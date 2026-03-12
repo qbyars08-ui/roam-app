@@ -1,0 +1,341 @@
+// =============================================================================
+// ROAM — ExploreHub
+// 2-column glass card grid of all features, navigable from Profile or Home
+// =============================================================================
+import React, { useCallback } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  StyleSheet,
+  Dimensions,
+  type ViewStyle,
+  type TextStyle,
+} from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MessageSquare, Shield, Plane, Globe, BookOpen, PawPrint, Users, Search, FlaskConical, Image, Wallet, Flag, Star, Map, Receipt, User, Gift, Shuffle, Clock, Building2, Heart, UserPlus, Languages, Repeat } from 'lucide-react-native';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { useProGate } from '../../lib/pro-gate';
+
+// ---------------------------------------------------------------------------
+// Feature definitions
+// ---------------------------------------------------------------------------
+const ICON_MAP = {
+  MessageSquare,
+  Shield,
+  Plane,
+  Globe,
+  BookOpen,
+  PawPrint,
+  Users,
+  Search,
+  FlaskConical,
+  Image,
+  Wallet,
+  Flag,
+  Star,
+  Map,
+  Receipt,
+  User,
+  Gift,
+  Shuffle,
+  Clock,
+  Building2,
+  Heart,
+  UserPlus,
+  Languages,
+  Repeat,
+} as const;
+
+type Feature = {
+  id: string;
+  icon: keyof typeof ICON_MAP;
+  name: string;
+  description: string;
+  route: string;
+  pro?: boolean;
+};
+
+const FEATURES: Feature[] = [
+  { id: 'chat', icon: 'MessageSquare', name: 'Ask AI', description: 'Chat with your travel assistant', route: '/(tabs)/chat' },
+  { id: 'prep', icon: 'Shield', name: 'Trip Prep', description: 'Packing lists, visas & essentials', route: '/(tabs)/prep' },
+  { id: 'flights', icon: 'Plane', name: 'Flights', description: 'Track and manage your flights', route: '/(tabs)/flights' },
+  { id: 'globe', icon: 'Globe', name: 'Globe', description: 'Explore the interactive map', route: '/(tabs)/globe' },
+  { id: 'passport', icon: 'BookOpen', name: 'Passport', description: 'Visa info & travel documents', route: '/(tabs)/passport' },
+  { id: 'pets', icon: 'PawPrint', name: 'Pet Travel', description: 'Plan trips with your pet', route: '/(tabs)/pets' },
+  { id: 'travel-twin', icon: 'Users', name: 'Travel Twin', description: 'Find your travel style match', route: '/travel-twin', pro: true },
+  { id: 'roam-for-dates', icon: 'Heart', name: 'ROAM for Dates', description: 'Couples planner — merge your travel styles', route: '/roam-for-dates' },
+  { id: 'trip-trading', icon: 'Repeat', name: 'Trip Trading', description: 'Swap itineraries, claim others\' trips', route: '/trip-trading' },
+  { id: 'local-lens', icon: 'Search', name: 'Local Lens', description: 'See destinations like a local', route: '/(tabs)/chat' },
+  { id: 'trip-chemistry', icon: 'FlaskConical', name: 'Trip Chemistry', description: 'Group travel compatibility', route: '/trip-chemistry', pro: true },
+  { id: 'memory-lane', icon: 'Image', name: 'Memory Lane', description: 'Relive your past adventures', route: '/memory-lane', pro: true },
+  { id: 'budget-guardian', icon: 'Wallet', name: 'Budget Guardian', description: 'Track spending & get alerts', route: '/budget-guardian' },
+  { id: 'arrival-mode', icon: 'Flag', name: 'Arrival Mode', description: 'First-day city survival guide', route: '/(tabs)/prep' },
+  { id: 'honest-reviews', icon: 'Star', name: 'Honest Reviews', description: 'Real traveler feedback', route: '/(tabs)/chat' },
+  { id: 'visited-map', icon: 'Map', name: 'Visited Map', description: 'Track where you\'ve been', route: '/(tabs)/globe' },
+  { id: 'receipt', icon: 'Receipt', name: 'The Receipt', description: 'See your trip cost breakdown', route: '/trip-receipt' },
+  { id: 'dupe-finder', icon: 'Search', name: 'Dupe Finder', description: 'Find cheaper alternatives', route: '/dupe-finder' },
+  { id: 'main-character', icon: 'User', name: 'Main Character', description: 'Your trip as a story', route: '/main-character' },
+  { id: 'trip-wrapped', icon: 'Gift', name: 'Trip Wrapped', description: 'Your year in travel', route: '/trip-wrapped' },
+  { id: 'chaos-mode', icon: 'Shuffle', name: 'Chaos Mode', description: 'ROAM picks everything', route: '/chaos-mode' },
+  { id: 'layover', icon: 'Clock', name: 'Layover Optimizer', description: 'What to do with X hours in a city', route: '/layover' },
+  { id: 'airport-guide', icon: 'Building2', name: 'Airport Survival', description: 'Food, lounges, security at major hubs', route: '/airport-guide' },
+  { id: 'dream-vault', icon: 'Heart', name: 'Dream Trip Vault', description: 'Saved destinations & price alerts', route: '/dream-vault' },
+  { id: 'people-met', icon: 'UserPlus', name: "People You've Met", description: 'Contacts from your travels', route: '/people-met' },
+  { id: 'language-survival', icon: 'Languages', name: 'Language Survival', description: '50 phrases, tap to hear, 10 cities', route: '/language-survival' },
+  { id: 'travel-time-machine', icon: 'Clock', name: 'Travel Time Machine', description: 'Tokyo 2019 vs now — AI comparison', route: '/travel-time-machine' },
+  { id: 'trip-collections', icon: 'Map', name: 'Trip Collections', description: 'Curated lists by vibe', route: '/trip-collections' },
+  { id: 'anti-itinerary', icon: 'Shuffle', name: 'Anti-itinerary', description: 'One decision at a time, spontaneous', route: '/anti-itinerary' },
+];
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const COLUMN_GAP = SPACING.md;
+const CARD_WIDTH = (SCREEN_WIDTH - SPACING.lg * 2 - COLUMN_GAP) / 2;
+
+// ---------------------------------------------------------------------------
+// ExploreHub component
+// ---------------------------------------------------------------------------
+type ExploreHubProps = {
+  /** If true, renders as a full screen with header and safe area. Otherwise inline. */
+  standalone?: boolean;
+};
+
+export default function ExploreHub({ standalone = false }: ExploreHubProps) {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { canAccess: canAccessPro } = useProGate('travel-twin');
+
+  const handlePress = useCallback(
+    (feature: Feature) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      if (feature.pro && !canAccessPro) {
+        router.push('/paywall');
+        return;
+      }
+      router.push(feature.route as any);
+    },
+    [router, canAccessPro]
+  );
+
+  const content = (
+    <View style={styles.grid}>
+      {FEATURES.map((feature) => (
+        <Pressable
+          key={feature.id}
+          style={({ pressed }) => [
+            styles.card,
+            { opacity: pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
+          ]}
+          onPress={() => handlePress(feature)}
+        >
+          {(() => {
+            const IconComponent = ICON_MAP[feature.icon];
+            return IconComponent ? (
+              <View style={styles.cardIcon}>
+                <IconComponent size={24} color={COLORS.accentGold} strokeWidth={2} />
+              </View>
+            ) : null;
+          })()}
+          <Text style={styles.cardName}>{feature.name}</Text>
+          <Text style={styles.cardDesc} numberOfLines={2}>
+            {feature.description}
+          </Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+
+  if (standalone) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.headerTitle}>Explore</Text>
+          <Text style={styles.headerSubtitle}>All your travel tools in one place</Text>
+          {content}
+        </ScrollView>
+      </View>
+    );
+  }
+
+  return content;
+}
+
+// ---------------------------------------------------------------------------
+// Compact horizontal row variant for the Home screen
+// ---------------------------------------------------------------------------
+export function FeatureQuickAccess() {
+  const router = useRouter();
+
+  // Subset of features to show on home — the most useful quick-access items
+  const QUICK_FEATURES = FEATURES.slice(0, 8);
+
+  const handlePress = useCallback(
+    (feature: Feature) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      router.push(feature.route as any);
+    },
+    [router]
+  );
+
+  return (
+    <View style={quickStyles.section}>
+      <View style={quickStyles.header}>
+        <Text style={quickStyles.title}>Features</Text>
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push('/(tabs)/profile');
+          }}
+          style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
+        >
+          <Text style={quickStyles.seeAll}>See all</Text>
+        </Pressable>
+      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={quickStyles.row}
+      >
+        {QUICK_FEATURES.map((feature) => (
+          <Pressable
+            key={feature.id}
+            style={({ pressed }) => [
+              quickStyles.card,
+              { opacity: pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.96 : 1 }] },
+            ]}
+            onPress={() => handlePress(feature)}
+          >
+            {(() => {
+              const IconComponent = ICON_MAP[feature.icon];
+              return IconComponent ? (
+                <View style={quickStyles.cardIcon}>
+                  <IconComponent size={22} color={COLORS.accentGold} strokeWidth={2} />
+                </View>
+              ) : null;
+            })()}
+            <Text style={quickStyles.cardName} numberOfLines={1}>
+              {feature.name}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Styles — full grid
+// ---------------------------------------------------------------------------
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.bg,
+  } as ViewStyle,
+  scrollContent: {
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.xxxl,
+  } as ViewStyle,
+  headerTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 28,
+    color: COLORS.cream,
+    paddingTop: SPACING.lg,
+  } as TextStyle,
+  headerSubtitle: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.cream,
+    opacity: 0.5,
+    marginTop: SPACING.xs,
+    marginBottom: SPACING.xl,
+  } as TextStyle,
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: COLUMN_GAP,
+  } as ViewStyle,
+  card: {
+    width: CARD_WIDTH,
+    backgroundColor: COLORS.bgGlass,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.lg,
+    gap: SPACING.xs,
+  } as ViewStyle,
+  cardIcon: {
+    marginBottom: SPACING.xs,
+  } as ViewStyle,
+  cardName: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 15,
+    color: COLORS.cream,
+  } as TextStyle,
+  cardDesc: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.cream,
+    opacity: 0.5,
+    lineHeight: 17,
+  } as TextStyle,
+});
+
+// ---------------------------------------------------------------------------
+// Styles — compact horizontal row
+// ---------------------------------------------------------------------------
+const quickStyles = StyleSheet.create({
+  section: {
+    marginTop: SPACING.lg,
+    gap: SPACING.sm,
+  } as ViewStyle,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+  } as ViewStyle,
+  title: {
+    fontFamily: FONTS.header,
+    fontSize: 22,
+    color: COLORS.cream,
+  } as TextStyle,
+  seeAll: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.sage,
+    letterSpacing: 0.5,
+  } as TextStyle,
+  row: {
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.sm,
+  } as ViewStyle,
+  card: {
+    width: 80,
+    height: 80,
+    backgroundColor: COLORS.bgGlass,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+  } as ViewStyle,
+  cardIcon: {
+    marginBottom: 2,
+  } as ViewStyle,
+  cardName: {
+    fontFamily: FONTS.mono,
+    fontSize: 9,
+    color: COLORS.cream,
+    opacity: 0.7,
+    letterSpacing: 0.3,
+    textAlign: 'center',
+    paddingHorizontal: 2,
+  } as TextStyle,
+});

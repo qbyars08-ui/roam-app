@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROAM — AI Travel Planner</title>
+<meta name="description" content="The AI travel planner built for how you actually travel. Plan any trip in 30 seconds.">
+<meta property="og:title" content="ROAM — AI Travel Planner">
+<meta property="og:description" content="Plan any trip in 30 seconds. Hidden gems. Real budgets. Built for Gen Z.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0D1F1A;--bg-light:#132B24;--sage:#7CAF8A;--cream:#F5EDD8;--coral:#E8614A;
+  --gold:#C9A84C;--white:rgba(245,237,216,0.92);--muted:rgba(245,237,216,0.5);
+  --glass:rgba(124,175,138,0.06);--glass-border:rgba(124,175,138,0.12);
+}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--cream);
+  min-height:100vh;overflow-x:hidden;position:relative;
+}
+
+/* ── animated gradient orbs ── */
+.orb{position:fixed;border-radius:50%;filter:blur(120px);opacity:.35;pointer-events:none;z-index:0}
+.orb-1{width:600px;height:600px;background:radial-gradient(circle,var(--sage),transparent 70%);top:-10%;left:-10%;animation:drift1 18s ease-in-out infinite}
+.orb-2{width:500px;height:500px;background:radial-gradient(circle,var(--coral),transparent 70%);bottom:-5%;right:-8%;animation:drift2 22s ease-in-out infinite}
+.orb-3{width:350px;height:350px;background:radial-gradient(circle,var(--gold),transparent 70%);top:40%;left:50%;animation:drift3 20s ease-in-out infinite}
+@keyframes drift1{0%,100%{transform:translate(0,0)}50%{transform:translate(80px,60px)}}
+@keyframes drift2{0%,100%{transform:translate(0,0)}50%{transform:translate(-70px,-50px)}}
+@keyframes drift3{0%,100%{transform:translate(0,0)}50%{transform:translate(-50px,40px)}}
+
+/* ── grain overlay ── */
+body::before{
+  content:'';position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.03;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+/* ── layout ── */
+.wrapper{position:relative;z-index:2;max-width:720px;margin:0 auto;padding:0 24px}
+
+/* ── nav ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(13,31,26,0.7);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--glass-border);
+}
+nav .nav-inner{
+  max-width:720px;margin:0 auto;padding:16px 24px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.logo{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:1.5rem;letter-spacing:0.08em;color:var(--cream)}
+.logo span{color:var(--coral)}
+.nav-cta{
+  font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--cream);background:transparent;border:1px solid var(--glass-border);
+  padding:8px 16px;border-radius:999px;cursor:pointer;transition:all .3s;text-decoration:none;
+}
+.nav-cta:hover{background:var(--glass);border-color:var(--sage)}
+
+/* ── hero ── */
+.hero{
+  min-height:100vh;display:flex;flex-direction:column;
+  justify-content:center;align-items:center;text-align:center;
+  padding:120px 0 80px;
+}
+.badge{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--sage);background:var(--glass);
+  border:1px solid var(--glass-border);border-radius:999px;padding:8px 20px;
+  margin-bottom:32px;animation:fadeUp .8s ease both;
+}
+.badge .dot{width:6px;height:6px;border-radius:50%;background:var(--sage);animation:pulse-dot 2s ease-in-out infinite}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+
+h1{
+  font-family:'Cormorant Garamond',serif;font-weight:700;
+  font-size:clamp(2.4rem,6vw,4rem);line-height:1.1;
+  color:var(--cream);max-width:600px;margin-bottom:20px;
+  animation:fadeUp .8s ease .1s both;
+}
+h1 em{font-style:italic;color:var(--coral)}
+
+.subtitle{
+  font-size:clamp(1rem,2.5vw,1.2rem);color:var(--muted);
+  max-width:480px;line-height:1.6;margin-bottom:40px;
+  animation:fadeUp .8s ease .2s both;
+}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── form ── */
+.form-card{
+  width:100%;max-width:480px;
+  background:var(--glass);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border:1px solid var(--glass-border);border-radius:20px;padding:32px;
+  animation:fadeUp .8s ease .3s both;
+}
+.input-row{display:flex;gap:10px;margin-bottom:14px}
+.input-row input{
+  flex:1;font-family:'DM Sans',sans-serif;font-size:1rem;
+  background:rgba(245,237,216,0.06);border:1px solid var(--glass-border);
+  color:var(--cream);padding:16px 20px;border-radius:14px;outline:none;
+  transition:border-color .3s,box-shadow .3s;
+}
+.input-row input::placeholder{color:var(--muted)}
+.input-row input:focus{border-color:var(--sage);box-shadow:0 0 0 3px rgba(124,175,138,0.15)}
+.btn-submit{
+  width:100%;font-family:'DM Sans',sans-serif;font-weight:600;font-size:1rem;
+  background:var(--coral);color:#fff;border:none;
+  padding:16px 32px;border-radius:14px;cursor:pointer;
+  position:relative;overflow:hidden;transition:transform .2s,box-shadow .3s;
+}
+.btn-submit:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(232,97,74,0.35)}
+.btn-submit:active{transform:translateY(0)}
+.btn-submit .shimmer{
+  position:absolute;top:0;left:-100%;width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);
+  animation:shimmer 3s ease-in-out infinite;
+}
+@keyframes shimmer{0%{left:-100%}100%{left:100%}}
+
+.form-proof{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  margin-top:16px;font-size:.85rem;color:var(--muted);
+}
+.avatar-stack{display:flex}
+.avatar-stack span{
+  width:24px;height:24px;border-radius:50%;border:2px solid var(--bg);
+  margin-left:-8px;font-size:.6rem;display:flex;align-items:center;justify-content:center;
+}
+.avatar-stack span:first-child{margin-left:0}
+
+/* ── success state ── */
+.success-state{display:none;text-align:center;padding:12px 0}
+.success-state.show{display:block;animation:fadeUp .5s ease}
+.success-state .check{
+  width:56px;height:56px;border-radius:50%;
+  background:rgba(124,175,138,0.15);border:2px solid var(--sage);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 16px;font-size:1.5rem;
+}
+.success-state h3{font-family:'Cormorant Garamond',serif;font-size:1.5rem;margin-bottom:8px}
+.success-state p{color:var(--muted);font-size:.9rem;line-height:1.5}
+.queue-number{
+  font-family:'DM Mono',monospace;font-size:2rem;color:var(--coral);
+  font-weight:700;margin:12px 0;
+}
+.share-row{display:flex;gap:10px;justify-content:center;margin-top:20px}
+.share-btn{
+  font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;
+  padding:10px 20px;border-radius:12px;border:1px solid var(--glass-border);
+  background:var(--glass);color:var(--cream);cursor:pointer;transition:all .3s;
+}
+.share-btn:hover{background:rgba(124,175,138,0.12);border-color:var(--sage)}
+.share-btn.primary{background:var(--sage);color:var(--bg);border-color:var(--sage)}
+
+/* ── features ── */
+.features{padding:40px 0 60px}
+.features-label{
+  font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--sage);text-align:center;margin-bottom:40px;
+}
+.features-grid{display:grid;grid-template-columns:1fr;gap:16px}
+.feature-card{
+  background:var(--glass);border:1px solid var(--glass-border);
+  border-radius:20px;padding:28px;
+  transition:transform .3s,border-color .3s;
+}
+.feature-card:hover{transform:translateY(-4px);border-color:rgba(124,175,138,0.25)}
+.feature-icon{
+  width:48px;height:48px;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;font-size:1.4rem;
+  margin-bottom:16px;
+}
+.feature-card:nth-child(1) .feature-icon{background:rgba(232,97,74,0.12)}
+.feature-card:nth-child(2) .feature-icon{background:rgba(124,175,138,0.12)}
+.feature-card:nth-child(3) .feature-icon{background:rgba(201,168,76,0.12)}
+.feature-card h3{
+  font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;
+  margin-bottom:8px;color:var(--cream);
+}
+.feature-card p{font-size:.9rem;line-height:1.6;color:var(--muted)}
+
+/* ── how it works ── */
+.how-it-works{padding:20px 0 60px;text-align:center}
+.how-it-works h2{
+  font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,4vw,2.5rem);
+  font-weight:700;margin-bottom:48px;
+}
+.steps{display:grid;grid-template-columns:1fr;gap:32px;max-width:400px;margin:0 auto}
+.step{display:flex;align-items:flex-start;gap:16px;text-align:left}
+.step-num{
+  font-family:'DM Mono',monospace;font-size:.75rem;font-weight:500;
+  color:var(--coral);background:rgba(232,97,74,0.1);
+  width:36px;height:36px;border-radius:10px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.step h4{font-family:'DM Sans',sans-serif;font-weight:600;font-size:1rem;margin-bottom:4px}
+.step p{font-size:.85rem;color:var(--muted);line-height:1.5}
+
+/* ── stats ── */
+.stats{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:16px;
+  padding:48px 0;border-top:1px solid var(--glass-border);
+  border-bottom:1px solid var(--glass-border);margin:0 0 64px;
+}
+.stat{text-align:center}
+.stat-num{
+  font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,4vw,2.5rem);
+  font-weight:700;color:var(--cream);
+}
+.stat-num .accent{color:var(--coral)}
+.stat-label{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+
+/* ── vibes quiz teaser ── */
+.quiz-teaser{
+  text-align:center;padding:40px 0 60px;
+}
+.quiz-card{
+  background:linear-gradient(135deg,rgba(124,175,138,0.08),rgba(232,97,74,0.06));
+  border:1px solid var(--glass-border);border-radius:24px;
+  padding:48px 32px;max-width:500px;margin:0 auto;
+}
+.quiz-card h2{
+  font-family:'Cormorant Garamond',serif;font-size:clamp(1.6rem,3.5vw,2rem);
+  font-weight:700;margin-bottom:12px;
+}
+.quiz-card p{color:var(--muted);font-size:.95rem;margin-bottom:28px;line-height:1.5}
+.vibe-tags{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:28px}
+.vibe-tag{
+  font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.04em;
+  padding:8px 16px;border-radius:999px;border:1px solid var(--glass-border);
+  color:var(--cream);cursor:default;transition:all .4s;
+}
+.vibe-tag:nth-child(odd){animation:float-tag 6s ease-in-out infinite}
+.vibe-tag:nth-child(even){animation:float-tag 6s ease-in-out 1s infinite}
+@keyframes float-tag{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.vibe-tag:hover{background:var(--glass);border-color:var(--sage)}
+.quiz-cta{
+  font-family:'DM Sans',sans-serif;font-weight:600;font-size:.9rem;
+  color:var(--coral);background:transparent;border:none;cursor:pointer;
+  text-decoration:underline;text-underline-offset:4px;transition:opacity .3s;
+}
+.quiz-cta:hover{opacity:.7}
+
+/* ── bottom CTA ── */
+.bottom-cta{text-align:center;padding:40px 0 100px}
+.bottom-cta h2{
+  font-family:'Cormorant Garamond',serif;font-size:clamp(1.6rem,4vw,2.2rem);
+  font-weight:700;margin-bottom:12px;
+}
+.bottom-cta p{color:var(--muted);font-size:.95rem;margin-bottom:28px}
+.btn-bottom{
+  font-family:'DM Sans',sans-serif;font-weight:600;font-size:1rem;
+  background:var(--coral);color:#fff;border:none;
+  padding:16px 40px;border-radius:14px;cursor:pointer;
+  transition:transform .2s,box-shadow .3s;text-decoration:none;display:inline-block;
+}
+.btn-bottom:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(232,97,74,0.35)}
+
+/* ── footer ── */
+footer{
+  text-align:center;padding:32px 24px;
+  border-top:1px solid var(--glass-border);
+  font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);
+  letter-spacing:.04em;
+}
+
+/* ── sticky mobile CTA ── */
+.sticky-cta{
+  display:none;position:fixed;bottom:0;left:0;right:0;z-index:99;
+  padding:12px 20px;
+  background:rgba(13,31,26,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-top:1px solid var(--glass-border);
+}
+.sticky-cta button{
+  width:100%;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.95rem;
+  background:var(--coral);color:#fff;border:none;
+  padding:14px;border-radius:12px;cursor:pointer;
+}
+
+/* ── scroll animations ── */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .8s cubic-bezier(0.22,1,0.36,1),transform .8s cubic-bezier(0.22,1,0.36,1)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal.stagger-1{transition-delay:.1s}
+.reveal.stagger-2{transition-delay:.2s}
+.reveal.stagger-3{transition-delay:.3s}
+
+/* ── responsive ── */
+@media(min-width:640px){
+  .features-grid{grid-template-columns:repeat(3,1fr)}
+  .input-row{flex-direction:row}
+}
+@media(max-width:639px){
+  .input-row{flex-direction:column}
+  .sticky-cta{display:block}
+  .hero{padding:100px 0 60px}
+  .stats{grid-template-columns:1fr;gap:24px}
+  .nav-cta{display:none}
+}
+
+/* ── reduced motion ── */
+@media(prefers-reduced-motion:reduce){
+  .orb,.vibe-tag,.badge .dot{animation:none !important}
+  .reveal{transition:none !important;opacity:1 !important;transform:none !important}
+  .btn-submit .shimmer{animation:none !important}
+}
+</style>
+</head>
+<body>
+
+<!-- gradient orbs -->
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<!-- nav -->
+<nav>
+  <div class="nav-inner">
+    <div class="logo">R<span>O</span>AM</div>
+    <a href="#signup" class="nav-cta">Get Early Access</a>
+  </div>
+</nav>
+
+<div class="wrapper">
+
+  <!-- hero -->
+  <section class="hero" id="signup">
+    <div class="badge"><span class="dot"></span> Now accepting early access</div>
+
+    <h1>The AI travel planner built for how you <em>actually</em> travel</h1>
+
+    <p class="subtitle">Plan any trip in 30 seconds. Hidden gems. Real budgets. Built for Gen Z.</p>
+
+    <!-- form -->
+    <div class="form-card" id="form-card">
+      <form id="waitlist-form">
+        <div class="input-row">
+          <input type="email" id="email-input" placeholder="your@email.com" required autocomplete="email" aria-label="Email address">
+        </div>
+        <button type="submit" class="btn-submit">
+          <span class="shimmer"></span>
+          Reserve Your Spot
+        </button>
+      </form>
+      <div class="form-proof">
+        <div class="avatar-stack">
+          <span style="background:#E8614A">QJ</span>
+          <span style="background:#7CAF8A">MR</span>
+          <span style="background:#C9A84C">KL</span>
+          <span style="background:#5E9E6E">AD</span>
+        </div>
+        <span>Join <strong id="counter">527</strong> travelers already on the list</span>
+      </div>
+
+      <!-- success state (hidden by default) -->
+      <div class="success-state" id="success-state">
+        <div class="check">&#10003;</div>
+        <h3>You're in.</h3>
+        <div class="queue-number" id="queue-pos">#528</div>
+        <p>Share with friends to move up the list.<br>Top 100 get ROAM Pro free for 3 months.</p>
+        <div class="share-row">
+          <button class="share-btn primary" onclick="copyLink()">Copy Link</button>
+          <button class="share-btn" onclick="shareTwitter()">Twitter / X</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- features -->
+  <section class="features">
+    <div class="features-label reveal">Why travelers are switching</div>
+    <div class="features-grid">
+      <div class="feature-card reveal">
+        <div class="feature-icon">&#9889;</div>
+        <h3>AI itineraries in 30 seconds</h3>
+        <p>Tell us where, your budget, and your vibe. Claude builds a full day-by-day plan instantly. No more 47 browser tabs.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">&#127758;</div>
+        <h3>Hidden gems not on Google</h3>
+        <p>Local-favorite bars, secret viewpoints, the taco stand only residents know. Real recs from real travel data, not sponsored ads.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">&#128176;</div>
+        <h3>Budget tracking built in</h3>
+        <p>Set your budget from backpacker to bougie. Every suggestion fits what you actually want to spend. No surprise expenses.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- how it works -->
+  <section class="how-it-works reveal">
+    <h2>Three steps. That's it.</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div>
+          <h4>Tell us your vibe</h4>
+          <p>Pick a destination, set your budget, choose vibes like "hidden-gems" or "night-owl."</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div>
+          <h4>AI builds your trip</h4>
+          <p>Full day-by-day itinerary with times, costs, map pins, and packing lists generated in seconds.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div>
+          <h4>Just go</h4>
+          <p>Hype mode counts you down. Voice guide narrates your day. Share with your crew in one tap.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- stats -->
+  <div class="stats reveal">
+    <div class="stat">
+      <div class="stat-num"><span class="accent">30</span>s</div>
+      <div class="stat-label">Avg trip plan time</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num"><span class="accent">16</span>+</div>
+      <div class="stat-label">Travel vibes</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num"><span class="accent">$0</span></div>
+      <div class="stat-label">To get started</div>
+    </div>
+  </div>
+
+  <!-- quiz teaser -->
+  <section class="quiz-teaser reveal">
+    <div class="quiz-card">
+      <h2>What kind of traveler are you?</h2>
+      <p>ROAM personalizes every trip to your travel DNA. Here's a taste of the vibes:</p>
+      <div class="vibe-tags">
+        <span class="vibe-tag">hidden-gems</span>
+        <span class="vibe-tag">local-eats</span>
+        <span class="vibe-tag">adrenaline</span>
+        <span class="vibe-tag">sunset-chaser</span>
+        <span class="vibe-tag">night-owl</span>
+        <span class="vibe-tag">art-design</span>
+        <span class="vibe-tag">budget-king</span>
+        <span class="vibe-tag">off-the-grid</span>
+      </div>
+      <button class="quiz-cta" onclick="document.getElementById('email-input').focus();window.scrollTo({top:0,behavior:'smooth'})">
+        Find out when you get access &#8594;
+      </button>
+    </div>
+  </section>
+
+  <!-- bottom CTA -->
+  <section class="bottom-cta reveal">
+    <h2>Stop planning. Start roaming.</h2>
+    <p>Early access is filling up. First 500 get Pro free for 3 months.</p>
+    <a href="#signup" class="btn-bottom">Reserve Your Spot</a>
+  </section>
+
+</div>
+
+<footer>
+  &copy; 2026 ROAM &nbsp;&middot;&nbsp; Built with AI, made for explorers
+</footer>
+
+<!-- sticky mobile CTA -->
+<div class="sticky-cta">
+  <button onclick="document.getElementById('email-input').focus();window.scrollTo({top:0,behavior:'smooth'})">
+    Reserve Your Spot &mdash; It's Free
+  </button>
+</div>
+
+<script>
+// ── scroll reveal ──
+const revealEls = document.querySelectorAll('.reveal');
+if ('IntersectionObserver' in window) {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+  }, { threshold: 0, rootMargin: '0px 0px -20px 0px' });
+  revealEls.forEach(el => observer.observe(el));
+} else {
+  revealEls.forEach(el => el.classList.add('visible'));
+}
+
+// ── form submission ──
+const form = document.getElementById('waitlist-form');
+const successState = document.getElementById('success-state');
+const counterEl = document.getElementById('counter');
+let currentCount = 527;
+
+// ── Supabase config (anon key — safe to expose, RLS protects data) ──
+const SUPABASE_URL = 'https://byetqukwnanrmupovzev.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5ZXRxdWt3bmFucm11cG92emV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjA3NTAsImV4cCI6MjA4ODgzNjc1MH0.-mmAZK0ssdwI1KzypL_OWWmjVIHtcbPM0sg6nfMfa0E';
+
+function getRefSource() {
+  try { return new URLSearchParams(window.location.search).get('ref') || 'direct'; }
+  catch { return 'direct'; }
+}
+
+form.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const email = document.getElementById('email-input').value;
+  if (!email) return;
+
+  const btn = form.querySelector('.btn-submit');
+  const origText = btn.innerHTML;
+  btn.innerHTML = '<span class="shimmer"></span>Joining...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/waitlist_emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON,
+        'Authorization': 'Bearer ' + SUPABASE_ANON,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ email: email.trim().toLowerCase(), referral_source: getRefSource() })
+    });
+
+    if (res.ok || res.status === 409) {
+      // 409 = duplicate email, still show success
+      currentCount++;
+      form.style.display = 'none';
+      document.querySelector('.form-proof').style.display = 'none';
+      successState.classList.add('show');
+      document.getElementById('queue-pos').textContent = '#' + currentCount;
+      counterEl.textContent = currentCount;
+    } else {
+      throw new Error('Server error');
+    }
+  } catch (err) {
+    // Graceful fallback — still show success UX, log error
+    console.error('Waitlist submit error:', err);
+    currentCount++;
+    form.style.display = 'none';
+    document.querySelector('.form-proof').style.display = 'none';
+    successState.classList.add('show');
+    document.getElementById('queue-pos').textContent = '#' + currentCount;
+    counterEl.textContent = currentCount;
+  }
+});
+
+// ── share actions ──
+function copyLink() {
+  const link = window.location.href + '?ref=share';
+  navigator.clipboard.writeText(link).then(() => {
+    const btn = document.querySelector('.share-btn.primary');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy Link', 2000);
+  });
+}
+function shareTwitter() {
+  const text = encodeURIComponent("Just joined the waitlist for ROAM \u2014 an AI travel planner that builds your entire trip in 30 seconds. This is going to change everything.\n\n");
+  const url = encodeURIComponent(window.location.href + '?ref=twitter');
+  window.open('https://twitter.com/intent/tweet?text=' + text + '&url=' + url, '_blank');
+}
+
+// ── counter animation on load ──
+function animateCounter(el, target) {
+  let current = target - 47;
+  const step = () => {
+    current += Math.ceil((target - current) / 8);
+    el.textContent = current;
+    if (current < target) requestAnimationFrame(step);
+    else el.textContent = target;
+  };
+  step();
+}
+animateCounter(counterEl, currentCount);
+
+// ── hide sticky CTA when hero form is visible ──
+const heroObserver = new IntersectionObserver(([entry]) => {
+  const sticky = document.querySelector('.sticky-cta');
+  if (sticky) sticky.style.opacity = entry.isIntersecting ? '0' : '1';
+  if (sticky) sticky.style.pointerEvents = entry.isIntersecting ? 'none' : 'auto';
+}, { threshold: 0.3 });
+heroObserver.observe(document.getElementById('form-card'));
+</script>
+
+</body>
+</html>

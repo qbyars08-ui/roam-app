@@ -1,0 +1,212 @@
+// =============================================================================
+// ROAM — Flight Deal Card
+// Watch prices for destination, get alerts when they drop 20%
+// =============================================================================
+import React, { useState } from 'react';
+import { Pressable, StyleSheet, Text, View, Alert, type ViewStyle, type TextStyle } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import {
+  addSavedDestination,
+  getSavedDestinations,
+  removeSavedDestination,
+  type SavedDestination,
+} from '../../lib/flight-deals';
+import { getHomeAirport } from '../../lib/flights-amadeus';
+import { quickFlightSearch } from '../../lib/flights-amadeus';
+import { TrendingDown } from 'lucide-react-native';
+
+interface FlightDealCardProps {
+  destination: string;
+  onDealAlert?: (message: string) => void;
+}
+
+export default function FlightDealCard({ destination, onDealAlert }: FlightDealCardProps) {
+  const [watched, setWatched] = useState<SavedDestination | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(false);
+
+  const loadWatched = React.useCallback(async () => {
+    const list = await getSavedDestinations();
+    const match = list.find(
+      (d) => d.destination.toLowerCase() === destination.toLowerCase()
+    );
+    setWatched(match ?? null);
+  }, [destination]);
+
+  React.useEffect(() => {
+    loadWatched();
+  }, [loadWatched]);
+
+  const handleWatch = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setLoading(true);
+    try {
+      const homeAirport = await getHomeAirport();
+      const saved = await addSavedDestination(destination, homeAirport);
+      setWatched(saved);
+
+      // Fetch initial price
+      const result = await quickFlightSearch(destination, 7);
+      if (result?.cheapest?.price) {
+        const { updateDestinationPrice } = await import('../../lib/flight-deals');
+        await updateDestinationPrice(saved.id, result.cheapest.price);
+        await loadWatched();
+      }
+    } catch (err) {
+      Alert.alert(
+        'Couldn\'t add',
+        'Flight price tracking requires Amadeus API. We\'ll notify you when we can track prices for this destination.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUnwatch = async () => {
+    if (!watched) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await removeSavedDestination(watched.id);
+    setWatched(null);
+  };
+
+  const handleCheckDeals = async () => {
+    setChecking(true);
+    try {
+      const { checkForDeals } = await import('../../lib/flight-deals');
+      const alerts = await checkForDeals();
+      await loadWatched();
+
+      if (alerts.length > 0) {
+        const msg = alerts
+          .map(
+            (a) =>
+              `${a.destination}: $${a.oldPrice} → $${a.newPrice} (${a.dropPercent}% off!)`
+          )
+          .join('\n');
+        if (onDealAlert) onDealAlert(msg);
+        else Alert.alert('Price drop!', msg);
+      } else if (watched) {
+        Alert.alert(
+          'No new deals',
+          `We checked prices for ${destination}. No 20%+ drops yet — we'll keep watching.`
+        );
+      }
+    } catch {
+      Alert.alert('Check failed', 'Couldn\'t check flight prices right now. Try again later.');
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TrendingDown size={18} color={COLORS.sage} strokeWidth={2} />
+        <Text style={styles.headerLabel}>PRICE ALERTS</Text>
+      </View>
+      <Text style={styles.title}>
+        {watched
+          ? `Watching flights to ${destination}`
+          : `Get alerts when flights to ${destination} drop 20%+`}
+      </Text>
+      {watched?.baselinePrice != null && (
+        <Text style={styles.baseline}>Lowest seen: ${watched.baselinePrice}</Text>
+      )}
+      <View style={styles.actions}>
+        {watched ? (
+          <>
+            <Pressable
+              onPress={handleCheckDeals}
+              disabled={checking}
+              style={({ pressed }) => [
+                styles.btn,
+                styles.btnPrimary,
+                { opacity: pressed || checking ? 0.7 : 1 },
+              ]}
+            >
+              <Text style={styles.btnText}>{checking ? 'Checking...' : 'Check for deals'}</Text>
+            </Pressable>
+            <Pressable
+              onPress={handleUnwatch}
+              style={({ pressed }) => [styles.btn, { opacity: pressed ? 0.7 : 1 }]}
+            >
+              <Text style={styles.btnTextMuted}>Stop watching</Text>
+            </Pressable>
+          </>
+        ) : (
+          <Pressable
+            onPress={handleWatch}
+            disabled={loading}
+            style={({ pressed }) => [
+              styles.btn,
+              styles.btnPrimary,
+              { opacity: pressed || loading ? 0.7 : 1 },
+            ]}
+          >
+            <Text style={styles.btnText}>{loading ? 'Adding...' : 'Watch prices'}</Text>
+          </Pressable>
+        )}
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: COLORS.bgGlass,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.md,
+    gap: SPACING.sm,
+  } as ViewStyle,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  } as ViewStyle,
+  headerLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+    letterSpacing: 1.5,
+  } as TextStyle,
+  title: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.cream,
+    lineHeight: 20,
+  } as TextStyle,
+  baseline: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+  } as TextStyle,
+  actions: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginTop: SPACING.xs,
+  } as ViewStyle,
+  btn: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.md,
+  } as ViewStyle,
+  btnPrimary: {
+    backgroundColor: COLORS.sageLight,
+    borderWidth: 1,
+    borderColor: COLORS.sage,
+  } as ViewStyle,
+  btnText: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.sage,
+  } as TextStyle,
+  btnTextMuted: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamMuted,
+  } as TextStyle,
+});

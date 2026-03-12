@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ROAM — Travel like you know someone there</title>
+<meta name="description" content="AI trip planning so good it feels like cheating. Get early access to ROAM for iOS.">
+<meta name="theme-color" content="#080F0F">
+<meta property="og:title" content="ROAM — Travel like you know someone there">
+<meta property="og:description" content="AI trip planning so good it feels like cheating. Launching on iOS soon.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #080F0F;
+  --gold: #C9A84C;
+  --coral: #E8614A;
+  --coral-hover: #d4553f;
+  --cream: #F5EDD8;
+  --sage: #7CAF8A;
+  --muted: rgba(245, 237, 216, 0.5);
+  --glass: rgba(245, 237, 216, 0.04);
+  --glass-border: rgba(245, 237, 216, 0.08);
+  --glass-hover: rgba(245, 237, 216, 0.07);
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+body {
+  background: var(--bg);
+  color: var(--cream);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Animated gradient background ──────────────────────────────────── */
+.bg-gradient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(135deg, #0a1a14, #0d1a2a, #150d26, #0a1a14);
+  background-size: 400% 400%;
+  animation: gradientShift 20s ease infinite;
+}
+
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  25%  { background-position: 100% 0%; }
+  50%  { background-position: 100% 100%; }
+  75%  { background-position: 0% 100%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ── Floating particles ────────────────────────────────────────────── */
+.particles {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: rgba(201, 168, 76, 0.25);
+  animation: float linear infinite;
+}
+
+@keyframes float {
+  0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+}
+
+/* ── Page structure ────────────────────────────────────────────────── */
+.page { position: relative; z-index: 2; }
+
+.column {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ── Hero section ──────────────────────────────────────────────────── */
+.hero {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: env(safe-area-inset-top, 20px);
+  padding-bottom: 60px;
+}
+
+.logo {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 4px;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 40px;
+  opacity: 0;
+  animation: fadeUp 0.8s ease forwards;
+}
+
+.headline {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: clamp(36px, 9vw, 52px);
+  line-height: 1.1;
+  color: var(--cream);
+  margin-bottom: 20px;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.15s forwards;
+}
+
+.subheadline {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin-bottom: 40px;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.3s forwards;
+}
+
+/* ── Email form ────────────────────────────────────────────────────── */
+.email-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.45s forwards;
+}
+
+.email-input {
+  width: 100%;
+  padding: 16px 20px;
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--cream);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  outline: none;
+  transition: border-color 0.25s, background 0.25s;
+  -webkit-appearance: none;
+}
+
+.email-input::placeholder { color: rgba(245, 237, 216, 0.25); }
+.email-input:focus {
+  border-color: rgba(201, 168, 76, 0.4);
+  background: var(--glass-hover);
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 16px 24px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 16px;
+  color: #fff;
+  background: var(--coral);
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  -webkit-appearance: none;
+}
+
+.submit-btn:hover { background: var(--coral-hover); }
+.submit-btn:active { transform: scale(0.985); }
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.success-msg {
+  display: none;
+  text-align: center;
+  padding: 20px;
+  background: rgba(124, 175, 138, 0.08);
+  border: 1px solid rgba(124, 175, 138, 0.2);
+  border-radius: 14px;
+  font-size: 15px;
+  color: var(--sage);
+  line-height: 1.5;
+}
+
+.success-msg.show { display: block; animation: fadeUp 0.5s ease forwards; }
+
+/* ── Social proof ──────────────────────────────────────────────────── */
+.social-proof {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0.3px;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.6s forwards;
+}
+
+.social-proof .count { color: var(--gold); font-weight: 500; }
+.social-proof .dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--sage);
+  margin-right: 8px;
+  vertical-align: middle;
+  animation: pulse 2s ease infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* ── Scroll indicator ──────────────────────────────────────────────── */
+.scroll-hint {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 1s forwards;
+}
+
+.scroll-hint span {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(245, 237, 216, 0.2);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.scroll-arrow {
+  width: 20px;
+  height: 20px;
+  border-right: 1.5px solid rgba(245, 237, 216, 0.15);
+  border-bottom: 1.5px solid rgba(245, 237, 216, 0.15);
+  transform: rotate(45deg);
+  animation: bounce 2s ease infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: rotate(45deg) translateY(0); }
+  50% { transform: rotate(45deg) translateY(6px); }
+}
+
+/* ── Features section ──────────────────────────────────────────────── */
+.features {
+  padding: 80px 0 60px;
+}
+
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--sage);
+  margin-bottom: 48px;
+}
+
+.feature-card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 32px 28px;
+  margin-bottom: 16px;
+  transition: border-color 0.3s, background 0.3s;
+}
+
+.feature-card:hover {
+  border-color: rgba(245, 237, 216, 0.12);
+  background: var(--glass-hover);
+}
+
+.feature-title {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 24px;
+  color: var(--cream);
+  margin-bottom: 12px;
+}
+
+.feature-desc {
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+/* ── Phone mockup ──────────────────────────────────────────────────── */
+.mockup-section {
+  padding: 60px 0 80px;
+  display: flex;
+  justify-content: center;
+}
+
+.phone-frame {
+  width: 280px;
+  height: 560px;
+  border-radius: 40px;
+  border: 3px solid rgba(245, 237, 216, 0.1);
+  background: linear-gradient(180deg, #0D1F1A 0%, #0a1614 100%);
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(245, 237, 216, 0.04);
+}
+
+.phone-notch {
+  width: 120px;
+  height: 28px;
+  background: #080F0F;
+  border-radius: 0 0 18px 18px;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+}
+
+.phone-screen {
+  width: 100%;
+  height: 100%;
+  border-radius: 28px;
+  overflow: hidden;
+  position: relative;
+}
+
+.mock-header {
+  padding: 40px 16px 12px;
+}
+
+.mock-logo {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.mock-greeting {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--cream);
+}
+
+.mock-search {
+  margin: 10px 16px;
+  padding: 10px 14px;
+  background: rgba(245, 237, 216, 0.04);
+  border: 1px solid rgba(245, 237, 216, 0.08);
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: rgba(245, 237, 216, 0.25);
+}
+
+.mock-chips {
+  display: flex;
+  gap: 6px;
+  padding: 6px 16px;
+  overflow: hidden;
+}
+
+.mock-chip {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+}
+
+.mock-chip.active {
+  background: rgba(124, 175, 138, 0.15);
+  border: 1px solid rgba(124, 175, 138, 0.3);
+  color: var(--sage);
+}
+
+.mock-chip.inactive {
+  background: rgba(245, 237, 216, 0.04);
+  border: 1px solid rgba(245, 237, 216, 0.06);
+  color: rgba(245, 237, 216, 0.35);
+}
+
+.mock-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 10px 16px;
+}
+
+.mock-card {
+  border-radius: 12px;
+  height: 100px;
+  position: relative;
+  overflow: hidden;
+}
+
+.mock-card-bg {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+}
+
+.mock-card:nth-child(1) .mock-card-bg { background: linear-gradient(135deg, #1a3a2a, #0d2018); }
+.mock-card:nth-child(2) .mock-card-bg { background: linear-gradient(135deg, #2a1a18, #1a0d0a); }
+.mock-card:nth-child(3) .mock-card-bg { background: linear-gradient(135deg, #1a2a3a, #0d1820); }
+.mock-card:nth-child(4) .mock-card-bg { background: linear-gradient(135deg, #2a2a1a, #1a1a0d); }
+
+.mock-card-label {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--cream);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+}
+
+.mock-card-sub {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--sage);
+  background: rgba(0,0,0,0.4);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.mock-card-emoji {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 22px;
+}
+
+.phone-glow {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(124, 175, 138, 0.08), transparent 70%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: glowPulse 4s ease infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+}
+
+/* ── Second CTA ────────────────────────────────────────────────────── */
+.cta2 {
+  padding: 60px 0 80px;
+  text-align: center;
+}
+
+.cta2-headline {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: clamp(32px, 8vw, 44px);
+  color: var(--cream);
+  margin-bottom: 16px;
+}
+
+.cta2-sub {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin-bottom: 36px;
+}
+
+.cta2-perks {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 36px;
+  flex-wrap: wrap;
+}
+
+.perk {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--sage);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.perk::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--sage);
+  flex-shrink: 0;
+}
+
+/* ── Footer ────────────────────────────────────────────────────────── */
+.footer {
+  padding: 48px 0;
+  border-top: 1px solid var(--glass-border);
+  text-align: center;
+}
+
+.footer-story {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 14px;
+  color: rgba(245, 237, 216, 0.3);
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+.footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.footer-links a {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: rgba(245, 237, 216, 0.25);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.footer-links a:hover { color: var(--muted); }
+
+.footer-copy {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(245, 237, 216, 0.15);
+  letter-spacing: 1px;
+}
+
+/* ── Animations ────────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Responsive ────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .column { padding: 0 20px; }
+  .feature-card { padding: 28px 24px; }
+  .phone-frame { width: 250px; height: 500px; }
+  .cta2-perks { gap: 16px; }
+}
+
+@media (min-width: 768px) {
+  .hero { padding-bottom: 80px; }
+  .scroll-hint { bottom: 48px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Animated gradient -->
+<div class="bg-gradient"></div>
+
+<!-- Floating particles (injected via JS) -->
+<div class="particles" id="particles"></div>
+
+<!-- Page content -->
+<div class="page">
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- HERO — Above the fold                                         -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <section class="hero column" id="hero">
+    <div class="logo">ROAM</div>
+    <h1 class="headline">Travel like you know someone there</h1>
+    <p class="subheadline">AI trip planning so good it feels like cheating. Launching on iOS soon.</p>
+
+    <form class="email-form" id="form-hero" data-form="hero">
+      <input type="email" class="email-input" placeholder="your@email.com" required autocomplete="email" inputmode="email" aria-label="Email address">
+      <button type="submit" class="submit-btn">Get early access</button>
+    </form>
+    <div class="success-msg" id="success-hero">You're in. We'll reach out before anyone else. &#10024;</div>
+
+    <div class="social-proof">
+      <span class="dot"></span>
+      <span class="count" id="counter">1,200</span> travelers already waiting
+    </div>
+
+    <div class="scroll-hint">
+      <span>See more</span>
+      <div class="scroll-arrow"></div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- FEATURES                                                       -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <section class="features column">
+    <div class="section-label reveal">Why ROAM</div>
+
+    <div class="feature-card reveal">
+      <div class="feature-title">30-second itineraries</div>
+      <p class="feature-desc">Type a destination. Get a full day-by-day plan with real venues, real prices, local tips.</p>
+    </div>
+
+    <div class="feature-card reveal">
+      <div class="feature-title">Works offline</div>
+      <p class="feature-desc">Download your trip before you fly. No wifi needed when you're lost in Tokyo at midnight.</p>
+    </div>
+
+    <div class="feature-card reveal">
+      <div class="feature-title">Built for how you actually travel</div>
+      <p class="feature-desc">Solo, budget, luxury, chaotic &mdash; ROAM adapts to you, not the other way around.</p>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- PHONE MOCKUP                                                   -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <section class="mockup-section reveal">
+    <div style="position: relative;">
+      <div class="phone-glow"></div>
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="mock-header">
+            <div class="mock-logo">&#10022; ROAM</div>
+            <div class="mock-greeting">Where to next?</div>
+          </div>
+          <div class="mock-search">Search any destination...</div>
+          <div class="mock-chips">
+            <span class="mock-chip active">All</span>
+            <span class="mock-chip inactive">Beaches</span>
+            <span class="mock-chip inactive">Cities</span>
+            <span class="mock-chip inactive">Mountains</span>
+          </div>
+          <div class="mock-grid">
+            <div class="mock-card">
+              <div class="mock-card-bg"></div>
+              <span class="mock-card-emoji">&#x26A9;&#xFE0F;</span>
+              <span class="mock-card-label">Tokyo</span>
+              <span class="mock-card-sub">$85/day</span>
+            </div>
+            <div class="mock-card">
+              <div class="mock-card-bg"></div>
+              <span class="mock-card-emoji">&#127796;</span>
+              <span class="mock-card-label">Bali</span>
+              <span class="mock-card-sub">$42/day</span>
+            </div>
+            <div class="mock-card">
+              <div class="mock-card-bg"></div>
+              <span class="mock-card-emoji">&#127751;</span>
+              <span class="mock-card-label">Lisbon</span>
+              <span class="mock-card-sub">$65/day</span>
+            </div>
+            <div class="mock-card">
+              <div class="mock-card-bg"></div>
+              <span class="mock-card-emoji">&#127966;</span>
+              <span class="mock-card-label">Patagonia</span>
+              <span class="mock-card-sub">$90/day</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- SECOND CTA                                                     -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <section class="cta2 column reveal">
+    <h2 class="cta2-headline">Be first.</h2>
+    <p class="cta2-sub">Early access users get 3 months of ROAM Pro free.<br>No credit card. No spam.</p>
+
+    <div class="cta2-perks">
+      <span class="perk">3 months free</span>
+      <span class="perk">No credit card</span>
+      <span class="perk">Zero spam</span>
+    </div>
+
+    <form class="email-form" id="form-cta2" data-form="cta2" style="opacity:1;">
+      <input type="email" class="email-input" placeholder="your@email.com" required autocomplete="email" inputmode="email" aria-label="Email address">
+      <button type="submit" class="submit-btn">Get early access</button>
+    </form>
+    <div class="success-msg" id="success-cta2">You're in. We'll reach out before anyone else. &#10024;</div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- FOOTER                                                         -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <footer class="footer column">
+    <p class="footer-story">Built by a 17-year-old who got lost in Vienna<br>and decided to fix travel planning.</p>
+    <div class="footer-links">
+      <a href="#">Privacy</a>
+      <a href="#">Terms</a>
+      <a href="mailto:hello@roamtravel.app">Contact</a>
+    </div>
+    <p class="footer-copy">&copy; 2025 ROAM</p>
+  </footer>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════
+// Particles
+// ═══════════════════════════════════════════════════════════════════════
+(function initParticles() {
+  const container = document.getElementById('particles');
+  const count = window.innerWidth < 500 ? 25 : 40;
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.animationDuration = (12 + Math.random() * 20) + 's';
+    p.style.animationDelay = (Math.random() * 15) + 's';
+    p.style.width = p.style.height = (1.5 + Math.random() * 2) + 'px';
+    if (Math.random() > 0.6) p.style.background = 'rgba(124, 175, 138, 0.2)';
+    container.appendChild(p);
+  }
+})();
+
+// ═══════════════════════════════════════════════════════════════════════
+// Counter animation  (1200 → 1247)
+// ═══════════════════════════════════════════════════════════════════════
+(function animateCounter() {
+  const el = document.getElementById('counter');
+  const target = 1247;
+  const start = 1200;
+  const duration = 2000;
+  const startTime = performance.now();
+
+  function step(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    // ease-out cubic
+    const ease = 1 - Math.pow(1 - progress, 3);
+    const current = Math.round(start + (target - start) * ease);
+    el.textContent = current.toLocaleString();
+    if (progress < 1) requestAnimationFrame(step);
+  }
+
+  // Start after hero fades in
+  setTimeout(() => requestAnimationFrame(step), 800);
+})();
+
+// ═══════════════════════════════════════════════════════════════════════
+// Scroll reveal
+// ═══════════════════════════════════════════════════════════════════════
+(function initReveal() {
+  const els = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
+  );
+  els.forEach((el) => observer.observe(el));
+})();
+
+// ═══════════════════════════════════════════════════════════════════════
+// Form submission → Formspree
+// ═══════════════════════════════════════════════════════════════════════
+//
+//  SETUP: Replace YOUR_FORM_ID below with your real Formspree form ID.
+//  1. Go to https://formspree.io  →  sign up free
+//  2. Create a new form  →  copy the form ID (e.g. "xpwzgkbn")
+//  3. Paste it below
+//
+const FORMSPREE_ID = 'xjgawjqd';      // ← replace this
+const FORMSPREE_URL = `https://formspree.io/f/${FORMSPREE_ID}`;
+
+document.querySelectorAll('[data-form]').forEach((form) => {
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = form.querySelector('.email-input');
+    const btn = form.querySelector('.submit-btn');
+    const successId = 'success-' + form.dataset.form;
+    const successEl = document.getElementById(successId);
+    const email = input.value.trim();
+    if (!email) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Joining...';
+
+    try {
+      const res = await fetch(FORMSPREE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      if (res.ok || FORMSPREE_ID === 'YOUR_FORM_ID') {
+        // Success (or demo mode if Formspree not yet configured)
+        form.style.display = 'none';
+        successEl.classList.add('show');
+      } else {
+        throw new Error('Submit failed');
+      }
+    } catch {
+      btn.disabled = false;
+      btn.textContent = 'Try again';
+      setTimeout(() => { btn.textContent = 'Get early access'; }, 2000);
+    }
+  });
+});
+</script>
+</body>
+</html>

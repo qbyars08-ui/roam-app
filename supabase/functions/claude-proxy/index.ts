@@ -1,0 +1,190 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+const FREE_TIER_LIMIT = 1;
+
+Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Missing or invalid Authorization header" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const jwt = authHeader.replace("Bearer ", "");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY")!;
+
+    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${jwt}` } },
+    });
+
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Invalid or expired token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+    // ── Read request body (support both client formats) ─────────────────
+    const body = await req.json();
+    // Client sends: { system, message, isTripGeneration }
+    // Legacy: { systemPrompt, messages }
+    const systemPrompt = body.system ?? body.systemPrompt;
+    const isTripGeneration = body.isTripGeneration === true;
+    let messages = body.messages;
+    if (!messages && body.message != null) {
+      messages = [{ role: "user", content: String(body.message) }];
+    }
+
+    if (!systemPrompt || !messages?.length) {
+      return new Response(
+        JSON.stringify({ error: "Missing system or message" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // ── Profile: fetch or use defaults ─────────────────────────────────
+    let profile: { subscription_tier: string; trips_generated_this_month: number; month_reset_at: string } = {
+      subscription_tier: "free",
+      trips_generated_this_month: 0,
+      month_reset_at: new Date().toISOString(),
+    };
+
+    const { data: fetchedProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("subscription_tier, trips_generated_this_month, month_reset_at")
+      .eq("id", user.id)
+      .single();
+
+    if (fetchedProfile) {
+      profile = fetchedProfile;
+    } else {
+      try {
+        await supabaseAdmin.from("profiles").upsert(
+          {
+            id: user.id,
+            subscription_tier: "free",
+            trips_generated_this_month: 0,
+            month_reset_at: new Date().toISOString(),
+          },
+          { onConflict: "id" }
+        );
+      } catch {
+        // profiles table may not exist; continue with defaults
+      }
+    }
+
+    const now = new Date();
+    const resetAt = new Date(profile.month_reset_at);
+    const needsReset =
+      now.getUTCFullYear() !== resetAt.getUTCFullYear() ||
+      now.getUTCMonth() !== resetAt.getUTCMonth();
+
+    if (needsReset) {
+      await supabaseAdmin
+        .from("profiles")
+        .update({
+          trips_generated_this_month: 0,
+          month_reset_at: now.toISOString(),
+        })
+        .eq("id", user.id);
+      profile.trips_generated_this_month = 0;
+    }
+
+    // ── Rate limit only for trip generation ────────────────────────────
+    const isFree = profile.subscription_tier === "free" || !profile.subscription_tier;
+    if (isTripGeneration && isFree && profile.trips_generated_this_month >= FREE_TIER_LIMIT) {
+      return new Response(
+        JSON.stringify({
+          error: "Trip limit reached",
+          code: "LIMIT_REACHED",
+          tripsUsed: profile.trips_generated_this_month,
+          limit: FREE_TIER_LIMIT,
+        }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // ── Call Anthropic API ─────────────────────────────────────────────
+    const anthropicResponse = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": anthropicApiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 8192,
+        system: systemPrompt,
+        messages,
+      }),
+    });
+
+    if (!anthropicResponse.ok) {
+      const errBody = await anthropicResponse.text();
+      return new Response(
+        JSON.stringify({ error: "Anthropic API error", details: errBody }),
+        {
+          status: anthropicResponse.status,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    const anthropicData = await anthropicResponse.json();
+
+    // ── Extract text from content blocks ───────────────────────────────
+    let content = "";
+    const raw = anthropicData.content;
+    if (Array.isArray(raw)) {
+      const textBlock = raw.find((b: { type?: string }) => b?.type === "text");
+      content = textBlock?.text ?? raw.map((b: { text?: string }) => b?.text ?? "").join("");
+    } else if (typeof raw === "string") {
+      content = raw;
+    }
+
+    // ── Increment trip count only for trip generation ──────────────────
+    let newCount = profile.trips_generated_this_month;
+    if (isTripGeneration) {
+      newCount = profile.trips_generated_this_month + 1;
+      await supabaseAdmin
+        .from("profiles")
+        .update({ trips_generated_this_month: newCount })
+        .eq("id", user.id);
+    }
+
+    return new Response(
+      JSON.stringify({
+        content,
+        tripsUsed: newCount,
+        limit: isFree ? FREE_TIER_LIMIT : null,
+      }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  } catch (err) {
+    return new Response(
+      JSON.stringify({ error: "Internal server error", details: String(err) }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+});

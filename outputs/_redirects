@@ -1,0 +1,2 @@
+# SPA-style routing for trip shares
+/trip/*  /trip/index.html  200

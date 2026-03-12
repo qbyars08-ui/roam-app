@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ROAM — Shared Trip</title>
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg:#080F0A;--cream:#F5EDD8;--muted:rgba(245,237,216,0.5);
+      --sage:#7CAF8A;--coral:#C0392B;--glass:rgba(255,255,255,0.04);
+      --glass-border:rgba(255,255,255,0.06);
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--cream);min-height:100vh;line-height:1.6}
+    .wrapper{max-width:640px;margin:0 auto;padding:24px 20px}
+    nav{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:16px 0;margin-bottom:24px;border-bottom:1px solid var(--glass-border)
+    }
+    .logo{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:1.25rem;letter-spacing:.08em}
+    .logo a{color:var(--cream);text-decoration:none}
+    .nav-cta{
+      font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.06em;
+      color:var(--sage);background:var(--glass);border:1px solid var(--glass-border);
+      padding:8px 16px;border-radius:999px;text-decoration:none;
+    }
+    .nav-cta:hover{background:rgba(124,175,138,0.15);border-color:var(--sage)}
+    .loading{text-align:center;padding:80px 20px;color:var(--muted)}
+    .error{text-align:center;padding:80px 20px;color:var(--coral)}
+    .trip-hero{
+      margin-bottom:32px;padding:32px;background:var(--glass);
+      border:1px solid var(--glass-border);border-radius:16px;
+    }
+    .trip-hero h1{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:700;margin-bottom:8px}
+    .trip-meta{font-family:'DM Mono',monospace;font-size:.8rem;color:var(--muted);letter-spacing:.05em}
+    .day-card{
+      margin-bottom:24px;padding:24px;background:var(--glass);
+      border:1px solid var(--glass-border);border-radius:12px;
+    }
+    .day-title{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--sage);letter-spacing:.1em;margin-bottom:16px}
+    .slot{display:flex;gap:16px;margin-bottom:16px;align-items:flex-start}
+    .slot:last-child{margin-bottom:0}
+    .slot-label{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);min-width:80px}
+    .slot-content{}
+    .slot-activity{font-weight:500;margin-bottom:4px}
+    .slot-details{font-size:.9rem;color:var(--muted)}
+    .cta-card{
+      margin-top:40px;padding:32px;text-align:center;
+      background:linear-gradient(135deg,rgba(124,175,138,0.08),rgba(124,175,138,0.02));
+      border:1px solid var(--sage);border-radius:16px;
+    }
+    .cta-card h3{font-family:'Cormorant Garamond',serif;font-size:1.5rem;margin-bottom:8px}
+    .cta-card p{color:var(--muted);margin-bottom:24px;font-size:.95rem}
+    .btn-steal{
+      display:inline-block;font-family:'DM Sans',sans-serif;font-weight:600;
+      background:var(--sage);color:#080F0A;padding:16px 32px;
+      border-radius:12px;text-decoration:none;font-size:1rem;
+      transition:transform .2s,box-shadow .2s;
+    }
+    .btn-steal:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(124,175,138,0.3)}
+    .btn-steal:active{transform:translateY(0)}
+    footer{margin-top:48px;padding-top:24px;border-top:1px solid var(--glass-border);text-align:center}
+    footer a{color:var(--muted);font-size:.85rem;text-decoration:none}
+    footer a:hover{color:var(--sage)}
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <nav>
+      <span class="logo"><a href="https://roamappwait.netlify.app">ROAM</a></span>
+      <a href="https://roamappwait.netlify.app" class="nav-cta">Get the app</a>
+    </nav>
+
+    <div id="loading" class="loading">Loading trip...</div>
+    <div id="error" class="error" style="display:none">This trip could not be found.</div>
+    <div id="content" style="display:none"></div>
+  </div>
+
+  <script>
+    (function() {
+      const SUPABASE_URL = 'https://byetqukwnanrmupovzev.supabase.co';
+      const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5ZXRxdWt3bmFucm11cG92emV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjA3NTAsImV4cCI6MjA4ODgzNjc1MH0.-mmAZK0ssdwI1KzypL_OWWmjVIHtcbPM0sg6nfMfa0E';
+      const TRIP_BASE = 'https://roamappwait.netlify.app/trip';
+
+      const path = window.location.pathname;
+      const match = path.match(/\/trip\/([a-f0-9-]+)/i);
+      const tripId = match ? match[1] : null;
+
+      if (!tripId) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error').textContent = 'Invalid link.';
+        return;
+      }
+
+      fetch(SUPABASE_URL + '/rest/v1/shared_trips?id=eq.' + tripId + '&select=*', {
+        headers: {
+          'apikey': SUPABASE_ANON,
+          'Authorization': 'Bearer ' + SUPABASE_ANON
+        }
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(rows) {
+          document.getElementById('loading').style.display = 'none';
+          if (!rows || rows.length === 0) {
+            document.getElementById('error').style.display = 'block';
+            return;
+          }
+          const t = rows[0];
+          renderTrip(t);
+        })
+        .catch(function() {
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('error').style.display = 'block';
+        });
+
+      function renderTrip(t) {
+        let itinerary;
+        try {
+          itinerary = typeof t.itinerary === 'string' ? JSON.parse(t.itinerary) : t.itinerary;
+        } catch (e) {
+          itinerary = null;
+        }
+
+        const stealUrl = 'roam://trip/' + tripId;
+        const appStoreUrl = 'https://roamappwait.netlify.app';
+
+        let html = '<div class="trip-hero">';
+        html += '<h1>' + escapeHtml(itinerary?.destination || t.destination) + '</h1>';
+        html += '<div class="trip-meta">' + t.days + ' days';
+        if (t.budget) html += ' &middot; ' + escapeHtml(t.budget);
+        if (t.vibes && t.vibes.length) html += ' &middot; ' + escapeHtml(t.vibes.slice(0, 3).join(', '));
+        html += '</div></div>';
+
+        if (itinerary && Array.isArray(itinerary.days)) {
+          for (let i = 0; i < itinerary.days.length; i++) {
+            const d = itinerary.days[i];
+            html += '<div class="day-card">';
+            html += '<div class="day-title">Day ' + (i + 1);
+            if (d.theme) html += ' — ' + escapeHtml(d.theme);
+            html += '</div>';
+            for (const slot of ['morning', 'afternoon', 'evening']) {
+              const s = d[slot];
+              if (!s || !s.activity) continue;
+              html += '<div class="slot">';
+              html += '<span class="slot-label">' + slot.charAt(0).toUpperCase() + slot.slice(1) + '</span>';
+              html += '<div class="slot-content">';
+              html += '<div class="slot-activity">' + escapeHtml(s.activity) + '</div>';
+              if (s.location) html += '<div class="slot-details">' + escapeHtml(s.location) + (s.cost ? ' · ' + escapeHtml(s.cost) : '') + '</div>';
+              if (s.tip) html += '<div class="slot-details" style="margin-top:4px;font-style:italic">' + escapeHtml(s.tip) + '</div>';
+              html += '</div></div>';
+            }
+            html += '</div>';
+          }
+        }
+
+        html += '<div class="cta-card">';
+        html += '<h3>Steal this trip</h3>';
+        html += '<p>Add this itinerary to your ROAM. Plan, edit, and share it with your crew.</p>';
+        html += '<a href="' + stealUrl + '" class="btn-steal" id="btn-steal">Open in ROAM</a>';
+        html += '</div>';
+
+        document.getElementById('content').innerHTML = html;
+        document.getElementById('content').style.display = 'block';
+
+        document.getElementById('btn-steal').addEventListener('click', function(e) {
+          e.preventDefault();
+          window.location.href = stealUrl;
+          setTimeout(function() {
+            window.location.href = appStoreUrl;
+          }, 1500);
+        });
+      }
+
+      function escapeHtml(s) {
+        if (!s) return '';
+        const div = document.createElement('div');
+        div.textContent = s;
+        return div.innerHTML;
+      }
+    })();
+  </script>
+  <footer>
+    <a href="https://roamappwait.netlify.app">Get ROAM</a> — Travel like you know someone there
+  </footer>
+</body>
+</html>

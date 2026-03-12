@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "roam-web",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["node_modules/.bin/expo", "start", "--web", "--port", "8081", "--clear"],
+      "port": 8081
+    },
+    {
+      "name": "waitlist",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8090", "-d", "outputs"],
+      "port": 8090
+    }
+  ]
+}
