@@ -1,7 +1,7 @@
 // =============================================================================
 // ROAM — Venue Card (Google Places enriched data)
 // =============================================================================
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import {
   Image,
   Linking,
@@ -58,7 +58,7 @@ function formatReviewCount(count: number): string {
 // Component
 // ---------------------------------------------------------------------------
 
-export default function VenueCard({
+function VenueCardInner({
   name,
   photo_url,
   rating,
@@ -70,16 +70,16 @@ export default function VenueCard({
   booking_url,
   city,
 }: VenueCardProps) {
-  const handleOpenMaps = () => {
+  const handleOpenMaps = useCallback(() => {
     Linking.openURL(maps_url).catch(() => {});
-  };
+  }, [maps_url]);
 
-  const handleBook = () => {
+  const handleBook = useCallback(() => {
     const url =
       booking_url ??
       `${AFFILIATES.getyourguide}${encodeURIComponent(name)}`;
     Linking.openURL(url).catch(() => {});
-  };
+  }, [booking_url, name]);
 
   return (
     <View style={styles.container}>
@@ -158,6 +158,9 @@ export default function VenueCard({
     </View>
   );
 }
+
+const VenueCard = memo(VenueCardInner);
+export default VenueCard;
 
 // ---------------------------------------------------------------------------
 // Styles

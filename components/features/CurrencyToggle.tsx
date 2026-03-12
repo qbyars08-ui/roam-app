@@ -41,6 +41,7 @@ export default function CurrencyToggle({ onCurrencyChange, subtle }: CurrencyTog
   const rates = useAppStore((s) => s.exchangeRates);
   const setHomeCurrencyStore = useAppStore((s) => s.setHomeCurrency);
   const setExchangeRates = useAppStore((s) => s.setExchangeRates);
+  const setExchangeRatesLoadAttempted = useAppStore((s) => s.setExchangeRatesLoadAttempted);
   const [pickerVisible, setPickerVisible] = useState(false);
 
   // Ensure rates loaded (store init does this; retry if missing)
@@ -48,10 +49,17 @@ export default function CurrencyToggle({ onCurrencyChange, subtle }: CurrencyTog
     if (rates) return;
     let cancelled = false;
     fetchExchangeRates()
-      .then((r) => { if (!cancelled) setExchangeRates(r); })
-      .catch(() => {});
+      .then((r) => {
+        if (!cancelled) {
+          setExchangeRates(r);
+          setExchangeRatesLoadAttempted(true);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setExchangeRatesLoadAttempted(true);
+      });
     return () => { cancelled = true; };
-  }, [rates, setExchangeRates]);
+  }, [rates, setExchangeRates, setExchangeRatesLoadAttempted]);
 
   const handleSelect = useCallback(
     async (code: string) => {
@@ -150,7 +158,8 @@ export default function CurrencyToggle({ onCurrencyChange, subtle }: CurrencyTog
 export function useCurrency() {
   const currency = useAppStore((s) => s.homeCurrency);
   const rates = useAppStore((s) => s.exchangeRates);
-  return { currency, rates, loading: !rates };
+  const loadAttempted = useAppStore((s) => s.exchangeRatesLoadAttempted);
+  return { currency, rates, loading: !rates && !loadAttempted };
 }
 
 // ---------------------------------------------------------------------------
@@ -185,12 +194,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-    backgroundColor: 'rgba(124,175,138,0.12)',
+    backgroundColor: COLORS.sageMuted,
     borderRadius: RADIUS.full,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderWidth: 1,
-    borderColor: 'rgba(124,175,138,0.25)',
+    borderColor: COLORS.sageBorder,
   } as ViewStyle,
   toggleSymbolSubtle: {
     fontFamily: FONTS.bodyMedium,
@@ -243,7 +252,7 @@ const styles = StyleSheet.create({
   attribution: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: 'rgba(245,237,216,0.4)',
+    color: COLORS.creamDim,
     paddingHorizontal: SPACING.lg,
     marginBottom: SPACING.md,
   } as TextStyle,
@@ -263,7 +272,7 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
   } as ViewStyle,
   currencyRowActive: {
-    backgroundColor: 'rgba(124,175,138,0.08)',
+    backgroundColor: COLORS.sageSubtle,
     borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.sm,
     marginHorizontal: -SPACING.sm,

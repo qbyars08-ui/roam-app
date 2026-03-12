@@ -151,6 +151,11 @@ export default function PlanScreen() {
       return;
     }
 
+    if (!isPro && tripsThisMonth >= FREE_TRIPS_PER_MONTH) {
+      router.push({ pathname: '/paywall', params: { reason: 'limit' } });
+      return;
+    }
+
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setIsGenerating(true);
 

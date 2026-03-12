@@ -473,7 +473,9 @@ export default function ItineraryScreen() {
           <View style={[styles.headerLeft, { width: 44 }]}>
             <SkeletonCard width={44} height={44} borderRadius={RADIUS.md} />
           </View>
-          <SkeletonCard width={120} height={20} style={{ flex: 1, marginHorizontal: SPACING.md }} />
+          <View style={{ flex: 1, marginHorizontal: SPACING.md }}>
+            <SkeletonCard width="100%" height={20} borderRadius={RADIUS.md} />
+          </View>
           <View style={[styles.headerRight, { width: 44 }]}>
             <SkeletonCard width={44} height={44} borderRadius={RADIUS.md} />
           </View>

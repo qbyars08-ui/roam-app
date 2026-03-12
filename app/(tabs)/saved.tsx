@@ -2,7 +2,7 @@
 // ROAM — Saved Trips Screen
 // FlatList of saved trips with swipe-to-delete
 // =============================================================================
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -19,18 +19,32 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Users } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS, BUDGETS } from '../../lib/constants';
 import { getDestinationPhoto, BACKUP_FALLBACK } from '../../lib/photos';
 import ShimmerOverlay from '../../components/ui/ShimmerOverlay';
 import { useAppStore, type Trip } from '../../lib/store';
+import { getMyGroups, type TripGroup } from '../../lib/group-trips';
 import { trackItineraryOutcome } from '../../lib/ai-improvement';
 import Button from '../../components/ui/Button';
 import { EmptySuitcase } from '../../components/ui/EmptyStateIllustrations';
 
 // ---------------------------------------------------------------------------
-// Trip card component
+// Trip card component — memoized for FlatList scroll performance
 // ---------------------------------------------------------------------------
-function TripCard({ trip, onPress, onDelete, onHype, onInvite }: { trip: Trip; onPress: () => void; onDelete: () => void; onHype: () => void; onInvite: () => void }) {
+const TripCard = memo(function TripCard({
+  trip,
+  onPress,
+  onDelete,
+  onHype,
+  onInvite,
+}: {
+  trip: Trip;
+  onPress: (t: Trip) => void;
+  onDelete: (t: Trip) => void;
+  onHype: (t: Trip) => void;
+  onInvite: (t: Trip) => void;
+}) {
   const [loaded, setLoaded] = useState(false);
   const [useFallback, setUseFallback] = useState(false);
   const budgetLabel = BUDGETS.find((b) => b.id === trip.budget)?.label ?? trip.budget;
@@ -42,10 +56,10 @@ function TripCard({ trip, onPress, onDelete, onHype, onInvite }: { trip: Trip; o
         styles.card,
         { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
       ]}
-      onPress={onPress}
+      onPress={() => onPress(trip)}
       onLongPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        onDelete();
+        onDelete(trip);
       }}
       accessibilityRole="button"
       accessibilityLabel={`${trip.destination}, ${trip.days} days. Double-tap to open.`}
@@ -88,7 +102,7 @@ function TripCard({ trip, onPress, onDelete, onHype, onInvite }: { trip: Trip; o
             onPress={(e) => {
               e.stopPropagation();
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              onHype();
+              onHype(trip);
             }}
             hitSlop={8}
             accessibilityRole="button"
@@ -157,6 +171,11 @@ export default function SavedScreen() {
   const insets = useSafeAreaInsets();
   const trips = useAppStore((s) => s.trips);
   const removeTrip = useAppStore((s) => s.removeTrip);
+  const [groups, setGroups] = useState<TripGroup[]>([]);
+
+  useEffect(() => {
+    getMyGroups().then(setGroups).catch(() => setGroups([]));
+  }, []);
 
   const handlePress = useCallback(
     (trip: Trip) => {
@@ -220,27 +239,8 @@ export default function SavedScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Group trips entry — only show when user has at least one trip */}
-      {trips.length > 0 && (
-      <Pressable
-        style={({ pressed }) => [styles.groupTripCard, { opacity: pressed ? 0.9 : 1 }]}
-        onPress={handleCreateGroup}
-      >
-        <Text style={styles.groupTripTitle}>Plan a trip with friends</Text>
-        <Text style={styles.groupTripSub}>Invite people you love — plan, vote, and split costs together.</Text>
-      </Pressable>
-      )}
-
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Trips</Text>
-        <Text style={styles.headerCount}>
-          {trips.length} {trips.length === 1 ? 'trip' : 'trips'}
-        </Text>
-      </View>
-
-      {/* Trip list */}
       <FlatList
+        ListHeaderComponent={ListHeader}
         data={trips}
         keyExtractor={(item) => item.id}
         contentContainerStyle={[
@@ -251,10 +251,10 @@ export default function SavedScreen() {
         renderItem={({ item }) => (
           <TripCard
             trip={item}
-            onPress={() => handlePress(item)}
-            onDelete={() => handleDelete(item)}
-            onHype={() => handleHype(item)}
-            onInvite={() => handleInvite(item)}
+            onPress={handlePress}
+            onDelete={handleDelete}
+            onHype={handleHype}
+            onInvite={handleInvite}
           />
         )}
         ListEmptyComponent={<EmptyState onPlan={handlePlan} />}
@@ -407,6 +407,37 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   } as ViewStyle,
   emptyIconWrap: {
+    width: 120,
+    height: 120,
+    marginBottom: SPACING.lg,
+    backgroundColor: COLORS.bgGlass,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
+  emptyEmoji: {
+    fontSize: 40,
+  } as TextStyle,
+  emptyTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 24,
+    color: COLORS.cream,
+  } as TextStyle,
+  emptySubtitle: {
+    fontFamily: FONTS.body,
+    fontSize: 15,
+    color: COLORS.cream,
+    opacity: 0.5,
+    textAlign: 'center',
+    lineHeight: 22,
+  } as TextStyle,
+  emptyButtonContainer: {
+    width: '100%',
+    marginTop: SPACING.lg,
+  } as ViewStyle,
+});
+ emptyIconWrap: {
     width: 120,
     height: 120,
     marginBottom: SPACING.lg,

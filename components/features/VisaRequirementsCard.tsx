@@ -23,7 +23,7 @@ const PASSPORT_COLORS: Record<string, { bg: string; text: string }> = {
   AT: { bg: 'rgba(220,38,38,0.12)', text: '#E87C7C' },    // Red tint
 };
 
-const DEFAULT_PASSPORT_COLOR = { bg: 'rgba(124,175,138,0.12)', text: COLORS.sage };
+const DEFAULT_PASSPORT_COLOR = { bg: COLORS.sageSubtle, text: COLORS.sage };
 
 export default function VisaRequirementsCard({ destination }: VisaRequirementsCardProps) {
   const [visa, setVisa] = useState<VisaResult | null>(null);
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.sm,
   } as ViewStyle,
   passportRowBest: {
-    backgroundColor: 'rgba(124,175,138,0.08)',
+    backgroundColor: COLORS.sageFaint,
   } as ViewStyle,
   passportPill: {
     paddingHorizontal: 7,
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.mono,
     fontSize: 8,
     color: COLORS.sage,
-    backgroundColor: 'rgba(124,175,138,0.15)',
+    backgroundColor: COLORS.sageHighlight,
     paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: 4,
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   source: {
     fontFamily: FONTS.mono,
     fontSize: 9,
-    color: 'rgba(245,237,216,0.4)',
+    color: COLORS.creamDim,
     marginTop: SPACING.sm,
   } as TextStyle,
 });

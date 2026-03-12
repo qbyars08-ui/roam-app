@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
   pillGood: {
     backgroundColor: COLORS.sageLight,
     borderWidth: 1,
-    borderColor: 'rgba(124,175,138,0.4)',
+    borderColor: COLORS.sageBorder,
   } as ViewStyle,
   pillAvoid: {
     backgroundColor: COLORS.coralLight,

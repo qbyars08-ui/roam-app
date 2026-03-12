@@ -19,14 +19,14 @@ Design bar:
 | /plan | x | SafetyScoreBadge, VisaChecker |
 | /chat (Ask) | x | VoiceInputButton, "Where should I go?" starter |
 | /saved | x | Image fallback, trip copy |
-| /prep | | |
-| /passport | | |
-| /globe | | |
-| /flights | | |
-| /pets | | |
-| /profile | | |
-| /itinerary | | |
-| /chaos-mode | | |
+| /prep | x | Trip copy |
+| /passport | x | |
+| /globe | x | Trip copy, no shadows |
+| /flights | x | |
+| /pets | x | |
+| /profile | x | |
+| /itinerary | x | Trip copy, no shadows |
+| /chaos-mode | x | Trip copy |
 | /chaos-dare | | |
 | /create-group | | |
 | /join-group | | |
@@ -44,7 +44,7 @@ Design bar:
 | /trip-wrapped | | |
 | /trip-collections | | |
 | /trip-trading | | |
-| /main-character | | |
+| /main-character | x | Trip copy |
 | /local-lens | | |
 | /arrival-mode | | |
 | /airport-guide | | |
@@ -57,7 +57,7 @@ Design bar:
 | /honest-reviews | | |
 | /hype | | |
 | /anti-itinerary | | |
-| /roam-for-dates | | |
+| /roam-for-dates | x | Trip copy |
 | /travel-time-machine | | |
 | /share-card | | |
 | /viral-cards | | |
@@ -65,16 +65,16 @@ Design bar:
 | /referral | | |
 | /admin | | |
 | /trip/[id] | | |
-| (auth) welcome | | |
-| (auth) signin | | |
-| (auth) signup | | |
-| (auth) onboard | | |
-| (auth) onboarding | | |
-| (auth) personalization | | |
-| (auth) value-preview | | |
-| (auth) social-proof | | |
-| (auth) splash | | |
-| (auth) hook | | |
+| (auth) welcome | x | |
+| (auth) signin | x | |
+| (auth) signup | x | |
+| (auth) onboard | x | |
+| (auth) onboarding | x | Trip copy, no shadows |
+| (auth) personalization | x | No emojis |
+| (auth) value-preview | x | |
+| (auth) social-proof | x | Trip copy |
+| (auth) splash | x | |
+| (auth) hook | x | |
 | travel-profile | | |
 | +not-found | | |
 

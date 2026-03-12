@@ -3,7 +3,7 @@
 // Full-width 100px card, rotating destination photos, Cormorant Garamond
 // Never black. Real photos only.
 // =============================================================================
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { memo, useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -425,3 +425,6 @@ const styles = StyleSheet.create({
     color: COLORS.creamMuted,
   } as TextStyle,
 });
+
+const SurpriseMe = memo(SurpriseMeInner);
+export default SurpriseMe;

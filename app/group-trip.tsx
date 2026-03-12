@@ -300,27 +300,34 @@ function ActivityVoteRow({
   activity: string;
   members: GroupMember[];
 }) {
+  const session = useAppStore((s) => s.session);
   const [votes, setVotes] = useState<{ keep: number; swap: number }>({ keep: 0, swap: 0 });
   const [myVote, setMyVote] = useState<'keep' | 'swap' | null>(null);
 
   useEffect(() => {
     getVotes(groupId, dayNumber).then((v) => {
       const filtered = v.filter((x) => x.timeSlot === timeSlot);
-      setVotes({
-        keep: filtered.filter((x) => x.voteType === 'keep').length,
-        swap: filtered.filter((x) => x.voteType === 'swap').length,
-      });
+      const keepCount = filtered.filter((x) => x.voteType === 'keep').length;
+      const swapCount = filtered.filter((x) => x.voteType === 'swap').length;
+      setVotes({ keep: keepCount, swap: swapCount });
+      const mine = filtered.find((x) => x.userId === session?.user?.id);
+      setMyVote(mine?.voteType === 'keep' || mine?.voteType === 'swap' ? mine.voteType : null);
     });
-  }, [groupId, dayNumber, timeSlot]);
+  }, [groupId, dayNumber, timeSlot, session?.user?.id]);
 
   const handleVote = useCallback(
     async (t: 'keep' | 'swap') => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const prevVote = myVote;
       setMyVote(t);
+      setVotes((prev) => {
+        let next = { ...prev, [t]: prev[t] + 1 };
+        if (prevVote && prevVote !== t) next = { ...next, [prevVote]: Math.max(0, next[prevVote] - 1) };
+        return next;
+      });
       await castVote({ groupId, dayNumber, timeSlot, voteType: t });
-      setVotes((prev) => ({ ...prev, [t]: prev[t] + 1 }));
     },
-    [groupId, dayNumber, timeSlot]
+    [groupId, dayNumber, timeSlot, myVote]
   );
 
   const label = timeSlot.charAt(0).toUpperCase() + timeSlot.slice(1);

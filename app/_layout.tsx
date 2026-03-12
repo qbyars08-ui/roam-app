@@ -19,6 +19,7 @@ import { DMMono_400Regular, DMMono_500Medium } from '@expo-google-fonts/dm-mono'
 import { supabase } from '../lib/supabase';
 import { useAppStore, checkActiveTripOnLoad, loadPersistedTrips, loadPersistedPets, loadPersistedTravelProfile } from '../lib/store';
 import { initRevenueCat, checkProStatus, addCustomerInfoListener } from '../lib/revenuecat';
+import { syncProStatusToSupabase } from '../lib/sync-pro-status';
 import { ensureReferralCode } from '../lib/referral';
 import { requestNotificationPermission, scheduleDailyDiscovery } from '../lib/notifications';
 import { recordAppOpen, cancelReengagementNotifications, scheduleReengagementNotifications } from '../lib/reengagement';
@@ -78,7 +79,6 @@ export default function RootLayout() {
   const router = useRouter();
   const session = useAppStore((s) => s.session);
   const setSession = useAppStore((s) => s.setSession);
-  const setIsPro = useAppStore((s) => s.setIsPro);
   const setTripsThisMonth = useAppStore((s) => s.setTripsThisMonth);
 
   // Load fonts
@@ -151,10 +151,7 @@ export default function RootLayout() {
         .eq('id', session.user.id)
         .single();
 
-      const proFromReferrals =
-        profile?.pro_referral_expires_at &&
-        new Date(profile.pro_referral_expires_at) > new Date();
-      setIsPro(proFromPurchases || !!proFromReferrals);
+      await syncProStatusToSupabase(session.user.id, proFromPurchases);
 
       if (profile) {
         setTripsThisMonth(profile.trips_generated_this_month ?? 0);
@@ -177,8 +174,8 @@ export default function RootLayout() {
       cancelReengagementNotifications();
 
       // Listen for purchase changes (new purchase, restore, expiration)
-      return addCustomerInfoListener((isPro) => {
-        useAppStore.getState().setIsPro(isPro);
+      return addCustomerInfoListener((proFromPurchases) => {
+        syncProStatusToSupabase(session.user.id, proFromPurchases);
       });
     };
 

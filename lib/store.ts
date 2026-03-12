@@ -65,6 +65,8 @@ type AppState = {
   pendingOnboardDestination: string | null;
   homeCurrency: string;
   exchangeRates: ExchangeRates | null;
+  /** True once we've attempted to fetch rates (success or failure) — prevents indefinite loading state */
+  exchangeRatesLoadAttempted: boolean;
 
   // Actions
   setSession: (session: Session | null) => void;
@@ -90,6 +92,7 @@ type AppState = {
   setPendingOnboardDestination: (dest: string | null) => void;
   setHomeCurrency: (code: string) => Promise<void>;
   setExchangeRates: (rates: ExchangeRates | null) => void;
+  setExchangeRatesLoadAttempted: (attempted: boolean) => void;
   initCurrency: () => Promise<void>;
 };
 
@@ -142,6 +145,7 @@ export const useAppStore = create<AppState>((set) => ({
   pendingOnboardDestination: null,
   homeCurrency: 'USD',
   exchangeRates: null,
+  exchangeRatesLoadAttempted: false,
 
   setSession: (session) => set({ session }),
   addTrip: (trip) =>
@@ -229,9 +233,11 @@ export const useAppStore = create<AppState>((set) => ({
     set({ homeCurrency: c });
   },
   setExchangeRates: (rates) => set({ exchangeRates: rates }),
+  setExchangeRatesLoadAttempted: (attempted) => set({ exchangeRatesLoadAttempted: attempted }),
   initCurrency: async () => {
     const code = await getHomeCurrency();
     set({ homeCurrency: code });
+    set({ exchangeRatesLoadAttempted: true });
     try {
       const rates = await fetchExchangeRates();
       set({ exchangeRates: rates });
