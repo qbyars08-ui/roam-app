@@ -12,10 +12,8 @@ jobs:
           node-version: 18
       - run: npm install
       - run: npx expo export --platform web
-      - uses: netlify/actions/deploy@master
-        with:
-          publish-dir: dist
-          production-deploy: true
+      - name: Deploy to Netlify
+        run: npx netlify-cli deploy --prod --dir=dist
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
