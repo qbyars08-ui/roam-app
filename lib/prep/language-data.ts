@@ -23,7 +23,7 @@ export interface LanguagePack {
 const JAPANESE: LanguagePack = {
   language: 'Japanese',
   destinations: ['Tokyo', 'Kyoto', 'Osaka'],
-  flag: '\uD83C\uDDEF\uD83C\uDDF5',
+  flag: 'JP',
   phrases: [
     { english: 'Hello', local: 'こんにちは', phonetic: 'kon-NI-chi-wa', category: 'greetings' },
     { english: 'Thank you', local: 'ありがとうございます', phonetic: 'a-ri-GA-to go-zai-MAS', category: 'greetings' },
@@ -176,7 +176,7 @@ const FRENCH: LanguagePack = {
 const PORTUGUESE: LanguagePack = {
   language: 'Portuguese',
   destinations: ['Lisbon'],
-  flag: '\uD83C\uDDF5\uD83C\uDDF9',
+  flag: 'PT',
   phrases: [
     { english: 'Hello', local: 'Olá', phonetic: 'oh-LAH', category: 'greetings' },
     { english: 'Thank you', local: 'Obrigado/a', phonetic: 'oh-bree-GAH-do/dah', category: 'greetings' },

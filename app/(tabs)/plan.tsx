@@ -24,7 +24,7 @@ import { useAppStore } from '../../lib/store';
 import { generateItinerary } from '../../lib/claude';
 import { TripLimitReachedError } from '../../lib/claude';
 import Button from '../../components/ui/Button';
-import VisaStatusCard from '../../components/features/VisaStatusCard';
+import VisaChecker from '../../components/features/VisaChecker';
 import HealthBriefCard from '../../components/features/HealthBriefCard';
 import SafetyScoreBadge from '../../components/features/SafetyScoreBadge';
 import Tag from '../../components/ui/Tag';
@@ -420,11 +420,8 @@ export default function PlanScreen() {
               <SafetyScoreBadge destination={planWizard.destination} variant="full" />
             </View>
 
-            {/* Visa status — shown before every trip generates */}
-            <VisaStatusCard
-              destination={planWizard.destination}
-              passport={travelProfile?.passportNationality ?? 'US'}
-            />
+            {/* Visa checker — passport selector, shown before every trip generates */}
+            <VisaChecker destination={planWizard.destination} variant="full" />
 
             {/* Trip summary */}
             <View style={styles.summaryCard}>

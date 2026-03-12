@@ -101,7 +101,7 @@ export default function GroupExpenseCard({
                 value={amount}
                 onChangeText={setAmount}
                 placeholder="0.00"
-                placeholderTextColor="rgba(245,237,216,0.25)"
+                placeholderTextColor={COLORS.creamMuted}
                 keyboardType="decimal-pad"
                 autoFocus
               />
@@ -147,7 +147,7 @@ export default function GroupExpenseCard({
               value={description}
               onChangeText={setDescription}
               placeholder="What was it for?"
-              placeholderTextColor="rgba(245,237,216,0.25)"
+              placeholderTextColor={COLORS.creamMuted}
               maxLength={100}
             />
 

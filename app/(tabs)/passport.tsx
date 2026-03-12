@@ -29,6 +29,7 @@ import {
   type TravelStats,
   BADGES,
 } from '../../lib/passport';
+import WorldMap from '../../components/features/WorldMap';
 
 export default function PassportScreen() {
   const router = useRouter();
@@ -109,6 +110,11 @@ export default function PassportScreen() {
           <Pressable onPress={handleShare} hitSlop={8} style={styles.shareBtn}>
             <Share2 size={22} color={COLORS.cream} strokeWidth={2} />
           </Pressable>
+        </View>
+
+        {/* World map — visited countries in sage */}
+        <View style={styles.section}>
+          <WorldMap stamps={stats.stamps} />
         </View>
 
         {/* Stats row */}

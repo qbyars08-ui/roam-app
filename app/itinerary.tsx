@@ -63,7 +63,7 @@ import BreathingLine from '../components/ui/BreathingLine';
 import BudgetChart from '../components/features/BudgetChart';
 import SafetyScoreCard from '../components/features/SafetyScoreCard';
 import SafetyScoreBadge from '../components/features/SafetyScoreBadge';
-import VisaRequirementsCard from '../components/features/VisaRequirementsCard';
+import VisaChecker from '../components/features/VisaChecker';
 import TripEventsCard from '../components/features/TripEventsCard';
 import BookingCards from '../components/features/BookingCards';
 import EmergencySOS from '../components/features/EmergencySOS';
@@ -1013,7 +1013,7 @@ export default function ItineraryScreen() {
 
           {/* Visa & entry requirements (multi-passport) */}
           <View style={styles.section}>
-            <VisaRequirementsCard destination={trip.destination} />
+            <VisaChecker destination={trip.destination} variant="full" />
           </View>
 
           {/* Trip Insurance — Safetywing + World Nomads */}

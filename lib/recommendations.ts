@@ -43,7 +43,7 @@ export const MOODS: Mood[] = [
   {
     id: 'inspired',
     label: 'I want to be inspired',
-    emoji: '✨',
+    emoji: '',
     description: 'Art, architecture, culture that rewires your brain',
     traits: {
       categories: ['cities', 'couples'],
@@ -54,7 +54,7 @@ export const MOODS: Mood[] = [
   {
     id: 'adventure',
     label: 'I need adventure',
-    emoji: '',
+    emoji: '🧗',
     description: 'Push yourself. Come back with a story.',
     traits: {
       categories: ['adventure', 'mountains'],
@@ -65,7 +65,7 @@ export const MOODS: Mood[] = [
   {
     id: 'eat-everything',
     label: 'I want to eat everything',
-    emoji: '🍜',
+    emoji: '',
     description: 'Cities where food is the main event',
     traits: {
       categories: ['food', 'budget'],
@@ -87,7 +87,7 @@ export const MOODS: Mood[] = [
   {
     id: 'feel-small',
     label: 'I want to feel small',
-    emoji: '🏔️',
+    emoji: '',
     description: 'Mountains, temples, landscapes that humble you',
     traits: {
       categories: ['mountains', 'adventure'],
@@ -98,7 +98,7 @@ export const MOODS: Mood[] = [
   {
     id: 'culture-shock',
     label: 'I need culture shock',
-    emoji: '🌏',
+    emoji: '',
     description: 'Go somewhere that rewires how you see the world',
     traits: {
       categories: ['food', 'adventure', 'budget'],

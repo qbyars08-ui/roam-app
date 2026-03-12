@@ -45,9 +45,11 @@ import { getForYouFeed } from '../../lib/recommendations';
 import type { Destination } from '../../lib/constants';
 import { CURATED_DAILY_BACKGROUNDS } from '../../lib/curated-backgrounds';
 import { getDestinationPhoto } from '../../lib/photos';
+import SeasonalBadge from '../../components/features/SeasonalBadge';
 import { useCurrency } from '../../components/features/CurrencyToggle';
 import { formatUSD } from '../../lib/currency';
 import { resolveUnsplashPhoto } from '../../lib/unsplash';
+import Slider from '@react-native-community/slider';
 import Svg, { Rect, Circle } from 'react-native-svg';
 import ShimmerOverlay from '../../components/ui/ShimmerOverlay';
 
@@ -135,6 +137,7 @@ export default function DiscoverScreen() {
   // ── State ──────────────────────────────────────────────────────────────
   const [activeCategory, setActiveCategory] = useState('all');
   const [activeBudget, setActiveBudget] = useState<string | null>(null);
+  const [budgetSliderMax, setBudgetSliderMax] = useState<number | null>(null);
   const [_personalizedMsg, setPersonalizedMsg] = useState<string | null>(null);
   const [backgroundUrl, setBackgroundUrl] = useState<string>(() => {
     const idx = dayOfYear(new Date()) % CURATED_DAILY_BACKGROUNDS.length;
@@ -215,7 +218,9 @@ export default function DiscoverScreen() {
     if (activeCategory !== 'all') {
       filtered = filtered.filter((d) => d.category === activeCategory);
     }
-    if (activeBudget && budgetRanges[activeBudget]) {
+    if (budgetSliderMax !== null) {
+      filtered = filtered.filter((d) => d.dailyCost >= 30 && d.dailyCost <= budgetSliderMax);
+    } else if (activeBudget && budgetRanges[activeBudget]) {
       const [min, max] = budgetRanges[activeBudget];
       filtered = filtered.filter((d) => d.dailyCost >= min && d.dailyCost < max);
     }
@@ -226,13 +231,16 @@ export default function DiscoverScreen() {
       );
     }
     return filtered;
-  }, [activeCategory, activeBudget, searchValue]);
+  }, [activeCategory, activeBudget, budgetSliderMax, searchValue]);
 
-  // Trending — top destinations by trendScore from filtered set
-  const trending = useMemo(
-    () => [...filteredDestinations].sort((a, b) => b.trendScore - a.trendScore).slice(0, 8),
-    [filteredDestinations]
-  );
+  // Trending — top by trendScore; when budget filter active, sort by dailyCost ascending
+  const trending = useMemo(() => {
+    const sorted =
+      budgetSliderMax !== null || activeBudget
+        ? [...filteredDestinations].sort((a, b) => a.dailyCost - b.dailyCost)
+        : [...filteredDestinations].sort((a, b) => b.trendScore - a.trendScore);
+    return sorted.slice(0, 8);
+  }, [filteredDestinations, budgetSliderMax, activeBudget]);
 
   // Current month for seasonal badges (1-12)
   const currentMonth = useMemo(() => new Date().getMonth() + 1, []);
@@ -510,7 +518,10 @@ export default function DiscoverScreen() {
                         {topReason ? (
                           <Text style={styles.forYouReason} numberOfLines={2}>{topReason}</Text>
                         ) : null}
-                        <Text style={styles.forYouPrice}>from {rates && currency !== 'USD' ? formatUSD(dest.dailyCost, currency, rates) : `$${dest.dailyCost}`}/day</Text>
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.xs, alignItems: 'center', marginTop: SPACING.xs }}>
+                          <Text style={styles.forYouPrice}>from {rates && currency !== 'USD' ? formatUSD(dest.dailyCost, currency, rates) : `$${dest.dailyCost}`}/day</Text>
+                          <SeasonalBadge destination={dest.label} variant="pill" />
+                        </View>
                       </LinearGradient>
                     </ImageBackground>
                     </View>
@@ -532,18 +543,19 @@ export default function DiscoverScreen() {
             <Pressable
               style={({ pressed }) => [
                 styles.budgetPill,
-                !activeBudget && styles.budgetPillActive,
+                !activeBudget && budgetSliderMax === null && styles.budgetPillActive,
                 { opacity: pressed ? 0.85 : 1 },
               ]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setActiveBudget(null);
+                setBudgetSliderMax(null);
               }}
             >
-              <Text style={[styles.budgetPillLabel, !activeBudget && styles.budgetPillLabelActive]}>All</Text>
+              <Text style={[styles.budgetPillLabel, !activeBudget && budgetSliderMax === null && styles.budgetPillLabelActive]}>All</Text>
             </Pressable>
             {BUDGETS.map((b) => {
-              const isActive = activeBudget === b.id;
+              const isActive = activeBudget === b.id && budgetSliderMax === null;
               return (
                 <Pressable
                   key={b.id}
@@ -555,6 +567,7 @@ export default function DiscoverScreen() {
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     setActiveBudget(b.id);
+                    setBudgetSliderMax(null);
                   }}
                 >
                   <Text style={[styles.budgetPillLabel, isActive && styles.budgetPillLabelActive]}>{b.range}</Text>
@@ -562,6 +575,33 @@ export default function DiscoverScreen() {
               );
             })}
           </ScrollView>
+        )}
+
+        {/* Budget slider — $30–500/day */}
+        {!todaysPlan && (
+          <View style={styles.budgetSliderSection}>
+            <View style={styles.budgetSliderHeader}>
+              <Text style={styles.budgetSliderLabel}>Max daily budget</Text>
+              <Text style={styles.budgetSliderValue}>
+                {budgetSliderMax !== null ? `$${budgetSliderMax}` : 'Any'}
+              </Text>
+            </View>
+            <Slider
+              style={styles.budgetSlider}
+              minimumValue={30}
+              maximumValue={500}
+              step={10}
+              value={budgetSliderMax ?? 500}
+              onValueChange={(v) => {
+                setBudgetSliderMax(Math.round(v));
+                setActiveBudget(null);
+              }}
+              onSlidingComplete={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+              minimumTrackTintColor={COLORS.sage}
+              maximumTrackTintColor={COLORS.border}
+              thumbTintColor={COLORS.sage}
+            />
+          </View>
         )}
 
         {/* Category pills */}
@@ -616,7 +656,6 @@ export default function DiscoverScreen() {
             >
               {(activeCategory === 'all' && seasonalPicks.length > 0 ? seasonalPicks.slice(0, 8) : trending).map((dest) => {
                 const photoUrl = getDestinationPhoto(dest.label);
-                const inSeason = dest.bestMonths.includes(currentMonth);
                 const country = dest.country ? regionNames.of(dest.country) : '';
 
                 return (
@@ -646,11 +685,7 @@ export default function DiscoverScreen() {
                           <View style={styles.pricePill}>
                             <Text style={styles.pricePillText}>from {rates && currency !== 'USD' ? formatUSD(dest.dailyCost, currency, rates) : `$${dest.dailyCost}`}/day</Text>
                           </View>
-                          {inSeason && (
-                            <View style={styles.seasonPill}>
-                              <Text style={styles.seasonPillText}>Best time now</Text>
-                            </View>
-                          )}
+                          <SeasonalBadge destination={dest.label} month={currentMonth} variant="pill" />
                         </View>
                         <Text style={styles.destCity}>{dest.label}</Text>
                         {country && (
@@ -687,7 +722,6 @@ export default function DiscoverScreen() {
                 .slice(0, 10)
                 .map((dest) => {
                   const photoUrl = getDestinationPhoto(dest.label);
-                  const inSeason = dest.bestMonths.includes(currentMonth);
                   const country = dest.country ? regionNames.of(dest.country) : '';
 
                   return (
@@ -718,11 +752,7 @@ export default function DiscoverScreen() {
                               <View style={styles.pricePill}>
                                 <Text style={styles.pricePillText}>from {rates && currency !== 'USD' ? formatUSD(dest.dailyCost, currency, rates) : `$${dest.dailyCost}`}/day</Text>
                               </View>
-                              {inSeason && (
-                                <View style={styles.seasonPill}>
-                                  <Text style={styles.seasonPillText}>Peak season</Text>
-                                </View>
-                              )}
+                              <SeasonalBadge destination={dest.label} month={currentMonth} variant="pill" />
                             </View>
                             <Text style={styles.destCity}>{dest.label}</Text>
                             {country && <Text style={styles.destCountry}>{country}</Text>}
@@ -862,6 +892,30 @@ const styles = StyleSheet.create({
   budgetPillLabelActive: {
     color: COLORS.sage,
   } as TextStyle,
+  budgetSliderSection: {
+    paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
+  } as ViewStyle,
+  budgetSliderHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.xs,
+  } as ViewStyle,
+  budgetSliderLabel: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+  } as TextStyle,
+  budgetSliderValue: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.sage,
+  } as TextStyle,
+  budgetSlider: {
+    width: '100%',
+    height: 28,
+  } as ViewStyle,
   chipsScroll: {
     marginBottom: SPACING.lg,
   } as ViewStyle,
@@ -984,8 +1038,9 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   destBadges: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
+    alignItems: 'center',
     marginBottom: SPACING.sm,
   } as ViewStyle,
   pricePill: {
@@ -1061,6 +1116,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.border,
+    backgroundColor: COLORS.bgCard,
     overflow: 'hidden',
   } as ViewStyle,
   cardGradient: {
@@ -1167,6 +1223,7 @@ const styles = StyleSheet.create({
     padding: SPACING.sm,
   } as ViewStyle,
   seasonalImagePlaceholder: {
+    flex: 1,
     backgroundColor: COLORS.bgCard,
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -1317,6 +1374,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.xl,
     borderWidth: 1,
     borderColor: COLORS.border,
+    backgroundColor: COLORS.bgCard,
     overflow: 'hidden',
   } as ViewStyle,
   heroGradient: {

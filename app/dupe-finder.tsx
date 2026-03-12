@@ -235,7 +235,7 @@ export default function DupeFinderScreen() {
               value={dreamDest}
               onChangeText={setDreamDest}
               placeholder="Santorini, Tokyo, Bali..."
-              placeholderTextColor="rgba(245,237,216,0.3)"
+              placeholderTextColor={COLORS.creamMuted}
               returnKeyType="search"
               onSubmitEditing={() => findDupes(dreamDest)}
               autoCorrect={false}

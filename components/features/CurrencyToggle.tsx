@@ -100,8 +100,11 @@ export default function CurrencyToggle({ onCurrencyChange, subtle }: CurrencyTog
             </Text>
             <Text style={styles.attribution}>
               Rates by{' '}
-              <Text style={styles.attributionLink} onPress={() => {}}>
-                Exchange Rate API
+              <Text
+                style={styles.attributionLink}
+                onPress={() => Linking.openURL('https://www.frankfurter.app/')}
+              >
+                Frankfurter
               </Text>
             </Text>
             <ScrollView

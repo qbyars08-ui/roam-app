@@ -19,6 +19,7 @@ import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { Shield, Phone, X } from 'lucide-react-native';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -189,7 +190,7 @@ export default function EmergencySOS({ countryCode }: EmergencySSOProps) {
           { opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.95 : 1 }] },
         ]}
       >
-        <Text style={styles.floatingButtonText}>{'\uD83D\uDEE1\uFE0F'}</Text>
+        <Shield size={28} color={COLORS.cream} strokeWidth={2} />
       </Pressable>
     );
   }
@@ -198,7 +199,10 @@ export default function EmergencySOS({ countryCode }: EmergencySSOProps) {
     <View style={styles.expandedContainer}>
       {/* Header */}
       <View style={styles.expandedHeader}>
-        <Text style={styles.expandedTitle}>{'\uD83D\uDEE1\uFE0F'} Emergency SOS</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm }}>
+            <Shield size={22} color={COLORS.coral} strokeWidth={2} />
+            <Text style={styles.expandedTitle}>Emergency SOS</Text>
+          </View>
         <Pressable
           onPress={() => {
             setExpanded(false);
@@ -206,7 +210,7 @@ export default function EmergencySOS({ countryCode }: EmergencySSOProps) {
           }}
           hitSlop={8}
         >
-          <Text style={styles.closeText}>{'\u2715'}</Text>
+          <X size={20} color={COLORS.cream} strokeWidth={2} />
         </Pressable>
       </View>
 
@@ -235,7 +239,7 @@ export default function EmergencySOS({ countryCode }: EmergencySSOProps) {
               value={contactInput}
               onChangeText={setContactInput}
               placeholder="Phone number"
-              placeholderTextColor="rgba(245,237,216,0.3)"
+              placeholderTextColor={COLORS.creamMuted}
               keyboardType="phone-pad"
               autoFocus
             />
@@ -265,12 +269,15 @@ export default function EmergencySOS({ countryCode }: EmergencySSOProps) {
           { opacity: pressed ? 0.85 : 1 },
         ]}
       >
-        <Text style={styles.callButtonText}>
-          {'\uD83D\uDCDE'} Call Local Emergency (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm }}>
+          <Phone size={18} color={COLORS.cream} strokeWidth={2} />
+          <Text style={styles.callButtonText}>
+          Call Local Emergency (
           {EMERGENCY_NUMBERS[countryCode?.toUpperCase() ?? 'DEFAULT'] ??
             EMERGENCY_NUMBERS.DEFAULT}
           )
-        </Text>
+          </Text>
+        </View>
       </Pressable>
     </View>
   );

@@ -237,6 +237,7 @@ export const DISCOVER_HEADERS: string[] = [
 // Chat conversation starters
 // ---------------------------------------------------------------------------
 export const CHAT_STARTERS: string[] = [
+  'Where should I go?',
   'What should I pack for Tokyo in April?',
   'Best ramen in Tokyo under $15?',
   'Is Bali worth it right now?',

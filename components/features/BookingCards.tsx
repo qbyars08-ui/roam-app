@@ -38,6 +38,7 @@ export default function BookingCards({
   budget,
   tripId,
 }: BookingCardsProps) {
+  const { currency, rates } = useCurrency();
   const params: AffiliateParams = {
     destination,
     countryCode,
@@ -88,7 +89,9 @@ export default function BookingCards({
               </View>
 
               <Text style={styles.estimate}>
-                {partner.estimateLabel(params)}
+                {currency !== 'USD' && rates
+                  ? formatTextWithDualPrice(partner.estimateLabel(params), currency, rates)
+                  : partner.estimateLabel(params)}
               </Text>
 
               <View style={styles.ctaRow}>

@@ -15,6 +15,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { MapPin, Search, X } from 'lucide-react-native';
 import { searchPlaces, type PlacePrediction } from '../../lib/places';
 
 // ---------------------------------------------------------------------------
@@ -138,7 +139,7 @@ export default function PlacesInput({
           { backgroundColor: pressed ? COLORS.bgGlass : 'transparent' },
         ]}
       >
-        <Text style={styles.resultIcon}>{'\uD83D\uDCCD'}</Text>
+        <MapPin size={16} color={COLORS.sage} strokeWidth={2} />
         <View style={styles.resultTextContainer}>
           <Text style={styles.resultMain} numberOfLines={1}>
             {item.mainText}
@@ -158,7 +159,7 @@ export default function PlacesInput({
     <View style={styles.container}>
       {/* Input field */}
       <View style={styles.inputContainer}>
-        <Text style={styles.searchIcon}>{'\uD83D\uDD0D'}</Text>
+        <Search size={18} color={COLORS.creamMuted} strokeWidth={2} />
         <TextInput
           ref={inputRef}
           style={styles.input}
@@ -166,7 +167,7 @@ export default function PlacesInput({
           onChangeText={handleChangeText}
           onFocus={handleFocus}
           placeholder={placeholder}
-          placeholderTextColor="rgba(245,237,216,0.3)"
+          placeholderTextColor={COLORS.creamMuted}
           autoCapitalize="words"
           autoCorrect={false}
           returnKeyType="search"
@@ -186,7 +187,7 @@ export default function PlacesInput({
             style={styles.clearButton}
             hitSlop={8}
           >
-            <Text style={styles.clearText}>{'\u2715'}</Text>
+            <X size={18} color={COLORS.creamMuted} strokeWidth={2} />
           </Pressable>
         )}
       </View>

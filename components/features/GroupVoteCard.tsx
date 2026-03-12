@@ -180,7 +180,7 @@ export default function GroupVoteCard({
             value={suggestionText}
             onChangeText={setSuggestionText}
             placeholder="What would you rather do?"
-            placeholderTextColor="rgba(245,237,216,0.25)"
+            placeholderTextColor={COLORS.creamMuted}
             autoFocus
             onSubmitEditing={() => handleVote('suggest')}
           />

@@ -1,8 +1,8 @@
 // =============================================================================
 // ROAM — AI Travel Chat Screen
-// Chat interface with glass-card message bubbles
+// Chat interface with glass-card message bubbles. Voice search via expo-speech-recognition.
 // =============================================================================
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,7 @@ import BreathingLine from '../../components/ui/BreathingLine';
 import { EmptyMapPin } from '../../components/ui/EmptyStateIllustrations';
 import { useAppStore, type ChatMessage } from '../../lib/store';
 import { callClaude, CHAT_SYSTEM_PROMPT } from '../../lib/claude';
+import VoiceInputButton from '../../components/features/VoiceInputButton';
 
 // ---------------------------------------------------------------------------
 // Message bubble component
@@ -147,6 +148,10 @@ export default function ChatScreen() {
     handleSend(text);
   }, [handleSend]);
 
+  const handleVoiceTranscript = useCallback((text: string) => {
+    if (text.trim()) handleSend(text);
+  }, [handleSend]);
+
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
@@ -184,6 +189,10 @@ export default function ChatScreen() {
 
       {/* Input bar */}
       <View style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, SPACING.sm) }]}>
+        <VoiceInputButton
+          onTranscript={handleVoiceTranscript}
+          disabled={isSending}
+        />
         <TextInput
           style={styles.textInput}
           value={inputText}

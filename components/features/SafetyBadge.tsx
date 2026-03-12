@@ -4,6 +4,7 @@
 // =============================================================================
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
+import { COLORS, FONTS } from '../../lib/constants';
 import { getCitySafetyScore, SAFETY_COLORS, type SafetyLevel } from '../../lib/teleport-safety';
 
 interface SafetyBadgeProps {
@@ -64,16 +65,15 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   } as ViewStyle,
   label: {
-    fontFamily: 'DMMono_500Medium',
+    fontFamily: FONTS.monoMedium,
     fontSize: 11,
   } as TextStyle,
   labelSmall: {
     fontSize: 10,
   } as TextStyle,
   note: {
-    fontFamily: 'DMSans_400Regular',
+    fontFamily: FONTS.body,
     fontSize: 10,
-    color: 'rgba(245,237,216,0.6)',
     marginLeft: 4,
   } as TextStyle,
 });
