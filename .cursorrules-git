@@ -1,0 +1,5 @@
+After completing any task always run:
+git add .
+git commit -m "auto: [brief description of what changed]"
+git push origin main
+Confirm push succeeded before reporting task complete.
