@@ -231,7 +231,7 @@ export default function MainCharacterScreen() {
           <View style={{ width: 24 }} />
         </View>
         <View style={styles.emptyCenter}>
-          <Text style={styles.emptyTitle}>No itinerary to direct</Text>
+          <Text style={styles.emptyTitle}>No trip to direct</Text>
           <Text style={styles.emptyBody}>
             Plan a trip first, then come back to find your cinematic moments.
           </Text>

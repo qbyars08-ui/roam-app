@@ -60,6 +60,7 @@ import VoiceGuide from '../components/features/VoiceGuide';
 import PackingList from '../components/features/PackingList';
 import ShareCard from '../components/features/ShareCard';
 import BreathingLine from '../components/ui/BreathingLine';
+import { SkeletonCard } from '../components/premium/LoadingStates';
 import BudgetChart from '../components/features/BudgetChart';
 import SafetyScoreCard from '../components/features/SafetyScoreCard';
 import SafetyScoreBadge from '../components/features/SafetyScoreBadge';
@@ -169,7 +170,7 @@ export default function ItineraryScreen() {
 
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Something went sideways loading your itinerary. Give it another shot.'
+        err instanceof Error ? err.message : 'Something went sideways loading your trip. Give it another shot.'
       );
     }
     return () => { if (npsTimer) clearTimeout(npsTimer); };
@@ -463,16 +464,33 @@ export default function ItineraryScreen() {
   }
 
   // ---------------------------------------------------------------------------
-  // Loading state
+  // Loading state — skeleton matching itinerary layout
   // ---------------------------------------------------------------------------
   if (!parsed || !trip) {
     return (
       <View style={[styles.screen, { paddingTop: insets.top }]}>
-        <View style={styles.loadingContainer}>
-          <View style={styles.loadingPulse} />
-          <BreathingLine width={100} height={4} color={destTheme.primary} />
-          <Text style={styles.loadingText}>Loading your itinerary</Text>
-          <Text style={styles.loadingSubtext}>Almost there...</Text>
+        <View style={[styles.header, { paddingHorizontal: SPACING.lg }]}>
+          <View style={[styles.headerLeft, { width: 44 }]}>
+            <SkeletonCard width={44} height={44} borderRadius={RADIUS.md} />
+          </View>
+          <SkeletonCard width={120} height={20} style={{ flex: 1, marginHorizontal: SPACING.md }} />
+          <View style={[styles.headerRight, { width: 44 }]}>
+            <SkeletonCard width={44} height={44} borderRadius={RADIUS.md} />
+          </View>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: SPACING.lg, gap: SPACING.sm, paddingVertical: SPACING.md }}>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <SkeletonCard key={i} width={72} height={40} borderRadius={RADIUS.full} />
+          ))}
+        </ScrollView>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: SPACING.lg, gap: SPACING.lg }}>
+          <SkeletonCard width="100%" height={180} borderRadius={RADIUS.lg} />
+          <SkeletonCard width="100%" height={120} borderRadius={RADIUS.lg} />
+          <SkeletonCard width="100%" height={120} borderRadius={RADIUS.lg} />
+          <SkeletonCard width="100%" height={120} borderRadius={RADIUS.lg} />
+        </ScrollView>
+        <View style={{ paddingBottom: insets.bottom + SPACING.md, alignItems: 'center' }}>
+          <BreathingLine width={80} height={4} color={destTheme.primary} />
         </View>
       </View>
     );
@@ -2196,11 +2214,6 @@ const styles = StyleSheet.create({
   draggableItemActive: {
     opacity: 0.85,
     transform: [{ scale: 1.02 }],
-    shadowColor: COLORS.sage,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   } as ViewStyle,
   dragHandle: {
     width: 28,

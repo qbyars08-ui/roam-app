@@ -855,8 +855,7 @@ const squadStyles = StyleSheet.create({
   cardStack: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 400 } as ViewStyle,
   card: {
     position: 'absolute', width: '100%', maxWidth: 380, borderRadius: RADIUS.lg, overflow: 'hidden',
-    borderWidth: 1, borderColor: COLORS.border, elevation: 4,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8,
+    borderWidth: 1, borderColor: COLORS.border,
   } as ViewStyle,
   cardBehind: { opacity: 0.6 } as ViewStyle,
   cardInner: { padding: SPACING.lg, gap: SPACING.md, minHeight: 380 } as ViewStyle,

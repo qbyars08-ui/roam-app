@@ -297,11 +297,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#B91C1C',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#B91C1C',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 8,
     zIndex: 999,
   } as ViewStyle,
   floatingButtonText: {
@@ -319,11 +314,6 @@ const styles = StyleSheet.create({
     borderColor: '#B91C1C',
     padding: SPACING.md,
     zIndex: 999,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 12,
   } as ViewStyle,
   expandedHeader: {
     flexDirection: 'row',

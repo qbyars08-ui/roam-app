@@ -44,7 +44,7 @@ import PocketConcierge from '../../components/features/PocketConcierge';
 import { getForYouFeed } from '../../lib/recommendations';
 import type { Destination } from '../../lib/constants';
 import { CURATED_DAILY_BACKGROUNDS } from '../../lib/curated-backgrounds';
-import { getDestinationPhoto } from '../../lib/photos';
+import { getDestinationPhoto, BACKUP_FALLBACK } from '../../lib/photos';
 import SeasonalBadge from '../../components/features/SeasonalBadge';
 import { useCurrency } from '../../components/features/CurrencyToggle';
 import { formatUSD } from '../../lib/currency';
@@ -52,6 +52,7 @@ import { resolveUnsplashPhoto } from '../../lib/unsplash';
 import Slider from '@react-native-community/slider';
 import Svg, { Rect, Circle } from 'react-native-svg';
 import ShimmerOverlay from '../../components/ui/ShimmerOverlay';
+import { SkeletonCard } from '../../components/premium/LoadingStates';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const isWeb = Platform.OS === 'web';
@@ -146,7 +147,9 @@ export default function DiscoverScreen() {
   });
   const [searchValue, setSearchValue] = useState('');
   const [forYouFeed, setForYouFeed] = useState<{ destination: Destination; score: number; reasons: string[] }[]>([]);
+  const [forYouFeedLoading, setForYouFeedLoading] = useState(true);
   const [loadedPhotos, setLoadedPhotos] = useState<Record<string, boolean>>({});
+  const [photoFallbacks, setPhotoFallbacks] = useState<Record<string, boolean>>({});
   const scrollY = useRef(new Animated.Value(0)).current;
   const hasCompletedProfile = useAppStore((s) => s.hasCompletedProfile);
   const trips = useAppStore((s) => s.trips);
@@ -193,11 +196,17 @@ export default function DiscoverScreen() {
   // ── Load "For You" feed ────────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
+    setForYouFeedLoading(true);
     async function loadFeed() {
       try {
         const feed = await getForYouFeed({ limit: 8, includeHidden: true });
-        if (!cancelled) setForYouFeed(feed);
-      } catch { /* silent */ }
+        if (!cancelled) {
+          setForYouFeed(feed);
+          setForYouFeedLoading(false);
+        }
+      } catch {
+        if (!cancelled) setForYouFeedLoading(false);
+      }
     }
     loadFeed();
     return () => { cancelled = true; };
@@ -331,11 +340,12 @@ export default function DiscoverScreen() {
             <View style={styles.heroImageWrap}>
               <ShimmerOverlay visible={!loadedPhotos.hero} />
               <ImageBackground
-                source={{ uri: featuredPhotoUrl }}
+                source={{ uri: photoFallbacks.hero ? BACKUP_FALLBACK : featuredPhotoUrl }}
                 style={styles.heroImage}
                 imageStyle={styles.heroImageInner}
                 resizeMode="cover"
                 onLoad={() => setLoadedPhotos((p) => ({ ...p, hero: true }))}
+                onError={() => setPhotoFallbacks((p) => ({ ...p, hero: true }))}
               >
               <LinearGradient
                 colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.24)', 'rgba(0,0,0,0.9)']}
@@ -427,7 +437,7 @@ export default function DiscoverScreen() {
               if (activeTrip) router.push({ pathname: '/itinerary', params: { tripId: activeTrip.id } });
             }}
             accessibilityRole="button"
-            accessibilityLabel={`See full itinerary for ${todaysPlan.destination}, Day ${todaysPlan.dayNum}`}
+            accessibilityLabel={`See full trip for ${todaysPlan.destination}, Day ${todaysPlan.dayNum}`}
           >
             <Text style={styles.todayTheme}>{todaysPlan.theme}</Text>
             <View style={styles.todaySlots}>
@@ -444,7 +454,7 @@ export default function DiscoverScreen() {
                 <Text style={styles.todayActivity} numberOfLines={1}>{todaysPlan.evening.activity}</Text>
               </View>
             </View>
-            <Text style={styles.todayCta}>View your full itinerary →</Text>
+            <Text style={styles.todayCta}>View your full trip →</Text>
           </Pressable>
         )}
 
@@ -473,7 +483,26 @@ export default function DiscoverScreen() {
         )}
 
         {/* ── Made for you ── */}
-        {!todaysPlan && activeCategory === 'all' && !searchValue.trim() && forYouFeed.length > 0 && (
+        {!todaysPlan && activeCategory === 'all' && !searchValue.trim() && forYouFeedLoading && (
+          <View style={styles.forYouSection}>
+            <View style={styles.forYouHeader}>
+              <Text style={styles.forYouTitle}>Made for you</Text>
+              <Text style={styles.forYouSubtitle}>Personalizing your picks...</Text>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.forYouRow}
+            >
+              {[1, 2, 3, 4].map((i) => (
+                <View key={i} style={styles.forYouCard}>
+                  <SkeletonCard width={200} height={260} borderRadius={RADIUS.lg} />
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+        {!todaysPlan && activeCategory === 'all' && !searchValue.trim() && !forYouFeedLoading && forYouFeed.length > 0 && (
           <View style={styles.forYouSection}>
             <View style={styles.forYouHeader}>
               <Text style={styles.forYouTitle}>Made for you</Text>
@@ -503,10 +532,11 @@ export default function DiscoverScreen() {
                     <View style={styles.forYouImageWrap}>
                       <ShimmerOverlay visible={!loadedPhotos[`forYou-${dest.label}`]} />
                       <ImageBackground
-                        source={{ uri: photoUrl }}
+                        source={{ uri: photoFallbacks[`forYou-${dest.label}`] ? BACKUP_FALLBACK : photoUrl }}
                         style={styles.forYouImage}
                         resizeMode="cover"
                         onLoad={() => setLoadedPhotos((p) => ({ ...p, [`forYou-${dest.label}`]: true }))}
+                        onError={() => setPhotoFallbacks((p) => ({ ...p, [`forYou-${dest.label}`]: true }))}
                       >
                       <LinearGradient
                         colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.28)', 'rgba(0,0,0,0.88)']}
@@ -671,10 +701,11 @@ export default function DiscoverScreen() {
                     }}
                   >
                     <ImageBackground
-                      source={{ uri: photoUrl }}
+                      source={{ uri: photoFallbacks[`dest-${dest.label}`] ? BACKUP_FALLBACK : photoUrl }}
                       style={styles.destImage}
                       imageStyle={styles.destImageInner}
                       resizeMode="cover"
+                      onError={() => setPhotoFallbacks((p) => ({ ...p, [`dest-${dest.label}`]: true }))}
                     >
                       <LinearGradient
                         colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.9)']}
@@ -737,11 +768,12 @@ export default function DiscoverScreen() {
                       <ShimmerOverlay visible={!loadedPhotos[`dest2-${dest.label}`]} />
                       <Animated.View style={[styles.destImageParallax, { transform: [{ translateY: parallaxY }] }]}>
                         <ImageBackground
-                          source={{ uri: photoUrl }}
+                          source={{ uri: photoFallbacks[`dest2-${dest.label}`] ? BACKUP_FALLBACK : photoUrl }}
                           style={styles.destImage}
                           imageStyle={styles.destImageInner}
                           resizeMode="cover"
                           onLoad={() => setLoadedPhotos((p) => ({ ...p, [`dest2-${dest.label}`]: true }))}
+                          onError={() => setPhotoFallbacks((p) => ({ ...p, [`dest2-${dest.label}`]: true }))}
                         >
                           <LinearGradient
                             colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.9)']}

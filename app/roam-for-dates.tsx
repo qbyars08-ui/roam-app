@@ -102,7 +102,7 @@ export default function RoamForDatesScreen() {
           <Text style={styles.resultDestination}>{result.destination}</Text>
           <Text style={styles.resultTagline}>{result.tagline}</Text>
           <Button
-            label="View full itinerary"
+            label="View full trip"
             variant="sage"
             onPress={() => router.push({ pathname: '/itinerary', params: { data: JSON.stringify({ destination: result.destination, days: result.days.length, budget: result.totalBudget, vibes: [], itinerary: JSON.stringify(result) }) } })}
           />

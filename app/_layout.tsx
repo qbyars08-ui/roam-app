@@ -18,7 +18,7 @@ import { DMMono_400Regular, DMMono_500Medium } from '@expo-google-fonts/dm-mono'
 
 import { supabase } from '../lib/supabase';
 import { useAppStore, checkActiveTripOnLoad, loadPersistedTrips, loadPersistedPets, loadPersistedTravelProfile } from '../lib/store';
-import { initRevenueCat, checkProStatus } from '../lib/revenuecat';
+import { initRevenueCat, checkProStatus, addCustomerInfoListener } from '../lib/revenuecat';
 import { ensureReferralCode } from '../lib/referral';
 import { requestNotificationPermission, scheduleDailyDiscovery } from '../lib/notifications';
 import { recordAppOpen, cancelReengagementNotifications, scheduleReengagementNotifications } from '../lib/reengagement';
@@ -175,9 +175,16 @@ export default function RootLayout() {
       // Re-engagement: record open, cancel any scheduled reengagement
       recordAppOpen();
       cancelReengagementNotifications();
+
+      // Listen for purchase changes (new purchase, restore, expiration)
+      return addCustomerInfoListener((isPro) => {
+        useAppStore.getState().setIsPro(isPro);
+      });
     };
 
-    bootstrap();
+    let unsub: (() => void) | undefined;
+    bootstrap().then((fn) => { unsub = fn; });
+    return () => { unsub?.(); };
   }, [session?.user?.id]);
 
   // Re-engagement: when app goes to background, schedule Day 1/3/7/14 notifications
@@ -277,6 +284,20 @@ export default function RootLayout() {
             options={{
               presentation: 'card',
               animation: 'fade',
+            }}
+          />
+          <Stack.Screen
+            name="group-trip"
+            options={{
+              presentation: 'card',
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="create-group"
+            options={{
+              presentation: 'modal',
+              animation: 'slide_from_bottom',
             }}
           />
           <Stack.Screen name="+not-found" />

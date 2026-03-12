@@ -20,7 +20,7 @@ import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, FONTS, SPACING, RADIUS, BUDGETS } from '../../lib/constants';
-import { getDestinationPhoto } from '../../lib/photos';
+import { getDestinationPhoto, BACKUP_FALLBACK } from '../../lib/photos';
 import ShimmerOverlay from '../../components/ui/ShimmerOverlay';
 import { useAppStore, type Trip } from '../../lib/store';
 import { trackItineraryOutcome } from '../../lib/ai-improvement';
@@ -32,9 +32,10 @@ import { EmptySuitcase } from '../../components/ui/EmptyStateIllustrations';
 // ---------------------------------------------------------------------------
 function TripCard({ trip, onPress, onDelete, onHype, onInvite }: { trip: Trip; onPress: () => void; onDelete: () => void; onHype: () => void; onInvite: () => void }) {
   const [loaded, setLoaded] = useState(false);
+  const [useFallback, setUseFallback] = useState(false);
   const budgetLabel = BUDGETS.find((b) => b.id === trip.budget)?.label ?? trip.budget;
   const dateStr = format(new Date(trip.createdAt), 'MMM d, yyyy');
-  const photoUrl = getDestinationPhoto(trip.destination);
+  const photoUrl = useFallback ? BACKUP_FALLBACK : getDestinationPhoto(trip.destination);
   return (
     <Pressable
       style={({ pressed }) => [
@@ -57,6 +58,7 @@ function TripCard({ trip, onPress, onDelete, onHype, onInvite }: { trip: Trip; o
           imageStyle={styles.cardImageInner}
           resizeMode="cover"
           onLoad={() => setLoaded(true)}
+          onError={() => setUseFallback(true)}
         >
         <LinearGradient
           colors={['rgba(0,0,0,0.15)', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.88)']}
@@ -167,7 +169,7 @@ export default function SavedScreen() {
     (trip: Trip) => {
       Alert.alert(
         'Remove this trip?',
-        `Your ${trip.destination} itinerary will be removed. You can always plan it again.`,
+        `Your ${trip.destination} trip will be removed. You can always plan it again.`,
         [
           { text: 'Cancel', style: 'cancel' },
           {

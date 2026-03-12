@@ -514,12 +514,12 @@ export default function PrepScreen() {
         icon={<MapPin size={20} color={COLORS.accentGreen} />}
         iconColor={COLORS.accentGreen}
         title="Offline Map"
-        subtitle={activeTrip ? 'Your itinerary pins' : 'Plan a trip to unlock'}
+        subtitle={activeTrip ? 'Your trip pins' : 'Plan a trip to unlock'}
       >
         {activeTrip ? (
           <View style={styles.offlineMapContent}>
             <Text style={styles.offlineMapText}>
-              Your {activeTrip.destination} itinerary stops are pinned on the map. Open to see morning, afternoon, and evening activities with directions.
+              Your {activeTrip.destination} trip stops are pinned on the map. Open to see morning, afternoon, and evening activities with directions.
             </Text>
             <Button
               label="Open map"

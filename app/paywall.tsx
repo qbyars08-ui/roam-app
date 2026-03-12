@@ -23,9 +23,11 @@ import { Check, X } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import {
+  getOfferings,
   purchaseProMonthly,
   purchaseProAnnual,
   restorePurchases,
+  type OfferingPackages,
 } from '../lib/revenuecat';
 
 // =============================================================================
@@ -46,7 +48,8 @@ interface Tier {
   highlighted: boolean;
 }
 
-const TIERS: Tier[] = [
+function buildTiers(monthlyPrice: string, annualPrice: string): Tier[] {
+  return [
   {
     id: 'free',
     name: 'Free',
@@ -65,7 +68,7 @@ const TIERS: Tier[] = [
   {
     id: 'pro',
     name: 'ROAM Pro',
-    price: '$9.99',
+    price: monthlyPrice,
     period: '/month',
     features: [
       { text: 'Unlimited AI trips', included: true },
@@ -80,8 +83,8 @@ const TIERS: Tier[] = [
   {
     id: 'global',
     name: 'Global Pass',
-    price: '$4.17',
-    period: '/month (billed $49.99/year)',
+    price: annualPrice,
+    period: '/year',
     badge: 'Best Value',
     features: [
       { text: 'Everything in Pro', included: true },
@@ -93,7 +96,7 @@ const TIERS: Tier[] = [
     ],
     highlighted: false,
   },
-];
+]; }
 
 // =============================================================================
 // Component
@@ -107,6 +110,7 @@ export default function PaywallScreen() {
   const [selectedTier, setSelectedTier] = useState<'pro' | 'global'>('global');
   const [loading, setLoading] = useState(false);
   const [restoring, setRestoring] = useState(false);
+  const [packages, setPackages] = useState<OfferingPackages>({ monthly: null, annual: null });
 
   // Entrance animations
   const headerOpacity = useRef(new Animated.Value(0)).current;
@@ -154,11 +158,11 @@ export default function PaywallScreen() {
     if (loading) return;
     setLoading(true);
     try {
-      const isPro = selectedTier === 'global'
+      const success = selectedTier === 'global'
         ? await purchaseProAnnual()
         : await purchaseProMonthly();
 
-      if (isPro) {
+      if (success) {
         setIsPro(true);
         handleClose();
       }
@@ -171,6 +175,10 @@ export default function PaywallScreen() {
       setLoading(false);
     }
   }, [selectedTier, loading, setIsPro, handleClose]);
+
+  const monthlyPrice = packages.monthly?.product?.priceString ?? '$9.99';
+  const annualPrice = packages.annual?.product?.priceString ?? '$49.99';
+  const tiers = buildTiers(monthlyPrice, annualPrice);
 
   const handleRestore = useCallback(async () => {
     if (restoring) return;
@@ -226,7 +234,7 @@ export default function PaywallScreen() {
         <Animated.View
           style={{ opacity: cardsOpacity, transform: [{ translateY: cardsY }] }}
         >
-          {TIERS.map((tier) => {
+          {tiers.map((tier) => {
             const isSelected =
               tier.id === selectedTier || (tier.id === 'free' && false);
             const isFree = tier.id === 'free';
@@ -271,7 +279,7 @@ export default function PaywallScreen() {
 
                 {/* Features */}
                 <View style={styles.tierFeatures}>
-                  {tier.features.map((f, i) => (
+                  {tier.features.map((f: TierFeature, i: number) => (
                     <View key={i} style={styles.featureRow}>
                       <View style={[styles.featureIconWrap, !f.included && styles.featureIconMuted]}>
                         {f.included ? (
@@ -310,8 +318,8 @@ export default function PaywallScreen() {
               {loading
                 ? 'Unlocking your trips...'
                 : selectedTier === 'global'
-                  ? 'Start Global Pass — $49.99/year'
-                  : 'Start Pro — $9.99/month'}
+                  ? `Start Global Pass — ${annualPrice}/year`
+                  : `Start Pro — ${monthlyPrice}/month`}
             </Text>
           </LinearGradient>
         </Pressable>

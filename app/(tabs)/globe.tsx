@@ -359,7 +359,7 @@ export default function GlobeScreen() {
                 Building your {picked?.label} adventure...
               </Text>
               <Text style={styles.generatingSubtext}>
-                AI is crafting your itinerary
+                AI is crafting your trip
               </Text>
             </View>
           )}
@@ -432,11 +432,6 @@ const styles = StyleSheet.create({
     borderColor: COLORS.sage,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: COLORS.sage,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
   } as ViewStyle,
   globeEmoji: {
     fontSize: 72,

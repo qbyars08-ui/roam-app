@@ -269,11 +269,6 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     maxHeight: 240,
     overflow: 'hidden',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
   } as ViewStyle,
   resultsList: {
     paddingVertical: SPACING.xs,

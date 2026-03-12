@@ -87,18 +87,32 @@ function isProFromCustomerInfo(info: CustomerInfo): boolean {
 // Purchase flows
 // ---------------------------------------------------------------------------
 
+export interface OfferingPackages {
+  monthly: PurchasesPackage | null;
+  annual: PurchasesPackage | null;
+}
+
 /**
  * Fetch available packages from the default offering.
+ * Returns { monthly, annual } for Pro $9.99/mo and Global Pass $49.99/yr.
  */
-async function getPackages(): Promise<PurchasesPackage[]> {
+export async function getOfferings(): Promise<OfferingPackages> {
   const offerings = await Purchases.getOfferings();
   const offering = offerings.current ?? offerings.all[DEFAULT_OFFERING];
 
   if (!offering) {
-    throw new Error('No offerings configured in RevenueCat');
+    return { monthly: null, annual: null };
   }
 
-  return offering.availablePackages;
+  const packages = offering.availablePackages;
+  const monthly = packages.find((p) => p.packageType === 'MONTHLY') ?? null;
+  const annual = packages.find((p) => p.packageType === 'ANNUAL') ?? null;
+  return { monthly, annual };
+}
+
+async function getPackages(): Promise<PurchasesPackage[]> {
+  const { monthly, annual } = await getOfferings();
+  return [monthly, annual].filter(Boolean) as PurchasesPackage[];
 }
 
 /**
@@ -196,4 +210,32 @@ export async function logoutRevenueCat(): Promise<void> {
   } catch (err) {
     console.warn('[RevenueCat] Logout error:', err);
   }
+}
+
+// ---------------------------------------------------------------------------
+// CustomerInfo listener — sync Pro status when purchases change
+// ---------------------------------------------------------------------------
+
+export type CustomerInfoListener = (isPro: boolean) => void;
+
+/**
+ * Add a listener for CustomerInfo changes (new purchase, restore, expiration).
+ * Returns an unsubscribe function.
+ */
+export function addCustomerInfoListener(callback: CustomerInfoListener): () => void {
+  const handler = (info: CustomerInfo) => {
+    callback(isProFromCustomerInfo(info));
+  };
+  try {
+    Purchases.addCustomerInfoUpdateListener(handler);
+  } catch {
+    // RevenueCat not configured (web, missing key)
+  }
+  return () => {
+    try {
+      Purchases.removeCustomerInfoUpdateListener(handler);
+    } catch {
+      // no-op
+    }
+  };
 }

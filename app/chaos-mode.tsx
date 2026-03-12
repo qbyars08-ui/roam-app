@@ -565,7 +565,7 @@ export default function ChaosModeScreen() {
               }}
             >
               <Text style={styles.viewBtnText}>
-                See the full itinerary
+                See the full trip
               </Text>
             </Pressable>
 

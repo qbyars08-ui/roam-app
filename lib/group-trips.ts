@@ -779,7 +779,10 @@ export async function addPackingItem(params: AddPackingItemParams): Promise<void
     const { error } = await supabase.from('trip_packing_items').insert({
       group_id: params.groupId,
       item_name: params.itemName,
-      category: params.category ?? 'general',
+      category:
+        params.category && ['clothing','toiletries','electronics','documents','shared_gear','other'].includes(params.category)
+          ? params.category
+          : 'other',
       is_shared: params.isShared ?? false,
       packed: false,
     });

@@ -45,7 +45,7 @@ const STEPS: OnboardingStep[] = [
     subtitle: 'Be honest. We\'ll build around it.',
     options: [
       { label: 'Solo — faster, freer, no compromises', value: 'solo', bgImage: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=85' },
-      { label: 'With my partner — one itinerary, zero arguments', value: 'couple', bgImage: 'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?w=800&q=85' },
+      { label: 'With my partner — one trip, zero arguments', value: 'couple', bgImage: 'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?w=800&q=85' },
       { label: 'Friends — the group chat finally has a plan', value: 'friends', bgImage: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=85' },
       { label: 'Family — everyone\'s happy or no one is', value: 'family', bgImage: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&q=85' },
     ],
@@ -222,10 +222,6 @@ const styles = StyleSheet.create({
   progressGlow: {
     height: '100%',
     backgroundColor: COLORS.accentGreen,
-    shadowColor: COLORS.accentGreen,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 6,
   } as ViewStyle,
   topRow: {
     flexDirection: 'row',

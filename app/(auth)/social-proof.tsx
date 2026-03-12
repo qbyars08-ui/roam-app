@@ -35,7 +35,7 @@ const TESTIMONIALS: Testimonial[] = [
   },
   {
     quote:
-      "I used to spend 12 hours planning a trip. ROAM gave me a better itinerary in 30 seconds.",
+      "I used to spend 12 hours planning a trip. ROAM gave me a better one in 30 seconds.",
     name: 'Marcus D.',
     trip: 'Barcelona, 4 days',
   },

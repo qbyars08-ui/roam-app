@@ -286,11 +286,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.coral,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: COLORS.coral,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
   } as ViewStyle,
   fabEmoji: {
     fontSize: 24,

@@ -15,10 +15,10 @@ Design bar:
 
 | Route | Audited | Notes |
 |-------|---------|-------|
-| / (Discover) | x | SeasonalBadge, budget slider, design tokens |
+| / (Discover) | x | SeasonalBadge, budget slider, design tokens, image fallback |
 | /plan | x | SafetyScoreBadge, VisaChecker |
 | /chat (Ask) | x | VoiceInputButton, "Where should I go?" starter |
-| /saved | | |
+| /saved | x | Image fallback, trip copy |
 | /prep | | |
 | /passport | | |
 | /globe | | |

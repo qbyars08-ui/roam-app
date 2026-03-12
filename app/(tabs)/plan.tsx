@@ -463,7 +463,7 @@ export default function PlanScreen() {
               </Pressable>
               <View style={styles.navButtonContainer}>
                 <Button
-                  label={isGenerating ? 'Creating your trip...' : 'Create my itinerary'}
+                  label={isGenerating ? 'Creating your trip...' : 'Create my trip'}
                   variant="coral"
                   onPress={handleGenerate}
                   loading={isGenerating}

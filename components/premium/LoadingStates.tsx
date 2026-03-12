@@ -4,7 +4,7 @@
 // =============================================================================
 
 import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, StyleSheet, View, type DimensionValue } from 'react-native';
+import { Animated, Easing, StyleSheet, View, type DimensionValue, type ViewStyle } from 'react-native';
 import { COLORS, FONTS, SPACING } from '../../lib/constants';
 import { getDestinationTheme } from '../../lib/destination-themes';
 
@@ -238,12 +238,14 @@ interface SkeletonCardProps {
   width?: DimensionValue;
   height?: number;
   borderRadius?: number;
+  style?: ViewStyle;
 }
 
 export function SkeletonCard({
   width = '100%',
   height = 120,
   borderRadius = 10,
+  style,
 }: SkeletonCardProps) {
   const shimmer = useRef(new Animated.Value(0)).current;
 
@@ -272,6 +274,7 @@ export function SkeletonCard({
           height,
           borderRadius,
         },
+        style,
       ]}
     >
       <Animated.View
