@@ -2,6 +2,7 @@
 // ROAM — Destination-Specific Color Themes
 // Each destination gets a unique accent palette that shifts the UI feel
 // =============================================================================
+import { COLORS } from './constants';
 
 export type DestinationTheme = {
   primary: string;       // Main accent color
@@ -289,7 +290,7 @@ export function getDestinationTheme(destination: string): DestinationTheme {
       primary: '#7CAF8A',
       secondary: '#A3D9B1',
       gradient: ['#7CAF8A', '#2D5F3B', '#0B2E1A'] as [string, string, string],
-      glowColor: 'rgba(124,175,138,0.3)',
+      glowColor: COLORS.sageStrong,
       emoji: '\u{2708}\uFE0F',
     }
   );

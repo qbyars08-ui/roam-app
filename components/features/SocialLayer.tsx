@@ -221,7 +221,7 @@ function CandidateCardContent({ candidate }: { candidate: SquadCandidate }) {
   void (profile.vibeTags ?? (profile as any).vibe_tags ?? []);
   return (
     <LinearGradient
-      colors={['rgba(124,175,138,0.08)', 'rgba(201,168,76,0.04)', COLORS.bgCard]}
+      colors={[COLORS.sageSubtle, 'rgba(201,168,76,0.04)', COLORS.bgCard]}
       style={squadStyles.cardInner}
     >
       {/* Compatibility score */}

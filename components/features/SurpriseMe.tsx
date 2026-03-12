@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
   surpriseDesc: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: 'rgba(245,237,216,0.8)',
+    color: COLORS.creamBrightDim,
     marginTop: 2,
   } as TextStyle,
 
@@ -425,6 +425,3 @@ const styles = StyleSheet.create({
     color: COLORS.creamMuted,
   } as TextStyle,
 });
-
-const SurpriseMe = memo(SurpriseMeInner);
-export default SurpriseMe;

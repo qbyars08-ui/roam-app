@@ -19,7 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Heart, Users, ChevronRight } from 'lucide-react-native';
-import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, BUDGETS, VIBES } from '../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, BUDGETS, VIBES, FREE_TRIPS_PER_MONTH } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import { mergeProfiles } from '../lib/couples-overlap';
 import { generateItinerary } from '../lib/claude';

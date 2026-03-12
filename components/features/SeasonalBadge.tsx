@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   pillAvoid: {
     backgroundColor: COLORS.coralLight,
     borderWidth: 1,
-    borderColor: 'rgba(232,97,74,0.4)',
+    borderColor: COLORS.coralBorder,
   } as ViewStyle,
   pillText: {
     fontFamily: FONTS.mono,

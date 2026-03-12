@@ -39,8 +39,8 @@ import {
 // ---------------------------------------------------------------------------
 // Card style constants (shared across sections)
 // ---------------------------------------------------------------------------
-const CARD_BG = 'rgba(124,175,138,0.08)';
-const CARD_BORDER = 'rgba(124,175,138,0.2)';
+const CARD_BG = COLORS.sageSubtle;
+const CARD_BORDER = COLORS.sageLight;
 
 // ---------------------------------------------------------------------------
 // Section A — Your Pets

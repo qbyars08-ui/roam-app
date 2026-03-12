@@ -28,7 +28,7 @@ interface TripGeneratingLoaderProps {
 export function TripGeneratingLoader({ destination }: TripGeneratingLoaderProps) {
   const theme = destination ? getDestinationTheme(destination) : null;
   const accentColor = theme?.primary ?? COLORS.sage;
-  const glowColor = theme?.glowColor ?? 'rgba(124,175,138,0.3)';
+  const glowColor = theme?.glowColor ?? COLORS.sageStrong;
 
   // --- Compass rotation ---
   const compassRotation = useRef(new Animated.Value(0)).current;

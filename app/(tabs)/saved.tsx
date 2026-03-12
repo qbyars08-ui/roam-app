@@ -14,7 +14,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
@@ -30,9 +30,9 @@ import Button from '../../components/ui/Button';
 import { EmptySuitcase } from '../../components/ui/EmptyStateIllustrations';
 
 // ---------------------------------------------------------------------------
-// Trip card component — memoized for FlatList scroll performance
+// Trip card component
 // ---------------------------------------------------------------------------
-const TripCard = memo(function TripCard({
+function TripCard({
   trip,
   onPress,
   onDelete,
@@ -84,9 +84,9 @@ const TripCard = memo(function TripCard({
         <View style={styles.cardHeaderRight}>
           <Pressable
             onPress={(e) => {
-              e.stopPropagation();
+              e?.stopPropagation?.();
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              onInvite();
+              onInvite(trip);
             }}
             hitSlop={8}
             accessibilityRole="button"
@@ -173,9 +173,11 @@ export default function SavedScreen() {
   const removeTrip = useAppStore((s) => s.removeTrip);
   const [groups, setGroups] = useState<TripGroup[]>([]);
 
-  useEffect(() => {
-    getMyGroups().then(setGroups).catch(() => setGroups([]));
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      getMyGroups().then(setGroups).catch(() => setGroups([]));
+    }, [])
+  );
 
   const handlePress = useCallback(
     (trip: Trip) => {
@@ -237,6 +239,55 @@ export default function SavedScreen() {
     [router]
   );
 
+  const handleOpenGroup = useCallback(
+    (group: TripGroup) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      router.push({ pathname: '/group-trip', params: { groupId: group.id } });
+    },
+    [router]
+  );
+
+  const ListHeader = useCallback(
+    () => (
+      <>
+        {trips.length > 0 && (
+          <Pressable
+            style={({ pressed }) => [styles.groupTripCard, { opacity: pressed ? 0.9 : 1 }]}
+            onPress={handleCreateGroup}
+          >
+            <Text style={styles.groupTripTitle}>Plan a trip with friends</Text>
+            <Text style={styles.groupTripSub}>Invite people you love — plan, vote, and split costs together.</Text>
+          </Pressable>
+        )}
+        {groups.length > 0 && (
+          <View style={styles.groupSection}>
+            <Text style={styles.groupSectionTitle}>Group trips</Text>
+            {groups.map((g) => (
+              <Pressable
+                key={g.id}
+                style={({ pressed }) => [styles.groupCard, { opacity: pressed ? 0.9 : 1 }]}
+                onPress={() => handleOpenGroup(g)}
+              >
+                <Users size={18} color={COLORS.sage} strokeWidth={2} />
+                <View style={styles.groupCardContent}>
+                  <Text style={styles.groupCardName}>{g.name}</Text>
+                  <Text style={styles.groupCardDest}>{g.destination}</Text>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        )}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>My Trips</Text>
+          <Text style={styles.headerCount}>
+            {trips.length} {trips.length === 1 ? 'trip' : 'trips'}
+          </Text>
+        </View>
+      </>
+    ),
+    [trips.length, groups, handleCreateGroup, handleOpenGroup]
+  );
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <FlatList
@@ -290,6 +341,38 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.creamMuted,
     marginTop: SPACING.xs,
+  } as TextStyle,
+  groupSection: {
+    marginBottom: SPACING.lg,
+  } as ViewStyle,
+  groupSectionTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 16,
+    color: COLORS.creamMuted,
+    marginBottom: SPACING.sm,
+  } as TextStyle,
+  groupCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    padding: SPACING.md,
+    backgroundColor: COLORS.bgGlass,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginBottom: SPACING.sm,
+  } as ViewStyle,
+  groupCardContent: { flex: 1 } as ViewStyle,
+  groupCardName: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 15,
+    color: COLORS.cream,
+  } as TextStyle,
+  groupCardDest: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamMuted,
+    marginTop: 2,
   } as TextStyle,
   header: {
     paddingHorizontal: SPACING.lg,
@@ -407,37 +490,6 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   } as ViewStyle,
   emptyIconWrap: {
-    width: 120,
-    height: 120,
-    marginBottom: SPACING.lg,
-    backgroundColor: COLORS.bgGlass,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  } as ViewStyle,
-  emptyEmoji: {
-    fontSize: 40,
-  } as TextStyle,
-  emptyTitle: {
-    fontFamily: FONTS.header,
-    fontSize: 24,
-    color: COLORS.cream,
-  } as TextStyle,
-  emptySubtitle: {
-    fontFamily: FONTS.body,
-    fontSize: 15,
-    color: COLORS.cream,
-    opacity: 0.5,
-    textAlign: 'center',
-    lineHeight: 22,
-  } as TextStyle,
-  emptyButtonContainer: {
-    width: '100%',
-    marginTop: SPACING.lg,
-  } as ViewStyle,
-});
- emptyIconWrap: {
     width: 120,
     height: 120,
     marginBottom: SPACING.lg,

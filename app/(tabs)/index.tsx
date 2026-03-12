@@ -3,11 +3,12 @@
 // Premium: cinematic hero, glassmorphism, animated bg, masonry cards
 // =============================================================================
 const regionNames = new Intl.DisplayNames(['en'], { type: 'region' });
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
+  FlatList,
   Pressable,
   StyleSheet,
   Dimensions,
@@ -87,6 +88,84 @@ function dayOfYear(d: Date): number {
     (start.getTimezoneOffset() - d.getTimezoneOffset()) * 60 * 1000;
   return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
+
+// Memoized destination card for FlatList scroll performance
+const DestCard = memo(function DestCard({
+  dest,
+  onPress,
+  priceText,
+  currentMonth,
+  useParallax,
+  parallaxY,
+  useFallback,
+  photoLoaded,
+  onPhotoLoad,
+  onPhotoError,
+}: {
+  dest: Destination;
+  onPress: () => void;
+  priceText: string;
+  currentMonth: number;
+  useParallax?: boolean;
+  parallaxY?: Animated.AnimatedInterpolation<number>;
+  useFallback?: boolean;
+  photoLoaded?: boolean;
+  onPhotoLoad?: () => void;
+  onPhotoError?: () => void;
+}) {
+  const photoUrl = useFallback ? BACKUP_FALLBACK : getDestinationPhoto(dest.label);
+  const country = dest.country ? regionNames.of(dest.country) : '';
+
+  const content = (
+    <ImageBackground
+      source={{ uri: photoUrl }}
+      style={styles.destImage}
+      imageStyle={styles.destImageInner}
+      resizeMode="cover"
+      onLoad={onPhotoLoad}
+      onError={onPhotoError}
+    >
+      <LinearGradient
+        colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.9)']}
+        locations={[0.3, 0.7, 1]}
+        style={styles.destGradient}
+      >
+        <View style={styles.destBadges}>
+          <View style={styles.pricePill}>
+            <Text style={styles.pricePillText}>{priceText}</Text>
+          </View>
+          <SeasonalBadge destination={dest.label} month={currentMonth} variant="pill" />
+        </View>
+        <Text style={styles.destCity}>{dest.label}</Text>
+        {country ? <Text style={styles.destCountry}>{country}</Text> : null}
+        <Text style={styles.destHook} numberOfLines={2}>{dest.hook}</Text>
+      </LinearGradient>
+    </ImageBackground>
+  );
+
+  if (useParallax && parallaxY) {
+    return (
+      <Pressable
+        style={({ pressed }) => [styles.destCard, { opacity: pressed ? 0.95 : 1 }]}
+        onPress={onPress}
+      >
+        <View style={styles.destImageWrap}>
+          <ShimmerOverlay visible={photoLoaded !== true} />
+          <Animated.View style={[styles.destImageParallax, { transform: [{ translateY: parallaxY }] }]}>
+            {content}
+          </Animated.View>
+        </View>
+      </Pressable>
+    );
+  }
+
+  return (
+    <Pressable style={({ pressed }) => [styles.destCard, { opacity: pressed ? 0.95 : 1 }]} onPress={onPress}>
+      {content}
+    </Pressable>
+  );
+});
+
 export default function DiscoverScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();

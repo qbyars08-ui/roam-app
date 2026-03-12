@@ -74,7 +74,7 @@ export default function RainAlternativesCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: 'rgba(124,175,138,0.08)',
+    backgroundColor: COLORS.sageSubtle,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
     padding: SPACING.md,
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   pocketTip: {
     fontFamily: FONTS.mono,
     fontSize: 11,
-    color: 'rgba(245,237,216,0.5)',
+    color: COLORS.creamMuted,
     marginTop: SPACING.sm,
   } as TextStyle,
 });

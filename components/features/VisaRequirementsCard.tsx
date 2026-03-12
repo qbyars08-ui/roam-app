@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.sm,
   } as ViewStyle,
   passportRowBest: {
-    backgroundColor: COLORS.sageFaint,
+    backgroundColor: COLORS.sageSubtle,
   } as ViewStyle,
   passportPill: {
     paddingHorizontal: 7,

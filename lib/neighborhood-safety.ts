@@ -2,6 +2,7 @@
 // ROAM — Neighborhood Safety Overlay
 // Color-coded by time of day for itinerary map
 // =============================================================================
+import { COLORS } from './constants';
 
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening';
 
@@ -18,7 +19,7 @@ export interface SafetyZone {
 
 /** Safety level to fill color (rgba) */
 export const SAFETY_COLORS: Record<SafetyLevel, string> = {
-  safe: 'rgba(124,175,138,0.25)',
+  safe: COLORS.sageBorder,
   moderate: 'rgba(201,168,76,0.25)',
   caution: 'rgba(192,57,43,0.2)',
 };
