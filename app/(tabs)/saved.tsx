@@ -253,6 +253,18 @@ export default function SavedScreen() {
   const ListHeader = useCallback(
     () => (
       <>
+        {isGuestUser() && (
+          <Pressable
+            style={({ pressed }) => [
+              styles.guestBanner,
+              { opacity: pressed ? 0.9 : 1 },
+            ]}
+            onPress={() => router.push('/(auth)/signup')}
+          >
+            <Text style={styles.guestBannerText}>Sign up to sync your trips across devices</Text>
+            <Text style={styles.guestBannerCta}>Create account</Text>
+          </Pressable>
+        )}
         {trips.length > 0 && (
           <Pressable
             style={({ pressed }) => [styles.groupTripCard, { opacity: pressed ? 0.9 : 1 }]}
@@ -288,7 +300,7 @@ export default function SavedScreen() {
         </View>
       </>
     ),
-    [trips.length, groups, handleCreateGroup, handleOpenGroup]
+    [trips.length, groups, handleCreateGroup, handleOpenGroup, router]
   );
 
   return (
@@ -380,6 +392,27 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.creamMuted,
     marginTop: 2,
+  } as TextStyle,
+  guestBanner: {
+    marginHorizontal: SPACING.lg,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+    padding: SPACING.lg,
+    backgroundColor: COLORS.bgGlass,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  } as ViewStyle,
+  guestBannerText: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.creamMuted,
+    marginBottom: SPACING.xs,
+  } as TextStyle,
+  guestBannerCta: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.sage,
   } as TextStyle,
   header: {
     paddingHorizontal: SPACING.lg,

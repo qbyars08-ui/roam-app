@@ -104,8 +104,8 @@
 
 ## Success Criteria
 
-- [ ] Guest can enter via "Browse first" without sign-in
-- [ ] Guest generates 1 trip and views itinerary
-- [ ] Paywall/limit triggers email capture → waitlist
-- [ ] Emails in `waitlist_emails` with attribution
-- [ ] Sign-up clears guest mode and loads full state
+- [x] Guest can enter via "Browse first" without sign-in
+- [x] Guest generates 1 trip and views itinerary
+- [x] Paywall/limit triggers email capture (WaitlistCaptureModal)
+- [x] Emails in `waitlist_emails` (via joinWaitlist)
+- [x] Sign-up clears guest mode and loads full state

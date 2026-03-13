@@ -24,6 +24,7 @@ import { supabase } from '../../lib/supabase';
 import { COLORS, FONTS, SPACING, RADIUS, FREE_TRIPS_PER_MONTH } from '../../lib/constants';
 import { hasRatedBadge } from '../../lib/rating';
 import { useAppStore } from '../../lib/store';
+import { isGuestUser, clearGuestMode } from '../../lib/guest';
 import { getCurrentStreak } from '../../lib/streaks';
 import { logoutRevenueCat } from '../../lib/revenue-cat';
 import { Sparkles, Repeat, Gift, Shield, ChevronRight, BarChart3, CreditCard, LogOut } from 'lucide-react-native';
@@ -89,6 +90,7 @@ export default function ProfileScreen() {
         text: 'Log out',
         style: 'destructive',
         onPress: async () => {
+          await clearGuestMode();
           await logoutRevenueCat();
           setIsPro(false);
           setSession(null);
@@ -144,8 +146,22 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* Upgrade CTA */}
-        {!isPro && (
+        {/* Guest: Create account CTA */}
+        {isGuestUser() && (
+          <View style={styles.upgradeCard}>
+            <Text style={styles.upgradeTitle}>Create account to unlock</Text>
+            <Text style={styles.upgradeSubtitle}>
+              Sync your trips, plan unlimited adventures, and access all features.
+            </Text>
+            <Button
+              label="Create account"
+              variant="coral"
+              onPress={() => router.push('/(auth)/signup')}
+            />
+          </View>
+        )}
+        {/* Upgrade CTA for signed-in free users */}
+        {!isPro && !isGuestUser() && (
           <View style={styles.upgradeCard}>
             <Text style={styles.upgradeTitle}>Plan unlimited trips</Text>
             <Text style={styles.upgradeSubtitle}>

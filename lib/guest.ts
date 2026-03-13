@@ -51,13 +51,13 @@ export async function tryRestoreGuestSession(): Promise<Session | null> {
     AsyncStorage.getItem(GUEST_ID_KEY),
   ]);
   if (mode !== 'true' || !id?.startsWith('guest-')) return null;
-  const session = {
-    user: { id, email: null },
+  const session: Session = {
+    user: { id, email: null } as Session['user'],
     access_token: '',
     refresh_token: '',
     expires_in: 0,
     token_type: 'bearer',
-  } as unknown as Session;
+  };
   useAppStore.getState().setSession(session);
   return session;
 }

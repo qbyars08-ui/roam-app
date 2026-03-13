@@ -17,7 +17,7 @@ import { useAppStore, checkActiveTripOnLoad, loadPersistedTrips, loadPersistedPe
 import { initRevenueCat, loginRevenueCat, logoutRevenueCat, isProActive, addCustomerInfoListener } from '../lib/revenue-cat';
 import { syncProStatusToSupabase } from '../lib/sync-pro-status';
 import { ensureReferralCode } from '../lib/referral';
-import { requestNotificationPermission, scheduleDailyDiscovery } from '../lib/notifications';
+import { requestNotificationPermission, scheduleDailyDiscovery, registerPushToken } from '../lib/notifications';
 import { recordAppOpen, cancelReengagementNotifications, scheduleReengagementNotifications } from '../lib/reengagement';
 import { COLORS } from '../lib/constants';
 import { getSharedTrip } from '../lib/sharing';
@@ -186,6 +186,7 @@ export default function RootLayout() {
       try {
         await requestNotificationPermission();
         await scheduleDailyDiscovery();
+        await registerPushToken(session.user.id);
       } catch {}
 
       checkActiveTripOnLoad();
