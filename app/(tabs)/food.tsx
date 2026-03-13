@@ -3,6 +3,8 @@
 // Editorial, opinionated, sensory — not Yelp
 // =============================================================================
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { trackScreen } from '../../lib/analytics';
 import {
   Animated,
   Pressable,
@@ -234,6 +236,7 @@ const FOOD_CATEGORIES: FoodCategory[] = [
 export default function FoodScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  useFocusEffect(React.useCallback(() => { trackScreen('Food'); }, []));
   const activeTrip = getActiveTrip();
   const planWizard = useAppStore((s) => s.planWizard);
   const bookmarkedIds = useAppStore((s) => s.bookmarkedRestaurantIds);

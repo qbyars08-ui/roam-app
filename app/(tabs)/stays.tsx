@@ -4,6 +4,8 @@
 // =============================================================================
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { trackScreen } from '../../lib/analytics';
 import {
   View,
   Text,
@@ -437,6 +439,7 @@ export default function StaysScreen() {
   const router = useRouter();
   const planWizard = useAppStore((s) => s.planWizard);
   const trips = useAppStore((s) => s.trips);
+  useFocusEffect(React.useCallback(() => { trackScreen('Stays'); }, []));
 
   const destination = useMemo(() => {
     const fromPlan = planWizard.destination?.trim();

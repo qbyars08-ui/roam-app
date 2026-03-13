@@ -3,6 +3,8 @@
 // Offline-first. Always fast. Always readable. Lifeline screen.
 // =============================================================================
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { trackScreen } from '../../lib/analytics';
 import {
   View,
   Text,
@@ -1025,6 +1027,7 @@ function PrepScreen() {
   const insets = useSafeAreaInsets();
   const netInfo = useNetInfo();
   const isConnected = netInfo.isConnected ?? true;
+  useFocusEffect(React.useCallback(() => { trackScreen('Prep'); }, []));
 
   const trips = useAppStore((s) => s.trips);
   const activeTripId = useAppStore((s) => s.activeTripId);

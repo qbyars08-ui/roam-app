@@ -22,7 +22,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Search, MapPin, Flame, Clock } from 'lucide-react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from '../../lib/haptics';
+import { trackScreen } from '../../lib/analytics';
 import {
   COLORS,
   FONTS,
@@ -232,6 +234,8 @@ export default function DiscoverScreen() {
   const insets = useSafeAreaInsets();
   const setPlanWizard = useAppStore((s) => s.setPlanWizard);
   const setGenerateMode = useAppStore((s) => s.setGenerateMode);
+
+  useFocusEffect(React.useCallback(() => { trackScreen('Discover'); }, []));
 
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
