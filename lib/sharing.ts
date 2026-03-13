@@ -76,6 +76,15 @@ export async function shareTrip(trip: Trip): Promise<string | null> {
 }
 
 // ---------------------------------------------------------------------------
+// UUID validation (shared_trips uses UUID primary key)
+// ---------------------------------------------------------------------------
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isValidShareId(id: string): boolean {
+  return typeof id === 'string' && UUID_REGEX.test(id.trim());
+}
+
+// ---------------------------------------------------------------------------
 // Fetch a shared trip by UUID
 // ---------------------------------------------------------------------------
 
@@ -85,11 +94,14 @@ export async function shareTrip(trip: Trip): Promise<string | null> {
 export async function getSharedTrip(
   shareId: string
 ): Promise<SharedTrip | null> {
+  if (!isValidShareId(shareId)) {
+    return null;
+  }
   try {
     const { data, error } = await supabase
       .from('shared_trips')
       .select('*')
-      .eq('id', shareId)
+      .eq('id', shareId.trim())
       .single();
 
     if (error || !data) {
