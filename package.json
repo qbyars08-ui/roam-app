@@ -17,7 +17,8 @@
     "web": "expo start --web --port 3000",
     "test": "jest --forceExit --detectOpenHandles",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage --forceExit"
+    "test:coverage": "jest --coverage --forceExit",
+    "lint": "expo lint"
   },
   "dependencies": {
     "@expo-google-fonts/cormorant-garamond": "^0.4.1",
@@ -77,6 +78,8 @@
     "@babel/core": "^7.25.2",
     "@types/jest": "^30.0.0",
     "@types/react": "~18.3.12",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~55.0.0",
     "jest": "^30.3.0",
     "jest-expo": "^55.0.9",
     "ts-jest": "^29.4.6",
