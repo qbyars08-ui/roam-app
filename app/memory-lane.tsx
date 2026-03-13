@@ -41,7 +41,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 // ---------------------------------------------------------------------------
 // Milestone definitions
 // ---------------------------------------------------------------------------
-type MilestoneIcon = LucideIcon;
+type MilestoneIcon = ComponentType<Record<string, unknown>>;
 type Milestone = {
   id: string;
   label: string;
@@ -55,28 +55,28 @@ const MILESTONES: Milestone[] = [
     id: 'first-trip',
     label: 'First Trip',
     description: 'Completed your first journey',
-    Icon: Flag,
+    Icon: Flag as MilestoneIcon,
     check: (trips) => trips.length >= 1,
   },
   {
     id: 'globe-trotter',
     label: 'Globe Trotter',
     description: '5+ trips planned',
-    Icon: Globe,
+    Icon: Globe as MilestoneIcon,
     check: (trips) => trips.length >= 5,
   },
   {
     id: 'week-warrior',
     label: 'Week Warrior',
     description: 'A trip that was 7+ days',
-    Icon: Calendar,
+    Icon: Calendar as MilestoneIcon,
     check: (trips) => trips.some((t) => t.days >= 7),
   },
   {
     id: 'budget-boss',
     label: 'Budget Boss',
     description: 'Completed a backpacker trip',
-    Icon: Wallet,
+    Icon: Wallet as MilestoneIcon,
     check: (trips) => trips.some((t) => t.budget === 'backpacker'),
   },
   {
@@ -93,7 +93,7 @@ const MILESTONES: Milestone[] = [
     id: 'food-explorer',
     label: 'Food Explorer',
     description: 'Traveled for the food',
-    Icon: UtensilsCrossed,
+    Icon: UtensilsCrossed as MilestoneIcon,
     check: (trips) =>
       trips.some((t) => t.vibes.some((v) => v.toLowerCase().includes('food') || v.toLowerCase().includes('eat'))),
   },

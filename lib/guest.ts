@@ -52,7 +52,7 @@ export async function tryRestoreGuestSession(): Promise<Session | null> {
   ]);
   if (mode !== 'true' || !id?.startsWith('guest-')) return null;
   const session: Session = {
-    user: { id, email: null } as Session['user'],
+    user: { id, email: null } as unknown as Session['user'],
     access_token: '',
     refresh_token: '',
     expires_in: 0,
