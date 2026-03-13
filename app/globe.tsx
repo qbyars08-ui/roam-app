@@ -16,14 +16,14 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from '../../lib/haptics';
+import * as Haptics from '../lib/haptics';
 
-import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, BUDGETS, VIBES, FREE_TRIPS_PER_MONTH } from '../../lib/constants';
-import { withComingSoon } from '../../lib/with-coming-soon';
-import { useAppStore } from '../../lib/store';
-import { generateItinerary, TripLimitReachedError } from '../../lib/claude';
-import { isGuestUser } from '../../lib/guest';
-import { getMockItinerary } from '../../lib/mock-fallback';
+import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, BUDGETS, VIBES, FREE_TRIPS_PER_MONTH } from '../lib/constants';
+import { withComingSoon } from '../lib/with-coming-soon';
+import { useAppStore } from '../lib/store';
+import { generateItinerary, TripLimitReachedError } from '../lib/claude';
+import { isGuestUser } from '../lib/guest';
+import { getMockItinerary } from '../lib/mock-fallback';
 
 // ---------------------------------------------------------------------------
 // Spin pool — extended destinations for more mystery

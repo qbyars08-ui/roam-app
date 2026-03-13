@@ -15,13 +15,13 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from '../../lib/haptics';
+import * as Haptics from '../lib/haptics';
 
-import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../../lib/constants';
-import { withComingSoon } from '../../lib/with-coming-soon';
+import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../lib/constants';
+import { withComingSoon } from '../lib/with-coming-soon';
 import { Share2, BookOpen, MapPin, Lock } from 'lucide-react-native';
-import { EmptyPassport } from '../../components/ui/EmptyStateIllustrations';
-import { useAppStore } from '../../lib/store';
+import { EmptyPassport } from '../components/ui/EmptyStateIllustrations';
+import { useAppStore } from '../lib/store';
 import {
   addStamp,
   getStats,
@@ -29,8 +29,8 @@ import {
   type PassportStamp,
   type TravelStats,
   BADGES,
-} from '../../lib/passport';
-import WorldMap from '../../components/features/WorldMap';
+} from '../lib/passport';
+import WorldMap from '../components/features/WorldMap';
 
 function PassportScreen() {
   const router = useRouter();
@@ -226,7 +226,7 @@ function PassportScreen() {
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/(tabs)/plan');
+                router.push('/(tabs)/generate');
               }}
               style={({ pressed }) => [styles.emptyCta, { opacity: pressed ? 0.85 : 1 }]}
             >

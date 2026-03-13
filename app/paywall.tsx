@@ -164,29 +164,7 @@ export default function PaywallScreen() {
     }
   }, [router]);
 
-  // Guest: show waitlist email capture instead of purchase tiers
-  if (isGuest) {
-    return (
-      <View style={[styles.screen, { paddingTop: insets.top }]}>
-        <Pressable
-          onPress={handleClose}
-          hitSlop={12}
-          accessibilityRole="button"
-          accessibilityLabel="Close"
-          style={({ pressed }) => [styles.closeBtn, { top: insets.top + SPACING.xs, opacity: pressed ? 0.6 : 1 }]}
-        >
-          <X size={20} color={COLORS.cream} strokeWidth={2} />
-        </Pressable>
-        <WaitlistCaptureModal
-          visible
-          destination={params.destination ?? ''}
-          onViewTrip={handleClose}
-          skipLabel="Maybe later"
-        />
-      </View>
-    );
-  }
-
+  // All useCallback hooks must be declared before any early return (Rules of Hooks)
   const handlePurchase = useCallback(async () => {
     if (loading) return;
     setLoading(true);
@@ -210,10 +188,6 @@ export default function PaywallScreen() {
     }
   }, [selectedTier, loading, setIsPro, handleClose, session?.user?.id]);
 
-  const monthlyPrice = packages.monthly?.product?.priceString ?? '$9.99';
-  const annualPrice = packages.annual?.product?.priceString ?? '$49.99';
-  const tiers = buildTiers(monthlyPrice, annualPrice);
-
   const handleRestore = useCallback(async () => {
     if (restoring) return;
     setRestoring(true);
@@ -236,6 +210,33 @@ export default function PaywallScreen() {
       setRestoring(false);
     }
   }, [restoring, setIsPro, handleClose, session?.user?.id]);
+
+  // Guest: show waitlist email capture instead of purchase tiers
+  if (isGuest) {
+    return (
+      <View style={[styles.screen, { paddingTop: insets.top }]}>
+        <Pressable
+          onPress={handleClose}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="Close"
+          style={({ pressed }) => [styles.closeBtn, { top: insets.top + SPACING.xs, opacity: pressed ? 0.6 : 1 }]}
+        >
+          <X size={20} color={COLORS.cream} strokeWidth={2} />
+        </Pressable>
+        <WaitlistCaptureModal
+          visible
+          destination={params.destination ?? ''}
+          onViewTrip={handleClose}
+          skipLabel="Maybe later"
+        />
+      </View>
+    );
+  }
+
+  const monthlyPrice = packages.monthly?.product?.priceString ?? '$9.99';
+  const annualPrice = packages.annual?.product?.priceString ?? '$49.99';
+  const tiers = buildTiers(monthlyPrice, annualPrice);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>

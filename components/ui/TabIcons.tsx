@@ -3,7 +3,7 @@
 // Minimal, line-based, architectural — not rounded squares
 // =============================================================================
 import React from 'react';
-import Svg, { Path, Circle, Line } from 'react-native-svg';
+import Svg, { Path, Circle, Line, Rect } from 'react-native-svg';
 import { COLORS } from '../../lib/constants';
 
 const SIZE = 24;
@@ -18,7 +18,71 @@ type IconProps = {
 const activeColor = COLORS.gold;
 const inactiveColor = COLORS.creamDim;
 
-// Discover — minimal compass rose (cardinal points, thin lines)
+// Generate — sparkle / magic wand (two 4-point stars)
+export function IconGenerate({ size = SIZE, color, focused }: IconProps) {
+  const c = color ?? (focused ? activeColor : inactiveColor);
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M9.5 2l1.2 3.8L14.5 7l-3.8 1.2L9.5 12l-1.2-3.8L4.5 7l3.8-1.2L9.5 2z" />
+      <Path d="M18 12l.8 2.2L21 15l-2.2.8L18 18l-.8-2.2L15 15l2.2-.8L18 12z" />
+      <Line x1={2} y1={21} x2={22} y2={21} strokeOpacity={0.3} />
+    </Svg>
+  );
+}
+
+// Flights — minimal airplane
+export function IconFlights({ size = SIZE, color, focused }: IconProps) {
+  const c = color ?? (focused ? activeColor : inactiveColor);
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 00-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
+    </Svg>
+  );
+}
+
+// Stays — minimal building
+export function IconStays({ size = SIZE, color, focused }: IconProps) {
+  const c = color ?? (focused ? activeColor : inactiveColor);
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round">
+      <Rect x={4} y={2} width={16} height={20} rx={1} />
+      <Line x1={9} y1={6} x2={9} y2={6.01} />
+      <Line x1={15} y1={6} x2={15} y2={6.01} />
+      <Line x1={9} y1={10} x2={9} y2={10.01} />
+      <Line x1={15} y1={10} x2={15} y2={10.01} />
+      <Line x1={9} y1={14} x2={9} y2={14.01} />
+      <Line x1={15} y1={14} x2={15} y2={14.01} />
+      <Path d="M10 22v-4h4v4" />
+    </Svg>
+  );
+}
+
+// Food — minimal utensils (fork + knife)
+export function IconFood({ size = SIZE, color, focused }: IconProps) {
+  const c = color ?? (focused ? activeColor : inactiveColor);
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M7 2v4a3 3 0 006 0V2" />
+      <Line x1={10} y1={9} x2={10} y2={22} />
+      <Path d="M17 2c-1.7 0-3 1.3-3 3v5h3V2z" />
+      <Line x1={17} y1={10} x2={17} y2={22} />
+    </Svg>
+  );
+}
+
+// Prep — minimal shield outline (same as before)
+export function IconPrep({ size = SIZE, color, focused }: IconProps) {
+  const c = color ?? (focused ? activeColor : inactiveColor);
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M12 3l8 4v6c0 5.5-3.8 10.7-8 12-4.2-1.3-8-6.5-8-12V7l8-4z" />
+    </Svg>
+  );
+}
+
+// ─── Legacy icons (kept for ExploreHub and standalone screens) ───
+
+// Discover — minimal compass rose
 export function IconDiscover({ size = SIZE, color, focused }: IconProps) {
   const c = color ?? (focused ? activeColor : inactiveColor);
   return (
@@ -49,7 +113,7 @@ export function IconPlan({ size = SIZE, color, focused }: IconProps) {
   );
 }
 
-// Ask — minimal waveform (3 lines of different heights)
+// Ask — minimal waveform
 export function IconAsk({ size = SIZE, color, focused }: IconProps) {
   const c = color ?? (focused ? activeColor : inactiveColor);
   return (
@@ -57,16 +121,6 @@ export function IconAsk({ size = SIZE, color, focused }: IconProps) {
       <Line x1={5} y1={14} x2={5} y2={10} />
       <Line x1={12} y1={16} x2={12} y2={8} />
       <Line x1={19} y1={15} x2={19} y2={9} />
-    </Svg>
-  );
-}
-
-// PREP — minimal shield outline
-export function IconPrep({ size = SIZE, color, focused }: IconProps) {
-  const c = color ?? (focused ? activeColor : inactiveColor);
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round">
-      <Path d="M12 3l8 4v6c0 5.5-3.8 10.7-8 12-4.2-1.3-8-6.5-8-12V7l8-4z" />
     </Svg>
   );
 }
@@ -83,7 +137,7 @@ export function IconSaved({ size = SIZE, color, focused }: IconProps) {
   );
 }
 
-// You — minimal circle with smaller circle inside (person/silhouette)
+// You — minimal person silhouette
 export function IconYou({ size = SIZE, color, focused }: IconProps) {
   const c = color ?? (focused ? activeColor : inactiveColor);
   return (

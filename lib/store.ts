@@ -6,17 +6,10 @@ import type { Session } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { TravelProfile } from './types/travel-profile';
 import { DEFAULT_TRAVEL_PROFILE } from './types/travel-profile';
+import type { LocationSharingState, MemberLocation } from './types/location-sharing';
+import { DEFAULT_LOCATION_STATE } from './types/location-sharing';
 import { getHomeCurrency, setHomeCurrency as persistHomeCurrency, fetchExchangeRates } from './currency';
 import type { ExchangeRates } from './currency';
-import {
-  TRIPS,
-  TRIPS_THIS_MONTH,
-  CHAT_MESSAGES,
-  PETS,
-  PET_REMINDERS,
-  TRAVEL_PROFILE,
-  PROFILE_COMPLETED,
-} from './storage-keys';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -74,8 +67,12 @@ type AppState = {
   pendingOnboardDestination: string | null;
   homeCurrency: string;
   exchangeRates: ExchangeRates | null;
-  /** True once we've attempted to fetch rates (success or failure) — prevents indefinite loading state */
   exchangeRatesLoadAttempted: boolean;
+  bookmarkedRestaurantIds: string[];
+  /** Generate screen mode: quick form or conversation. null = not yet selected. */
+  generateMode: 'quick' | 'conversation' | null;
+  /** Location sharing state for group trips */
+  locationSharing: LocationSharingState;
 
   // Actions
   setSession: (session: Session | null) => void;
@@ -103,6 +100,11 @@ type AppState = {
   setExchangeRates: (rates: ExchangeRates | null) => void;
   setExchangeRatesLoadAttempted: (attempted: boolean) => void;
   initCurrency: () => Promise<void>;
+  setGenerateMode: (mode: 'quick' | 'conversation') => void;
+  toggleBookmarkedRestaurant: (id: string) => void;
+  setLocationSharing: (state: Partial<LocationSharingState>) => void;
+  updateMemberLocation: (location: MemberLocation) => void;
+  removeMemberLocation: (memberId: string) => void;
 };
 
 const defaultPlanWizard: PlanWizardState = {
@@ -112,21 +114,36 @@ const defaultPlanWizard: PlanWizardState = {
   vibes: [],
 };
 
+const TRIPS_STORAGE_KEY = 'roam_trips';
+const TRIPS_MONTH_KEY = 'roam_trips_this_month';
+const CHAT_STORAGE_KEY = 'roam_chat_messages';
+const GENERATE_MODE_KEY = 'roam_generate_mode';
+const PETS_STORAGE_KEY = 'roam_pets';
+const PET_REMINDERS_KEY = 'roam_pet_reminders';
+const TRAVEL_PROFILE_KEY = 'roam_travel_profile';
+const PROFILE_COMPLETED_KEY = 'roam_profile_completed';
+const BOOKMARKED_RESTAURANTS_KEY = 'roam_bookmarked_restaurants';
+
+function persistBookmarkedRestaurants(ids: string[]) {
+  AsyncStorage.setItem(BOOKMARKED_RESTAURANTS_KEY, JSON.stringify(ids)).catch(() => {});
+}
+
 function persistTravelProfile(profile: TravelProfile) {
-  AsyncStorage.setItem(TRAVEL_PROFILE, JSON.stringify(profile)).catch(() => {});
+  AsyncStorage.setItem(TRAVEL_PROFILE_KEY, JSON.stringify(profile)).catch(() => {});
 }
 
 function persistTrips(trips: Trip[]) {
-  AsyncStorage.setItem(TRIPS, JSON.stringify(trips)).catch(() => {});
+  AsyncStorage.setItem(TRIPS_STORAGE_KEY, JSON.stringify(trips)).catch(() => {});
 }
 
 function persistChat(messages: ChatMessage[]) {
+  // Only persist last 100 messages to avoid storage bloat
   const toSave = messages.slice(-100);
-  AsyncStorage.setItem(CHAT_MESSAGES, JSON.stringify(toSave)).catch(() => {});
+  AsyncStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(toSave)).catch(() => {});
 }
 
 function persistPets(pets: Pet[]) {
-  AsyncStorage.setItem(PETS, JSON.stringify(pets)).catch(() => {});
+  AsyncStorage.setItem(PETS_STORAGE_KEY, JSON.stringify(pets)).catch(() => {});
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -146,6 +163,9 @@ export const useAppStore = create<AppState>((set) => ({
   homeCurrency: 'USD',
   exchangeRates: null,
   exchangeRatesLoadAttempted: false,
+  generateMode: null,
+  bookmarkedRestaurantIds: [],
+  locationSharing: { ...DEFAULT_LOCATION_STATE },
 
   setSession: (session) => set({ session }),
   addTrip: (trip) =>
@@ -176,7 +196,7 @@ export const useAppStore = create<AppState>((set) => ({
   },
   setIsPro: (isPro) => set({ isPro }),
   setTripsThisMonth: (tripsThisMonth) => {
-    AsyncStorage.setItem(TRIPS_THIS_MONTH, JSON.stringify(tripsThisMonth)).catch(() => {});
+    AsyncStorage.setItem(TRIPS_MONTH_KEY, JSON.stringify(tripsThisMonth)).catch(() => {});
     set({ tripsThisMonth });
   },
   setChatMessages: (chatMessages) => {
@@ -208,7 +228,7 @@ export const useAppStore = create<AppState>((set) => ({
     }),
   setPets: (pets) => set({ pets }),
   setPetRemindersEnabled: (val) => {
-    AsyncStorage.setItem(PET_REMINDERS, JSON.stringify(val)).catch(() => {});
+    AsyncStorage.setItem(PET_REMINDERS_KEY, JSON.stringify(val)).catch(() => {});
     set({ petRemindersEnabled: val });
   },
   setActiveTripId: (id) => set({ activeTripId: id }),
@@ -223,7 +243,7 @@ export const useAppStore = create<AppState>((set) => ({
       return { travelProfile: updated };
     }),
   setHasCompletedProfile: (val) => {
-    AsyncStorage.setItem(PROFILE_COMPLETED, JSON.stringify(val)).catch(() => {});
+    AsyncStorage.setItem(PROFILE_COMPLETED_KEY, JSON.stringify(val)).catch(() => {});
     set({ hasCompletedProfile: val });
   },
   setPendingOnboardDestination: (dest) => set({ pendingOnboardDestination: dest }),
@@ -245,6 +265,42 @@ export const useAppStore = create<AppState>((set) => ({
       // silent — will retry when rates needed
     }
   },
+  setGenerateMode: (mode) => {
+    AsyncStorage.setItem(GENERATE_MODE_KEY, mode).catch(() => {});
+    set({ generateMode: mode });
+  },
+  toggleBookmarkedRestaurant: (id) =>
+    set((s) => {
+      const ids = s.bookmarkedRestaurantIds.includes(id)
+        ? s.bookmarkedRestaurantIds.filter((x) => x !== id)
+        : [...s.bookmarkedRestaurantIds, id];
+      persistBookmarkedRestaurants(ids);
+      return { bookmarkedRestaurantIds: ids };
+    }),
+  setLocationSharing: (partial) =>
+    set((s) => ({
+      locationSharing: { ...s.locationSharing, ...partial },
+    })),
+  updateMemberLocation: (location) =>
+    set((s) => {
+      const existing = s.locationSharing.memberLocations;
+      const idx = existing.findIndex((m) => m.memberId === location.memberId);
+      const updated = idx >= 0
+        ? existing.map((m, i) => (i === idx ? location : m))
+        : [...existing, location];
+      return {
+        locationSharing: { ...s.locationSharing, memberLocations: updated },
+      };
+    }),
+  removeMemberLocation: (memberId) =>
+    set((s) => ({
+      locationSharing: {
+        ...s.locationSharing,
+        memberLocations: s.locationSharing.memberLocations.filter(
+          (m) => m.memberId !== memberId
+        ),
+      },
+    })),
 }));
 
 // ---------------------------------------------------------------------------
@@ -299,14 +355,28 @@ export function getActiveTripDayIndex(): number {
 }
 
 // ---------------------------------------------------------------------------
+// Load persisted generate mode on app start
+// ---------------------------------------------------------------------------
+export async function loadGenerateMode(): Promise<void> {
+  try {
+    const raw = await AsyncStorage.getItem(GENERATE_MODE_KEY);
+    if (raw === 'quick' || raw === 'conversation') {
+      useAppStore.setState({ generateMode: raw });
+    }
+  } catch {
+    // silent
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Load persisted trips + chat on app start
 // ---------------------------------------------------------------------------
 export async function loadPersistedTrips(): Promise<void> {
   try {
     const [tripsRaw, monthRaw, chatRaw] = await Promise.all([
-      AsyncStorage.getItem(TRIPS),
-      AsyncStorage.getItem(TRIPS_THIS_MONTH),
-      AsyncStorage.getItem(CHAT_MESSAGES),
+      AsyncStorage.getItem(TRIPS_STORAGE_KEY),
+      AsyncStorage.getItem(TRIPS_MONTH_KEY),
+      AsyncStorage.getItem(CHAT_STORAGE_KEY),
     ]);
     const store = useAppStore.getState();
     if (tripsRaw) {
@@ -329,8 +399,8 @@ export async function loadPersistedTrips(): Promise<void> {
 export async function loadPersistedPets(): Promise<void> {
   try {
     const [petsRaw, remindersRaw] = await Promise.all([
-      AsyncStorage.getItem(PETS),
-      AsyncStorage.getItem(PET_REMINDERS),
+      AsyncStorage.getItem(PETS_STORAGE_KEY),
+      AsyncStorage.getItem(PET_REMINDERS_KEY),
     ]);
     if (petsRaw) {
       useAppStore.getState().setPets(JSON.parse(petsRaw));
@@ -346,11 +416,23 @@ export async function loadPersistedPets(): Promise<void> {
 // ---------------------------------------------------------------------------
 // Load persisted travel profile on app start
 // ---------------------------------------------------------------------------
+export async function loadPersistedBookmarks(): Promise<void> {
+  try {
+    const raw = await AsyncStorage.getItem(BOOKMARKED_RESTAURANTS_KEY);
+    if (raw) {
+      const ids: string[] = JSON.parse(raw);
+      useAppStore.setState({ bookmarkedRestaurantIds: ids });
+    }
+  } catch {
+    // silent — first launch or corrupt data
+  }
+}
+
 export async function loadPersistedTravelProfile(): Promise<void> {
   try {
     const [profileRaw, completedRaw] = await Promise.all([
-      AsyncStorage.getItem(TRAVEL_PROFILE),
-      AsyncStorage.getItem(PROFILE_COMPLETED),
+      AsyncStorage.getItem(TRAVEL_PROFILE_KEY),
+      AsyncStorage.getItem(PROFILE_COMPLETED_KEY),
     ]);
     if (profileRaw) {
       const store = useAppStore.getState();

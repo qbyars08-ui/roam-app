@@ -17,19 +17,19 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from '../../lib/haptics';
+import * as Haptics from '../lib/haptics';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '../../lib/supabase';
-import { COLORS, FONTS, SPACING, RADIUS, FREE_TRIPS_PER_MONTH } from '../../lib/constants';
-import { hasRatedBadge } from '../../lib/rating';
-import { useAppStore } from '../../lib/store';
-import { isGuestUser, clearGuestMode } from '../../lib/guest';
-import { getCurrentStreak } from '../../lib/streaks';
-import { logoutRevenueCat } from '../../lib/revenue-cat';
+import { supabase } from '../lib/supabase';
+import { COLORS, FONTS, SPACING, RADIUS, FREE_TRIPS_PER_MONTH } from '../lib/constants';
+import { hasRatedBadge } from '../lib/rating';
+import { useAppStore } from '../lib/store';
+import { isGuestUser, clearGuestMode } from '../lib/guest';
+import { getCurrentStreak } from '../lib/streaks';
+import { logoutRevenueCat } from '../lib/revenue-cat';
 import { Sparkles, Repeat, Gift, Shield, ChevronRight, BarChart3, CreditCard, LogOut } from 'lucide-react-native';
-import Button from '../../components/ui/Button';
-import ExploreHub from '../../components/features/ExploreHub';
+import Button from '../components/ui/Button';
+import ExploreHub from '../components/features/ExploreHub';
 
 import { EMERGENCY_CONTACT, ONBOARDING_COMPLETE } from '../../lib/storage-keys';
 

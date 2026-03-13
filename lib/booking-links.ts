@@ -3,7 +3,7 @@
 // One-tap connections to every major travel service. ROAM as the middle layer.
 // =============================================================================
 import { Linking } from 'react-native';
-import { buildAffiliateUrl, trackAffiliateClick } from './affiliate-tracking';
+import { buildAffiliateUrl, trackAffiliateClick, isSafeUrl } from './affiliate-tracking';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -98,6 +98,7 @@ export async function openBookingLink(
   destination: string,
   placement: string
 ): Promise<void> {
+  if (!isSafeUrl(url)) return;
   await trackAffiliateClick({ partner, destination, placement, url });
-  await Linking.openURL(url);
+  await Linking.openURL(url).catch(() => {});
 }

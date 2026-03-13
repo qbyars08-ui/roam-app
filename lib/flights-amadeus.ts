@@ -1,11 +1,9 @@
 // =============================================================================
 // ROAM — Amadeus Flight Search (Free Tier: 2,000 req/month)
-// Real flight prices from user's nearest airport to destination.
-// SECURITY: API keys kept server-side. All searches go through amadeus-proxy.
+// Real flight prices via edge function proxy (secrets stay server-side).
 // =============================================================================
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
-import { HOME_AIRPORT } from './storage-keys';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -33,6 +31,10 @@ export interface FlightSearchResult {
   searchedAt: string;
 }
 
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
 // Major airport codes for popular destinations
 const DESTINATION_AIRPORTS: Record<string, string> = {
   tokyo: 'NRT', paris: 'CDG', bali: 'DPS', 'new york': 'JFK',
@@ -55,6 +57,9 @@ const DESTINATION_AIRPORTS: Record<string, string> = {
   seattle: 'SEA', boston: 'BOS', atlanta: 'ATL', dallas: 'DFW',
   honolulu: 'HNL', 'las vegas': 'LAS', portland: 'PDX',
 };
+
+// User's home airport preference
+const HOME_AIRPORT_KEY = 'roam_home_airport';
 
 // Common US airports for picker
 export const US_AIRPORTS = [
@@ -92,15 +97,21 @@ export const US_AIRPORTS = [
 // ---------------------------------------------------------------------------
 export async function getHomeAirport(): Promise<string> {
   try {
-    const val = await AsyncStorage.getItem(HOME_AIRPORT);
+    const val = await AsyncStorage.getItem(HOME_AIRPORT_KEY);
     return val ?? 'JFK';
   } catch {
     return 'JFK';
   }
 }
 
+const IATA_RE = /^[A-Z]{3}$/;
+
 export async function setHomeAirport(code: string): Promise<void> {
-  await AsyncStorage.setItem(HOME_AIRPORT, code.toUpperCase());
+  const normalized = code.trim().toUpperCase();
+  if (!IATA_RE.test(normalized)) {
+    throw new Error(`Invalid IATA code: ${normalized}`);
+  }
+  await AsyncStorage.setItem(HOME_AIRPORT_KEY, normalized);
 }
 
 // ---------------------------------------------------------------------------
@@ -118,7 +129,38 @@ export function getDestinationAirport(destination: string): string | null {
 }
 
 // ---------------------------------------------------------------------------
-// Search Flights (via amadeus-proxy edge function — keys stay server-side)
+// Airline name lookup (top carriers)
+// ---------------------------------------------------------------------------
+const AIRLINE_NAMES: Record<string, string> = {
+  AA: 'American Airlines', UA: 'United', DL: 'Delta', WN: 'Southwest',
+  B6: 'JetBlue', NK: 'Spirit', F9: 'Frontier', AS: 'Alaska',
+  HA: 'Hawaiian', BA: 'British Airways', LH: 'Lufthansa',
+  AF: 'Air France', KL: 'KLM', IB: 'Iberia', AY: 'Finnair',
+  SK: 'SAS', LX: 'Swiss', OS: 'Austrian', TP: 'TAP Portugal',
+  TK: 'Turkish Airlines', EK: 'Emirates', QR: 'Qatar Airways',
+  EY: 'Etihad', SQ: 'Singapore Airlines', CX: 'Cathay Pacific',
+  NH: 'ANA', JL: 'JAL', OZ: 'Asiana', KE: 'Korean Air',
+  QF: 'Qantas', NZ: 'Air New Zealand', AC: 'Air Canada',
+  AM: 'Aeromexico', AV: 'Avianca', LA: 'LATAM', G3: 'Gol',
+  FR: 'Ryanair', U2: 'easyJet', W6: 'Wizz Air', VY: 'Vueling',
+  TG: 'Thai Airways', GA: 'Garuda', MH: 'Malaysia Airlines',
+  BR: 'EVA Air', CI: 'China Airlines', CA: 'Air China',
+  MU: 'China Eastern', CZ: 'China Southern', AI: 'Air India',
+  ET: 'Ethiopian', SA: 'South African', MS: 'EgyptAir',
+  RJ: 'Royal Jordanian', SV: 'Saudi Arabian',
+};
+
+function formatDuration(iso: string): string {
+  // PT2H30M → "2h 30m"
+  const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
+  if (!match) return iso;
+  const h = match[1] ? `${match[1]}h` : '';
+  const m = match[2] ? `${match[2]}m` : '';
+  return `${h} ${m}`.trim();
+}
+
+// ---------------------------------------------------------------------------
+// Search Flights
 // ---------------------------------------------------------------------------
 
 /**
@@ -133,26 +175,60 @@ export async function searchFlights(params: {
   adults?: number;
   maxOffers?: number;
 }): Promise<FlightSearchResult> {
+  const { origin, destination, departureDate, returnDate } = params;
+  const adults = params.adults ?? 1;
+  const max = params.maxOffers ?? 5;
+
+  // Call edge function proxy — secrets stay server-side
   const { data, error } = await supabase.functions.invoke('amadeus-proxy', {
-    body: {
-      origin: params.origin,
-      destination: params.destination,
-      departureDate: params.departureDate,
-      returnDate: params.returnDate,
-      adults: params.adults ?? 1,
-      maxOffers: params.maxOffers ?? 5,
-    },
+    body: { origin, destination, departureDate, returnDate, adults, maxOffers: max },
   });
 
   if (error) {
-    throw new Error(error.message ?? 'Flight search failed');
+    throw new Error(`Flight search failed: ${error.message}`);
   }
 
-  if (data?.error) {
-    throw new Error(typeof data.error === 'string' ? data.error : 'Flight search failed');
-  }
+  const rawOffers = data?.data ?? [];
 
-  return data as FlightSearchResult;
+  const offers: FlightOffer[] = rawOffers.map((offer: Record<string, unknown>) => {
+    const price = parseFloat((offer.price as Record<string, string>).total);
+    const currency = (offer.price as Record<string, string>).currency;
+    const itineraries = offer.itineraries as Array<Record<string, unknown>>;
+    const outbound = itineraries[0];
+    const returnFlight = itineraries[1];
+
+    const segments = outbound.segments as Array<Record<string, unknown>>;
+    const mainCarrier = (segments[0]?.carrierCode as string) ?? 'XX';
+    const stops = segments.length - 1;
+
+    return {
+      airline: mainCarrier,
+      airlineName: AIRLINE_NAMES[mainCarrier] ?? mainCarrier,
+      price,
+      currency,
+      departureDate,
+      returnDate,
+      outboundDuration: formatDuration(outbound.duration as string),
+      returnDuration: returnFlight
+        ? formatDuration(returnFlight.duration as string)
+        : '',
+      stops,
+      origin,
+      destination,
+      bookingUrl: `https://www.google.com/travel/flights?q=flights+from+${origin}+to+${destination}+on+${departureDate}`,
+    };
+  });
+
+  // Sort by price
+  offers.sort((a: FlightOffer, b: FlightOffer) => a.price - b.price);
+
+  return {
+    offers,
+    cheapest: offers[0] ?? null,
+    origin,
+    destination,
+    searchedAt: new Date().toISOString(),
+  };
 }
 
 /**

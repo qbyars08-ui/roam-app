@@ -22,5 +22,6 @@ alter table public.venues enable row level security;
 -- Service role has full access (edge function uses SUPABASE_SERVICE_ROLE_KEY)
 create policy "Service role full access" on public.venues
   for all
+  to service_role
   using (true)
   with check (true);

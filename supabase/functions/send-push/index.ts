@@ -15,32 +15,40 @@
  *   8. safety_alert
  *
  * Body: { user_ids: string[], title: string, body: string, data?: object }
- * Auth: Bearer <SEND_PUSH_INTERNAL_SECRET> (set in Supabase env vars)
- * Callers must pass: Authorization: Bearer ${SEND_PUSH_INTERNAL_SECRET}
+ * Auth: Requires service_role key (internal use only)
  * ─────────────────────────────────────────────────────────────
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 
 Deno.serve(async (req: Request) => {
-  const internalSecret = Deno.env.get("SEND_PUSH_INTERNAL_SECRET");
-  if (!internalSecret) {
-    return new Response(
-      JSON.stringify({ error: "SEND_PUSH_INTERNAL_SECRET not configured" }),
-      { status: 500, headers: { "Content-Type": "application/json" } },
-    );
-  }
-
+  // Internal-only endpoint — verify service role
   const authHeader = req.headers.get("Authorization");
-  const expectedAuth = `Bearer ${internalSecret}`;
-  if (!authHeader || authHeader !== expectedAuth) {
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+  if (!authHeader || authHeader !== `Bearer ${serviceRoleKey}`) {
     return new Response(
-      JSON.stringify({ error: "Unauthorized — invalid or missing secret" }),
+      JSON.stringify({ error: "Unauthorized" }),
       { status: 401, headers: { "Content-Type": "application/json" } },
     );
   }
 
-  const { user_ids, title, body, data } = await req.json();
+  let reqBody: Record<string, unknown>;
+  try {
+    reqBody = await req.json();
+  } catch {
+    return new Response(
+      JSON.stringify({ error: "Invalid JSON body" }),
+      { status: 400, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
+  const { user_ids, title, body, data } = reqBody as {
+    user_ids?: string[];
+    title?: string;
+    body?: string;
+    data?: Record<string, unknown>;
+  };
 
   if (!user_ids?.length || !title || !body) {
     return new Response(
@@ -49,8 +57,15 @@ Deno.serve(async (req: Request) => {
     );
   }
 
+  if (user_ids.length > 1000) {
+    return new Response(
+      JSON.stringify({ error: "Maximum 1000 user_ids per request" }),
+      { status: 400, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
+  // Fetch push tokens for target users
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
   const { data: tokens, error } = await supabase
@@ -60,7 +75,7 @@ Deno.serve(async (req: Request) => {
 
   if (error || !tokens?.length) {
     return new Response(
-      JSON.stringify({ sent: 0, reason: error?.message || "no_tokens" }),
+      JSON.stringify({ sent: 0, reason: "no_tokens" }),
       { status: 200, headers: { "Content-Type": "application/json" } },
     );
   }
@@ -120,7 +135,7 @@ Deno.serve(async (req: Request) => {
     JSON.stringify({
       sent: totalSent,
       total: messages.length,
-      errors: errors.length > 0 ? errors.slice(0, 5) : undefined,
+      failed: errors.length > 0 ? errors.length : 0,
     }),
     { status: 200, headers: { "Content-Type": "application/json" } },
   );

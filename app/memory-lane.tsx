@@ -167,12 +167,7 @@ function MemoryLaneScreen() {
   const { canAccess } = useProGate('memory-lane');
   const trips = useAppStore((s) => s.trips);
 
-  useEffect(() => {
-    if (!canAccess) router.replace('/paywall');
-  }, [canAccess, router]);
-  if (!canAccess) return null;
-
-  // Sort trips newest first
+  // All hooks must be declared before any early return (Rules of Hooks)
   const sortedTrips = useMemo(
     () => [...trips].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
     [trips]
@@ -183,7 +178,6 @@ function MemoryLaneScreen() {
   const countries = useMemo(() => getCountries(trips), [trips]);
   const onThisDayTrips = useMemo(() => getOnThisDayTrips(trips), [trips]);
 
-  // Animations
   const headerAnim = useRef(new Animated.Value(0)).current;
   const staggerAnims = useStaggerAnim(sortedTrips.length + 4); // +4 for sections
 
@@ -194,6 +188,12 @@ function MemoryLaneScreen() {
       useNativeDriver: true,
     }).start();
   }, []);
+
+  useEffect(() => {
+    if (!canAccess) router.replace('/paywall');
+  }, [canAccess, router]);
+
+  if (!canAccess) return null;
 
   // ---------------------------------------------------------------------------
   // Empty state
@@ -219,7 +219,7 @@ function MemoryLaneScreen() {
             style={({ pressed }) => [styles.ctaButton, { opacity: pressed ? 0.85 : 1 }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              router.push('/(tabs)/plan');
+              router.push('/(tabs)/generate');
             }}
           >
             <Text style={styles.ctaText}>Plan Your First Trip</Text>

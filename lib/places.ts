@@ -74,7 +74,11 @@ export async function searchPlaces(
       return [];
     }
 
-    return (data.predictions ?? []).map((p: any) => ({
+    return (data.predictions ?? []).map((p: {
+      place_id: string;
+      description: string;
+      structured_formatting?: { main_text?: string; secondary_text?: string };
+    }) => ({
       placeId: p.place_id,
       mainText: p.structured_formatting?.main_text ?? p.description,
       secondaryText: p.structured_formatting?.secondary_text ?? '',
@@ -133,8 +137,8 @@ export async function getPlaceDetails(
     const result = data.result;
 
     // Extract country code from address_components
-    const countryComponent = result.address_components?.find((c: any) =>
-      c.types?.includes('country')
+    const countryComponent = result.address_components?.find((c: Record<string, unknown>) =>
+      (c.types as string[] | undefined)?.includes('country')
     );
     const country = countryComponent?.short_name ?? '';
 

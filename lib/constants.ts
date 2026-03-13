@@ -32,6 +32,8 @@ export const COLORS = {
   creamBright: 'rgba(245,237,216,0.85)',
   creamHighlight: 'rgba(245,237,216,0.7)',
   creamMutedLight: 'rgba(245,237,216,0.45)',
+  creamMinimal: 'rgba(245,237,216,0.08)',
+  creamSubtle: 'rgba(245,237,216,0.1)',
   creamVeryFaint: 'rgba(245,237,216,0.2)',
   creamDimLight: 'rgba(245,237,216,0.3)',
   creamDimMedium: 'rgba(245,237,216,0.35)',
@@ -503,12 +505,12 @@ export const VIBES: Vibe[] = [
 // ---------------------------------------------------------------------------
 export const DISCOVER_HEADERS: string[] = [
   'Travel like you know someone there',
-  'Where will you go next?',
+  'Pick a place. We\u2019ll handle the rest.',
   'Plan less. Experience more.',
-  'Your next adventure is one tap away',
-  'The world is waiting for you',
-  'Let us help you plan something wonderful',
-  'Your next trip starts here',
+  '30 seconds to your next trip.',
+  'Some trips plan themselves. This is one.',
+  'Tell us where. We\u2019ll tell you everything.',
+  'The hard part was picking. We did the rest.',
 ];
 
 // ---------------------------------------------------------------------------

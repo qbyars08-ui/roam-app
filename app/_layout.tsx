@@ -14,7 +14,7 @@ import { ONBOARDING_COMPLETE } from '../lib/storage-keys';
 import { useFonts } from 'expo-font';
 
 import { supabase } from '../lib/supabase';
-import { useAppStore, checkActiveTripOnLoad, loadPersistedTrips, loadPersistedPets, loadPersistedTravelProfile } from '../lib/store';
+import { useAppStore, checkActiveTripOnLoad, loadPersistedTrips, loadPersistedPets, loadPersistedTravelProfile, loadPersistedBookmarks, loadGenerateMode } from '../lib/store';
 import { initRevenueCat, loginRevenueCat, logoutRevenueCat, isProActive, addCustomerInfoListener } from '../lib/revenue-cat';
 import { syncProStatusToSupabase } from '../lib/sync-pro-status';
 import { ensureReferralCode } from '../lib/referral';
@@ -101,6 +101,8 @@ export default function RootLayout() {
       loadPersistedTrips(),
       loadPersistedPets(),
       loadPersistedTravelProfile(),
+      loadPersistedBookmarks(),
+      loadGenerateMode(),
       useAppStore.getState().initCurrency(),
     ]).catch(() => {});
 

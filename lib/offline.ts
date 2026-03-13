@@ -58,12 +58,10 @@ export async function saveTripOffline(trip: OfflineTrip): Promise<void> {
   try {
     const existing = await loadTripsOffline();
     const idx = existing.findIndex((t) => t.id === trip.id);
-    if (idx >= 0) {
-      existing[idx] = trip;
-    } else {
-      existing.unshift(trip);
-    }
-    await saveTripsOffline(existing);
+    const updated = idx >= 0
+      ? [...existing.slice(0, idx), trip, ...existing.slice(idx + 1)]
+      : [trip, ...existing];
+    await saveTripsOffline(updated);
   } catch (err) {
     console.warn('[offline] Failed to save single trip:', err);
   }

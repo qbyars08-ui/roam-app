@@ -19,18 +19,18 @@ import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { format } from 'date-fns';
-import * as Haptics from '../../lib/haptics';
+import * as Haptics from '../lib/haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Users } from 'lucide-react-native';
-import { COLORS, FONTS, SPACING, RADIUS, BUDGETS } from '../../lib/constants';
-import { getDestinationPhoto, BACKUP_FALLBACK } from '../../lib/photos';
-import ShimmerOverlay from '../../components/ui/ShimmerOverlay';
-import { useAppStore, type Trip } from '../../lib/store';
-import { isGuestUser } from '../../lib/guest';
-import { getMyGroups, type TripGroup } from '../../lib/group-trips';
-import { trackItineraryOutcome } from '../../lib/ai-improvement';
-import Button from '../../components/ui/Button';
-import { EmptySuitcase } from '../../components/ui/EmptyStateIllustrations';
+import { COLORS, FONTS, SPACING, RADIUS, BUDGETS } from '../lib/constants';
+import { getDestinationPhoto, BACKUP_FALLBACK } from '../lib/photos';
+import ShimmerOverlay from '../components/ui/ShimmerOverlay';
+import { useAppStore, type Trip } from '../lib/store';
+import { isGuestUser } from '../lib/guest';
+import { getMyGroups, type TripGroup } from '../lib/group-trips';
+import { trackItineraryOutcome } from '../lib/ai-improvement';
+import Button from '../components/ui/Button';
+import { EmptySuitcase } from '../components/ui/EmptyStateIllustrations';
 
 // ---------------------------------------------------------------------------
 // Trip card component
@@ -221,7 +221,7 @@ export default function SavedScreen() {
   );
 
   const handlePlan = useCallback(() => {
-    router.push('/(tabs)/plan');
+    router.push('/(tabs)/generate');
   }, [router]);
 
   const handleCreateGroup = useCallback(() => {

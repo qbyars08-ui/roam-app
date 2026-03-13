@@ -18,7 +18,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from '../../lib/haptics';
+import * as Haptics from '../lib/haptics';
 import { PawPrint } from 'lucide-react-native';
 import {
   COLORS,
@@ -28,14 +28,14 @@ import {
   PET_DESTINATIONS,
   ROVER_AFFILIATE_URL,
   WAG_AFFILIATE_URL,
-} from '../../lib/constants';
-import { withComingSoon } from '../../lib/with-coming-soon';
-import { useAppStore, type Pet } from '../../lib/store';
+} from '../lib/constants';
+import { withComingSoon } from '../lib/with-coming-soon';
+import { useAppStore, type Pet } from '../lib/store';
 import {
   schedulePetCheckIn,
   cancelPetCheckIns,
   requestNotificationPermission,
-} from '../../lib/notifications';
+} from '../lib/notifications';
 
 // ---------------------------------------------------------------------------
 // Card style constants (shared across sections)
@@ -247,7 +247,7 @@ function PetAICard() {
       role: 'user',
       content: message,
     });
-    router.push('/(tabs)/chat');
+    router.push('/(tabs)/generate');
   }, [firstPet, latestTrip, appendChatMessage, router]);
 
   return (
@@ -338,7 +338,7 @@ function PetDestinations() {
       // Extract city name before comma for the plan wizard
       const destination = city.split(',')[0].trim();
       setPlanWizard({ destination });
-      router.push('/(tabs)/plan');
+      router.push('/(tabs)/generate');
     },
     [setPlanWizard, router]
   );

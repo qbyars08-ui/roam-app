@@ -23,6 +23,8 @@ function getCorsHeaders(req: Request) {
   };
 }
 
+const MAX_DESTINATION_LENGTH = 200;
+
 interface WeatherDay {
   date: string;
   tempHigh: number;
@@ -81,11 +83,13 @@ const CITY_COORDS: Record<string, { lat: number; lon: number }> = {
 
 Deno.serve(async (req: Request) => {
   const corsHeaders = getCorsHeaders(req);
+
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
+    // ── Auth: verify JWT via Supabase ──────────────────────────────────
     const authHeader = req.headers.get("Authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return new Response(
@@ -97,9 +101,11 @@ Deno.serve(async (req: Request) => {
     const jwt = authHeader.replace("Bearer ", "");
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
     const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: `Bearer ${jwt}` } },
     });
+
     const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
     if (userError || !user) {
       return new Response(
@@ -111,22 +117,25 @@ Deno.serve(async (req: Request) => {
     const apiKey = Deno.env.get("OPENWEATHERMAP_KEY");
     if (!apiKey) {
       return new Response(
-        JSON.stringify({ error: "OpenWeatherMap API key not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({ error: "Weather service unavailable" }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const { destination } = await req.json();
-    if (!destination || typeof destination !== "string") {
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
       return new Response(
-        JSON.stringify({ error: "destination is required" }),
+        JSON.stringify({ error: "Invalid JSON body" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    if (destination.length > 200) {
+    const destination = body.destination as string | undefined;
+    if (!destination || typeof destination !== "string" || destination.length > MAX_DESTINATION_LENGTH) {
       return new Response(
-        JSON.stringify({ error: "destination too long" }),
+        JSON.stringify({ error: "destination is required (max 200 chars)" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -176,8 +185,7 @@ Deno.serve(async (req: Request) => {
     return new Response(JSON.stringify(intel), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (err) {
-    console.error("[weather-intel] Error:", err);
+  } catch {
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },

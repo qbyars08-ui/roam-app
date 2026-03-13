@@ -1,9 +1,8 @@
 // =============================================================================
 // ROAM — Amadeus Flight Search Proxy
-// Keeps AMADEUS_KEY and AMADEUS_SECRET server-side. Client calls this instead
-// of Amadeus API directly.
+// Keeps API_KEY + API_SECRET server-side. Client sends JWT + search params.
 // =============================================================================
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const ALLOWED_ORIGINS = [
   "https://tryroam.netlify.app",
@@ -17,171 +16,154 @@ function getCorsHeaders(req: Request) {
   const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
     "Access-Control-Allow-Origin": allowedOrigin,
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
   };
 }
 
-const BASE = "https://test.api.amadeus.com";
+const AMADEUS_BASE = "https://test.api.amadeus.com";
 
-const AIRLINE_NAMES: Record<string, string> = {
-  AA: "American Airlines", UA: "United", DL: "Delta", WN: "Southwest",
-  B6: "JetBlue", NK: "Spirit", F9: "Frontier", AS: "Alaska",
-  HA: "Hawaiian", BA: "British Airways", LH: "Lufthansa",
-  AF: "Air France", KL: "KLM", IB: "Iberia", AY: "Finnair",
-  SK: "SAS", LX: "Swiss", OS: "Austrian", TP: "TAP Portugal",
-  TK: "Turkish Airlines", EK: "Emirates", QR: "Qatar Airways",
-  EY: "Etihad", SQ: "Singapore Airlines", CX: "Cathay Pacific",
-  NH: "ANA", JL: "JAL", OZ: "Asiana", KE: "Korean Air",
-  QF: "Qantas", NZ: "Air New Zealand", AC: "Air Canada",
-  AM: "Aeromexico", AV: "Avianca", LA: "LATAM", G3: "Gol",
-  FR: "Ryanair", U2: "easyJet", W6: "Wizz Air", VY: "Vueling",
-  TG: "Thai Airways", GA: "Garuda", MH: "Malaysia Airlines",
-  BR: "EVA Air", CI: "China Airlines", CA: "Air China",
-  MU: "China Eastern", CZ: "China Southern", AI: "Air India",
-  ET: "Ethiopian", SA: "South African", MS: "EgyptAir",
-  RJ: "Royal Jordanian", SV: "Saudi Arabian",
-};
-
-function formatDuration(iso: string): string {
-  const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
-  if (!match) return iso;
-  const h = match[1] ? `${match[1]}h` : "";
-  const m = match[2] ? `${match[2]}m` : "";
-  return `${h} ${m}`.trim();
-}
+// ---------------------------------------------------------------------------
+// Amadeus OAuth — cached in memory (edge function warm instances reuse this)
+// ---------------------------------------------------------------------------
+let cachedToken: { access_token: string; expires_at: number } | null = null;
 
 async function getAmadeusToken(): Promise<string> {
-  const apiKey = Deno.env.get("AMADEUS_KEY");
-  const apiSecret = Deno.env.get("AMADEUS_SECRET");
-  if (!apiKey || !apiSecret) {
-    throw new Error("AMADEUS_KEY and AMADEUS_SECRET must be set in Supabase env");
+  const key = Deno.env.get("AMADEUS_KEY");
+  const secret = Deno.env.get("AMADEUS_SECRET");
+
+  if (!key || !secret) {
+    throw new Error("Amadeus credentials not configured on server");
   }
 
-  const res = await fetch(`${BASE}/v1/security/oauth2/token`, {
+  // Return cached token if still valid (with 60s buffer)
+  if (cachedToken && cachedToken.expires_at > Date.now() + 60_000) {
+    return cachedToken.access_token;
+  }
+
+  const res = await fetch(`${AMADEUS_BASE}/v1/security/oauth2/token`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: `grant_type=client_credentials&client_id=${encodeURIComponent(apiKey)}&client_secret=${encodeURIComponent(apiSecret)}`,
+    body: `grant_type=client_credentials&client_id=${key}&client_secret=${secret}`,
   });
 
   if (!res.ok) {
-    const text = await res.text();
-    console.error("[amadeus-proxy] Token error:", res.status, text);
-    throw new Error("Amadeus auth failed");
+    throw new Error(`Amadeus OAuth failed: ${res.status}`);
   }
 
   const data = await res.json();
-  return data.access_token;
+  cachedToken = {
+    access_token: data.access_token,
+    expires_at: Date.now() + data.expires_in * 1000,
+  };
+
+  return cachedToken.access_token;
 }
 
+// ---------------------------------------------------------------------------
+// Input validation
+// ---------------------------------------------------------------------------
+const IATA_RE = /^[A-Z]{3}$/;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function validateSearchParams(body: Record<string, unknown>): {
+  origin: string;
+  destination: string;
+  departureDate: string;
+  returnDate: string;
+  adults: number;
+  maxOffers: number;
+} {
+  const origin = String(body.origin ?? "").toUpperCase().trim();
+  const destination = String(body.destination ?? "").toUpperCase().trim();
+  const departureDate = String(body.departureDate ?? "");
+  const returnDate = String(body.returnDate ?? "");
+  const adults = Math.min(Math.max(Number(body.adults) || 1, 1), 9);
+  const maxOffers = Math.min(Math.max(Number(body.maxOffers) || 5, 1), 20);
+
+  if (!IATA_RE.test(origin)) throw new Error("Invalid origin IATA code");
+  if (!IATA_RE.test(destination)) throw new Error("Invalid destination IATA code");
+  if (!DATE_RE.test(departureDate)) throw new Error("Invalid departure date");
+  if (!DATE_RE.test(returnDate)) throw new Error("Invalid return date");
+
+  return { origin, destination, departureDate, returnDate, adults, maxOffers };
+}
+
+// ---------------------------------------------------------------------------
+// Handler
+// ---------------------------------------------------------------------------
 Deno.serve(async (req: Request) => {
   const corsHeaders = getCorsHeaders(req);
+
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    // ── Auth: verify JWT ──
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: "Missing or invalid Authorization header" }),
+        JSON.stringify({ error: "Missing authorization header" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const jwt = authHeader.replace("Bearer ", "");
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: `Bearer ${jwt}` } },
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
     });
-    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
-    if (userError || !user) {
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
       return new Response(
-        JSON.stringify({ error: "Invalid or expired token" }),
+        JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
+    // ── Parse + validate params ──
     const body = await req.json();
-    const { origin, destination, departureDate, returnDate, adults = 1, maxOffers = 5 } = body;
+    const params = validateSearchParams(body);
 
-    if (!origin || !destination || !departureDate || !returnDate) {
-      return new Response(
-        JSON.stringify({ error: "origin, destination, departureDate, returnDate required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
+    // ── Get Amadeus token + search ──
     const token = await getAmadeusToken();
 
-    const url = new URL(`${BASE}/v2/shopping/flight-offers`);
-    url.searchParams.set("originLocationCode", String(origin));
-    url.searchParams.set("destinationLocationCode", String(destination));
-    url.searchParams.set("departureDate", String(departureDate));
-    url.searchParams.set("returnDate", String(returnDate));
-    url.searchParams.set("adults", String(adults));
-    url.searchParams.set("max", String(Math.min(maxOffers, 10)));
+    const url = new URL(`${AMADEUS_BASE}/v2/shopping/flight-offers`);
+    url.searchParams.set("originLocationCode", params.origin);
+    url.searchParams.set("destinationLocationCode", params.destination);
+    url.searchParams.set("departureDate", params.departureDate);
+    url.searchParams.set("returnDate", params.returnDate);
+    url.searchParams.set("adults", String(params.adults));
+    url.searchParams.set("max", String(params.maxOffers));
     url.searchParams.set("currencyCode", "USD");
     url.searchParams.set("nonStop", "false");
 
-    const res = await fetch(url.toString(), {
+    const amadeusRes = await fetch(url.toString(), {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    if (!res.ok) {
-      const errBody = await res.text();
-      console.error("[amadeus-proxy] Search error:", res.status, errBody);
+    if (!amadeusRes.ok) {
+      const errBody = await amadeusRes.text();
+      console.error("Amadeus API error:", amadeusRes.status, errBody);
       return new Response(
-        JSON.stringify({ error: "Flight search failed" }),
-        { status: res.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({ error: "Flight search failed", status: amadeusRes.status }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const data = await res.json();
-    const rawOffers = data.data ?? [];
+    const amadeusData = await amadeusRes.json();
 
-    const offers = rawOffers.map((offer: Record<string, unknown>) => {
-      const price = parseFloat((offer.price as Record<string, string>).total);
-      const currency = (offer.price as Record<string, string>).currency;
-      const itineraries = offer.itineraries as Array<Record<string, unknown>>;
-      const outbound = itineraries[0];
-      const returnFlight = itineraries[1];
-      const segments = outbound.segments as Array<Record<string, unknown>>;
-      const mainCarrier = (segments[0]?.carrierCode as string) ?? "XX";
-
-      return {
-        airline: mainCarrier,
-        airlineName: AIRLINE_NAMES[mainCarrier] ?? mainCarrier,
-        price,
-        currency,
-        departureDate,
-        returnDate,
-        outboundDuration: formatDuration(outbound.duration as string),
-        returnDuration: returnFlight ? formatDuration(returnFlight.duration as string) : "",
-        stops: segments.length - 1,
-        origin,
-        destination,
-        bookingUrl: `https://www.google.com/travel/flights?q=flights+from+${origin}+to+${destination}+on+${departureDate}`,
-      };
+    // ── Return raw Amadeus response (client does the parsing) ──
+    return new Response(JSON.stringify(amadeusData), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-
-    offers.sort((a: { price: number }, b: { price: number }) => a.price - b.price);
-
-    return new Response(
-      JSON.stringify({
-        offers,
-        cheapest: offers[0] ?? null,
-        origin,
-        destination,
-        searchedAt: new Date().toISOString(),
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
   } catch (err) {
-    console.error("[amadeus-proxy] Error:", err);
+    const message = err instanceof Error ? err.message : "Internal server error";
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
+      JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
