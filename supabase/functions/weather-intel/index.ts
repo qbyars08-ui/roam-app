@@ -24,6 +24,7 @@ function getCorsHeaders(req: Request) {
 }
 
 const MAX_DESTINATION_LENGTH = 200;
+const RATE_LIMIT_PER_MINUTE = 60;
 
 interface WeatherDay {
   date: string;
@@ -111,6 +112,19 @@ Deno.serve(async (req: Request) => {
       return new Response(
         JSON.stringify({ error: "Invalid or expired token" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // ── Rate limit ───────────────────────────────────────────────────
+    const supabaseAdmin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const { data: count } = await supabaseAdmin.rpc("increment_edge_rate_limit", {
+      p_user_id: user.id,
+      p_endpoint: "weather-intel",
+    });
+    if ((count as number) > RATE_LIMIT_PER_MINUTE) {
+      return new Response(
+        JSON.stringify({ error: "Rate limit exceeded. Try again in a minute." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 

@@ -26,6 +26,7 @@ function getCorsHeaders(req: Request) {
 
 // Cache for 30 days — destination photos rarely change
 const CACHE_DAYS = 30;
+const RATE_LIMIT_PER_MINUTE = 60;
 
 // ── Main handler ────────────────────────────────────────────────────────────
 Deno.serve(async (req: Request) => {
@@ -78,6 +79,18 @@ Deno.serve(async (req: Request) => {
 
     // Service-role client for cache
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+    // ── Rate limit ─────────────────────────────────────────────────────
+    const { data: count } = await supabaseAdmin.rpc("increment_edge_rate_limit", {
+      p_user_id: user.id,
+      p_endpoint: "destination-photo",
+    });
+    if ((count as number) > RATE_LIMIT_PER_MINUTE) {
+      return new Response(
+        JSON.stringify({ error: "Rate limit exceeded. Try again in a minute." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     // ── Parse request ───────────────────────────────────────────────────
     const { query } = (await req.json()) as { query: string };
