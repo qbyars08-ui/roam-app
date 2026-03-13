@@ -17,8 +17,8 @@ export type TravelFrequency =
   | 'constantly';
 
 export type TravelProfile = {
-  /** Passport nationality for visa checks (US or Austrian) */
-  passportNationality: PassportNationality;
+  /** Passport nationality for visa checks. null = not yet set by user (defaults to US silently, show warning). */
+  passportNationality: PassportNationality | null;
   /** How often they travel — first-trip = more tips/safety; constantly = less hand-holding */
   travelFrequency: TravelFrequency;
   /** 1 = slow single-neighborhood traveler, 10 = multi-country speed runner */
@@ -81,7 +81,7 @@ export const TRAVEL_FREQUENCY_OPTIONS: { id: TravelFrequency; label: string; des
 ];
 
 export const DEFAULT_TRAVEL_PROFILE: TravelProfile = {
-  passportNationality: 'US',
+  passportNationality: null,
   travelFrequency: 'few-times-year',
   pace: 5,
   budgetStyle: 5,
@@ -232,7 +232,11 @@ export function getSliderDescriptor(
 
 export function profileToPromptString(profile: TravelProfile): string {
   const lines: string[] = [];
-  const passportLabel = profile.passportNationality === 'US' ? 'US passport' : 'Austrian passport';
+  const passportLabel = profile.passportNationality === 'US'
+    ? 'US passport'
+    : profile.passportNationality === 'AT'
+      ? 'Austrian passport'
+      : 'US passport (default — user has not set passport country)';
   lines.push(`Passport: ${passportLabel}`);
 
   const freqLabels: Record<TravelFrequency, string> = {

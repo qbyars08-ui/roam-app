@@ -62,9 +62,11 @@ export default function EmergencySOS({ countryCode }: EmergencySSOProps) {
 
   // Load saved emergency contact
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((val) => {
-      if (val) setEmergencyContact(val);
-    });
+    let cancelled = false;
+    AsyncStorage.getItem(STORAGE_KEY)
+      .then((val) => { if (!cancelled && val) setEmergencyContact(val); })
+      .catch(() => {});
+    return () => { cancelled = true; };
   }, []);
 
   // Pulse animation
@@ -217,6 +219,14 @@ export default function EmergencySOS({ countryCode }: EmergencySSOProps) {
       {/* SOS Button */}
       <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
         <Pressable
+          onPress={() => {
+            const code = countryCode?.toUpperCase() ?? 'DEFAULT';
+            const number = EMERGENCY_NUMBERS[code] ?? EMERGENCY_NUMBERS.DEFAULT;
+            Alert.alert(
+              'SOS Activated',
+              `Emergency numbers for this country are shown below.\n\nLocal emergency: ${number}\n\nHold the SOS button to send your location to your emergency contact.`
+            );
+          }}
           onLongPress={handleSOSLongPress}
           delayLongPress={LONG_PRESS_DURATION}
           style={({ pressed }) => [
@@ -225,7 +235,7 @@ export default function EmergencySOS({ countryCode }: EmergencySSOProps) {
           ]}
         >
           <Text style={styles.sosButtonText}>SOS</Text>
-          <Text style={styles.sosHint}>Hold to send location</Text>
+          <Text style={styles.sosHint}>Tap for info  •  Hold to send location</Text>
         </Pressable>
       </Animated.View>
 

@@ -268,9 +268,9 @@ export function convertPriceString(
 export function formatDualPrice(
   priceStr: string,
   targetCurrency: string,
-  rates: ExchangeRates
+  rates: ExchangeRates | null | undefined
 ): string {
-  if (targetCurrency === 'USD') return priceStr;
+  if (!rates || targetCurrency === 'USD') return priceStr;
 
   const converted = convertPriceString(priceStr, targetCurrency, rates);
   if (!converted) return priceStr;
@@ -280,14 +280,14 @@ export function formatDualPrice(
 
 /**
  * Format a price ONLY in the local currency.
- * Falls back to original if conversion fails.
+ * Falls back to original if conversion fails or rates are unavailable.
  */
 export function formatLocalPrice(
   priceStr: string,
   targetCurrency: string,
-  rates: ExchangeRates
+  rates: ExchangeRates | null | undefined
 ): string {
-  if (targetCurrency === 'USD') return priceStr;
+  if (!rates || targetCurrency === 'USD') return priceStr;
 
   const converted = convertPriceString(priceStr, targetCurrency, rates);
   if (!converted) return priceStr;

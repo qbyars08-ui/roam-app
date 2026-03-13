@@ -178,7 +178,11 @@ export default function SavedScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      getMyGroups().then(setGroups).catch(() => setGroups([]));
+      let cancelled = false;
+      getMyGroups()
+        .then((g) => { if (!cancelled) setGroups(g); })
+        .catch(() => { if (!cancelled) setGroups([]); });
+      return () => { cancelled = true; };
     }, [])
   );
 

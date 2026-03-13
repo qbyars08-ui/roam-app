@@ -27,6 +27,7 @@ import {
   Luggage,
   MapPin,
   Building2,
+  AlertCircle,
 } from 'lucide-react-native';
 
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../../lib/constants';
@@ -334,6 +335,7 @@ function PrepScreen() {
   const insets = useSafeAreaInsets();
   const trips = useAppStore((s) => s.trips);
   const activeTripId = useAppStore((s) => s.activeTripId);
+  const passportNationality = useAppStore((s) => s.travelProfile.passportNationality);
 
   const activeTrip: Trip | null =
     trips.find((t) => t.id === activeTripId) ?? trips[0] ?? null;
@@ -375,6 +377,22 @@ function PrepScreen() {
           Language, safety, culture, packing. Everything you need, all in one place. Works offline.
         </Text>
       </View>
+
+      {/* Passport warning — shown when user hasn't set their passport country */}
+      {passportNationality === null && (
+        <Pressable
+          onPress={() => router.push('/travel-profile')}
+          style={styles.passportWarning}
+          accessibilityRole="button"
+          accessibilityLabel="Set your passport country"
+        >
+          <AlertCircle size={16} color={COLORS.gold} strokeWidth={2} style={{ flexShrink: 0 }} />
+          <Text style={styles.passportWarningText}>
+            Set your passport country for accurate visa & entry info
+          </Text>
+          <ChevronRight size={14} color={COLORS.gold} strokeWidth={2} style={{ flexShrink: 0 }} />
+        </Pressable>
+      )}
 
       {/* Trip card (if active) */}
       {activeTrip && (
@@ -634,6 +652,28 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: COLORS.creamMuted,
     lineHeight: 22,
+  } as TextStyle,
+
+  // Passport warning banner
+  passportWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
+    backgroundColor: COLORS.gold + '1A',
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.gold,
+    borderRadius: RADIUS.sm,
+    paddingVertical: SPACING.sm + 2,
+    paddingHorizontal: SPACING.md,
+  } as ViewStyle,
+  passportWarningText: {
+    flex: 1,
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.cream,
+    lineHeight: 18,
   } as TextStyle,
 
   // Trip card
