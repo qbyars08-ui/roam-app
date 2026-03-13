@@ -46,8 +46,11 @@ export async function requestNotificationPermission(): Promise<boolean> {
 // Trip countdown
 // ---------------------------------------------------------------------------
 
+/** Spec: 3 days, 1 day, day-of before trip start */
+const TRIP_COUNTDOWN_DAYS = [3, 1, 0] as const;
+
 /**
- * Schedule a notification that counts down to a trip departure date.
+ * Schedule trip countdown notifications per spec: 3 days, 1 day, day-of.
  *
  * @param tripId    Unique trip identifier (used to cancel later)
  * @param destination  e.g. "Tokyo"
@@ -57,32 +60,53 @@ export async function scheduleTripCountdown(
   tripId: string,
   destination: string,
   departureDate: string
-): Promise<string | null> {
+): Promise<string[]> {
+  if (Platform.OS === 'web') return [];
+
   const departure = new Date(departureDate);
+  departure.setHours(0, 0, 0, 0);
   const now = new Date();
 
-  // Schedule a reminder 24 hours before departure
-  const reminderDate = new Date(departure.getTime() - 24 * 60 * 60 * 1000);
+  const ids: string[] = [];
 
-  if (reminderDate <= now) {
-    return null;
+  const messages: Record<number, { title: string; body: string }> = {
+    3: {
+      title: `${destination} is in 3 days`,
+      body: "Here's what to do today to get ready.",
+    },
+    1: {
+      title: `${destination} tomorrow!`,
+      body: "Final prep: passports, confirmations, adapters. You've got this!",
+    },
+    0: {
+      title: `Today's the day — ${destination}`,
+      body: 'Your adventure starts now. Safe travels!',
+    },
+  };
+
+  for (const daysBefore of TRIP_COUNTDOWN_DAYS) {
+    const triggerDate = new Date(departure);
+    triggerDate.setDate(triggerDate.getDate() - daysBefore);
+    triggerDate.setHours(9, 0, 0, 0);
+
+    if (triggerDate > now) {
+      const msg = messages[daysBefore] ?? messages[1];
+      const id = await Notifications.scheduleNotificationAsync({
+        content: {
+          title: msg.title,
+          body: msg.body,
+          data: { tripId, type: 'trip_countdown', daysBefore },
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: triggerDate,
+        },
+      });
+      ids.push(id);
+    }
   }
 
-  if (Platform.OS === 'web') return null;
-
-  const id = await Notifications.scheduleNotificationAsync({
-    content: {
-      title: `${destination} tomorrow!`,
-      body: `Final prep: passports, confirmations, adapters, chargers. You've got this!`,
-      data: { tripId, type: 'trip_countdown' },
-    },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.DATE,
-      date: reminderDate,
-    },
-  });
-
-  return id;
+  return ids;
 }
 
 // ---------------------------------------------------------------------------
@@ -269,4 +293,61 @@ export async function getExpoPushToken(
     console.warn('[notifications] Failed to get push token:', err);
     return null;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Push token registration — store device token in Supabase for remote push
+// ---------------------------------------------------------------------------
+
+const EAS_PROJECT_ID = 'c19740b8-17b5-43c6-8156-35bacc2312dd';
+
+/**
+ * Register this device's push token with Supabase.
+ * Call after auth session is established.
+ * Safe to call multiple times — upserts on (user_id, token).
+ */
+export async function registerPushToken(userId: string): Promise<void> {
+  if (Platform.OS === 'web') return;
+
+  const token = await getExpoPushToken(EAS_PROJECT_ID);
+  if (!token) return;
+
+  // Lazy import to avoid circular deps
+  const { supabase } = require('./supabase');
+
+  const { error } = await supabase
+    .from('push_tokens')
+    .upsert(
+      {
+        user_id: userId,
+        token,
+        platform: Platform.OS,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,token' }
+    );
+
+  if (error) {
+    console.warn('[notifications] Failed to register push token:', error.message);
+  } else {
+    console.info('[notifications] Push token registered');
+  }
+}
+
+/**
+ * Remove this device's push token (call on logout).
+ */
+export async function unregisterPushToken(userId: string): Promise<void> {
+  if (Platform.OS === 'web') return;
+
+  const token = await getExpoPushToken(EAS_PROJECT_ID);
+  if (!token) return;
+
+  const { supabase } = require('./supabase');
+
+  await supabase
+    .from('push_tokens')
+    .delete()
+    .eq('user_id', userId)
+    .eq('token', token);
 }
