@@ -98,6 +98,7 @@ ROAM is coordinated by four specialized agents. Each has a distinct mandate. Bri
 **Does not:** Write code, run tests, or generate feature ideas unilaterally.
 
 **Key files to maintain:**
+- `docs/agents/AGENT_BOARD.md` — update Bridge section after every completed task (status, date, ≤10 findings with file paths, action needed)
 - `docs/DAILY_BRIEF.md` — current session brief (overwrite each session)
 - `docs/DECISIONS_LOG.md` — append-only decisions log
 - `AGENTS.md` — this file (update as team evolves)
@@ -115,6 +116,7 @@ Each dimension: 1–5. Effort is inverted: 5 = trivial, 1 = epic.
 **Outputs:** Structured research reports in `docs/` with a clear "so what" section.
 
 **Key docs to maintain:**
+- `docs/agents/AGENT_BOARD.md` — update Scout section after every completed task
 - `docs/competitive-research.md`
 - `docs/free-apis-research.md`
 - `docs/tiktok-gen-z-research.md`
@@ -131,6 +133,7 @@ Each dimension: 1–5. Effort is inverted: 5 = trivial, 1 = epic.
 **Outputs:** Updated `docs/polish-checklist.md`, bug reports with reproduction steps, test results.
 
 **Key docs to maintain:**
+- `docs/agents/AGENT_BOARD.md` — update Forge section after every completed task
 - `docs/polish-checklist.md` — mark each screen as audited with notes
 - Bug reports filed as comments on the relevant commit or as `docs/YYYYMMDD-bug-report.md`
 
@@ -147,6 +150,9 @@ Each dimension: 1–5. Effort is inverted: 5 = trivial, 1 = epic.
 
 **Inputs:** Problems or opportunities from Bridge, Scout findings, or Forge bug patterns.  
 **Outputs:** Feature concepts in `docs/UNBUILT_FEATURES.md` (append) or standalone spec files.
+
+**Key docs to maintain:**
+- `docs/agents/AGENT_BOARD.md` — update Spark section after every completed task
 
 **Protocol:**
 - Every idea must answer: *What does the user feel when this works perfectly?*
