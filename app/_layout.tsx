@@ -29,6 +29,8 @@ import { checkStorageVersion } from '../lib/storage-version';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
 import OfflineBanner from '../components/ui/OfflineBanner';
 import PhoneFrame from '../components/ui/PhoneFrame';
+import { initAnalytics, identifyUser, resetUser, getPostHogClient } from '../lib/analytics';
+import { PostHogProvider } from 'posthog-react-native';
 
 // ---------------------------------------------------------------------------
 // Auth guard — redirects based on session state
@@ -94,6 +96,7 @@ export default function RootLayout() {
   useEffect(() => {
     // Initialize RevenueCat on app start (anonymous); links to user when session loads
     initRevenueCat().catch(() => {});
+    initAnalytics().catch(() => {});
     checkStorageVersion().catch(() => {});
     captureRefOnLoad().catch(() => {}); // Web: track ?ref= for referral attribution
     // Restore persisted data (trips, pets, travel profile, currency) before session check
@@ -145,6 +148,7 @@ export default function RootLayout() {
           const current = useAppStore.getState().session;
           if (current?.user?.id?.startsWith?.('guest-')) return;
           logoutRevenueCat().catch(() => {});
+          resetUser();
           setSession(null);
         }
       });
@@ -184,6 +188,7 @@ export default function RootLayout() {
         setTripsThisMonth(profile.trips_generated_this_month ?? 0);
       }
 
+      identifyUser(session.user.id, { isPro: proFromPurchases });
       ensureReferralCode(session.user.id).catch(() => {});
 
       try {
@@ -290,8 +295,11 @@ export default function RootLayout() {
     );
   }
 
+  const phClient = getPostHogClient() ?? undefined;
+
   return (
     <ErrorBoundary>
+      <PostHogProvider client={phClient} autocapture={false}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <PhoneFrame>
           <OfflineBanner />
@@ -531,6 +539,7 @@ export default function RootLayout() {
         </PhoneFrame>
         <StatusBar style="light" />
       </GestureHandlerRootView>
+      </PostHogProvider>
     </ErrorBoundary>
   );
 }
