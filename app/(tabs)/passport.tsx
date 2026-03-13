@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../../lib/haptics';
 
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../../lib/constants';
+import { withComingSoon } from '../../lib/with-coming-soon';
 import { Share2, BookOpen, MapPin, Lock } from 'lucide-react-native';
 import { EmptyPassport } from '../../components/ui/EmptyStateIllustrations';
 import { useAppStore } from '../../lib/store';
@@ -31,7 +32,7 @@ import {
 } from '../../lib/passport';
 import WorldMap from '../../components/features/WorldMap';
 
-export default function PassportScreen() {
+function PassportScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const trips = useAppStore((s) => s.trips);
@@ -457,3 +458,5 @@ const styles = StyleSheet.create({
     color: COLORS.bg,
   } as TextStyle,
 });
+
+export default withComingSoon(PassportScreen, { routeName: 'passport', title: 'Digital Passport' });

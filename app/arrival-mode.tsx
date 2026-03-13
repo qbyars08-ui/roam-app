@@ -21,6 +21,7 @@ import * as Haptics from '../lib/haptics';
 import { ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useDestinationTheme } from '../lib/useDestinationTheme';
+import { withComingSoon } from '../lib/with-coming-soon';
 
 // =============================================================================
 // Types
@@ -242,7 +243,7 @@ function SectionIcon({ icon, color }: { icon: string; color: string }) {
 // =============================================================================
 // Main component
 // =============================================================================
-export default function ArrivalModeScreen() {
+function ArrivalModeScreen() {
   const { destination } = useLocalSearchParams<{ destination: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -306,7 +307,7 @@ export default function ArrivalModeScreen() {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <LinearGradient
-          colors={[COLORS.bg, '#0a1a12', COLORS.bg]}
+          colors={[COLORS.bg, COLORS.gradientForestDark, COLORS.bg]}
           style={StyleSheet.absoluteFill}
         />
         <Pressable
@@ -444,7 +445,7 @@ export default function ArrivalModeScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient
-        colors={[COLORS.bg, '#0a1a12', COLORS.bg]}
+        colors={[COLORS.bg, COLORS.gradientForestDark, COLORS.bg]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -490,7 +491,7 @@ export default function ArrivalModeScreen() {
             ]}
           >
             <LinearGradient
-              colors={[COLORS.bgGlass, 'rgba(255,255,255,0.02)']}
+              colors={[COLORS.bgGlass, COLORS.whiteFaint]}
               style={styles.cardGradient}
             >
               {/* Card header */}
@@ -798,3 +799,5 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   } as TextStyle,
 });
+
+export default withComingSoon(ArrivalModeScreen, { routeName: 'arrival-mode', title: 'Arrival Mode' });

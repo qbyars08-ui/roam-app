@@ -29,6 +29,7 @@ import {
   ROVER_AFFILIATE_URL,
   WAG_AFFILIATE_URL,
 } from '../../lib/constants';
+import { withComingSoon } from '../../lib/with-coming-soon';
 import { useAppStore, type Pet } from '../../lib/store';
 import {
   schedulePetCheckIn,
@@ -317,7 +318,7 @@ function ReminderToggle() {
       <Switch
         value={enabled}
         onValueChange={handleToggle}
-        trackColor={{ false: 'rgba(255,255,255,0.1)', true: COLORS.sage }}
+        trackColor={{ false: COLORS.whiteSoft, true: COLORS.sage }}
         thumbColor={COLORS.cream}
       />
     </View>
@@ -372,7 +373,7 @@ function PetDestinations() {
 // Main Screen
 // ---------------------------------------------------------------------------
 
-export default function PetsScreen() {
+function PetsScreen() {
   const insets = useSafeAreaInsets();
   const [modalVisible, setModalVisible] = useState(false);
   const pets = useAppStore((s) => s.pets);
@@ -681,7 +682,7 @@ const styles = StyleSheet.create({
   // Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: COLORS.overlay,
     justifyContent: 'flex-end',
   } as ViewStyle,
   modalSheet: {
@@ -697,7 +698,7 @@ const styles = StyleSheet.create({
   modalHandle: {
     width: 40,
     height: 4,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: COLORS.whiteDim,
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: SPACING.lg,
@@ -721,7 +722,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 16,
     color: COLORS.cream,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: COLORS.border,
     borderWidth: 1,
     borderColor: CARD_BORDER,
     borderRadius: RADIUS.md,
@@ -739,7 +740,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     borderWidth: 1,
     borderColor: CARD_BORDER,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: COLORS.bgCard,
   } as ViewStyle,
   typeChipActive: {
     borderColor: COLORS.sage,
@@ -751,3 +752,5 @@ const styles = StyleSheet.create({
     color: COLORS.cream,
   } as TextStyle,
 });
+
+export default withComingSoon(PetsScreen, { routeName: 'pets', title: 'Pet Travel' });

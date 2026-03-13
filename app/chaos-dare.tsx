@@ -23,8 +23,9 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { getChaosDare, type ChaosDare } from '../lib/chaos-dare';
 import { getDestinationPhoto } from '../lib/photos';
 import { BUDGETS, VIBES } from '../lib/constants';
+import { withComingSoon } from '../lib/with-coming-soon';
 
-export default function ChaosDareScreen() {
+function ChaosDareScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ id?: string }>();
@@ -78,7 +79,7 @@ export default function ChaosDareScreen() {
         imageStyle={styles.bgImage as ImageStyle}
       >
         <LinearGradient
-          colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.85)']}
+          colors={[COLORS.overlaySoft, COLORS.overlayStrong]}
           style={styles.grad}
         >
           <Text style={styles.eyebrow}>SOMEONE DARED YOU</Text>
@@ -159,3 +160,5 @@ const styles = StyleSheet.create({
     color: COLORS.creamMuted,
   } as TextStyle,
 });
+
+export default withComingSoon(ChaosDareScreen, { routeName: 'chaos-dare', title: 'Chaos Dare' });

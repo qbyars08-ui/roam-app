@@ -23,6 +23,7 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import { useProGate } from '../lib/pro-gate';
 import type { TravelProfile } from '../lib/types/travel-profile';
+import { withComingSoon } from '../lib/with-coming-soon';
 
 // ---------------------------------------------------------------------------
 // Archetype definitions
@@ -293,7 +294,7 @@ function computeTravelTwin(profile: TravelProfile): Archetype {
 // Component
 // ---------------------------------------------------------------------------
 
-export default function TravelTwinScreen() {
+function TravelTwinScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { canAccess } = useProGate('travel-twin');
@@ -368,7 +369,7 @@ export default function TravelTwinScreen() {
   if (!hasCompletedProfile || !twin) {
     return (
       <LinearGradient
-        colors={[COLORS.bg, '#0a1a12', COLORS.bg]}
+        colors={[COLORS.bg, COLORS.gradientForestDark, COLORS.bg]}
         style={[styles.container, { paddingTop: insets.top }]}
       >
         <View style={styles.emptyState}>
@@ -384,7 +385,7 @@ export default function TravelTwinScreen() {
             onPress={() => router.push('/travel-profile')}
           >
             <LinearGradient
-              colors={[COLORS.sage, '#5a9468']}
+              colors={[COLORS.sage, COLORS.sageDeep]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.ctaGradient}
@@ -423,7 +424,7 @@ export default function TravelTwinScreen() {
   // ------ Main reveal ------
   return (
     <LinearGradient
-        colors={[COLORS.bg, '#0a1410', '#080F0A']}
+        colors={[COLORS.bg, COLORS.gradientForestSoft, COLORS.bg]}
       style={[styles.container, { paddingTop: insets.top }]}
     >
       {/* Back button */}
@@ -597,7 +598,7 @@ export default function TravelTwinScreen() {
             onPress={handleShare}
           >
             <LinearGradient
-              colors={[COLORS.sage, '#5a9468']}
+              colors={[COLORS.sage, COLORS.sageDeep]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.shareGradient}
@@ -641,7 +642,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: RADIUS.full,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: COLORS.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -781,8 +782,8 @@ const styles = StyleSheet.create({
   // Mantra
   mantraCard: {
     justifyContent: 'center',
-    borderColor: 'rgba(201,168,76,0.15)',
-    backgroundColor: 'rgba(201,168,76,0.04)',
+    borderColor: COLORS.goldHighlight,
+    backgroundColor: COLORS.goldFaint,
   },
   mantraText: {
     fontFamily: FONTS.headerMedium,
@@ -821,8 +822,8 @@ const styles = StyleSheet.create({
 
   // Nightmare
   nightmareCard: {
-    borderColor: 'rgba(192,57,43,0.15)',
-    backgroundColor: 'rgba(192,57,43,0.04)',
+    borderColor: COLORS.dangerFaintBorder,
+    backgroundColor: COLORS.dangerDim,
   },
 
   // Actions
@@ -857,3 +858,5 @@ const styles = StyleSheet.create({
     color: COLORS.creamMuted,
   },
 });
+
+export default withComingSoon(TravelTwinScreen, { routeName: 'travel-twin', title: 'Travel Twin' });

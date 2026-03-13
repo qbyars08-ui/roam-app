@@ -18,7 +18,9 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import { withComingSoon } from '../lib/with-coming-soon';
 import type { ComponentType } from 'react';
+import { type LucideIcon } from 'lucide-react-native';
 import {
   ChevronLeft,
   BookOpen,
@@ -159,7 +161,7 @@ function useStaggerAnim(count: number, delay = 80) {
 // =============================================================================
 // Component
 // =============================================================================
-export default function MemoryLaneScreen() {
+function MemoryLaneScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { canAccess } = useProGate('memory-lane');
@@ -889,3 +891,5 @@ const styles = StyleSheet.create({
     color: COLORS.bg,
   } as TextStyle,
 });
+
+export default withComingSoon(MemoryLaneScreen, { routeName: 'memory-lane', title: 'Memory Lane' });

@@ -2,6 +2,7 @@
 // ROAM — Mapbox Integration (Free Tier: 100K geocoding, 50K map loads/month)
 // Dark-styled static maps with day routes as connected paths.
 // =============================================================================
+import { COLORS } from './constants';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -13,11 +14,11 @@ const STATIC_BASE = 'https://api.mapbox.com/styles/v1';
 // Dark map style — ROAM branded
 const DARK_STYLE = 'mapbox/dark-v11';
 
-// Pin colors for morning/afternoon/evening
+// Pin colors for morning/afternoon/evening (Mapbox expects hex without #)
 const SLOT_COLORS: Record<string, string> = {
-  morning: '7CAF8A',   // sage
-  afternoon: 'C9A84C', // gold
-  evening: 'C0392B',   // coral
+  morning: COLORS.primary.slice(1),
+  afternoon: COLORS.gold.slice(1),
+  evening: COLORS.danger.slice(1),
 };
 
 // ---------------------------------------------------------------------------
@@ -126,7 +127,7 @@ export function buildStaticMapUrl(params: {
 
   // Build pin markers
   const markers = locations.map((loc, i) => {
-    const color = SLOT_COLORS[slots[i]] ?? '7CAF8A';
+    const color = SLOT_COLORS[slots[i]] ?? COLORS.primary.slice(1);
     const label = `${i + 1}`;
     return `pin-l-${label}+${color}(${loc.lng},${loc.lat})`;
   }).join(',');
@@ -138,7 +139,7 @@ export function buildStaticMapUrl(params: {
     // GeoJSON line with sage green color, 3px width
     const geojson = JSON.stringify({
       type: 'Feature',
-      properties: { 'stroke': '#7CAF8A', 'stroke-width': 3, 'stroke-opacity': 0.8 },
+      properties: { 'stroke': COLORS.primary, 'stroke-width': 3, 'stroke-opacity': 0.8 },
       geometry: {
         type: 'LineString',
         coordinates: locations.map((l) => [l.lng, l.lat]),
@@ -168,7 +169,7 @@ export function buildDestinationMapUrl(params: {
 
   const { lat, lng, zoom = 11, width = 600, height = 300 } = params;
 
-  const marker = `pin-s+7CAF8A(${lng},${lat})`;
+  const marker = `pin-s+${COLORS.primary.slice(1)}(${lng},${lat})`;
   return `${STATIC_BASE}/${DARK_STYLE}/static/${marker}/${lng},${lat},${zoom}/${width}x${height}@2x?access_token=${TOKEN}&attribution=false&logo=false`;
 }
 

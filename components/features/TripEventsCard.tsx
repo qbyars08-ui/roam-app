@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   } as ImageStyle,
   eventOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: COLORS.overlayLight,
   } as ViewStyle,
   eventBadge: {
     position: 'absolute',

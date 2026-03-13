@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   phrasePhonetic: { fontFamily: FONTS.mono, fontSize: 13, color: COLORS.creamMuted, marginTop: 4 },
   fullScreenOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.9)',
+    backgroundColor: COLORS.overlayDeeper,
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.xl,

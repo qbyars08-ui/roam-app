@@ -21,8 +21,9 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useProGate } from '../../lib/pro-gate';
 
 // ---------------------------------------------------------------------------
-// Feature definitions
+// Feature definitions — 5 visible & functional; rest show "Coming Soon"
 // ---------------------------------------------------------------------------
+const LIVE_FEATURE_IDS = ['budget-guardian', 'flights', 'language-survival', 'prep', 'group-trips'] as const;
 const ICON_MAP = {
   MessageSquare,
   Shield,
@@ -70,6 +71,7 @@ const FEATURES: Feature[] = [
   { id: 'roam-for-dates', icon: 'Heart', name: 'ROAM for Dates', description: 'Couples planner — merge your travel styles', route: '/roam-for-dates' },
   { id: 'trip-trading', icon: 'Repeat', name: 'Trip Trading', description: 'Swap itineraries, claim others\' trips', route: '/trip-trading' },
   { id: 'local-lens', icon: 'Search', name: 'Local Lens', description: 'See destinations like a local', route: '/(tabs)/chat' },
+  { id: 'group-trips', icon: 'Users', name: 'Group Trips', description: 'Plan with friends — vote, chat, split costs', route: '/create-group' },
   { id: 'trip-chemistry', icon: 'FlaskConical', name: 'Trip Chemistry', description: 'Group travel compatibility', route: '/trip-chemistry', pro: true },
   { id: 'memory-lane', icon: 'Image', name: 'Memory Lane', description: 'Relive your past adventures', route: '/memory-lane', pro: true },
   { id: 'budget-guardian', icon: 'Wallet', name: 'Budget Guardian', description: 'Track spending & get alerts', route: '/budget-guardian' },
@@ -110,6 +112,8 @@ export default function ExploreHub({ standalone = false }: ExploreHubProps) {
 
   const handlePress = useCallback(
     (feature: Feature) => {
+      const isLive = (LIVE_FEATURE_IDS as readonly string[]).includes(feature.id);
+      if (!isLive) return;
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       if (feature.pro && !canAccessPro) {
         router.push('/paywall');
@@ -122,29 +126,37 @@ export default function ExploreHub({ standalone = false }: ExploreHubProps) {
 
   const content = (
     <View style={styles.grid}>
-      {FEATURES.map((feature) => (
-        <Pressable
-          key={feature.id}
-          style={({ pressed }) => [
-            styles.card,
-            { opacity: pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
-          ]}
-          onPress={() => handlePress(feature)}
-        >
-          {(() => {
-            const IconComponent = ICON_MAP[feature.icon];
-            return IconComponent ? (
-              <View style={styles.cardIcon}>
-                <IconComponent size={24} color={COLORS.accentGold} strokeWidth={2} />
+      {FEATURES.map((feature) => {
+        const isLive = (LIVE_FEATURE_IDS as readonly string[]).includes(feature.id);
+        return (
+          <Pressable
+            key={feature.id}
+            style={({ pressed }) => [
+              styles.card,
+              { opacity: pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
+            ]}
+            onPress={() => handlePress(feature)}
+          >
+            {!isLive && (
+              <View style={styles.comingSoonBadge}>
+                <Text style={styles.comingSoonBadgeText}>COMING SOON</Text>
               </View>
-            ) : null;
-          })()}
-          <Text style={styles.cardName}>{feature.name}</Text>
-          <Text style={styles.cardDesc} numberOfLines={2}>
-            {feature.description}
-          </Text>
-        </Pressable>
-      ))}
+            )}
+            {(() => {
+              const IconComponent = ICON_MAP[feature.icon];
+              return IconComponent ? (
+                <View style={styles.cardIcon}>
+                  <IconComponent size={24} color={isLive ? COLORS.accentGold : COLORS.creamMuted} strokeWidth={2} />
+                </View>
+              ) : null;
+            })()}
+            <Text style={[styles.cardName, !isLive && styles.cardNameMuted]}>{feature.name}</Text>
+            <Text style={styles.cardDesc} numberOfLines={2}>
+              {feature.description}
+            </Text>
+          </Pressable>
+        );
+      })}
     </View>
   );
 
@@ -262,6 +274,8 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   card: {
     width: CARD_WIDTH,
+    position: 'relative',
+    overflow: 'hidden',
     backgroundColor: COLORS.bgGlass,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
@@ -269,6 +283,25 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
     gap: SPACING.xs,
   } as ViewStyle,
+  comingSoonBadge: {
+    position: 'absolute',
+    top: SPACING.sm,
+    right: SPACING.sm,
+    backgroundColor: COLORS.sageLight,
+    paddingHorizontal: SPACING.xs + 2,
+    paddingVertical: 2,
+    borderRadius: RADIUS.full,
+    zIndex: 1,
+  } as ViewStyle,
+  comingSoonBadgeText: {
+    fontFamily: FONTS.mono,
+    fontSize: 9,
+    letterSpacing: 1,
+    color: COLORS.sage,
+  } as TextStyle,
+  cardNameMuted: {
+    opacity: 0.6,
+  } as TextStyle,
   cardIcon: {
     marginBottom: SPACING.xs,
   } as ViewStyle,

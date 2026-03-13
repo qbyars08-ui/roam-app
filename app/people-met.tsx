@@ -22,6 +22,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../lib/haptics';
+import { withComingSoon } from '../lib/with-coming-soon';
 import { Plus, MapPin, Camera } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import {
@@ -36,7 +37,7 @@ import { useAppStore } from '../lib/store';
 
 const DEFAULT_CITY = '';
 
-export default function PeopleMetScreen() {
+function PeopleMetScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [people, setPeople] = useState<PersonMet[]>([]);
@@ -536,7 +537,7 @@ const formStyles = StyleSheet.create({
 const modalStyles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: COLORS.overlay,
     justifyContent: 'flex-end',
   } as ViewStyle,
   sheet: {
@@ -587,3 +588,5 @@ const modalStyles = StyleSheet.create({
     color: COLORS.bg,
   } as TextStyle,
 });
+
+export default withComingSoon(PeopleMetScreen, { routeName: 'people-met', title: 'People Met' });

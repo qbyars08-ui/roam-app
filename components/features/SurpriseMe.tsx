@@ -151,7 +151,7 @@ export default function SurpriseMe({ photoUrls: _photoUrls }: Props) {
         >
           <Animated.View style={[styles.shimmerOverlay, { opacity: shimmerOpacity }]} />
           <LinearGradient
-            colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.5)']}
+            colors={[COLORS.overlayDarkDim, COLORS.overlayLight]}
             style={StyleSheet.absoluteFill}
           />
           <View style={styles.surpriseContent}>
@@ -202,7 +202,7 @@ export default function SurpriseMe({ photoUrls: _photoUrls }: Props) {
                       resizeMode="cover"
                     >
                       <LinearGradient
-                        colors={['transparent', 'rgba(0,0,0,0.85)']}
+                        colors={['transparent', COLORS.overlayStrong]}
                         style={styles.revealImageGradient}
                       >
                         <Text style={styles.revealName}>{dest.label}</Text>
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   modalBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.85)',
+    backgroundColor: COLORS.overlayStrong,
   } as ViewStyle,
 
   loadingCard: {

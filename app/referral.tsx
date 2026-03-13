@@ -154,7 +154,7 @@ export default function ReferralScreen() {
           ]}
         >
           <LinearGradient
-            colors={[COLORS.sage, '#5a9a6a']}
+            colors={[COLORS.sage, COLORS.sageDark]}
             style={styles.shareGradient}
           >
             <View style={styles.shareBtnInner}>

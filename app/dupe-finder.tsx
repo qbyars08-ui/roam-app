@@ -25,6 +25,7 @@ import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../lib/constants';
 import { getDestinationPhoto } from '../lib/photos';
 import ShimmerOverlay from '../components/ui/ShimmerOverlay';
 import { callClaude } from '../lib/claude';
+import { withComingSoon } from '../lib/with-coming-soon';
 
 // =============================================================================
 // Types
@@ -106,7 +107,7 @@ const SUGGESTED_SEARCHES = [
 // =============================================================================
 // Main Screen
 // =============================================================================
-export default function DupeFinderScreen() {
+function DupeFinderScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [dreamDest, setDreamDest] = useState('');
@@ -913,3 +914,5 @@ const styles = StyleSheet.create({
     color: COLORS.sage,
   } as TextStyle,
 });
+
+export default withComingSoon(DupeFinderScreen, { routeName: 'dupe-finder', title: 'Dupe Finder' });

@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: COLORS.overlaySoft,
     borderRadius: RADIUS.lg,
   } as ViewStyle,
   brand: {

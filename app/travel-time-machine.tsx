@@ -16,8 +16,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, Clock } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { compareDestinationOverTime } from '../lib/travel-time-machine';
+import { withComingSoon } from '../lib/with-coming-soon';
 
-export default function TravelTimeMachineScreen() {
+function TravelTimeMachineScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const params = useLocalSearchParams<{ destination?: string; year?: string }>();
@@ -156,3 +157,5 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
 });
+
+export default withComingSoon(TravelTimeMachineScreen, { routeName: 'travel-time-machine', title: 'Time Machine' });

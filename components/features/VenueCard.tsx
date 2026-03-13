@@ -93,7 +93,7 @@ function VenueCardInner({
           />
         ) : (
           <LinearGradient
-            colors={['#1A3A2E', '#0D1F1A']}
+            colors={[COLORS.gradientCardDeep, COLORS.gradientCard]}
             style={styles.placeholderGradient}
           >
             <MapPin size={40} color={COLORS.creamMuted} strokeWidth={1.5} />

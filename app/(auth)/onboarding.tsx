@@ -184,7 +184,7 @@ export default function OnboardingScreen() {
                   resizeMode="cover"
                 >
                   <LinearGradient
-                    colors={['rgba(0,0,0,0.15)', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.95)']}
+                    colors={[COLORS.overlayFaint, COLORS.overlayDark, COLORS.overlayDarkest]}
                     locations={[0.0, 0.5, 1]}
                     style={StyleSheet.absoluteFill}
                   />
@@ -280,8 +280,8 @@ const styles = StyleSheet.create({
   optionLabel: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 17,
-    color: '#FFFFFF',
-    textShadowColor: 'rgba(0,0,0,0.9)',
+    color: COLORS.white,
+    textShadowColor: COLORS.overlayDeeper,
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   } as TextStyle,

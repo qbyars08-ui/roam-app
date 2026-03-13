@@ -51,9 +51,9 @@ export default function ShimmerOverlay({ visible, style }: ShimmerOverlayProps) 
         <LinearGradient
           colors={[
             'transparent',
-            'rgba(255,255,255,0.06)',
-            'rgba(255,255,255,0.1)',
-            'rgba(255,255,255,0.06)',
+            COLORS.border,
+            COLORS.whiteSoft,
+            COLORS.border,
             'transparent',
           ]}
           locations={[0, 0.25, 0.5, 0.75, 1]}

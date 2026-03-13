@@ -1174,7 +1174,7 @@ const styles = StyleSheet.create({
   // Horizontal bar (shared)
   barBackground: {
     height: 6,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: COLORS.border,
     borderRadius: 3,
     overflow: 'hidden',
     marginTop: SPACING.xs,
@@ -1258,7 +1258,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: COLORS.bgCard,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: SPACING.sm,
@@ -1350,7 +1350,7 @@ const styles = StyleSheet.create({
 
   // Skeleton loader
   skeletonBar: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: COLORS.bgElevated,
     borderRadius: 4,
   },
 });

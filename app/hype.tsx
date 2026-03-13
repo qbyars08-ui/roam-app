@@ -29,11 +29,12 @@ import {
   type HypeTrip,
 } from '../lib/hype';
 import { scheduleTripCountdown } from '../lib/notifications';
+import { withComingSoon } from '../lib/with-coming-soon';
 
 // ---------------------------------------------------------------------------
 // Hype Screen
 // ---------------------------------------------------------------------------
-export default function HypeScreen() {
+function HypeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ tripId?: string; destination?: string }>();
@@ -153,7 +154,7 @@ export default function HypeScreen() {
           <>
             <View style={styles.countdownContainer}>
               <LinearGradient
-                colors={['rgba(201,168,76,0.15)', 'rgba(201,168,76,0.03)']}
+                colors={[COLORS.goldHighlight, COLORS.goldVeryFaint]}
                 style={styles.countdownGlow}
               >
                 <Text style={styles.countdownNumber}>
@@ -178,7 +179,7 @@ export default function HypeScreen() {
               </View>
               <View style={styles.progressBar}>
                 <LinearGradient
-                  colors={[COLORS.gold, '#E8B84A']}
+                  colors={[COLORS.gold, COLORS.goldBright]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={[
@@ -193,7 +194,7 @@ export default function HypeScreen() {
             {hypeContent && (
               <View style={styles.hypeCard}>
                 <LinearGradient
-                  colors={['rgba(201,168,76,0.12)', COLORS.sageSubtle]}
+                  colors={[COLORS.goldMutedLight, COLORS.sageSubtle]}
                   style={styles.hypeCardGradient}
                 >
                   {null}
@@ -214,7 +215,7 @@ export default function HypeScreen() {
                 ]}
               >
                 <LinearGradient
-                  colors={[COLORS.sage, '#5a9a6a']}
+                  colors={[COLORS.sage, COLORS.sageDark]}
                   style={styles.shareGradient}
                 >
                   <Text style={styles.shareButtonText}>
@@ -267,7 +268,7 @@ export default function HypeScreen() {
               ]}
             >
               <LinearGradient
-                colors={[COLORS.gold, '#B89640']}
+                colors={[COLORS.gold, COLORS.goldDark2]}
                 style={styles.setDateGradient}
               >
                 <Text style={styles.setDateText}>
@@ -534,3 +535,5 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   } as TextStyle,
 });
+
+export default withComingSoon(HypeScreen, { routeName: 'hype', title: 'Hype' });

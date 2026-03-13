@@ -53,7 +53,7 @@ function DestinationCardInner({ dest, photoUrl: photoUrlProp, onPress, size = 's
           resizeMode="cover"
         >
           <LinearGradient
-            colors={['transparent', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.92)']}
+            colors={['transparent', COLORS.overlayLight, COLORS.overlayFull]}
             locations={[0.3, 0.7, 1]}
             style={styles.gradient}
           >
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   badge: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: COLORS.whiteMuted,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,

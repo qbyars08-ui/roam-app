@@ -19,6 +19,7 @@ import * as Haptics from '../../lib/haptics';
 import { Plane, Camera, TrendingDown, X } from 'lucide-react-native';
 
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { withComingSoon } from '../../lib/with-coming-soon';
 import BreathingLine from '../../components/ui/BreathingLine';
 import { EmptyPlane } from '../../components/ui/EmptyStateIllustrations';
 import {
@@ -276,7 +277,7 @@ const dealStyles = StyleSheet.create({
 // ---------------------------------------------------------------------------
 // Main screen
 // ---------------------------------------------------------------------------
-export default function FlightsScreen() {
+function FlightsScreen() {
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
@@ -609,3 +610,5 @@ const styles = StyleSheet.create({
     color: COLORS.creamMuted,
   } as TextStyle,
 });
+
+export default withComingSoon(FlightsScreen, { routeName: 'flights', title: 'Flight Tracker' });

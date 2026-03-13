@@ -3,6 +3,7 @@
 // Curated visa data for US + Austrian passports (2025–2026)
 // Show before every trip generates so travelers know entry requirements.
 // =============================================================================
+import { COLORS } from './constants';
 
 export type PassportNationality = 'US' | 'AT';
 
@@ -169,11 +170,11 @@ export const PASSPORT_FLAGS: Record<PassportNationality, string> = {
 };
 
 const statusColors: Record<VisaStatus, string> = {
-  visa_free: '#7CAF8A',
-  eta: '#C9A84C',
-  visa_on_arrival: '#7CAF8A',
-  e_visa: '#C9A84C',
-  visa_required: '#C0392B',
+  visa_free: COLORS.primary,
+  eta: COLORS.gold,
+  visa_on_arrival: COLORS.primary,
+  e_visa: COLORS.gold,
+  visa_required: COLORS.danger,
 };
 
 /**

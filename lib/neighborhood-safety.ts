@@ -20,8 +20,8 @@ export interface SafetyZone {
 /** Safety level to fill color (rgba) */
 export const SAFETY_COLORS: Record<SafetyLevel, string> = {
   safe: COLORS.sageBorder,
-  moderate: 'rgba(201,168,76,0.25)',
-  caution: 'rgba(192,57,43,0.2)',
+  moderate: COLORS.safetyModerate,
+  caution: COLORS.safetyCaution,
 };
 
 /** Default safety by slot — generic; can be overridden per destination */

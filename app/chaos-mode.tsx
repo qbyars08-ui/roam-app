@@ -41,6 +41,7 @@ import { generateItinerary, TripLimitReachedError } from '../lib/claude';
 import { isGuestUser } from '../lib/guest';
 import { type Itinerary } from '../lib/types/itinerary';
 import { saveChaosDare, getDareShareUrl, getDareShareMessage } from '../lib/chaos-dare';
+import { withComingSoon } from '../lib/with-coming-soon';
 
 // =============================================================================
 // Chaos Messages — shown during generation
@@ -96,7 +97,7 @@ function pickRandomDestination(): string {
 // =============================================================================
 // Main Screen
 // =============================================================================
-export default function ChaosModeScreen() {
+function ChaosModeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const addTrip = useAppStore((s) => s.addTrip);
@@ -1020,3 +1021,5 @@ const styles = StyleSheet.create({
     color: COLORS.danger,
   } as TextStyle,
 });
+
+export default withComingSoon(ChaosModeScreen, { routeName: 'chaos-mode', title: 'Chaos Mode' });

@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.bgCard,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
-    borderColor: '#B91C1C',
+    borderColor: COLORS.emergencyRed,
     padding: SPACING.md,
     zIndex: 999,
   } as ViewStyle,

@@ -17,6 +17,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../lib/haptics';
+import { withComingSoon } from '../lib/with-coming-soon';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Heart, Users, ChevronRight } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, BUDGETS, VIBES, FREE_TRIPS_PER_MONTH } from '../lib/constants';
@@ -29,7 +30,7 @@ import type { TravelProfile } from '../lib/types/travel-profile';
 import type { Itinerary } from '../lib/types/itinerary';
 import Button from '../components/ui/Button';
 
-export default function RoamForDatesScreen() {
+function RoamForDatesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const myProfile = useAppStore((s) => s.travelProfile);
@@ -278,3 +279,5 @@ const styles = StyleSheet.create({
   resultDestination: { fontFamily: FONTS.header, fontSize: 32, color: COLORS.cream } as TextStyle,
   resultTagline: { fontFamily: FONTS.body, fontSize: 16, color: COLORS.creamMuted, marginTop: SPACING.sm } as TextStyle,
 });
+
+export default withComingSoon(RoamForDatesScreen, { routeName: 'roam-for-dates', title: 'ROAM for Dates' });

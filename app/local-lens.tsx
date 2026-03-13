@@ -20,6 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useDestinationTheme } from '../lib/useDestinationTheme';
+import { withComingSoon } from '../lib/with-coming-soon';
 
 // =============================================================================
 // Types
@@ -1608,7 +1609,7 @@ function NeighborhoodCard({ item }: { item: Neighborhood }) {
 // =============================================================================
 // Main screen
 // =============================================================================
-export default function LocalLensScreen() {
+function LocalLensScreen() {
   const { destination } = useLocalSearchParams<{ destination: string }>();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -1620,7 +1621,7 @@ export default function LocalLensScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient
-        colors={[COLORS.bg, '#0a1a12', COLORS.bg]}
+        colors={[COLORS.bg, COLORS.gradientForestDark, COLORS.bg]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -1956,7 +1957,7 @@ const styles = StyleSheet.create({
     marginRight: SPACING.sm,
   } as TextStyle,
   priceBadge: {
-    backgroundColor: 'rgba(201,168,76,0.15)',
+    backgroundColor: COLORS.goldHighlight,
     borderRadius: RADIUS.full,
     paddingHorizontal: SPACING.sm,
     paddingVertical: 3,
@@ -1998,9 +1999,9 @@ const styles = StyleSheet.create({
 
   // — Scams --
   scamCard: {
-    backgroundColor: 'rgba(192,57,43,0.06)',
+    backgroundColor: COLORS.dangerDim,
     borderWidth: 1,
-    borderColor: 'rgba(192,57,43,0.15)',
+    borderColor: COLORS.dangerFaintBorder,
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
     marginBottom: SPACING.sm,
@@ -2130,3 +2131,5 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   } as TextStyle,
 });
+
+export default withComingSoon(LocalLensScreen, { routeName: 'local-lens', title: 'Local Lens' });

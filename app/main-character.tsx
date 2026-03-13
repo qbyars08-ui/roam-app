@@ -18,6 +18,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
+import { withComingSoon } from '../lib/with-coming-soon';
 import ViewShot, { captureRef } from '../lib/view-shot';
 import * as Sharing from 'expo-sharing';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
@@ -86,12 +87,12 @@ Rules:
 // Vibe Colors
 // =============================================================================
 const VIBE_COLORS: Record<string, string> = {
-  'golden-hour': '#C9A84C',
-  'chaos': '#C0392B',
-  'quiet-flex': '#7CAF8A',
-  'discovery': '#5B9BD5',
-  'main-character': '#9B59B6',
-  'plot-twist': '#E67E22',
+  'golden-hour': COLORS.gold,
+  'chaos': COLORS.danger,
+  'quiet-flex': COLORS.sage,
+  'discovery': COLORS.blueAccent,
+  'main-character': COLORS.purpleAccent,
+  'plot-twist': COLORS.orangeAccent,
 };
 
 const VIBE_LABELS: Record<string, string> = {
@@ -106,7 +107,7 @@ const VIBE_LABELS: Record<string, string> = {
 // =============================================================================
 // Main Screen
 // =============================================================================
-export default function MainCharacterScreen() {
+function MainCharacterScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
@@ -634,7 +635,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.bgCard,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: COLORS.border,
     padding: SPACING.lg,
     marginBottom: SPACING.md,
   } as ViewStyle,
@@ -738,7 +739,7 @@ const styles = StyleSheet.create({
 
   // Caption
   captionRow: {
-    backgroundColor: 'rgba(155,89,182,0.1)',
+    backgroundColor: COLORS.purpleFaint,
     borderRadius: RADIUS.sm,
     padding: SPACING.sm,
     gap: 4,
@@ -775,3 +776,5 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   } as TextStyle,
 });
+
+export default withComingSoon(MainCharacterScreen, { routeName: 'main-character', title: 'Main Character Mode' });

@@ -3,6 +3,7 @@
 // Deep link templates + click tracking for booking partners
 // =============================================================================
 import { Linking, Platform } from 'react-native';
+import { COLORS } from './constants';
 import { supabase } from './supabase';
 import { useAppStore } from './store';
 
@@ -57,7 +58,7 @@ export const AFFILIATE_PARTNERS: AffiliatePartner[] = [
     id: 'skyscanner',
     name: 'Skyscanner',
     category: 'flights',
-    color: '#0770E3',
+    color: COLORS.affiliateSkyscanner,
     buildUrl: (p) => {
       const dest = getCityCode(p.destination);
       return `https://www.skyscanner.net/transport/flights/USAA/${dest}/?associateId=roam&utm_source=roam&utm_medium=app`;
@@ -68,7 +69,7 @@ export const AFFILIATE_PARTNERS: AffiliatePartner[] = [
     id: 'booking',
     name: 'Booking.com',
     category: 'hotels',
-    color: '#003580',
+    color: COLORS.affiliateBooking,
     buildUrl: (p) => {
       const city = encodeCity(p.destination);
       return `https://www.booking.com/searchresults.html?ss=${city}&aid=roam&utm_source=roam&utm_medium=app`;
@@ -79,7 +80,7 @@ export const AFFILIATE_PARTNERS: AffiliatePartner[] = [
     id: 'getyourguide',
     name: 'GetYourGuide',
     category: 'experiences',
-    color: '#FF5533',
+    color: COLORS.affiliateGetyourguide,
     buildUrl: (p) => {
       const city = encodeCity(p.destination);
       return `https://www.getyourguide.com/s/?q=${city}&partner_id=roam&utm_source=roam&utm_medium=app`;
@@ -90,7 +91,7 @@ export const AFFILIATE_PARTNERS: AffiliatePartner[] = [
     id: 'rentalcars',
     name: 'Rentalcars.com',
     category: 'car-rental',
-    color: '#F7B731',
+    color: COLORS.affiliateRentalcars,
     buildUrl: (p) => {
       const city = encodeCity(p.destination);
       return `https://www.rentalcars.com/search-results?location=${city}&affiliateCode=roam&utm_source=roam&utm_medium=app`;

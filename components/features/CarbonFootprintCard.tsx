@@ -29,7 +29,7 @@ export default function CarbonFootprintCard({
 
   return (
     <View style={styles.card}>
-      <Leaf size={20} color="#22c55e" strokeWidth={2} />
+      <Leaf size={20} color={COLORS.carbonGreen} strokeWidth={2} />
       <View style={styles.content}>
         <Text style={styles.title}>Carbon footprint</Text>
         <Text style={styles.amount}>
@@ -79,13 +79,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingVertical: 6,
     paddingHorizontal: 10,
-    backgroundColor: 'rgba(34, 197, 94, 0.2)',
+    backgroundColor: COLORS.carbonGreenBg,
     borderRadius: RADIUS.md,
     alignSelf: 'flex-start',
   },
   offsetText: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 13,
-    color: '#22c55e',
+    color: COLORS.carbonGreen,
   },
 });

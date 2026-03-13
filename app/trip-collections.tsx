@@ -19,6 +19,7 @@ import { ChevronRight } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import { TRIP_COLLECTIONS, type TripCollection } from '../lib/trip-collections';
+import { withComingSoon } from '../lib/with-coming-soon';
 
 function CollectionCard({
   collection,
@@ -47,7 +48,7 @@ function CollectionCard({
   );
 }
 
-export default function TripCollectionsScreen() {
+function TripCollectionsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const setPlanWizard = useAppStore((s) => s.setPlanWizard);
@@ -159,3 +160,5 @@ const styles = StyleSheet.create({
     color: COLORS.cream,
   } as TextStyle,
 });
+
+export default withComingSoon(TripCollectionsScreen, { routeName: 'trip-collections', title: 'Trip Collections' });

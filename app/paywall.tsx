@@ -346,7 +346,7 @@ export default function PaywallScreen() {
           ]}
         >
           <LinearGradient
-            colors={[COLORS.gold, '#B8943F']}
+            colors={[COLORS.gold, COLORS.goldDark]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.ctaGradient}
@@ -456,11 +456,11 @@ const styles = StyleSheet.create({
   tierCardHighlighted: {
     borderColor: COLORS.gold,
     borderWidth: 2,
-    backgroundColor: 'rgba(201,168,76,0.06)',
+    backgroundColor: COLORS.goldVeryFaint,
   } as ViewStyle,
   tierCardSelected: {
     borderColor: COLORS.gold,
-    backgroundColor: 'rgba(201,168,76,0.06)',
+    backgroundColor: COLORS.goldVeryFaint,
   } as ViewStyle,
   bestValueBadge: {
     position: 'absolute',

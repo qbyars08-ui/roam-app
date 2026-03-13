@@ -32,8 +32,9 @@ import {
   type SavedDestination,
 } from '../lib/flight-deals';
 import { useAppStore } from '../lib/store';
+import { withComingSoon } from '../lib/with-coming-soon';
 
-export default function DreamVaultScreen() {
+function DreamVaultScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const params = useLocalSearchParams<{ destination?: string }>();
@@ -114,7 +115,7 @@ export default function DreamVaultScreen() {
               onLongPress={() => handleRemove(d)}
             >
               <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.8)']}
+                colors={['transparent', COLORS.overlayDeeper]}
                 style={styles.cardGrad}
               >
                 <View style={styles.cardContent}>
@@ -263,3 +264,5 @@ const styles = StyleSheet.create({
     color: COLORS.sage,
   } as TextStyle,
 });
+
+export default withComingSoon(DreamVaultScreen, { routeName: 'dream-vault', title: 'Dream Vault' });

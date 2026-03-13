@@ -2,6 +2,7 @@
 // ROAM — Teleport API: Urban area scores (safety, cost of living)
 // Open data, no API key. api.teleport.org
 // =============================================================================
+import { COLORS } from './constants';
 
 const BASE = 'https://api.teleport.org/api';
 
@@ -94,7 +95,7 @@ export async function fetchUrbanScores(
       categories: data.categories.map((c) => ({
         name: c.name,
         score_out_of_10: c.score_out_of_10,
-        color: c.color || '#7CAF8A',
+        color: c.color || COLORS.primary,
       })),
       summary: data.summary || '',
       teleport_city_score: data.teleport_city_score ?? 0,

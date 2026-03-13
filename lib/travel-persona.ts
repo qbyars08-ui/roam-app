@@ -3,6 +3,7 @@
 // Analyzes trip history + preferences to create a unique Travel DNA profile
 // =============================================================================
 import { useAppStore } from './store';
+import { PERSONA_COLORS } from './constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ---------------------------------------------------------------------------
@@ -65,28 +66,28 @@ const ARCHETYPES: Record<PersonaArchetype, ArchetypeDefinition> = {
     title: 'The Midnight Explorer',
     subtitle: 'Nightlife runs through your veins',
     emoji: '',
-    color: '#6C5CE7',
+    color: PERSONA_COLORS['midnight-explorer'],
     vibeSignals: ['nightlife', 'bars', 'rooftop', 'underground', 'late-night'],
   },
   'dawn-chaser': {
     title: 'The Dawn Chaser',
     subtitle: 'First in line. Every time.',
     emoji: '',
-    color: '#E17055',
+    color: PERSONA_COLORS['dawn-chaser'],
     vibeSignals: ['temples', 'sunrise', 'hiking', 'nature', 'early-bird', 'outdoors'],
   },
   'food-archaeologist': {
     title: 'The Food Archaeologist',
     subtitle: 'Every trip is planned around eating',
     emoji: '',
-    color: '#D63031',
+    color: PERSONA_COLORS['food-archaeologist'],
     vibeSignals: ['food', 'street-food', 'culinary', 'foodie', 'cooking', 'restaurants', 'markets'],
   },
   'comfort-maximalist': {
     title: 'The Comfort Maximalist',
     subtitle: 'Nice hotels. Easy transport. No roughing it.',
     emoji: '',
-    color: '#C9A84C',
+    color: PERSONA_COLORS['comfort-maximalist'],
     vibeSignals: ['luxury', 'spa', 'relaxation', 'comfort', 'boutique'],
     budgetSignal: 'treat-yourself',
   },
@@ -94,21 +95,21 @@ const ARCHETYPES: Record<PersonaArchetype, ArchetypeDefinition> = {
     title: 'The Chaos Tourist',
     subtitle: 'No plan. Spontaneous. Loves getting lost.',
     emoji: '',
-    color: '#00B894',
+    color: PERSONA_COLORS['chaos-tourist'],
     vibeSignals: ['spontaneous', 'adventure', 'random', 'surprise', 'offbeat'],
   },
   'culture-collector': {
     title: 'The Culture Collector',
     subtitle: 'Museums, ruins, history — your happy place',
     emoji: '',
-    color: '#0984E3',
+    color: PERSONA_COLORS['culture-collector'],
     vibeSignals: ['culture', 'history', 'museums', 'art', 'architecture', 'heritage'],
   },
   'budget-ninja': {
     title: 'The Budget Ninja',
     subtitle: 'Seeing the world without breaking the bank',
     emoji: '',
-    color: '#00CEC9',
+    color: PERSONA_COLORS['budget-ninja'],
     vibeSignals: ['budget', 'cheap', 'backpacker', 'hostel', 'free'],
     budgetSignal: 'backpacker',
   },
@@ -116,35 +117,35 @@ const ARCHETYPES: Record<PersonaArchetype, ArchetypeDefinition> = {
     title: 'The Adventure Junkie',
     subtitle: 'If it has an adrenaline rush, you are there',
     emoji: '',
-    color: '#E84393',
+    color: PERSONA_COLORS['adventure-junkie'],
     vibeSignals: ['adventure', 'extreme', 'hiking', 'diving', 'surfing', 'trekking', 'climbing'],
   },
   'slow-traveler': {
     title: 'The Slow Traveler',
     subtitle: 'One city. Two weeks. Actually living there.',
     emoji: '',
-    color: '#7CAF8A',
+    color: PERSONA_COLORS['slow-traveler'],
     vibeSignals: ['slow', 'local', 'immersive', 'long-stay', 'digital-nomad'],
   },
   'digital-nomad': {
     title: 'The Digital Nomad',
     subtitle: 'WiFi first. Everything else second.',
     emoji: '',
-    color: '#636E72',
+    color: PERSONA_COLORS['digital-nomad'],
     vibeSignals: ['remote', 'coworking', 'wifi', 'digital-nomad', 'laptop'],
   },
   'romantic-wanderer': {
     title: 'The Romantic Wanderer',
     subtitle: 'Sunsets, rooftops, and candlelit dinners',
     emoji: '',
-    color: '#FD79A8',
+    color: PERSONA_COLORS['romantic-wanderer'],
     vibeSignals: ['romantic', 'couples', 'sunset', 'wine', 'honeymoon', 'date'],
   },
   'solo-wolf': {
     title: 'The Solo Wolf',
     subtitle: 'Your own pace. Your own path.',
     emoji: '',
-    color: '#2D3436',
+    color: PERSONA_COLORS['solo-wolf'],
     vibeSignals: ['solo', 'independent', 'alone', 'self-discovery'],
   },
 };

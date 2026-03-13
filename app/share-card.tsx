@@ -19,6 +19,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { COLORS, FONTS, SPACING, RADIUS, BUDGETS } from '../lib/constants';
 import { getDestinationPhoto } from '../lib/photos';
 import BreathingLine from '../components/ui/BreathingLine';
+import { withComingSoon } from '../lib/with-coming-soon';
 
 const CARD_WIDTH = 360;
 const CARD_HEIGHT = Math.round(CARD_WIDTH * (16 / 9));
@@ -39,7 +40,7 @@ interface ShareCardData {
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-export default function ShareCardPage() {
+function ShareCardPage() {
   const { k } = useLocalSearchParams<{ k?: string }>();
   const router = useRouter();
   const cardRef = useRef<View>(null);
@@ -121,7 +122,7 @@ export default function ShareCardPage() {
             resizeMode="cover"
           >
             <LinearGradient
-              colors={['transparent', 'rgba(0,0,0,0.2)', 'rgba(8,15,15,0.85)', '#080F0F']}
+              colors={['transparent', COLORS.overlayDarkDim, COLORS.bgDark1515Overlay, COLORS.bgDark1515End]}
               locations={[0.15, 0.45, 0.75, 1]}
               style={styles.overlay}
             >
@@ -176,7 +177,7 @@ export default function ShareCardPage() {
               style={[styles.downloadBtn, isDownloading && styles.downloadBtnDisabled]}
             >
               {isDownloading ? (
-                <BreathingLine width={40} height={3} color="#080F0A" />
+                <BreathingLine width={40} height={3} color={COLORS.bg} />
               ) : (
                 <Text style={styles.downloadBtnText}>Open image in new tab</Text>
               )}
@@ -192,7 +193,7 @@ export default function ShareCardPage() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#080F0F',
+    backgroundColor: COLORS.bgDark1515End,
     minHeight: '100%',
   } as ViewStyle,
   scrollContent: {
@@ -217,7 +218,7 @@ const styles = StyleSheet.create({
   logo: {
     fontFamily: FONTS.header,
     fontSize: 18,
-    color: '#C9A84C',
+    color: COLORS.gold,
     letterSpacing: 4,
   } as TextStyle,
   center: {
@@ -228,7 +229,7 @@ const styles = StyleSheet.create({
   destination: {
     fontFamily: FONTS.header,
     fontSize: 42,
-    color: '#FFFFFF',
+    color: COLORS.white,
     lineHeight: 48,
     letterSpacing: -0.5,
     marginBottom: SPACING.sm,
@@ -237,7 +238,7 @@ const styles = StyleSheet.create({
   tagline: {
     fontFamily: FONTS.header,
     fontSize: 20,
-    color: 'rgba(255,255,255,0.9)',
+    color: COLORS.whiteMuted90,
     lineHeight: 28,
     fontStyle: 'italic',
     textAlign: 'center',
@@ -253,14 +254,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     borderRadius: RADIUS.full,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: COLORS.sageMuted,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
+    borderColor: COLORS.whiteMuted15,
   } as ViewStyle,
   pillText: {
     fontFamily: FONTS.bodyMedium,
     fontSize: 13,
-    color: '#FFFFFF',
+    color: COLORS.white,
   } as TextStyle,
   themes: {
     gap: 4,
@@ -268,12 +269,12 @@ const styles = StyleSheet.create({
   themeItem: {
     fontFamily: FONTS.body,
     fontSize: 12,
-    color: 'rgba(248,250,252,0.75)',
+    color: COLORS.slateMuted75,
   } as TextStyle,
   builtWith: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: 'rgba(74,222,128,0.5)',
+    color: COLORS.successMuted,
     letterSpacing: 2,
     textAlign: 'center',
     marginTop: SPACING.sm,
@@ -295,12 +296,12 @@ const styles = StyleSheet.create({
   downloadBtnText: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 16,
-    color: '#080F0F',
+    color: COLORS.bgDark1515End,
   } as TextStyle,
   hint: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: 'rgba(248,250,252,0.5)',
+    color: COLORS.slateMuted50,
   } as TextStyle,
   fallbackText: {
     fontFamily: FONTS.body,
@@ -319,3 +320,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
   } as TextStyle,
 });
+
+export default withComingSoon(ShareCardPage, { routeName: 'share-card', title: 'Share Card' });

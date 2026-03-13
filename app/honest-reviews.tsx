@@ -21,6 +21,7 @@ import * as Haptics from '../lib/haptics';
 import { ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useDestinationTheme } from '../lib/useDestinationTheme';
+import { withComingSoon } from '../lib/with-coming-soon';
 
 // =============================================================================
 // Types
@@ -808,7 +809,7 @@ const VERDICT_SORT_VALUE: Record<Verdict, number> = {
 // =============================================================================
 // Component
 // =============================================================================
-export default function HonestReviews() {
+function HonestReviews() {
   const { destination } = useLocalSearchParams<{ destination: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -868,7 +869,7 @@ export default function HonestReviews() {
               key={i}
               style={[
                 styles.crowdDot,
-                { backgroundColor: i <= idx ? crowdColor : 'rgba(255,255,255,0.1)' },
+                { backgroundColor: i <= idx ? crowdColor : COLORS.whiteSoft },
               ]}
             />
           ))}
@@ -899,7 +900,7 @@ export default function HonestReviews() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient
-        colors={[COLORS.bg, '#0a1a10', COLORS.bg]}
+        colors={[COLORS.bg, COLORS.gradientForestDarkGreen, COLORS.bg]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -1229,10 +1230,10 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.sm,
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: COLORS.border,
   } as ViewStyle,
   sortChipActive: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: COLORS.whiteFaintBorder,
     borderColor: COLORS.cream,
   } as ViewStyle,
   sortChipText: {
@@ -1333,12 +1334,12 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   } as ViewStyle,
   infoBadge: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: COLORS.bgCard,
     borderRadius: RADIUS.sm,
     paddingHorizontal: SPACING.sm + 4,
     paddingVertical: SPACING.xs + 2,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: COLORS.border,
   } as ViewStyle,
   infoBadgeLabel: {
     fontFamily: FONTS.mono,
@@ -1386,7 +1387,7 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   alternativeCardMixed: {
     backgroundColor: COLORS.goldMuted,
-    borderColor: 'rgba(201,168,76,0.3)',
+    borderColor: COLORS.goldBorderStrong,
   } as ViewStyle,
   alternativeLabel: {
     fontFamily: FONTS.monoMedium,
@@ -1474,3 +1475,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   } as TextStyle,
 });
+
+export default withComingSoon(HonestReviews, { routeName: 'honest-reviews', title: 'Honest Reviews' });

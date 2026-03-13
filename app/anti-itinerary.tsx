@@ -14,6 +14,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
+import { withComingSoon } from '../lib/with-coming-soon';
 
 const QUESTIONS = [
   { q: 'Morning, afternoon, or evening?', options: ['Morning', 'Afternoon', 'Evening'] },
@@ -23,7 +24,7 @@ const QUESTIONS = [
   { q: 'Solo or with people?', options: ['Solo', 'With people'] },
 ];
 
-export default function AntiItineraryScreen() {
+function AntiItineraryScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -171,3 +172,5 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.sage,
   },
 });
+
+export default withComingSoon(AntiItineraryScreen, { routeName: 'anti-itinerary', title: 'Anti-Itinerary' });

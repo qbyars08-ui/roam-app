@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
-    backgroundColor: 'rgba(8,15,10,0.6)',
+    backgroundColor: COLORS.bgDarkGreenSoft,
   } as ViewStyle,
   overviewCity: {
     fontFamily: FONTS.header,

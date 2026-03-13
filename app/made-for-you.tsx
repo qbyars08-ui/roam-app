@@ -17,6 +17,7 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../lib/haptics';
+import { withComingSoon } from '../lib/with-coming-soon';
 import { LinearGradient } from 'expo-linear-gradient';
 import { UtensilsCrossed, Compass, Mountain, Moon, BarChart3, Users, Calendar, Wallet, Tag, CreditCard, AlertTriangle } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
@@ -203,7 +204,7 @@ const TABS: { id: TabId; label: string }[] = [
 // ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
-export default function MadeForYouScreen() {
+function MadeForYouScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ destination?: string }>();
@@ -252,7 +253,7 @@ export default function MadeForYouScreen() {
         resizeMode="cover"
       >
         <LinearGradient
-          colors={['rgba(0,0,0,0.5)', 'rgba(0,0,0,0.2)', 'transparent']}
+          colors={[COLORS.overlayLight, COLORS.overlayDarkDim, 'transparent']}
           style={StyleSheet.absoluteFill}
         />
         <View style={styles.header}>
@@ -442,8 +443,8 @@ export default function MadeForYouScreen() {
               </View>
               <View style={[
                 styles.crowdIndicator,
-                vibeCheck.crowdLevel === 'low' && { backgroundColor: 'rgba(74,222,128,0.15)' },
-                vibeCheck.crowdLevel === 'moderate' && { backgroundColor: 'rgba(245,158,11,0.15)' },
+                vibeCheck.crowdLevel === 'low' && { backgroundColor: COLORS.successHighlight },
+                vibeCheck.crowdLevel === 'moderate' && { backgroundColor: COLORS.warningSubtle },
                 vibeCheck.crowdLevel === 'high' && { backgroundColor: COLORS.coralSubtle },
                 vibeCheck.crowdLevel === 'peak' && { backgroundColor: COLORS.coralMuted },
               ]}>
@@ -803,3 +804,5 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   } as TextStyle,
 });
+
+export default withComingSoon(MadeForYouScreen, { routeName: 'made-for-you', title: 'Made For You' });

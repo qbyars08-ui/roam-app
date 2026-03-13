@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
+import { withComingSoon } from '../lib/with-coming-soon';
 
 // ---------------------------------------------------------------------------
 // Quiz data
@@ -96,7 +97,7 @@ const PERSONALITIES: Record<string, PersonalityType> = {
     subtitle: 'You vanish into cities and emerge with stories nobody believes',
     emoji: '\uD83D\uDC7B',
     description: 'You don\'t follow maps, you follow instincts. Every alley is an invitation. Every local is a potential lifelong friend. You\'ve been places that don\'t show up on Google.',
-    gradient: ['#1a3a2a', '#0D1F1A'],
+    gradient: COLORS.alterSage as [string, string],
     destinations: ['Tbilisi', 'Oaxaca', 'Hoi An'],
   },
   adventurer: {
@@ -105,7 +106,7 @@ const PERSONALITIES: Record<string, PersonalityType> = {
     subtitle: 'Your best stories start with "So we missed the last bus..."',
     emoji: '\u26A1',
     description: 'Plans are suggestions. Comfort zones are prisons. You\'ve slept in airports, hitchhiked to waterfalls, and your friends are terrified to travel with you — but they always come.',
-    gradient: ['#2a1a0a', '#1a0d00'],
+    gradient: COLORS.alterGold as [string, string],
     destinations: ['Medell\u00edn', 'Marrakech', 'Cape Town'],
   },
   luxury: {
@@ -114,7 +115,7 @@ const PERSONALITIES: Record<string, PersonalityType> = {
     subtitle: 'Fewer things, better things, unforgettable things',
     emoji: '\uD83E\uDDCA',
     description: 'You don\'t need a lot — but what you have is exquisite. One perfect hotel. One unforgettable meal. One moment that makes the whole trip. Quality over quantity, always.',
-    gradient: ['#1a1a2a', '#0d0d1a'],
+    gradient: COLORS.alterPurple as [string, string],
     destinations: ['Kyoto', 'Santorini', 'Dubrovnik'],
   },
   foodie: {
@@ -123,7 +124,7 @@ const PERSONALITIES: Record<string, PersonalityType> = {
     subtitle: 'Your stomach has a better passport than you do',
     emoji: '\uD83C\uDF36\uFE0F',
     description: 'You don\'t sightsee — you eat. Markets are your museums. Street stalls are your Michelin stars. You\'ve eaten things you can\'t pronounce and loved every single one.',
-    gradient: ['#2a0d0d', '#1a0800'],
+    gradient: COLORS.alterRed as [string, string],
     destinations: ['Bangkok', 'Mexico City', 'Seoul'],
   },
   chill: {
@@ -132,7 +133,7 @@ const PERSONALITIES: Record<string, PersonalityType> = {
     subtitle: 'You travel to slow down, not speed up',
     emoji: '\uD83C\uDF05',
     description: 'You\'re not here to check boxes. You\'re here to sit in that cafe for three hours. Watch the sun go down. Talk to the bartender. The best trips have no itinerary — just a vibe.',
-    gradient: ['#1a1508', '#0d0d00'],
+    gradient: COLORS.alterAmber as [string, string],
     destinations: ['Lisbon', 'Bali', 'Porto'],
   },
   budget: {
@@ -141,7 +142,7 @@ const PERSONALITIES: Record<string, PersonalityType> = {
     subtitle: 'You could travel for a year on what your friends spend in a week',
     emoji: '\uD83D\uDC51',
     description: 'Money doesn\'t define your travel — creativity does. You find the free museum days, the $3 meals, the overnight buses that save a hotel night. More trips, less guilt.',
-    gradient: ['#0d1a0d', '#001a00'],
+    gradient: COLORS.alterGreen as [string, string],
     destinations: ['Chiang Mai', 'Ljubljana', 'Buenos Aires'],
   },
   planner: {
@@ -150,14 +151,14 @@ const PERSONALITIES: Record<string, PersonalityType> = {
     subtitle: 'Your color-coded itinerary has a backup itinerary',
     emoji: '\uD83D\uDCCB',
     description: 'You don\'t wing it — you optimize it. Every restaurant is researched. Every transit connection is timed. Your friends think you\'re insane but they always have the best trips.',
-    gradient: ['#0d0d1a', '#00001a'],
+    gradient: COLORS.alterNavy as [string, string],
     destinations: ['Tokyo', 'New York', 'London'],
   },
 };
 
 type Phase = 'quiz' | 'calculating' | 'result';
 
-export default function AlterEgoScreen() {
+function AlterEgoScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -334,7 +335,7 @@ export default function AlterEgoScreen() {
               ]}
             >
               <LinearGradient
-                colors={[COLORS.sage, '#5a9a6a']}
+                colors={[COLORS.sage, COLORS.sageDark]}
                 style={styles.shareGradient}
               >
                 <Text style={styles.shareButtonText}>
@@ -553,3 +554,5 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   } as TextStyle,
 });
+
+export default withComingSoon(AlterEgoScreen, { routeName: 'alter-ego', title: 'Alter Ego' });

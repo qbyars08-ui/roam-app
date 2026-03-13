@@ -25,10 +25,11 @@ import {
   AiVsRealityCard,
   buildAiVsRealityItems,
 } from '../components/features/ViralCards';
+import { withComingSoon } from '../lib/with-coming-soon';
 
 type TabId = 'reveal' | 'cost' | 'reality';
 
-export default function ViralCardsScreen() {
+function ViralCardsScreen() {
   const { tripId } = useLocalSearchParams<{ tripId?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -208,3 +209,5 @@ const styles = StyleSheet.create({
     color: COLORS.creamMuted,
   } as TextStyle,
 });
+
+export default withComingSoon(ViralCardsScreen, { routeName: 'viral-cards', title: 'Viral Cards' });

@@ -107,7 +107,7 @@ function MoodSectionInner({ onDestinationPick }: Props) {
               >
                 {!isSelected && <View style={styles.cardMuteOverlay} />}
                 <LinearGradient
-                  colors={['transparent', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.9)']}
+                  colors={['transparent', COLORS.overlayDark, COLORS.overlayDeeper]}
                   locations={[0.4, 0.8, 1]}
                   style={styles.cardGradient}
                 >
@@ -173,8 +173,8 @@ function MoodSectionInner({ onDestinationPick }: Props) {
                       <LinearGradient
                         colors={[
                           'transparent',
-                          'rgba(0,0,0,0.7)',
-                          'rgba(0,0,0,0.95)',
+                          COLORS.overlayDark,
+                          COLORS.overlayDarkest,
                         ]}
                         locations={[0.2, 0.5, 1]}
                         style={styles.resultGradient}
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
   },
   cardMuteOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.15)',
+    backgroundColor: COLORS.overlayFaint,
   },
   cardGradient: {
     flex: 1,

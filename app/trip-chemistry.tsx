@@ -34,6 +34,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import { useProGate } from '../lib/pro-gate';
+import { withComingSoon } from '../lib/with-coming-soon';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -239,7 +240,7 @@ function makeId(): string {
   return `tc_${Date.now()}_${++_idCounter}`;
 }
 
-export default function TripChemistryScreen() {
+function TripChemistryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { canAccess } = useProGate('trip-chemistry');
@@ -419,7 +420,7 @@ export default function TripChemistryScreen() {
 
   return (
     <LinearGradient
-      colors={[COLORS.bg, '#0a1a14', COLORS.bg]}
+      colors={[COLORS.bg, COLORS.gradientForest14, COLORS.bg]}
       style={[styles.container, { paddingTop: insets.top }]}
     >
       {/* Header */}
@@ -542,7 +543,7 @@ export default function TripChemistryScreen() {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={canCalculate ? [COLORS.coral, '#a83125'] : ['#333', '#222']}
+              colors={canCalculate ? [COLORS.coral, COLORS.alterCoral] : [COLORS.neutralDark, COLORS.neutralDarker]}
               style={styles.calculateGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
@@ -1104,3 +1105,5 @@ const styles = StyleSheet.create({
     color: COLORS.creamMuted,
   },
 });
+
+export default withComingSoon(TripChemistryScreen, { routeName: 'trip-chemistry', title: 'Trip Chemistry' });

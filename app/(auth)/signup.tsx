@@ -297,12 +297,12 @@ const styles = StyleSheet.create({
     width: '100%',
   } as ViewStyle,
   googleBtn: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
   } as ViewStyle,
   socialBtnText: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 16,
-    color: '#1A1A1A',
+    color: COLORS.receiptText,
     letterSpacing: 0.3,
   } as TextStyle,
   emailBtn: {

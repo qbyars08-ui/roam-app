@@ -8,11 +8,11 @@ import { COLORS, FONTS, SPACING } from '../../lib/constants';
 import { formatUSD, type ExchangeRates } from '../../lib/currency';
 
 const CHART_COLORS = [
-  '#4ADE80', // sage
-  '#E8614A', // coral
-  '#F59E0B', // gold
-  '#60A5FA', // blue
-  '#A78BFA', // violet
+  COLORS.chartGreen,
+  COLORS.coral,
+  COLORS.chartGold,
+  COLORS.chartBlue,
+  COLORS.chartViolet,
 ];
 
 export interface BudgetSlice {

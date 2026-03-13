@@ -19,6 +19,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../../lib/haptics';
 
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, BUDGETS, VIBES, FREE_TRIPS_PER_MONTH } from '../../lib/constants';
+import { withComingSoon } from '../../lib/with-coming-soon';
 import { useAppStore } from '../../lib/store';
 import { generateItinerary, TripLimitReachedError } from '../../lib/claude';
 import { isGuestUser } from '../../lib/guest';
@@ -43,7 +44,7 @@ const SPIN_POOL = [
 
 type SpinPhase = 'idle' | 'spinning' | 'revealing' | 'generating' | 'done';
 
-export default function GlobeScreen() {
+function GlobeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const addTrip = useAppStore((s) => s.addTrip);
@@ -555,3 +556,5 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   } as TextStyle,
 });
+
+export default withComingSoon(GlobeScreen, { routeName: 'globe', title: 'Globe View' });

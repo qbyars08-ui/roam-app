@@ -17,6 +17,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Speech from 'expo-speech';
 import * as Haptics from '../lib/haptics';
+import { withComingSoon } from '../lib/with-coming-soon';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ChevronLeft, Volume2 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -88,7 +89,7 @@ function PhraseCard({
 // -----------------------------------------------------------------------------
 // Main screen
 // -----------------------------------------------------------------------------
-export default function LanguageSurvivalScreen() {
+function LanguageSurvivalScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ city?: string; destination?: string }>();
@@ -416,3 +417,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   } as ViewStyle,
 });
+
+export default withComingSoon(LanguageSurvivalScreen, { routeName: 'language-survival', title: 'Language Survival' });

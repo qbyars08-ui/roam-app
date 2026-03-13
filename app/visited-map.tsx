@@ -39,6 +39,7 @@ import {
   ALL_CONTINENTS,
   WORLD_GRID,
 } from '../lib/visited-store';
+import { withComingSoon } from '../lib/with-coming-soon';
 
 // ---------------------------------------------------------------------------
 // Milestone thresholds
@@ -55,7 +56,7 @@ function getNextMilestone(count: number): number {
 // ---------------------------------------------------------------------------
 // Main Screen
 // ---------------------------------------------------------------------------
-export default function VisitedMapScreen() {
+function VisitedMapScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -236,7 +237,7 @@ export default function VisitedMapScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient
-        colors={[COLORS.bg, '#0a1a12', COLORS.bg]}
+        colors={[COLORS.bg, COLORS.gradientForestDark, COLORS.bg]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -729,7 +730,7 @@ const styles = StyleSheet.create({
   progressBarBg: {
     flex: 1,
     height: 6,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: COLORS.border,
     borderRadius: RADIUS.full,
     overflow: 'hidden',
   } as ViewStyle,
@@ -774,8 +775,8 @@ const styles = StyleSheet.create({
     borderColor: COLORS.sage,
   } as ViewStyle,
   countryPillDimmed: {
-    backgroundColor: 'rgba(255,255,255,0.02)',
-    borderColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: COLORS.whiteFaint,
+    borderColor: COLORS.border,
   } as ViewStyle,
   checkmark: {
     fontFamily: FONTS.bodySemiBold,
@@ -829,7 +830,7 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     height: 44,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: COLORS.bgCard,
     borderRadius: RADIUS.md,
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -841,7 +842,7 @@ const styles = StyleSheet.create({
 
   // Suggestions
   suggestionsBox: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: COLORS.border,
     borderRadius: RADIUS.md,
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -895,7 +896,7 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   statCard: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    backgroundColor: COLORS.whiteVeryFaint,
     borderRadius: RADIUS.md,
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -919,7 +920,7 @@ const styles = StyleSheet.create({
 
   // Milestone
   milestoneCard: {
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    backgroundColor: COLORS.whiteVeryFaint,
     borderRadius: RADIUS.md,
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -956,10 +957,10 @@ const styles = StyleSheet.create({
   // World explored
   worldExploredCard: {
     alignItems: 'center',
-    backgroundColor: 'rgba(201,168,76,0.06)',
+    backgroundColor: COLORS.goldVeryFaint,
     borderRadius: RADIUS.md,
     borderWidth: 1,
-    borderColor: 'rgba(201,168,76,0.2)',
+    borderColor: COLORS.goldBorder,
     padding: SPACING.lg,
   } as ViewStyle,
   worldExploredValue: {
@@ -1083,3 +1084,5 @@ const styles = StyleSheet.create({
     padding: SPACING.xs,
   } as TextStyle,
 });
+
+export default withComingSoon(VisitedMapScreen, { routeName: 'visited-map', title: 'Visited Map' });

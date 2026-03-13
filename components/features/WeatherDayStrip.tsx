@@ -101,8 +101,8 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
   } as ViewStyle,
   stripRainy: {
-    borderColor: 'rgba(234, 88, 84, 0.3)',
-    backgroundColor: 'rgba(234, 88, 84, 0.08)',
+    borderColor: COLORS.weatherCoralBorder,
+    backgroundColor: COLORS.weatherCoralBg,
   } as ViewStyle,
   left: {
     minWidth: 52,

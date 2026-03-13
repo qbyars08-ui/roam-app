@@ -27,8 +27,9 @@ import { useAppStore, type Trip } from '../lib/store';
 import { createGroup, generateInviteLink } from '../lib/group-trips';
 import Button from '../components/ui/Button';
 import GroupInviteCard from '../components/features/GroupInviteCard';
+import { withComingSoon } from '../lib/with-coming-soon';
 
-export default function CreateGroupScreen() {
+function CreateGroupScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ tripId?: string }>();
@@ -163,7 +164,7 @@ export default function CreateGroupScreen() {
               imageStyle={styles.tripCardImg}
             >
               <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.8)']}
+                colors={['transparent', COLORS.overlayDeeper]}
                 style={styles.tripCardGrad}
               >
                 <Text style={styles.tripCardDest}>{selectedTrip.destination}</Text>
@@ -304,3 +305,5 @@ const styles = StyleSheet.create({
     color: COLORS.sage,
   } as TextStyle,
 });
+
+export default withComingSoon(CreateGroupScreen, { routeName: 'create-group', title: 'Create Group' });

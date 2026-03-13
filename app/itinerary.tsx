@@ -864,7 +864,7 @@ export default function ItineraryScreen() {
               resizeMode="cover"
             >
               <LinearGradient
-                colors={['transparent', 'rgba(8,15,15,0.4)', 'rgba(8,15,15,0.9)']}
+                colors={['transparent', COLORS.bgDark1515, COLORS.bgDark1515Deep]}
                 locations={[0.2, 0.6, 1]}
                 style={styles.heroGradient}
               >
@@ -909,7 +909,7 @@ export default function ItineraryScreen() {
                 ]}
               >
                 <LinearGradient
-                  colors={[COLORS.sage, '#5a9a6a']}
+                  colors={[COLORS.sage, COLORS.sageDark]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.stealCtaGradient}
@@ -1262,7 +1262,7 @@ export default function ItineraryScreen() {
             <AffiliateCard
               title="Book your stay"
               subtitle="Find the best hotels on Booking.com"
-              gradientColors={['#003580', '#0057B8']}
+              gradientColors={[COLORS.flightBlueStart, COLORS.flightBlueEnd]}
               onPress={() => openAffiliate(AFFILIATES.booking)}
             />
           </View>
@@ -1271,7 +1271,7 @@ export default function ItineraryScreen() {
             <AffiliateCard
               title="Book activities"
               subtitle="Tours & experiences on GetYourGuide"
-              gradientColors={['#C5162E', '#E8301C']}
+              gradientColors={[COLORS.flightRedStart, COLORS.flightRedEnd]}
               onPress={() => openAffiliate(AFFILIATES.getyourguide)}
             />
           </View>
@@ -1280,7 +1280,7 @@ export default function ItineraryScreen() {
             <AffiliateCard
               title="Find flights"
               subtitle="Compare cheap flights on Skyscanner"
-              gradientColors={['#0770E3', '#00A4E8']}
+              gradientColors={[COLORS.flightUnitedStart, COLORS.flightUnitedEnd]}
               onPress={() => openAffiliate(AFFILIATES.skyscanner)}
             />
           </View>
@@ -1514,38 +1514,38 @@ function AffiliateCard({
 // Dark map style (matches ROAM dark UI)
 // =============================================================================
 const darkMapStyle = [
-  { elementType: 'geometry', stylers: [{ color: '#1a2e27' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#7caf8a' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#0d1f1a' }] },
+  { elementType: 'geometry', stylers: [{ color: COLORS.mapGeometry }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: COLORS.mapLabelFill }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: COLORS.mapLabelStroke }] },
   {
     featureType: 'road',
     elementType: 'geometry',
-    stylers: [{ color: '#243b33' }],
+    stylers: [{ color: COLORS.mapWater }],
   },
   {
     featureType: 'road',
     elementType: 'labels.text.fill',
-    stylers: [{ color: '#5a8a66' }],
+    stylers: [{ color: COLORS.mapRoad }],
   },
   {
     featureType: 'water',
     elementType: 'geometry',
-    stylers: [{ color: '#0a1812' }],
+    stylers: [{ color: COLORS.mapLandscape }],
   },
   {
     featureType: 'poi',
     elementType: 'geometry',
-    stylers: [{ color: '#1e3329' }],
+    stylers: [{ color: COLORS.mapNatural }],
   },
   {
     featureType: 'poi',
     elementType: 'labels.text.fill',
-    stylers: [{ color: '#5a8a66' }],
+    stylers: [{ color: COLORS.mapRoad }],
   },
   {
     featureType: 'transit',
     elementType: 'geometry',
-    stylers: [{ color: '#1e3329' }],
+    stylers: [{ color: COLORS.mapNatural }],
   },
 ];
 
@@ -1663,7 +1663,7 @@ const styles = StyleSheet.create({
   heroTagline: {
     fontFamily: FONTS.body,
     fontSize: 18,
-    color: 'rgba(248,250,252,0.85)',
+    color: COLORS.slateBright,
     lineHeight: 26,
     fontStyle: 'italic',
     marginBottom: SPACING.sm,
@@ -1698,13 +1698,13 @@ const styles = StyleSheet.create({
   stealCtaSub: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: 'rgba(8,15,10,0.8)',
+    color: COLORS.bgDarkGreen80,
     marginTop: 4,
   } as TextStyle,
   shareCtaCard: {
     borderRadius: RADIUS.lg,
     borderWidth: 1,
-    borderColor: 'rgba(74,222,128,0.3)',
+    borderColor: COLORS.successBorder,
     overflow: 'hidden',
   } as ViewStyle,
   shareCtaGradient: {
@@ -1744,7 +1744,7 @@ const styles = StyleSheet.create({
   itineraryExtraCard: {
     borderRadius: RADIUS.lg,
     borderWidth: 1,
-    borderColor: 'rgba(74,222,128,0.2)',
+    borderColor: COLORS.successBorderLight,
     overflow: 'hidden',
   } as ViewStyle,
   itineraryExtraGradient: {
@@ -1770,7 +1770,7 @@ const styles = StyleSheet.create({
   saveTripCard: {
     borderRadius: RADIUS.lg,
     borderWidth: 1,
-    borderColor: 'rgba(74,222,128,0.35)',
+    borderColor: COLORS.successBorderMedium,
     overflow: 'hidden',
   } as ViewStyle,
   saveTripGradient: {
@@ -1930,7 +1930,7 @@ const styles = StyleSheet.create({
   dayTabTheme: {
     fontFamily: FONTS.header,
     fontSize: 22,
-    color: 'rgba(248,250,252,0.7)',
+    color: COLORS.slateDim,
     lineHeight: 30,
     letterSpacing: -0.3,
     marginBottom: SPACING.xs,
@@ -2005,7 +2005,7 @@ const styles = StyleSheet.create({
     color: COLORS.cream,
   } as TextStyle,
   tipCard: {
-    backgroundColor: 'rgba(74,222,128,0.08)',
+    backgroundColor: COLORS.successFaint,
     borderRadius: RADIUS.md,
     padding: SPACING.sm + 2,
     borderLeftWidth: 3,
@@ -2131,7 +2131,7 @@ const styles = StyleSheet.create({
   affiliateSubtitle: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: 'rgba(255,255,255,0.75)',
+    color: COLORS.whiteHighlight,
   } as TextStyle,
   affiliateArrow: {
     fontSize: 20,
@@ -2260,7 +2260,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(13,31,26,0.85)',
+    backgroundColor: COLORS.bgCardOverlay,
   } as ViewStyle,
   mapEmptyText: {
     fontFamily: FONTS.body,
@@ -2356,7 +2356,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: COLORS.whiteDim,
     alignSelf: 'center',
     marginBottom: SPACING.sm,
   } as ViewStyle,

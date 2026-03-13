@@ -175,7 +175,7 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        {/* Trip Wrapped — prominent hero feature */}
+        {/* Trip Wrapped — Coming Soon badge */}
         <Pressable
           style={({ pressed }) => [
             styles.tripWrappedCard,
@@ -183,43 +183,36 @@ export default function ProfileScreen() {
           ]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            router.push('/trip-wrapped');
+            router.push({ pathname: '/coming-soon', params: { title: 'Trip Wrapped' } });
           }}
         >
+          <View style={styles.comingSoonBadgeWrap}>
+            <Text style={styles.comingSoonBadgeText}>COMING SOON</Text>
+          </View>
           <View style={styles.tripWrappedContent}>
             <View style={styles.tripWrappedIconWrap}>
-              <BarChart3 size={24} color={COLORS.accentGold} strokeWidth={2} />
+              <BarChart3 size={24} color={COLORS.creamMuted} strokeWidth={2} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.tripWrappedTitle}>Trip Wrapped</Text>
+              <Text style={[styles.tripWrappedTitle, { opacity: 0.85 }]}>Trip Wrapped</Text>
               <Text style={styles.tripWrappedSub}>Your year in travel</Text>
             </View>
-            <ChevronRight size={22} color={COLORS.accentGold} strokeWidth={2} />
+            <ChevronRight size={22} color={COLORS.creamMuted} strokeWidth={2} />
           </View>
         </Pressable>
 
-        {/* Fun features */}
+        {/* Fun features — Coming Soon badges */}
         <View style={[styles.menuSection, { marginTop: SPACING.lg }]}>
           <Pressable
             style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.7 : 1 }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push('/alter-ego');
+              router.push({ pathname: '/coming-soon', params: { title: 'Travel Alter-Ego Quiz' } });
             }}
           >
-            <View style={styles.menuIconWrap}><Sparkles size={18} color={COLORS.accentGold} strokeWidth={2} /></View>
-            <Text style={[styles.menuLabel, { flex: 1 }]}>Travel Alter-Ego Quiz</Text>
-            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
-          </Pressable>
-
-          <View style={styles.menuDivider} />
-
-          <Pressable
-            style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.7 : 1 }]}
-            onPress={() => router.push('/trip-dupe')}
-          >
-            <View style={styles.menuIconWrap}><Repeat size={18} color={COLORS.accentGold} strokeWidth={2} /></View>
-            <Text style={[styles.menuLabel, { flex: 1 }]}>Trip Dupe Mode</Text>
+            <View style={styles.menuIconWrap}><Sparkles size={18} color={COLORS.creamMuted} strokeWidth={2} /></View>
+            <Text style={[styles.menuLabel, { flex: 1, opacity: 0.85 }]}>Travel Alter-Ego Quiz</Text>
+            <View style={styles.comingSoonInlineBadge}><Text style={styles.comingSoonInlineText}>COMING SOON</Text></View>
             <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
           </Pressable>
 
@@ -229,11 +222,27 @@ export default function ProfileScreen() {
             style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.7 : 1 }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push('/referral');
+              router.push({ pathname: '/coming-soon', params: { title: 'Trip Dupe Mode' } });
             }}
           >
-            <View style={styles.menuIconWrap}><Gift size={18} color={COLORS.accentGold} strokeWidth={2} /></View>
-            <Text style={[styles.menuLabel, { flex: 1 }]}>Refer Friends</Text>
+            <View style={styles.menuIconWrap}><Repeat size={18} color={COLORS.creamMuted} strokeWidth={2} /></View>
+            <Text style={[styles.menuLabel, { flex: 1, opacity: 0.85 }]}>Trip Dupe Mode</Text>
+            <View style={styles.comingSoonInlineBadge}><Text style={styles.comingSoonInlineText}>COMING SOON</Text></View>
+            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
+          </Pressable>
+
+          <View style={styles.menuDivider} />
+
+          <Pressable
+            style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.7 : 1 }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push({ pathname: '/coming-soon', params: { title: 'Refer Friends' } });
+            }}
+          >
+            <View style={styles.menuIconWrap}><Gift size={18} color={COLORS.creamMuted} strokeWidth={2} /></View>
+            <Text style={[styles.menuLabel, { flex: 1, opacity: 0.85 }]}>Refer Friends</Text>
+            <View style={styles.comingSoonInlineBadge}><Text style={styles.comingSoonInlineText}>COMING SOON</Text></View>
             <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
           </Pressable>
         </View>
@@ -373,7 +382,36 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     overflow: 'hidden',
+    position: 'relative',
   } as ViewStyle,
+  comingSoonBadgeWrap: {
+    position: 'absolute',
+    top: SPACING.sm,
+    right: SPACING.md,
+    zIndex: 1,
+    backgroundColor: COLORS.sageLight,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: RADIUS.full,
+  } as ViewStyle,
+  comingSoonBadgeText: {
+    fontFamily: FONTS.mono,
+    fontSize: 9,
+    color: COLORS.sage,
+    letterSpacing: 1,
+  } as TextStyle,
+  comingSoonInlineBadge: {
+    backgroundColor: COLORS.sageLight,
+    paddingHorizontal: SPACING.xs + 2,
+    paddingVertical: 2,
+    borderRadius: RADIUS.full,
+  } as ViewStyle,
+  comingSoonInlineText: {
+    fontFamily: FONTS.mono,
+    fontSize: 9,
+    color: COLORS.sage,
+    letterSpacing: 1,
+  } as TextStyle,
   tripWrappedContent: {
     flexDirection: 'row',
     alignItems: 'center',

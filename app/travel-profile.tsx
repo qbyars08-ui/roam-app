@@ -217,10 +217,12 @@ function PillSingleSelect<T extends string>({
   );
 }
 
+import { withComingSoon } from '../lib/with-coming-soon';
+
 // ---------------------------------------------------------------------------
 // Main Screen
 // ---------------------------------------------------------------------------
-export default function TravelProfileScreen() {
+function TravelProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const travelProfile = useAppStore((s) => s.travelProfile);
@@ -653,7 +655,7 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 16,
-    color: '#fff',
+    color: COLORS.white,
   } as TextStyle,
   editLaterHint: {
     fontFamily: FONTS.mono,
@@ -664,3 +666,5 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   } as TextStyle,
 });
+
+export default withComingSoon(TravelProfileScreen, { routeName: 'travel-profile', title: 'Travel Profile' });

@@ -6,7 +6,8 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, View, StyleSheet, Dimensions } from 'react-native';
 
 const { width: W, height: H } = Dimensions.get('window');
-const COLORS = ['#E8614A', '#4ADE80', '#F59E0B', '#7CAF8A', '#F5EDD8', '#94A3B8'];
+import { COLORS as DS } from '../../lib/constants';
+const CONFETTI_COLORS = [DS.coral, DS.chartGreen, DS.chartGold, DS.sage, DS.cream, DS.slateMuted];
 const COUNT = 60;
 const DURATION = 2500;
 
@@ -33,7 +34,7 @@ function buildParticles(): Particle[] {
       id: i,
       x: cx,
       y: cy,
-      color: COLORS[i % COLORS.length],
+      color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
       size: 6 + Math.random() * 8,
       rotation: Math.random() * 360,
       tx: Math.cos(angle) * speed,

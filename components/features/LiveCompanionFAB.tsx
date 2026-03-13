@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
   fabInner: {},
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: COLORS.overlayLight,
     justifyContent: 'flex-end',
   } as ViewStyle,
   modalContent: {

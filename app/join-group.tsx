@@ -24,6 +24,7 @@ import { supabase } from '../lib/supabase';
 import { useAppStore } from '../lib/store';
 import { getGroupPreviewByInviteCode, joinGroup, type GroupPreview } from '../lib/group-trips';
 import Button from '../components/ui/Button';
+import { withComingSoon } from '../lib/with-coming-soon';
 
 function formatDateRange(start: string | null, end: string | null): string {
   if (!start && !end) return '';
@@ -42,7 +43,7 @@ function getItinerarySummary(itinerary: Record<string, unknown> | null): string 
   return `${days.length} days planned`;
 }
 
-export default function JoinGroupScreen() {
+function JoinGroupScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ code?: string }>();
@@ -121,7 +122,7 @@ export default function JoinGroupScreen() {
         imageStyle={styles.bgImg}
       >
         <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.6)', 'rgba(8,15,10,0.98)']}
+          colors={['transparent', COLORS.overlay, COLORS.bgDarkGreenDeep]}
           style={styles.gradient}
         >
           <View style={styles.content}>
@@ -261,3 +262,5 @@ const styles = StyleSheet.create({
     color: COLORS.creamMuted,
   } as TextStyle,
 });
+
+export default withComingSoon(JoinGroupScreen, { routeName: 'join-group', title: 'Join Group' });

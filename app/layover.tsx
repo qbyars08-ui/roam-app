@@ -18,6 +18,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../lib/haptics';
+import { withComingSoon } from '../lib/with-coming-soon';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { callClaude } from '../lib/claude';
 
@@ -80,7 +81,7 @@ interface LayoverResult {
 // ---------------------------------------------------------------------------
 // Main screen
 // ---------------------------------------------------------------------------
-export default function LayoverScreen() {
+function LayoverScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [departure, setDeparture] = useState('');
@@ -435,3 +436,5 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   } as TextStyle,
 });
+
+export default withComingSoon(LayoverScreen, { routeName: 'layover', title: 'Layover Guide' });

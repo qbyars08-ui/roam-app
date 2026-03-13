@@ -16,7 +16,7 @@ type IconProps = {
 };
 
 const activeColor = COLORS.gold;
-const inactiveColor = 'rgba(255,255,255,0.4)';
+const inactiveColor = COLORS.creamDim;
 
 // Discover — minimal compass rose (cardinal points, thin lines)
 export function IconDiscover({ size = SIZE, color, focused }: IconProps) {

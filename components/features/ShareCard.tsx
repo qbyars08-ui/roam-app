@@ -125,7 +125,7 @@ export default function ShareCard({
         {heroPhoto ? (
           <ImageBackground source={{ uri: heroPhoto }} style={styles.heroBg} resizeMode="cover">
             <LinearGradient
-              colors={['transparent', 'rgba(0,0,0,0.2)', 'rgba(8,15,15,0.85)', '#080F0F']}
+              colors={['transparent', COLORS.overlayDarkDim, COLORS.bgDark1515Overlay, COLORS.bgDark1515End]}
               locations={[0.15, 0.45, 0.75, 1]}
               style={styles.overlay}
             >
@@ -178,7 +178,7 @@ export default function ShareCard({
           </ImageBackground>
         ) : (
           <LinearGradient
-            colors={['#0D1F1A', '#142B24', '#1A3A2E', '#0D1F1A']}
+            colors={[COLORS.gradientCard, COLORS.gradientCardLight, COLORS.gradientCardDeep, COLORS.gradientCard]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.gradientFallback}
@@ -228,13 +228,13 @@ export default function ShareCard({
           ]}
         >
           <LinearGradient
-            colors={[COLORS.coral, '#D14A35']}
+            colors={[COLORS.coral, COLORS.coralDark]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.generateGradient}
           >
             {isGenerating ? (
-              <BreathingLine width={40} height={3} color="#FFFFFF" />
+              <BreathingLine width={40} height={3} color={COLORS.white} />
             ) : null}
             <Text style={styles.generateText}>
               {isGenerating
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.xl,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: COLORS.whiteFaintBorder,
   } as ViewStyle,
 
   heroBg: {
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
   logo: {
     fontFamily: FONTS.header,
     fontSize: 18,
-    color: '#C9A84C',
+    color: COLORS.gold,
     letterSpacing: 4,
   } as TextStyle,
 
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   destination: {
     fontFamily: FONTS.header,
     fontSize: 40,
-    color: '#FFFFFF',
+    color: COLORS.white,
     lineHeight: 46,
     letterSpacing: -0.5,
     textAlign: 'center',
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
   tagline: {
     fontFamily: FONTS.header,
     fontSize: 20,
-    color: 'rgba(255,255,255,0.9)',
+    color: COLORS.whiteMuted90,
     lineHeight: 28,
     fontStyle: 'italic',
     textAlign: 'center',
@@ -346,15 +346,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     borderRadius: RADIUS.full,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: COLORS.sageMuted,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
+    borderColor: COLORS.whiteMuted15,
   } as ViewStyle,
 
   pillText: {
     fontFamily: FONTS.bodyMedium,
     fontSize: 13,
-    color: '#FFFFFF',
+    color: COLORS.white,
   } as TextStyle,
 
   themes: {
@@ -364,13 +364,13 @@ const styles = StyleSheet.create({
   themeItem: {
     fontFamily: FONTS.body,
     fontSize: 12,
-    color: 'rgba(248,250,252,0.75)',
+    color: COLORS.slateMuted75,
   } as TextStyle,
 
   builtWith: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: 'rgba(74,222,128,0.5)',
+    color: COLORS.successMuted,
     letterSpacing: 2,
     textAlign: 'center',
   } as TextStyle,
@@ -402,13 +402,13 @@ const styles = StyleSheet.create({
   generateText: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 16,
-    color: '#FFFFFF',
+    color: COLORS.white,
   } as TextStyle,
 
   webHint: {
     fontFamily: FONTS.body,
     fontSize: 12,
-    color: 'rgba(248,250,252,0.5)',
+    color: COLORS.slateMuted50,
     textAlign: 'center',
   } as TextStyle,
 
@@ -420,6 +420,6 @@ const styles = StyleSheet.create({
   dismissText: {
     fontFamily: FONTS.bodyMedium,
     fontSize: 14,
-    color: 'rgba(248,250,252,0.4)',
+    color: COLORS.slateMuted40,
   } as TextStyle,
 });

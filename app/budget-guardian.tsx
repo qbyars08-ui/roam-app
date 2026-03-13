@@ -26,6 +26,7 @@ import * as Haptics from '../lib/haptics';
 import { ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useDestinationTheme } from '../lib/useDestinationTheme';
+import { withComingSoon } from '../lib/with-coming-soon';
 
 // =============================================================================
 // Types
@@ -52,12 +53,12 @@ interface CategoryMeta {
 // Constants
 // =============================================================================
 const CATEGORIES: CategoryMeta[] = [
-  { id: 'food', emoji: '', label: 'Food', color: '#7CAF8A' },
-  { id: 'stay', emoji: '', label: 'Stay', color: '#C9A84C' },
-  { id: 'transport', emoji: '', label: 'Transport', color: '#5B9BD5' },
-  { id: 'activities', emoji: '', label: 'Activities', color: '#D4A574' },
-  { id: 'shopping', emoji: '', label: 'Shopping', color: '#B07CC6' },
-  { id: 'other', emoji: '', label: 'Other', color: '#8899AA' },
+  { id: 'food', emoji: '', label: 'Food', color: COLORS.sage },
+  { id: 'stay', emoji: '', label: 'Stay', color: COLORS.gold },
+  { id: 'transport', emoji: '', label: 'Transport', color: COLORS.blueAccent },
+  { id: 'activities', emoji: '', label: 'Activities', color: COLORS.tanAccent },
+  { id: 'shopping', emoji: '', label: 'Shopping', color: COLORS.violetAccent },
+  { id: 'other', emoji: '', label: 'Other', color: COLORS.grayAccent },
 ];
 
 const CURRENCY_RATES: Record<string, { symbol: string; rate: number; code: string }> = {
@@ -108,7 +109,7 @@ const CHEAPER_ALTERNATIVES: Record<CategoryId, string> = {
   other: 'Review your misc spending — small costs add up',
 };
 
-export default function BudgetGuardianScreen() {
+function BudgetGuardianScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
@@ -430,7 +431,7 @@ export default function BudgetGuardianScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <LinearGradient
-        colors={[COLORS.bg, 'rgba(8,15,10,0.95)']}
+        colors={[COLORS.bg, COLORS.bgDarkGreen]}
         style={styles.headerGradient}
       >
         <View style={styles.headerRow}>
@@ -593,7 +594,7 @@ export default function BudgetGuardianScreen() {
                 ]}
               >
                 <LinearGradient
-                  colors={[COLORS.sage, '#5E9A6E']}
+                  colors={[COLORS.sage, COLORS.sageDarker]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.addButtonGradient}
@@ -1323,3 +1324,5 @@ const styles = StyleSheet.create({
     color: COLORS.gold,
   } as TextStyle,
 });
+
+export default withComingSoon(BudgetGuardianScreen, { routeName: 'budget-guardian', title: 'Budget Guardian' });

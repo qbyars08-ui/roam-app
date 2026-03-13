@@ -2,6 +2,7 @@
 // ROAM — Neighborhood Safety (Teleport API, free, no key)
 // City quality/safety scores for itinerary activity cards
 // =============================================================================
+import { COLORS } from './constants';
 
 export type SafetyLevel = 'safe' | 'caution' | 'avoid';
 
@@ -80,7 +81,7 @@ export async function getCitySafetyScore(city: string): Promise<SafetyScore | nu
 }
 
 export const SAFETY_COLORS: Record<SafetyLevel, string> = {
-  safe: '#7CAF8A',
-  caution: '#C9A84C',
-  avoid: '#C0392B',
+  safe: COLORS.primary,
+  caution: COLORS.gold,
+  avoid: COLORS.danger,
 };

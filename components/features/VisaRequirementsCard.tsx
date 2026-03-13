@@ -19,8 +19,8 @@ interface VisaRequirementsCardProps {
 
 // Passport pill colors (subtle, on-brand)
 const PASSPORT_COLORS: Record<string, { bg: string; text: string }> = {
-  US: { bg: 'rgba(59,130,246,0.15)', text: '#6FA8DC' },   // Blue tint
-  AT: { bg: 'rgba(220,38,38,0.12)', text: '#E87C7C' },    // Red tint
+  US: COLORS.passportUS,
+  AT: COLORS.passportAT,
 };
 
 const DEFAULT_PASSPORT_COLOR = { bg: COLORS.sageSubtle, text: COLORS.sage };

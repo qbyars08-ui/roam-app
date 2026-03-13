@@ -4,6 +4,7 @@
 // User has US + Austrian passports — check both and show the better option.
 // =============================================================================
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { COLORS } from './constants';
 
 const RAPID_API_KEY = process.env.EXPO_PUBLIC_VISA_API_KEY ?? '';
 const BASE = 'https://visa-requirement.p.rapidapi.com/visa';
@@ -136,15 +137,15 @@ export function getVisaStatusDisplay(status: VisaStatus): {
 } {
   switch (status) {
     case 'visa-free':
-      return { label: 'Visa-free', color: '#7CAF8A', emoji: '' };
+      return { label: 'Visa-free', color: COLORS.primary, emoji: '' };
     case 'visa-on-arrival':
-      return { label: 'Visa on arrival', color: '#7CAF8A', emoji: '' };
+      return { label: 'Visa on arrival', color: COLORS.primary, emoji: '' };
     case 'e-visa':
-      return { label: 'e-Visa required', color: '#C9A84C', emoji: '' };
+      return { label: 'e-Visa required', color: COLORS.gold, emoji: '' };
     case 'visa-required':
-      return { label: 'Visa required', color: '#C0392B', emoji: '' };
+      return { label: 'Visa required', color: COLORS.danger, emoji: '' };
     default:
-      return { label: 'Check requirements', color: '#C9A84C', emoji: '' };
+      return { label: 'Check requirements', color: COLORS.gold, emoji: '' };
   }
 }
 

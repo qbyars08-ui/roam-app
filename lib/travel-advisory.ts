@@ -5,6 +5,7 @@
 // Levels: 1 (Exercise Normal Precautions) → 4 (Do Not Travel)
 // =============================================================================
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { COLORS } from './constants';
 
 const BASE = 'https://cadataapi.state.gov/api/TravelAdvisories';
 const CACHE_KEY = 'roam_travel_advisories';
@@ -34,10 +35,10 @@ export interface AdvisoryDisplay {
 // Advisory level display mapping
 // ---------------------------------------------------------------------------
 const LEVEL_INFO: Record<number, Omit<AdvisoryDisplay, 'level' | 'description'>> = {
-  1: { label: 'Exercise Normal Precautions', shortLabel: 'Safe to visit', color: '#7CAF8A', emoji: '' },
-  2: { label: 'Exercise Increased Caution', shortLabel: 'Use caution', color: '#C9A84C', emoji: '' },
-  3: { label: 'Reconsider Travel', shortLabel: 'Reconsider travel', color: '#E67E22', emoji: '' },
-  4: { label: 'Do Not Travel', shortLabel: 'Do not travel', color: '#C0392B', emoji: '' },
+  1: { label: 'Exercise Normal Precautions', shortLabel: 'Safe to visit', color: COLORS.primary, emoji: '' },
+  2: { label: 'Exercise Increased Caution', shortLabel: 'Use caution', color: COLORS.gold, emoji: '' },
+  3: { label: 'Reconsider Travel', shortLabel: 'Reconsider travel', color: COLORS.orangeAccent, emoji: '' },
+  4: { label: 'Do Not Travel', shortLabel: 'Do not travel', color: COLORS.danger, emoji: '' },
 };
 
 export function getAdvisoryDisplay(advisory: TravelAdvisory): AdvisoryDisplay {

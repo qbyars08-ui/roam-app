@@ -3,6 +3,7 @@
 // =============================================================================
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, Dimensions } from 'react-native';
+import { COLORS } from '../../lib/constants';
 
 const { width: W, height: H } = Dimensions.get('window');
 const ORB_COUNT = 6;
@@ -66,6 +67,6 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#4ADE80',
+    backgroundColor: COLORS.successLight,
   },
 });

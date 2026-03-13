@@ -28,6 +28,7 @@ import { useAppStore } from '../lib/store';
 import { callClaude, TripLimitReachedError } from '../lib/claude';
 import { getMockDupeResult } from '../lib/mock-fallback';
 import MockDataBadge from '../components/ui/MockDataBadge';
+import { withComingSoon } from '../lib/with-coming-soon';
 
 // ---------------------------------------------------------------------------
 // Dupe prompt — separate from main itinerary prompt
@@ -107,7 +108,7 @@ const DREAM_DESTINATIONS = [
   { label: 'French Riviera', emoji: '\uD83C\uDDEB\uD83C\uDDF7', hook: 'Yacht life, Côte d\'Azur glamour' },
 ];
 
-export default function TripDupeScreen() {
+function TripDupeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [phase, setPhase] = useState<Phase>('pick');
@@ -270,7 +271,7 @@ export default function TripDupeScreen() {
                     resizeMode="cover"
                   >
                     <LinearGradient
-                      colors={['transparent', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.92)']}
+                      colors={['transparent', COLORS.overlayLight, COLORS.overlayFull]}
                       locations={[0.3, 0.7, 1]}
                       style={StyleSheet.absoluteFill}
                     />
@@ -392,7 +393,7 @@ export default function TripDupeScreen() {
                 ]}
               >
                 <LinearGradient
-                  colors={[COLORS.sage, '#5a9a6a']}
+                  colors={[COLORS.sage, COLORS.sageDark]}
                   style={styles.buildGradient}
                 >
                   <Text style={styles.buildButtonText}>
@@ -765,3 +766,5 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
   } as TextStyle,
 });
+
+export default withComingSoon(TripDupeScreen, { routeName: 'trip-dupe', title: 'Trip Dupe' });

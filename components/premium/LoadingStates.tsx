@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: COLORS.bgCard,
   },
   compassNeedle: {
     position: 'absolute',
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 160,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: COLORS.border,
   },
 
   // --- PulseLoader ---

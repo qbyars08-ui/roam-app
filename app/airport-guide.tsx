@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronRight, ChevronDown } from 'lucide-react-native';
 import * as Haptics from '../lib/haptics';
+import { withComingSoon } from '../lib/with-coming-soon';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { AIRPORTS, type AirportData } from '../lib/airport-data';
 // ---------------------------------------------------------------------------
@@ -191,7 +192,7 @@ function DetailSection({
 // ---------------------------------------------------------------------------
 // Main screen
 // ---------------------------------------------------------------------------
-export default function AirportGuideScreen() {
+function AirportGuideScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [selected, setSelected] = useState<AirportData | null>(null);
@@ -467,3 +468,5 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   } as TextStyle,
 });
+
+export default withComingSoon(AirportGuideScreen, { routeName: 'airport-guide', title: 'Airport Guide' });

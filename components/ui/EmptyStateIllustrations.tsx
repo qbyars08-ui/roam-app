@@ -5,7 +5,8 @@
 import React from 'react';
 import Svg, { Path, Circle } from 'react-native-svg';
 
-const CREAM = '#F5EDD8';
+import { COLORS } from '../../lib/constants';
+const CREAM = COLORS.cream;
 const SIZE = 120;
 const STROKE = 1.5;
 

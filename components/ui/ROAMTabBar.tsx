@@ -40,7 +40,7 @@ export default function ROAMTabBar({ state, descriptors, navigation }: BottomTab
           }
         };
 
-        const color = isFocused ? COLORS.gold : 'rgba(255,255,255,0.4)';
+        const color = isFocused ? COLORS.gold : COLORS.creamDim;
 
         return (
           <Pressable
@@ -92,10 +92,10 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
   },
   wrapperAndroid: {
-    backgroundColor: 'rgba(8,15,10,0.92)',
+    backgroundColor: COLORS.bgDarkGreenMedium,
   },
   barOverlay: {
-    backgroundColor: 'rgba(8,15,10,0.5)',
+    backgroundColor: COLORS.creamMuted,
   },
   bar: {
     flexDirection: 'row',

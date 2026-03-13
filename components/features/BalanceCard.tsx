@@ -24,7 +24,7 @@ interface BalanceCardProps {
 
 // Generate color from userId hash for member pills
 function memberColor(userId: string): string {
-  const colors = ['#7CAF8A', '#C9A84C', '#6FA8DC', '#E87C7C', '#B488D9', '#F0A05E'];
+  const colors = [COLORS.sage, COLORS.gold, COLORS.blueAccent, COLORS.coral, COLORS.lavender, COLORS.amber];
   let hash = 0;
   for (let i = 0; i < userId.length; i++) {
     hash = userId.charCodeAt(i) + ((hash << 5) - hash);
@@ -90,7 +90,7 @@ export default function BalanceCard({
                   myBalance.netBalance > 0
                     ? COLORS.sage
                     : myBalance.netBalance < 0
-                    ? '#E87C7C'
+                    ? COLORS.coral
                     : COLORS.cream,
               },
             ]}
@@ -148,7 +148,7 @@ export default function BalanceCard({
           </View>
           <View style={styles.debtInfo}>
             <Text style={styles.debtName}>You owe {debt.displayName}</Text>
-            <Text style={[styles.debtAmount, { color: '#E87C7C' }]}>
+            <Text style={[styles.debtAmount, { color: COLORS.coral }]}>
               ${debt.amount.toFixed(2)}
             </Text>
           </View>
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
     paddingVertical: SPACING.sm,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.04)',
+    borderTopColor: COLORS.bgCard,
   } as ViewStyle,
   avatar: {
     width: 32,

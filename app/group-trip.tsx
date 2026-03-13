@@ -47,13 +47,14 @@ import {
 } from '../lib/group-trips';
 import { parseItinerary, type Itinerary, type ItineraryDay } from '../lib/types/itinerary';
 import Button from '../components/ui/Button';
+import { withComingSoon } from '../lib/with-coming-soon';
 
 type TabId = 'itinerary' | 'expenses' | 'chat' | 'packing';
 
 // ---------------------------------------------------------------------------
 // Main Screen
 // ---------------------------------------------------------------------------
-export default function GroupTripScreen() {
+function GroupTripScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ groupId: string }>();
@@ -1011,3 +1012,5 @@ const styles = StyleSheet.create({
     color: COLORS.creamMuted,
   } as TextStyle,
 });
+
+export default withComingSoon(GroupTripScreen, { routeName: 'group-trip', title: 'Group Trips' });

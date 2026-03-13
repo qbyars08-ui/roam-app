@@ -30,8 +30,9 @@ import {
   type TradableTrip,
 } from '../lib/trip-trading';
 import { getDestinationPhoto } from '../lib/photos';
+import { withComingSoon } from '../lib/with-coming-soon';
 
-export default function TripTradingScreen() {
+function TripTradingScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const addTrip = useAppStore((s) => s.addTrip);
@@ -118,7 +119,7 @@ export default function TripTradingScreen() {
                     imageStyle={styles.cardBgImage}
                   >
                     <LinearGradient
-                      colors={['transparent', 'rgba(0,0,0,0.85)']}
+                      colors={['transparent', COLORS.overlayStrong]}
                       style={styles.cardGrad}
                     >
                       <View style={styles.cardContent}>
@@ -172,3 +173,5 @@ const styles = StyleSheet.create({
   claimRow: { flexDirection: 'row', alignItems: 'center', marginTop: SPACING.sm, gap: 4 } as ViewStyle,
   claimBtn: { fontFamily: FONTS.bodySemiBold, fontSize: 14, color: COLORS.gold } as TextStyle,
 });
+
+export default withComingSoon(TripTradingScreen, { routeName: 'trip-trading', title: 'Trip Trading' });

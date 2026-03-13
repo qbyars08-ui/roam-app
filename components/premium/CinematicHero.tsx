@@ -95,7 +95,7 @@ export default function CinematicHero() {
         </AnimatedView>
       </View>
       <LinearGradient
-        colors={['rgba(8,15,15,0.3)', 'rgba(8,15,15,0.7)', 'rgba(8,15,15,0.95)']}
+        colors={[COLORS.bgDark1515, COLORS.bgDark1515Medium, COLORS.bgDark1515Deep]}
         locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
       />
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
   },
   overlayWeb: {
     // Glassmorphism on web
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    backgroundColor: COLORS.whiteVeryFaint,
     // @ts-ignore - web-only
     backdropFilter: 'blur(12px)',
     WebkitBackdropFilter: 'blur(12px)',

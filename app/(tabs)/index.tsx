@@ -126,7 +126,7 @@ const DestCard = memo(function DestCard({
       onError={onPhotoError}
     >
       <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.9)']}
+        colors={['transparent', COLORS.overlayMedium, COLORS.overlayDeeper]}
         locations={[0.3, 0.7, 1]}
         style={styles.destGradient}
       >
@@ -390,7 +390,7 @@ export default function DiscoverScreen() {
       resizeMode="cover"
     >
       <LinearGradient
-        colors={['rgba(8,12,10,0.12)', 'rgba(8,12,10,0.68)', 'rgba(8,12,10,0.96)']}
+        colors={[COLORS.bgDark1210Faint, COLORS.bgDark1210Medium, COLORS.bgDark1210Deep]}
         locations={[0, 0.55, 1]}
         style={StyleSheet.absoluteFill}
       />
@@ -432,7 +432,7 @@ export default function DiscoverScreen() {
                 onError={() => setPhotoFallbacks((p) => ({ ...p, hero: true }))}
               >
               <LinearGradient
-                colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.24)', 'rgba(0,0,0,0.9)']}
+                colors={[COLORS.overlayVeryFaint, COLORS.overlaySoftDim, COLORS.overlayDeeper]}
                 locations={[0, 0.46, 1]}
                 style={styles.heroGradient}
               >
@@ -482,7 +482,7 @@ export default function DiscoverScreen() {
           >
             <Animated.View style={[styles.chaosModeInner, { transform: [{ scale: chaosPulseAnim }] }]}>
               <LinearGradient
-                colors={['#C0392B', '#E74C3C', '#C0392B']}
+                colors={[COLORS.chaosGradientStart, COLORS.chaosGradientEnd, COLORS.chaosGradientStart]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.chaosModeGradient}
@@ -623,7 +623,7 @@ export default function DiscoverScreen() {
                         onError={() => setPhotoFallbacks((p) => ({ ...p, [`forYou-${dest.label}`]: true }))}
                       >
                       <LinearGradient
-                        colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.28)', 'rgba(0,0,0,0.88)']}
+                        colors={[COLORS.overlayVeryFaint, COLORS.overlayMuted, COLORS.overlayDeep]}
                         locations={[0, 0.5, 1]}
                         style={styles.forYouGradient}
                       >
@@ -1120,7 +1120,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   } as TextStyle,
   seasonPill: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: COLORS.whiteDim,
     paddingHorizontal: SPACING.sm,
     paddingVertical: 4,
     borderRadius: RADIUS.full,
@@ -1220,7 +1220,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: SPACING.sm,
     right: SPACING.sm,
-    backgroundColor: 'rgba(0,0,0,0.65)',
+    backgroundColor: COLORS.overlayDim,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: RADIUS.sm,
@@ -1578,7 +1578,7 @@ const styles = StyleSheet.create({
   chaosModeSub: {
     fontFamily: FONTS.body,
     fontSize: 12,
-    color: 'rgba(255,255,255,0.85)',
+    color: COLORS.whiteBright,
     marginTop: 2,
   } as TextStyle,
   dupeFinderCta: {

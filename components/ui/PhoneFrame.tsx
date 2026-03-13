@@ -4,6 +4,7 @@
 // =============================================================================
 import React from 'react';
 import { View, StyleSheet, type ViewStyle } from 'react-native';
+import { COLORS } from '../../lib/constants';
 
 export default function PhoneFrame({ children }: { children: React.ReactNode }) {
   // Always render full-width — no phone frame constraint
@@ -14,6 +15,6 @@ const styles = StyleSheet.create({
   full: {
     flex: 1,
     width: '100%',
-    backgroundColor: '#080F0A',
+    backgroundColor: COLORS.bg,
   } as ViewStyle,
 });

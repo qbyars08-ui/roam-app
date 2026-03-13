@@ -30,6 +30,7 @@ import {
 } from 'lucide-react-native';
 
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../../lib/constants';
+import { withComingSoon } from '../../lib/with-coming-soon';
 import { useAppStore, type Trip } from '../../lib/store';
 import {
   LANGUAGE_PACKS,
@@ -328,7 +329,7 @@ function DestinationPicker({
 // ---------------------------------------------------------------------------
 // Main screen
 // ---------------------------------------------------------------------------
-export default function PrepScreen() {
+function PrepScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const trips = useAppStore((s) => s.trips);
@@ -1079,3 +1080,5 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   } as TextStyle,
 });
+
+export default withComingSoon(PrepScreen, { routeName: 'prep', title: 'Trip Prep' });

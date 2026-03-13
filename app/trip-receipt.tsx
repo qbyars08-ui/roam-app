@@ -22,6 +22,7 @@ import * as Sharing from 'expo-sharing';
 import { COLORS, FONTS, SPACING, RADIUS, BUDGETS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import { parseItinerary, type Itinerary, type ItineraryDay } from '../lib/types/itinerary';
+import { withComingSoon } from '../lib/with-coming-soon';
 
 // =============================================================================
 // Helpers
@@ -115,7 +116,7 @@ function calculateBreakdown(itinerary: Itinerary) {
 // =============================================================================
 // Main Screen
 // =============================================================================
-export default function TripReceiptScreen() {
+function TripReceiptScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
@@ -664,3 +665,5 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   } as TextStyle,
 });
+
+export default withComingSoon(TripReceiptScreen, { routeName: 'trip-receipt', title: 'Trip Receipt' });

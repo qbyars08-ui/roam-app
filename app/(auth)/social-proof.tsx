@@ -145,7 +145,7 @@ export default function SocialProofScreen() {
               ]}
             >
               <LinearGradient
-                colors={[COLORS.sageSubtle, 'rgba(255,255,255,0.03)']}
+                colors={[COLORS.sageSubtle, COLORS.whiteVeryFaint]}
                 style={StyleSheet.absoluteFill}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}

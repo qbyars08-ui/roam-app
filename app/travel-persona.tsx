@@ -27,11 +27,12 @@ import {
   type TravelPersona,
   type PersonaTrait,
 } from '../lib/travel-persona';
+import { withComingSoon } from '../lib/with-coming-soon';
 
 // =============================================================================
 // Main Screen
 // =============================================================================
-export default function TravelPersonaScreen() {
+function TravelPersonaScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [persona, setPersona] = useState<TravelPersona | null>(null);
@@ -610,3 +611,5 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   } as TextStyle,
 });
+
+export default withComingSoon(TravelPersonaScreen, { routeName: 'travel-persona', title: 'Travel Persona' });
