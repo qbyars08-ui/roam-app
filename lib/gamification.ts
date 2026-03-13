@@ -48,7 +48,7 @@ const RANK_ORDER: RoamRank[] = ['explorer', 'wanderer', 'nomad', 'legend'];
  * Maps activity score to Roam rank.
  */
 export function getRoamRank(activityScore: number): RoamRank {
-  let rank: RoamRank = 'explorer';
+  const rank: RoamRank = 'explorer';
   for (let i = RANK_ORDER.length - 1; i >= 0; i--) {
     const r = RANK_ORDER[i];
     if (activityScore >= RANK_THRESHOLDS[r]) {

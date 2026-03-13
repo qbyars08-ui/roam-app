@@ -417,7 +417,7 @@ async function fetchGroupStats(): Promise<GroupTripStats> {
 
     let avgMembers = 0;
     let totalExpenses = 0;
-    let inviteConversion = 0;
+    const inviteConversion = 0;
 
     try {
       const { data: members } = await supabase

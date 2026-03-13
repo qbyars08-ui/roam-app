@@ -4,7 +4,7 @@
 
 import { supabase } from './supabase';
 
-let sessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+const sessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
 export type AnalyticsEvent =
   | { type: 'tap'; screen: string; action: string; payload?: Record<string, unknown> }
