@@ -149,15 +149,18 @@ export default function PlanScreen() {
   // ---------------------------------------------------------------------------
   const handleGenerate = async () => {
     const isGuest = isGuestUser();
+    const session = useAppStore.getState().session;
+    const isAnon = isGuest || session?.user?.is_anonymous === true;
 
-    // On first trip, send to travel profile screen first (skip for guests)
-    if (!isGuest && !hasCompletedProfile) {
+    // On first trip, send to travel profile screen first
+    // Skip for guests and anonymous users — let them generate immediately
+    if (!isAnon && !hasCompletedProfile) {
       router.push('/travel-profile');
       return;
     }
 
-    // Guest limit: 1 trip; signed-in free: FREE_TRIPS_PER_MONTH
-    if (isGuest && trips.length >= 1) {
+    // Guest/anonymous limit: 1 trip; signed-in free: FREE_TRIPS_PER_MONTH
+    if (isAnon && trips.length >= 1) {
       router.push({ pathname: '/paywall', params: { reason: 'limit', destination: planWizard.destination } });
       return;
     }
