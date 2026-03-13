@@ -10,11 +10,24 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 20
+      - name: Resolve workspace
+        id: ws
+        run: |
+          if [ -f package.json ]; then
+            echo "dir=." >> $GITHUB_OUTPUT
+          elif [ -f roam/package.json ]; then
+            echo "dir=roam" >> $GITHUB_OUTPUT
+          else
+            echo "No package.json found"
+            exit 1
+          fi
       - run: npm install --legacy-peer-deps
+        working-directory: ${{ steps.ws.outputs.dir }}
       - run: npm run build:web
+        working-directory: ${{ steps.ws.outputs.dir }}
       - uses: nwtgck/actions-netlify@v2
         with:
-          publish-dir: dist
+          publish-dir: ${{ steps.ws.outputs.dir }}/dist
           production-deploy: true
           fails-without-credentials: true
         env:

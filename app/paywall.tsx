@@ -29,6 +29,7 @@ import {
   restorePurchases,
   type OfferingPackages,
 } from '../lib/revenue-cat';
+import { syncProStatusToSupabase } from '../lib/sync-pro-status';
 
 // =============================================================================
 // Tier definitions
@@ -106,6 +107,7 @@ export default function PaywallScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ reason?: string }>();
   const setIsPro = useAppStore((s) => s.setIsPro);
+  const session = useAppStore((s) => s.session);
 
   const [selectedTier, setSelectedTier] = useState<'pro' | 'global'>('global');
   const [loading, setLoading] = useState(false);
@@ -169,6 +171,9 @@ export default function PaywallScreen() {
 
       if (success) {
         setIsPro(true);
+        if (session?.user?.id && !String(session.user.id).startsWith('guest-')) {
+          syncProStatusToSupabase(session.user.id, true).catch(() => {});
+        }
         handleClose();
       }
       // On cancel: purchasePro/purchaseGlobal return false, dismiss quietly
@@ -177,7 +182,7 @@ export default function PaywallScreen() {
     } finally {
       setLoading(false);
     }
-  }, [selectedTier, loading, setIsPro, handleClose]);
+  }, [selectedTier, loading, setIsPro, handleClose, session?.user?.id]);
 
   const monthlyPrice = packages.monthly?.product?.priceString ?? '$9.99';
   const annualPrice = packages.annual?.product?.priceString ?? '$49.99';
@@ -190,6 +195,9 @@ export default function PaywallScreen() {
       const isPro = await restorePurchases();
       if (isPro) {
         setIsPro(true);
+        if (session?.user?.id && !String(session.user.id).startsWith('guest-')) {
+          syncProStatusToSupabase(session.user.id, true).catch(() => {});
+        }
         Alert.alert('Restored', 'Your Pro subscription has been restored.', [
           { text: 'OK', onPress: handleClose },
         ]);
@@ -201,7 +209,7 @@ export default function PaywallScreen() {
     } finally {
       setRestoring(false);
     }
-  }, [restoring, setIsPro, handleClose]);
+  }, [restoring, setIsPro, handleClose, session?.user?.id]);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>

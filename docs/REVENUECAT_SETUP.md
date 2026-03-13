@@ -25,7 +25,24 @@ In App Store Connect (iOS) and Google Play Console (Android), create:
 - Create offering: **default**
 - Attach both products (monthly + annual) to **default**
 
-## 3. Verify
+## 3. Environment Variables
+
+Add to `.env`:
+```
+EXPO_PUBLIC_REVENUECAT_IOS_KEY=appl_xxx
+EXPO_PUBLIC_REVENUECAT_ANDROID_KEY=goog_xxx
+```
+
+## 4. End-to-End Flow
+
+1. **App start** → `initRevenueCat()` configures SDK (no-op on web)
+2. **User signs in** → `loginRevenueCat(userId)` associates purchases with user
+3. **Bootstrap** → `isProActive()` fetches status, `syncProStatusToSupabase()` updates profiles
+4. **Listener** → `addCustomerInfoUpdateListener` syncs on purchase/restore/expiration
+5. **Paywall** → `purchasePro()` / `purchaseGlobal()` trigger Store/Play sheet; on success, `syncProStatusToSupabase()` runs immediately
+6. **Restore** → `restorePurchases()` + sync
+
+## 5. Verify
 
 After setup, the app will:
 - Show live prices from RevenueCat on the paywall
