@@ -31,7 +31,7 @@ import { Sparkles, Repeat, Gift, Shield, ChevronRight, BarChart3, CreditCard, Lo
 import Button from '../components/ui/Button';
 import ExploreHub from '../components/features/ExploreHub';
 
-import { EMERGENCY_CONTACT, ONBOARDING_COMPLETE } from '../../lib/storage-keys';
+import { EMERGENCY_CONTACT, ONBOARDING_COMPLETE } from '../lib/storage-keys';
 
 export default function ProfileScreen() {
   const router = useRouter();

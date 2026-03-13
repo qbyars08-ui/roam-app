@@ -189,7 +189,7 @@ function StepSignup({
       if (error) {
         Alert.alert('Sign-in failed', error.message);
       } else {
-        await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
+        await AsyncStorage.setItem(ONBOARDING_COMPLETE, 'true');
       }
     } catch (e: any) {
       if (e.code !== 'ERR_REQUEST_CANCELED') Alert.alert('Try again', 'Apple Sign-In hit a snag.');
