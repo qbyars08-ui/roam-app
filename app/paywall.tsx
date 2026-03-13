@@ -32,6 +32,7 @@ import {
   type OfferingPackages,
 } from '../lib/revenue-cat';
 import { syncProStatusToSupabase } from '../lib/sync-pro-status';
+import { trackPaywallShown, trackSubscriptionStarted } from '../lib/analytics';
 
 // =============================================================================
 // Tier definitions
@@ -128,6 +129,11 @@ export default function PaywallScreen() {
     getOfferings().then(setPackages).catch(() => {});
   }, []);
 
+  // Track paywall impression
+  useEffect(() => {
+    trackPaywallShown({ reason: params.reason, destination: params.destination });
+  }, []);
+
   useEffect(() => {
     Animated.sequence([
       Animated.parallel([
@@ -175,6 +181,7 @@ export default function PaywallScreen() {
 
       if (success) {
         setIsPro(true);
+        trackSubscriptionStarted({ tier: selectedTier, source: 'paywall' });
         if (session?.user?.id && !String(session.user.id).startsWith('guest-')) {
           syncProStatusToSupabase(session.user.id, true).catch(() => {});
         }

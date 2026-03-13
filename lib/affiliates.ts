@@ -6,6 +6,7 @@ import { Linking, Platform } from 'react-native';
 import { COLORS } from './constants';
 import { supabase } from './supabase';
 import { useAppStore } from './store';
+import { trackBookingLinkClicked } from './analytics';
 
 // ---------------------------------------------------------------------------
 // Partner configurations
@@ -133,6 +134,7 @@ export async function openAffiliateLink(
 ): Promise<void> {
   const url = partner.buildUrl(params);
 
+  trackBookingLinkClicked({ partner: partner.id, destination: params.destination, placement: 'affiliate_card', url });
   // Track click (fire-and-forget)
   trackAffiliateClick(partner.id, params.destination, tripId);
 

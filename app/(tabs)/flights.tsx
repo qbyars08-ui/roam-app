@@ -3,6 +3,8 @@
 // Hopper meets Google Flights — fast, visual, zero clutter
 // =============================================================================
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { trackFlightSearch, trackScreen } from '../../lib/analytics';
 import {
   View,
   Text,
@@ -246,6 +248,7 @@ export default function FlightsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const planDestination = useAppStore((s) => s.planWizard.destination);
+  useFocusEffect(React.useCallback(() => { trackScreen('Flights'); }, []));
 
   const [from, setFrom] = useState('');
   const [to, setTo] = useState(planDestination);
@@ -319,7 +322,8 @@ export default function FlightsScreen() {
     setSearchPerformed(true);
     const flights = generateMockFlights();
     setResults(flights);
-  }, []);
+    trackFlightSearch({ from, to, resultCount: flights.length });
+  }, [from, to]);
 
   const flightMinPrice = results.length ? Math.min(...results.map((f) => f.price)) : 0;
   const flightMaxPrice = results.length ? Math.max(...results.map((f) => f.price)) : 1;

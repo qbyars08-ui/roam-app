@@ -105,6 +105,7 @@ import { trackItineraryView, maybePromptForReview } from '../lib/rating';
 import { maybePromptNPS } from '../lib/nps';
 import MockDataBadge from '../components/ui/MockDataBadge';
 import ActivityEditModal from '../components/features/ActivityEditModal';
+import { trackTripViewed } from '../lib/analytics';
 
 // =============================================================================
 // Component
@@ -177,6 +178,7 @@ export default function ItineraryScreen() {
       }
 
       setTrip(resolved);
+      trackTripViewed({ tripId: resolved.id, destination: resolved.destination, isShared: resolved.id.startsWith('shared-') });
 
       // Parse itinerary
       const itinerary = parseItinerary(resolved.itinerary);

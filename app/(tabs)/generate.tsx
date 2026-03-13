@@ -12,6 +12,8 @@ import { useAppStore } from '../../lib/store';
 import { generateItinerary, TripLimitReachedError } from '../../lib/claude';
 import { FREE_TRIPS_PER_MONTH } from '../../lib/constants';
 import { isGuestUser } from '../../lib/guest';
+import { useFocusEffect } from '@react-navigation/native';
+import { trackTripGenerated, trackScreen } from '../../lib/analytics';
 import type { QuickModeState } from '../../components/generate/GenerateQuickMode';
 import { BUDGET_TO_BACKEND } from '../../components/generate/GenerateQuickMode';
 import GenerateModeSelect from '../../components/generate/GenerateModeSelect';
@@ -35,6 +37,7 @@ interface ConversationBrief {
 export default function GenerateScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  useFocusEffect(React.useCallback(() => { trackScreen('Generate'); }, []));
 
   const [networkError, setNetworkError] = useState<string | null>(null);
   const generatingDestRef = useRef<string>('');
@@ -100,6 +103,7 @@ export default function GenerateScreen() {
 
       addTrip(trip);
       setTripsThisMonth(tripsUsed);
+      trackTripGenerated({ destination: state.destination, days: state.duration, budget: BUDGET_TO_BACKEND[state.budget], vibes: state.vibes, mode: 'quick' });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       // Brief pause so the user sees the loader complete before navigating
       await new Promise((r) => setTimeout(r, 800));
@@ -164,6 +168,7 @@ export default function GenerateScreen() {
 
       addTrip(trip);
       setTripsThisMonth(tripsUsed);
+      trackTripGenerated({ destination: dest, days, budget, vibes, mode: 'conversation' });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       // Brief pause so the user sees the loader complete before navigating
       await new Promise((r) => setTimeout(r, 800));

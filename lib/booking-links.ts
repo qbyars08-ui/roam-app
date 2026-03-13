@@ -4,6 +4,7 @@
 // =============================================================================
 import { Linking } from 'react-native';
 import { buildAffiliateUrl, trackAffiliateClick, isSafeUrl } from './affiliate-tracking';
+import { trackBookingLinkClicked } from './analytics';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -99,6 +100,7 @@ export async function openBookingLink(
   placement: string
 ): Promise<void> {
   if (!isSafeUrl(url)) return;
+  trackBookingLinkClicked({ partner, destination, placement, url });
   await trackAffiliateClick({ partner, destination, placement, url });
   await Linking.openURL(url).catch(() => {});
 }
