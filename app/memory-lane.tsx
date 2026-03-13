@@ -170,9 +170,8 @@ function MemoryLaneScreen() {
   useEffect(() => {
     if (!canAccess) router.replace('/paywall');
   }, [canAccess, router]);
-  if (!canAccess) return null;
 
-  // Sort trips newest first
+  // Sort trips newest first — computed before early return so hook order is stable
   const sortedTrips = useMemo(
     () => [...trips].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
     [trips]
@@ -193,7 +192,9 @@ function MemoryLaneScreen() {
       duration: 800,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [headerAnim]);
+
+  if (!canAccess) return null;
 
   // ---------------------------------------------------------------------------
   // Empty state

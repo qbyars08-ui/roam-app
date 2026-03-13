@@ -303,9 +303,8 @@ function TravelTwinScreen() {
   useEffect(() => {
     if (!canAccess) router.replace('/paywall');
   }, [canAccess, router]);
-  if (!canAccess) return null;
 
-  // Animation refs
+  // Animation refs — declared before early return so hook order is stable
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.85)).current;
   const emojiScale = useRef(new Animated.Value(0)).current;
@@ -363,7 +362,9 @@ function TravelTwinScreen() {
         }),
       ]).start();
     });
-  }, [twin]);
+  }, [twin, cardFades, cardSlides, emojiScale, fadeAnim, scaleAnim]);
+
+  if (!canAccess) return null;
 
   // ------ Empty state: no profile ------
   if (!hasCompletedProfile || !twin) {

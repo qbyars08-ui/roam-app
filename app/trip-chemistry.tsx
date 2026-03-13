@@ -249,9 +249,8 @@ function TripChemistryScreen() {
   useEffect(() => {
     if (!canAccess) router.replace('/paywall');
   }, [canAccess, router]);
-  if (!canAccess) return null;
 
-  // State
+  // State — declared before early return so hook order is stable
   const [travelers, setTravelers] = useState<Traveler[]>([
     {
       id: makeId(),
@@ -382,6 +381,8 @@ function TripChemistryScreen() {
       // User cancelled
     }
   }, [result, travelers]);
+
+  if (!canAccess) return null;
 
   // Dimension bar color
   const barColor = (score: number) => {

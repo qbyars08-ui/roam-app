@@ -12,10 +12,9 @@ export default function OfflineBanner() {
   const [isOffline, setIsOffline] = useState(false);
   const [translateY] = useState(() => new Animated.Value(-50));
 
-  // Skip on web — banner not relevant for browser
-  if (Platform.OS === 'web') return null;
-
   useEffect(() => {
+    // Banner not relevant for browser — skip subscription on web
+    if (Platform.OS === 'web') return;
     const unsubscribe = NetInfo.addEventListener((state) => {
       const offline = !(state.isConnected && state.isInternetReachable !== false);
       setIsOffline(offline);
@@ -24,6 +23,7 @@ export default function OfflineBanner() {
   }, []);
 
   useEffect(() => {
+    if (Platform.OS === 'web') return;
     Animated.spring(translateY, {
       toValue: isOffline ? 0 : -50,
       useNativeDriver: true,
@@ -31,6 +31,9 @@ export default function OfflineBanner() {
       friction: 12,
     }).start();
   }, [isOffline, translateY]);
+
+  // Skip on web — banner not relevant for browser
+  if (Platform.OS === 'web') return null;
 
   return (
     <Animated.View
