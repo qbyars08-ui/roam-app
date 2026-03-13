@@ -15,20 +15,27 @@
  *   8. safety_alert
  *
  * Body: { user_ids: string[], title: string, body: string, data?: object }
- * Auth: Requires service_role key (internal use only)
+ * Auth: Bearer <SEND_PUSH_INTERNAL_SECRET> (set in Supabase env vars)
+ * Callers must pass: Authorization: Bearer ${SEND_PUSH_INTERNAL_SECRET}
  * ─────────────────────────────────────────────────────────────
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 
 Deno.serve(async (req: Request) => {
-  // Internal-only endpoint — verify service role
-  const authHeader = req.headers.get("Authorization");
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-  if (!authHeader || !authHeader.includes(serviceRoleKey)) {
+  const internalSecret = Deno.env.get("SEND_PUSH_INTERNAL_SECRET");
+  if (!internalSecret) {
     return new Response(
-      JSON.stringify({ error: "Unauthorized — service role required" }),
+      JSON.stringify({ error: "SEND_PUSH_INTERNAL_SECRET not configured" }),
+      { status: 500, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
+  const authHeader = req.headers.get("Authorization");
+  const expectedAuth = `Bearer ${internalSecret}`;
+  if (!authHeader || authHeader !== expectedAuth) {
+    return new Response(
+      JSON.stringify({ error: "Unauthorized — invalid or missing secret" }),
       { status: 401, headers: { "Content-Type": "application/json" } },
     );
   }
@@ -42,8 +49,8 @@ Deno.serve(async (req: Request) => {
     );
   }
 
-  // Fetch push tokens for target users
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
   const { data: tokens, error } = await supabase
