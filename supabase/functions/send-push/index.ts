@@ -26,18 +26,40 @@ Deno.serve(async (req: Request) => {
   const authHeader = req.headers.get("Authorization");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-  if (!authHeader || !authHeader.includes(serviceRoleKey)) {
+  if (!authHeader || authHeader !== `Bearer ${serviceRoleKey}`) {
     return new Response(
-      JSON.stringify({ error: "Unauthorized — service role required" }),
+      JSON.stringify({ error: "Unauthorized" }),
       { status: 401, headers: { "Content-Type": "application/json" } },
     );
   }
 
-  const { user_ids, title, body, data } = await req.json();
+  let reqBody: Record<string, unknown>;
+  try {
+    reqBody = await req.json();
+  } catch {
+    return new Response(
+      JSON.stringify({ error: "Invalid JSON body" }),
+      { status: 400, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
+  const { user_ids, title, body, data } = reqBody as {
+    user_ids?: string[];
+    title?: string;
+    body?: string;
+    data?: Record<string, unknown>;
+  };
 
   if (!user_ids?.length || !title || !body) {
     return new Response(
       JSON.stringify({ error: "Missing user_ids, title, or body" }),
+      { status: 400, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
+  if (user_ids.length > 1000) {
+    return new Response(
+      JSON.stringify({ error: "Maximum 1000 user_ids per request" }),
       { status: 400, headers: { "Content-Type": "application/json" } },
     );
   }
@@ -53,7 +75,7 @@ Deno.serve(async (req: Request) => {
 
   if (error || !tokens?.length) {
     return new Response(
-      JSON.stringify({ sent: 0, reason: error?.message || "no_tokens" }),
+      JSON.stringify({ sent: 0, reason: "no_tokens" }),
       { status: 200, headers: { "Content-Type": "application/json" } },
     );
   }
@@ -113,7 +135,7 @@ Deno.serve(async (req: Request) => {
     JSON.stringify({
       sent: totalSent,
       total: messages.length,
-      errors: errors.length > 0 ? errors.slice(0, 5) : undefined,
+      failed: errors.length > 0 ? errors.length : 0,
     }),
     { status: 200, headers: { "Content-Type": "application/json" } },
   );

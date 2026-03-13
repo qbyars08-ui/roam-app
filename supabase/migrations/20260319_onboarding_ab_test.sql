@@ -19,8 +19,8 @@ CREATE INDEX idx_onboarding_ab_created ON onboarding_ab_assignments(created_at D
 
 ALTER TABLE onboarding_ab_assignments ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow insert ab assignments" ON onboarding_ab_assignments
-  FOR INSERT WITH CHECK (true);
+CREATE POLICY "Authenticated insert ab assignments" ON onboarding_ab_assignments
+  FOR INSERT TO authenticated WITH CHECK (true);
 
 CREATE POLICY "Service role full access" ON onboarding_ab_assignments
   FOR ALL TO service_role USING (true) WITH CHECK (true);

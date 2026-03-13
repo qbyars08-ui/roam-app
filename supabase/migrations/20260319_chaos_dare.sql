@@ -16,8 +16,8 @@ CREATE INDEX idx_chaos_dares_created ON chaos_dares(created_at DESC);
 
 ALTER TABLE chaos_dares ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Anyone can read chaos dares" ON chaos_dares
+CREATE POLICY "Public read chaos dares" ON chaos_dares
   FOR SELECT USING (true);
 
-CREATE POLICY "Anyone can insert chaos dares" ON chaos_dares
-  FOR INSERT WITH CHECK (true);
+CREATE POLICY "Authenticated insert chaos dares" ON chaos_dares
+  FOR INSERT TO authenticated WITH CHECK (true);

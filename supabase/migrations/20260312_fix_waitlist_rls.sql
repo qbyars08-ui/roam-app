@@ -4,7 +4,11 @@
 -- Also allow anon to read own row for duplicate handling.
 -- =============================================================================
 
--- Allow anon users to read waitlist rows (needed for .insert().select() and duplicate handling)
-CREATE POLICY "Anon can read waitlist rows" ON public.waitlist_emails
-  FOR SELECT
+-- Authenticated users can read waitlist rows; anon can insert only
+CREATE POLICY "Authenticated read waitlist" ON public.waitlist_emails
+  FOR SELECT TO authenticated
   USING (true);
+
+CREATE POLICY "Anon insert waitlist" ON public.waitlist_emails
+  FOR INSERT TO anon
+  WITH CHECK (true);

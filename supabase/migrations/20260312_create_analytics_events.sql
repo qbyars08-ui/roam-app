@@ -20,12 +20,8 @@ CREATE INDEX idx_analytics_events_payload ON analytics_events USING GIN (payload
 
 ALTER TABLE analytics_events ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow insert analytics" ON analytics_events
-  FOR INSERT WITH CHECK (true);
+CREATE POLICY "Authenticated insert analytics" ON analytics_events
+  FOR INSERT TO authenticated WITH CHECK (true);
 
 CREATE POLICY "Service role full access" ON analytics_events
   FOR ALL TO service_role USING (true) WITH CHECK (true);
-
--- Admin dashboard read access
-CREATE POLICY "Allow select analytics" ON analytics_events
-  FOR SELECT USING (true);

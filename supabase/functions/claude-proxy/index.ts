@@ -154,11 +154,14 @@ Deno.serve(async (req: Request) => {
     });
 
     if (!anthropicResponse.ok) {
-      const errBody = await anthropicResponse.text();
+      const status = anthropicResponse.status;
+      const clientMessage = status === 429
+        ? "AI service is busy, please try again shortly"
+        : "AI service temporarily unavailable";
       return new Response(
-        JSON.stringify({ error: "Anthropic API error", details: errBody }),
+        JSON.stringify({ error: clientMessage }),
         {
-          status: anthropicResponse.status,
+          status: status >= 500 ? 502 : status,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
