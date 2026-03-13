@@ -593,9 +593,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   } as ViewStyle,
   categoryPill: {
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.md,
     paddingVertical: 9,
-    borderRadius: 100,
+    borderRadius: RADIUS.full,
     backgroundColor: COLORS.bgCard,
     borderWidth: 1,
     borderColor: COLORS.creamDim,
@@ -614,7 +614,7 @@ const styles = StyleSheet.create({
     color: COLORS.bg,
   } as TextStyle,
   heroCard: {
-    borderRadius: RADIUS.lg + 4,
+    borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     marginBottom: SPACING.lg,
     overflow: 'hidden',
@@ -638,8 +638,8 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   aiPickBadge: {
     backgroundColor: COLORS.gold,
-    borderRadius: 4,
-    paddingHorizontal: 8,
+    borderRadius: RADIUS.sm,
+    paddingHorizontal: SPACING.sm,
     paddingVertical: 3,
   } as ViewStyle,
   aiPickBadgeText: {
@@ -741,8 +741,8 @@ const styles = StyleSheet.create({
   } as TextStyle,
   restaurantCard: {
     backgroundColor: COLORS.bgCard,
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: RADIUS.xl,
+    padding: SPACING.sm + 6,
     marginBottom: 10,
     flexDirection: 'row',
     flexWrap: 'wrap',

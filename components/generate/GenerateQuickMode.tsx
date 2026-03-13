@@ -859,7 +859,7 @@ const styles = StyleSheet.create({
   groupInline: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: SPACING.md, paddingHorizontal: SPACING.xs } as ViewStyle,
   groupInlineLabel: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.cream } as TextStyle,
   groupRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md } as ViewStyle,
-  groupBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.bgCard, alignItems: 'center', justifyContent: 'center' } as ViewStyle,
+  groupBtn: { width: 36, height: 36, borderRadius: RADIUS.full, backgroundColor: COLORS.bgCard, alignItems: 'center', justifyContent: 'center' } as ViewStyle,
   groupBtnDisabled: { opacity: 0.4 } as ViewStyle,
   groupValue: { fontFamily: FONTS.mono, fontSize: 22, color: COLORS.gold, minWidth: 30, textAlign: 'center' } as TextStyle,
 
@@ -922,7 +922,7 @@ const styles = StyleSheet.create({
 
   // CTA
   ctaWrap: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: SPACING.md, paddingBottom: SPACING.lg, backgroundColor: COLORS.bg } as ViewStyle,
-  cta: { height: 56, borderRadius: 14, backgroundColor: COLORS.sage, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: SPACING.sm } as ViewStyle,
+  cta: { height: 56, borderRadius: RADIUS.xl, backgroundColor: COLORS.sage, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: SPACING.sm } as ViewStyle,
   ctaPressed: { opacity: 0.85 } as ViewStyle,
   ctaText: { fontFamily: FONTS.header, fontSize: 22, color: COLORS.bg } as TextStyle,
   ctaLoading: { fontFamily: FONTS.body, fontSize: 15, color: COLORS.bg } as TextStyle,

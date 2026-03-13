@@ -59,11 +59,11 @@ export default function ReturnTripSection({
 
 const styles = StyleSheet.create({
   wrap: {
-    backgroundColor: COLORS.accentGold + '15',
+    backgroundColor: COLORS.goldSubtle,
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
     borderWidth: 1,
-    borderColor: COLORS.accentGold + '30',
+    borderColor: COLORS.goldBorderStrong,
   },
   header: {
     flexDirection: 'row',
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
     paddingTop: SPACING.sm,
     borderTopWidth: 1,
-    borderTopColor: COLORS.accentGold + '30',
+    borderTopColor: COLORS.goldBorderStrong,
   },
   ctaText: {
     fontFamily: FONTS.bodySemiBold,

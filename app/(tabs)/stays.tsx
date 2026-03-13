@@ -664,9 +664,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
   } as ViewStyle,
   pill: {
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.md,
     paddingVertical: 9,
-    borderRadius: 100,
+    borderRadius: RADIUS.full,
   } as ViewStyle,
   pillSelected: {
     backgroundColor: COLORS.sage,
@@ -689,7 +689,7 @@ const styles = StyleSheet.create({
   mapContainer: {
     width: '100%',
     height: 220,
-    borderRadius: 16,
+    borderRadius: RADIUS.xl,
     overflow: 'hidden',
     marginHorizontal: SPACING.lg,
     marginBottom: SPACING.md,
@@ -716,14 +716,14 @@ const styles = StyleSheet.create({
   } as TextStyle,
   mapWrap: {
     flex: 1,
-    borderRadius: 16,
+    borderRadius: RADIUS.xl,
     overflow: 'hidden',
   } as ViewStyle,
   priceBubble: {
     backgroundColor: COLORS.gold,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 100,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.full,
   } as ViewStyle,
   priceBubbleText: {
     fontFamily: FONTS.mono,
@@ -746,9 +746,9 @@ const styles = StyleSheet.create({
   } as TextStyle,
   card: {
     marginHorizontal: SPACING.lg,
-    marginBottom: 12,
+    marginBottom: SPACING.sm + 4,
     backgroundColor: COLORS.bgCard,
-    borderRadius: 16,
+    borderRadius: RADIUS.xl,
     overflow: 'hidden',
   } as ViewStyle,
   cardPhotoWrap: {
