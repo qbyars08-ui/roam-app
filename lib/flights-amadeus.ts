@@ -1,8 +1,10 @@
 // =============================================================================
 // ROAM — Amadeus Flight Search (Free Tier: 2,000 req/month)
 // Real flight prices from user's nearest airport to destination.
+// OAuth + API calls go through the amadeus-proxy edge function — secrets stay server-side.
 // =============================================================================
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from './supabase';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -29,20 +31,6 @@ export interface FlightSearchResult {
   destination: string;
   searchedAt: string;
 }
-
-interface AmadeusToken {
-  access_token: string;
-  expires_at: number; // epoch ms
-}
-
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-const API_KEY = process.env.EXPO_PUBLIC_AMADEUS_KEY ?? '';
-const API_SECRET = process.env.EXPO_PUBLIC_AMADEUS_SECRET ?? '';
-const TOKEN_KEY = 'roam_amadeus_token';
-// Test environment (free tier)
-const BASE = 'https://test.api.amadeus.com';
 
 // Major airport codes for popular destinations
 const DESTINATION_AIRPORTS: Record<string, string> = {
@@ -132,49 +120,6 @@ export function getDestinationAirport(destination: string): string | null {
 }
 
 // ---------------------------------------------------------------------------
-// OAuth token management
-// ---------------------------------------------------------------------------
-
-async function getToken(): Promise<string> {
-  if (!API_KEY || !API_SECRET) {
-    throw new Error('Missing Amadeus API credentials');
-  }
-
-  // Check cached token
-  try {
-    const raw = await AsyncStorage.getItem(TOKEN_KEY);
-    if (raw) {
-      const cached: AmadeusToken = JSON.parse(raw);
-      if (cached.expires_at > Date.now() + 60_000) {
-        return cached.access_token;
-      }
-    }
-  } catch {
-    // Ignore
-  }
-
-  // Fetch new token
-  const res = await fetch(`${BASE}/v1/security/oauth2/token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `grant_type=client_credentials&client_id=${API_KEY}&client_secret=${API_SECRET}`,
-  });
-
-  if (!res.ok) {
-    throw new Error(`Amadeus auth failed: ${res.status}`);
-  }
-
-  const data = await res.json();
-  const token: AmadeusToken = {
-    access_token: data.access_token,
-    expires_at: Date.now() + data.expires_in * 1000,
-  };
-
-  await AsyncStorage.setItem(TOKEN_KEY, JSON.stringify(token)).catch(() => {});
-  return token.access_token;
-}
-
-// ---------------------------------------------------------------------------
 // Airline name lookup (top carriers)
 // ---------------------------------------------------------------------------
 const AIRLINE_NAMES: Record<string, string> = {
@@ -221,32 +166,19 @@ export async function searchFlights(params: {
   adults?: number;
   maxOffers?: number;
 }): Promise<FlightSearchResult> {
-  const token = await getToken();
   const { origin, destination, departureDate, returnDate } = params;
   const adults = params.adults ?? 1;
   const max = params.maxOffers ?? 5;
 
-  const url = new URL(`${BASE}/v2/shopping/flight-offers`);
-  url.searchParams.set('originLocationCode', origin);
-  url.searchParams.set('destinationLocationCode', destination);
-  url.searchParams.set('departureDate', departureDate);
-  url.searchParams.set('returnDate', returnDate);
-  url.searchParams.set('adults', String(adults));
-  url.searchParams.set('max', String(max));
-  url.searchParams.set('currencyCode', 'USD');
-  url.searchParams.set('nonStop', 'false');
-
-  const res = await fetch(url.toString(), {
-    headers: { Authorization: `Bearer ${token}` },
+  const { data: proxyData, error } = await supabase.functions.invoke('amadeus-proxy', {
+    body: { origin, destination, departureDate, returnDate, adults, max },
   });
 
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Amadeus flight search failed: ${res.status} ${body}`);
+  if (error) {
+    throw new Error(`Amadeus proxy error: ${error.message}`);
   }
 
-  const data = await res.json();
-  const rawOffers = data.data ?? [];
+  const rawOffers = proxyData?.data ?? [];
 
   const offers: FlightOffer[] = rawOffers.map((offer: Record<string, unknown>) => {
     const price = parseFloat((offer.price as Record<string, string>).total);
