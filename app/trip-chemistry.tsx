@@ -246,12 +246,7 @@ function TripChemistryScreen() {
   const { canAccess } = useProGate('trip-chemistry');
   const travelProfile = useAppStore((s) => s.travelProfile);
 
-  useEffect(() => {
-    if (!canAccess) router.replace('/paywall');
-  }, [canAccess, router]);
-  if (!canAccess) return null;
-
-  // State
+  // State — must be declared before any early return (Rules of Hooks)
   const [travelers, setTravelers] = useState<Traveler[]>([
     {
       id: makeId(),
@@ -276,6 +271,12 @@ function TripChemistryScreen() {
     new Animated.Value(0),
   ]).current;
   const scrollRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    if (!canAccess) router.replace('/paywall');
+  }, [canAccess, router]);
+
+  if (!canAccess) return null;
 
   // Handlers
   const addCompanion = useCallback(() => {

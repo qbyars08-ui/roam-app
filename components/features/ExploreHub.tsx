@@ -61,23 +61,23 @@ type Feature = {
 };
 
 const FEATURES: Feature[] = [
-  { id: 'chat', icon: 'MessageSquare', name: 'Ask AI', description: 'Chat with your travel assistant', route: '/(tabs)/chat' },
+  { id: 'chat', icon: 'MessageSquare', name: 'Ask AI', description: 'Chat with your travel assistant', route: '/(tabs)/generate' },
   { id: 'prep', icon: 'Shield', name: 'Trip Prep', description: 'Packing lists, visas & essentials', route: '/(tabs)/prep' },
   { id: 'flights', icon: 'Plane', name: 'Flights', description: 'Track and manage your flights', route: '/(tabs)/flights' },
-  { id: 'globe', icon: 'Globe', name: 'Globe', description: 'Explore the interactive map', route: '/(tabs)/globe' },
-  { id: 'passport', icon: 'BookOpen', name: 'Passport', description: 'Visa info & travel documents', route: '/(tabs)/passport' },
-  { id: 'pets', icon: 'PawPrint', name: 'Pet Travel', description: 'Plan trips with your pet', route: '/(tabs)/pets' },
+  { id: 'globe', icon: 'Globe', name: 'Globe', description: 'Explore the interactive map', route: '/globe' },
+  { id: 'passport', icon: 'BookOpen', name: 'Passport', description: 'Visa info & travel documents', route: '/passport' },
+  { id: 'pets', icon: 'PawPrint', name: 'Pet Travel', description: 'Plan trips with your pet', route: '/pets' },
   { id: 'travel-twin', icon: 'Users', name: 'Travel Twin', description: 'Find your travel style match', route: '/travel-twin', pro: true },
   { id: 'roam-for-dates', icon: 'Heart', name: 'ROAM for Dates', description: 'Couples planner — merge your travel styles', route: '/roam-for-dates' },
   { id: 'trip-trading', icon: 'Repeat', name: 'Trip Trading', description: 'Swap itineraries, claim others\' trips', route: '/trip-trading' },
-  { id: 'local-lens', icon: 'Search', name: 'Local Lens', description: 'See destinations like a local', route: '/(tabs)/chat' },
+  { id: 'local-lens', icon: 'Search', name: 'Local Lens', description: 'See destinations like a local', route: '/(tabs)/generate' },
   { id: 'group-trips', icon: 'Users', name: 'Group Trips', description: 'Plan with friends — vote, chat, split costs', route: '/create-group' },
   { id: 'trip-chemistry', icon: 'FlaskConical', name: 'Trip Chemistry', description: 'Group travel compatibility', route: '/trip-chemistry', pro: true },
   { id: 'memory-lane', icon: 'Image', name: 'Memory Lane', description: 'Relive your past adventures', route: '/memory-lane', pro: true },
   { id: 'budget-guardian', icon: 'Wallet', name: 'Budget Guardian', description: 'Track spending & get alerts', route: '/budget-guardian' },
   { id: 'arrival-mode', icon: 'Flag', name: 'Arrival Mode', description: 'First-day city survival guide', route: '/(tabs)/prep' },
-  { id: 'honest-reviews', icon: 'Star', name: 'Honest Reviews', description: 'Real traveler feedback', route: '/(tabs)/chat' },
-  { id: 'visited-map', icon: 'Map', name: 'Visited Map', description: 'Track where you\'ve been', route: '/(tabs)/globe' },
+  { id: 'honest-reviews', icon: 'Star', name: 'Honest Reviews', description: 'Real traveler feedback', route: '/(tabs)/generate' },
+  { id: 'visited-map', icon: 'Map', name: 'Visited Map', description: 'Track where you\'ve been', route: '/globe' },
   { id: 'receipt', icon: 'Receipt', name: 'The Receipt', description: 'See your trip cost breakdown', route: '/trip-receipt' },
   { id: 'dupe-finder', icon: 'Search', name: 'Dupe Finder', description: 'Find cheaper alternatives', route: '/dupe-finder' },
   { id: 'main-character', icon: 'User', name: 'Main Character', description: 'Your trip as a story', route: '/main-character' },
@@ -202,7 +202,7 @@ export function FeatureQuickAccess() {
         <Pressable
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.push('/(tabs)/profile');
+            router.push('/profile');
           }}
           style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
         >

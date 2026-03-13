@@ -30,26 +30,42 @@ JSON schema:
         "activity": "Specific — not 'explore the area'",
         "location": "Real place name — the actual spot",
         "cost": "$XX",
-        "tip": "The kind of tip a local friend would whisper to you"
+        "tip": "The kind of tip a local friend would whisper to you",
+        "time": "9:00 AM",
+        "duration": "90",
+        "neighborhood": "Shibuya",
+        "address": "Google Maps-friendly address",
+        "transitToNext": "15 min walk through Cat Street"
       },
       "afternoon": {
         "activity": "Specific activity",
         "location": "Real place name",
         "cost": "$XX",
-        "tip": "What to order, where to sit, when to go"
+        "tip": "What to order, where to sit, when to go",
+        "time": "2:00 PM",
+        "duration": "120",
+        "neighborhood": "Harajuku",
+        "address": "Full address for navigation",
+        "transitToNext": "Take Yamanote Line, 2 stops to Shinjuku (8 min)"
       },
       "evening": {
         "activity": "Specific activity",
         "location": "Real place name",
         "cost": "$XX",
-        "tip": "Insider knowledge, not 'arrive early'"
+        "tip": "Insider knowledge, not 'arrive early'",
+        "time": "6:00 PM",
+        "duration": "150",
+        "neighborhood": "Shinjuku",
+        "address": "Full address"
       },
       "accommodation": {
         "name": "Real name — the place you'd actually book",
         "type": "hotel | hostel | airbnb | resort",
-        "pricePerNight": "$XX"
+        "pricePerNight": "$XX",
+        "neighborhood": "Shinjuku"
       },
-      "dailyCost": "$XXX"
+      "dailyCost": "$XXX",
+      "routeSummary": "Shibuya → Harajuku → Shinjuku"
     }
   ],
   "budgetBreakdown": {
@@ -70,6 +86,13 @@ Voice guidelines:
 - Tips should be texts to a friend: "Order the #3, skip the appetizers"
 - REAL places only. If unsure, pick one you're confident about.
 - packingEssentials: destination-specific. "Reef-safe sunscreen" not just "sunscreen."
+- CRITICAL: Each morning/afternoon/evening slot MUST include ALL of these fields:
+  - "time": exact clock time in 12-hour format (e.g. "9:00 AM", "2:30 PM"). Never "Morning" or "Evening".
+  - "duration": estimated minutes as a string (e.g. "90", "120"). Be realistic — a temple visit is 60-90 min, a food tour is 180 min.
+  - "neighborhood": the district or area (e.g. "Shibuya", "Roma Norte", "Alfama"). Critical for route planning.
+  - "address": a Google Maps-friendly address users can tap to navigate.
+  - "transitToNext": how to get to the next activity. Be specific: "15 min walk along the canal" or "Take Metro Line 3, get off at Zócalo (12 min)". Skip for the last activity of the day (evening).
+- "routeSummary": a quick route overview for the day, e.g. "Shibuya → Harajuku → Shinjuku"
 - visaInfo: current 2025-2026 policies for US passport holders.
 
 PERSONALIZATION — Travel Style Profile:
@@ -92,7 +115,16 @@ TRAVEL FREQUENCY (how often they travel) — critical for tone and depth:
 - few-times-year: Standard level. Assume they know basics.
 - constantly: Minimal hand-holding. Advanced recommendations only. Skip basics, visa reminders, packing 101. Get straight to the good stuff.
 
-A pace-1, budget-1, crowd-1 user in Tokyo should get completely different recs than a pace-10, budget-10, crowd-10 user.`;
+A pace-1, budget-1, crowd-1 user in Tokyo should get completely different recs than a pace-10, budget-10, crowd-10 user.
+
+SPATIAL INTELLIGENCE — The "Hokkaido Problem" (CRITICAL):
+Never schedule activities that are geographically impossible in sequence. Rules:
+- ALL activities within a single day MUST be in the same city/district or reachable within 30 minutes by the transit mode available in that destination.
+- If a destination has multiple areas (e.g., Kyoto temples are spread across the city), group activities by neighborhood per day, not randomly.
+- "transitToNext" MUST reflect a REAL, feasible route — not a fantasy. If it takes 3 hours by train, it cannot be a morning→afternoon transition. Schedule it across different days instead.
+- If suggesting a day trip to a nearby area (e.g., Kamakura from Tokyo, Sintra from Lisbon), the ENTIRE day should be dedicated to that trip. Do not mix a day trip with activities back in the main city.
+- Before finalizing each day, mentally verify: "Can a person physically get from Activity A to Activity B in the time between them?" If not, restructure.
+- The "routeSummary" field should show neighborhoods flowing geographically, not zigzagging across the city.`;
 
 export const CHAT_SYSTEM_PROMPT = `You're the friend who's been everywhere and always knows a spot. You're ROAM's travel chat — knowledgeable, honest, opinionated, and never boring.
 
@@ -175,6 +207,35 @@ export async function callClaude(
   };
 }
 
+export async function callClaudeWithMessages(
+  systemPrompt: string,
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+  isTripGeneration = false
+): Promise<ClaudeResponse> {
+  const { data, error } = await supabase.functions.invoke('claude-proxy', {
+    body: {
+      system: systemPrompt,
+      messages: messages.map((m) => ({ role: m.role, content: m.content })),
+      isTripGeneration,
+    },
+  });
+
+  if (error) {
+    const msg = typeof error === 'object' && 'message' in error ? (error as { message: string }).message : String(error);
+    throw new Error(`Claude proxy error: ${msg}`);
+  }
+  if (data?.code === 'LIMIT_REACHED') {
+    throw new TripLimitReachedError(data.tripsUsed ?? 0, data.limit ?? 1);
+  }
+  if (data?.error) throw new Error(data.error);
+
+  return {
+    content: data.content as string,
+    tripsUsed: (data.tripsUsed as number) ?? 0,
+    limit: (data.limit as number) ?? 1,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // buildTripPrompt — build the user message for itinerary generation
 // ---------------------------------------------------------------------------
@@ -196,6 +257,16 @@ export function buildTripPrompt(params: {
   vibes: string[];
   travelProfile?: TravelProfile | null;
   weather?: WeatherContext | null;
+  groupSize?: number;
+  pace?: string;
+  accommodationStyle?: string;
+  morningType?: string;
+  tripComposition?: string;
+  dietary?: string[];
+  transport?: string[];
+  mustVisit?: string;
+  avoidList?: string;
+  specialRequests?: string;
 }): string {
   const vibeList = params.vibes.length > 0 ? params.vibes.join(', ') : 'general sightseeing';
 
@@ -204,6 +275,61 @@ export function buildTripPrompt(params: {
     `Budget tier: ${params.budget}.`,
     `Travel vibes: ${vibeList}.`,
   ];
+
+  if (params.groupSize != null && params.groupSize > 1) {
+    lines.push(`Group size: ${params.groupSize} travelers.`);
+  }
+
+  // ── Trip customization (from quick mode builder) ──
+  if (params.tripComposition) {
+    lines.push(`Trip composition: ${params.tripComposition}.`);
+  }
+
+  if (params.pace) {
+    lines.push(`Travel pace: ${params.pace}. Match the number of activities per time slot to this pace exactly.`);
+  }
+
+  if (params.morningType) {
+    const morningTimes: Record<string, string> = {
+      'early-bird': 'Start mornings at 6:30-7:00 AM. This traveler wants to catch sunrise and beat crowds.',
+      'regular': 'Start mornings around 9:00 AM. Standard pacing.',
+      'sleep-in': 'Start mornings at 11:00 AM or later. This traveler is NOT a morning person — no sunrise temples.',
+    };
+    lines.push(morningTimes[params.morningType] ?? `Morning preference: ${params.morningType}.`);
+  }
+
+  if (params.accommodationStyle) {
+    lines.push(`Accommodation preference: ${params.accommodationStyle}. Only suggest this type of accommodation.`);
+  }
+
+  if (params.transport && params.transport.length > 0) {
+    lines.push(`Preferred transport: ${params.transport.join(', ')}. Only use these modes in transitToNext directions.`);
+  }
+
+  if (params.dietary && params.dietary.length > 0) {
+    lines.push(`Dietary requirements: ${params.dietary.join(', ')}. ALL food recommendations MUST respect these restrictions — no exceptions.`);
+  }
+
+  if (params.mustVisit) {
+    lines.push('');
+    lines.push('--- MUST-VISIT SPOTS (work these into the itinerary, do NOT skip them) ---');
+    lines.push(params.mustVisit);
+    lines.push('---');
+  }
+
+  if (params.avoidList) {
+    lines.push('');
+    lines.push('--- AVOID LIST (do NOT include any of these) ---');
+    lines.push(params.avoidList);
+    lines.push('---');
+  }
+
+  if (params.specialRequests) {
+    lines.push('');
+    lines.push('--- SPECIAL REQUESTS (incorporate these into the plan) ---');
+    lines.push(params.specialRequests);
+    lines.push('---');
+  }
 
   // Inject travel profile if available
   if (params.travelProfile) {
@@ -246,8 +372,17 @@ export async function generateItinerary(params: {
   vibes: string[];
   travelProfile?: TravelProfile | null;
   weather?: WeatherContext | null;
-  /** Trip start date YYYY-MM-DD — aligns forecast to trip days (default: today) */
   startDate?: string;
+  groupSize?: number;
+  pace?: string;
+  accommodationStyle?: string;
+  morningType?: string;
+  tripComposition?: string;
+  dietary?: string[];
+  transport?: string[];
+  mustVisit?: string;
+  avoidList?: string;
+  specialRequests?: string;
 }): Promise<{ itinerary: Itinerary; tripsUsed: number; limit: number }> {
   // Auto-inject travel profile from store if not explicitly provided
   const profile = params.travelProfile ?? (
@@ -282,7 +417,12 @@ export async function generateItinerary(params: {
     }
   }
 
-  const prompt = buildTripPrompt({ ...params, travelProfile: profile, weather: weatherCtx });
+  const prompt = buildTripPrompt({
+    ...params,
+    travelProfile: profile,
+    weather: weatherCtx,
+    groupSize: params.groupSize,
+  });
   const response = await callClaude(ITINERARY_SYSTEM_PROMPT, prompt, true);
 
   const itinerary = parseItinerary(response.content);
@@ -292,6 +432,29 @@ export async function generateItinerary(params: {
     tripsUsed: response.tripsUsed,
     limit: response.limit,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Conversation mode — trip planning dialogue
+// ---------------------------------------------------------------------------
+
+export const CONVERSATION_GENERATE_SYSTEM = `You are ROAM — a travel planner. You are having a conversation to plan a trip.
+
+RULES:
+1. Ask ONE question at a time. Never more.
+2. Never offer more than 3 options in any response.
+3. Match the user's energy — casual or specific.
+4. Remember everything. Reference earlier answers naturally.
+5. When destination, duration, budget, and at least one vibe are confirmed, say exactly: "Ready to build your trip?" and stop. Do not add anything after that.
+6. Never use emojis.
+7. Keep every response under 30 words. Punchy, direct, no filler.
+8. Extract: destination (city/region), days (number), budget (budget / mid / luxury), group size (number), vibes (adventure, culture, relaxed, party, foodie, digital nomad).`;
+
+export async function sendConversationMessage(
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>
+): Promise<{ content: string }> {
+  const response = await callClaudeWithMessages(CONVERSATION_GENERATE_SYSTEM, messages, false);
+  return { content: response.content };
 }
 
 // ---------------------------------------------------------------------------

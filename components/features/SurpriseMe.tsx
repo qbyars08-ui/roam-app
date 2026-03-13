@@ -110,7 +110,7 @@ export default function SurpriseMe({ photoUrls: _photoUrls }: Props) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setPlanWizard({ destination: result.destination.label });
     setShowModal(false);
-    router.push('/(tabs)/plan');
+    router.push('/(tabs)/generate');
   }, [result, setPlanWizard, router]);
 
   const handleTryAgain = useCallback(() => {

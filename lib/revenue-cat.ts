@@ -144,8 +144,8 @@ export async function purchasePro(): Promise<boolean> {
     }
     const { customerInfo } = await Purchases.purchasePackage(monthly);
     return planFromCustomerInfo(customerInfo) !== 'free';
-  } catch (err: any) {
-    if (err?.userCancelled) return false;
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && 'userCancelled' in err && (err as Record<string, unknown>).userCancelled) return false;
     throw err;
   }
 }
@@ -163,8 +163,8 @@ export async function purchaseGlobal(): Promise<boolean> {
     }
     const { customerInfo } = await Purchases.purchasePackage(annual);
     return planFromCustomerInfo(customerInfo) !== 'free';
-  } catch (err: any) {
-    if (err?.userCancelled) return false;
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && 'userCancelled' in err && (err as Record<string, unknown>).userCancelled) return false;
     throw err;
   }
 }

@@ -32,6 +32,7 @@ import * as Clipboard from 'expo-clipboard';
 // ---------------------------------------------------------------------------
 // Snake-case DB row -> camelCase converters
 // ---------------------------------------------------------------------------
+type DbRow = Record<string, unknown>;
 
 function toGroup(row: any): TripGroup {
   return {
@@ -202,8 +203,8 @@ export async function createGroup(params: CreateGroupParams): Promise<TripGroup>
     if (memberError) throw memberError;
 
     return toGroup(data);
-  } catch (err: any) {
-    throw new Error(`Failed to create group: ${err.message}`);
+  } catch (err: unknown) {
+    throw new Error(`Failed to create group: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
 }
 
@@ -219,8 +220,8 @@ export async function joinGroup(inviteCode: string): Promise<TripGroup> {
     if (!data) throw new Error('Invalid invite code');
 
     return toGroup(data);
-  } catch (err: any) {
-    throw new Error(`Failed to join group: ${err.message}`);
+  } catch (err: unknown) {
+    throw new Error(`Failed to join group: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
 }
 
@@ -235,8 +236,8 @@ export async function leaveGroup(groupId: string): Promise<void> {
       .eq('user_id', userId);
 
     if (error) throw error;
-  } catch (err: any) {
-    throw new Error(`Failed to leave group: ${err.message}`);
+  } catch (err: unknown) {
+    throw new Error(`Failed to leave group: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
 }
 
@@ -264,8 +265,8 @@ export async function getMyGroups(): Promise<TripGroup[]> {
     if (error) throw error;
 
     return (data ?? []).map(toGroup);
-  } catch (err: any) {
-    throw new Error(`Failed to fetch groups: ${err.message}`);
+  } catch (err: unknown) {
+    throw new Error(`Failed to fetch groups: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
 }
 
@@ -294,8 +295,8 @@ export async function getGroupDetails(
       ...toGroup(group),
       members: (members ?? []).map(toMember),
     };
-  } catch (err: any) {
-    throw new Error(`Failed to fetch group details: ${err.message}`);
+  } catch (err: unknown) {
+    throw new Error(`Failed to fetch group details: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
 }
 
@@ -310,8 +311,8 @@ export async function updateGroupItinerary(
       .eq('id', groupId);
 
     if (error) throw error;
-  } catch (err: any) {
-    throw new Error(`Failed to update itinerary: ${err.message}`);
+  } catch (err: unknown) {
+    throw new Error(`Failed to update itinerary: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
 }
 
@@ -400,8 +401,8 @@ export async function castVote(params: CastVoteParams): Promise<void> {
     );
 
     if (error) throw error;
-  } catch (err: any) {
-    throw new Error(`Failed to cast vote: ${err.message}`);
+  } catch (err: unknown) {
+    throw new Error(`Failed to cast vote: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
 }
 
@@ -417,8 +418,8 @@ export async function getVotes(groupId: string, dayNumber: number): Promise<Vote
     if (error) throw error;
 
     return (data ?? []).map(toVote);
-  } catch (err: any) {
-    throw new Error(`Failed to fetch votes: ${err.message}`);
+  } catch (err: unknown) {
+    throw new Error(`Failed to fetch votes: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
 }
 
@@ -525,8 +526,8 @@ export async function addExpense(params: AddExpenseParams): Promise<TripExpense>
     }
 
     return toExpense(expense);
-  } catch (err: any) {
-    throw new Error(`Failed to add expense: ${err.message}`);
+  } catch (err: unknown) {
+    throw new Error(`Failed to add expense: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
 }
 
@@ -541,8 +542,8 @@ export async function getExpenses(groupId: string): Promise<TripExpense[]> {
     if (error) throw error;
 
     return (data ?? []).map(toExpense);
-  } catch (err: any) {
-    throw new Error(`Failed to fetch expenses: ${err.message}`);
+  } catch (err: unknown) {
+    throw new Error(`Failed to fetch expenses: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
 }
 
@@ -554,8 +555,8 @@ export async function settleExpense(splitId: string): Promise<void> {
       .eq('id', splitId);
 
     if (error) throw error;
-  } catch (err: any) {
-    throw new Error(`Failed to settle expense: ${err.message}`);
+  } catch (err: unknown) {
+    throw new Error(`Failed to settle expense: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
 }
 
@@ -723,8 +724,8 @@ export async function sendMessage(params: SendMessageParams): Promise<void> {
     });
 
     if (error) throw error;
-  } catch (err: any) {
-    throw new Error(`Failed to send message: ${err.message}`);
+  } catch (err: unknown) {
+    throw new Error(`Failed to send message: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
 }
 
@@ -741,8 +742,8 @@ export async function getMessages(groupId: string, limit = 50): Promise<GroupMes
 
     // Return in chronological order
     return (data ?? []).map(toMessage).reverse();
-  } catch (err: any) {
-    throw new Error(`Failed to fetch messages: ${err.message}`);
+  } catch (err: unknown) {
+    throw new Error(`Failed to fetch messages: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
 }
 
@@ -769,8 +770,8 @@ export async function getPackingList(groupId: string): Promise<PackingItem[]> {
     if (error) throw error;
 
     return (data ?? []).map(toPackingItem);
-  } catch (err: any) {
-    throw new Error(`Failed to fetch packing list: ${err.message}`);
+  } catch (err: unknown) {
+    throw new Error(`Failed to fetch packing list: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
 }
 
@@ -788,8 +789,8 @@ export async function addPackingItem(params: AddPackingItemParams): Promise<void
     });
 
     if (error) throw error;
-  } catch (err: any) {
-    throw new Error(`Failed to add packing item: ${err.message}`);
+  } catch (err: unknown) {
+    throw new Error(`Failed to add packing item: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
 }
 
@@ -809,8 +810,8 @@ export async function togglePackedItem(itemId: string): Promise<void> {
       .eq('id', itemId);
 
     if (error) throw error;
-  } catch (err: any) {
-    throw new Error(`Failed to toggle packing item: ${err.message}`);
+  } catch (err: unknown) {
+    throw new Error(`Failed to toggle packing item: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
 }
 
@@ -825,8 +826,8 @@ export async function assignPackingItem(
       .eq('id', itemId);
 
     if (error) throw error;
-  } catch (err: any) {
-    throw new Error(`Failed to assign packing item: ${err.message}`);
+  } catch (err: unknown) {
+    throw new Error(`Failed to assign packing item: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
 }
 
@@ -838,8 +839,8 @@ export async function removePackingItem(itemId: string): Promise<void> {
       .eq('id', itemId);
 
     if (error) throw error;
-  } catch (err: any) {
-    throw new Error(`Failed to remove packing item: ${err.message}`);
+  } catch (err: unknown) {
+    throw new Error(`Failed to remove packing item: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
 }
 
@@ -873,9 +874,9 @@ export async function shareInviteLink(
     if (result.action === Share.dismissedAction) {
       await Clipboard.setStringAsync(webLink);
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     // Fallback: copy link to clipboard when share fails
     await Clipboard.setStringAsync(webLink);
-    throw new Error(`Share failed, link copied to clipboard: ${err.message}`);
+    throw new Error(`Share failed, link copied to clipboard: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
 }

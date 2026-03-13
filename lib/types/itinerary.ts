@@ -11,6 +11,16 @@ export interface TimeSlotActivity {
   location: string;
   cost: string;
   tip: string;
+  /** Exact time e.g. "9:00 AM" — required for itinerary display */
+  time?: string;
+  /** Duration in minutes e.g. "90" — helps users plan their day */
+  duration?: string;
+  /** Neighborhood or district e.g. "Shibuya" — helps with map grouping */
+  neighborhood?: string;
+  /** Google Maps-friendly address for navigation */
+  address?: string;
+  /** Transit info to next activity e.g. "15 min walk" or "Take subway Ginza Line, 3 stops" */
+  transitToNext?: string;
 }
 
 export interface ItineraryDay {
@@ -23,8 +33,12 @@ export interface ItineraryDay {
     name: string;
     type: string;
     pricePerNight: string;
+    /** Neighborhood for map context */
+    neighborhood?: string;
   };
   dailyCost: string;
+  /** Summary of the day's neighborhoods e.g. "Shibuya → Harajuku → Shinjuku" */
+  routeSummary?: string;
 }
 
 export interface BudgetBreakdown {
@@ -133,6 +147,17 @@ export function parseItinerary(raw: string): Itinerary {
           throw new Error(`days[${i}].${slot}.${field} must be a string`);
         }
       }
+      // Validate optional string fields
+      for (const optField of ['time', 'duration', 'neighborhood', 'address', 'transitToNext'] as const) {
+        if (ts[optField] !== undefined && typeof ts[optField] !== 'string') {
+          throw new Error(`days[${i}].${slot}.${optField} must be a string if present`);
+        }
+      }
+    }
+
+    // Validate optional day-level fields
+    if (day.routeSummary !== undefined && typeof day.routeSummary !== 'string') {
+      throw new Error(`days[${i}].routeSummary must be a string if present`);
     }
 
     // Validate accommodation
@@ -144,6 +169,9 @@ export function parseItinerary(raw: string): Itinerary {
       if (typeof acc[field] !== 'string') {
         throw new Error(`days[${i}].accommodation.${field} must be a string`);
       }
+    }
+    if (acc.neighborhood !== undefined && typeof acc.neighborhood !== 'string') {
+      throw new Error(`days[${i}].accommodation.neighborhood must be a string if present`);
     }
   }
 
