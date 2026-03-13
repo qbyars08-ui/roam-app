@@ -11,7 +11,20 @@ Format: status, date, findings (max 10 bullets), action needed flag.
 **Last Updated:** 2026-03-13  
 **Action Needed:** NO
 
-### Latest Findings (Design Audit)
+
+
+### Latest Findings (Empty States + Loading Pass)
+- `app/(tabs)/saved.tsx`: `emptyIconWrap` had no `borderRadius` — SVG icon sat in a sharp-cornered box; fixed to `RADIUS.lg`; dead `emptyEmoji` style removed
+- `app/(tabs)/passport.tsx`: empty state was **buried below** world map + stats + all-locked badges grid — moved to render first so new users see it immediately; dead `emptyEmoji` removed
+- `app/(tabs)/index.tsx`: filter empty state had no title and no way to escape — added "Nothing here yet" header + "Clear filters" pill CTA with haptic feedback
+- `app/(tabs)/flights.tsx`: no loading feedback during search (only button animation) — added 3× `SkeletonCard` shimmer while `loading=true`
+- `app/(tabs)/prep.tsx`: section empty states had no icons — added `Globe`/`Phone`/`BookOpen` icons; dead `emptySectionEmoji` style removed
+- `app/(tabs)/pets.tsx`: no empty state when 0 pets — added branded card with `PawPrint` icon, title, subtitle, and AddPetCard inline
+- `app/chaos-dare.tsx`, `app/join-group.tsx`, `app/travel-time-machine.tsx`: `ActivityIndicator` replaced with `PulseLoader` from `components/premium/LoadingStates` — brand-aligned, no more OS-default spinners
+- `app/trip-wrapped.tsx`, `app/trip-receipt.tsx`, `app/main-character.tsx`: all had text-only empty states — added `TrendingUp`, `Receipt`, `Film` icons
+- `npx tsc --noEmit` — zero errors; `npx jest` — 100/100 tests passing
+
+### Previous Findings (Design Audit)
 - **Discover tab** `app/(tabs)/index.tsx`: category/budget pills → frosted glass (whiteSoft border, bgGlass fill, goldHighlight active); price badge → glassmorphic (goldSubtle + goldBorder); error banner borderColor anti-pattern fixed
 - **Flights tab** `app/(tabs)/flights.tsx`: search input → pill-shaped; status badges use `statusBgColor()` helper returning proper COLORS tokens; `placeholderTextColor` anti-pattern fixed
 - **Prep tab** `app/(tabs)/prep.tsx`: `Section` component `iconColor+'20'` prop refactored to `iconBg` accepting explicit tokens; trip card gradient anti-patterns fixed; packing checkbox styled with sageBorder/sageFaint
