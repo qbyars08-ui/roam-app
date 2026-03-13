@@ -290,7 +290,7 @@ export default function OnboardScreen() {
   const pendingOnboardDestination = useAppStore((s) => s.pendingOnboardDestination);
   const session = useAppStore((s) => s.session);
   const isGuest = !session;
-  const isWebGuest = Platform.OS === 'web' && (!session || String(session.user?.id ?? '').startsWith('guest-') || !!(session.user as { is_anonymous?: boolean })?.is_anonymous);
+  const isGuestLike = isGuest || !!(session?.user as { is_anonymous?: boolean })?.is_anonymous;
 
   const handleDestinationSelect = useCallback(
     (dest: string) => {
@@ -316,14 +316,14 @@ export default function OnboardScreen() {
     setStep(1);
   }, [hasCompletedProfile, isGuest, setPendingOnboardDestination, router]);
 
-  // Web: sign in anonymously so generateItinerary (edge function) has a valid JWT
+  // Sign in anonymously so generateItinerary (edge function) has a valid JWT
   useEffect(() => {
-    if (Platform.OS === 'web' && !session) {
+    if (!session) {
       supabase.auth.signInAnonymously().then(({ data }) => {
         if (data?.session) setSession(data.session);
       }).catch(() => {});
     }
-  }, [Platform.OS, session, setSession]);
+  }, [session, setSession]);
 
   useFocusEffect(
     useCallback(() => {
@@ -337,12 +337,17 @@ export default function OnboardScreen() {
 
   const handleGenerate = useCallback(async () => {
     if (!destination) return;
-    if (!isWebGuest && !isPro && tripsThisMonth >= FREE_TRIPS_PER_MONTH) {
+    if (!isGuestLike && !isPro && tripsThisMonth >= FREE_TRIPS_PER_MONTH) {
       router.push('/paywall');
       return;
     }
     setError(null);
     try {
+      // Edge function requires a valid JWT; ensure session before generate
+      if (!session) {
+        const { data, error: signErr } = await supabase.auth.signInAnonymously();
+        if (!signErr && data?.session) setSession(data.session);
+      }
       const budget = BUDGETS[Math.floor(Math.random() * BUDGETS.length)].id;
       const shuffled = [...VIBES].sort(() => Math.random() - 0.5);
       const vibes = shuffled.slice(0, 3).map((v) => v.label);
@@ -376,7 +381,7 @@ export default function OnboardScreen() {
       }
       setError('We couldn\'t build your trip right now. Check your connection and try again.');
     }
-  }, [destination, addTrip, setTripsThisMonth, router, isPro, tripsThisMonth, isWebGuest]);
+  }, [destination, addTrip, setTripsThisMonth, router, isPro, tripsThisMonth, isGuestLike, session, setSession]);
 
   const handleSkipSignup = useCallback(async () => {
     await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
