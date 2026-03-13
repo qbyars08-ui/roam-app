@@ -42,9 +42,21 @@ EXPO_PUBLIC_REVENUECAT_ANDROID_KEY=goog_xxx
 5. **Paywall** → `purchasePro()` / `purchaseGlobal()` trigger Store/Play sheet; on success, `syncProStatusToSupabase()` runs immediately
 6. **Restore** → `restorePurchases()` + sync
 
-## 5. Verify
+## 5. Webhook (Server-Side Sync)
+
+For renewals, cancellations, and expirations to sync to Supabase:
+
+1. Deploy the webhook: `supabase functions deploy revenuecat-webhook`
+2. In Supabase Dashboard: Edge Functions → revenuecat-webhook → Secrets
+   - Add `REVENUECAT_WEBHOOK_SECRET` (generate a random string, e.g. `openssl rand -hex 32`)
+3. In RevenueCat Dashboard → Integrations → Webhooks
+   - URL: `https://<project-ref>.supabase.co/functions/v1/revenuecat-webhook`
+   - Authorization header: `Bearer <REVENUECAT_WEBHOOK_SECRET>`
+
+## 6. Verify
 
 After setup, the app will:
 - Show live prices from RevenueCat on the paywall
 - Use `purchasePro()` for monthly and `purchaseGlobal()` for annual
 - Grant Pro/Global via the **pro** entitlement
+- Webhook updates `profiles.subscription_tier` on purchase/renewal/expiration
