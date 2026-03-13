@@ -27,11 +27,9 @@ jobs:
         working-directory: ${{ steps.ws.outputs.dir }}
       - run: npm run build:web
         working-directory: ${{ steps.ws.outputs.dir }}
-      - uses: nwtgck/actions-netlify@v2
-        with:
-          publish-dir: ${{ steps.ws.outputs.dir }}/dist
-          production-deploy: true
-          fails-without-credentials: true
+      - name: Deploy to Netlify
+        run: npx netlify-cli deploy --prod --dir=dist
+        working-directory: ${{ steps.ws.outputs.dir }}
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
