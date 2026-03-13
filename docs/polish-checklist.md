@@ -27,44 +27,44 @@ Design bar:
 | /profile | x | |
 | /itinerary | x | Trip copy, no shadows |
 | /chaos-mode | x | Trip copy |
-| /chaos-dare | | |
-| /create-group | | |
-| /join-group | | |
-| /group-trip | | |
-| /dupe-finder | | |
-| /trip-dupe | | |
-| /made-for-you | | |
-| /travel-persona | | |
-| /trip-chemistry | | |
-| /travel-twin | | |
-| /memory-lane | | |
-| /dream-vault | | |
-| /alter-ego | | |
-| /trip-receipt | | |
-| /trip-wrapped | | |
-| /trip-collections | | |
-| /trip-trading | | |
+| /chaos-dare | x | Trip copy |
+| /create-group | x | |
+| /join-group | x | Contraction, haptics |
+| /group-trip | x | Trip copy, em dash, haptics |
+| /dupe-finder | x | Back button, sentence case, haptics |
+| /trip-dupe | x | Emojis → Lucide, share copy |
+| /made-for-you | x | Back button → Lucide |
+| /travel-persona | x | Back/refresh → Lucide |
+| /trip-chemistry | x | Sentence case |
+| /travel-twin | x | Sentence case, contractions |
+| /memory-lane | x | Haptics import, sentence case |
+| /dream-vault | x | Back button, trip copy |
+| /alter-ego | x | Emojis → Lucide, sentence case |
+| /trip-receipt | x | Back button → Lucide |
+| /trip-wrapped | x | Back button, contractions |
+| /trip-collections | x | Back button → Lucide |
+| /trip-trading | x | Back button → Lucide |
 | /main-character | x | Trip copy |
-| /local-lens | | |
-| /arrival-mode | | |
-| /airport-guide | | |
-| /layover | | |
-| /language-survival | | |
-| /prep-detail | | |
-| /budget-guardian | | |
-| /visited-map | | |
-| /people-met | | |
-| /honest-reviews | | |
-| /hype | | |
-| /anti-itinerary | | |
+| /local-lens | x | |
+| /arrival-mode | x | |
+| /airport-guide | x | Back button → Lucide |
+| /layover | x | Back button → Lucide |
+| /language-survival | x | Flag/category emojis removed |
+| /prep-detail | x | Haptics |
+| /budget-guardian | x | Sentence case, haptics |
+| /visited-map | x | Haptics |
+| /people-met | x | Back button → Lucide |
+| /honest-reviews | x | Sentence case, haptics |
+| /hype | x | Emojis → Lucide, sentence case |
+| /anti-itinerary | x | |
 | /roam-for-dates | x | Trip copy |
-| /travel-time-machine | | |
-| /share-card | | |
-| /viral-cards | | |
-| /paywall | | |
-| /referral | | |
-| /admin | | |
-| /trip/[id] | | |
+| /travel-time-machine | x | Haptics |
+| /share-card | x | Haptics |
+| /viral-cards | x | Haptics |
+| /paywall | x | Haptics |
+| /referral | x | Haptics |
+| /admin | x | |
+| /trip/[id] | x | Trip copy, haptics |
 | (auth) welcome | x | |
 | (auth) signin | x | |
 | (auth) signup | x | |
@@ -75,7 +75,7 @@ Design bar:
 | (auth) social-proof | x | Trip copy |
 | (auth) splash | x | |
 | (auth) hook | x | |
-| travel-profile | | |
-| +not-found | | |
+| travel-profile | x | |
+| +not-found | x | |
 
 Total: 59 screens
