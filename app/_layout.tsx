@@ -3,7 +3,7 @@
 // Font loading, auth routing, session bootstrap, StatusBar
 // =============================================================================
 import React, { useEffect, useRef, useState } from 'react';
-import { AppState, Linking } from 'react-native';
+import { AppState, Linking, Platform } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -272,8 +272,9 @@ export default function RootLayout() {
   useProtectedRoute(session);
 
   // Hide splash and show app once fonts + session are ready
+  // SplashScreen.hideAsync can be undefined on web — guard to avoid "n is not a function"
   useEffect(() => {
-    if (fontsLoaded && isReady) {
+    if (fontsLoaded && isReady && Platform.OS !== 'web' && typeof SplashScreen?.hideAsync === 'function') {
       SplashScreen.hideAsync().catch(() => {});
     }
   }, [fontsLoaded, isReady]);
