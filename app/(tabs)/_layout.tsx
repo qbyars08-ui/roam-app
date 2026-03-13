@@ -1,7 +1,7 @@
 // =============================================================================
 // ROAM — Tab Navigator Layout
-// 4 visible tabs: Discover / Plan / My Trips / You
-// Hidden tabs: chat, prep, flights, pets, passport, globe (accessible via router)
+// 6 visible tabs: Discover / Generate / Flights / Stays / Food / Prep
+// Displaced screens (saved, profile, globe, passport, pets) → standalone routes
 // =============================================================================
 import React from 'react';
 import { View } from 'react-native';
@@ -26,19 +26,14 @@ export default function TabsLayout() {
           lazy: true,
         }}
       >
-        {/* ── Visible tabs (4) ── */}
+        {/* ── Visible tabs (6) ── */}
         <Tabs.Screen name="index" options={{ title: 'Discover' }} />
-        <Tabs.Screen name="plan" options={{ title: 'Plan' }} />
-        <Tabs.Screen name="saved" options={{ title: 'My Trips' }} />
-        <Tabs.Screen name="profile" options={{ title: 'You' }} />
-
-        {/* ── Hidden tabs — still routable, just not in the tab bar ── */}
-        <Tabs.Screen name="chat" options={{ href: null }} />
-        <Tabs.Screen name="prep" options={{ href: null }} />
-        <Tabs.Screen name="flights" options={{ href: null }} />
-        <Tabs.Screen name="pets" options={{ href: null }} />
-        <Tabs.Screen name="passport" options={{ href: null }} />
-        <Tabs.Screen name="globe" options={{ href: null }} />
+        <Tabs.Screen name="generate" options={{ title: 'Generate' }} />
+        <Tabs.Screen name="flights" options={{ title: 'Flights' }} />
+        <Tabs.Screen name="stays" options={{ title: 'Stays' }} />
+        <Tabs.Screen name="food" options={{ title: 'Food' }} />
+        <Tabs.Screen name="prep" options={{ title: 'Prep' }} />
+        <Tabs.Screen name="group" options={{ href: null }} />
       </Tabs>
       <LiveCompanionFAB />
     </View>

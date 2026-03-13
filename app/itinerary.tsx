@@ -91,11 +91,20 @@ import {
   type TimeOfDay,
 } from '../lib/neighborhood-safety';
 import { formatDualPrice, formatLocalPrice, type ExchangeRates } from '../lib/currency';
-import { AlertTriangle, X, Pencil, Calendar, Link2, Share2, MapPin, Receipt, Film, Wallet } from 'lucide-react-native';
+import { AlertTriangle, X, Pencil, Calendar, Link2, Share2, MapPin, Receipt, Film, Wallet, Train, ArrowDown, CreditCard, Plane, Heart, ShieldCheck, Droplets, Globe, Sun, Wind, PartyPopper } from 'lucide-react-native';
+import { getTransitGuide, type TransitGuide } from '../lib/transit-data';
+import { getHomeAirport } from '../lib/flights-amadeus';
+import { getMedicalGuideByDestination, type MedicalGuide } from '../lib/medical-abroad';
+import { getTimezoneByDestination, getTimezoneInfo, getTimeDifference, type TimezoneInfo } from '../lib/timezone';
+import { getAirQuality, getDestinationCoords, type AirQuality } from '../lib/air-quality';
+import { getSunTimes, type SunTimes } from '../lib/sun-times';
+import { getCountryCode, getPublicHolidays, getHolidaysDuringTrip, type PublicHoliday } from '../lib/public-holidays';
+import { getCostOfLiving, type CostOfLiving } from '../lib/cost-of-living';
 import { getHeroPhotoUrl } from '../lib/heroPhotos';
 import { trackItineraryView, maybePromptForReview } from '../lib/rating';
 import { maybePromptNPS } from '../lib/nps';
 import MockDataBadge from '../components/ui/MockDataBadge';
+import ActivityEditModal from '../components/features/ActivityEditModal';
 
 // =============================================================================
 // Component
@@ -113,6 +122,17 @@ export default function ItineraryScreen() {
   const [trip, setTrip] = useState<Trip | null>(null);
   const [weather, setWeather] = useState<WeatherForecast | null>(null);
   const [venueData, setVenueData] = useState<Map<string, EnrichedVenue>>(new Map());
+  const transitGuide = useMemo(() => trip ? getTransitGuide(trip.destination) : null, [trip]);
+  const medicalGuide = useMemo(() => trip ? getMedicalGuideByDestination(trip.destination) : null, [trip]);
+  const costOfLiving = useMemo(() => trip ? getCostOfLiving(trip.destination) : null, [trip]);
+
+  // Destination intel — async data
+  const [timezoneInfo, setTimezoneInfo] = useState<TimezoneInfo | null>(null);
+  const [airQuality, setAirQuality] = useState<AirQuality | null>(null);
+  const [sunTimes, setSunTimes] = useState<SunTimes | null>(null);
+  const [tripHolidays, setTripHolidays] = useState<PublicHoliday[]>([]);
+  const [homeAirport, setHomeAirportLocal] = useState('JFK');
+
   const [activeDay, setActiveDay] = useState(0);
   const [viewMode, setViewMode] = useState<'list' | 'map'>(params.map === '1' ? 'map' : 'list');
   const [selectedPin, setSelectedPin] = useState<string | null>(null);
@@ -120,6 +140,10 @@ export default function ItineraryScreen() {
   const [editMode, setEditMode] = useState(false);
   const [shareVisible, setShareVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editingActivity, setEditingActivity] = useState<{
+    slot: 'morning' | 'afternoon' | 'evening';
+    data: TimeSlotActivity;
+  } | null>(null);
   const mapRef = useRef<typeof MapView>(null);
   const dayPagerRef = useRef<ScrollView>(null);
   const updateTrip = useAppStore((s) => s.updateTrip);
@@ -195,6 +219,42 @@ export default function ItineraryScreen() {
       .then(setWeather)
       .catch(() => setWeather(null));
   }, [trip?.destination, trip?.createdAt, trip?.days]);
+
+  // Load user's home airport preference
+  useEffect(() => {
+    getHomeAirport().then(setHomeAirportLocal).catch(() => {});
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // Fetch destination intel (timezone, AQI, sun, holidays)
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (!trip || !parsed) return;
+    const dest = trip.destination;
+
+    // Timezone
+    const tz = getTimezoneByDestination(dest);
+    if (tz) {
+      getTimezoneInfo(tz).then(setTimezoneInfo).catch(() => {});
+    }
+
+    // Air quality + sun times — use offline coordinate lookup
+    const coords = getDestinationCoords(dest);
+    if (coords) {
+      getAirQuality(coords.lat, coords.lng).then(setAirQuality).catch(() => {});
+      getSunTimes(coords.lat, coords.lng).then(setSunTimes).catch(() => {});
+    }
+
+    // Public holidays
+    const cc = getCountryCode(dest);
+    if (cc) {
+      getPublicHolidays(cc).then((holidays) => {
+        const startDate = trip.createdAt.split('T')[0];
+        const overlap = getHolidaysDuringTrip(holidays, startDate, trip.days);
+        setTripHolidays(overlap);
+      }).catch(() => {});
+    }
+  }, [trip?.destination, parsed]);
 
   // ---------------------------------------------------------------------------
   // Fetch venue enrichment data
@@ -427,6 +487,30 @@ export default function ItineraryScreen() {
       if (copied) Alert.alert('Copied!', 'Share link copied to clipboard.');
     }
   }, [trip]);
+
+  // ---------------------------------------------------------------------------
+  // Activity edit — save handler
+  // ---------------------------------------------------------------------------
+  const handleActivitySave = useCallback(
+    (updated: TimeSlotActivity) => {
+      if (!parsed || !trip || !editingActivity) return;
+
+      const updatedDay: ItineraryDay = { ...parsed.days[activeDay] };
+      updatedDay[editingActivity.slot] = updated;
+
+      const updatedDays = [...parsed.days];
+      updatedDays[activeDay] = updatedDay;
+      const updatedItinerary: Itinerary = { ...parsed, days: updatedDays };
+
+      setParsed(updatedItinerary);
+      updateTrip(trip.id, { itinerary: JSON.stringify(updatedItinerary) });
+      saveItineraryOffline(trip.id, updatedItinerary).catch(() => {});
+
+      setEditingActivity(null);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    },
+    [parsed, trip, activeDay, editingActivity, updateTrip]
+  );
 
   // ---------------------------------------------------------------------------
   // Venue card renderer
@@ -901,7 +985,7 @@ export default function ItineraryScreen() {
                     createdAt: new Date().toISOString(),
                   };
                   addTrip(stolen);
-                  router.replace('/(tabs)/saved');
+                  router.replace('/saved');
                 }}
                 style={({ pressed }) => [
                   styles.stealCtaCard,
@@ -1191,11 +1275,17 @@ export default function ItineraryScreen() {
                 </View>
               ) : (
                 <>
-                  <TimeBlock slot="morning" data={currentDay.morning} currency={currency} rates={rates} />
+                  <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setEditingActivity({ slot: 'morning', data: currentDay.morning }); }}>
+                    <TimeBlock slot="morning" data={currentDay.morning} currency={currency} rates={rates} />
+                  </Pressable>
                   {renderVenueCard(currentDay.morning.activity)}
-                  <TimeBlock slot="afternoon" data={currentDay.afternoon} currency={currency} rates={rates} />
+                  <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setEditingActivity({ slot: 'afternoon', data: currentDay.afternoon }); }}>
+                    <TimeBlock slot="afternoon" data={currentDay.afternoon} currency={currency} rates={rates} />
+                  </Pressable>
                   {renderVenueCard(currentDay.afternoon.activity)}
-                  <TimeBlock slot="evening" data={currentDay.evening} currency={currency} rates={rates} />
+                  <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setEditingActivity({ slot: 'evening', data: currentDay.evening }); }}>
+                    <TimeBlock slot="evening" data={currentDay.evening} currency={currency} rates={rates} />
+                  </Pressable>
                   {renderVenueCard(currentDay.evening.activity)}
                 </>
               )}
@@ -1257,6 +1347,27 @@ export default function ItineraryScreen() {
             </View>
           ) : null}
 
+          {/* Destination Intel — timezone, AQI, sun, holidays, cost */}
+          {(timezoneInfo || airQuality || sunTimes || tripHolidays.length > 0 || costOfLiving) && (
+            <DestinationIntelSection
+              timezone={timezoneInfo}
+              airQuality={airQuality}
+              sunTimes={sunTimes}
+              holidays={tripHolidays}
+              costOfLiving={costOfLiving}
+            />
+          )}
+
+          {/* Medical & Safety Abroad */}
+          {medicalGuide && (
+            <MedicalAbroadSection guide={medicalGuide} />
+          )}
+
+          {/* Getting Around — Transit intelligence */}
+          {transitGuide && (
+            <TransitSection guide={transitGuide} />
+          )}
+
           {/* Affiliate cards */}
           <View style={styles.section}>
             <AffiliateCard
@@ -1293,7 +1404,7 @@ export default function ItineraryScreen() {
           {/* Carbon footprint — flight emissions + offset */}
           <View style={styles.section}>
             <CarbonFootprintCard
-              origin="JFK"
+              origin={homeAirport}
               destination={trip.destination}
               roundTrip
             />
@@ -1332,7 +1443,7 @@ export default function ItineraryScreen() {
             <Pressable
               onPress={() => {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                router.replace('/(tabs)/saved');
+                router.replace('/saved');
               }}
               style={({ pressed }) => [
                 styles.saveTripCard,
@@ -1383,6 +1494,19 @@ export default function ItineraryScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* ── Activity Edit Modal ──────────────────────────────────────── */}
+      {editingActivity && currentDay && (
+        <ActivityEditModal
+          visible={!!editingActivity}
+          activity={editingActivity.data}
+          slot={editingActivity.slot}
+          dayNumber={currentDay.day}
+          destination={trip.destination}
+          onSave={handleActivitySave}
+          onClose={() => setEditingActivity(null)}
+        />
+      )}
     </View>
   );
 }
@@ -1392,10 +1516,10 @@ export default function ItineraryScreen() {
 // =============================================================================
 
 // ── Activity card (venue, neighborhood, cost, tip) ──────────────────────────
-const SLOT_LABELS: Record<string, { label: string }> = {
-  morning: { label: 'MORNING' },
-  afternoon: { label: 'AFTERNOON' },
-  evening: { label: 'EVENING' },
+const SLOT_DEFAULT_TIMES: Record<string, string> = {
+  morning: '9:00 AM',
+  afternoon: '2:00 PM',
+  evening: '6:00 PM',
 };
 
 const TimeBlock = React.memo(function TimeBlock({
@@ -1409,7 +1533,7 @@ const TimeBlock = React.memo(function TimeBlock({
   currency?: string;
   rates?: ExchangeRates | null;
 }) {
-  const meta = SLOT_LABELS[slot];
+  const timeDisplay = data.time ?? SLOT_DEFAULT_TIMES[slot];
   const costDisplay = currency && currency !== 'USD' && rates
     ? formatLocalPrice(data.cost, currency, rates)
     : data.cost;
@@ -1417,7 +1541,7 @@ const TimeBlock = React.memo(function TimeBlock({
   return (
     <View style={[styles.glassCard, styles.section]}>
       <Text style={styles.timeSlotLabel}>
-        {meta.label}
+        {timeDisplay}
       </Text>
 
       <Text style={styles.activityTitle}>{data.activity}</Text>
@@ -1436,6 +1560,13 @@ const TimeBlock = React.memo(function TimeBlock({
         <View style={styles.tipCard}>
           <Text style={styles.tipLabel}>Local tip</Text>
           <Text style={styles.tipText}>{data.tip}</Text>
+        </View>
+      ) : null}
+
+      {data.transitToNext ? (
+        <View style={styles.transitConnector}>
+          <Train size={14} color={COLORS.sage} strokeWidth={2} />
+          <Text style={styles.transitText}>{data.transitToNext}</Text>
         </View>
       ) : null}
     </View>
@@ -1509,6 +1640,400 @@ function AffiliateCard({
     </Pressable>
   );
 }
+
+// ── Transit Section — "Getting Around" guide ────────────────────────────────
+// =============================================================================
+// Destination Intel Section
+// =============================================================================
+interface DestinationIntelProps {
+  timezone: TimezoneInfo | null;
+  airQuality: AirQuality | null;
+  sunTimes: SunTimes | null;
+  holidays: PublicHoliday[];
+  costOfLiving: CostOfLiving | null;
+}
+
+const DestinationIntelSection = React.memo(function DestinationIntelSection({
+  timezone,
+  airQuality,
+  sunTimes,
+  holidays,
+  costOfLiving,
+}: DestinationIntelProps) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <View style={[styles.glassCard, styles.section]}>
+      <Pressable
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          setExpanded((prev) => !prev);
+        }}
+        style={styles.transitSectionHeader}
+      >
+        <View style={styles.transitSectionTitleRow}>
+          <Globe size={18} color={COLORS.sage} strokeWidth={2} />
+          <Text style={styles.sectionLabel}>DESTINATION INTEL</Text>
+        </View>
+        <Text style={styles.transitExpandArrow}>{expanded ? '▲' : '▼'}</Text>
+      </Pressable>
+
+      {/* Always-visible summary row */}
+      <View style={styles.intelSummaryRow}>
+        {timezone && (
+          <View style={styles.intelChip}>
+            <Text style={styles.intelChipLabel}>{timezone.abbreviation}</Text>
+            <Text style={styles.intelChipValue}>{getTimeDifference(timezone.utcOffset)}</Text>
+          </View>
+        )}
+        {airQuality && (
+          <View style={styles.intelChip}>
+            <Wind size={12} color={airQuality.color} strokeWidth={2} />
+            <Text style={[styles.intelChipLabel, { color: airQuality.color }]}>AQI {airQuality.aqi}</Text>
+          </View>
+        )}
+        {sunTimes && (
+          <View style={styles.intelChip}>
+            <Sun size={12} color={COLORS.gold} strokeWidth={2} />
+            <Text style={styles.intelChipValue}>{sunTimes.dayLength}</Text>
+          </View>
+        )}
+      </View>
+
+      {expanded && (
+        <View style={styles.transitExpanded}>
+          {/* Timezone detail */}
+          {timezone && (
+            <View style={styles.transitBlock}>
+              <Text style={styles.transitBlockTitle}>LOCAL TIME</Text>
+              <Text style={styles.transitLateNight}>
+                {timezone.currentTime} ({timezone.timezone})
+              </Text>
+              <Text style={styles.intelDetail}>
+                {getTimeDifference(timezone.utcOffset)} · {timezone.isDst ? 'Daylight saving active' : 'Standard time'}
+              </Text>
+            </View>
+          )}
+
+          {/* Air quality */}
+          {airQuality && (
+            <View style={styles.transitBlock}>
+              <View style={styles.transitBlockTitleRow}>
+                <Wind size={14} color={airQuality.color} strokeWidth={2} />
+                <Text style={styles.transitBlockTitle}>AIR QUALITY</Text>
+              </View>
+              <View style={[styles.intelAqiBadge, { borderColor: airQuality.color }]}>
+                <Text style={[styles.intelAqiText, { color: airQuality.color }]}>
+                  {airQuality.label.toUpperCase()} — AQI {airQuality.aqi}
+                </Text>
+              </View>
+              <Text style={styles.transitLateNight}>{airQuality.advice}</Text>
+            </View>
+          )}
+
+          {/* Sun times */}
+          {sunTimes && (
+            <View style={styles.transitBlock}>
+              <View style={styles.transitBlockTitleRow}>
+                <Sun size={14} color={COLORS.gold} strokeWidth={2} />
+                <Text style={styles.transitBlockTitle}>DAYLIGHT</Text>
+              </View>
+              <View style={styles.intelSunRow}>
+                <View style={styles.intelSunItem}>
+                  <Text style={styles.intelSunLabel}>Sunrise</Text>
+                  <Text style={styles.intelSunTime}>{sunTimes.sunrise}</Text>
+                </View>
+                <View style={styles.intelSunItem}>
+                  <Text style={styles.intelSunLabel}>Sunset</Text>
+                  <Text style={styles.intelSunTime}>{sunTimes.sunset}</Text>
+                </View>
+                <View style={styles.intelSunItem}>
+                  <Text style={styles.intelSunLabel}>Golden Hour</Text>
+                  <Text style={styles.intelSunTime}>{sunTimes.goldenHour}</Text>
+                </View>
+              </View>
+              <Text style={styles.intelDetail}>{sunTimes.dayLength} of daylight</Text>
+            </View>
+          )}
+
+          {/* Public holidays */}
+          {holidays.length > 0 && (
+            <View style={styles.transitBlock}>
+              <View style={styles.transitBlockTitleRow}>
+                <PartyPopper size={14} color={COLORS.coral} strokeWidth={2} />
+                <Text style={styles.transitBlockTitle}>HOLIDAYS DURING YOUR TRIP</Text>
+              </View>
+              {holidays.map((h) => (
+                <View key={h.date} style={styles.transitPaymentCard}>
+                  <Text style={styles.transitPaymentMethod}>{h.name}</Text>
+                  <Text style={styles.transitPaymentHow}>{h.localName} · {h.date}</Text>
+                </View>
+              ))}
+              <Text style={styles.intelDetail}>
+                Some attractions may be closed or extra crowded
+              </Text>
+            </View>
+          )}
+
+          {/* Cost of living */}
+          {costOfLiving && (
+            <View style={styles.transitBlock}>
+              <View style={styles.transitBlockTitleRow}>
+                <Wallet size={14} color={COLORS.gold} strokeWidth={2} />
+                <Text style={styles.transitBlockTitle}>DAILY COSTS ({costOfLiving.currencySymbol})</Text>
+              </View>
+              <View style={styles.intelCostGrid}>
+                <View style={styles.intelCostCol}>
+                  <Text style={styles.intelCostTier}>BUDGET</Text>
+                  <Text style={styles.intelCostTotal}>{costOfLiving.budget.dailyTotal}</Text>
+                  <Text style={styles.intelDetail}>Meals: {costOfLiving.budget.meal}</Text>
+                </View>
+                <View style={styles.intelCostCol}>
+                  <Text style={styles.intelCostTier}>COMFORT</Text>
+                  <Text style={styles.intelCostTotal}>{costOfLiving.comfort.dailyTotal}</Text>
+                  <Text style={styles.intelDetail}>Meals: {costOfLiving.comfort.meal}</Text>
+                </View>
+                <View style={styles.intelCostCol}>
+                  <Text style={styles.intelCostTier}>LUXURY</Text>
+                  <Text style={styles.intelCostTotal}>{costOfLiving.luxury.dailyTotal}</Text>
+                  <Text style={styles.intelDetail}>Meals: {costOfLiving.luxury.meal}</Text>
+                </View>
+              </View>
+              <Text style={styles.intelDetail}>{costOfLiving.tipping}</Text>
+            </View>
+          )}
+        </View>
+      )}
+    </View>
+  );
+});
+
+// =============================================================================
+// Medical & Safety Abroad Section
+// =============================================================================
+const MedicalAbroadSection = React.memo(function MedicalAbroadSection({ guide }: { guide: MedicalGuide }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const priorityColor = guide.insurancePriority === 'critical' ? COLORS.coral
+    : guide.insurancePriority === 'recommended' ? COLORS.gold
+    : COLORS.sage;
+
+  return (
+    <View style={[styles.glassCard, styles.section]}>
+      <Pressable
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          setExpanded((prev) => !prev);
+        }}
+        style={styles.transitSectionHeader}
+      >
+        <View style={styles.transitSectionTitleRow}>
+          <Heart size={18} color={COLORS.coral} strokeWidth={2} />
+          <Text style={styles.sectionLabel}>HEALTH & SAFETY</Text>
+        </View>
+        <Text style={styles.transitExpandArrow}>{expanded ? '▲' : '▼'}</Text>
+      </Pressable>
+
+      {/* Always-visible emergency numbers */}
+      <View style={styles.medicalEmergencyRow}>
+        <View style={styles.medicalNumberCard}>
+          <Text style={styles.medicalNumberLabel}>EMERGENCY</Text>
+          <Text style={styles.medicalNumber}>{guide.emergencyNumber}</Text>
+        </View>
+        <View style={styles.medicalNumberCard}>
+          <Text style={styles.medicalNumberLabel}>AMBULANCE</Text>
+          <Text style={styles.medicalNumber}>{guide.ambulanceNumber}</Text>
+        </View>
+        <View style={styles.medicalNumberCard}>
+          <Text style={styles.medicalNumberLabel}>POLICE</Text>
+          <Text style={styles.medicalNumber}>{guide.policeNumber}</Text>
+        </View>
+      </View>
+
+      {expanded && (
+        <View style={styles.transitExpanded}>
+          {/* English at ER */}
+          <View style={styles.transitBlock}>
+            <Text style={styles.transitBlockTitle}>ENGLISH AT HOSPITALS</Text>
+            <Text style={styles.transitLateNight}>
+              {guide.englishEmergency ? '✓ ' : '✕ '}{guide.englishNote}
+            </Text>
+          </View>
+
+          {/* Hospital quality */}
+          <View style={styles.transitBlock}>
+            <View style={styles.transitBlockTitleRow}>
+              <ShieldCheck size={14} color={COLORS.sage} strokeWidth={2} />
+              <Text style={styles.transitBlockTitle}>HOSPITAL QUALITY</Text>
+            </View>
+            <Text style={styles.medicalQualityBadge}>
+              {guide.hospitalQuality.toUpperCase()}
+            </Text>
+            <Text style={styles.transitLateNight}>{guide.hospitalNote}</Text>
+            <Text style={styles.medicalCost}>ER visit: {guide.erCostRange}</Text>
+          </View>
+
+          {/* Pharmacy */}
+          <View style={styles.transitBlock}>
+            <Text style={styles.transitBlockTitle}>PHARMACY</Text>
+            <Text style={styles.transitLateNight}>
+              {guide.pharmacyOTC ? 'Many meds OTC · ' : 'Prescription required · '}{guide.pharmacyNote}
+            </Text>
+          </View>
+
+          {/* Water */}
+          <View style={styles.transitBlock}>
+            <View style={styles.transitBlockTitleRow}>
+              <Droplets size={14} color={guide.tapWaterSafe ? COLORS.sage : COLORS.coral} strokeWidth={2} />
+              <Text style={styles.transitBlockTitle}>TAP WATER</Text>
+            </View>
+            <Text style={styles.transitLateNight}>
+              {guide.tapWaterSafe ? '✓ Safe to drink' : '✕ Not safe — use bottled'} · {guide.waterNote}
+            </Text>
+          </View>
+
+          {/* Insurance priority */}
+          <View style={styles.transitBlock}>
+            <Text style={styles.transitBlockTitle}>TRAVEL INSURANCE</Text>
+            <View style={[styles.medicalPriorityBadge, { borderColor: priorityColor }]}>
+              <Text style={[styles.medicalPriorityText, { color: priorityColor }]}>
+                {guide.insurancePriority.toUpperCase()}
+              </Text>
+            </View>
+            <Text style={styles.transitLateNight}>{guide.insuranceNote}</Text>
+          </View>
+
+          {/* Health risks */}
+          {guide.healthRisks.length > 0 && (
+            <View style={styles.transitBlock}>
+              <Text style={styles.transitBlockTitle}>HEALTH RISKS</Text>
+              {guide.healthRisks.map((risk, i) => (
+                <View key={i} style={styles.transitMistakeRow}>
+                  <Text style={styles.transitMistakeDot}>⚠</Text>
+                  <Text style={styles.transitMistakeText}>{risk}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Where to go */}
+          <View style={styles.transitBlock}>
+            <Text style={styles.transitBlockTitle}>WHERE TO GO</Text>
+            {guide.whereToGo.map((w, i) => (
+              <View key={i} style={styles.transitPaymentCard}>
+                <Text style={styles.transitPaymentMethod}>{w.condition}</Text>
+                <Text style={styles.transitPaymentHow}>{w.go}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+    </View>
+  );
+});
+
+const TransitSection = React.memo(function TransitSection({ guide }: { guide: TransitGuide }) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <View style={[styles.glassCard, styles.section]}>
+      <Pressable
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          setExpanded((prev) => !prev);
+        }}
+        style={styles.transitSectionHeader}
+      >
+        <View style={styles.transitSectionTitleRow}>
+          <Train size={18} color={COLORS.sage} strokeWidth={2} />
+          <Text style={styles.sectionLabel}>GETTING AROUND</Text>
+        </View>
+        <Text style={styles.transitExpandArrow}>{expanded ? '▲' : '▼'}</Text>
+      </Pressable>
+
+      <Text style={styles.transitHeadline}>{guide.headline}</Text>
+
+      {expanded && (
+        <View style={styles.transitExpanded}>
+          {/* Transit lines */}
+          {guide.lines.length > 0 && (
+            <View style={styles.transitBlock}>
+              <Text style={styles.transitBlockTitle}>KEY LINES</Text>
+              {guide.lines.map((line) => (
+                <View key={line.name} style={styles.transitLineRow}>
+                  <View style={[styles.transitLineDot, { backgroundColor: line.color }]} />
+                  <View style={styles.transitLineInfo}>
+                    <Text style={styles.transitLineName}>{line.name}</Text>
+                    <Text style={styles.transitLineNote}>{line.usefulFor}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Payment methods */}
+          <View style={styles.transitBlock}>
+            <View style={styles.transitBlockTitleRow}>
+              <CreditCard size={14} color={COLORS.sage} strokeWidth={2} />
+              <Text style={styles.transitBlockTitle}>HOW TO PAY</Text>
+            </View>
+            {guide.payment.map((p) => (
+              <View key={p.method} style={styles.transitPaymentCard}>
+                <Text style={styles.transitPaymentMethod}>{p.method}</Text>
+                <Text style={styles.transitPaymentHow}>{p.howToGet}</Text>
+                <Text style={styles.transitPaymentCost}>{p.cost}</Text>
+                <Text style={styles.transitPaymentTip}>{p.tip}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Airport transfers */}
+          <View style={styles.transitBlock}>
+            <View style={styles.transitBlockTitleRow}>
+              <Plane size={14} color={COLORS.sage} strokeWidth={2} />
+              <Text style={styles.transitBlockTitle}>FROM THE AIRPORT</Text>
+            </View>
+            {guide.airportTransfers.map((t) => (
+              <View key={t.name} style={styles.transitTransferCard}>
+                <View style={styles.transitTransferHeader}>
+                  <Text style={styles.transitTransferName}>{t.name}</Text>
+                  <Text style={styles.transitTransferCost}>{t.cost}</Text>
+                </View>
+                <Text style={styles.transitTransferDuration}>{t.duration} · {t.schedule}</Text>
+                <Text style={styles.transitPaymentTip}>{t.tip}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Late night */}
+          <View style={styles.transitBlock}>
+            <Text style={styles.transitBlockTitle}>AFTER MIDNIGHT</Text>
+            <Text style={styles.transitLateNight}>{guide.lateNight}</Text>
+          </View>
+
+          {/* Common mistakes */}
+          <View style={styles.transitBlock}>
+            <Text style={styles.transitBlockTitle}>DON'T DO THIS</Text>
+            {guide.mistakes.map((m, i) => (
+              <View key={i} style={styles.transitMistakeRow}>
+                <Text style={styles.transitMistakeDot}>✕</Text>
+                <Text style={styles.transitMistakeText}>{m}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Google Maps note */}
+          <View style={styles.transitMapsNote}>
+            <MapPin size={14} color={guide.googleMapsWorks ? COLORS.sage : COLORS.coral} strokeWidth={2} />
+            <Text style={styles.transitMapsText}>
+              Google Maps: {guide.googleMapsNote}
+            </Text>
+          </View>
+        </View>
+      )}
+    </View>
+  );
+});
 
 // =============================================================================
 // Dark map style (matches ROAM dark UI)
@@ -1587,6 +2112,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   } as ViewStyle,
   headerBtnText: {
+    fontFamily: FONTS.bodySemiBold,
     fontSize: 16,
     color: COLORS.cream,
   } as TextStyle,
@@ -1638,7 +2164,7 @@ const styles = StyleSheet.create({
   // ── Hero (cinematic) ────────────────────────────────────────────────────
   heroWrapper: {
     width: SCREEN_WIDTH,
-    height: 280,
+    height: 340,
     marginBottom: SPACING.lg,
   } as ViewStyle,
   heroImage: {
@@ -1655,13 +2181,13 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   heroDestination: {
     fontFamily: FONTS.header,
-    fontSize: 36,
+    fontSize: 44,
     color: COLORS.cream,
-    letterSpacing: -0.5,
+    letterSpacing: -1,
     marginBottom: SPACING.xs,
   } as TextStyle,
   heroTagline: {
-    fontFamily: FONTS.body,
+    fontFamily: FONTS.header,
     fontSize: 18,
     color: COLORS.slateBright,
     lineHeight: 26,
@@ -1803,6 +2329,9 @@ const styles = StyleSheet.create({
   dayThemeHero: {
     paddingHorizontal: SPACING.lg,
     marginBottom: SPACING.lg,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingTop: SPACING.lg,
   } as ViewStyle,
   dayThemeNumber: {
     fontFamily: FONTS.mono,
@@ -1831,7 +2360,14 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.border,
+    borderTopColor: 'rgba(255,255,255,0.06)',
+    borderTopWidth: 1,
     padding: SPACING.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
   } as ViewStyle,
 
   // ── Tagline + budget summary ────────────────────────────────────────────
@@ -2009,7 +2545,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     padding: SPACING.sm + 2,
     borderLeftWidth: 3,
-    borderLeftColor: COLORS.sage,
+    borderLeftColor: COLORS.gold,
   } as ViewStyle,
   tipLabel: {
     fontFamily: FONTS.mono,
@@ -2377,5 +2913,327 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodySemiBold,
     fontSize: 15,
     color: COLORS.bg,
+  } as TextStyle,
+
+  // ── Transit styles ──────────────────────────────────────────────────────
+  transitConnector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    marginTop: SPACING.sm,
+    paddingTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  } as ViewStyle,
+  transitText: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.sage,
+    flex: 1,
+  } as TextStyle,
+  transitSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  } as ViewStyle,
+  transitSectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  } as ViewStyle,
+  transitExpandArrow: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.creamSoft,
+  } as TextStyle,
+  transitHeadline: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 15,
+    color: COLORS.cream,
+    marginTop: SPACING.sm,
+    lineHeight: 22,
+  } as TextStyle,
+  transitExpanded: {
+    marginTop: SPACING.md,
+    gap: SPACING.md,
+  } as ViewStyle,
+  transitBlock: {
+    gap: SPACING.sm,
+  } as ViewStyle,
+  transitBlockTitle: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.creamSoft,
+    letterSpacing: 1,
+  } as TextStyle,
+  transitBlockTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  } as ViewStyle,
+  transitLineRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: SPACING.sm,
+  } as ViewStyle,
+  transitLineDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginTop: 4,
+  } as ViewStyle,
+  transitLineInfo: {
+    flex: 1,
+  } as ViewStyle,
+  transitLineName: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.cream,
+  } as TextStyle,
+  transitLineNote: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamSoft,
+    lineHeight: 18,
+  } as TextStyle,
+  transitPaymentCard: {
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.md,
+    padding: SPACING.sm,
+    gap: 4,
+  } as ViewStyle,
+  transitPaymentMethod: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.cream,
+  } as TextStyle,
+  transitPaymentHow: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamSoft,
+  } as TextStyle,
+  transitPaymentCost: {
+    fontFamily: FONTS.mono,
+    fontSize: 13,
+    color: COLORS.sage,
+  } as TextStyle,
+  transitPaymentTip: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.gold,
+    fontStyle: 'italic',
+    lineHeight: 18,
+  } as TextStyle,
+  transitTransferCard: {
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.md,
+    padding: SPACING.sm,
+    gap: 4,
+  } as ViewStyle,
+  transitTransferHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  } as ViewStyle,
+  transitTransferName: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.cream,
+    flex: 1,
+  } as TextStyle,
+  transitTransferCost: {
+    fontFamily: FONTS.mono,
+    fontSize: 14,
+    color: COLORS.sage,
+  } as TextStyle,
+  transitTransferDuration: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.creamSoft,
+  } as TextStyle,
+  transitLateNight: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamBrightDim,
+    lineHeight: 20,
+  } as TextStyle,
+  transitMistakeRow: {
+    flexDirection: 'row',
+    gap: SPACING.xs,
+    alignItems: 'flex-start',
+  } as ViewStyle,
+  transitMistakeDot: {
+    fontFamily: FONTS.mono,
+    fontSize: 13,
+    color: COLORS.coral,
+    marginTop: 1,
+  } as TextStyle,
+  transitMistakeText: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamBrightDim,
+    flex: 1,
+    lineHeight: 18,
+  } as TextStyle,
+  transitMapsNote: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: SPACING.xs,
+    paddingTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  } as ViewStyle,
+  transitMapsText: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamSoft,
+    flex: 1,
+    lineHeight: 18,
+  } as TextStyle,
+
+  // Medical & Safety Abroad styles
+  medicalEmergencyRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginTop: SPACING.sm,
+  } as ViewStyle,
+  medicalNumberCard: {
+    flex: 1,
+    backgroundColor: COLORS.bgGlass,
+    borderRadius: RADIUS.sm,
+    padding: SPACING.sm,
+    alignItems: 'center',
+  } as ViewStyle,
+  medicalNumberLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.creamSoft,
+    letterSpacing: 1,
+    marginBottom: 4,
+  } as TextStyle,
+  medicalNumber: {
+    fontFamily: FONTS.mono,
+    fontSize: 18,
+    color: COLORS.coral,
+    fontWeight: '700',
+  } as TextStyle,
+  medicalQualityBadge: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.sage,
+    letterSpacing: 1,
+    marginBottom: 4,
+  } as TextStyle,
+  medicalCost: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.gold,
+    marginTop: 4,
+  } as TextStyle,
+  medicalPriorityBadge: {
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderRadius: RADIUS.sm,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    marginBottom: 4,
+  } as ViewStyle,
+  medicalPriorityText: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    letterSpacing: 1,
+  } as TextStyle,
+
+  // Destination Intel styles
+  intelSummaryRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginTop: SPACING.sm,
+    flexWrap: 'wrap',
+  } as ViewStyle,
+  intelChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: COLORS.bgGlass,
+    borderRadius: RADIUS.sm,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+  } as ViewStyle,
+  intelChipLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+    letterSpacing: 0.5,
+  } as TextStyle,
+  intelChipValue: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.creamSoft,
+  } as TextStyle,
+  intelDetail: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+    marginTop: 4,
+    lineHeight: 16,
+  } as TextStyle,
+  intelAqiBadge: {
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderRadius: RADIUS.sm,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    marginBottom: 4,
+  } as ViewStyle,
+  intelAqiText: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    letterSpacing: 1,
+  } as TextStyle,
+  intelSunRow: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+    marginBottom: 4,
+  } as ViewStyle,
+  intelSunItem: {
+    alignItems: 'center',
+  } as ViewStyle,
+  intelSunLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.creamMuted,
+    letterSpacing: 1,
+    marginBottom: 2,
+  } as TextStyle,
+  intelSunTime: {
+    fontFamily: FONTS.mono,
+    fontSize: 16,
+    color: COLORS.gold,
+  } as TextStyle,
+  intelCostGrid: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  } as ViewStyle,
+  intelCostCol: {
+    flex: 1,
+    backgroundColor: COLORS.bgGlass,
+    borderRadius: RADIUS.sm,
+    padding: SPACING.sm,
+    alignItems: 'center',
+  } as ViewStyle,
+  intelCostTier: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.creamMuted,
+    letterSpacing: 1,
+    marginBottom: 4,
+  } as TextStyle,
+  intelCostTotal: {
+    fontFamily: FONTS.mono,
+    fontSize: 14,
+    color: COLORS.sage,
+    fontWeight: '700',
+    marginBottom: 2,
   } as TextStyle,
 });

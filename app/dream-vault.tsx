@@ -33,6 +33,7 @@ import {
 } from '../lib/flight-deals';
 import { useAppStore } from '../lib/store';
 import { withComingSoon } from '../lib/with-coming-soon';
+import { getHomeAirport } from '../lib/flights-amadeus';
 
 function DreamVaultScreen() {
   const insets = useSafeAreaInsets();
@@ -41,6 +42,7 @@ function DreamVaultScreen() {
   const passport = useAppStore((s) => s.travelProfile?.passportNationality ?? 'US');
   const [destinations, setDestinations] = useState<SavedDestination[]>([]);
   const [loading, setLoading] = useState(true);
+  const [homeAirport, setHomeAirportLocal] = useState('JFK');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -54,12 +56,16 @@ function DreamVaultScreen() {
 
   useEffect(() => {
     load();
+    getHomeAirport().then(setHomeAirportLocal).catch(() => {});
   }, [load]);
 
   useEffect(() => {
-    if (params.destination) {
-      addSavedDestination(params.destination, 'JFK').then(load);
-    }
+    if (!params.destination) return;
+    // Resolve home airport first to avoid race with stale 'JFK' default
+    getHomeAirport()
+      .then((airport) => addSavedDestination(params.destination!, airport))
+      .then(load)
+      .catch(() => {});
   }, [params.destination]);
 
   const handleSearchFlights = async (dest: SavedDestination) => {
@@ -144,7 +150,7 @@ function DreamVaultScreen() {
           </Text>
           <Pressable
             style={styles.addBtn}
-            onPress={() => router.push('/(tabs)/plan')}
+            onPress={() => router.push('/(tabs)/generate')}
           >
             <Text style={styles.addBtnText}>Plan a trip</Text>
           </Pressable>

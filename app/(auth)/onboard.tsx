@@ -186,7 +186,11 @@ function StepSignup({
         provider: 'apple',
         token: cred.identityToken,
       });
-      if (error) Alert.alert('Sign-in failed', error.message);
+      if (error) {
+        Alert.alert('Sign-in failed', error.message);
+      } else {
+        await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
+      }
     } catch (e: any) {
       if (e.code !== 'ERR_REQUEST_CANCELED') Alert.alert('Try again', 'Apple Sign-In hit a snag.');
     } finally {
@@ -203,7 +207,12 @@ function StepSignup({
           redirectTo: Platform.OS === 'web' ? window.location.origin : 'roam://auth/callback',
         },
       });
-      if (error) Alert.alert('Sign-in failed', error.message);
+      if (error) {
+        Alert.alert('Sign-in failed', error.message);
+      }
+      // Note: ONBOARDING_COMPLETE_KEY is set by the auth callback handler
+      // after the OAuth redirect completes — not here, since the browser
+      // flow hasn't finished yet when signInWithOAuth returns.
     } finally {
       setLoading(false);
     }

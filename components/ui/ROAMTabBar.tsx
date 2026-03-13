@@ -7,14 +7,16 @@ import { BlurView } from 'expo-blur';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, FONTS, SPACING } from '../../lib/constants';
-import { IconDiscover, IconPlan, IconSaved, IconYou } from './TabIcons';
+import { IconDiscover, IconGenerate, IconFlights, IconStays, IconFood, IconPrep } from './TabIcons';
 
-const TAB_ORDER = ['index', 'plan', 'saved', 'profile'] as const;
-const TAB_CONFIG: Record<string, { label: string; Icon: React.ComponentType<{ size?: number; color?: string; focused?: boolean }>; showPulse?: boolean }> = {
+const TAB_ORDER = ['index', 'generate', 'flights', 'stays', 'food', 'prep'] as const;
+const TAB_CONFIG: Record<string, { label: string; Icon: React.ComponentType<{ size?: number; color?: string; focused?: boolean }> }> = {
   index: { label: 'Discover', Icon: IconDiscover },
-  plan: { label: 'Plan', Icon: IconPlan },
-  saved: { label: 'My Trips', Icon: IconSaved },
-  profile: { label: 'You', Icon: IconYou },
+  generate: { label: 'Generate', Icon: IconGenerate },
+  flights: { label: 'Flights', Icon: IconFlights },
+  stays: { label: 'Stays', Icon: IconStays },
+  food: { label: 'Food', Icon: IconFood },
+  prep: { label: 'Prep', Icon: IconPrep },
 };
 
 export default function ROAMTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
@@ -116,11 +118,6 @@ const styles = StyleSheet.create({
   iconWrap: {
     position: 'relative',
     marginBottom: 2,
-  },
-  pulseDot: {
-    position: 'absolute',
-    top: -2,
-    right: -4,
   },
   label: {
     fontFamily: FONTS.mono,

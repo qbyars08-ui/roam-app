@@ -114,7 +114,7 @@ function ShareCardPage() {
           ref={cardRef}
           nativeID={Platform.OS === 'web' ? 'roam-share-card' : undefined}
           style={[styles.card, { width: CARD_WIDTH, height: CARD_HEIGHT }]}
-          collapsable={false}
+          collapsable={undefined}
         >
           <ImageBackground
             source={{ uri: data.heroUrl || getDestinationPhoto(data.destination) }}
