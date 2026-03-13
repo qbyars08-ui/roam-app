@@ -5,21 +5,19 @@
   "scripts": {
     "profile": "expo start --dev-client",
     "start": "expo start",
-    "build:web": "npx expo export --platform web && echo '/* /index.html 200' > dist/_redirects",
+    "build:web": "npx expo export --platform web && echo '/*  /index.html  200' > dist/_redirects",
+    "export:web": "npx expo export --platform web",
     "deploy:web": "npm run build:web && netlify deploy --prod --dir=dist",
     "start:lan": "expo start",
     "start:tunnel": "expo start --tunnel",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web --port 3000",
-    "export:web": "expo export --platform web",
-    "deploy:web": "npm run export:web && echo '/*    /index.html   200' > dist/_redirects && netlify deploy --prod --dir=dist"
+    "web": "expo start --web --port 3000"
   },
   "dependencies": {
     "@expo-google-fonts/cormorant-garamond": "^0.4.1",
     "@expo-google-fonts/dm-mono": "^0.4.2",
     "@expo-google-fonts/dm-sans": "^0.4.2",
-    "@expo/vector-icons": "^15.1.1",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/netinfo": "11.5.2",
     "@react-native-community/slider": "^5.1.2",
