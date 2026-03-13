@@ -18,7 +18,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { Ionicons } from '@expo/vector-icons';
+import { ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useDestinationTheme } from '../lib/useDestinationTheme';
 
@@ -316,7 +316,7 @@ export default function ArrivalModeScreen() {
             router.back();
           }}
         >
-          <Ionicons name="chevron-back" size={24} color={COLORS.cream} />
+          <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
         <View style={styles.fallbackContainer}>
           <Text style={styles.fallbackTitle}>Packing your {city} survival kit...</Text>
@@ -456,7 +456,7 @@ export default function ArrivalModeScreen() {
           router.back();
         }}
       >
-        <Ionicons name="chevron-back" size={24} color={COLORS.cream} />
+        <ChevronLeft size={24} color={COLORS.cream} />
       </Pressable>
 
       <ScrollView
@@ -551,7 +551,7 @@ const styles = StyleSheet.create({
   headerLabel: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: 'rgba(245,237,216,0.6)',
+    color: COLORS.creamSoft,
     marginBottom: SPACING.xs,
   } as TextStyle,
   headerCity: {

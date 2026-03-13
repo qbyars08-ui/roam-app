@@ -637,7 +637,7 @@ const styles = StyleSheet.create({
   cardHeadline: {
     fontFamily: FONTS.body,
     fontSize: 18,
-    color: 'rgba(245,237,216,0.85)',
+    color: COLORS.creamBright,
     textAlign: 'center',
     lineHeight: 26,
     marginBottom: SPACING.xl,
@@ -652,7 +652,7 @@ const styles = StyleSheet.create({
   cardFooter: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: 'rgba(245,237,216,0.25)',
+    color: COLORS.creamFaint,
     textAlign: 'center',
     letterSpacing: 1,
     marginTop: 'auto' as unknown as number,
@@ -691,12 +691,12 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   } as ViewStyle,
   destChip: {
-    backgroundColor: 'rgba(124,175,138,0.15)',
+    backgroundColor: COLORS.sageHighlight,
     borderRadius: RADIUS.full,
     paddingHorizontal: SPACING.md,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: 'rgba(124,175,138,0.3)',
+    borderColor: COLORS.sageStrong,
   } as ViewStyle,
   destChipText: {
     fontFamily: FONTS.mono,
@@ -748,7 +748,7 @@ const styles = StyleSheet.create({
   personalityDesc: {
     fontFamily: FONTS.body,
     fontSize: 15,
-    color: 'rgba(245,237,216,0.75)',
+    color: COLORS.creamBrightSoft,
     textAlign: 'center',
     lineHeight: 23,
     marginBottom: SPACING.lg,
@@ -852,7 +852,7 @@ const styles = StyleSheet.create({
   nextYearText: {
     fontFamily: FONTS.body,
     fontSize: 18,
-    color: 'rgba(245,237,216,0.85)',
+    color: COLORS.creamBright,
     textAlign: 'center',
     lineHeight: 28,
     marginBottom: SPACING.lg,

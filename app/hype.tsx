@@ -193,7 +193,7 @@ export default function HypeScreen() {
             {hypeContent && (
               <View style={styles.hypeCard}>
                 <LinearGradient
-                  colors={['rgba(201,168,76,0.12)', 'rgba(124,175,138,0.08)']}
+                  colors={['rgba(201,168,76,0.12)', COLORS.sageSubtle]}
                   style={styles.hypeCardGradient}
                 >
                   {null}

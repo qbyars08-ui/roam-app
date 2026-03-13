@@ -6,6 +6,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AppState, Linking } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import * as SplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -18,7 +19,7 @@ import { DMMono_400Regular, DMMono_500Medium } from '@expo-google-fonts/dm-mono'
 
 import { supabase } from '../lib/supabase';
 import { useAppStore, checkActiveTripOnLoad, loadPersistedTrips, loadPersistedPets, loadPersistedTravelProfile } from '../lib/store';
-import { initRevenueCat, checkProStatus, addCustomerInfoListener } from '../lib/revenuecat';
+import { initRevenueCat, loginRevenueCat, logoutRevenueCat, isProActive, addCustomerInfoListener } from '../lib/revenue-cat';
 import { syncProStatusToSupabase } from '../lib/sync-pro-status';
 import { ensureReferralCode } from '../lib/referral';
 import { requestNotificationPermission, scheduleDailyDiscovery } from '../lib/notifications';
@@ -26,8 +27,8 @@ import { recordAppOpen, cancelReengagementNotifications, scheduleReengagementNot
 import { COLORS } from '../lib/constants';
 import { getSharedTrip } from '../lib/sharing';
 import { trackOnboardingComplete } from '../lib/ab-test';
+import { captureRefOnLoad } from '../lib/waitlist-guest';
 import { checkStorageVersion } from '../lib/storage-version';
-import Spinner from '../components/ui/Spinner';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
 import OfflineBanner from '../components/ui/OfflineBanner';
 import PhoneFrame from '../components/ui/PhoneFrame';
@@ -43,7 +44,7 @@ function useProtectedRoute(session: { user: { id: string } } | null) {
 
   useEffect(() => {
     const inAuthGroup = segments[0] === '(auth)';
-    const onJoinGroup = segments[0] === 'join-group';
+    const onJoinGroup = segments[0] === 'join-group' || segments[0] === 'join';
 
     // Deferred signup: unauthenticated users can view join-group preview
     if (onJoinGroup) return;
@@ -94,7 +95,10 @@ export default function RootLayout() {
 
   // Bootstrap auth session + restore persisted data
   useEffect(() => {
+    // Initialize RevenueCat on app start (anonymous); links to user when session loads
+    initRevenueCat().catch(() => {});
     checkStorageVersion().catch(() => {});
+    captureRefOnLoad().catch(() => {}); // Web: track ?ref= for referral attribution
     // Restore persisted data (trips, pets, travel profile, currency) before session check
     Promise.all([
       loadPersistedTrips(),
@@ -104,27 +108,36 @@ export default function RootLayout() {
     ]).catch(() => {});
 
     // Get initial session (handle errors gracefully for dev/preview)
+    // Don't overwrite guest sessions — they're set by Continue as guest on web
     supabase.auth
       .getSession()
       .then(({ data: { session: initialSession } }) => {
+        const current = useAppStore.getState().session;
+        if (current?.user?.id?.startsWith?.('guest-')) return;
         setSession(initialSession);
       })
       .catch(() => {
-        // Supabase credentials missing / invalid — no session
+        const current = useAppStore.getState().session;
+        if (current?.user?.id?.startsWith?.('guest-')) return;
         setSession(null);
       })
       .finally(() => {
         setIsReady(true);
       });
 
-    // Listen for auth state changes
+    // Listen for auth state changes (don't overwrite guest sessions)
     let subscription: { unsubscribe: () => void } | undefined;
     try {
       const result = supabase.auth.onAuthStateChange((_event, newSession) => {
-        setSession(newSession);
         if (newSession) {
+          setSession(newSession);
           AsyncStorage.setItem('@roam/onboarding_complete', 'true').catch(() => {});
           trackOnboardingComplete(newSession.user.id).catch(() => {});
+        } else {
+          const current = useAppStore.getState().session;
+          if (current?.user?.id?.startsWith?.('guest-')) return;
+          logoutRevenueCat().catch(() => {});
+          setSession(null);
         }
       });
       subscription = result.data.subscription;
@@ -139,12 +152,18 @@ export default function RootLayout() {
   useEffect(() => {
     if (!session?.user) return;
 
-    const bootstrap = async () => {
-      // Initialize RevenueCat with user ID
-      await initRevenueCat(session.user.id);
+    const isGuest = String(session.user.id).startsWith('guest-');
 
-      // Check pro subscription status (RevenueCat + referral-earned Pro)
-      const proFromPurchases = await checkProStatus();
+    const bootstrap = async () => {
+      if (isGuest) {
+        setTripsThisMonth(0);
+        checkActiveTripOnLoad();
+        return;
+      }
+
+      await initRevenueCat(session.user.id);
+      await loginRevenueCat(session.user.id);
+      const proFromPurchases = await isProActive();
       const { data: profile } = await supabase
         .from('profiles')
         .select('trips_generated_this_month, pro_referral_expires_at')
@@ -157,23 +176,17 @@ export default function RootLayout() {
         setTripsThisMonth(profile.trips_generated_this_month ?? 0);
       }
 
-      // Ensure referral code exists for this user
       ensureReferralCode(session.user.id).catch(() => {});
 
-      // Request notification permission + schedule daily discovery (non-blocking)
       try {
         await requestNotificationPermission();
         await scheduleDailyDiscovery();
       } catch {}
 
-      // Check for active trip (Live Trip Mode)
       checkActiveTripOnLoad();
-
-      // Re-engagement: record open, cancel any scheduled reengagement
       recordAppOpen();
       cancelReengagementNotifications();
 
-      // Listen for purchase changes (new purchase, restore, expiration)
       return addCustomerInfoListener((proFromPurchases) => {
         syncProStatusToSupabase(session.user.id, proFromPurchases);
       });
@@ -252,11 +265,17 @@ export default function RootLayout() {
   // Auth guard
   useProtectedRoute(session);
 
-  // Show spinner while loading fonts or initial session
+  // Hide splash and show app once fonts + session are ready
+  useEffect(() => {
+    if (fontsLoaded && isReady) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [fontsLoaded, isReady]);
+
+  // Show minimal loading state (native splash stays visible) until ready
   if (!fontsLoaded || !isReady) {
     return (
       <>
-        <Spinner fullScreen />
         <StatusBar style="light" />
       </>
     );
@@ -272,6 +291,7 @@ export default function RootLayout() {
             headerShown: false,
             contentStyle: { backgroundColor: COLORS.bg },
             animation: 'fade',
+            lazy: true,
           }}
         >
           <Stack.Screen name="(auth)" />
@@ -298,6 +318,18 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen name="+not-found" />
+          <Stack.Screen
+            name="privacy"
+            options={{ presentation: 'card', animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="terms"
+            options={{ presentation: 'card', animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="support"
+            options={{ presentation: 'card', animation: 'slide_from_right' }}
+          />
           <Stack.Screen
             name="itinerary"
             options={{

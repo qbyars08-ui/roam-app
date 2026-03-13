@@ -18,7 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 
-import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, BUDGETS, VIBES } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, BUDGETS, VIBES, FREE_TRIPS_PER_MONTH } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
 import { generateItinerary, TripLimitReachedError } from '../../lib/claude';
 import { getMockItinerary } from '../../lib/mock-fallback';
@@ -46,6 +46,8 @@ export default function GlobeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const addTrip = useAppStore((s) => s.addTrip);
+  const isPro = useAppStore((s) => s.isPro);
+  const tripsThisMonth = useAppStore((s) => s.tripsThisMonth);
 
   const [phase, setPhase] = useState<SpinPhase>('idle');
   const [picked, setPicked] = useState<(typeof SPIN_POOL)[0] | null>(null);
@@ -140,6 +142,10 @@ export default function GlobeScreen() {
 
   const handleGenerateTrip = useCallback(async () => {
     if (!picked) return;
+    if (!isPro && tripsThisMonth >= FREE_TRIPS_PER_MONTH) {
+      router.push({ pathname: '/paywall', params: { reason: 'limit' } });
+      return;
+    }
     setPhase('generating');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
@@ -212,7 +218,7 @@ export default function GlobeScreen() {
       setPhase('idle');
       revealAnim.setValue(0);
     }
-  }, [picked, addTrip, router, revealAnim, glowAnim]);
+  }, [picked, addTrip, router, revealAnim, glowAnim, isPro, tripsThisMonth]);
 
   const handleReset = useCallback(() => {
     setPhase('idle');
@@ -537,7 +543,7 @@ const styles = StyleSheet.create({
   hint: {
     fontFamily: FONTS.mono,
     fontSize: 11,
-    color: 'rgba(245,237,216,0.25)',
+    color: COLORS.creamFaint,
     textAlign: 'center',
     paddingBottom: SPACING.lg,
     letterSpacing: 0.5,

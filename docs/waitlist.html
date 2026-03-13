@@ -159,6 +159,14 @@ h1 em{font-style:italic;color:var(--coral)}
 }
 .share-btn:hover{background:rgba(124,175,138,0.12);border-color:var(--sage)}
 .share-btn.primary{background:var(--sage);color:var(--bg);border-color:var(--sage)}
+.btn-try-app{
+  display:inline-block;margin-top:20px;margin-bottom:8px;
+  font-family:'DM Sans',sans-serif;font-weight:600;font-size:1rem;
+  background:var(--gold);color:var(--bg);
+  padding:14px 28px;border-radius:14px;
+  text-decoration:none;transition:transform .2s,box-shadow .3s;
+}
+.btn-try-app:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(201,168,76,0.35)}
 
 /* ── features ── */
 .features{padding:40px 0 60px}
@@ -324,7 +332,10 @@ footer{
 <nav>
   <div class="nav-inner">
     <div class="logo">R<span>O</span>AM</div>
-    <a href="#signup" class="nav-cta">Get Early Access</a>
+    <div style="display:flex;gap:12px;align-items:center">
+      <a href="https://tryroam.netlify.app" class="nav-cta">Try the app now &rarr;</a>
+      <a href="#signup" class="nav-cta">Get Early Access</a>
+    </div>
   </div>
 </nav>
 
@@ -365,6 +376,9 @@ footer{
         <h3>You're in.</h3>
         <div class="queue-number" id="queue-pos">#528</div>
         <p>Share with friends to move up the list.<br>Top 100 get ROAM Pro free for 3 months.</p>
+        <a href="https://tryroam.netlify.app" id="try-app-btn" class="btn-try-app">
+          Try the app now &rarr;
+        </a>
         <div class="share-row">
           <button class="share-btn primary" onclick="copyLink()">Copy Link</button>
           <button class="share-btn" onclick="shareTwitter()">Twitter / X</button>
@@ -537,6 +551,13 @@ form.addEventListener('submit', async function(e) {
       successState.classList.add('show');
       document.getElementById('queue-pos').textContent = '#' + currentCount;
       counterEl.textContent = currentCount;
+      var tryBtn = document.getElementById('try-app-btn');
+      if (tryBtn) {
+        var u = 'https://tryroam.netlify.app?email=' + encodeURIComponent(email.trim().toLowerCase());
+        var ref = getRefSource();
+        if (ref && ref !== 'direct') u += '&ref=' + encodeURIComponent(ref);
+        tryBtn.href = u;
+      }
     } else {
       throw new Error('Server error');
     }
@@ -549,6 +570,13 @@ form.addEventListener('submit', async function(e) {
     successState.classList.add('show');
     document.getElementById('queue-pos').textContent = '#' + currentCount;
     counterEl.textContent = currentCount;
+    var tryBtn = document.getElementById('try-app-btn');
+    if (tryBtn) {
+      var u = 'https://tryroam.netlify.app?email=' + encodeURIComponent(email.trim().toLowerCase());
+      var ref = getRefSource();
+      if (ref && ref !== 'direct') u += '&ref=' + encodeURIComponent(ref);
+      tryBtn.href = u;
+    }
   }
 });
 

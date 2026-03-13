@@ -25,15 +25,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, BUDGETS, VIBES } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, BUDGETS, VIBES, FREE_TRIPS_PER_MONTH } from '../../lib/constants';
 import { getDestinationPhoto } from '../../lib/photos';
 import { useAppStore } from '../../lib/store';
 import { generateItinerary, TripLimitReachedError } from '../../lib/claude';
 import { supabase } from '../../lib/supabase';
+import WaitlistCaptureModal from '../../components/features/WaitlistCaptureModal';
 
 const ONBOARDING_COMPLETE_KEY = '@roam/onboarding_complete';
 const DESTINATION_CHOICES = DESTINATIONS.slice(0, 4);
 const DEV = __DEV__;
+const IS_WEB = Platform.OS === 'web';
 
 // ---------------------------------------------------------------------------
 // Step 1: Destination
@@ -283,12 +285,16 @@ export default function OnboardScreen() {
   const setTripsThisMonth = useAppStore((s) => s.setTripsThisMonth);
   const setSession = useAppStore((s) => s.setSession);
   const hasCompletedProfile = useAppStore((s) => s.hasCompletedProfile);
+  const isPro = useAppStore((s) => s.isPro);
+  const tripsThisMonth = useAppStore((s) => s.tripsThisMonth);
   const setPendingOnboardDestination = useAppStore((s) => s.setPendingOnboardDestination);
   const pendingOnboardDestination = useAppStore((s) => s.pendingOnboardDestination);
+  const session = useAppStore((s) => s.session);
+  const isWebGuest = IS_WEB && !session;
 
   const handleDestinationSelect = useCallback(
     (dest: string) => {
-      if (!hasCompletedProfile) {
+      if (!hasCompletedProfile && !isWebGuest) {
         setPendingOnboardDestination(dest);
         router.push('/travel-profile');
         return;
@@ -296,19 +302,19 @@ export default function OnboardScreen() {
       setDestination(dest);
       setStep(1);
     },
-    [hasCompletedProfile, setPendingOnboardDestination, router]
+    [hasCompletedProfile, isWebGuest, setPendingOnboardDestination, router]
   );
 
   const handleSurpriseMe = useCallback(() => {
     const d = DESTINATIONS[Math.floor(Math.random() * DESTINATIONS.length)];
-    if (!hasCompletedProfile) {
+    if (!hasCompletedProfile && !isWebGuest) {
       setPendingOnboardDestination(d.label);
       router.push('/travel-profile');
       return;
     }
     setDestination(d.label);
     setStep(1);
-  }, [hasCompletedProfile, setPendingOnboardDestination, router]);
+  }, [hasCompletedProfile, isWebGuest, setPendingOnboardDestination, router]);
 
   useFocusEffect(
     useCallback(() => {
@@ -322,6 +328,10 @@ export default function OnboardScreen() {
 
   const handleGenerate = useCallback(async () => {
     if (!destination) return;
+    if (!isWebGuest && !isPro && tripsThisMonth >= FREE_TRIPS_PER_MONTH) {
+      router.push('/paywall');
+      return;
+    }
     setError(null);
     try {
       const budget = BUDGETS[Math.floor(Math.random() * BUDGETS.length)].id;
@@ -357,7 +367,7 @@ export default function OnboardScreen() {
       }
       setError('We couldn\'t build your trip right now. Check your connection and try again.');
     }
-  }, [destination, addTrip, setTripsThisMonth, router]);
+  }, [destination, addTrip, setTripsThisMonth, router, isPro, tripsThisMonth, isWebGuest]);
 
   const handleSkipSignup = useCallback(async () => {
     await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
@@ -410,6 +420,23 @@ export default function OnboardScreen() {
             </Pressable>
           </View>
         )}
+      </View>
+    );
+  }
+
+  // Web guest: show waitlist capture modal instead of signup
+  if (isWebGuest) {
+    return (
+      <View style={styles.container}>
+        <View style={[styles.step, { paddingTop: insets.top, justifyContent: 'center' }]}>
+          <Text style={styles.signupTitle}>Your {destination} trip is ready</Text>
+          <Text style={styles.signupSub}>Save it and get early access</Text>
+        </View>
+        <WaitlistCaptureModal
+          visible={true}
+          destination={destination}
+          onViewTrip={handleSkipSignup}
+        />
       </View>
     );
   }
@@ -523,7 +550,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 38,
     borderWidth: 1,
-    borderColor: 'rgba(124,175,138,0.4)',
+    borderColor: COLORS.sageMedium,
   } as ViewStyle,
   generatingTitle: {
     fontFamily: FONTS.header,

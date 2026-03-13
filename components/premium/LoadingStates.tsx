@@ -250,14 +250,16 @@ export function SkeletonCard({
   const shimmer = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.loop(
+    const loop = Animated.loop(
       Animated.timing(shimmer, {
         toValue: 1,
         duration: 1500,
         easing: Easing.inOut(Easing.ease),
         useNativeDriver: true,
       }),
-    ).start();
+    );
+    loop.start();
+    return () => loop.stop();
   }, [shimmer]);
 
   const translateX = shimmer.interpolate({

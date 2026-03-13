@@ -17,7 +17,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useDestinationTheme } from '../lib/useDestinationTheme';
 
@@ -1627,7 +1627,7 @@ export default function LocalLensScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={[styles.backButton, { backgroundColor: `${destTheme.primary}20` }]}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.cream} />
+          <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
         <View style={styles.headerTextContainer}>
           <Text style={[styles.headerLabel, { color: destTheme.primary }]}>· Local lens</Text>
@@ -1807,7 +1807,7 @@ const styles = StyleSheet.create({
   headerLabel: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: 'rgba(245,237,216,0.6)',
+    color: COLORS.creamSoft,
     marginBottom: 2,
   } as TextStyle,
   headerCity: {
@@ -1835,7 +1835,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: 'rgba(245,237,216,0.6)',
+    color: COLORS.creamSoft,
     marginTop: SPACING.xl,
     marginBottom: SPACING.xs,
   } as TextStyle,
@@ -1866,7 +1866,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: RADIUS.full,
-    backgroundColor: 'rgba(124,175,138,0.15)',
+    backgroundColor: COLORS.sageHighlight,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: SPACING.sm,
@@ -1937,7 +1937,7 @@ const styles = StyleSheet.create({
   avoidText: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: 'rgba(245,237,216,0.6)',
+    color: COLORS.creamSoft,
     lineHeight: 19,
   } as TextStyle,
 
@@ -1976,7 +1976,7 @@ const styles = StyleSheet.create({
   tipRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: 'rgba(124,175,138,0.06)',
+    backgroundColor: COLORS.sageFaint,
     borderRadius: RADIUS.sm,
     padding: SPACING.sm,
   } as ViewStyle,
@@ -2019,7 +2019,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   } as TextStyle,
   scamAvoidRow: {
-    backgroundColor: 'rgba(124,175,138,0.08)',
+    backgroundColor: COLORS.sageSubtle,
     borderRadius: RADIUS.sm,
     padding: SPACING.sm,
   } as ViewStyle,
@@ -2049,7 +2049,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   } as ViewStyle,
   timeBadge: {
-    backgroundColor: 'rgba(124,175,138,0.15)',
+    backgroundColor: COLORS.sageHighlight,
     borderRadius: RADIUS.full,
     paddingHorizontal: SPACING.sm + 2,
     paddingVertical: 4,
@@ -2087,7 +2087,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   } as TextStyle,
   phraseWhenRow: {
-    backgroundColor: 'rgba(124,175,138,0.06)',
+    backgroundColor: COLORS.sageFaint,
     borderRadius: RADIUS.sm,
     padding: SPACING.sm,
   } as ViewStyle,

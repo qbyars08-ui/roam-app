@@ -568,18 +568,18 @@ const styles = StyleSheet.create({
   detailsBody: {
     fontFamily: FONTS.body,
     fontSize: 15,
-    color: 'rgba(245,237,216,0.75)',
+    color: COLORS.creamBrightSoft,
     lineHeight: 22,
   } as TextStyle,
   detailsHint: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: 'rgba(245,237,216,0.4)',
+    color: COLORS.creamDim,
     marginTop: SPACING.xs,
   } as TextStyle,
   vibeChip: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(124,175,138,0.15)',
+    backgroundColor: COLORS.sageHighlight,
     borderWidth: 1,
     borderColor: COLORS.sage,
     borderRadius: RADIUS.full,

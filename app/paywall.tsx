@@ -24,11 +24,11 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import {
   getOfferings,
-  purchaseProMonthly,
-  purchaseProAnnual,
+  purchasePro,
+  purchaseGlobal,
   restorePurchases,
   type OfferingPackages,
-} from '../lib/revenuecat';
+} from '../lib/revenue-cat';
 
 // =============================================================================
 // Tier definitions
@@ -118,6 +118,11 @@ export default function PaywallScreen() {
   const cardsOpacity = useRef(new Animated.Value(0)).current;
   const cardsY = useRef(new Animated.Value(30)).current;
 
+  // Load offerings for live prices
+  useEffect(() => {
+    getOfferings().then(setPackages).catch(() => {});
+  }, []);
+
   useEffect(() => {
     Animated.sequence([
       Animated.parallel([
@@ -159,18 +164,16 @@ export default function PaywallScreen() {
     setLoading(true);
     try {
       const success = selectedTier === 'global'
-        ? await purchaseProAnnual()
-        : await purchaseProMonthly();
+        ? await purchaseGlobal()
+        : await purchasePro();
 
       if (success) {
         setIsPro(true);
         handleClose();
       }
+      // On cancel: purchasePro/purchaseGlobal return false, dismiss quietly
     } catch (err) {
-      Alert.alert(
-        'Payment didn\u2019t go through',
-        'Double-check your card details or try a different one \u2014 we\u2019ll be here.'
-      );
+      Alert.alert('Something went wrong', 'Try again — we\u2019ll be here.');
     } finally {
       setLoading(false);
     }
@@ -285,7 +288,7 @@ export default function PaywallScreen() {
                         {f.included ? (
                           <Check size={14} color={COLORS.sage} strokeWidth={2.5} />
                         ) : (
-                          <X size={14} color="rgba(245,237,216,0.2)" strokeWidth={2.5} />
+                          <X size={14} color={COLORS.creamVeryFaint} strokeWidth={2.5} />
                         )}
                       </View>
                       <Text style={[styles.featureText, !f.included && styles.featureTextMuted]}>
@@ -496,7 +499,7 @@ const styles = StyleSheet.create({
     flex: 1,
   } as TextStyle,
   featureTextMuted: {
-    color: 'rgba(245,237,216,0.3)',
+    color: COLORS.creamDimLight,
   } as TextStyle,
 
   // Radio
@@ -541,7 +544,7 @@ const styles = StyleSheet.create({
   trialNote: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: 'rgba(245,237,216,0.4)',
+    color: COLORS.creamDim,
     textAlign: 'center',
     marginBottom: SPACING.lg,
   } as TextStyle,
@@ -552,13 +555,13 @@ const styles = StyleSheet.create({
   restoreText: {
     fontFamily: FONTS.bodyMedium,
     fontSize: 14,
-    color: 'rgba(245,237,216,0.45)',
+    color: COLORS.creamMutedLight,
     textDecorationLine: 'underline',
   } as TextStyle,
   maybeLater: {
     fontFamily: FONTS.mono,
     fontSize: 12,
-    color: 'rgba(245,237,216,0.25)',
+    color: COLORS.creamFaint,
     textAlign: 'center',
     marginTop: SPACING.lg,
     paddingBottom: SPACING.md,

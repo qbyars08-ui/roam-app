@@ -18,7 +18,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { Ionicons } from '@expo/vector-icons';
+import { ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useDestinationTheme } from '../lib/useDestinationTheme';
 
@@ -912,7 +912,7 @@ export default function HonestReviews() {
           }}
           style={[styles.backButton, { backgroundColor: `${destTheme.primary}20` }]}
         >
-          <Ionicons name="chevron-back" size={24} color={COLORS.cream} />
+          <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
         <View style={styles.headerText}>
           <Text style={styles.headerTitle}>Honest Reviews</Text>
@@ -1382,7 +1382,7 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     marginBottom: SPACING.md,
     borderWidth: 1,
-    borderColor: 'rgba(124,175,138,0.3)',
+    borderColor: COLORS.sageStrong,
   } as ViewStyle,
   alternativeCardMixed: {
     backgroundColor: COLORS.goldMuted,

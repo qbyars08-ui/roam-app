@@ -7,7 +7,6 @@ import {
   Animated,
   Alert,
   Easing,
-  Linking,
   Platform,
   Pressable,
   StyleSheet,
@@ -16,6 +15,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -24,6 +24,7 @@ import { useAppStore } from '../../lib/store';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 
 const DEV = __DEV__;
+const isWeb = Platform.OS === 'web';
 
 export default function SignUpScreen() {
   const router = useRouter();
@@ -125,12 +126,27 @@ export default function SignUpScreen() {
   };
 
   // -------------------------------------------------------------------------
-  // Dev skip
+  // Guest / Skip (web: always visible; native: dev only)
+  // Uses anonymous auth so API/trip generation works; fallback to fake session if anon disabled
   // -------------------------------------------------------------------------
-  const handleSkipLogin = () => {
+  const handleContinueAsGuest = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSession({ user: { id: 'dev-user', email: 'dev@roam.app' } } as any);
-    router.replace('/(auth)/onboarding');
+    try {
+      const { data, error } = await supabase.auth.signInAnonymously();
+      if (error) throw error;
+      if (data.session) {
+        setSession(data.session);
+        await AsyncStorage.setItem('@roam/onboarding_complete', 'true');
+        router.replace('/(tabs)');
+        return;
+      }
+    } catch {
+      // Anonymous sign-in disabled — use fake guest session (browse only, trip gen may fail)
+      const guestId = `guest-web-${Date.now()}`;
+      setSession({ user: { id: guestId, email: null }, access_token: '', refresh_token: '' } as any);
+      await AsyncStorage.setItem('@roam/onboarding_complete', 'true');
+      router.replace('/(tabs)');
+    }
   };
 
   // Apple button (iOS only)
@@ -207,14 +223,14 @@ export default function SignUpScreen() {
             By continuing, you agree to our{' '}
             <Text
               style={styles.termsLink}
-              onPress={() => Linking.openURL('https://roamtravel.app/terms')}
+              onPress={() => router.push('/terms')}
             >
               Terms of Service
             </Text>
             {'\n'}and{' '}
             <Text
               style={styles.termsLink}
-              onPress={() => Linking.openURL('https://roamtravel.app/privacy')}
+              onPress={() => router.push('/privacy')}
             >
               Privacy Policy
             </Text>
@@ -222,17 +238,17 @@ export default function SignUpScreen() {
           </Text>
         </Animated.View>
 
-        {DEV && (
+        {(isWeb || DEV) && (
           <Pressable
-            onPress={handleSkipLogin}
+            onPress={handleContinueAsGuest}
             accessibilityRole="button"
-            accessibilityLabel="Skip login (Dev only)"
+            accessibilityLabel="Continue as guest"
             style={({ pressed }) => [
-              styles.devSkip,
-              { opacity: pressed ? 0.5 : 0.7 },
+              styles.guestBtn,
+              { opacity: pressed ? 0.85 : 1 },
             ]}
           >
-            <Text style={styles.devSkipText}>Skip Login (Dev Only)</Text>
+            <Text style={styles.guestBtnText}>Continue as guest</Text>
           </Pressable>
         )}
       </View>
@@ -320,14 +336,18 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
     opacity: 1,
   } as TextStyle,
-  devSkip: {
+  guestBtn: {
+    marginTop: SPACING.lg,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xl,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     alignItems: 'center',
-    paddingVertical: SPACING.sm,
   } as ViewStyle,
-  devSkipText: {
-    fontFamily: FONTS.mono,
-    fontSize: 12,
-    color: COLORS.sage,
-    letterSpacing: 0.5,
+  guestBtnText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 15,
+    color: COLORS.creamMuted,
   } as TextStyle,
 });

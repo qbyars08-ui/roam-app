@@ -1,6 +1,7 @@
 // =============================================================================
 // ROAM — Pro Feature Gating & Trip Limit Enforcement
-// Central module for checking pro status + enforcing free-tier limits
+// Pro status comes from RevenueCat via _layout bootstrap + CustomerInfo listener.
+// Store (isPro) is synced on app start and after every purchase/restore.
 // =============================================================================
 import { useAppStore } from './store';
 import { FREE_TRIPS_PER_MONTH } from './constants';

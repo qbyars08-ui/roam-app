@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: 'rgba(245,237,216,0.6)',
+    color: COLORS.creamSoft,
     paddingHorizontal: SPACING.lg,
     marginBottom: SPACING.md,
   },

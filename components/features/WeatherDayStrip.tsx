@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   dateText: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: 'rgba(245,237,216,0.45)',
+    color: COLORS.creamMutedLight,
     marginTop: 2,
   } as TextStyle,
   center: {
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
   tempLow: {
     fontFamily: FONTS.body,
     fontSize: 14,
-    color: 'rgba(245,237,216,0.5)',
+    color: COLORS.creamMuted,
     marginLeft: 2,
   } as TextStyle,
   right: {
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
   desc: {
     fontFamily: FONTS.body,
     fontSize: 12,
-    color: 'rgba(245,237,216,0.6)',
+    color: COLORS.creamSoft,
     textAlign: 'right',
     textTransform: 'capitalize',
   } as TextStyle,

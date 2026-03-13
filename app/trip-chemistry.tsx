@@ -17,7 +17,18 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Slider from '@react-native-community/slider';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  ChevronLeft,
+  ChevronUp,
+  ChevronDown,
+  XCircle,
+  UserPlus,
+  FlaskConical,
+  AlertTriangle,
+  Compass,
+  Share2,
+  RotateCcw,
+} from 'lucide-react-native';
 import Svg, { Circle } from 'react-native-svg';
 
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
@@ -414,7 +425,7 @@ export default function TripChemistryScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.cream} />
+          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>Trip Chemistry</Text>
@@ -471,7 +482,7 @@ export default function TripChemistryScreen() {
                     hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                     style={styles.removeButton}
                   >
-                    <Ionicons name="close-circle" size={22} color={COLORS.coral} />
+                    <XCircle size={22} color={COLORS.coral} strokeWidth={2} />
                   </TouchableOpacity>
                 )}
                 <Ionicons

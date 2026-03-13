@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
   source: {
     fontFamily: FONTS.mono,
     fontSize: 9,
-    color: 'rgba(245,237,216,0.4)',
+    color: COLORS.creamDim,
     marginTop: 4,
   } as TextStyle,
 });

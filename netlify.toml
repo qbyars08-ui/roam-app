@@ -1,0 +1,11 @@
+[build]
+  command = "npx expo export --platform web && echo '/* /index.html 200' > dist/_redirects"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[headers]]
+  for = "/_expo/static/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

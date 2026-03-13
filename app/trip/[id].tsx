@@ -9,7 +9,6 @@ import {
   ScrollView,
   Pressable,
   StyleSheet,
-  ActivityIndicator,
   Platform,
   Linking,
   type TextStyle,
@@ -21,6 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { SkeletonCard } from '../../components/premium/LoadingStates';
 import { getSharedTrip, type SharedTrip } from '../../lib/sharing';
 import { getDestinationPhoto } from '../../lib/photos';
 import { parseItinerary } from '../../lib/types/itinerary';
@@ -80,9 +80,10 @@ export default function PublicTripScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.screen, styles.centerContent, { paddingTop: insets.top }]}>
-        <ActivityIndicator size="large" color={COLORS.sage} />
-        <Text style={styles.loadingText}>Loading trip...</Text>
+      <View style={[styles.screen, { paddingTop: insets.top, paddingHorizontal: SPACING.lg }]}>
+        <SkeletonCard width="100%" height={200} borderRadius={RADIUS.lg} style={{ marginBottom: SPACING.lg }} />
+        <SkeletonCard width="100%" height={120} borderRadius={RADIUS.lg} style={{ marginBottom: SPACING.md }} />
+        <SkeletonCard width="100%" height={80} borderRadius={RADIUS.md} />
       </View>
     );
   }
@@ -113,6 +114,7 @@ export default function PublicTripScreen() {
         style={styles.scroll}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + SPACING.xxl }]}
         showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
       >
         {/* Header with destination */}
         <View style={styles.hero}>

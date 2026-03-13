@@ -298,15 +298,20 @@ export function formatLocalPrice(
 export function formatTextWithDualPrice(
   text: string,
   targetCurrency: string,
-  rates: ExchangeRates
+  rates: ExchangeRates | { base?: string; rates?: Record<string, number> } | null
 ): string {
-  if (targetCurrency === 'USD') return text;
-  const match = text.match(/\$([\d,]+(?:\.\d{2})?)/);
-  if (!match) return text;
-  const priceStr = `$${match[1]}`;
-  const converted = convertPriceString(priceStr, targetCurrency, rates);
-  if (!converted) return text;
-  return `${text} / ${converted.converted}`;
+  if (!targetCurrency || targetCurrency === 'USD') return text;
+  if (!rates || typeof rates !== 'object' || !rates.rates || typeof rates.rates !== 'object') return text;
+  try {
+    const match = text.match(/\$([\d,]+(?:\.\d{2})?)/);
+    if (!match) return text;
+    const priceStr = `$${match[1]}`;
+    const converted = convertPriceString(priceStr, targetCurrency, rates as ExchangeRates);
+    if (!converted) return text;
+    return `${text} / ${converted.converted}`;
+  } catch {
+    return text;
+  }
 }
 
 /**

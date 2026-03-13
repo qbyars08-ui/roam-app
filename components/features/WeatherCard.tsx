@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   feelsLike: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: 'rgba(245,237,216,0.5)',
+    color: COLORS.creamMuted,
     marginTop: 2,
   } as TextStyle,
   divider: {
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
   dailyDay: {
     fontFamily: FONTS.monoMedium,
     fontSize: 11,
-    color: 'rgba(245,237,216,0.6)',
+    color: COLORS.creamSoft,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
     marginBottom: SPACING.xs,
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
   dailyLow: {
     fontFamily: FONTS.body,
     fontSize: 12,
-    color: 'rgba(245,237,216,0.45)',
+    color: COLORS.creamMutedLight,
     marginTop: 2,
   } as TextStyle,
   popBadge: {

@@ -625,7 +625,7 @@ const styles = StyleSheet.create({
   shotListFooterText: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: 'rgba(245,237,216,0.3)',
+    color: COLORS.creamDimLight,
     letterSpacing: 1,
   } as TextStyle,
 
@@ -698,7 +698,7 @@ const styles = StyleSheet.create({
   momentText: {
     fontFamily: FONTS.body,
     fontSize: 14,
-    color: 'rgba(245,237,216,0.85)',
+    color: COLORS.creamBright,
     lineHeight: 22,
     fontStyle: 'italic',
     marginBottom: SPACING.sm,
@@ -752,7 +752,7 @@ const styles = StyleSheet.create({
   captionText: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: 'rgba(245,237,216,0.8)',
+    color: COLORS.creamBrightDim,
     fontStyle: 'italic',
     lineHeight: 20,
   } as TextStyle,

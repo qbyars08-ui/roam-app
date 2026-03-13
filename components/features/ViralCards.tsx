@@ -300,7 +300,7 @@ export function CostBreakdownCard({
     { label: 'Food', value: breakdown.food, color: COLORS.sage },
     { label: 'Activities', value: breakdown.activities, color: '#E8614A' },
     { label: 'Transport', value: breakdown.transportation, color: '#5B9BD5' },
-    { label: 'Buffer (10%)', value: `$${buffer}`, color: 'rgba(245,237,216,0.3)' },
+    { label: 'Buffer (10%)', value: `$${buffer}`, color: COLORS.creamDimLight },
   ];
 
   const maxVal = Math.max(...categories.map((c) => parseDollar(c.value)), 1);
@@ -933,7 +933,7 @@ const vsStyles = StyleSheet.create({
   touristText: {
     fontFamily: FONTS.body,
     fontSize: 12,
-    color: 'rgba(245,237,216,0.5)',
+    color: COLORS.creamMuted,
     flex: 1,
     lineHeight: 17,
     textDecorationLine: 'line-through',

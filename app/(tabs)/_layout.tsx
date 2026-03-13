@@ -23,6 +23,7 @@ export default function TabsLayout() {
           tabBarHideOnKeyboard: true,
           animation: 'shift',
           tabBarStyle: { display: 'none' },
+          lazy: true,
         }}
       >
         {/* ── Visible tabs (4) ── */}

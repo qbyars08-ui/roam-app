@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   voteCount: {
     fontFamily: FONTS.mono,
     fontSize: 9,
-    color: 'rgba(245,237,216,0.4)',
+    color: COLORS.creamDim,
   } as TextStyle,
   voteCountActive: {
     color: 'rgba(8,15,10,0.6)',
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
   suggestionText: {
     fontFamily: FONTS.body,
     fontSize: 12,
-    color: 'rgba(245,237,216,0.7)',
+    color: COLORS.creamHighlight,
     fontStyle: 'italic',
     flex: 1,
   } as TextStyle,

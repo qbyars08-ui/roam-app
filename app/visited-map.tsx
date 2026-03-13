@@ -19,7 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 
-import { Ionicons } from '@expo/vector-icons';
+import { ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import {
   type VisitedPlace,
@@ -243,7 +243,7 @@ export default function VisitedMapScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.cream} />
+          <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
         <Text style={styles.headerTitle}>Visited Map</Text>
         <View style={styles.backBtn} />
@@ -661,7 +661,7 @@ const styles = StyleSheet.create({
   } as TextStyle,
   milesCard: {
     marginTop: SPACING.md,
-    backgroundColor: 'rgba(124,175,138,0.1)',
+    backgroundColor: COLORS.sageSoft,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.sage + '40',
@@ -702,7 +702,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: 'rgba(245,237,216,0.6)',
+    color: COLORS.creamSoft,
     marginBottom: SPACING.md,
   } as TextStyle,
   sectionSubtext: {
@@ -770,7 +770,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   } as ViewStyle,
   countryPillVisited: {
-    backgroundColor: 'rgba(124,175,138,0.15)',
+    backgroundColor: COLORS.sageHighlight,
     borderColor: COLORS.sage,
   } as ViewStyle,
   countryPillDimmed: {
@@ -791,7 +791,7 @@ const styles = StyleSheet.create({
     color: COLORS.sage,
   } as TextStyle,
   countryPillTextDimmed: {
-    color: 'rgba(245,237,216,0.3)',
+    color: COLORS.creamDimLight,
   } as TextStyle,
 
   // Expanded cities
@@ -871,7 +871,7 @@ const styles = StyleSheet.create({
   // Sync button
   syncBtn: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(124,175,138,0.12)',
+    backgroundColor: COLORS.sageMuted,
     borderRadius: RADIUS.md,
     borderWidth: 1,
     borderColor: COLORS.sage,
@@ -1004,19 +1004,19 @@ const styles = StyleSheet.create({
   bucketDestination: {
     fontFamily: FONTS.bodyMedium,
     fontSize: 14,
-    color: 'rgba(245,237,216,0.4)',
+    color: COLORS.creamDim,
   } as TextStyle,
   bucketMeta: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: 'rgba(245,237,216,0.2)',
+    color: COLORS.creamVeryFaint,
   } as TextStyle,
   bucketActions: {
     flexDirection: 'row',
     gap: SPACING.sm,
   } as ViewStyle,
   bucketActionBtn: {
-    backgroundColor: 'rgba(124,175,138,0.12)',
+    backgroundColor: COLORS.sageMuted,
     borderRadius: RADIUS.sm,
     paddingHorizontal: SPACING.sm + 2,
     paddingVertical: SPACING.xs,

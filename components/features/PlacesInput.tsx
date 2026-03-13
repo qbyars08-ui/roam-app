@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   clearText: {
     fontSize: 12,
-    color: 'rgba(245,237,216,0.5)',
+    color: COLORS.creamMuted,
   } as TextStyle,
   dropdown: {
     position: 'absolute',
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
   resultSecondary: {
     fontFamily: FONTS.body,
     fontSize: 12,
-    color: 'rgba(245,237,216,0.4)',
+    color: COLORS.creamDim,
     marginTop: 2,
   } as TextStyle,
   separator: {

@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { ChevronLeft } from 'lucide-react-native';
 
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
@@ -51,7 +51,7 @@ export default function ViralCardsScreen() {
     return (
       <View style={[styles.screen, { paddingTop: insets.top }]}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.cream} />
+          <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
         <View style={styles.empty}>
           <Text style={styles.emptyTitle}>No trip to card-ify</Text>
@@ -65,7 +65,7 @@ export default function ViralCardsScreen() {
     return (
       <View style={[styles.screen, { paddingTop: insets.top }]}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.cream} />
+          <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
         <View style={styles.empty}>
           <Text style={styles.emptyTitle}>Building your card...</Text>
@@ -80,7 +80,7 @@ export default function ViralCardsScreen() {
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.cream} />
+          <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
         <Text style={styles.headerTitle}>Viral Cards</Text>
         <View style={styles.backBtn} />

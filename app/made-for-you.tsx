@@ -444,8 +444,8 @@ export default function MadeForYouScreen() {
                 styles.crowdIndicator,
                 vibeCheck.crowdLevel === 'low' && { backgroundColor: 'rgba(74,222,128,0.15)' },
                 vibeCheck.crowdLevel === 'moderate' && { backgroundColor: 'rgba(245,158,11,0.15)' },
-                vibeCheck.crowdLevel === 'high' && { backgroundColor: 'rgba(232,97,74,0.15)' },
-                vibeCheck.crowdLevel === 'peak' && { backgroundColor: 'rgba(232,97,74,0.3)' },
+                vibeCheck.crowdLevel === 'high' && { backgroundColor: COLORS.coralSubtle },
+                vibeCheck.crowdLevel === 'peak' && { backgroundColor: COLORS.coralMuted },
               ]}>
                 <Text style={styles.crowdLabel}>{vibeCheck.crowdLevel.toUpperCase()}</Text>
               </View>

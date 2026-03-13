@@ -18,7 +18,18 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  ChevronLeft,
+  BookOpen,
+  ArrowRight,
+  Clock,
+  Calendar,
+  Wallet,
+  Flag,
+  Globe,
+  Library,
+  UtensilsCrossed,
+} from 'lucide-react-native';
 
 import { COLORS, FONTS, SPACING, RADIUS, BUDGETS } from '../lib/constants';
 import { useAppStore, type Trip } from '../lib/store';
@@ -29,11 +40,12 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 // ---------------------------------------------------------------------------
 // Milestone definitions
 // ---------------------------------------------------------------------------
+type MilestoneIcon = React.ComponentType<{ size?: number; color?: string; style?: object }>;
 type Milestone = {
   id: string;
   label: string;
   description: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  Icon: MilestoneIcon;
   check: (trips: Trip[]) => boolean;
 };
 
@@ -42,35 +54,35 @@ const MILESTONES: Milestone[] = [
     id: 'first-trip',
     label: 'First Trip',
     description: 'Completed your first journey',
-    icon: 'flag',
+    Icon: Flag,
     check: (trips) => trips.length >= 1,
   },
   {
     id: 'globe-trotter',
     label: 'Globe Trotter',
     description: '5+ trips planned',
-    icon: 'globe',
+    Icon: Globe,
     check: (trips) => trips.length >= 5,
   },
   {
     id: 'week-warrior',
     label: 'Week Warrior',
     description: 'A trip that was 7+ days',
-    icon: 'calendar',
+    Icon: Calendar,
     check: (trips) => trips.some((t) => t.days >= 7),
   },
   {
     id: 'budget-boss',
     label: 'Budget Boss',
     description: 'Completed a backpacker trip',
-    icon: 'wallet',
+    Icon: Wallet,
     check: (trips) => trips.some((t) => t.budget === 'backpacker'),
   },
   {
     id: 'culture-club',
     label: 'Culture Club',
     description: 'Explored culture or history',
-    icon: 'library',
+    Icon: Library,
     check: (trips) =>
       trips.some((t) =>
         t.vibes.some((v) => v.toLowerCase().includes('culture') || v.toLowerCase().includes('history'))
@@ -80,7 +92,7 @@ const MILESTONES: Milestone[] = [
     id: 'food-explorer',
     label: 'Food Explorer',
     description: 'Traveled for the food',
-    icon: 'restaurant',
+    Icon: UtensilsCrossed,
     check: (trips) =>
       trips.some((t) => t.vibes.some((v) => v.toLowerCase().includes('food') || v.toLowerCase().includes('eat'))),
   },
@@ -191,11 +203,11 @@ export default function MemoryLaneScreen() {
           style={StyleSheet.absoluteFill}
         />
         <Pressable style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.cream} />
+          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
         </Pressable>
 
         <View style={styles.emptyContainer}>
-          <Ionicons name="book-outline" size={64} color={COLORS.sage} style={{ marginBottom: SPACING.lg }} />
+          <BookOpen size={64} color={COLORS.sage} strokeWidth={1.5} style={{ marginBottom: SPACING.lg }} />
           <Text style={styles.emptyTitle}>Memory Lane</Text>
           <Text style={styles.emptySubtitle}>
             Your story starts with one trip.{'\n'}Every journey becomes a memory.
@@ -208,7 +220,7 @@ export default function MemoryLaneScreen() {
             }}
           >
             <Text style={styles.ctaText}>Plan Your First Trip</Text>
-            <Ionicons name="arrow-forward" size={18} color={COLORS.bg} />
+            <ArrowRight size={18} color={COLORS.bg} strokeWidth={2} />
           </Pressable>
         </View>
       </View>
@@ -228,7 +240,7 @@ export default function MemoryLaneScreen() {
 
       {/* Back button */}
       <Pressable style={styles.backBtn} onPress={() => router.back()}>
-        <Ionicons name="chevron-back" size={24} color={COLORS.cream} />
+        <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
       </Pressable>
 
       <ScrollView
@@ -305,7 +317,7 @@ export default function MemoryLaneScreen() {
                   style={StyleSheet.absoluteFill}
                 />
                 <View style={styles.nostalgiaInner}>
-                  <Ionicons name="time" size={20} color={COLORS.coral} />
+                  <Clock size={20} color={COLORS.coral} strokeWidth={2} />
                   <View style={{ flex: 1, marginLeft: SPACING.sm }}>
                     <Text style={styles.nostalgiaTitle}>On This Day</Text>
                     <Text style={styles.nostalgiaBody}>
@@ -396,8 +408,7 @@ export default function MemoryLaneScreen() {
                     }
                     style={StyleSheet.absoluteFill}
                   />
-                  <Ionicons
-                    name={m.icon}
+                  <m.Icon
                     size={24}
                     color={earned ? COLORS.gold : COLORS.creamMuted}
                     style={{ marginBottom: SPACING.xs }}
@@ -469,11 +480,11 @@ export default function MemoryLaneScreen() {
 
                   <View style={styles.tripMeta}>
                     <View style={styles.tripChip}>
-                      <Ionicons name="calendar-outline" size={12} color={COLORS.sage} />
+                      <Calendar size={12} color={COLORS.sage} strokeWidth={2} />
                       <Text style={styles.tripChipText}>{trip.days} days</Text>
                     </View>
                     <View style={styles.tripChip}>
-                      <Ionicons name="wallet-outline" size={12} color={COLORS.sage} />
+                      <Wallet size={12} color={COLORS.sage} strokeWidth={2} />
                       <Text style={styles.tripChipText}>{budgetLabel}</Text>
                     </View>
                   </View>
@@ -502,7 +513,7 @@ export default function MemoryLaneScreen() {
                     }}
                   >
                     <Text style={styles.reliveBtnText}>Relive this trip</Text>
-                    <Ionicons name="arrow-forward" size={14} color={COLORS.sage} />
+                    <ArrowRight size={14} color={COLORS.sage} strokeWidth={2} />
                   </Pressable>
                 </View>
               </Animated.View>
@@ -639,7 +650,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: 'rgba(245,237,216,0.6)',
+    color: COLORS.creamSoft,
     marginBottom: SPACING.md,
   } as TextStyle,
   stampsGrid: {

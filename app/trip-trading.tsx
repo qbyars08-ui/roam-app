@@ -9,7 +9,6 @@ import {
   ScrollView,
   Pressable,
   StyleSheet,
-  ActivityIndicator,
   RefreshControl,
   Alert,
   ImageBackground,
@@ -23,6 +22,7 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Repeat, ChevronRight } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
+import { SkeletonCard } from '../components/premium/LoadingStates';
 import { useAppStore } from '../lib/store';
 import {
   fetchTradableTrips,
@@ -81,13 +81,16 @@ export default function TripTradingScreen() {
       </View>
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={COLORS.gold} size="large" />
+        <View style={styles.skeletonGrid}>
+          {[1, 2, 3, 4].map((i) => (
+            <SkeletonCard key={i} width="100%" height={160} borderRadius={RADIUS.lg} style={{ marginBottom: SPACING.md }} />
+          ))}
         </View>
       ) : (
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.gold} />
           }
@@ -148,6 +151,7 @@ const styles = StyleSheet.create({
   title: { fontFamily: FONTS.header, fontSize: 28, color: COLORS.cream, marginTop: SPACING.sm } as TextStyle,
   subtitle: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.creamMuted, marginTop: 4 } as TextStyle,
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' } as ViewStyle,
+  skeletonGrid: { paddingHorizontal: SPACING.lg, gap: SPACING.md } as ViewStyle,
   scrollContent: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xl } as ViewStyle,
   empty: { alignItems: 'center', paddingVertical: SPACING.xxxl } as ViewStyle,
   emptyTitle: { fontFamily: FONTS.headerMedium, fontSize: 18, color: COLORS.cream, marginTop: SPACING.md } as TextStyle,

@@ -9,12 +9,14 @@ import {
   FlatList,
   Pressable,
   Alert,
+  Platform,
   StyleSheet,
   ImageBackground,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
@@ -299,6 +301,10 @@ export default function SavedScreen() {
           trips.length === 0 && styles.listContentEmpty,
         ]}
         showsVerticalScrollIndicator={false}
+        windowSize={5}
+        maxToRenderPerBatch={5}
+        initialNumToRender={6}
+        removeClippedSubviews={Platform.OS !== 'web'}
         renderItem={({ item }) => (
           <TripCard
             trip={item}

@@ -208,8 +208,8 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   } as ViewStyle,
   offerRowCheapest: {
-    borderColor: 'rgba(124,175,138,0.3)',
-    backgroundColor: 'rgba(124,175,138,0.06)',
+    borderColor: COLORS.sageStrong,
+    backgroundColor: COLORS.sageFaint,
   } as ViewStyle,
   offerLeft: {
     flex: 1,
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     color: COLORS.cream,
   } as TextStyle,
   cheapestBadge: {
-    backgroundColor: 'rgba(124,175,138,0.2)',
+    backgroundColor: COLORS.sageLight,
     borderRadius: RADIUS.full,
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   disclaimer: {
     fontFamily: FONTS.body,
     fontSize: 11,
-    color: 'rgba(245,237,216,0.35)',
+    color: COLORS.creamDimMedium,
     textAlign: 'center',
     marginTop: SPACING.xs,
   } as TextStyle,

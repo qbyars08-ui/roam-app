@@ -39,6 +39,9 @@ export default function BookingCards({
   tripId,
 }: BookingCardsProps) {
   const { currency, rates } = useCurrency();
+  const safeCurrency = currency ?? 'USD';
+  const safeRates = rates ?? null;
+  const canConvert = safeCurrency !== 'USD' && safeRates != null;
   const params: AffiliateParams = {
     destination,
     countryCode,
@@ -89,8 +92,8 @@ export default function BookingCards({
               </View>
 
               <Text style={styles.estimate}>
-                {currency !== 'USD' && rates
-                  ? formatTextWithDualPrice(partner.estimateLabel(params), currency, rates)
+                {canConvert && safeRates
+                  ? formatTextWithDualPrice(partner.estimateLabel(params), safeCurrency, safeRates)
                   : partner.estimateLabel(params)}
               </Text>
 
@@ -184,7 +187,7 @@ const styles = StyleSheet.create({
   disclaimer: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: 'rgba(245,237,216,0.2)',
+    color: COLORS.creamVeryFaint,
     textAlign: 'center',
     marginTop: SPACING.md,
   } as TextStyle,

@@ -371,6 +371,8 @@ function ExpensesTab({
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<TripExpense['category']>('food');
   const [description, setDescription] = useState('');
+  const [addError, setAddError] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
 
   const balances = calculateBalances(expenses, members);
   const session = useAppStore((s) => s.session);
@@ -378,12 +380,20 @@ function ExpensesTab({
 
   const handleAdd = useCallback(async () => {
     const num = parseFloat(amount);
-    if (!num || !description.trim()) return;
-    await addExpense({ groupId, amount: num, category, description });
-    setAmount('');
-    setDescription('');
-    setShowAdd(false);
-    onRefresh();
+    if (!num || num <= 0 || !description.trim()) return;
+    setAddError(null);
+    setAdding(true);
+    try {
+      await addExpense({ groupId, amount: num, category, description });
+      setAmount('');
+      setDescription('');
+      setShowAdd(false);
+      onRefresh();
+    } catch {
+      setAddError('Could not add expense');
+    } finally {
+      setAdding(false);
+    }
   }, [groupId, amount, category, description, onRefresh]);
 
   return (
@@ -448,11 +458,11 @@ function ExpensesTab({
             ))}
           </ScrollView>
           <View style={styles.modalActions}>
-            <Pressable onPress={() => setShowAdd(false)}>
+            <Pressable onPress={() => { setShowAdd(false); setAddError(null); }}>
               <Text style={styles.cancelText}>Cancel</Text>
             </Pressable>
-            <Pressable style={styles.saveBtn} onPress={handleAdd}>
-              <Text style={styles.saveBtnText}>Add</Text>
+            <Pressable style={styles.saveBtn} onPress={handleAdd} disabled={adding}>
+              <Text style={styles.saveBtnText}>{adding ? 'Adding...' : 'Add'}</Text>
             </Pressable>
           </View>
         </View>
@@ -474,14 +484,20 @@ function ChatTab({
   members: GroupMember[];
 }) {
   const [input, setInput] = useState('');
+  const [sending, setSending] = useState(false);
   const session = useAppStore((s) => s.session);
 
   const handleSend = useCallback(async () => {
     const t = input.trim();
-    if (!t) return;
-    await sendMessage({ groupId, content: t });
+    if (!t || sending) return;
+    setSending(true);
     setInput('');
-  }, [groupId, input]);
+    try {
+      await sendMessage({ groupId, content: t });
+    } finally {
+      setSending(false);
+    }
+  }, [groupId, input, sending]);
 
   const getName = (userId: string) =>
     members.find((m) => m.userId === userId)?.displayName ?? 'Traveler';
@@ -516,8 +532,8 @@ function ChatTab({
           placeholderTextColor={COLORS.creamMuted}
           onSubmitEditing={handleSend}
         />
-        <Pressable style={styles.sendBtn} onPress={handleSend}>
-          <Text style={styles.sendBtnText}>Send</Text>
+        <Pressable style={styles.sendBtn} onPress={handleSend} disabled={sending}>
+          <Text style={styles.sendBtnText}>{sending ? '...' : 'Send'}</Text>
         </Pressable>
       </View>
     </View>
@@ -537,13 +553,23 @@ function PackingTab({
   onRefresh: () => void;
 }) {
   const [newItem, setNewItem] = useState('');
+  const [addError, setAddError] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
 
   const handleAdd = useCallback(async () => {
     const t = newItem.trim();
     if (!t) return;
-    await addPackingItem({ groupId, itemName: t });
-    setNewItem('');
-    onRefresh();
+    setAddError(null);
+    setAdding(true);
+    try {
+      await addPackingItem({ groupId, itemName: t });
+      setNewItem('');
+      onRefresh();
+    } catch {
+      setAddError('Could not add item');
+    } finally {
+      setAdding(false);
+    }
   }, [groupId, newItem, onRefresh]);
 
   const handleToggle = useCallback(
@@ -560,15 +586,17 @@ function PackingTab({
         <TextInput
           style={styles.packingInput}
           value={newItem}
-          onChangeText={setNewItem}
+          onChangeText={(v) => { setNewItem(v); setAddError(null); }}
           placeholder="Add item..."
           placeholderTextColor={COLORS.creamMuted}
           onSubmitEditing={handleAdd}
+          editable={!adding}
         />
-        <Pressable style={styles.addPackingBtn} onPress={handleAdd}>
-          <Text style={styles.addPackingBtnText}>Add</Text>
+        <Pressable style={styles.addPackingBtn} onPress={handleAdd} disabled={adding}>
+          <Text style={styles.addPackingBtnText}>{adding ? '...' : 'Add'}</Text>
         </Pressable>
       </View>
+      {addError ? <Text style={[styles.emptyText, { color: COLORS.coral }]}>{addError}</Text> : null}
       {items.map((item) => (
         <Pressable
           key={item.id}
@@ -787,6 +815,7 @@ const styles = StyleSheet.create({
   } as TextStyle,
   expenseRow: {
     padding: SPACING.md,
+    marginBottom: SPACING.sm,
     backgroundColor: COLORS.bgGlass,
     borderRadius: RADIUS.md,
     borderWidth: 1,

@@ -31,12 +31,13 @@ import {
   HIDDEN_DESTINATIONS,
   BUDGETS,
   VIBES,
+  FREE_TRIPS_PER_MONTH,
 } from '../lib/constants';
 import { DiceIcon } from '../lib/icons';
 import { useAppStore } from '../lib/store';
 import { getDestinationPhoto } from '../lib/photos';
 import ShimmerOverlay from '../components/ui/ShimmerOverlay';
-import { generateItinerary } from '../lib/claude';
+import { generateItinerary, TripLimitReachedError } from '../lib/claude';
 import { type Itinerary } from '../lib/types/itinerary';
 import { saveChaosDare, getDareShareUrl, getDareShareMessage } from '../lib/chaos-dare';
 
@@ -98,6 +99,8 @@ export default function ChaosModeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const addTrip = useAppStore((s) => s.addTrip);
+  const isPro = useAppStore((s) => s.isPro);
+  const tripsThisMonth = useAppStore((s) => s.tripsThisMonth);
 
   const [phase, setPhase] = useState<
     'idle' | 'generating' | 'reveal' | 'result'
@@ -171,6 +174,10 @@ export default function ChaosModeScreen() {
   }, [phase]);
 
   const handleChaos = useCallback(async () => {
+    if (!isPro && tripsThisMonth >= FREE_TRIPS_PER_MONTH) {
+      router.push({ pathname: '/paywall', params: { reason: 'limit' } });
+      return;
+    }
     setPhase('generating');
     setError(null);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
@@ -249,14 +256,18 @@ export default function ChaosModeScreen() {
           ]).start();
         }, 2000);
       });
-    } catch {
+    } catch (err) {
+      if (err instanceof TripLimitReachedError) {
+        router.push('/paywall');
+        return;
+      }
       setError(
         "Chaos mode hit a wall. The universe is taking a break. Try again."
       );
       setPhase('idle');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
-  }, [addTrip, revealFade, revealScale, resultFade, resultSlide]);
+  }, [addTrip, revealFade, revealScale, resultFade, resultSlide, isPro, tripsThisMonth, router]);
 
   const handleShare = useCallback(async () => {
     if (!cardRef.current) return;
@@ -828,7 +839,7 @@ const styles = StyleSheet.create({
   chaosCardBrand: {
     fontFamily: FONTS.mono,
     fontSize: 12,
-    color: 'rgba(245,237,216,0.5)',
+    color: COLORS.creamMuted,
     letterSpacing: 3,
     marginBottom: 4,
   } as TextStyle,
@@ -850,7 +861,7 @@ const styles = StyleSheet.create({
   chaosCardTagline: {
     fontFamily: FONTS.body,
     fontSize: 14,
-    color: 'rgba(245,237,216,0.7)',
+    color: COLORS.creamHighlight,
     textAlign: 'center',
     marginBottom: SPACING.lg,
   } as TextStyle,
@@ -946,7 +957,7 @@ const styles = StyleSheet.create({
   chaosCardFooter: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: 'rgba(245,237,216,0.25)',
+    color: COLORS.creamFaint,
     letterSpacing: 1,
   } as TextStyle,
 

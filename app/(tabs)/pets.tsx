@@ -499,7 +499,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   } as TextStyle,
   breedChip: {
-    backgroundColor: 'rgba(124,175,138,0.15)',
+    backgroundColor: COLORS.sageHighlight,
     borderRadius: RADIUS.full,
     paddingHorizontal: SPACING.sm,
     paddingVertical: 2,
@@ -743,7 +743,7 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   typeChipActive: {
     borderColor: COLORS.sage,
-    backgroundColor: 'rgba(124,175,138,0.15)',
+    backgroundColor: COLORS.sageHighlight,
   } as ViewStyle,
   typeChipText: {
     fontFamily: FONTS.bodyMedium,

@@ -396,8 +396,8 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   crowdLow: { backgroundColor: 'rgba(74,222,128,0.2)' } as ViewStyle,
   crowdMod: { backgroundColor: 'rgba(245,158,11,0.2)' } as ViewStyle,
-  crowdHigh: { backgroundColor: 'rgba(232,97,74,0.2)' } as ViewStyle,
-  crowdPeak: { backgroundColor: 'rgba(232,97,74,0.4)' } as ViewStyle,
+  crowdHigh: { backgroundColor: COLORS.coralLight } as ViewStyle,
+  crowdPeak: { backgroundColor: COLORS.coralBorder } as ViewStyle,
   crowdBadgeText: {
     fontFamily: FONTS.mono,
     fontSize: 10,

@@ -100,6 +100,23 @@ export default function CreateGroupScreen() {
     router.replace({ pathname: '/group-trip', params: { groupId: createdGroupId } });
   }, [createdGroupId, router]);
 
+  if (!trips.length) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={styles.header}>
+          <Pressable onPress={() => router.back()} style={styles.backBtn}>
+            <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
+          </Pressable>
+          <Text style={styles.headerTitle}>Create group trip</Text>
+        </View>
+        <View style={[styles.scrollInner, { flex: 1, justifyContent: 'center' }]}>
+          <Text style={styles.emptyMessage}>Plan a trip first, then come back to invite friends.</Text>
+          <Button label="Plan my trip" variant="sage" onPress={() => router.replace('/(tabs)/plan')} />
+        </View>
+      </View>
+    );
+  }
+
   if (inviteCode && createdGroupId && selectedTrip) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -240,6 +257,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.coral,
     marginBottom: SPACING.md,
+  } as TextStyle,
+  emptyMessage: {
+    fontFamily: FONTS.body,
+    fontSize: 16,
+    color: COLORS.creamMuted,
+    textAlign: 'center',
+    marginBottom: SPACING.lg,
   } as TextStyle,
   successScroll: {
     padding: SPACING.xl,

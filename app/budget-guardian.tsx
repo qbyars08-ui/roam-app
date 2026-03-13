@@ -23,7 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { Ionicons } from '@expo/vector-icons';
+import { ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useDestinationTheme } from '../lib/useDestinationTheme';
 
@@ -435,7 +435,7 @@ export default function BudgetGuardianScreen() {
       >
         <View style={styles.headerRow}>
           <Pressable onPress={() => router.back()} hitSlop={12} style={[styles.backBtnWrap, { backgroundColor: `${destTheme.primary}20`, borderRadius: RADIUS.full }]}>
-            <Ionicons name="chevron-back" size={24} color={COLORS.cream} />
+            <ChevronLeft size={24} color={COLORS.cream} />
           </Pressable>
           <View style={{ flex: 1 }}>
             <Text style={styles.headerTitle}>Budget Guardian</Text>
@@ -933,7 +933,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: 'rgba(245,237,216,0.6)',
+    color: COLORS.creamSoft,
     marginBottom: SPACING.md,
   } as TextStyle,
 

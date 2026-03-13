@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
   splitDesc: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: 'rgba(245,237,216,0.35)',
+    color: COLORS.creamDimMedium,
     marginTop: 2,
   } as TextStyle,
   submitBtn: {
@@ -339,6 +339,6 @@ const styles = StyleSheet.create({
     color: COLORS.bg,
   } as TextStyle,
   submitTextDisabled: {
-    color: 'rgba(245,237,216,0.3)',
+    color: COLORS.creamDimLight,
   } as TextStyle,
 });

@@ -103,7 +103,7 @@ const DestCard = memo(function DestCard({
   onPhotoError,
 }: {
   dest: Destination;
-  onPress: () => void;
+  onPress: (label: string) => void;
   priceText: string;
   currentMonth: number;
   useParallax?: boolean;
@@ -143,11 +143,16 @@ const DestCard = memo(function DestCard({
     </ImageBackground>
   );
 
+  const handlePress = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onPress(dest.label);
+  }, [onPress, dest.label]);
+
   if (useParallax && parallaxY) {
     return (
       <Pressable
         style={({ pressed }) => [styles.destCard, { opacity: pressed ? 0.95 : 1 }]}
-        onPress={onPress}
+        onPress={handlePress}
       >
         <View style={styles.destImageWrap}>
           <ShimmerOverlay visible={photoLoaded !== true} />
@@ -160,7 +165,7 @@ const DestCard = memo(function DestCard({
   }
 
   return (
-    <Pressable style={({ pressed }) => [styles.destCard, { opacity: pressed ? 0.95 : 1 }]} onPress={onPress}>
+    <Pressable style={({ pressed }) => [styles.destCard, { opacity: pressed ? 0.95 : 1 }]} onPress={handlePress}>
       {content}
     </Pressable>
   );
@@ -747,7 +752,7 @@ export default function DiscoverScreen() {
           })}
         </ScrollView>
 
-        {/* ── Destination cards (85vw, overlap) ── */}
+        {/* ── Destination cards (85vw, overlap) — FlatList for 60fps scroll ── */}
         {filteredDestinations.length > 0 && (
           <View style={styles.destSection}>
             <View style={styles.sectionHeader}>
@@ -758,126 +763,74 @@ export default function DiscoverScreen() {
                   : 'Trending now'}
               </Text>
             </View>
-            <ScrollView
+            <FlatList
+              data={activeCategory === 'all' && seasonalPicks.length > 0 ? seasonalPicks.slice(0, 8) : trending}
+              keyExtractor={(d) => d.label}
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.destRow}
-            >
-              {(activeCategory === 'all' && seasonalPicks.length > 0 ? seasonalPicks.slice(0, 8) : trending).map((dest) => {
-                const photoUrl = getDestinationPhoto(dest.label);
-                const country = dest.country ? regionNames.of(dest.country) : '';
-
-                return (
-                  <Pressable
-                    key={dest.label}
-                    style={({ pressed }) => [
-                      styles.destCard,
-                      { opacity: pressed ? 0.95 : 1 },
-                    ]}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      handleDestinationPress(dest.label);
-                    }}
-                  >
-                    <ImageBackground
-                      source={{ uri: photoFallbacks[`dest-${dest.label}`] ? BACKUP_FALLBACK : photoUrl }}
-                      style={styles.destImage}
-                      imageStyle={styles.destImageInner}
-                      resizeMode="cover"
-                      onError={() => setPhotoFallbacks((p) => ({ ...p, [`dest-${dest.label}`]: true }))}
-                    >
-                      <LinearGradient
-                        colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.9)']}
-                        locations={[0.3, 0.7, 1]}
-                        style={styles.destGradient}
-                      >
-                        <View style={styles.destBadges}>
-                          <View style={styles.pricePill}>
-                            <Text style={styles.pricePillText}>from {rates && currency !== 'USD' ? formatUSD(dest.dailyCost, currency, rates) : `$${dest.dailyCost}`}/day</Text>
-                          </View>
-                          <SeasonalBadge destination={dest.label} month={currentMonth} variant="pill" />
-                        </View>
-                        <Text style={styles.destCity}>{dest.label}</Text>
-                        {country && (
-                          <Text style={styles.destCountry}>{country}</Text>
-                        )}
-                        <Text style={styles.destHook} numberOfLines={2}>{dest.hook}</Text>
-                      </LinearGradient>
-                    </ImageBackground>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
+              windowSize={5}
+              maxToRenderPerBatch={4}
+              initialNumToRender={4}
+              removeClippedSubviews={!isWeb}
+              nestedScrollEnabled
+              renderItem={({ item: dest }) => (
+                <DestCard
+                  dest={dest}
+                  onPress={handleDestinationPress}
+                  priceText={`from ${rates && currency !== 'USD' ? formatUSD(dest.dailyCost, currency, rates) : `$${dest.dailyCost}`}/day`}
+                  currentMonth={currentMonth}
+                  useFallback={!!photoFallbacks[`dest-${dest.label}`]}
+                  onPhotoError={() => setPhotoFallbacks((p) => ({ ...p, [`dest-${dest.label}`]: true }))}
+                />
+              )}
+            />
           </View>
         )}
 
-        {/* Additional destinations (rest of filtered) */}
-        {filteredDestinations.length > 8 && (
-          <View style={styles.destSection}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionDot}>·</Text>
-              <Text style={styles.sectionTitle}>More to explore</Text>
+        {/* Additional destinations (rest of filtered) — FlatList for 60fps scroll ── */}
+        {filteredDestinations.length > 8 && (() => {
+          const moreData = filteredDestinations.filter((d) => {
+            const inSeasonal = activeCategory === 'all' && seasonalPicks.some((s) => s.label === d.label);
+            const inTrending = trending.some((t) => t.label === d.label);
+            return !inSeasonal && !inTrending;
+          }).slice(0, 10);
+          if (moreData.length === 0) return null;
+          return (
+            <View style={styles.destSection}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionDot}>·</Text>
+                <Text style={styles.sectionTitle}>More to explore</Text>
+              </View>
+              <FlatList
+                data={moreData}
+                keyExtractor={(d) => d.label}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.destRow}
+                windowSize={5}
+                maxToRenderPerBatch={4}
+                initialNumToRender={4}
+                removeClippedSubviews={!isWeb}
+                nestedScrollEnabled
+                renderItem={({ item: dest }) => (
+                  <DestCard
+                    dest={dest}
+                    onPress={handleDestinationPress}
+                    priceText={`from ${rates && currency !== 'USD' ? formatUSD(dest.dailyCost, currency, rates) : `$${dest.dailyCost}`}/day`}
+                    currentMonth={currentMonth}
+                    useParallax
+                    parallaxY={parallaxY}
+                    useFallback={!!photoFallbacks[`dest2-${dest.label}`]}
+                    photoLoaded={!!loadedPhotos[`dest2-${dest.label}`]}
+                    onPhotoLoad={() => setLoadedPhotos((p) => ({ ...p, [`dest2-${dest.label}`]: true }))}
+                    onPhotoError={() => setPhotoFallbacks((p) => ({ ...p, [`dest2-${dest.label}`]: true }))}
+                  />
+                )}
+              />
             </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.destRow}
-            >
-              {filteredDestinations
-                .filter((d) => {
-                  const inSeasonal = activeCategory === 'all' && seasonalPicks.some((s) => s.label === d.label);
-                  const inTrending = trending.some((t) => t.label === d.label);
-                  return !inSeasonal && !inTrending;
-                })
-                .slice(0, 10)
-                .map((dest) => {
-                  const photoUrl = getDestinationPhoto(dest.label);
-                  const country = dest.country ? regionNames.of(dest.country) : '';
-
-                  return (
-                    <Pressable
-                      key={dest.label}
-                    style={({ pressed }) => [styles.destCard, { opacity: pressed ? 0.95 : 1 }]}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      handleDestinationPress(dest.label);
-                    }}
-                  >
-                    <View style={styles.destImageWrap}>
-                      <ShimmerOverlay visible={!loadedPhotos[`dest2-${dest.label}`]} />
-                      <Animated.View style={[styles.destImageParallax, { transform: [{ translateY: parallaxY }] }]}>
-                        <ImageBackground
-                          source={{ uri: photoFallbacks[`dest2-${dest.label}`] ? BACKUP_FALLBACK : photoUrl }}
-                          style={styles.destImage}
-                          imageStyle={styles.destImageInner}
-                          resizeMode="cover"
-                          onLoad={() => setLoadedPhotos((p) => ({ ...p, [`dest2-${dest.label}`]: true }))}
-                          onError={() => setPhotoFallbacks((p) => ({ ...p, [`dest2-${dest.label}`]: true }))}
-                        >
-                          <LinearGradient
-                            colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.9)']}
-                            locations={[0.3, 0.7, 1]}
-                            style={styles.destGradient}
-                          >
-                            <View style={styles.destBadges}>
-                              <View style={styles.pricePill}>
-                                <Text style={styles.pricePillText}>from {rates && currency !== 'USD' ? formatUSD(dest.dailyCost, currency, rates) : `$${dest.dailyCost}`}/day</Text>
-                              </View>
-                              <SeasonalBadge destination={dest.label} month={currentMonth} variant="pill" />
-                            </View>
-                            <Text style={styles.destCity}>{dest.label}</Text>
-                            {country && <Text style={styles.destCountry}>{country}</Text>}
-                            <Text style={styles.destHook} numberOfLines={2}>{dest.hook}</Text>
-                          </LinearGradient>
-                        </ImageBackground>
-                      </Animated.View>
-                    </View>
-                  </Pressable>
-                  );
-                })}
-            </ScrollView>
-          </View>
-        )}
+          );
+        })()}
 
         {/* Empty state */}
         {filteredDestinations.length === 0 && (
@@ -930,7 +883,7 @@ const styles = StyleSheet.create({
   heroKicker: {
     fontFamily: FONTS.monoMedium,
     fontSize: 11,
-    color: 'rgba(245,237,216,0.75)',
+    color: COLORS.creamBrightSoft,
     letterSpacing: 2.2,
   } as TextStyle,
   heroDestination: {
@@ -1110,7 +1063,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: FONTS.body,
     fontSize: 14,
-    color: 'rgba(245,237,216,0.6)',
+    color: COLORS.creamSoft,
   } as TextStyle,
   destRow: {
     paddingLeft: SPACING.lg,
@@ -1194,7 +1147,7 @@ const styles = StyleSheet.create({
   destHook: {
     fontFamily: FONTS.body,
     fontSize: 14,
-    color: 'rgba(245,237,216,0.85)',
+    color: COLORS.creamBright,
     marginTop: SPACING.xs,
     lineHeight: 20,
   } as TextStyle,
@@ -1283,7 +1236,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: SPACING.sm,
     left: SPACING.sm,
-    backgroundColor: 'rgba(124,175,138,0.25)',
+    backgroundColor: COLORS.sageBorder,
     borderWidth: 1,
     borderColor: COLORS.sage,
     paddingHorizontal: 7,
@@ -1405,7 +1358,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: SPACING.sm,
     right: SPACING.sm,
-    backgroundColor: 'rgba(124,175,138,0.25)',
+    backgroundColor: COLORS.sageBorder,
     borderWidth: 1,
     borderColor: COLORS.sage,
     paddingHorizontal: 7,
@@ -1509,7 +1462,7 @@ const styles = StyleSheet.create({
   heroMeta: {
     fontFamily: FONTS.mono,
     fontSize: 11,
-    color: 'rgba(245,237,216,0.72)',
+    color: COLORS.creamBrightMuted,
     letterSpacing: 1,
     marginTop: SPACING.sm,
   } as TextStyle,
@@ -1560,7 +1513,7 @@ const styles = StyleSheet.create({
     marginHorizontal: SPACING.lg,
     marginBottom: SPACING.lg,
     padding: SPACING.lg,
-    backgroundColor: 'rgba(124,175,138,0.08)',
+    backgroundColor: COLORS.sageSubtle,
     borderWidth: 1,
     borderColor: COLORS.sage,
     borderRadius: RADIUS.lg,

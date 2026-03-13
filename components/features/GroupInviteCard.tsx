@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: RADIUS.lg,
     borderWidth: 1,
-    borderColor: 'rgba(124,175,138,0.25)',
+    borderColor: COLORS.sageBorder,
     padding: SPACING.xl,
     alignItems: 'center',
     overflow: 'hidden',
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
   inviteLabel: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: 'rgba(245,237,216,0.5)',
+    color: COLORS.creamMuted,
     letterSpacing: 2,
     marginBottom: SPACING.xs,
   } as TextStyle,
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
   inviteMessage: {
     fontFamily: FONTS.body,
     fontSize: 14,
-    color: 'rgba(245,237,216,0.7)',
+    color: COLORS.creamHighlight,
     textAlign: 'center',
     fontStyle: 'italic',
     lineHeight: 20,
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   divider: {
     width: 40,
     height: 1,
-    backgroundColor: 'rgba(124,175,138,0.3)',
+    backgroundColor: COLORS.sageStrong,
     marginBottom: SPACING.md,
   } as ViewStyle,
   openLabel: {
@@ -291,17 +291,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: 'rgba(124,175,138,0.1)',
+    backgroundColor: COLORS.sageSoft,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     borderRadius: RADIUS.md,
     borderWidth: 1,
-    borderColor: 'rgba(124,175,138,0.2)',
+    borderColor: COLORS.sageLight,
   } as ViewStyle,
   codeLabel: {
     fontFamily: FONTS.mono,
     fontSize: 9,
-    color: 'rgba(245,237,216,0.4)',
+    color: COLORS.creamDim,
     letterSpacing: 1,
   } as TextStyle,
   codeValue: {

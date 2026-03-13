@@ -34,6 +34,8 @@ export default function RoamForDatesScreen() {
   const myProfile = useAppStore((s) => s.travelProfile);
   const hasProfile = useAppStore((s) => s.hasCompletedProfile);
   const addTrip = useAppStore((s) => s.addTrip);
+  const isPro = useAppStore((s) => s.isPro);
+  const tripsThisMonth = useAppStore((s) => s.tripsThisMonth);
 
   const [destination, setDestination] = useState('');
   const [days, setDays] = useState(7);
@@ -59,6 +61,10 @@ export default function RoamForDatesScreen() {
   const handleGenerate = useCallback(async () => {
     if (!destination.trim()) {
       Alert.alert('Pick a destination', 'Where do you two want to go?');
+      return;
+    }
+    if (!isPro && tripsThisMonth >= FREE_TRIPS_PER_MONTH) {
+      router.push({ pathname: '/paywall', params: { reason: 'limit' } });
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -87,7 +93,7 @@ export default function RoamForDatesScreen() {
     } finally {
       setGenerating(false);
     }
-  }, [destination, days, budget, vibes, merged, addTrip]);
+  }, [destination, days, budget, vibes, merged, addTrip, isPro, tripsThisMonth, router]);
 
   if (result) {
     return (

@@ -17,7 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
-import { Ionicons } from '@expo/vector-icons';
+import { User, ArrowRight, ChevronLeft, ArrowRightCircle, ShoppingBag, Skull, Share2 } from 'lucide-react-native';
 
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
@@ -372,7 +372,7 @@ export default function TravelTwinScreen() {
         style={[styles.container, { paddingTop: insets.top }]}
       >
         <View style={styles.emptyState}>
-          <Ionicons name="person-outline" size={64} color={COLORS.sage} style={{ marginBottom: SPACING.lg }} />
+          <User size={64} color={COLORS.sage} strokeWidth={1.5} style={{ marginBottom: SPACING.lg }} />
           <Text style={styles.emptyTitle}>Discover Your Travel Twin</Text>
           <Text style={styles.emptyBody}>
             Complete your travel profile first and we will match you with your
@@ -390,7 +390,7 @@ export default function TravelTwinScreen() {
               style={styles.ctaGradient}
             >
               <Text style={styles.ctaText}>Build Your Profile</Text>
-              <Ionicons name="arrow-forward" size={18} color={COLORS.bg} />
+              <ArrowRight size={18} color={COLORS.bg} strokeWidth={2} />
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -432,7 +432,7 @@ export default function TravelTwinScreen() {
         onPress={() => router.back()}
         activeOpacity={0.7}
       >
-        <Ionicons name="chevron-back" size={24} color={COLORS.cream} />
+        <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
       </TouchableOpacity>
 
       <ScrollView
@@ -489,15 +489,11 @@ export default function TravelTwinScreen() {
                 }}
               >
                 <LinearGradient
-                  colors={['rgba(124,175,138,0.15)', 'rgba(124,175,138,0.05)']}
+                  colors={[COLORS.sageHighlight, COLORS.sageVeryFaint]}
                   style={styles.pillGradient}
                 >
                   <Text style={styles.pillText}>{dest}</Text>
-                  <Ionicons
-                    name="arrow-forward-circle-outline"
-                    size={16}
-                    color={COLORS.sage}
-                  />
+                  <ArrowRightCircle size={16} color={COLORS.sage} strokeWidth={2} />
                 </LinearGradient>
               </TouchableOpacity>
             ))}
@@ -516,12 +512,7 @@ export default function TravelTwinScreen() {
         >
           <Text style={styles.sectionLabel}>· Packing must-have</Text>
           <View style={styles.glassCard}>
-            <Ionicons
-              name="bag-outline"
-              size={22}
-              color={COLORS.gold}
-              style={{ marginRight: SPACING.md }}
-            />
+            <ShoppingBag size={22} color={COLORS.gold} strokeWidth={1.5} style={{ marginRight: SPACING.md }} />
             <Text style={styles.cardText}>{twin.packingMustHave}</Text>
           </View>
         </Animated.View>
@@ -582,12 +573,7 @@ export default function TravelTwinScreen() {
         >
           <Text style={styles.sectionLabel}>· Your worst nightmare</Text>
           <View style={[styles.glassCard, styles.nightmareCard]}>
-            <Ionicons
-              name="skull-outline"
-              size={20}
-              color={COLORS.coral}
-              style={{ marginRight: SPACING.md }}
-            />
+            <Skull size={20} color={COLORS.coral} strokeWidth={1.5} style={{ marginRight: SPACING.md }} />
             <Text style={[styles.cardText, { color: COLORS.coral }]}>
               {twin.worstNightmare}
             </Text>
@@ -616,12 +602,7 @@ export default function TravelTwinScreen() {
               end={{ x: 1, y: 0 }}
               style={styles.shareGradient}
             >
-              <Ionicons
-                name="share-outline"
-                size={18}
-                color={COLORS.bg}
-                style={{ marginRight: SPACING.sm }}
-              />
+              <Share2 size={18} color={COLORS.bg} strokeWidth={2} style={{ marginRight: SPACING.sm }} />
               <Text style={styles.shareText}>Share Your Twin</Text>
             </LinearGradient>
           </TouchableOpacity>
@@ -682,7 +663,7 @@ const styles = StyleSheet.create({
   emptyBody: {
     fontFamily: FONTS.body,
     fontSize: 16,
-    color: 'rgba(245,237,216,0.6)',
+    color: COLORS.creamSoft,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: SPACING.xl,
@@ -712,7 +693,7 @@ const styles = StyleSheet.create({
   labelText: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: 'rgba(245,237,216,0.6)',
+    color: COLORS.creamSoft,
     marginBottom: SPACING.lg,
   },
   heroEmoji: {
@@ -736,7 +717,7 @@ const styles = StyleSheet.create({
   heroDescription: {
     fontFamily: FONTS.body,
     fontSize: 15,
-    color: 'rgba(245,237,216,0.7)',
+    color: COLORS.creamHighlight,
     textAlign: 'center',
     lineHeight: 24,
     paddingHorizontal: SPACING.sm,
@@ -749,7 +730,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: 'rgba(245,237,216,0.6)',
+    color: COLORS.creamSoft,
     marginBottom: SPACING.md,
   },
 
@@ -771,7 +752,7 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
     borderRadius: RADIUS.full,
     borderWidth: 1,
-    borderColor: 'rgba(124,175,138,0.2)',
+    borderColor: COLORS.sageLight,
   },
   pillText: {
     fontFamily: FONTS.bodyMedium,
@@ -873,6 +854,6 @@ const styles = StyleSheet.create({
   retakeText: {
     fontFamily: FONTS.bodyMedium,
     fontSize: 14,
-    color: 'rgba(245,237,216,0.5)',
+    color: COLORS.creamMuted,
   },
 });

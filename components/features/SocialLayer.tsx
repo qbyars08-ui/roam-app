@@ -542,7 +542,7 @@ export function NightlifeCrew({ venues, city, onJoinVenue }: NightlifeCrewProps)
               <View style={nightlifeStyles.venueInfo}>
                 <View style={nightlifeStyles.venueNameRow}>
                   <Text style={nightlifeStyles.venueName}>{venue.name}</Text>
-                  <View style={[nightlifeStyles.typePill, { backgroundColor: venueType === 'club' ? 'rgba(232,97,74,0.15)' : 'rgba(124,175,138,0.15)' }]}>
+                  <View style={[nightlifeStyles.typePill, { backgroundColor: venueType === 'club' ? COLORS.coralSubtle : COLORS.sageHighlight }]}>
                     <Text style={nightlifeStyles.typeText}>{venueType}</Text>
                   </View>
                 </View>
@@ -878,7 +878,7 @@ const squadStyles = StyleSheet.create({
     backgroundColor: COLORS.bgCard, borderRadius: RADIUS.full, borderWidth: 1, borderColor: COLORS.border,
     paddingHorizontal: SPACING.sm + 2, paddingVertical: SPACING.xs,
   } as ViewStyle,
-  tagShared: { borderColor: COLORS.sage, backgroundColor: 'rgba(124,175,138,0.12)' } as ViewStyle,
+  tagShared: { borderColor: COLORS.sage, backgroundColor: COLORS.sageMuted } as ViewStyle,
   tagText: { fontFamily: FONTS.body, fontSize: 12, color: COLORS.creamMuted } as TextStyle,
   tagTextShared: { color: COLORS.sage } as TextStyle,
   languagesText: { fontFamily: FONTS.mono, fontSize: 11, color: COLORS.creamMuted } as TextStyle,
@@ -1018,7 +1018,7 @@ const groupStyles = StyleSheet.create({
   dates: { fontFamily: FONTS.mono, fontSize: 12, color: COLORS.creamMuted } as TextStyle,
   desc: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.creamMuted, lineHeight: 19 } as TextStyle,
   vibes: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.xs } as ViewStyle,
-  vibePill: { backgroundColor: 'rgba(124,175,138,0.1)', borderRadius: RADIUS.full, paddingHorizontal: SPACING.sm, paddingVertical: 2 } as ViewStyle,
+  vibePill: { backgroundColor: COLORS.sageSoft, borderRadius: RADIUS.full, paddingHorizontal: SPACING.sm, paddingVertical: 2 } as ViewStyle,
   vibeText: { fontFamily: FONTS.mono, fontSize: 10, color: COLORS.sage } as TextStyle,
   cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' } as ViewStyle,
   members: { fontFamily: FONTS.mono, fontSize: 11, color: COLORS.creamMuted } as TextStyle,
@@ -1043,7 +1043,7 @@ const localStyles = StyleSheet.create({
   localNameRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs } as ViewStyle,
   localName: { fontFamily: FONTS.bodySemiBold, fontSize: 15, color: COLORS.cream } as TextStyle,
   localMeta: { fontFamily: FONTS.mono, fontSize: 11, color: COLORS.creamMuted, marginTop: 2 } as TextStyle,
-  pricingBadge: { backgroundColor: 'rgba(124,175,138,0.12)', borderRadius: RADIUS.full, paddingHorizontal: SPACING.sm + 2, paddingVertical: SPACING.xs } as ViewStyle,
+  pricingBadge: { backgroundColor: COLORS.sageMuted, borderRadius: RADIUS.full, paddingHorizontal: SPACING.sm + 2, paddingVertical: SPACING.xs } as ViewStyle,
   pricingText: { fontFamily: FONTS.monoMedium, fontSize: 11, color: COLORS.sage } as TextStyle,
   bio: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.creamMuted, lineHeight: 19 } as TextStyle,
   offers: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.xs } as ViewStyle,
@@ -1091,6 +1091,6 @@ const safetyStyles = StyleSheet.create({
   confirmBtnInner: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs } as ViewStyle,
   confirmText: { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: COLORS.bg } as TextStyle,
   privacyNote: {
-    fontFamily: FONTS.mono, fontSize: 10, color: 'rgba(245,237,216,0.25)', textAlign: 'center', lineHeight: 15,
+    fontFamily: FONTS.mono, fontSize: 10, color: COLORS.creamFaint, textAlign: 'center', lineHeight: 15,
   } as TextStyle,
 });

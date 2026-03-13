@@ -5,11 +5,15 @@
   "scripts": {
     "profile": "expo start --dev-client",
     "start": "expo start",
+    "build:web": "npx expo export --platform web && echo '/* /index.html 200' > dist/_redirects",
+    "deploy:web": "npm run build:web && netlify deploy --prod --dir=dist",
     "start:lan": "expo start",
     "start:tunnel": "expo start --tunnel",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web --port 3000"
+    "web": "expo start --web --port 3000",
+    "export:web": "expo export --platform web",
+    "deploy:web": "npm run export:web && echo '/*    /index.html   200' > dist/_redirects && netlify deploy --prod --dir=dist"
   },
   "dependencies": {
     "@expo-google-fonts/cormorant-garamond": "^0.4.1",
@@ -21,8 +25,6 @@
     "@react-native-community/slider": "^5.1.2",
     "@react-navigation/bottom-tabs": "^7.15.5",
     "@react-navigation/native": "^7.1.33",
-    "@react-three/drei": "^10.7.7",
-    "@react-three/fiber": "^9.5.0",
     "@supabase/supabase-js": "^2.49.0",
     "date-fns": "^4.1.0",
     "expo": "~55.0.0",
@@ -57,7 +59,7 @@
     "react-native-gesture-handler": "~2.30.0",
     "react-native-maps": "^1.26.20",
     "react-native-pager-view": "8.0.0",
-    "react-native-purchases": "^8.10.7",
+    "react-native-purchases": "^8.12.0",
     "react-native-reanimated": "^4.2.1",
     "react-native-safe-area-context": "~5.6.2",
     "react-native-screens": "~4.23.0",
@@ -66,7 +68,6 @@
     "react-native-view-shot": "~4.0.3",
     "react-native-web": "^0.21.2",
     "react-native-worklets": "^0.7.4",
-    "three": "^0.183.2",
     "zustand": "^5.0.11"
   },
   "devDependencies": {

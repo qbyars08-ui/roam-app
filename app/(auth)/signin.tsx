@@ -14,19 +14,44 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
+import { useAppStore } from '../../lib/store';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import Button from '../../components/ui/Button';
+
+const isWeb = Platform.OS === 'web';
 
 export default function SignInScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const setSession = useAppStore((s) => s.setSession);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const handleContinueAsGuest = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      const { data, error } = await supabase.auth.signInAnonymously();
+      if (error) throw error;
+      if (data.session) {
+        setSession(data.session);
+        await AsyncStorage.setItem('@roam/onboarding_complete', 'true');
+        router.replace('/(tabs)');
+        return;
+      }
+    } catch {
+      const guestId = `guest-web-${Date.now()}`;
+      setSession({ user: { id: guestId, email: null }, access_token: '', refresh_token: '' } as any);
+      await AsyncStorage.setItem('@roam/onboarding_complete', 'true');
+      router.replace('/(tabs)');
+    }
+  };
 
   // ---------------------------------------------------------------------------
   // Auth handler
@@ -139,6 +164,15 @@ export default function SignInScreen() {
             {isSignUp ? 'Sign in' : 'Create account'}
           </Text>
         </Pressable>
+
+        {isWeb && (
+          <Pressable
+            onPress={handleContinueAsGuest}
+            style={({ pressed }) => [styles.guestBtn, { opacity: pressed ? 0.85 : 1 }]}
+          >
+            <Text style={styles.guestBtnText}>Continue as guest</Text>
+          </Pressable>
+        )}
       </View>
 
       {/* Bottom spacer for keyboard avoidance */}
@@ -224,4 +258,17 @@ const styles = StyleSheet.create({
   bottomSpacer: {
     flex: 1,
   } as ViewStyle,
+  guestBtn: {
+    marginTop: SPACING.md,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+  } as ViewStyle,
+  guestBtnText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 15,
+    color: COLORS.creamMuted,
+  } as TextStyle,
 });

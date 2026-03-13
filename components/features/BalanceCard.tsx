@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   summaryLabel: {
     fontFamily: FONTS.mono,
     fontSize: 9,
-    color: 'rgba(245,237,216,0.4)',
+    color: COLORS.creamDim,
     letterSpacing: 0.5,
     marginBottom: 2,
   } as TextStyle,
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.sm,
     backgroundColor: COLORS.sageLight,
     borderWidth: 1,
-    borderColor: 'rgba(124,175,138,0.3)',
+    borderColor: COLORS.sageStrong,
   } as ViewStyle,
   settleBtnText: {
     fontFamily: FONTS.mono,

@@ -390,7 +390,7 @@ const styles = StyleSheet.create({
   proximityCard: {
     marginHorizontal: SPACING.lg,
     marginBottom: SPACING.md,
-    backgroundColor: 'rgba(124,175,138,0.1)',
+    backgroundColor: COLORS.sageSoft,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.sage + '40',

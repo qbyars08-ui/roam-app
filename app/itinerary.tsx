@@ -847,6 +847,8 @@ export default function ItineraryScreen() {
             { paddingBottom: insets.bottom + SPACING.xxl },
           ]}
           showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16}
+          removeClippedSubviews={!isWeb}
         >
           {/* Hero — cinematic destination photo with tagline */}
           <View style={styles.heroWrapper}>
@@ -1385,7 +1387,7 @@ const SLOT_LABELS: Record<string, { label: string }> = {
   evening: { label: 'EVENING' },
 };
 
-function TimeBlock({
+const TimeBlock = React.memo(function TimeBlock({
   slot,
   data,
   currency,
@@ -1427,7 +1429,7 @@ function TimeBlock({
       ) : null}
     </View>
   );
-}
+});
 
 // ── Budget row ──────────────────────────────────────────────────────────────
 function BudgetRow({
@@ -1605,7 +1607,7 @@ const styles = StyleSheet.create({
   viewToggleText: {
     fontFamily: FONTS.monoMedium,
     fontSize: 11,
-    color: 'rgba(245,237,216,0.45)',
+    color: COLORS.creamMutedLight,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   } as TextStyle,
@@ -1930,7 +1932,7 @@ const styles = StyleSheet.create({
   dayTabNumber: {
     fontFamily: FONTS.mono,
     fontSize: 11,
-    color: 'rgba(245,237,216,0.5)',
+    color: COLORS.creamMuted,
     letterSpacing: 1.5,
     textTransform: 'uppercase',
   } as TextStyle,
@@ -1966,7 +1968,7 @@ const styles = StyleSheet.create({
   locationText: {
     fontFamily: FONTS.body,
     fontSize: 14,
-    color: 'rgba(245,237,216,0.7)',
+    color: COLORS.creamHighlight,
     flex: 1,
   } as TextStyle,
   activityMeta: {
@@ -2008,7 +2010,7 @@ const styles = StyleSheet.create({
   tipText: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: 'rgba(245,237,216,0.85)',
+    color: COLORS.creamBright,
     fontStyle: 'italic',
     lineHeight: 19,
   } as TextStyle,
@@ -2040,7 +2042,7 @@ const styles = StyleSheet.create({
   accommodationType: {
     fontFamily: FONTS.body,
     fontSize: 14,
-    color: 'rgba(245,237,216,0.6)',
+    color: COLORS.creamSoft,
   } as TextStyle,
   accommodationPrice: {
     fontFamily: FONTS.monoMedium,
@@ -2267,7 +2269,7 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   safetyToggleActive: {
     borderColor: COLORS.sage,
-    backgroundColor: 'rgba(124,175,138,0.15)',
+    backgroundColor: COLORS.sageHighlight,
   } as ViewStyle,
   safetyToggleText: {
     fontFamily: FONTS.mono,

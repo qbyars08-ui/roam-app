@@ -731,7 +731,7 @@ const styles = StyleSheet.create({
   dupeCardsFooterText: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: 'rgba(245,237,216,0.3)',
+    color: COLORS.creamDimLight,
     letterSpacing: 1,
   } as TextStyle,
 
@@ -791,7 +791,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   } as TextStyle,
   savingsBadge: {
-    backgroundColor: 'rgba(124,175,138,0.15)',
+    backgroundColor: COLORS.sageHighlight,
     borderRadius: RADIUS.full,
     paddingHorizontal: SPACING.sm,
     paddingVertical: 4,
@@ -834,7 +834,7 @@ const styles = StyleSheet.create({
   dupeWhy: {
     fontFamily: FONTS.body,
     fontSize: 14,
-    color: 'rgba(245,237,216,0.8)',
+    color: COLORS.creamBrightDim,
     lineHeight: 21,
     marginBottom: SPACING.sm,
   } as TextStyle,
@@ -862,7 +862,7 @@ const styles = StyleSheet.create({
   tipRow: {
     flexDirection: 'row',
     gap: 8,
-    backgroundColor: 'rgba(124,175,138,0.08)',
+    backgroundColor: COLORS.sageSubtle,
     borderRadius: RADIUS.sm,
     padding: SPACING.sm,
   } as ViewStyle,

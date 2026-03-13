@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   destination: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: 'rgba(245,237,216,0.5)',
+    color: COLORS.creamMuted,
     marginTop: 2,
   } as TextStyle,
   progressBadge: {
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
   hintText: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: 'rgba(245,237,216,0.7)',
+    color: COLORS.creamHighlight,
     lineHeight: 18,
   } as TextStyle,
   itemsContainer: {
@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
   } as TextStyle,
   itemLabelChecked: {
     textDecorationLine: 'line-through',
-    color: 'rgba(245,237,216,0.4)',
+    color: COLORS.creamDim,
   } as TextStyle,
   destBadge: {
     backgroundColor: COLORS.coralLight,
