@@ -122,6 +122,7 @@ export async function setHomeAirport(code: string): Promise<void> {
 // ---------------------------------------------------------------------------
 export function getDestinationAirport(destination: string): string | null {
   const key = destination.toLowerCase().trim();
+  if (!key) return null;
   // Exact match
   if (DESTINATION_AIRPORTS[key]) return DESTINATION_AIRPORTS[key];
   // Partial match (e.g. "Tokyo, Japan" → "tokyo")
@@ -196,7 +197,7 @@ const AIRLINE_NAMES: Record<string, string> = {
   RJ: 'Royal Jordanian', SV: 'Saudi Arabian',
 };
 
-function formatDuration(iso: string): string {
+export function formatDuration(iso: string): string {
   // PT2H30M → "2h 30m"
   const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
   if (!match) return iso;
