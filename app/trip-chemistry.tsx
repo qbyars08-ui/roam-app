@@ -549,7 +549,7 @@ function TripChemistryScreen() {
               end={{ x: 1, y: 1 }}
             >
               <FlaskConical size={20} color={COLORS.white} strokeWidth={2} />
-              <Text style={styles.calculateText}>Calculate Chemistry</Text>
+              <Text style={styles.calculateText}>Calculate chemistry</Text>
             </LinearGradient>
           </TouchableOpacity>
         )}
@@ -599,7 +599,7 @@ function TripChemistryScreen() {
 
             {/* Dimension Bars */}
             <View style={styles.dimensionsCard}>
-              <Text style={styles.sectionTitle}>Compatibility Breakdown</Text>
+              <Text style={styles.sectionTitle}>Compatibility breakdown</Text>
               {result.dimensions.map((dim, i) => (
                 <View key={dim.key} style={styles.dimensionRow}>
                   <View style={styles.dimensionLabelRow}>
@@ -629,7 +629,7 @@ function TripChemistryScreen() {
             {/* Conflicts */}
             {result.conflicts.length > 0 && (
               <View style={styles.conflictsCard}>
-                <Text style={styles.sectionTitle}>Potential Conflicts</Text>
+                <Text style={styles.sectionTitle}>Potential conflicts</Text>
                 {result.conflicts.map((conflict, i) => (
                   <View key={i} style={styles.conflictItem}>
                     <View style={styles.conflictIcon}>
@@ -643,7 +643,7 @@ function TripChemistryScreen() {
 
             {/* Pro Tips */}
             <View style={styles.tipsCard}>
-              <Text style={styles.sectionTitle}>Pro Tips</Text>
+              <Text style={styles.sectionTitle}>Pro tips</Text>
               {result.proTips.map((tip, i) => (
                 <View key={i} style={styles.tipItem}>
                   <View style={styles.tipNumber}>
@@ -656,7 +656,7 @@ function TripChemistryScreen() {
 
             {/* Best Destination Type */}
             <View style={styles.destinationCard}>
-              <Text style={styles.sectionTitle}>Best Destination Type</Text>
+              <Text style={styles.sectionTitle}>Best destination type</Text>
               <View style={styles.destinationContent}>
                 <Compass size={24} color={COLORS.sage} strokeWidth={2} />
                 <Text style={styles.destinationText}>{result.destinationType}</Text>

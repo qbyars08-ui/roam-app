@@ -17,7 +17,7 @@ import {
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../lib/haptics';
 import { withComingSoon } from '../lib/with-coming-soon';
 import type { ComponentType } from 'react';
 import { type LucideIcon } from 'lucide-react-native';
@@ -222,7 +222,7 @@ function MemoryLaneScreen() {
               router.push('/(tabs)/plan');
             }}
           >
-            <Text style={styles.ctaText}>Plan Your First Trip</Text>
+            <Text style={styles.ctaText}>Plan your first trip</Text>
             <ArrowRight size={18} color={COLORS.bg} strokeWidth={2} />
           </Pressable>
         </View>

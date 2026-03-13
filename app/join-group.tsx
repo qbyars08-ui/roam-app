@@ -72,7 +72,7 @@ function JoinGroupScreen() {
 
   const handleJoin = useCallback(async () => {
     if (!code) return;
-
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setJoining(true);
     setError(null);
     try {
@@ -126,7 +126,7 @@ function JoinGroupScreen() {
           style={styles.gradient}
         >
           <View style={styles.content}>
-            <Text style={styles.title}>You are invited</Text>
+            <Text style={styles.title}>You're invited</Text>
             <Text style={styles.groupName}>{group.name}</Text>
             <Text style={styles.dest}>{group.destination}</Text>
             {dateRange ? (

@@ -19,7 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../lib/haptics';
 import { withComingSoon } from '../lib/with-coming-soon';
 import { LinearGradient } from 'expo-linear-gradient';
-import { UtensilsCrossed, Compass, Mountain, Moon, BarChart3, Users, Calendar, Wallet, Tag, CreditCard, AlertTriangle } from 'lucide-react-native';
+import { UtensilsCrossed, Compass, Mountain, Moon, BarChart3, Users, Calendar, Wallet, Tag, CreditCard, AlertTriangle, ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import { getStaticPricePulse, getVibeCheck } from '../lib/recommendations';
@@ -125,7 +125,7 @@ function generateExperiences(destination: string, purposes: string[]): Experienc
       { id: 'e2', name: 'Golden Gai Bar Crawl', description: '6 bars in 6 rooms — each seats 4-8 people. Every one is different.', cost: '$30-50', duration: '3 hours', bookAdvance: false, insiderTip: 'Start at the far end (least touristy). Ask bartenders where to go next.', category: 'culture', emoji: '' },
       { id: 'e3', name: 'Night Photography at Shibuya', description: 'Shoot the scramble crossing from the Magnet rooftop, then the neon-lit alleys of Center-gai.', cost: 'Free', duration: '2 hours', bookAdvance: false, insiderTip: 'Best light: 7-9pm. Bring a wide-angle lens.', category: 'photography', emoji: '' },
       { id: 'e4', name: 'Ramen-Making Workshop', description: 'Make your own tonkotsu from scratch in a local cooking school. Eat your creation.', cost: '$45', duration: '3 hours', bookAdvance: true, insiderTip: 'Book at Cooking Sun in Asakusa. Small group, english-speaking chef.', category: 'cooking', emoji: '' },
-      { id: 'e5', name: 'Underground Jazz at Dug', description: 'Tiny jazz bar in Shinjuku basement. Live sets nightly. The kind of place you stumble into and never leave.', cost: '$10 cover', duration: '2 hours', bookAdvance: false, insiderTip: 'Show up after 9pm. Sit at the bar.', category: 'music', emoji: '🎷' },
+      { id: 'e5', name: 'Underground Jazz at Dug', description: 'Tiny jazz bar in Shinjuku basement. Live sets nightly. The kind of place you stumble into and never leave.', cost: '$10 cover', duration: '2 hours', bookAdvance: false, insiderTip: 'Show up after 9pm. Sit at the bar.', category: 'music', emoji: '' },
     ],
     Bali: [
       { id: 'e1', name: 'Sunrise at Mount Batur', description: 'Leave at 2am, hike in the dark, watch the sun rise over the caldera with coffee cooked on volcanic steam.', cost: '$40 with guide', duration: '6 hours', bookAdvance: true, insiderTip: 'Skip the package breakfast — bring your own snacks.', category: 'outdoor', emoji: '' },
@@ -258,8 +258,8 @@ function MadeForYouScreen() {
         />
         <View style={styles.header}>
           <Pressable onPress={() => router.back()}>
-          <Text style={[styles.backButton, { color: destTheme.primary }]}>← Back</Text>
-        </Pressable>
+            <ChevronLeft size={24} color={destTheme.primary} strokeWidth={2} />
+          </Pressable>
         <View>
           <Text style={styles.headerTitle}>Made for you</Text>
           <Text style={[styles.headerSubtitle, { color: destTheme.secondary }]}>{destinationLabel}</Text>
@@ -534,11 +534,6 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.md,
     paddingBottom: SPACING.sm,
   } as ViewStyle,
-  backButton: {
-    fontFamily: FONTS.bodyMedium,
-    fontSize: 16,
-    color: COLORS.sage,
-  } as TextStyle,
   headerTitle: {
     fontFamily: FONTS.header,
     fontSize: 24,

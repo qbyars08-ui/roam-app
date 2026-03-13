@@ -21,6 +21,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
+import { X, Search, Share2 } from 'lucide-react-native';
 
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { getDestinationPhoto } from '../lib/photos';
@@ -94,18 +95,18 @@ type Phase = 'pick' | 'searching' | 'result';
 // Popular dream destinations
 // ---------------------------------------------------------------------------
 const DREAM_DESTINATIONS = [
-  { label: 'Maldives', emoji: '\uD83C\uDFDD\uFE0F', hook: 'Overwater bungalows, crystal lagoons' },
-  { label: 'Santorini', emoji: '\uD83C\uDDEC\uD83C\uDDF7', hook: 'Blue domes, sunset caldera views' },
-  { label: 'Swiss Alps', emoji: '\uD83C\uDDE8\uD83C\uDDED', hook: 'Mountain chalets, fondue, pristine peaks' },
-  { label: 'Amalfi Coast', emoji: '\uD83C\uDDEE\uD83C\uDDF9', hook: 'Cliffside villages, limoncello, sea views' },
-  { label: 'Bora Bora', emoji: '\uD83C\uDDF5\uD83C\uDDEB', hook: 'Turquoise lagoons, luxury overwater' },
-  { label: 'Tokyo', emoji: '\uD83C\uDDEF\uD83C\uDDF5', hook: 'Neon-lit streets, Michelin heaven' },
-  { label: 'Iceland', emoji: '\uD83C\uDDEE\uD83C\uDDF8', hook: 'Northern lights, dramatic landscapes' },
-  { label: 'Dubai', emoji: '\uD83C\uDDE6\uD83C\uDDEA', hook: 'Gold everything, desert luxury' },
-  { label: 'Patagonia', emoji: '\uD83C\uDDE6\uD83C\uDDF7', hook: 'Glaciers, peaks, end of the world' },
-  { label: 'New Zealand', emoji: '\uD83C\uDDF3\uD83C\uDDFF', hook: 'Epic landscapes, adventure capital' },
-  { label: 'Norway Fjords', emoji: '\uD83C\uDDF3\uD83C\uDDF4', hook: 'Dramatic fjords, midnight sun' },
-  { label: 'French Riviera', emoji: '\uD83C\uDDEB\uD83C\uDDF7', hook: 'Yacht life, Côte d\'Azur glamour' },
+  { label: 'Maldives', hook: 'Overwater bungalows, crystal lagoons' },
+  { label: 'Santorini', hook: 'Blue domes, sunset caldera views' },
+  { label: 'Swiss Alps', hook: 'Mountain chalets, fondue, pristine peaks' },
+  { label: 'Amalfi Coast', hook: 'Cliffside villages, limoncello, sea views' },
+  { label: 'Bora Bora', hook: 'Turquoise lagoons, luxury overwater' },
+  { label: 'Tokyo', hook: 'Neon-lit streets, Michelin heaven' },
+  { label: 'Iceland', hook: 'Northern lights, dramatic landscapes' },
+  { label: 'Dubai', hook: 'Gold everything, desert luxury' },
+  { label: 'Patagonia', hook: 'Glaciers, peaks, end of the world' },
+  { label: 'New Zealand', hook: 'Epic landscapes, adventure capital' },
+  { label: 'Norway Fjords', hook: 'Dramatic fjords, midnight sun' },
+  { label: "French Riviera", hook: "Yacht life, Côte d'Azur glamour" },
 ];
 
 function TripDupeScreen() {
@@ -208,7 +209,7 @@ function TripDupeScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     await Share.share({
-      message: `Can\u2019t afford ${dupeResult.dream}? Try ${dupeResult.dupeEmoji} ${dupeResult.dupe}!\n\n${dupeResult.whyItWorks}\n\nSave ${dupeResult.costComparison.savings} per day\n\nFound with ROAM \u2728`,
+      message: `Can't afford ${dupeResult.dream}? Try ${dupeResult.dupe}!\n\n${dupeResult.whyItWorks}\n\nSave ${dupeResult.costComparison.savings} per day — found with ROAM`,
     });
   }, [dupeResult]);
 
@@ -234,7 +235,7 @@ function TripDupeScreen() {
             { opacity: pressed ? 0.6 : 1 },
           ]}
         >
-          <Text style={styles.closeBtnText}>{'\u2715'}</Text>
+          <X size={18} color={COLORS.cream} strokeWidth={2} />
         </Pressable>
       </View>
 
@@ -289,7 +290,7 @@ function TripDupeScreen() {
         {/* Searching phase */}
         {phase === 'searching' && (
           <View style={styles.searchingContainer}>
-            <Text style={styles.searchingEmoji}>{'\uD83D\uDD0D'}</Text>
+            <Search size={48} color={COLORS.sage} strokeWidth={1.5} />
             <Text style={styles.searchingTitle}>
               Finding your {selectedDream} dupe...
             </Text>
@@ -310,6 +311,11 @@ function TripDupeScreen() {
               },
             ]}
           >
+            {isMockResult && (
+              <View style={styles.mockBadgeWrap}>
+                <MockDataBadge />
+              </View>
+            )}
             {/* Comparison header */}
             <View style={styles.comparisonHeader}>
               <View style={styles.comparisonSide}>
@@ -331,7 +337,7 @@ function TripDupeScreen() {
                   DUPE
                 </Text>
                 <Text style={styles.comparisonCity}>
-                  {dupeResult.dupeEmoji} {dupeResult.dupe}
+                  {dupeResult.dupe}
                 </Text>
                 <Text style={[styles.comparisonPrice, { color: COLORS.sage }]}>
                   {dupeResult.costComparison.dupePerDay}/day
@@ -397,16 +403,17 @@ function TripDupeScreen() {
                   style={styles.buildGradient}
                 >
                   <Text style={styles.buildButtonText}>
-                    {'\u2728'} Build this trip
+                    Build this trip
                   </Text>
                 </LinearGradient>
               </Pressable>
 
               <View style={styles.secondaryActions}>
                 <Pressable onPress={handleShare} style={styles.secondaryBtn}>
-                  <Text style={styles.secondaryBtnText}>
-                    {'\uD83D\uDCE4'} Share
-                  </Text>
+                  <View style={styles.secondaryBtnInner}>
+                    <Share2 size={14} color={COLORS.creamMuted} strokeWidth={2} />
+                    <Text style={styles.secondaryBtnText}>Share</Text>
+                  </View>
                 </Pressable>
                 <Pressable onPress={handleReset} style={styles.secondaryBtn}>
                   <Text style={styles.secondaryBtnText}>Try another</Text>
@@ -442,10 +449,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
-  closeBtnText: {
-    fontSize: 16,
-    color: COLORS.cream,
-  } as TextStyle,
   scrollContent: {
     paddingBottom: SPACING.xxxl,
   } as ViewStyle,
@@ -501,9 +504,6 @@ const styles = StyleSheet.create({
   dreamCardImageInner: {
     borderRadius: RADIUS.lg - 1,
   },
-  dreamEmoji: {
-    fontSize: 24,
-  } as TextStyle,
   dreamLabel: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 15,
@@ -523,9 +523,6 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
     paddingHorizontal: SPACING.xl,
   } as ViewStyle,
-  searchingEmoji: {
-    fontSize: 64,
-  } as TextStyle,
   searchingTitle: {
     fontFamily: FONTS.header,
     fontSize: 24,
@@ -750,6 +747,11 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   secondaryBtn: {
     paddingVertical: SPACING.sm,
+  } as ViewStyle,
+  secondaryBtnInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
   } as ViewStyle,
   secondaryBtnText: {
     fontFamily: FONTS.bodyMedium,

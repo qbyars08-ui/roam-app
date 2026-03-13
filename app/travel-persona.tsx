@@ -20,6 +20,7 @@ import * as Haptics from '../lib/haptics';
 import ViewShot, { captureRef } from '../lib/view-shot';
 import * as Sharing from 'expo-sharing';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
+import { ChevronLeft, RotateCcw } from 'lucide-react-native';
 import {
   analyzePersona,
   getSavedPersona,
@@ -152,14 +153,14 @@ function TravelPersonaScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Text style={styles.backBtn}>{'\u2190'}</Text>
+          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
         </Pressable>
         <View>
           <Text style={styles.eyebrow}>YOUR TRAVEL DNA</Text>
           <Text style={styles.title}>Travel Persona</Text>
         </View>
         <Pressable onPress={handleRefresh} hitSlop={12}>
-          <Text style={styles.refreshBtn}>{'\u21BB'}</Text>
+          <RotateCcw size={22} color={COLORS.sage} strokeWidth={2} />
         </Pressable>
       </View>
 
@@ -389,10 +390,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
   } as ViewStyle,
-  backBtn: {
-    fontSize: 24,
-    color: COLORS.cream,
-  } as TextStyle,
   eyebrow: {
     fontFamily: FONTS.mono,
     fontSize: 11,
@@ -405,10 +402,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: COLORS.cream,
     textAlign: 'center',
-  } as TextStyle,
-  refreshBtn: {
-    fontSize: 24,
-    color: COLORS.sage,
   } as TextStyle,
   scroll: {
     flex: 1,

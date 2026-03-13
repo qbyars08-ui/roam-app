@@ -132,11 +132,11 @@ function GroupTripScreen() {
 
   const dateRange =
     group.startDate && group.endDate
-      ? `${group.startDate} - ${group.endDate}`
+      ? `${group.startDate} — ${group.endDate}`
       : 'Dates TBD';
 
   const TABS: { id: TabId; label: string; icon: typeof MapPin }[] = [
-    { id: 'itinerary', label: 'Itinerary', icon: MapPin },
+    { id: 'itinerary', label: 'Plan', icon: MapPin },
     { id: 'expenses', label: 'Expenses', icon: DollarSign },
     { id: 'chat', label: 'Chat', icon: MessageCircle },
     { id: 'packing', label: 'Packing', icon: Package },
@@ -151,7 +151,7 @@ function GroupTripScreen() {
         </Pressable>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>{group.name}</Text>
-          <Text style={styles.headerSub}>{group.destination} - {dateRange}</Text>
+          <Text style={styles.headerSub}>{group.destination} — {dateRange}</Text>
         </View>
         <Pressable onPress={handleShare} style={styles.shareBtn}>
           <Share2 size={20} color={COLORS.sage} strokeWidth={2} />
@@ -245,8 +245,8 @@ function ItineraryTab({ group, members }: { group: TripGroup; members: GroupMemb
   if (!itinerary?.days?.length) {
     return (
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Itinerary</Text>
-        <Text style={styles.emptyText}>No itinerary yet. Add one from your trip.</Text>
+        <Text style={styles.cardTitle}>Plan</Text>
+        <Text style={styles.emptyText}>No plan yet — add one from your trip.</Text>
       </View>
     );
   }
@@ -413,7 +413,10 @@ function ExpensesTab({
 
       <Pressable
         style={styles.addExpenseBtn}
-        onPress={() => setShowAdd(true)}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          setShowAdd(true);
+        }}
       >
         <Text style={styles.addExpenseBtnText}>Add expense</Text>
       </Pressable>
@@ -491,6 +494,7 @@ function ChatTab({
   const handleSend = useCallback(async () => {
     const t = input.trim();
     if (!t || sending) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSending(true);
     setInput('');
     try {
@@ -560,6 +564,7 @@ function PackingTab({
   const handleAdd = useCallback(async () => {
     const t = newItem.trim();
     if (!t) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setAddError(null);
     setAdding(true);
     try {
@@ -575,6 +580,7 @@ function PackingTab({
 
   const handleToggle = useCallback(
     async (id: string) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       await togglePackedItem(id);
       onRefresh();
     },

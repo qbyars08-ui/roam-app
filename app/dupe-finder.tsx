@@ -19,6 +19,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
+import { ChevronLeft } from 'lucide-react-native';
 import ViewShot, { captureRef } from '../lib/view-shot';
 import * as Sharing from 'expo-sharing';
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../lib/constants';
@@ -210,7 +211,7 @@ function DupeFinderScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Text style={styles.backBtn}>{'\u2190'}</Text>
+          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
         </Pressable>
         <View>
           <Text style={styles.headerEyebrow}>DESTINATION DUPES</Text>
@@ -251,7 +252,7 @@ function DupeFinderScreen() {
               disabled={loading}
             >
               <Text style={styles.searchBtnText}>
-                {loading ? 'Finding...' : 'Find Dupes'}
+                {loading ? 'Finding...' : 'Find dupes'}
               </Text>
             </Pressable>
           </View>
@@ -370,7 +371,7 @@ function DupeFinderScreen() {
                 style={styles.shareBtnGradient}
               >
                 <Text style={styles.shareBtnText}>
-                  Share the Dupes
+                  Share the dupes
                 </Text>
               </LinearGradient>
             </Pressable>
@@ -382,6 +383,7 @@ function DupeFinderScreen() {
                 { opacity: pressed ? 0.85 : 1 },
               ]}
               onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 if (result.dupes[0]) {
                   router.push({
                     pathname: '/(tabs)/plan',
@@ -514,10 +516,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
   } as ViewStyle,
-  backBtn: {
-    fontSize: 24,
-    color: COLORS.cream,
-  } as TextStyle,
   headerEyebrow: {
     fontFamily: FONTS.mono,
     fontSize: 10,
@@ -563,7 +561,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 16,
     color: COLORS.cream,
-    backgroundColor: COLORS.border,
+    backgroundColor: COLORS.bgGlass,
     borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.md,
     paddingVertical: 14,

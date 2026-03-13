@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../lib/haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
+import { ChevronLeft } from 'lucide-react-native';
 import { SkeletonGrid } from '../components/ui/Skeleton';
 import { getDestinationPhoto } from '../lib/photos';
 import {
@@ -85,7 +86,7 @@ function DreamVaultScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Text style={styles.back}>{'←'}</Text>
+          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
         </Pressable>
         <Text style={styles.title}>Dream Trip Vault</Text>
         <Text style={styles.subtitle}>
@@ -140,7 +141,7 @@ function DreamVaultScreen() {
         <View style={styles.empty}>
           <Text style={styles.emptyText}>No dream destinations yet</Text>
           <Text style={styles.emptySub}>
-            Save destinations from itineraries to track flight prices
+            Save destinations from trips to track flight prices
           </Text>
           <Pressable
             style={styles.addBtn}
@@ -157,7 +158,6 @@ function DreamVaultScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
   header: { padding: SPACING.lg },
-  back: { fontSize: 24, color: COLORS.cream, marginBottom: SPACING.sm },
   title: {
     fontFamily: FONTS.header,
     fontSize: 28,

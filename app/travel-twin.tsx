@@ -374,9 +374,9 @@ function TravelTwinScreen() {
       >
         <View style={styles.emptyState}>
           <User size={64} color={COLORS.sage} strokeWidth={1.5} style={{ marginBottom: SPACING.lg }} />
-          <Text style={styles.emptyTitle}>Discover Your Travel Twin</Text>
+          <Text style={styles.emptyTitle}>Discover your travel twin</Text>
           <Text style={styles.emptyBody}>
-            Complete your travel profile first and we will match you with your
+            Complete your travel profile first and we'll match you with your
             travel personality archetype.
           </Text>
           <TouchableOpacity
@@ -390,7 +390,7 @@ function TravelTwinScreen() {
               end={{ x: 1, y: 0 }}
               style={styles.ctaGradient}
             >
-              <Text style={styles.ctaText}>Build Your Profile</Text>
+              <Text style={styles.ctaText}>Build your profile</Text>
               <ArrowRight size={18} color={COLORS.bg} strokeWidth={2} />
             </LinearGradient>
           </TouchableOpacity>
@@ -604,7 +604,7 @@ function TravelTwinScreen() {
               style={styles.shareGradient}
             >
               <Share2 size={18} color={COLORS.bg} strokeWidth={2} style={{ marginRight: SPACING.sm }} />
-              <Text style={styles.shareText}>Share Your Twin</Text>
+              <Text style={styles.shareText}>Share your twin</Text>
             </LinearGradient>
           </TouchableOpacity>
 
@@ -613,7 +613,7 @@ function TravelTwinScreen() {
             activeOpacity={0.7}
             onPress={() => router.push('/travel-profile')}
           >
-            <Text style={styles.retakeText}>Retake Profile</Text>
+            <Text style={styles.retakeText}>Retake profile</Text>
           </TouchableOpacity>
         </Animated.View>
       </ScrollView>
