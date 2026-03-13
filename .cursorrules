@@ -1,0 +1,33 @@
+You are working on ROAM, an AI-powered travel planning app built with React Native + Expo Router.
+
+CRITICAL RULES:
+- NO EMOJIS in UI code. Use colored dots, text pills, or lucide-react-native icons.
+- NEVER call Anthropic API directly from client code. All AI goes through supabase/functions/claude-proxy/.
+- NEVER put secrets in EXPO_PUBLIC_ vars (except Supabase anon key and public API keys).
+- ALWAYS use immutable patterns. Never mutate state.
+- Files under 800 lines. Functions under 50 lines. Nesting under 4 levels.
+
+DESIGN SYSTEM (import from lib/constants.ts):
+- COLORS: bg=#080F0A, sage=#7CAF8A, cream=#F5EDD8, coral=#E8614A, accentGold=#C9A84C
+- FONTS: Cormorant Garamond Bold (headers), DM Sans (body), DM Mono (mono/labels)
+- Dark-only UI. All cards use bgCard with border color.
+
+ARCHITECTURE:
+- app/ = Expo Router screens (file-based routing)
+- lib/ = Business logic, API clients, utilities
+- components/features/ = Feature-specific UI components
+- components/ui/ = Reusable design system components
+- supabase/functions/ = Deno edge functions (server-side)
+- supabase/migrations/ = SQL migrations with RLS
+
+KEY PATTERNS:
+- State: Zustand store in lib/store.ts
+- Auth: Supabase auth + guest mode (lib/guest.ts)
+- Subscriptions: RevenueCat (lib/revenue-cat.ts)
+- Pro gating: lib/pro-gate.ts
+- Web compatibility: lib/haptics.ts and lib/view-shot.ts are web-safe shims
+
+BEFORE COMMITTING:
+- Run: npx tsc --noEmit
+- Check: No hardcoded secrets
+- Verify: RLS policies use auth.uid() not true

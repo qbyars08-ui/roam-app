@@ -15,10 +15,15 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.roam.app",
+      "buildNumber": "1",
       "usesAppleSignIn": true,
       "associatedDomains": ["applinks:roamtravel.app"],
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSLocationWhenInUseUsageDescription": "ROAM uses your location to show nearby events, weather, and safety information for your destination.",
+        "NSMicrophoneUsageDescription": "ROAM uses your microphone for voice input when planning trips and chatting with the AI travel assistant.",
+        "NSPhotoLibraryUsageDescription": "ROAM accesses your photos to set trip cover images and share trip cards.",
+        "NSSpeechRecognitionUsageDescription": "ROAM uses speech recognition for hands-free trip planning and voice commands."
       }
     },
     "android": {

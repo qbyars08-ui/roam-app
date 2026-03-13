@@ -1,38 +1,46 @@
 name: Deploy ROAM
+
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   deploy:
+    name: Build & Deploy to Netlify
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Resolve workspace
-        id: ws
-        run: |
-          if [ -f package.json ]; then
-            echo "dir=." >> $GITHUB_OUTPUT
-          elif [ -f roam/package.json ]; then
-            echo "dir=roam" >> $GITHUB_OUTPUT
-          else
-            echo "No package.json found"
-            exit 1
-          fi
-      - run: npm install --legacy-peer-deps
-        working-directory: ${{ steps.ws.outputs.dir }}
-      - run: npx tsc --noEmit
-        working-directory: ${{ steps.ws.outputs.dir }}
-      - run: npm run build:web
-        working-directory: ${{ steps.ws.outputs.dir }}
-      - name: Install Netlify CLI
-        run: npm install -g netlify-cli
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Build web
+        run: npx expo export --platform web
 
       - name: Deploy to Netlify
-        run: netlify deploy --prod --dir=dist
-        working-directory: ${{ steps.ws.outputs.dir }}
+        run: npx netlify-cli deploy --prod --dir=dist
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+
+      - name: Post deploy summary
+        if: success()
+        run: |
+          echo "### Deploy Complete" >> $GITHUB_STEP_SUMMARY
+          echo "- Site: https://tryroam.netlify.app" >> $GITHUB_STEP_SUMMARY
+          echo "- Commit: \`${GITHUB_SHA::7}\`" >> $GITHUB_STEP_SUMMARY
+          JS_SIZE=$(du -sh dist/_expo/static/js/web/ | cut -f1)
+          echo "- JS Bundle: $JS_SIZE" >> $GITHUB_STEP_SUMMARY

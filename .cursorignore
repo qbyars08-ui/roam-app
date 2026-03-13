@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.expo/
+ios/
+android/
+
+# Large/binary files
+assets/fonts/*.ttf
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+
+# Git
+.git/
+
+# Supabase local
+.supabase/
