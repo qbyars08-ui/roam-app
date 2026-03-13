@@ -18,6 +18,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
+import { X, Sparkles, Share2 } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { withComingSoon } from '../lib/with-coming-soon';
 
@@ -246,7 +247,7 @@ function AlterEgoScreen() {
             { opacity: pressed ? 0.6 : 1 },
           ]}
         >
-          <Text style={styles.closeBtnText}>{'\u2715'}</Text>
+          <X size={18} color={COLORS.cream} strokeWidth={2} />
         </Pressable>
       </View>
 
@@ -288,7 +289,7 @@ function AlterEgoScreen() {
       {/* Calculating phase */}
       {phase === 'calculating' && (
         <View style={styles.calculatingContainer}>
-          <Text style={styles.calculatingEmoji}>{'\uD83D\uDD2E'}</Text>
+          <Sparkles size={48} color={COLORS.sage} strokeWidth={1.5} />
           <Text style={styles.calculatingText}>
             Analyzing your travel soul...
           </Text>
@@ -338,9 +339,10 @@ function AlterEgoScreen() {
                 colors={[COLORS.sage, COLORS.sageDark]}
                 style={styles.shareGradient}
               >
-                <Text style={styles.shareButtonText}>
-                  {'\uD83D\uDCE4'} Share Your Alter-Ego
-                </Text>
+                <View style={styles.shareBtnInner}>
+                  <Share2 size={16} color={COLORS.bg} strokeWidth={2} />
+                  <Text style={styles.shareButtonText}>Share your alter-ego</Text>
+                </View>
               </LinearGradient>
             </Pressable>
 
@@ -376,11 +378,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
-  closeBtnText: {
-    fontSize: 16,
-    color: COLORS.cream,
-  } as TextStyle,
-
   // Quiz
   quizContainer: {
     flex: 1,
@@ -426,9 +423,6 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     padding: SPACING.md,
   } as ViewStyle,
-  optionEmoji: {
-    fontSize: 24,
-  } as TextStyle,
   optionLabel: {
     flex: 1,
     fontFamily: FONTS.bodyMedium,
@@ -444,9 +438,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: SPACING.lg,
   } as ViewStyle,
-  calculatingEmoji: {
-    fontSize: 72,
-  } as TextStyle,
   calculatingText: {
     fontFamily: FONTS.headerMedium,
     fontSize: 22,
@@ -470,10 +461,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: SPACING.sm,
   } as ViewStyle,
-  resultEmoji: {
-    fontSize: 56,
-    marginBottom: SPACING.sm,
-  } as TextStyle,
   resultLabel: {
     fontFamily: FONTS.mono,
     fontSize: 10,
@@ -538,6 +525,11 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md + 2,
     alignItems: 'center',
     borderRadius: RADIUS.lg,
+  } as ViewStyle,
+  shareBtnInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
   } as ViewStyle,
   shareButtonText: {
     fontFamily: FONTS.bodySemiBold,

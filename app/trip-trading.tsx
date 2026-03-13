@@ -20,7 +20,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../lib/haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Repeat, ChevronRight } from 'lucide-react-native';
+import { Repeat, ChevronRight, ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { SkeletonCard } from '../components/premium/LoadingStates';
 import { useAppStore } from '../lib/store';
@@ -75,7 +75,7 @@ function TripTradingScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Text style={styles.back}>{'←'}</Text>
+          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
         </Pressable>
         <Text style={styles.title}>Trip Trading</Text>
         <Text style={styles.subtitle}>Browse trips others shared. One tap to claim.</Text>
@@ -148,7 +148,6 @@ function TripTradingScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg } as ViewStyle,
   header: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.md } as ViewStyle,
-  back: { fontSize: 24, color: COLORS.cream } as TextStyle,
   title: { fontFamily: FONTS.header, fontSize: 28, color: COLORS.cream, marginTop: SPACING.sm } as TextStyle,
   subtitle: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.creamMuted, marginTop: 4 } as TextStyle,
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' } as ViewStyle,

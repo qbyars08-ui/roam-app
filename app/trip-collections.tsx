@@ -15,7 +15,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../lib/haptics';
-import { ChevronRight } from 'lucide-react-native';
+import { ChevronRight, ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import { TRIP_COLLECTIONS, type TripCollection } from '../lib/trip-collections';
@@ -66,7 +66,7 @@ function TripCollectionsScreen() {
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Text style={styles.backBtn}>{'\u2190'}</Text>
+          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
         </Pressable>
         <Text style={styles.title}>Trip Collections</Text>
         <Text style={styles.subtitle}>
@@ -96,12 +96,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     marginBottom: SPACING.lg,
   } as ViewStyle,
-  backBtn: {
-    fontFamily: FONTS.body,
-    fontSize: 18,
-    color: COLORS.cream,
-    marginBottom: SPACING.sm,
-  } as TextStyle,
   title: {
     fontFamily: FONTS.header,
     fontSize: 28,

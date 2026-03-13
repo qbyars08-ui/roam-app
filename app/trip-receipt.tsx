@@ -20,6 +20,7 @@ import * as Haptics from '../lib/haptics';
 import ViewShot, { captureRef } from '../lib/view-shot';
 import * as Sharing from 'expo-sharing';
 import { COLORS, FONTS, SPACING, RADIUS, BUDGETS } from '../lib/constants';
+import { ChevronLeft } from 'lucide-react-native';
 import { useAppStore } from '../lib/store';
 import { parseItinerary, type Itinerary, type ItineraryDay } from '../lib/types/itinerary';
 import { withComingSoon } from '../lib/with-coming-soon';
@@ -189,7 +190,7 @@ function TripReceiptScreen() {
       <View style={[styles.screen, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} hitSlop={12}>
-            <Text style={styles.backBtn}>{'\u2190'}</Text>
+            <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
           </Pressable>
           <Text style={styles.headerTitle}>The Receipt</Text>
           <View style={{ width: 24 }} />
@@ -220,7 +221,7 @@ function TripReceiptScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Text style={styles.backBtn}>{'\u2190'}</Text>
+          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
         </Pressable>
         <View>
           <Text style={styles.headerEyebrow}>TRIP COST BREAKDOWN</Text>
@@ -441,10 +442,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
   } as ViewStyle,
-  backBtn: {
-    fontSize: 24,
-    color: COLORS.cream,
-  } as TextStyle,
   headerEyebrow: {
     fontFamily: FONTS.mono,
     fontSize: 10,

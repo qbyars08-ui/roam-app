@@ -21,6 +21,7 @@ import * as Haptics from '../lib/haptics';
 import ViewShot, { captureRef } from '../lib/view-shot';
 import * as Sharing from 'expo-sharing';
 import { COLORS, FONTS, SPACING, RADIUS, BUDGETS, VIBES } from '../lib/constants';
+import { ChevronLeft } from 'lucide-react-native';
 import {
   generateYearInReview,
   type YearInReview,
@@ -160,7 +161,7 @@ function TripWrappedScreen() {
         <View style={styles.loadingCenter}>
           <Text style={styles.loadingText}>Wrapping your year in travel...</Text>
           <Text style={styles.loadingSubtext}>
-            Crunching the numbers on everywhere you have been
+            Crunching the numbers on everywhere you've been
           </Text>
         </View>
       </View>
@@ -172,7 +173,7 @@ function TripWrappedScreen() {
       <View style={[styles.screen, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} hitSlop={12}>
-            <Text style={styles.backBtn}>{'\u2190'}</Text>
+            <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
           </Pressable>
           <Text style={styles.headerTitle}>Trip Wrapped</Text>
           <View style={{ width: 24 }} />
@@ -180,7 +181,7 @@ function TripWrappedScreen() {
         <View style={styles.emptyCenter}>
           <Text style={styles.emptyTitle}>Nothing to wrap yet</Text>
           <Text style={styles.emptyBody}>
-            Plan some trips and come back at the end of the year. We will have your recap ready.
+            Plan some trips and come back at the end of the year. We'll have your recap ready.
           </Text>
         </View>
       </View>
@@ -194,7 +195,7 @@ function TripWrappedScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Text style={styles.backBtn}>{'\u2190'}</Text>
+          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
         </Pressable>
         <View>
           <Text style={styles.headerEyebrow}>YOUR YEAR IN TRAVEL</Text>
@@ -441,10 +442,10 @@ function TripWrappedScreen() {
               </Text>
 
               {review.favoriteDestination && (
-                <Text style={styles.nextSuggestion}>
-                  You keep coming back to {review.favoriteDestination}. Maybe it
-                  is time to try something completely different.
-                </Text>
+              <Text style={styles.nextSuggestion}>
+                You keep coming back to {review.favoriteDestination}. Maybe it's
+                time to try something completely different.
+              </Text>
               )}
 
               <View style={styles.ctaWrapper}>
@@ -528,10 +529,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
   } as ViewStyle,
-  backBtn: {
-    fontSize: 24,
-    color: COLORS.cream,
-  } as TextStyle,
   headerEyebrow: {
     fontFamily: FONTS.mono,
     fontSize: 10,
