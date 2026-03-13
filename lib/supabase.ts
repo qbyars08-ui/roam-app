@@ -3,6 +3,7 @@
 // =============================================================================
 
 import 'react-native-url-polyfill/auto';
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
@@ -31,7 +32,8 @@ export const supabase: SupabaseClient = createClient(
       storage: AsyncStorage,
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: false, // no browser URL bar in RN
+      // Web needs URL detection for OAuth redirects; native doesn't have a URL bar
+      detectSessionInUrl: Platform.OS === 'web',
     },
   }
 );

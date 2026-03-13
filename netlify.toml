@@ -4,6 +4,8 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  # EXPO_PUBLIC_* env vars are set in Netlify Dashboard → Environment Variables
+  # (Netlify's secret scanner blocks API keys in netlify.toml)
 
 # SPA fallback — serve index.html for all routes (backup if _redirects fails)
 [[redirects]]

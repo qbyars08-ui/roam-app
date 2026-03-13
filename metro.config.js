@@ -26,10 +26,14 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
 };
 
 // Tree-shaking-friendly resolution
+// NOTE: 'import' condition is intentionally excluded — @babel/runtime v7.28+
+// exports ESM helpers via the 'import' condition that break Metro's CJS interop
+// (ExpoRoot crash: "n is not a function" because ESM helper exports .default
+//  but consumer expects CJS module.exports = fn)
 config.resolver = {
   ...config.resolver,
   unstable_enablePackageExports: true,
-  unstable_conditionNames: ['require', 'import', 'browser', 'react-native'],
+  unstable_conditionNames: ['require', 'browser', 'react-native'],
 };
 
 // Reduce web bundle: disable source maps in production (handled by expo export)

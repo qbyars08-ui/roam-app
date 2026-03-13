@@ -1,0 +1,43 @@
+// =============================================================================
+// ROAM — Feature Flags
+// v1.0 App Store: only core features are unlocked
+// Web: everything is unlocked (tryroam.netlify.app stays full-featured)
+// =============================================================================
+import { Platform } from 'react-native';
+
+/**
+ * v1.0 core routes — these are always accessible on all platforms.
+ * Everything NOT in this set gets a "Coming Soon" gate on native builds.
+ */
+const V1_CORE_ROUTES = new Set([
+  // Auth flow
+  'splash', 'hook', 'signin', 'signup', 'welcome', 'onboard', 'onboarding',
+  'social-proof', 'value-preview', 'personalization',
+  // Main tabs
+  'index', 'plan', 'saved', 'profile', 'chat',
+  // Trip flow
+  'itinerary',
+  // Essential screens
+  'paywall', 'privacy', 'terms', 'support', 'referral',
+  // Dynamic routes
+  'trip/[id]',
+]);
+
+/**
+ * Returns true if a route should show the "Coming Soon" gate.
+ * Web is always full-featured. Native gates non-core routes.
+ */
+export function isComingSoon(routeName: string): boolean {
+  // Web: everything unlocked
+  if (Platform.OS === 'web') return false;
+
+  // Native: gate non-core routes
+  return !V1_CORE_ROUTES.has(routeName);
+}
+
+/**
+ * Returns true if we're in v1.0 stripped mode (native only).
+ */
+export function isV1Mode(): boolean {
+  return Platform.OS !== 'web';
+}
