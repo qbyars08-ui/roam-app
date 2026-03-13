@@ -143,8 +143,7 @@ const styles = StyleSheet.create({
   overlayWeb: {
     // Glassmorphism on web
     backgroundColor: COLORS.whiteVeryFaint,
-    // @ts-ignore - web-only
-    backdropFilter: 'blur(12px)',
+    backdropFilter: 'blur(12px)', // web-only property; `as any` cast above handles typing
     WebkitBackdropFilter: 'blur(12px)',
   } as any,
   subhead: {
