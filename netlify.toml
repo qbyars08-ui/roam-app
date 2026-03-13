@@ -1,11 +1,26 @@
 [build]
-  command = "npx expo export --platform web && echo '/* /index.html 200' > dist/_redirects"
+  command = "npx expo export --platform web && echo '/*  /index.html  200' > dist/_redirects"
   publish = "dist"
 
 [build.environment]
   NODE_VERSION = "20"
 
+# SPA fallback — serve index.html for all routes (backup if _redirects fails)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
 [[headers]]
   for = "/_expo/static/js/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(self)"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com https://*.netlify.app https://api.frankfurter.app https://places.googleapis.com https://maps.googleapis.com https://api.unsplash.com https://beta3.api.climatiq.io https://app.ticketmaster.com https://www.eventbriteapi.com https://api.teleport.org https://cadataapi.state.gov https://api.openweathermap.org https://visa-requirement.p.rapidapi.com https://api.aviationstack.com https://api.mapbox.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
