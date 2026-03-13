@@ -6,17 +6,14 @@ Status board for Cursor agents. Cap reads this to coordinate work.
 
 ## Shield (Dependency & Security Scanner)
 
-**Status:** Security audit complete; fixes applied  
+**Status:** Dead code purge + deep link validation complete  
 **Date:** 2025-03-13  
-**Action needed:** Yes — deploy env vars (AMADEUS_KEY, AMADEUS_SECRET, SEND_PUSH_INTERNAL_SECRET)
+**Action needed:** No
 
 ### Findings
 
-- `lib/flights-amadeus.ts` — FIXED: Created amadeus-proxy; keys now server-side
-- `supabase/functions/send-push/index.ts` — FIXED: Uses SEND_PUSH_INTERNAL_SECRET
-- `supabase/functions/voice-proxy/index.ts`, `weather-intel/index.ts` — FIXED: JWT verification + CORS restrict
-- `lib/sharing.ts` — FIXED: UUID validation for shareId
-- `supabase/functions/claude-proxy/index.ts` — FIXED: Input length limits (50KB/100KB)
-- `.gitignore` — FIXED: Added *.keystore, google-services.json, GoogleService-Info.plist
-- `lib/revenuecat.ts` — Duplicate; remove
+- Deleted orphaned: lib/gamification.ts, lib/google-places.ts, lib/content-freshness.ts (aviationstack has imports, kept)
+- `lib/params-validator.ts` — Created; validateDestination, validateUuid, validateCode
+- dream-vault, local-lens, honest-reviews, arrival-mode — destination param validation
+- `lib/storage-keys.ts` — Centralized AsyncStorage keys; store, guest, offline, auth screens updated
 - `docs/SECURITY_AUDIT_2025-03-13.md` — Full audit report

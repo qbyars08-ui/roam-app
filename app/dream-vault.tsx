@@ -33,6 +33,7 @@ import {
 } from '../lib/flight-deals';
 import { useAppStore } from '../lib/store';
 import { withComingSoon } from '../lib/with-coming-soon';
+import { validateDestination } from '../lib/params-validator';
 
 function DreamVaultScreen() {
   const insets = useSafeAreaInsets();
@@ -57,10 +58,11 @@ function DreamVaultScreen() {
   }, [load]);
 
   useEffect(() => {
-    if (params.destination) {
-      addSavedDestination(params.destination, 'JFK').then(load);
+    const dest = validateDestination(params.destination);
+    if (dest) {
+      addSavedDestination(dest, 'JFK').then(load);
     }
-  }, [params.destination]);
+  }, [params.destination, load]);
 
   const handleSearchFlights = async (dest: SavedDestination) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

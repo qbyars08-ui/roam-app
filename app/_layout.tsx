@@ -9,6 +9,7 @@ import { StatusBar } from 'expo-status-bar';
 import { hideAsync as hideSplashScreen } from '../lib/splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ONBOARDING_COMPLETE } from '../lib/storage-keys';
 // Self-hosted fonts — only the 7 weights we actually use (1.5MB vs 6.5MB)
 import { useFonts } from 'expo-font';
 
@@ -49,7 +50,7 @@ function useProtectedRoute(session: { user: { id: string } } | null) {
       // No session → check if onboarding is complete
       if (!hasCheckedOnboarding.current) {
         hasCheckedOnboarding.current = true;
-        AsyncStorage.getItem('@roam/onboarding_complete').then((val) => {
+        AsyncStorage.getItem(ONBOARDING_COMPLETE).then((val) => {
           if (val === 'true') {
             // Returning user who completed onboarding but signed out
             router.replace('/(auth)/signup');
@@ -136,7 +137,7 @@ export default function RootLayout() {
         if (newSession && !isGuestSession(newSession)) {
           clearGuestMode().catch(() => {});
           setSession(newSession);
-          AsyncStorage.setItem('@roam/onboarding_complete', 'true').catch(() => {});
+          AsyncStorage.setItem(ONBOARDING_COMPLETE, 'true').catch(() => {});
           trackOnboardingComplete(newSession.user.id).catch(() => {});
         } else if (!newSession) {
           const current = useAppStore.getState().session;

@@ -8,6 +8,15 @@ import type { TravelProfile } from './types/travel-profile';
 import { DEFAULT_TRAVEL_PROFILE } from './types/travel-profile';
 import { getHomeCurrency, setHomeCurrency as persistHomeCurrency, fetchExchangeRates } from './currency';
 import type { ExchangeRates } from './currency';
+import {
+  TRIPS,
+  TRIPS_THIS_MONTH,
+  CHAT_MESSAGES,
+  PETS,
+  PET_REMINDERS,
+  TRAVEL_PROFILE,
+  PROFILE_COMPLETED,
+} from './storage-keys';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -103,30 +112,21 @@ const defaultPlanWizard: PlanWizardState = {
   vibes: [],
 };
 
-const TRIPS_STORAGE_KEY = 'roam_trips';
-const TRIPS_MONTH_KEY = 'roam_trips_this_month';
-const CHAT_STORAGE_KEY = 'roam_chat_messages';
-const PETS_STORAGE_KEY = 'roam_pets';
-const PET_REMINDERS_KEY = 'roam_pet_reminders';
-const TRAVEL_PROFILE_KEY = 'roam_travel_profile';
-const PROFILE_COMPLETED_KEY = 'roam_profile_completed';
-
 function persistTravelProfile(profile: TravelProfile) {
-  AsyncStorage.setItem(TRAVEL_PROFILE_KEY, JSON.stringify(profile)).catch(() => {});
+  AsyncStorage.setItem(TRAVEL_PROFILE, JSON.stringify(profile)).catch(() => {});
 }
 
 function persistTrips(trips: Trip[]) {
-  AsyncStorage.setItem(TRIPS_STORAGE_KEY, JSON.stringify(trips)).catch(() => {});
+  AsyncStorage.setItem(TRIPS, JSON.stringify(trips)).catch(() => {});
 }
 
 function persistChat(messages: ChatMessage[]) {
-  // Only persist last 100 messages to avoid storage bloat
   const toSave = messages.slice(-100);
-  AsyncStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(toSave)).catch(() => {});
+  AsyncStorage.setItem(CHAT_MESSAGES, JSON.stringify(toSave)).catch(() => {});
 }
 
 function persistPets(pets: Pet[]) {
-  AsyncStorage.setItem(PETS_STORAGE_KEY, JSON.stringify(pets)).catch(() => {});
+  AsyncStorage.setItem(PETS, JSON.stringify(pets)).catch(() => {});
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -176,7 +176,7 @@ export const useAppStore = create<AppState>((set) => ({
   },
   setIsPro: (isPro) => set({ isPro }),
   setTripsThisMonth: (tripsThisMonth) => {
-    AsyncStorage.setItem(TRIPS_MONTH_KEY, JSON.stringify(tripsThisMonth)).catch(() => {});
+    AsyncStorage.setItem(TRIPS_THIS_MONTH, JSON.stringify(tripsThisMonth)).catch(() => {});
     set({ tripsThisMonth });
   },
   setChatMessages: (chatMessages) => {
@@ -208,7 +208,7 @@ export const useAppStore = create<AppState>((set) => ({
     }),
   setPets: (pets) => set({ pets }),
   setPetRemindersEnabled: (val) => {
-    AsyncStorage.setItem(PET_REMINDERS_KEY, JSON.stringify(val)).catch(() => {});
+    AsyncStorage.setItem(PET_REMINDERS, JSON.stringify(val)).catch(() => {});
     set({ petRemindersEnabled: val });
   },
   setActiveTripId: (id) => set({ activeTripId: id }),
@@ -223,7 +223,7 @@ export const useAppStore = create<AppState>((set) => ({
       return { travelProfile: updated };
     }),
   setHasCompletedProfile: (val) => {
-    AsyncStorage.setItem(PROFILE_COMPLETED_KEY, JSON.stringify(val)).catch(() => {});
+    AsyncStorage.setItem(PROFILE_COMPLETED, JSON.stringify(val)).catch(() => {});
     set({ hasCompletedProfile: val });
   },
   setPendingOnboardDestination: (dest) => set({ pendingOnboardDestination: dest }),
@@ -304,9 +304,9 @@ export function getActiveTripDayIndex(): number {
 export async function loadPersistedTrips(): Promise<void> {
   try {
     const [tripsRaw, monthRaw, chatRaw] = await Promise.all([
-      AsyncStorage.getItem(TRIPS_STORAGE_KEY),
-      AsyncStorage.getItem(TRIPS_MONTH_KEY),
-      AsyncStorage.getItem(CHAT_STORAGE_KEY),
+      AsyncStorage.getItem(TRIPS),
+      AsyncStorage.getItem(TRIPS_THIS_MONTH),
+      AsyncStorage.getItem(CHAT_MESSAGES),
     ]);
     const store = useAppStore.getState();
     if (tripsRaw) {
@@ -329,8 +329,8 @@ export async function loadPersistedTrips(): Promise<void> {
 export async function loadPersistedPets(): Promise<void> {
   try {
     const [petsRaw, remindersRaw] = await Promise.all([
-      AsyncStorage.getItem(PETS_STORAGE_KEY),
-      AsyncStorage.getItem(PET_REMINDERS_KEY),
+      AsyncStorage.getItem(PETS),
+      AsyncStorage.getItem(PET_REMINDERS),
     ]);
     if (petsRaw) {
       useAppStore.getState().setPets(JSON.parse(petsRaw));
@@ -349,8 +349,8 @@ export async function loadPersistedPets(): Promise<void> {
 export async function loadPersistedTravelProfile(): Promise<void> {
   try {
     const [profileRaw, completedRaw] = await Promise.all([
-      AsyncStorage.getItem(TRAVEL_PROFILE_KEY),
-      AsyncStorage.getItem(PROFILE_COMPLETED_KEY),
+      AsyncStorage.getItem(TRAVEL_PROFILE),
+      AsyncStorage.getItem(PROFILE_COMPLETED),
     ]);
     if (profileRaw) {
       const store = useAppStore.getState();

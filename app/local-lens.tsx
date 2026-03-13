@@ -21,6 +21,7 @@ import { ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useDestinationTheme } from '../lib/useDestinationTheme';
 import { withComingSoon } from '../lib/with-coming-soon';
+import { validateDestination } from '../lib/params-validator';
 
 // =============================================================================
 // Types
@@ -1610,11 +1611,10 @@ function NeighborhoodCard({ item }: { item: Neighborhood }) {
 // Main screen
 // =============================================================================
 function LocalLensScreen() {
-  const { destination } = useLocalSearchParams<{ destination: string }>();
+  const params = useLocalSearchParams<{ destination: string }>();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-
-  const city = destination?.trim() ?? '';
+  const city = validateDestination(params.destination) ?? '';
   const data = LOCAL_DATA[city] ?? null;
   const destTheme = useDestinationTheme(city);
 

@@ -31,7 +31,7 @@ import { Sparkles, Repeat, Gift, Shield, ChevronRight, BarChart3, CreditCard, Lo
 import Button from '../../components/ui/Button';
 import ExploreHub from '../../components/features/ExploreHub';
 
-const EMERGENCY_CONTACT_KEY = '@roam/emergency_contact';
+import { EMERGENCY_CONTACT, ONBOARDING_COMPLETE } from '../../lib/storage-keys';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -53,7 +53,7 @@ export default function ProfileScreen() {
   const [emergencyInputValue, setEmergencyInputValue] = useState('');
 
   useEffect(() => {
-    AsyncStorage.getItem(EMERGENCY_CONTACT_KEY).then((val) => {
+    AsyncStorage.getItem(EMERGENCY_CONTACT).then((val) => {
       if (val) setEmergencyContact(val);
     });
     hasRatedBadge().then(setRatedBadge);
@@ -67,7 +67,7 @@ export default function ProfileScreen() {
   const handleSaveEmergencyContact = useCallback(async () => {
     const cleaned = emergencyInputValue.trim();
     if (cleaned) {
-      await AsyncStorage.setItem(EMERGENCY_CONTACT_KEY, cleaned);
+      await AsyncStorage.setItem(EMERGENCY_CONTACT, cleaned);
       setEmergencyContact(cleaned);
     }
     setEmergencyModalVisible(false);
@@ -309,7 +309,7 @@ export default function ProfileScreen() {
           <Pressable
             style={({ pressed }) => [styles.devReset, { opacity: pressed ? 0.7 : 1 }]}
             onPress={async () => {
-              await AsyncStorage.removeItem('@roam/onboarding_complete');
+              await AsyncStorage.removeItem(ONBOARDING_COMPLETE);
               await logoutRevenueCat();
               setIsPro(false);
               setSession(null);

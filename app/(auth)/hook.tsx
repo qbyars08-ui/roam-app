@@ -23,6 +23,7 @@ import { supabase } from '../../lib/supabase';
 import { useAppStore } from '../../lib/store';
 import { enterGuestMode } from '../../lib/guest';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { ONBOARDING_COMPLETE } from '../../lib/storage-keys';
 import { getDestinationPhoto } from '../../lib/photos';
 
 const HERO_IMAGE = () => getDestinationPhoto('travel');
@@ -100,7 +101,7 @@ export default function HookScreen() {
       const { data, error } = await supabase.auth.signInAnonymously();
       if (!error && data.session) {
         setSession(data.session);
-        await AsyncStorage.setItem('@roam/onboarding_complete', 'true');
+        await AsyncStorage.setItem(ONBOARDING_COMPLETE, 'true');
         router.replace('/(tabs)');
       } else {
         await enterGuestMode();

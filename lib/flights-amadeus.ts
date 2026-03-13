@@ -5,6 +5,7 @@
 // =============================================================================
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
+import { HOME_AIRPORT } from './storage-keys';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -55,9 +56,6 @@ const DESTINATION_AIRPORTS: Record<string, string> = {
   honolulu: 'HNL', 'las vegas': 'LAS', portland: 'PDX',
 };
 
-// User's home airport preference
-const HOME_AIRPORT_KEY = 'roam_home_airport';
-
 // Common US airports for picker
 export const US_AIRPORTS = [
   { code: 'JFK', city: 'New York (JFK)' },
@@ -94,7 +92,7 @@ export const US_AIRPORTS = [
 // ---------------------------------------------------------------------------
 export async function getHomeAirport(): Promise<string> {
   try {
-    const val = await AsyncStorage.getItem(HOME_AIRPORT_KEY);
+    const val = await AsyncStorage.getItem(HOME_AIRPORT);
     return val ?? 'JFK';
   } catch {
     return 'JFK';
@@ -102,7 +100,7 @@ export async function getHomeAirport(): Promise<string> {
 }
 
 export async function setHomeAirport(code: string): Promise<void> {
-  await AsyncStorage.setItem(HOME_AIRPORT_KEY, code.toUpperCase());
+  await AsyncStorage.setItem(HOME_AIRPORT, code.toUpperCase());
 }
 
 // ---------------------------------------------------------------------------
