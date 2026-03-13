@@ -27,6 +27,12 @@ jobs:
         working-directory: ${{ steps.ws.outputs.dir }}
       - run: npm run build:web
         working-directory: ${{ steps.ws.outputs.dir }}
+      - name: Install Netlify CLI
+        run: npm install -g netlify-cli
+
       - name: Deploy to Netlify
-        run: npx netlify-cli deploy --prod --dir=dist --site ${{ secrets.NETLIFY_SITE_ID }} --auth ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: netlify deploy --prod --dir=dist
         working-directory: ${{ steps.ws.outputs.dir }}
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
