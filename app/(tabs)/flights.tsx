@@ -56,6 +56,13 @@ function statusColor(s: string): string {
   return COLORS.creamMuted;
 }
 
+function statusBgColor(s: string): string {
+  if (s === 'landed') return COLORS.sageSoft;
+  if (s === 'active') return COLORS.goldSoft;
+  if (s === 'cancelled' || s === 'incident') return COLORS.coralSubtle;
+  return COLORS.bgElevated;
+}
+
 // ---------------------------------------------------------------------------
 // Format time from ISO string
 // ---------------------------------------------------------------------------
@@ -81,7 +88,7 @@ function FlightCard({ flight }: { flight: AviationStackFlight }) {
       {/* Header row */}
       <View style={styles.cardHeader}>
         <Text style={styles.airline}>{flight.airline.name}</Text>
-        <View style={[styles.statusBadge, { backgroundColor: `${statusColor(status)}20` }]}>
+        <View style={[styles.statusBadge, { backgroundColor: statusBgColor(status) }]}>
           <Text style={[styles.statusText, { color: statusColor(status) }]}>
             {statusLabel(status)}
           </Text>
@@ -329,7 +336,7 @@ function FlightsScreen() {
           value={query}
           onChangeText={(t) => { setQuery(t); setError(null); }}
           placeholder="e.g. AA 1004, UA 123"
-          placeholderTextColor={`${COLORS.cream}44`}
+          placeholderTextColor={COLORS.creamFaint}
           autoCapitalize="characters"
           autoCorrect={false}
           returnKeyType="search"
@@ -422,19 +429,20 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: 52,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.bgCard,
-    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.whiteSoft,
+    backgroundColor: COLORS.bgElevated,
+    paddingHorizontal: SPACING.lg,
     fontFamily: FONTS.mono,
-    fontSize: 16,
+    fontSize: 15,
     color: COLORS.cream,
+    letterSpacing: 1,
   } as TextStyle,
   searchBtn: {
     width: 88,
     height: 52,
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.full,
     backgroundColor: COLORS.sage,
     alignItems: 'center',
     justifyContent: 'center',
@@ -458,10 +466,12 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
   } as ViewStyle,
   scannerIconWrap: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.sageLight,
+    backgroundColor: COLORS.sageMuted,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,

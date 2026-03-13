@@ -362,7 +362,7 @@ function ArrivalModeScreen() {
     <View>
       {data.safetyHeadsUp.map((item, i) => (
         <View key={i} style={styles.safetyItem}>
-          <View style={[styles.safetyBullet, { backgroundColor: COLORS.coral + '30' }]}>
+          <View style={[styles.safetyBullet, { backgroundColor: COLORS.coralMuted }]}>
             <Text style={[styles.safetyBulletText, { color: COLORS.coral }]}>{i + 1}</Text>
           </View>
           <Text style={styles.safetyText}>{item}</Text>
@@ -589,7 +589,7 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.sage + '20',
+    backgroundColor: COLORS.sageSoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: SPACING.sm,
@@ -635,11 +635,11 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   } as ViewStyle,
   transportPill: {
-    backgroundColor: COLORS.sage + '12',
+    backgroundColor: COLORS.sageFaint,
     borderRadius: RADIUS.md,
     padding: SPACING.md,
     borderWidth: 1,
-    borderColor: COLORS.sage + '20',
+    borderColor: COLORS.sageSoft,
   } as ViewStyle,
   transportLabel: {
     fontFamily: FONTS.mono,
@@ -751,13 +751,13 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: RADIUS.sm,
     borderWidth: 1.5,
-    borderColor: COLORS.sage + '50',
+    borderColor: COLORS.sageStrong,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: SPACING.sm + 4,
   } as ViewStyle,
   checkboxChecked: {
-    backgroundColor: COLORS.sage + '30',
+    backgroundColor: COLORS.sageBorder,
     borderColor: COLORS.sage,
   } as ViewStyle,
   checkmark: {
@@ -774,7 +774,7 @@ const styles = StyleSheet.create({
   } as TextStyle,
   checklistTextDone: {
     textDecorationLine: 'line-through',
-    color: COLORS.sage + '60',
+    color: COLORS.sageMedium,
   } as TextStyle,
 
   // Fallback

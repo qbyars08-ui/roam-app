@@ -692,7 +692,7 @@ export default function ItineraryScreen() {
                 setActiveDay(i);
                 setSelectedPin(null);
               }}
-              style={[styles.dayTab, isActive && [styles.dayTabActive, { backgroundColor: `${destTheme.primary}1A`, borderColor: destTheme.primary }]]}
+              style={[styles.dayTab, isActive && [styles.dayTabActive, { backgroundColor: destTheme.glowColor, borderColor: destTheme.primary }]]}
             >
               <Text
                 style={[
@@ -934,7 +934,7 @@ export default function ItineraryScreen() {
               ]}
             >
               <LinearGradient
-                colors={[`${destTheme.primary}26`, `${destTheme.primary}0D`]}
+                colors={[destTheme.glowColor, COLORS.transparent]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.shareCtaGradient}
@@ -962,7 +962,7 @@ export default function ItineraryScreen() {
               ]}
             >
               <LinearGradient
-                colors={[`${destTheme.primary}26`, `${destTheme.primary}0D`]}
+                colors={[destTheme.glowColor, COLORS.transparent]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.itineraryExtraGradient}
@@ -983,7 +983,7 @@ export default function ItineraryScreen() {
               ]}
             >
               <LinearGradient
-                colors={[`${destTheme.primary}26`, `${destTheme.primary}0D`]}
+                colors={[destTheme.glowColor, COLORS.transparent]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.itineraryExtraGradient}
@@ -1004,7 +1004,7 @@ export default function ItineraryScreen() {
               ]}
             >
               <LinearGradient
-                colors={[`${destTheme.primary}26`, `${destTheme.primary}0D`]}
+                colors={[destTheme.glowColor, COLORS.transparent]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.itineraryExtraGradient}
@@ -1340,7 +1340,7 @@ export default function ItineraryScreen() {
               ]}
             >
               <LinearGradient
-                colors={[`${destTheme.primary}33`, `${destTheme.primary}14`]}
+                colors={[destTheme.glowColor, COLORS.transparent]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.saveTripGradient}

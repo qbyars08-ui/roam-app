@@ -938,15 +938,15 @@ const styles = StyleSheet.create({
   budgetPill: {
     height: 36,
     paddingHorizontal: SPACING.md,
-    borderRadius: 18,
+    borderRadius: RADIUS.full,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: 'transparent',
+    borderColor: COLORS.whiteSoft,
+    backgroundColor: COLORS.bgGlass,
     justifyContent: 'center',
   } as ViewStyle,
   budgetPillActive: {
-    backgroundColor: COLORS.sageLight,
-    borderColor: COLORS.sage,
+    backgroundColor: COLORS.sageHighlight,
+    borderColor: COLORS.sageBorder,
   } as ViewStyle,
   budgetPillLabel: {
     fontFamily: FONTS.mono,
@@ -955,6 +955,7 @@ const styles = StyleSheet.create({
   } as TextStyle,
   budgetPillLabelActive: {
     color: COLORS.sage,
+    fontFamily: FONTS.monoMedium,
   } as TextStyle,
   budgetSliderSection: {
     paddingHorizontal: SPACING.lg,
@@ -993,23 +994,25 @@ const styles = StyleSheet.create({
   categoryPill: {
     height: 36,
     paddingHorizontal: SPACING.md,
-    borderRadius: 18,
+    borderRadius: RADIUS.full,
     borderWidth: 1,
-    borderColor: COLORS.cream,
-    backgroundColor: 'transparent',
+    borderColor: COLORS.whiteSoft,
+    backgroundColor: COLORS.bgGlass,
     justifyContent: 'center',
   } as ViewStyle,
   categoryPillActive: {
-    backgroundColor: COLORS.gold,
-    borderColor: COLORS.gold,
+    backgroundColor: COLORS.goldHighlight,
+    borderColor: COLORS.goldBorder,
   } as ViewStyle,
   categoryPillLabel: {
-    fontFamily: FONTS.body,
-    fontSize: 14,
-    color: COLORS.cream,
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 13,
+    color: COLORS.creamSoft,
+    letterSpacing: 0.2,
   } as TextStyle,
   categoryPillLabelActive: {
-    color: COLORS.bg,
+    color: COLORS.gold,
+    fontFamily: FONTS.bodySemiBold,
   } as TextStyle,
   chip: {
     flexDirection: 'row',
@@ -1108,15 +1111,17 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   } as ViewStyle,
   pricePill: {
-    backgroundColor: COLORS.gold,
+    backgroundColor: COLORS.goldSubtle,
     paddingHorizontal: SPACING.sm + 2,
     paddingVertical: 4,
     borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.goldBorder,
   } as ViewStyle,
   pricePillText: {
-    fontFamily: FONTS.mono,
+    fontFamily: FONTS.monoMedium,
     fontSize: 11,
-    color: COLORS.bg,
+    color: COLORS.gold,
     letterSpacing: 0.3,
   } as TextStyle,
   seasonPill: {
@@ -1396,12 +1401,15 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     paddingTop: SPACING.xxxl,
+    paddingHorizontal: SPACING.xl,
     gap: SPACING.md,
   } as ViewStyle,
   emptyText: {
     fontFamily: FONTS.body,
     fontSize: 15,
     color: COLORS.creamMuted,
+    textAlign: 'center',
+    lineHeight: 22,
   } as TextStyle,
   errorBanner: {
     marginHorizontal: SPACING.lg,
@@ -1410,7 +1418,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.coralLight,
     borderRadius: RADIUS.md,
     borderWidth: 1,
-    borderColor: `${COLORS.coral}44`,
+    borderColor: COLORS.coralMuted,
   } as ViewStyle,
   heroScroll: {
     marginBottom: SPACING.lg,

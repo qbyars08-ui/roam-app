@@ -54,14 +54,14 @@ import Button from '../../components/ui/Button';
 // ---------------------------------------------------------------------------
 function Section({
   icon,
-  iconColor,
+  iconBg,
   title,
   subtitle,
   children,
   defaultOpen = false,
 }: {
   icon: React.ReactNode;
-  iconColor?: string;
+  iconBg?: string;
   title: string;
   subtitle?: string;
   children: React.ReactNode;
@@ -80,7 +80,7 @@ function Section({
           { opacity: pressed ? 0.85 : 1 },
         ]}
       >
-        <View style={[styles.sectionIconWrap, iconColor ? { backgroundColor: iconColor + '20' } : undefined]}>
+        <View style={[styles.sectionIconWrap, iconBg ? { backgroundColor: iconBg } : undefined]}>
           {icon}
         </View>
         <View style={styles.sectionTitleWrap}>
@@ -379,7 +379,7 @@ function PrepScreen() {
       {/* Trip card (if active) */}
       {activeTrip && (
         <LinearGradient
-          colors={[COLORS.sage + '15', COLORS.sage + '05']}
+          colors={[COLORS.sageHighlight, COLORS.sageFaint]}
           style={styles.tripCard}
         >
           <View style={styles.tripCardInner}>
@@ -407,7 +407,7 @@ function PrepScreen() {
       {/* Airport Survival Guide */}
       <Section
         icon={<Building2 size={20} color={COLORS.cream} />}
-        iconColor={COLORS.gold}
+        iconBg={COLORS.goldSoft}
         title="Airport Survival Guide"
         subtitle="JFK, LAX, LHR, CDG, DXB, NRT, SIN, BKK, BCN, FCO"
       >
@@ -430,7 +430,7 @@ function PrepScreen() {
       {langPack ? (
         <Section
           icon={<Globe size={20} color={COLORS.sage} />}
-          iconColor={COLORS.sage}
+          iconBg={COLORS.sageSoft}
           title="Language Kit"
           subtitle={`${langPack.flag} ${langPack.language} \u2022 ${langPack.phrases.length} phrases`}
           defaultOpen
@@ -466,7 +466,7 @@ function PrepScreen() {
       {emergency ? (
         <Section
           icon={<Phone size={20} color={COLORS.coral} />}
-          iconColor={COLORS.coral}
+          iconBg={COLORS.coralSubtle}
           title="Emergency Info"
           subtitle={`${emergency.flag} ${emergency.country}`}
         >
@@ -490,7 +490,7 @@ function PrepScreen() {
       {cultural ? (
         <Section
           icon={<BookOpen size={20} color={COLORS.gold} />}
-          iconColor={COLORS.gold}
+          iconBg={COLORS.goldSoft}
           title="Know Before You Go"
           subtitle={`${cultural.flag} Etiquette, tipping, scams`}
         >
@@ -513,7 +513,7 @@ function PrepScreen() {
       {/* Offline Map — links to itinerary map view */}
       <Section
         icon={<MapPin size={20} color={COLORS.accentGreen} />}
-        iconColor={COLORS.accentGreen}
+        iconBg={COLORS.sageSoft}
         title="Offline Map"
         subtitle={activeTrip ? 'Your trip pins' : 'Plan a trip to unlock'}
       >
@@ -641,7 +641,7 @@ const styles = StyleSheet.create({
     marginHorizontal: SPACING.lg,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
-    borderColor: COLORS.sage + '30',
+    borderColor: COLORS.sageBorder,
     marginBottom: SPACING.lg,
   } as ViewStyle,
   tripCardInner: {
@@ -710,8 +710,8 @@ const styles = StyleSheet.create({
     marginRight: SPACING.sm,
   } as ViewStyle,
   pickerChipActive: {
-    backgroundColor: COLORS.sageLight,
-    borderColor: COLORS.sage + '50',
+    backgroundColor: COLORS.sageHighlight,
+    borderColor: COLORS.sageStrong,
   } as ViewStyle,
   pickerEmoji: {
     fontSize: 16,
@@ -806,8 +806,8 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
   } as ViewStyle,
   chipActive: {
-    backgroundColor: COLORS.sageLight,
-    borderColor: COLORS.sage + '50',
+    backgroundColor: COLORS.sageHighlight,
+    borderColor: COLORS.sageStrong,
   } as ViewStyle,
   chipText: {
     fontFamily: FONTS.bodyMedium,
@@ -995,9 +995,10 @@ const styles = StyleSheet.create({
   packingCheckbox: {
     width: 20,
     height: 20,
-    borderRadius: 4,
-    borderWidth: 2,
-    borderColor: COLORS.border,
+    borderRadius: RADIUS.sm,
+    borderWidth: 1.5,
+    borderColor: COLORS.sageBorder,
+    backgroundColor: COLORS.sageFaint,
   } as ViewStyle,
   packingText: {
     fontFamily: FONTS.body,

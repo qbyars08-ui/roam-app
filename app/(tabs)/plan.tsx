@@ -323,7 +323,7 @@ export default function PlanScreen() {
               value={planWizard.destination}
               onChangeText={(val) => setPlanWizard({ destination: val })}
               placeholder="Try: Tokyo, 5 days in Bali, or anywhere you dream of"
-              placeholderTextColor={`${COLORS.cream}33`}
+              placeholderTextColor={COLORS.creamVeryFaint}
               autoCapitalize="words"
               autoCorrect={false}
             />
@@ -431,7 +431,7 @@ export default function PlanScreen() {
                 value={customDays}
                 onChangeText={handleCustomDaysChange}
                 placeholder="Custom"
-                placeholderTextColor={`${COLORS.cream}33`}
+                placeholderTextColor={COLORS.creamVeryFaint}
                 keyboardType="number-pad"
                 maxLength={2}
               />

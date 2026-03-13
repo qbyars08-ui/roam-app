@@ -665,7 +665,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.sageSoft,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
-    borderColor: COLORS.sage + '40',
+    borderColor: COLORS.sageStrong,
     padding: SPACING.lg,
     alignItems: 'center',
   } as ViewStyle,

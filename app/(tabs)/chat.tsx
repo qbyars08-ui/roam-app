@@ -198,7 +198,7 @@ export default function ChatScreen() {
           value={inputText}
           onChangeText={setInputText}
           placeholder="Best coffee in Lisbon? Visa for Vietnam? Ask anything."
-          placeholderTextColor={`${COLORS.cream}33`}
+          placeholderTextColor={COLORS.creamVeryFaint}
           multiline
           maxLength={1000}
           editable={!isSending}

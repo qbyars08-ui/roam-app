@@ -139,7 +139,7 @@ export default function LiveCompanionFAB() {
                 value={input}
                 onChangeText={setInput}
                 placeholder="Ask about your trip..."
-                placeholderTextColor={`${COLORS.cream}44`}
+                placeholderTextColor={COLORS.creamFaint}
                 onSubmitEditing={handleAsk}
                 returnKeyType="send"
               />

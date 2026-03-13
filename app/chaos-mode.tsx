@@ -557,7 +557,7 @@ function ChaosModeScreen() {
                 onPress={handleDareShare}
               >
                 <LinearGradient
-                  colors={[COLORS.gold + 'cc', COLORS.gold]}
+                  colors={[COLORS.goldMutedDim, COLORS.gold]}
                   style={styles.shareBtnGradient}
                 >
                   <Text style={styles.shareBtnText}>Dare you to do this</Text>
