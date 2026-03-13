@@ -12,7 +12,7 @@
 | Passport | working | Stamps, badges, share |
 | Pets | working | Add pet, sitter links, destinations |
 | Profile | working | Menu, Skip Login in dev |
-| Paywall | partial | UI; purchase needs RevenueCat |
+| Paywall | working | RevenueCat purchase/restore; guests see waitlist capture |
 | Alter-Ego | working | Quiz, result, share |
 | Trip Dupe | working | Real AI or mock fallback |
 | Referral | working | Code, copy, share |
