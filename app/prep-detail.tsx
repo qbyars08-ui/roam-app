@@ -37,9 +37,16 @@ export default function PrepDetailScreen() {
 
   useEffect(() => {
     if (!params.tripId || !params.sectionId) return;
-    getPrepSection(params.tripId, params.sectionId).then((raw) => {
-      if (raw) setContent(JSON.parse(raw));
-    });
+    getPrepSection(params.tripId, params.sectionId)
+      .then((raw) => {
+        if (!raw) return;
+        try {
+          setContent(JSON.parse(raw));
+        } catch {
+          // Cached prep data is malformed — show empty state
+        }
+      })
+      .catch(() => {});
   }, [params.tripId, params.sectionId]);
 
   if (!trip) return null;

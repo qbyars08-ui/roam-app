@@ -65,6 +65,7 @@ function GlobeScreen() {
   // Slot machine text cycling
   const [slotText, setSlotText] = useState('\uD83C\uDF0D');
   const slotInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isMounted = useRef(true);
 
   const handleSpin = useCallback(() => {
     if (phase !== 'idle') return;
@@ -113,6 +114,7 @@ function GlobeScreen() {
 
     // After spin completes → reveal
     setTimeout(() => {
+      if (!isMounted.current) return;
       if (slotInterval.current) clearInterval(slotInterval.current);
       setSlotText(destination.emoji);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -188,6 +190,7 @@ function GlobeScreen() {
 
       // Reset for next spin
       setTimeout(() => {
+        if (!isMounted.current) return;
         setPhase('idle');
         setPicked(null);
         revealAnim.setValue(0);
@@ -215,6 +218,7 @@ function GlobeScreen() {
         addTrip(trip);
         router.push({ pathname: '/itinerary', params: { data: JSON.stringify(trip) } });
         setTimeout(() => {
+          if (!isMounted.current) return;
           setPhase('idle');
           setPicked(null);
           revealAnim.setValue(0);
@@ -222,8 +226,10 @@ function GlobeScreen() {
         }, 500);
         return;
       }
-      setPhase('idle');
-      revealAnim.setValue(0);
+      if (isMounted.current) {
+        setPhase('idle');
+        revealAnim.setValue(0);
+      }
     }
   }, [picked, addTrip, router, revealAnim, glowAnim, isPro, tripsThisMonth]);
 
@@ -236,9 +242,11 @@ function GlobeScreen() {
     setSlotText('\uD83C\uDF0D');
   }, [revealAnim, glowAnim]);
 
-  // Cleanup interval
+  // Cleanup interval and mark unmounted
   useEffect(() => {
+    isMounted.current = true;
     return () => {
+      isMounted.current = false;
       if (slotInterval.current) clearInterval(slotInterval.current);
     };
   }, []);

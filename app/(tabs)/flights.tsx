@@ -146,8 +146,10 @@ function PriceAlertsSection() {
   }, []);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    let cancelled = false;
+    getSavedDestinations().then((list) => { if (!cancelled) setWatched(list); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   const handleCheck = async () => {
     setChecking(true);

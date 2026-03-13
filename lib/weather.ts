@@ -47,11 +47,17 @@ interface GeoResult {
 
 async function geocode(destination: string): Promise<GeoResult> {
   const url = `${BASE}/geo/1.0/direct?q=${encodeURIComponent(destination)}&limit=1&appid=${API_KEY}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Geocoding failed: ${res.status}`);
-  const data: GeoResult[] = await res.json();
-  if (!data.length) throw new Error(`No geocoding results for "${destination}"`);
-  return data[0];
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15_000);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) throw new Error(`Geocoding failed: ${res.status}`);
+    const data: GeoResult[] = await res.json();
+    if (!data.length) throw new Error(`No geocoding results for "${destination}"`);
+    return data[0];
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function iconUrl(code: string): string {
@@ -114,17 +120,33 @@ export async function getWeatherForecast(
 
   const geo = await geocode(destination);
 
-  // Current weather
+  // Current weather — 15s timeout
   const currentUrl = `${BASE}/data/2.5/weather?lat=${geo.lat}&lon=${geo.lon}&units=metric&appid=${API_KEY}`;
-  const currentRes = await fetch(currentUrl);
-  if (!currentRes.ok) throw new Error(`Current weather failed: ${currentRes.status}`);
-  const currentData = await currentRes.json();
+  const currentController = new AbortController();
+  const currentTimer = setTimeout(() => currentController.abort(), 15_000);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let currentData: any;
+  try {
+    const currentRes = await fetch(currentUrl, { signal: currentController.signal });
+    if (!currentRes.ok) throw new Error(`Current weather failed: ${currentRes.status}`);
+    currentData = await currentRes.json();
+  } finally {
+    clearTimeout(currentTimer);
+  }
 
-  // 5-day / 3-hour forecast
+  // 5-day / 3-hour forecast — 15s timeout
   const forecastUrl = `${BASE}/data/2.5/forecast?lat=${geo.lat}&lon=${geo.lon}&units=metric&appid=${API_KEY}`;
-  const forecastRes = await fetch(forecastUrl);
-  if (!forecastRes.ok) throw new Error(`Forecast failed: ${forecastRes.status}`);
-  const forecastData = await forecastRes.json();
+  const forecastController = new AbortController();
+  const forecastTimer = setTimeout(() => forecastController.abort(), 15_000);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let forecastData: any;
+  try {
+    const forecastRes = await fetch(forecastUrl, { signal: forecastController.signal });
+    if (!forecastRes.ok) throw new Error(`Forecast failed: ${forecastRes.status}`);
+    forecastData = await forecastRes.json();
+  } finally {
+    clearTimeout(forecastTimer);
+  }
 
   // Aggregate 3-hour slots into daily summaries
   const dailyMap = new Map<
@@ -164,17 +186,17 @@ export async function getWeatherForecast(
   const sortedDates = [...dailyMap.keys()].sort();
   for (const date of sortedDates) {
     const bucket = dailyMap.get(date)!;
-    // Pick the most common description
+    // Pick the most common description — guard against empty bucket (no slots for this date)
     const descFreq = new Map<string, number>();
     for (const d of bucket.descs) descFreq.set(d, (descFreq.get(d) ?? 0) + 1);
-    const topDesc = [...descFreq.entries()].sort((a, b) => b[1] - a[1])[0][0];
+    const topDesc = [...descFreq.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'Clear';
 
     // Pick the most common icon (prefer daytime icons ending with 'd')
     const dayIcons = bucket.icons.filter((i) => i.endsWith('d'));
     const iconPool = dayIcons.length > 0 ? dayIcons : bucket.icons;
     const iconFreq = new Map<string, number>();
     for (const i of iconPool) iconFreq.set(i, (iconFreq.get(i) ?? 0) + 1);
-    const topIcon = [...iconFreq.entries()].sort((a, b) => b[1] - a[1])[0][0];
+    const topIcon = [...iconFreq.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? '01d';
 
     days.push({
       date,

@@ -62,8 +62,16 @@ export async function lookupFlight(flightIata: string): Promise<AviationStackFli
     limit: '10',
   });
 
-  const res = await fetch(`${BASE_URL}?${params}`);
-  const json: AviationStackResponse = await res.json();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15_000);
+  let json: AviationStackResponse;
+  try {
+    const res = await fetch(`${BASE_URL}?${params}`, { signal: controller.signal });
+    if (!res.ok) throw new Error(`AviationStack API failed: ${res.status}`);
+    json = await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
 
   if (json.error) {
     throw new Error(json.error.message || 'Flight lookup failed');

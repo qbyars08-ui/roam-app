@@ -53,10 +53,12 @@ export default function ProfileScreen() {
   const [emergencyInputValue, setEmergencyInputValue] = useState('');
 
   useEffect(() => {
+    let cancelled = false;
     AsyncStorage.getItem(EMERGENCY_CONTACT_KEY).then((val) => {
-      if (val) setEmergencyContact(val);
-    });
-    hasRatedBadge().then(setRatedBadge);
+      if (!cancelled && val) setEmergencyContact(val);
+    }).catch(() => {});
+    hasRatedBadge().then((v) => { if (!cancelled) setRatedBadge(v); }).catch(() => {});
+    return () => { cancelled = true; };
   }, []);
 
   const handleEditEmergencyContact = useCallback(() => {

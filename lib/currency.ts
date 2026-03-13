@@ -186,12 +186,16 @@ export async function fetchExchangeRates(): Promise<ExchangeRates> {
   const cached = await getCachedRates();
   if (cached) return cached;
 
-  const res = await fetch(FRANKFURTER_URL);
-  if (!res.ok) {
-    throw new Error(`Frankfurter API failed: ${res.status}`);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15_000);
+  let data: { base?: string; rates?: Record<string, number> };
+  try {
+    const res = await fetch(FRANKFURTER_URL, { signal: controller.signal });
+    if (!res.ok) throw new Error(`Frankfurter API failed: ${res.status}`);
+    data = await res.json() as { base?: string; rates?: Record<string, number> };
+  } finally {
+    clearTimeout(timer);
   }
-
-  const data = await res.json() as { base?: string; rates?: Record<string, number> };
   const rates: Record<string, number> = data.rates ?? {};
   rates.USD = 1; // Ensure USD is present
 

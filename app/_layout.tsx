@@ -199,7 +199,9 @@ export default function RootLayout() {
     };
 
     let unsub: (() => void) | undefined;
-    bootstrap().then((fn) => { unsub = fn; });
+    bootstrap()
+      .then((fn) => { unsub = fn; })
+      .catch((err) => { console.error('[Layout] bootstrap failed:', err); });
     return () => { unsub?.(); };
   }, [session?.user?.id]);
 

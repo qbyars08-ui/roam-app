@@ -45,7 +45,9 @@ function PassportScreen() {
 
   // Load stats on mount
   useEffect(() => {
-    getStats().then(setStats);
+    let cancelled = false;
+    getStats().then((s) => { if (!cancelled) setStats(s); }).catch(() => {});
+    return () => { cancelled = true; };
   }, []);
 
   const earnedBadges = useMemo(() => getEarnedBadges(stats), [stats]);
