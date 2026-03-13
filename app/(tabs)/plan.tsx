@@ -2,7 +2,7 @@
 // ROAM — Plan Screen (3-Step Trip Wizard)
 // Step 1: Destination  |  Step 2: Budget + Days  |  Step 3: Vibes + Generate
 // =============================================================================
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,6 @@ import {
   ScrollView,
   Pressable,
   StyleSheet,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   type ViewStyle,
@@ -34,6 +33,19 @@ import { trackItineraryOutcome } from '../../lib/ai-improvement';
 import { isGuestUser } from '../../lib/guest';
 import { learnFromTrip } from '../../lib/personalization';
 import { recordPlanned } from '../../lib/social-proof';
+import { supabase } from '../../lib/supabase';
+
+// ---------------------------------------------------------------------------
+// Cross-platform alert (Alert.alert doesn't work reliably on web)
+// ---------------------------------------------------------------------------
+function showAlert(title: string, message: string) {
+  if (Platform.OS === 'web') {
+    window.alert(`${title}\n\n${message}`);
+  } else {
+    const { Alert } = require('react-native');
+    Alert.alert(title, message, [{ text: 'OK' }]);
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Day-count presets
@@ -148,29 +160,61 @@ export default function PlanScreen() {
   // prompt so AI swaps outdoor→indoor activities on rainy days)
   // ---------------------------------------------------------------------------
   const handleGenerate = async () => {
+    console.log('[ROAM] handleGenerate called');
     const isGuest = isGuestUser();
     const session = useAppStore.getState().session;
     const isAnon = isGuest || session?.user?.is_anonymous === true;
+    console.log('[ROAM] isGuest:', isGuest, 'isAnon:', isAnon, 'hasCompletedProfile:', hasCompletedProfile);
 
     // On first trip, send to travel profile screen first
     // Skip for guests and anonymous users — let them generate immediately
     if (!isAnon && !hasCompletedProfile) {
+      console.log('[ROAM] Redirecting to travel profile (not anon, no profile)');
       router.push('/travel-profile');
       return;
     }
 
     // Guest/anonymous limit: 1 trip; signed-in free: FREE_TRIPS_PER_MONTH
     if (isAnon && trips.length >= 1) {
+      console.log('[ROAM] Anon user at trip limit, redirecting to paywall');
       router.push({ pathname: '/paywall', params: { reason: 'limit', destination: planWizard.destination } });
       return;
     }
     if (!isPro && tripsThisMonth >= FREE_TRIPS_PER_MONTH) {
+      console.log('[ROAM] Free user at monthly limit, redirecting to paywall');
       router.push({ pathname: '/paywall', params: { reason: 'limit' } });
       return;
     }
 
+    // ── Ensure valid Supabase session for edge function call ──────────
+    // Fake guest sessions (access_token='') can't call edge functions.
+    // Try signInAnonymously to get a real JWT; if that fails, prompt signup.
+    if (isGuest) {
+      console.log('[ROAM] Fake guest detected, attempting signInAnonymously...');
+      try {
+        const { data, error } = await supabase.auth.signInAnonymously();
+        if (error) throw error;
+        if (data.session) {
+          console.log('[ROAM] Anonymous auth succeeded, got real session');
+          useAppStore.getState().setSession(data.session);
+        } else {
+          throw new Error('No session returned');
+        }
+      } catch (anonErr: any) {
+        console.warn('[ROAM] signInAnonymously failed:', anonErr?.message);
+        // Can't get a valid session — redirect to signup
+        showAlert(
+          'Sign up to create your trip',
+          'Creating your personalized itinerary requires a free account. Sign up in seconds — no credit card needed.'
+        );
+        router.push('/(auth)/signup');
+        return;
+      }
+    }
+
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setIsGenerating(true);
+    console.log('[ROAM] Starting trip generation for:', planWizard.destination);
 
     try {
       const today = new Date().toISOString().split('T')[0];
@@ -183,6 +227,7 @@ export default function PlanScreen() {
         startDate: today, // align forecast to trip start
       });
 
+      console.log('[ROAM] Trip generated successfully, tripsUsed:', tripsUsed);
       const itineraryStr = JSON.stringify(parsedItinerary);
       const trip = {
         id: Date.now().toString(),
@@ -205,15 +250,14 @@ export default function PlanScreen() {
       // Navigate to itinerary modal
       router.push({ pathname: '/itinerary', params: { tripId: trip.id } });
     } catch (err: any) {
+      console.error('[ROAM] Trip generation failed:', err?.message || err);
       if (err instanceof TripLimitReachedError) {
         router.push('/paywall');
       } else {
         track({ type: 'feature_use', feature: 'plan_fallback_used', payload: { destination: planWizard.destination } });
-        // Show error — don't silently present fake data as real
-        Alert.alert(
+        showAlert(
           'Give us another shot',
-          'We had trouble reaching our servers. Check your connection and try again — your trip is worth it.',
-          [{ text: 'Try again' }]
+          'We had trouble reaching our servers. Check your connection and try again — your trip is worth it.'
         );
       }
     } finally {
