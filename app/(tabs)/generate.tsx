@@ -60,11 +60,11 @@ export default function GenerateScreen() {
 
   const handleQuickSubmit = useCallback(async (state: QuickModeState) => {
     if (!isPro && !isGuestUser() && tripsThisMonth >= FREE_TRIPS_PER_MONTH) {
-      router.push('/paywall');
+      router.push({ pathname: '/paywall', params: { reason: 'limit', destination: state.destination } });
       return;
     }
     if (isGuestUser() && trips.length >= 1) {
-      router.push('/paywall');
+      router.push({ pathname: '/paywall', params: { reason: 'limit', destination: state.destination } });
       return;
     }
 
@@ -109,7 +109,7 @@ export default function GenerateScreen() {
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       if (err instanceof TripLimitReachedError) {
-        router.push('/paywall');
+        router.push({ pathname: '/paywall', params: { reason: 'limit', destination: generatingDestRef.current } });
       } else {
         setNetworkError(err instanceof Error ? err.message : 'Something went wrong. Try again.');
       }
@@ -128,11 +128,11 @@ export default function GenerateScreen() {
 
   const handleConversationGenerate = useCallback(async (brief: ConversationBrief) => {
     if (!isPro && !isGuestUser() && tripsThisMonth >= FREE_TRIPS_PER_MONTH) {
-      router.push('/paywall');
+      router.push({ pathname: '/paywall', params: { reason: 'limit', destination: brief.destination } });
       return;
     }
     if (isGuestUser() && trips.length >= 1) {
-      router.push('/paywall');
+      router.push({ pathname: '/paywall', params: { reason: 'limit', destination: brief.destination } });
       return;
     }
 
@@ -173,7 +173,7 @@ export default function GenerateScreen() {
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       if (err instanceof TripLimitReachedError) {
-        router.push('/paywall');
+        router.push({ pathname: '/paywall', params: { reason: 'limit', destination: generatingDestRef.current } });
       } else {
         setNetworkError(err instanceof Error ? err.message : 'Something went wrong. Try again.');
       }

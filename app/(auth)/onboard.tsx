@@ -347,12 +347,11 @@ export default function OnboardScreen() {
   const handleGenerate = useCallback(async () => {
     if (!destination) return;
     if (!isGuestLike && !isPro && tripsThisMonth >= FREE_TRIPS_PER_MONTH) {
-      router.push('/paywall');
+      router.push({ pathname: '/paywall', params: { reason: 'limit', destination } });
       return;
     }
     setError(null);
     try {
-      // Edge function requires a valid JWT; ensure session before generate
       if (!session) {
         const { data, error: signErr } = await supabase.auth.signInAnonymously();
         if (!signErr && data?.session) setSession(data.session);
@@ -385,7 +384,7 @@ export default function OnboardScreen() {
       setStep(2);
     } catch (err: any) {
       if (err instanceof TripLimitReachedError) {
-        router.push('/paywall');
+        router.push({ pathname: '/paywall', params: { reason: 'limit', destination } });
         return;
       }
       setError('We couldn\'t build your trip right now. Check your connection and try again.');

@@ -18,7 +18,7 @@ export default function TripLimitBanner() {
 
   const handleUpgrade = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push('/paywall');
+    router.push({ pathname: '/paywall', params: { reason: 'limit' } });
   }, [router]);
 
   const bannerContent = useMemo(() => {

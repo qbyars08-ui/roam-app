@@ -118,7 +118,7 @@ export default function ExploreHub({ standalone = false }: ExploreHubProps) {
       if (!isLive) return;
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       if (feature.pro && !canAccessPro) {
-        router.push('/paywall');
+        router.push({ pathname: '/paywall', params: { reason: 'feature', feature: feature.name } });
         return;
       }
       router.push(feature.route as any);
