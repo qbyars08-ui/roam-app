@@ -3,7 +3,7 @@
 > Central reporting hub for all ROAM agents. Each agent writes their status here. Captain reads all, decides, dispatches.
 
 **Last updated:** 2026-03-13
-**Sprint focus:** TBD (see Captain's Standup below)
+**Sprint focus:** SECURITY FIRST -- fix the 2 criticals before anything else ships
 
 ---
 
@@ -12,17 +12,15 @@
 > Report: vulnerabilities, exposed secrets, RLS gaps, unsafe patterns.
 
 ```
-STATUS: AWAITING FIRST REPORT
+STATUS: REPORTED | 2026-03-13
 ```
 
-**Latest findings:**
-- (none yet)
-
 **Flagged critical:**
-- (none yet)
+1. Amadeus client secret exposed -- `EXPO_PUBLIC_AMADEUS_SECRET` in `lib/flights-amadeus.ts:42`. OAuth happens client-side. Secret ships in the JS bundle.
+2. `chaos_dares` table accepts unauthenticated inserts -- RLS policy is `WITH CHECK (true)` in `supabase/migrations/20260319_chaos_dare.sql`. Spam/abuse vector.
 
 **Resolved since last standup:**
-- (none yet)
+- Anthropic API key removed from client (`lib/claude.ts` now uses edge function only)
 
 ---
 
@@ -31,14 +29,14 @@ STATUS: AWAITING FIRST REPORT
 > Report: competitive intel, API discoveries, user insights, tech opportunities.
 
 ```
-STATUS: AWAITING FIRST REPORT
+STATUS: REPORTED | 2026-03-13
 ```
 
 **Latest findings:**
-- (none yet)
+- (awaiting detailed report)
 
 **Recommended actions:**
-- (none yet)
+- (awaiting detailed report)
 
 ---
 
@@ -47,17 +45,17 @@ STATUS: AWAITING FIRST REPORT
 > Report: what's broken, what passed, what's untested, coverage gaps.
 
 ```
-STATUS: AWAITING FIRST REPORT
+STATUS: REPORTED | 2026-03-13 — IDLE
 ```
 
 **Test results:**
-- (none yet)
+- TypeScript compiles clean (`npx tsc --noEmit` passes)
 
 **Broken:**
-- (none yet)
+- (nothing reported)
 
 **Untested (critical):**
-- (none yet)
+- EVERYTHING. Zero test files exist in the repo. Jest configured but no specs written.
 
 ---
 
@@ -66,14 +64,14 @@ STATUS: AWAITING FIRST REPORT
 > Report: top feature idea, one sentence. Score it against the decision framework.
 
 ```
-STATUS: AWAITING FIRST REPORT
+STATUS: REPORTED | 2026-03-13
 ```
 
 **Top idea:**
-- (none yet)
+- Built `spark.tsx` (not yet committed to this branch)
 
 **Decision framework score:**
-- Delight: ?/5 | Retention: ?/5 | Conversion: ?/5 | Feasibility: ?/5 | Brand: ?/5 | **Total: ?/25**
+- TBD -- needs review before scoring
 
 ---
 
@@ -82,17 +80,15 @@ STATUS: AWAITING FIRST REPORT
 > Report: recurring failures, crash patterns, error logs, reliability issues.
 
 ```
-STATUS: AWAITING FIRST REPORT
+STATUS: REPORTED | 2026-03-13
 ```
 
 **Recurring failures:**
-- (none yet)
-
-**Error patterns:**
-- (none yet)
+- (none reported)
 
 **Fixed since last standup:**
-- (none yet)
+- Set up ESLint for the project
+- Fixed 5 bugs (details pending commit)
 
 ---
 
@@ -101,17 +97,18 @@ STATUS: AWAITING FIRST REPORT
 > Report: deployment status, pending releases, build health, store submission status.
 
 ```
-STATUS: AWAITING FIRST REPORT
+STATUS: REPORTED | 2026-03-13 — IDLE
 ```
 
 **Current deployment:**
-- (none yet)
+- Netlify is paused (per `docs/NETLIFY_PAUSED.md`)
 
 **Pending:**
-- (none yet)
+- Deployment pipeline status unknown
 
 **Build health:**
-- (none yet)
+- TypeScript compiles clean
+- Web export status unverified
 
 ---
 
@@ -120,96 +117,68 @@ STATUS: AWAITING FIRST REPORT
 > Report: marketing status, user feedback, social engagement, press/outreach.
 
 ```
-STATUS: AWAITING FIRST REPORT
+STATUS: REPORTED | 2026-03-13
 ```
 
 **Latest:**
-- (none yet)
-
-**User feedback:**
-- (none yet)
-
-**Outreach status:**
-- (none yet)
+- (awaiting detailed report)
 
 ---
 ---
 
-# CAPTAIN'S STANDUP -- 2026-03-13
+# CAPTAIN'S STANDUP -- 2026-03-13 (Standup #1)
 
 > "What's the one thing that matters most today?"
+> **Kill the two security criticals. Nothing else ships until they're dead.**
 
 ## Situation Assessment
 
-This is Standup Zero. No agents have reported yet. Here's what I know from reviewing the codebase directly:
+### What changed since Standup Zero
+- Scanguard confirmed 2 critical security issues still open in the codebase
+- Medic set up ESLint and fixed 5 bugs (good -- stability work while security gets triaged)
+- Ideas built spark.tsx (parked -- no new features until security is clean)
+- Testr and Deployer reported idle -- reassigning both NOW
+- TypeScript compiles clean (confirmed by Captain via `npx tsc --noEmit`)
+- Anthropic API key issue is resolved (claude.ts uses edge function only)
 
-### What exists
-- 70 app screens, 71 components, 112 lib modules -- this is a big app
-- 7 Supabase edge functions (claude-proxy, weather-intel, enrich-venues, revenuecat-webhook, destination-photo, voice-proxy, send-push)
-- 31 database migrations with RLS
-- Zustand store managing trips, chat, pets, travel profile, currency
-- RevenueCat integration for subscriptions
-- Guest mode + waitlist flow
-- Group trips, referrals, gamification features built out
-
-### What's broken or risky
-1. **SECURITY (critical):** Amadeus OAuth credentials still on client side. Anthropic API fallback still exists in client code. `chaos_dares` table allows unauthenticated inserts. `innerHTML` and `document.write` present. These are from the SECURITY_AUDIT.md.
-2. **TESTING (critical):** Jest is configured in package.json but zero test files exist. Zero TODO/FIXME comments. No evidence of any automated testing.
-3. **TYPESCRIPT:** Strict mode is on but we haven't verified it compiles clean.
-4. **DEPLOYMENT:** Netlify is paused per `docs/NETLIFY_PAUSED.md`. Build/deploy pipeline status unknown.
-
-### What's planned but not done
-- Move Amadeus OAuth to edge function
-- Remove Anthropic fallback from client
-- Tighten RLS policies
-- Guest mode refinements
-- Bundle size optimization
-
-## Today's Sprint
-
-### 1. SCANGUARD: Full security sweep
-- Verify every finding in SECURITY_AUDIT.md is still open
-- Check all edge functions for leaked secrets
-- Audit RLS policies -- confirm every table with user data uses `auth.uid()`
-- **Expected outcome:** Updated threat list with severity ratings
-- **Deadline:** End of day
-
-### 2. TESTR: TypeScript compilation check + identify test priorities
-- Run `npx tsc --noEmit` and report every error
-- Inventory which screens/features have zero test coverage
-- Identify the 5 most critical paths that need tests first
-- **Expected outcome:** Clean compile status + test priority list
-- **Deadline:** End of day
-
-### 3. RESEARCH: API key exposure audit
-- Grep the entire codebase for hardcoded API keys, tokens, secrets
-- Check what's in `.env` vs what's hardcoded
-- Verify `EXPO_PUBLIC_` vars only contain safe public keys
-- **Expected outcome:** List of every exposed credential with remediation path
-- **Deadline:** End of day
-
-### Parked (good but not now)
-- Bundle size optimization -- important but security comes first
-- New feature development -- freeze until security is clean
-- App Store submission -- not until we have tests and security fixed
-
-### Blocked
-- Deployment pipeline unclear (Netlify paused) -- need DEPLOYER to report current hosting status
-- RevenueCat webhook status unknown -- need DEPLOYER to verify
-
-### North Star Reminder
-**This week we are optimizing for: TRUST.** Before we ship anything new, we make sure what we have is secure, compiles, and has basic test coverage. A 22-year-old won't tell their friend about an app that leaks their data.
+### What's still broken
+1. **P0: Amadeus secret on client** -- `EXPO_PUBLIC_AMADEUS_SECRET` ships in the JS bundle. Anyone with devtools can extract it. Must move to edge function.
+2. **P0: chaos_dares open to the internet** -- Unauthenticated inserts = spam vector. Must lock down RLS.
+3. **P1: Zero test coverage** -- 70 screens, 112 lib modules, 0 tests. We can't ship with confidence.
+4. **P1: Deployment pipeline offline** -- Netlify paused. No way to verify fixes in production.
 
 ---
 
-## How to Report
+## CAPTAIN'S 3 DECISIONS
 
-Each agent: replace your `AWAITING FIRST REPORT` status with your findings. Use this format:
+### DECISION 1: SCANGUARD -- Fix both criticals now
 
-```
-STATUS: REPORTED | 2026-03-13 HH:MM
-```
+**What:** Create `supabase/functions/amadeus-proxy/` edge function. Move Amadeus OAuth server-side. Lock down `chaos_dares` RLS.
 
-Then fill in your section's fields. Keep it brief. One sentence per finding. Captain reads everything.
+**Why:** These are the only two items blocking us from a deployable state. Everything else waits.
 
-After all agents report, Captain reconvenes and updates Today's Sprint.
+### DECISION 2: TESTR -- Write tests for the 3 most critical code paths
+
+**What:** Create test files for auth flow, trip generation (claude.ts), and flight search. Use Jest (already configured).
+
+**Why:** We have zero tests. Testr has been idle. The 3 paths that touch user data and money get tested first.
+
+### DECISION 3: DEPLOYER -- Get the deployment pipeline running
+
+**What:** Verify web build works (`npx expo export --platform web`), determine why Netlify is paused, report what's needed to resume.
+
+**Why:** Scanguard's fixes are worthless if we can't deploy them. Need pipeline ready for when security patches land.
+
+---
+
+## Parked (good but not now)
+- `spark.tsx` from Ideas -- review after security is clean. No new features until P0s are closed.
+- Bundle size optimization -- scheduled for next sprint
+- App Store submission -- blocked on security + tests
+
+## Blocked
+- Production deploy -- Netlify paused, Deployer tasked with unblocking
+- RevenueCat webhook verification -- needs live deploy to test
+
+## North Star Reminder
+**This week: TRUST.** Secure what we have. Test what we ship. Deploy what we trust.
