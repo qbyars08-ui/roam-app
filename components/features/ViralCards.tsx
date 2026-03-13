@@ -937,7 +937,7 @@ const vsStyles = StyleSheet.create({
     flex: 1,
     lineHeight: 17,
     textDecorationLine: 'line-through',
-    textDecorationColor: 'rgba(192,57,43,0.4)',
+    textDecorationColor: COLORS.coralBorder,
   } as TextStyle,
   roamText: {
     fontFamily: FONTS.bodySemiBold,
@@ -959,7 +959,7 @@ const vsStyles = StyleSheet.create({
   taglineSub: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: 'rgba(201,168,76,0.5)',
+    color: COLORS.goldMutedDim,
     letterSpacing: 2,
   } as TextStyle,
 });

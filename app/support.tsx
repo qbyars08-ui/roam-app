@@ -10,8 +10,6 @@ import {
   Pressable,
   StyleSheet,
   Linking,
-  type ViewStyle,
-  type TextStyle,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -64,7 +62,7 @@ function FAQItem({ q, a }: { q: string; a: string }) {
           <ChevronDown size={20} color={COLORS.creamMuted} />
         )}
       </View>
-      {expanded && <Text style={styles.faqAnswer}>{a}</Text>}
+      {expanded && <Text style={textStyles.faqAnswer}>{a}</Text>}
     </Pressable>
   );
 }
@@ -74,35 +72,35 @@ export default function SupportScreen() {
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
+    <View style={[viewStyles.container, { paddingTop: insets.top }]}>
+      <View style={viewStyles.header}>
+        <Pressable onPress={() => router.back()} hitSlop={12} style={viewStyles.backBtn}>
           <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
-        <Text style={styles.headerTitle}>Support</Text>
+        <Text style={textStyles.headerTitle}>Support</Text>
       </View>
       <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + SPACING.xxl }]}
+        style={viewStyles.scroll}
+        contentContainerStyle={[viewStyles.scrollContent, { paddingBottom: insets.bottom + SPACING.xxl }]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.hero}>Need help with ROAM?</Text>
-        <Text style={styles.heroSub}>We're here for you.</Text>
+        <Text style={textStyles.hero}>Need help with ROAM?</Text>
+        <Text style={textStyles.heroSub}>We're here for you.</Text>
 
-        <Text style={styles.sectionLabel}>FREQUENTLY ASKED</Text>
+        <Text style={textStyles.sectionLabel}>FREQUENTLY ASKED</Text>
         {FAQ_ITEMS.map((item, i) => (
           <FAQItem key={i} q={item.q} a={item.a} />
         ))}
 
-        <View style={styles.contactCard}>
+        <View style={viewStyles.contactCard}>
           <Mail size={24} color={COLORS.sage} style={{ marginBottom: SPACING.sm }} />
-          <Text style={styles.contactTitle}>Contact us</Text>
-          <Text style={styles.contactSub}>Response within 48 hours</Text>
+          <Text style={textStyles.contactTitle}>Contact us</Text>
+          <Text style={textStyles.contactSub}>Response within 48 hours</Text>
           <Pressable
             onPress={() => Linking.openURL('mailto:support@roamtravel.app')}
-            style={({ pressed }) => [styles.emailBtn, { opacity: pressed ? 0.9 : 1 }]}
+            style={({ pressed }) => [viewStyles.emailBtn, { opacity: pressed ? 0.9 : 1 }]}
           >
-            <Text style={styles.emailBtnText}>support@roamtravel.app</Text>
+            <Text style={textStyles.emailBtnText}>support@roamtravel.app</Text>
           </Pressable>
         </View>
       </ScrollView>
@@ -134,4 +132,3 @@ const textStyles = StyleSheet.create({
   emailBtnText: { fontFamily: FONTS.bodyMedium, fontSize: 15, color: COLORS.sage },
 });
 
-const styles = { ...viewStyles, ...textStyles };

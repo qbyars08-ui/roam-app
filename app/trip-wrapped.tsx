@@ -64,11 +64,11 @@ function getVibeLabel(vibeId: string): string {
 // Card Gradients
 // =============================================================================
 const CARD_GRADIENTS: string[][] = [
-  [COLORS.bg, '#0a1f1a', '#0c2a20'], // Overview
-  ['#1a0a2e', '#0c1445', COLORS.bg], // Stats
-  ['#0c1445', '#0a1f1a', COLORS.bg], // Personality
-  [COLORS.bg, '#1a0a2e', '#0c1445'], // Top Vibes
-  ['#0a1f1a', COLORS.bg, '#0c2a20'], // Next Year
+  [COLORS.bg, COLORS.gradientForestDeep, COLORS.gradientForestDarker], // Overview
+  [COLORS.gradientPurple, COLORS.gradientMidnight, COLORS.bg], // Stats
+  [COLORS.gradientMidnight, COLORS.gradientForestDeep, COLORS.bg], // Personality
+  [COLORS.bg, COLORS.gradientPurple, COLORS.gradientMidnight], // Top Vibes
+  [COLORS.gradientForestDeep, COLORS.bg, COLORS.gradientForestDarker], // Next Year
 ];
 
 // =============================================================================
@@ -556,7 +556,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: COLORS.whiteMuted,
   } as ViewStyle,
   dotActive: {
     backgroundColor: COLORS.sage,
@@ -714,7 +714,7 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   statBlock: {
     width: '44%' as unknown as number,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: COLORS.bgCard,
     borderRadius: RADIUS.md,
     padding: SPACING.md,
     alignItems: 'center',
@@ -782,7 +782,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 6,
     borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: COLORS.whiteSoft,
     overflow: 'hidden',
   } as ViewStyle,
   budgetBarFill: {
@@ -825,7 +825,7 @@ const styles = StyleSheet.create({
   vibeBarBg: {
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: COLORS.whiteSoft,
     overflow: 'hidden',
   } as ViewStyle,
   vibeBarFill: {

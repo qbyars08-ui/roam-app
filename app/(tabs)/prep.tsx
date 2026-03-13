@@ -369,9 +369,9 @@ export default function PrepScreen() {
     >
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Before you go.</Text>
+        <Text style={styles.title}>Local intel before you land</Text>
         <Text style={styles.subtitle}>
-          Language, safety, culture, packing — everything you need, all in one place. Works without wifi.
+          Language, safety, culture, packing. Everything you need, all in one place. Works offline.
         </Text>
       </View>
 

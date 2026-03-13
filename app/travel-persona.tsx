@@ -442,7 +442,7 @@ const styles = StyleSheet.create({
   personaSubtitle: {
     fontFamily: FONTS.body,
     fontSize: 15,
-    color: 'rgba(255,255,255,0.8)',
+    color: COLORS.creamBrightDim,
     textAlign: 'center',
     marginBottom: SPACING.lg,
   } as TextStyle,
@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
   traitLabel: {
     fontFamily: FONTS.mono,
     fontSize: 11,
-    color: 'rgba(255,255,255,0.7)',
+    color: COLORS.creamHighlight,
     flex: 1,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
   traitBarBg: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: COLORS.whiteMuted,
     overflow: 'hidden',
   } as ViewStyle,
   traitBarFill: {
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
   statLabel: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: 'rgba(255,255,255,0.5)',
+    color: COLORS.creamMuted,
     textTransform: 'uppercase',
     letterSpacing: 1,
   } as TextStyle,
@@ -516,7 +516,7 @@ const styles = StyleSheet.create({
   evolution: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: 'rgba(255,255,255,0.5)',
+    color: COLORS.creamMuted,
     fontStyle: 'italic',
     textAlign: 'center',
   } as TextStyle,
@@ -528,7 +528,7 @@ const styles = StyleSheet.create({
   watermarkText: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: 'rgba(255,255,255,0.3)',
+    color: COLORS.creamDimLight,
     letterSpacing: 3,
   } as TextStyle,
 
@@ -594,8 +594,8 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   } as TextStyle,
   famousCard: {
-    borderColor: 'rgba(201,168,76,0.3)',
-    backgroundColor: 'rgba(201,168,76,0.06)',
+    borderColor: COLORS.goldBorderStrong,
+    backgroundColor: COLORS.goldVeryFaint,
   } as ViewStyle,
   famousName: {
     fontFamily: FONTS.header,

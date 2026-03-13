@@ -305,7 +305,7 @@ export default function MainCharacterScreen() {
             {/* Shot List Card (shareable) */}
             <ViewShot ref={cardRef} options={{ format: 'png', quality: 1 }}>
               <LinearGradient
-                colors={[COLORS.bg, '#0a1f1a', COLORS.bg]}
+                colors={[COLORS.bg, COLORS.gradientForestDeep, COLORS.bg]}
                 style={styles.shotListCard}
               >
                 {/* Shot List Header */}
@@ -357,7 +357,7 @@ export default function MainCharacterScreen() {
               onPress={handleShare}
             >
               <LinearGradient
-                colors={['#9B59B6', '#9B59B6CC']}
+                colors={[COLORS.purpleAccent, COLORS.purpleWithAlpha]}
                 style={styles.shareBtnGradient}
               >
                 <Text style={styles.shareBtnText}>
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   } as TextStyle,
   retryBtn: {
-    backgroundColor: 'rgba(192,57,43,0.15)',
+    backgroundColor: COLORS.dangerHighlight,
     borderRadius: RADIUS.full,
     paddingHorizontal: SPACING.lg,
     paddingVertical: 8,
@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
   arcEyebrow: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: '#9B59B6',
+    color: COLORS.purpleAccent,
     letterSpacing: 2,
     marginBottom: 4,
   } as TextStyle,
@@ -631,7 +631,7 @@ const styles = StyleSheet.create({
 
   // Moment Card
   momentCard: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: COLORS.bgCard,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
@@ -746,7 +746,7 @@ const styles = StyleSheet.create({
   captionLabel: {
     fontFamily: FONTS.mono,
     fontSize: 9,
-    color: '#9B59B6',
+    color: COLORS.purpleAccent,
     letterSpacing: 2,
   } as TextStyle,
   captionText: {

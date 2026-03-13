@@ -118,7 +118,7 @@ export default function SplashScreen() {
           resizeMode="cover"
         />
         <LinearGradient
-          colors={['rgba(8,15,10,0.85)', 'rgba(8,15,10,0.95)', COLORS.bg]}
+          colors={[COLORS.bgDarkGreenOverlay, COLORS.bgDarkGreen, COLORS.bg]}
           style={StyleSheet.absoluteFill}
           locations={[0, 0.5, 1]}
         />

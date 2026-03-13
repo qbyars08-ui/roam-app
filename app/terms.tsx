@@ -17,6 +17,21 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING } from '../lib/constants';
 
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: COLORS.bg } as ViewStyle,
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.border } as ViewStyle,
+  backBtn: { marginRight: SPACING.sm } as ViewStyle,
+  scroll: { flex: 1 } as ViewStyle,
+  scrollContent: { padding: SPACING.lg } as ViewStyle,
+  section: { marginBottom: SPACING.xl } as ViewStyle,
+  headerTitle: { fontFamily: FONTS.header, fontSize: 20, color: COLORS.cream } as TextStyle,
+  title: { fontFamily: FONTS.header, fontSize: 24, color: COLORS.cream, marginBottom: SPACING.xs } as TextStyle,
+  meta: { fontFamily: FONTS.mono, fontSize: 12, color: COLORS.creamMuted, marginBottom: SPACING.lg } as TextStyle,
+  sectionTitle: { fontFamily: FONTS.bodySemiBold, fontSize: 16, color: COLORS.sage, marginBottom: SPACING.sm } as TextStyle,
+  para: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.creamMuted, lineHeight: 22, marginBottom: SPACING.sm } as TextStyle,
+  bullet: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.creamMuted, lineHeight: 22, marginBottom: 4 } as TextStyle,
+});
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <View style={styles.section}>
@@ -117,18 +132,3 @@ export default function TermsScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg } as ViewStyle,
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.border } as ViewStyle,
-  backBtn: { marginRight: SPACING.sm } as ViewStyle,
-  headerTitle: { fontFamily: FONTS.header, fontSize: 20, color: COLORS.cream } as TextStyle,
-  scroll: { flex: 1 } as ViewStyle,
-  scrollContent: { padding: SPACING.lg } as ViewStyle,
-  title: { fontFamily: FONTS.header, fontSize: 24, color: COLORS.cream, marginBottom: SPACING.xs } as TextStyle,
-  meta: { fontFamily: FONTS.mono, fontSize: 12, color: COLORS.creamMuted, marginBottom: SPACING.lg } as TextStyle,
-  section: { marginBottom: SPACING.xl } as ViewStyle,
-  sectionTitle: { fontFamily: FONTS.bodySemiBold, fontSize: 16, color: COLORS.sage, marginBottom: SPACING.sm } as TextStyle,
-  para: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.creamMuted, lineHeight: 22, marginBottom: SPACING.sm } as TextStyle,
-  bullet: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.creamMuted, lineHeight: 22, marginBottom: 4 } as TextStyle,
-});

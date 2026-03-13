@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: 'rgba(124,175,138,0.2)',
+    backgroundColor: COLORS.sageLight,
     borderWidth: 2,
     borderColor: COLORS.sage,
     alignSelf: 'center',

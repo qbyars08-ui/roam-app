@@ -78,7 +78,7 @@ function TripCard({
           onError={() => setUseFallback(true)}
         >
         <LinearGradient
-          colors={['rgba(0,0,0,0.15)', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.88)']}
+          colors={[COLORS.overlayFaint, COLORS.overlayMedium, COLORS.overlayDeep]}
           locations={[0, 0.5, 1]}
           style={styles.cardGradient}
         >

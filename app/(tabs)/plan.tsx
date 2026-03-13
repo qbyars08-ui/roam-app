@@ -24,6 +24,7 @@ import { useAppStore } from '../../lib/store';
 import { generateItinerary } from '../../lib/claude';
 import { TripLimitReachedError } from '../../lib/claude';
 import Button from '../../components/ui/Button';
+import { TripGeneratingLoader } from '../../components/premium/LoadingStates';
 import VisaChecker from '../../components/features/VisaChecker';
 import HealthBriefCard from '../../components/features/HealthBriefCard';
 import SafetyScoreBadge from '../../components/features/SafetyScoreBadge';
@@ -220,6 +221,10 @@ export default function PlanScreen() {
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
+  if (isGenerating) {
+    return <TripGeneratingLoader destination={planWizard.destination || undefined} />;
+  }
+
   return (
     <KeyboardAvoidingView
       style={[styles.container, { paddingTop: insets.top }]}

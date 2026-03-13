@@ -494,7 +494,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   } as ViewStyle,
   receipt: {
-    backgroundColor: '#FAF8F2',
+    backgroundColor: COLORS.receiptBg,
     padding: SPACING.lg,
     borderRadius: RADIUS.lg,
   } as ViewStyle,
@@ -505,14 +505,14 @@ const styles = StyleSheet.create({
   receiptBrand: {
     fontFamily: FONTS.mono,
     fontSize: 18,
-    color: '#1A1A1A',
+    color: COLORS.receiptText,
     letterSpacing: 4,
     marginBottom: 4,
   } as TextStyle,
   receiptTagline: {
     fontFamily: FONTS.body,
     fontSize: 12,
-    color: '#666',
+    color: COLORS.receiptMuted,
     textAlign: 'center',
   } as TextStyle,
 
@@ -520,7 +520,7 @@ const styles = StyleSheet.create({
   divider: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: '#CCC',
+    color: COLORS.receiptBorder,
     textAlign: 'center',
     marginVertical: SPACING.sm,
     letterSpacing: -0.5,
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: '#999',
+    color: COLORS.receiptDim,
     letterSpacing: 2,
     marginBottom: 4,
   } as TextStyle,
@@ -552,21 +552,21 @@ const styles = StyleSheet.create({
   rowLabel: {
     fontFamily: FONTS.mono,
     fontSize: 12,
-    color: '#333',
+    color: COLORS.receiptDark,
     flex: 1,
     marginRight: SPACING.sm,
   } as TextStyle,
   rowLabelDay: {
     fontSize: 11,
-    color: '#555',
+    color: COLORS.receiptMedium,
   } as TextStyle,
   rowValue: {
     fontFamily: FONTS.mono,
     fontSize: 12,
-    color: '#1A1A1A',
+    color: COLORS.receiptText,
   } as TextStyle,
   rowValueDay: {
-    color: '#444',
+    color: COLORS.receiptLight,
   } as TextStyle,
 
   // Total
@@ -579,14 +579,14 @@ const styles = StyleSheet.create({
   totalLabel: {
     fontFamily: FONTS.mono,
     fontSize: 16,
-    color: '#1A1A1A',
+    color: COLORS.receiptText,
     fontWeight: '700',
     letterSpacing: 2,
   } as TextStyle,
   totalValue: {
     fontFamily: FONTS.header,
     fontSize: 32,
-    color: '#1A1A1A',
+    color: COLORS.receiptText,
   } as TextStyle,
   perDayRow: {
     alignItems: 'flex-end',
@@ -594,14 +594,14 @@ const styles = StyleSheet.create({
   perDayText: {
     fontFamily: FONTS.mono,
     fontSize: 11,
-    color: '#888',
+    color: COLORS.receiptSoft,
   } as TextStyle,
 
   // Fine print
   finePrintLine: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: '#777',
+    color: COLORS.receiptSofter,
     lineHeight: 16,
   } as TextStyle,
 
@@ -614,13 +614,13 @@ const styles = StyleSheet.create({
   receiptFooterText: {
     fontFamily: FONTS.body,
     fontSize: 10,
-    color: '#AAA',
+    color: COLORS.receiptFaint,
     textAlign: 'center',
   } as TextStyle,
   barcode: {
     fontFamily: FONTS.mono,
     fontSize: 20,
-    color: '#DDD',
+    color: COLORS.receiptFaintBorder,
     letterSpacing: -2,
     marginTop: SPACING.sm,
   } as TextStyle,

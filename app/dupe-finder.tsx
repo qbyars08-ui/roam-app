@@ -428,7 +428,7 @@ function DupeCard({
           onLoad={() => setLoaded(true)}
         >
         <LinearGradient
-          colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.6)', 'rgba(8,15,10,0.98)']}
+          colors={[COLORS.overlaySoft, COLORS.overlay, COLORS.bgDarkGreenDeep]}
           locations={[0, 0.4, 1]}
           style={styles.dupeCardGradient}
         >
@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 16,
     color: COLORS.cream,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: COLORS.border,
     borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.md,
     paddingVertical: 14,

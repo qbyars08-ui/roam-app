@@ -260,7 +260,7 @@ export default function GlobeScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient
-        colors={[COLORS.bg, '#0a1812', COLORS.bg]}
+        colors={[COLORS.bg, COLORS.gradientForestLight, COLORS.bg]}
         style={styles.gradient}
       >
         {/* Header */}
@@ -327,7 +327,7 @@ export default function GlobeScreen() {
               ]}
             >
               <LinearGradient
-                colors={[COLORS.sage, '#5a9a6a']}
+                colors={[COLORS.sage, COLORS.sageDark]}
                 style={styles.spinGradient}
               >
                 <Text style={styles.spinButtonText}>
@@ -351,7 +351,7 @@ export default function GlobeScreen() {
                 ]}
               >
                 <LinearGradient
-                  colors={[COLORS.sage, '#5a9a6a']}
+                  colors={[COLORS.sage, COLORS.sageDark]}
                   style={styles.spinGradient}
                 >
                   <Text style={styles.spinButtonText}>

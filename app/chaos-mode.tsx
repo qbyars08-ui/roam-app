@@ -388,7 +388,7 @@ export default function ChaosModeScreen() {
                 ]}
               >
                 <LinearGradient
-                  colors={['#C0392B', '#E74C3C', '#C0392B']}
+                  colors={[COLORS.chaosGradientStart, COLORS.chaosGradientEnd, COLORS.chaosGradientStart]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.chaosButtonGradient}
@@ -472,7 +472,7 @@ export default function ChaosModeScreen() {
                   onLoad={() => setChaosCardLoaded(true)}
                 >
                 <LinearGradient
-                  colors={['rgba(192,57,43,0.4)', 'rgba(26,10,46,0.7)', 'rgba(8,15,10,0.95)']}
+                  colors={[COLORS.dangerSoft, COLORS.purpleOverlay, COLORS.bgDarkGreen]}
                   locations={[0, 0.5, 1]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
@@ -540,7 +540,7 @@ export default function ChaosModeScreen() {
                 onPress={handleShare}
               >
                 <LinearGradient
-                  colors={['#C0392B', '#E74C3C']}
+                  colors={[COLORS.chaosGradientStart, COLORS.chaosGradientEnd]}
                   style={styles.shareBtnGradient}
                 >
                   <Text style={styles.shareBtnText}>Send to the Group Chat</Text>
@@ -617,7 +617,7 @@ export default function ChaosModeScreen() {
               onPress={handleReset}
             >
               <View style={styles.rerollRow}>
-                <DiceIcon size={18} color="#C0392B" />
+                <DiceIcon size={18} color={COLORS.danger} />
                 <Text style={styles.rerollText}>Try another surprise</Text>
               </View>
             </Pressable>
@@ -670,7 +670,7 @@ const styles = StyleSheet.create({
   headerEyebrow: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: '#C0392B',
+    color: COLORS.danger,
     letterSpacing: 2,
     textAlign: 'center',
   } as TextStyle,
@@ -852,7 +852,7 @@ const styles = StyleSheet.create({
   chaosCardMode: {
     fontFamily: FONTS.mono,
     fontSize: 14,
-    color: '#C0392B',
+    color: COLORS.danger,
     letterSpacing: 4,
     fontWeight: '700',
     marginBottom: SPACING.md,
@@ -903,7 +903,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   } as ViewStyle,
   chaosCardDay: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: COLORS.border,
     borderRadius: RADIUS.sm,
     padding: SPACING.sm,
     flexDirection: 'row',
@@ -913,7 +913,7 @@ const styles = StyleSheet.create({
   chaosCardDayNum: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: '#C0392B',
+    color: COLORS.danger,
     letterSpacing: 1,
     width: 48,
   } as TextStyle,
@@ -939,17 +939,17 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   } as ViewStyle,
   chaosVibeChip: {
-    backgroundColor: 'rgba(192,57,43,0.15)',
+    backgroundColor: COLORS.dangerHighlight,
     borderRadius: RADIUS.full,
     paddingHorizontal: SPACING.sm,
     paddingVertical: 4,
     borderWidth: 1,
-    borderColor: 'rgba(192,57,43,0.3)',
+    borderColor: COLORS.dangerBorder,
   } as ViewStyle,
   chaosVibeText: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: '#E74C3C',
+    color: COLORS.dangerLight,
     letterSpacing: 1,
   } as TextStyle,
 
@@ -957,7 +957,7 @@ const styles = StyleSheet.create({
   chaosCardDare: {
     fontFamily: FONTS.header,
     fontSize: 22,
-    color: '#C0392B',
+    color: COLORS.danger,
     marginBottom: SPACING.sm,
   } as TextStyle,
   chaosCardFooter: {
@@ -1004,7 +1004,7 @@ const styles = StyleSheet.create({
   rerollBtn: {
     borderRadius: RADIUS.lg,
     borderWidth: 1,
-    borderColor: '#C0392B',
+    borderColor: COLORS.danger,
     paddingVertical: SPACING.md,
     alignItems: 'center',
     marginTop: SPACING.sm,
@@ -1017,6 +1017,6 @@ const styles = StyleSheet.create({
   rerollText: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 15,
-    color: '#C0392B',
+    color: COLORS.danger,
   } as TextStyle,
 });

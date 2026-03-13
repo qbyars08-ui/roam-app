@@ -58,6 +58,7 @@ import { exportCalendar } from '../lib/calendar';
 import { shareTrip, copyShareableLink } from '../lib/sharing';
 import { buildDayNarration } from '../lib/elevenlabs';
 import WeatherCard from '../components/features/WeatherCard';
+import FlightPriceCard from '../components/features/FlightPriceCard';
 import WeatherDayStrip from '../components/features/WeatherDayStrip';
 import RainAlternativesCard from '../components/features/RainAlternativesCard';
 import VenueCard from '../components/features/VenueCard';
@@ -1021,6 +1022,11 @@ export default function ItineraryScreen() {
               <WeatherCard forecast={weather} />
             </View>
           )}
+
+          {/* Flight search — Skyscanner affiliate */}
+          <View style={styles.section}>
+            <FlightPriceCard destination={trip.destination} placement="itinerary" />
+          </View>
 
           {/* City safety score (US State Dept) */}
           <View style={styles.section}>
