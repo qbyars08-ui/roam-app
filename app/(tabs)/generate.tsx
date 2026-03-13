@@ -18,6 +18,8 @@ import GenerateModeSelect from '../../components/generate/GenerateModeSelect';
 import GenerateQuickMode from '../../components/generate/GenerateQuickMode';
 import GenerateConversationMode from '../../components/generate/GenerateConversationMode';
 import { TripGeneratingLoader } from '../../components/premium/LoadingStates';
+import { recordGrowthEvent } from '../../lib/growth-hooks';
+import { evaluateTrigger } from '../../lib/smart-triggers';
 
 const RANDOM_CITIES = [
   'Tokyo', 'Bali', 'Lisbon', 'Mexico City', 'Bangkok', 'Barcelona', 'Cape Town',
@@ -100,15 +102,16 @@ export default function GenerateScreen() {
 
       addTrip(trip);
       setTripsThisMonth(tripsUsed);
+      recordGrowthEvent('trip_generated').catch(() => {});
+      evaluateTrigger('post_generation').catch(() => {});
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      // Brief pause so the user sees the loader complete before navigating
       await new Promise((r) => setTimeout(r, 800));
       if (!isMountedRef.current) return;
       router.push({ pathname: '/itinerary', params: { tripId: trip.id } });
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       if (err instanceof TripLimitReachedError) {
-        router.push('/paywall');
+        router.push({ pathname: '/paywall', params: { reason: 'limit' } });
       } else {
         setNetworkError(err instanceof Error ? err.message : 'Something went wrong. Try again.');
       }
@@ -164,15 +167,16 @@ export default function GenerateScreen() {
 
       addTrip(trip);
       setTripsThisMonth(tripsUsed);
+      recordGrowthEvent('trip_generated').catch(() => {});
+      evaluateTrigger('post_generation').catch(() => {});
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      // Brief pause so the user sees the loader complete before navigating
       await new Promise((r) => setTimeout(r, 800));
       if (!isMountedRef.current) return;
       router.push({ pathname: '/itinerary', params: { tripId: trip.id } });
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       if (err instanceof TripLimitReachedError) {
-        router.push('/paywall');
+        router.push({ pathname: '/paywall', params: { reason: 'limit' } });
       } else {
         setNetworkError(err instanceof Error ? err.message : 'Something went wrong. Try again.');
       }
