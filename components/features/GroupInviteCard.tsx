@@ -14,7 +14,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import ViewShot, { captureRef } from 'react-native-view-shot';
+import ViewShot, { captureRef } from '../../lib/view-shot';
 import * as Sharing from 'expo-sharing';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from '../../lib/haptics';
@@ -53,7 +53,7 @@ export default function GroupInviteCard({
   ownerName,
   onDismiss,
 }: GroupInviteCardProps) {
-  const cardRef = useRef<ViewShot>(null);
+  const cardRef = useRef<React.ElementRef<typeof ViewShot> | null>(null);
   const inviteUrl = `https://roamtravel.app/join/${inviteCode}`;
 
   const handleShareImage = useCallback(async () => {
@@ -99,7 +99,7 @@ export default function GroupInviteCard({
       {/* Capturable card */}
       <ViewShot ref={cardRef} options={{ format: 'png', quality: 1 }}>
         <LinearGradient
-          colors={['#0D1F1A', '#142B24', '#0D1F1A']}
+          colors={[COLORS.gradientCard, COLORS.gradientCardLight, COLORS.gradientCard]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.card}

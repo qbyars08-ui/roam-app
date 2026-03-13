@@ -18,7 +18,7 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import type { LucideIcon } from 'lucide-react-native';
+import type { ComponentType } from 'react';
 import {
   ChevronLeft,
   BookOpen,
@@ -200,7 +200,7 @@ export default function MemoryLaneScreen() {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <LinearGradient
-          colors={[COLORS.bg, '#0a1a12', COLORS.bg]}
+          colors={[COLORS.bg, COLORS.gradientForestDark, COLORS.bg]}
           style={StyleSheet.absoluteFill}
         />
         <Pressable style={styles.backBtn} onPress={() => router.back()}>
@@ -234,7 +234,7 @@ export default function MemoryLaneScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient
-        colors={[COLORS.bg, '#0a1a12', '#0d0f1a', COLORS.bg]}
+        colors={[COLORS.bg, COLORS.gradientForestDark, COLORS.gradientNavy, COLORS.bg]}
         locations={[0, 0.3, 0.7, 1]}
         style={StyleSheet.absoluteFill}
       />
@@ -312,7 +312,7 @@ export default function MemoryLaneScreen() {
             {onThisDayTrips.map((t) => (
               <View key={t.id} style={styles.nostalgiaCard}>
                 <LinearGradient
-                  colors={[COLORS.coralLight, 'rgba(192,57,43,0.05)']}
+                  colors={[COLORS.coralLight, COLORS.dangerSubtle]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={StyleSheet.absoluteFill}
@@ -404,7 +404,7 @@ export default function MemoryLaneScreen() {
                   <LinearGradient
                     colors={
                       earned
-                        ? [COLORS.goldMuted, 'rgba(201,168,76,0.08)']
+                        ? [COLORS.goldMuted, COLORS.goldSoft]
                         : [COLORS.bgGlass, COLORS.bgCard]
                     }
                     style={StyleSheet.absoluteFill}
@@ -473,7 +473,7 @@ export default function MemoryLaneScreen() {
                 {/* Trip card */}
                 <View style={styles.tripCard}>
                   <LinearGradient
-                    colors={[COLORS.bgGlass, 'rgba(255,255,255,0.02)']}
+                    colors={[COLORS.bgGlass, COLORS.whiteFaint]}
                     style={StyleSheet.absoluteFill}
                   />
 
@@ -621,7 +621,7 @@ const styles = StyleSheet.create({
   nostalgiaCard: {
     borderRadius: RADIUS.md,
     borderWidth: 1,
-    borderColor: 'rgba(192,57,43,0.3)',
+    borderColor: COLORS.dangerBorder,
     overflow: 'hidden',
     marginBottom: SPACING.sm,
   } as ViewStyle,

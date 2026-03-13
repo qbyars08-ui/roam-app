@@ -21,6 +21,7 @@ import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, BUDGETS, VIBES, FREE_TRIPS_PER_MONTH } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
 import { generateItinerary, TripLimitReachedError } from '../../lib/claude';
+import { isGuestUser } from '../../lib/guest';
 import { getMockItinerary } from '../../lib/mock-fallback';
 
 // ---------------------------------------------------------------------------
@@ -46,6 +47,7 @@ export default function GlobeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const addTrip = useAppStore((s) => s.addTrip);
+  const trips = useAppStore((s) => s.trips);
   const isPro = useAppStore((s) => s.isPro);
   const tripsThisMonth = useAppStore((s) => s.tripsThisMonth);
 
@@ -142,6 +144,10 @@ export default function GlobeScreen() {
 
   const handleGenerateTrip = useCallback(async () => {
     if (!picked) return;
+    if (isGuestUser() && trips.length >= 1) {
+      router.push({ pathname: '/paywall', params: { reason: 'limit', destination: picked.label } });
+      return;
+    }
     if (!isPro && tripsThisMonth >= FREE_TRIPS_PER_MONTH) {
       router.push({ pathname: '/paywall', params: { reason: 'limit' } });
       return;

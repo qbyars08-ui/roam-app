@@ -17,7 +17,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
-import ViewShot, { captureRef } from 'react-native-view-shot';
+import ViewShot, { captureRef } from '../lib/view-shot';
 import * as Sharing from 'expo-sharing';
 import { COLORS, FONTS, SPACING, RADIUS, BUDGETS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
@@ -120,7 +120,7 @@ export default function TripReceiptScreen() {
   const insets = useSafeAreaInsets();
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
   const trips = useAppStore((s) => s.trips);
-  const cardRef = useRef<ViewShot>(null);
+  const cardRef = useRef<React.ElementRef<typeof ViewShot> | null>(null);
 
   // Animations
   const fadeIn = useRef(new Animated.Value(0)).current;

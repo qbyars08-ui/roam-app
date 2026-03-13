@@ -22,14 +22,18 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { joinWaitlist, getGuestReferralUrl, getEmailFromUrl, getStoredRef, type WaitlistResult } from '../../lib/waitlist-guest';
 interface WaitlistCaptureModalProps {
   visible: boolean;
-  destination: string;
+  /** Optional — used in share message and CTA; when empty, "trips" / "Go back" */
+  destination?: string;
   onViewTrip: () => void;
+  /** Optional — skip/secondary CTA text (default: "View my trip first") */
+  skipLabel?: string;
 }
 
 export default function WaitlistCaptureModal({
   visible,
-  destination,
+  destination = '',
   onViewTrip,
+  skipLabel = 'View my trip first',
 }: WaitlistCaptureModalProps) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -62,7 +66,8 @@ export default function WaitlistCaptureModal({
   };
 
   const referralUrl = result ? getGuestReferralUrl(result.referralCode) : '';
-  const shareMessage = `I just got a ${destination} itinerary from ROAM — an AI that plans your whole trip in 30 seconds. Try it: ${referralUrl}`;
+  const destLabel = destination.trim() || 'trips';
+  const shareMessage = `I just got a ${destLabel} itinerary from ROAM — an AI that plans your whole trip in 30 seconds. Try it: ${referralUrl}`;
 
   const handleCopy = async () => {
     if (referralUrl) {
@@ -136,7 +141,7 @@ export default function WaitlistCaptureModal({
                   <Text style={styles.submitText}>{loading ? 'Joining...' : 'Join waitlist'}</Text>
                 </Pressable>
                 <Pressable onPress={onViewTrip} style={styles.skipBtn}>
-                  <Text style={styles.skipText}>View my trip first</Text>
+                  <Text style={styles.skipText}>{skipLabel}</Text>
                 </Pressable>
               </>
             ) : (
@@ -172,7 +177,9 @@ export default function WaitlistCaptureModal({
                   onPress={onViewTrip}
                   style={({ pressed }) => [styles.viewTripBtn, { opacity: pressed ? 0.9 : 1 }]}
                 >
-                  <Text style={styles.viewTripText}>View my {destination} trip</Text>
+                  <Text style={styles.viewTripText}>
+                    {destination.trim() ? `View my ${destination} trip` : 'Go back'}
+                  </Text>
                 </Pressable>
               </>
             )}
@@ -186,7 +193,7 @@ export default function WaitlistCaptureModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: COLORS.overlayDark,
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.lg,

@@ -164,7 +164,7 @@ export default function MoodDiscovery({ photoUrls: _photoUrls }: Props) {
                         resizeMode="cover"
                       >
                         <LinearGradient
-                          colors={['transparent', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.95)']}
+                          colors={['transparent', COLORS.overlayDark, COLORS.overlayDarkest]}
                           locations={[0.2, 0.5, 1]}
                           style={styles.resultGradient}
                         >
@@ -394,8 +394,8 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     backgroundColor: COLORS.bgGlass,
   } as ViewStyle,
-  crowdLow: { backgroundColor: 'rgba(74,222,128,0.2)' } as ViewStyle,
-  crowdMod: { backgroundColor: 'rgba(245,158,11,0.2)' } as ViewStyle,
+  crowdLow: { backgroundColor: COLORS.successLight } as ViewStyle,
+  crowdMod: { backgroundColor: COLORS.warningHighlight } as ViewStyle,
   crowdHigh: { backgroundColor: COLORS.coralLight } as ViewStyle,
   crowdPeak: { backgroundColor: COLORS.coralBorder } as ViewStyle,
   crowdBadgeText: {

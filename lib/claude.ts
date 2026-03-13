@@ -2,7 +2,7 @@
 // ROAM — Claude AI Integration (via Supabase Edge Function proxy)
 // =============================================================================
 
-import { Platform } from 'react-native';
+// Platform import removed — direct API calls eliminated for security
 import { supabase } from './supabase';
 import { parseItinerary, type Itinerary } from './types/itinerary';
 import { type TravelProfile, profileToPromptString } from './types/travel-profile';
@@ -132,43 +132,11 @@ export class TripLimitReachedError extends Error {
 }
 
 // ---------------------------------------------------------------------------
-// Direct Anthropic API call — used as fallback when edge function unavailable
+// callClaude — all AI calls route through Supabase edge function (secure)
 // ---------------------------------------------------------------------------
-
-const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY ?? process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? '';
-
-async function callAnthropicDirect(
-  systemPrompt: string,
-  userMessage: string
-): Promise<string> {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_KEY,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userMessage }],
-    }),
-  });
-
-  if (!res.ok) {
-    const errBody = await res.text();
-    throw new Error(`Anthropic API ${res.status}: ${errBody}`);
-  }
-
-  const json = await res.json();
-  const textBlock = json.content?.find((b: { type: string }) => b.type === 'text');
-  return textBlock?.text ?? '';
-}
-
-// ---------------------------------------------------------------------------
-// callClaude — try Supabase edge function, fall back to direct API
+// SECURITY: Direct Anthropic API calls removed. The API key must NEVER be
+// bundled in client code. All requests go through claude-proxy edge function
+// which validates JWTs, enforces rate limits, and keeps the key server-side.
 // ---------------------------------------------------------------------------
 
 export async function callClaude(
@@ -177,15 +145,7 @@ export async function callClaude(
   /** If true, this counts as a trip generation (rate-limited) */
   isTripGeneration = false
 ): Promise<ClaudeResponse> {
-  // On web, never use direct API — keys would be bundled and exposed.
-  // In dev (native), direct API avoids edge function when not deployed.
-  if (Platform.OS !== 'web' && ANTHROPIC_KEY) {
-    console.info('[claude] Using direct Anthropic API');
-    const content = await callAnthropicDirect(systemPrompt, userMessage);
-    return { content, tripsUsed: 0, limit: 99 };
-  }
-
-  // Production path — Supabase edge function
+  // All calls go through the secure edge function proxy
   const { data, error } = await supabase.functions.invoke('claude-proxy', {
     body: {
       system: systemPrompt,

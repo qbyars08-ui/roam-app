@@ -17,7 +17,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
-import ViewShot, { captureRef } from 'react-native-view-shot';
+import ViewShot, { captureRef } from '../lib/view-shot';
 import * as Sharing from 'expo-sharing';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import {
@@ -37,7 +37,7 @@ export default function TravelPersonaScreen() {
   const [persona, setPersona] = useState<TravelPersona | null>(null);
   const [loading, setLoading] = useState(true);
   const [revealPhase, setRevealPhase] = useState(0);
-  const cardRef = useRef<ViewShot>(null);
+  const cardRef = useRef<React.ElementRef<typeof ViewShot> | null>(null);
 
   // Animations
   const fadeIn = useRef(new Animated.Value(0)).current;

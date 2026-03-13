@@ -22,7 +22,7 @@ export default function TripSoundtrackCard({ destination }: TripSoundtrackCardPr
         openSpotifySearch(destination);
       }}
     >
-      <Music size={24} color="#1DB954" strokeWidth={2} />
+      <Music size={24} color={COLORS.spotifyGreen} strokeWidth={2} />
       <View style={styles.content}>
         <Text style={styles.title}>Trip Soundtrack</Text>
         <Text style={styles.sub}>

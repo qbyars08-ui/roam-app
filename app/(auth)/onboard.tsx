@@ -79,7 +79,7 @@ function StepDestination({
               resizeMode="cover"
             >
               <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.8)']}
+                colors={['transparent', COLORS.overlayDeeper]}
                 style={StyleSheet.absoluteFill}
               />
               <Text style={styles.destLabel}>{d.label}</Text>
@@ -387,7 +387,7 @@ export default function OnboardScreen() {
     await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
     if (DEV) {
       setSession({ user: { id: 'dev-user', email: 'dev@roam.app' } } as any);
-    } else {
+    } else if (!session) {
       const { data, error } = await supabase.auth.signInAnonymously();
       if (!error && data.session) setSession(data.session);
     }
@@ -395,7 +395,7 @@ export default function OnboardScreen() {
     if (tripId) {
       setTimeout(() => router.push({ pathname: '/itinerary', params: { tripId } }), 300);
     }
-  }, [tripId, setSession, router]);
+  }, [tripId, session, setSession, router]);
 
   useEffect(() => {
     if (step === 1 && destination) {
@@ -420,7 +420,7 @@ export default function OnboardScreen() {
           resizeMode="cover"
         >
           <LinearGradient
-            colors={['rgba(8,15,10,0.6)', 'rgba(8,15,10,0.92)', COLORS.bg]}
+            colors={[COLORS.bgDarkGreenSoft, COLORS.bgDarkGreenMedium, COLORS.bg]}
             style={StyleSheet.absoluteFill}
             locations={[0, 0.5, 1]}
           />
@@ -438,8 +438,8 @@ export default function OnboardScreen() {
     );
   }
 
-  // Guest (no session): show waitlist capture modal instead of signup
-  if (isGuest) {
+  // Guest or anonymous: show waitlist capture modal instead of signup
+  if (isGuestLike) {
     return (
       <View style={styles.container}>
         <View style={[styles.step, { paddingTop: insets.top, justifyContent: 'center' }]}>
@@ -527,7 +527,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodySemiBold,
     fontSize: 15,
     color: COLORS.cream,
-    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowColor: COLORS.overlayDeeper,
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   } as TextStyle,

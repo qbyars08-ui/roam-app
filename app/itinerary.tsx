@@ -29,9 +29,14 @@ const Marker = isWeb ? View : require('react-native-maps').Marker;
 const Polyline = isWeb ? View : require('react-native-maps').Polyline;
 const Circle = isWeb ? View : require('react-native-maps').Circle;
 const PROVIDER_GOOGLE = isWeb ? undefined : require('react-native-maps').PROVIDER_GOOGLE;
-import DraggableFlatList, {
-  type RenderItemParams,
-} from 'react-native-draggable-flatlist';
+// DraggableFlatList crashes on web — lazy import on native only
+const DraggableFlatList = Platform.OS === 'web'
+  ? ({ data, renderItem, keyExtractor, ...rest }: any) => {
+      const { FlatList } = require('react-native');
+      return <FlatList data={data} renderItem={renderItem} keyExtractor={keyExtractor} {...rest} />;
+    }
+  : require('react-native-draggable-flatlist').default;
+type RenderItemParams<T> = { item: T; drag: () => void; isActive: boolean };
 import * as Haptics from '../lib/haptics';
 
 import { COLORS, FONTS, SPACING, RADIUS, AFFILIATES } from '../lib/constants';
@@ -1151,7 +1156,7 @@ export default function ItineraryScreen() {
                 <View style={styles.draggableWrapper}>
                   <DraggableFlatList
                     data={draggableActivities}
-                    keyExtractor={(item) => item.key}
+                    keyExtractor={(item: DraggableActivity) => item.key}
                     onDragEnd={handleReorder}
                     scrollEnabled={false}
                     renderItem={({

@@ -18,7 +18,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
-import ViewShot, { captureRef } from 'react-native-view-shot';
+import ViewShot, { captureRef } from '../lib/view-shot';
 import * as Sharing from 'expo-sharing';
 import { COLORS, FONTS, SPACING, RADIUS, BUDGETS, VIBES } from '../lib/constants';
 import {
@@ -80,7 +80,7 @@ export default function TripWrappedScreen() {
   const [review, setReview] = useState<YearInReview | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeCard, setActiveCard] = useState(0);
-  const cardRefs = useRef<(ViewShot | null)[]>([]);
+  const cardRefs = useRef<(React.ElementRef<typeof ViewShot> | null)[]>([]);
   const scrollRef = useRef<ScrollView>(null);
 
   // Animations
@@ -241,7 +241,7 @@ export default function TripWrappedScreen() {
         >
           {/* Card 1: Overview */}
           <ViewShot
-            ref={(ref) => { cardRefs.current[0] = ref; }}
+            ref={(ref: React.ElementRef<typeof ViewShot> | null) => { cardRefs.current[0] = ref; }}
             options={{ format: 'png', quality: 1 }}
           >
             <LinearGradient
@@ -273,7 +273,7 @@ export default function TripWrappedScreen() {
 
           {/* Card 2: Stats Deep Dive */}
           <ViewShot
-            ref={(ref) => { cardRefs.current[1] = ref; }}
+            ref={(ref: React.ElementRef<typeof ViewShot> | null) => { cardRefs.current[1] = ref; }}
             options={{ format: 'png', quality: 1 }}
           >
             <LinearGradient
@@ -311,7 +311,7 @@ export default function TripWrappedScreen() {
 
           {/* Card 3: Travel Personality */}
           <ViewShot
-            ref={(ref) => { cardRefs.current[2] = ref; }}
+            ref={(ref: React.ElementRef<typeof ViewShot> | null) => { cardRefs.current[2] = ref; }}
             options={{ format: 'png', quality: 1 }}
           >
             <LinearGradient
@@ -364,7 +364,7 @@ export default function TripWrappedScreen() {
 
           {/* Card 4: Top Vibes */}
           <ViewShot
-            ref={(ref) => { cardRefs.current[3] = ref; }}
+            ref={(ref: React.ElementRef<typeof ViewShot> | null) => { cardRefs.current[3] = ref; }}
             options={{ format: 'png', quality: 1 }}
           >
             <LinearGradient
@@ -417,7 +417,7 @@ export default function TripWrappedScreen() {
 
           {/* Card 5: Next Year CTA */}
           <ViewShot
-            ref={(ref) => { cardRefs.current[4] = ref; }}
+            ref={(ref: React.ElementRef<typeof ViewShot> | null) => { cardRefs.current[4] = ref; }}
             options={{ format: 'png', quality: 1 }}
           >
             <LinearGradient

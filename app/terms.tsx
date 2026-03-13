@@ -119,16 +119,16 @@ export default function TermsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  backBtn: { marginRight: SPACING.sm },
-  headerTitle: { fontFamily: FONTS.header, fontSize: 20, color: COLORS.cream },
-  scroll: { flex: 1 },
-  scrollContent: { padding: SPACING.lg },
-  title: { fontFamily: FONTS.header, fontSize: 24, color: COLORS.cream, marginBottom: SPACING.xs },
-  meta: { fontFamily: FONTS.mono, fontSize: 12, color: COLORS.creamMuted, marginBottom: SPACING.lg },
-  section: { marginBottom: SPACING.xl },
-  sectionTitle: { fontFamily: FONTS.bodySemiBold, fontSize: 16, color: COLORS.sage, marginBottom: SPACING.sm },
-  para: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.creamMuted, lineHeight: 22, marginBottom: SPACING.sm },
-  bullet: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.creamMuted, lineHeight: 22, marginBottom: 4 },
+  container: { flex: 1, backgroundColor: COLORS.bg } as ViewStyle,
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.border } as ViewStyle,
+  backBtn: { marginRight: SPACING.sm } as ViewStyle,
+  headerTitle: { fontFamily: FONTS.header, fontSize: 20, color: COLORS.cream } as TextStyle,
+  scroll: { flex: 1 } as ViewStyle,
+  scrollContent: { padding: SPACING.lg } as ViewStyle,
+  title: { fontFamily: FONTS.header, fontSize: 24, color: COLORS.cream, marginBottom: SPACING.xs } as TextStyle,
+  meta: { fontFamily: FONTS.mono, fontSize: 12, color: COLORS.creamMuted, marginBottom: SPACING.lg } as TextStyle,
+  section: { marginBottom: SPACING.xl } as ViewStyle,
+  sectionTitle: { fontFamily: FONTS.bodySemiBold, fontSize: 16, color: COLORS.sage, marginBottom: SPACING.sm } as TextStyle,
+  para: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.creamMuted, lineHeight: 22, marginBottom: SPACING.sm } as TextStyle,
+  bullet: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.creamMuted, lineHeight: 22, marginBottom: 4 } as TextStyle,
 });

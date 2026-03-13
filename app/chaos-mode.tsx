@@ -19,7 +19,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
-import ViewShot, { captureRef } from 'react-native-view-shot';
+import ViewShot, { captureRef } from '../lib/view-shot';
 import { Share as RNShare } from 'react-native';
 import * as ExpoSharing from 'expo-sharing';
 import {
@@ -38,6 +38,7 @@ import { useAppStore } from '../lib/store';
 import { getDestinationPhoto } from '../lib/photos';
 import ShimmerOverlay from '../components/ui/ShimmerOverlay';
 import { generateItinerary, TripLimitReachedError } from '../lib/claude';
+import { isGuestUser } from '../lib/guest';
 import { type Itinerary } from '../lib/types/itinerary';
 import { saveChaosDare, getDareShareUrl, getDareShareMessage } from '../lib/chaos-dare';
 
@@ -99,6 +100,7 @@ export default function ChaosModeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const addTrip = useAppStore((s) => s.addTrip);
+  const trips = useAppStore((s) => s.trips);
   const isPro = useAppStore((s) => s.isPro);
   const tripsThisMonth = useAppStore((s) => s.tripsThisMonth);
 
@@ -113,7 +115,7 @@ export default function ChaosModeScreen() {
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
   const [chaosCardLoaded, setChaosCardLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const cardRef = useRef<ViewShot>(null);
+  const cardRef = useRef<React.ElementRef<typeof ViewShot> | null>(null);
 
   // Animations
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -174,6 +176,10 @@ export default function ChaosModeScreen() {
   }, [phase]);
 
   const handleChaos = useCallback(async () => {
+    if (isGuestUser() && trips.length >= 1) {
+      router.push({ pathname: '/paywall', params: { reason: 'limit' } });
+      return;
+    }
     if (!isPro && tripsThisMonth >= FREE_TRIPS_PER_MONTH) {
       router.push({ pathname: '/paywall', params: { reason: 'limit' } });
       return;
@@ -267,7 +273,7 @@ export default function ChaosModeScreen() {
       setPhase('idle');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
-  }, [addTrip, revealFade, revealScale, resultFade, resultSlide, isPro, tripsThisMonth, router]);
+  }, [addTrip, revealFade, revealScale, resultFade, resultSlide, isPro, tripsThisMonth, trips.length, router]);
 
   const handleShare = useCallback(async () => {
     if (!cardRef.current) return;

@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingVertical: SPACING.xs + 2,
     borderRadius: RADIUS.sm,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: COLORS.bgCard,
     borderWidth: 1,
     borderColor: COLORS.border,
   } as ViewStyle,
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
     color: COLORS.creamDim,
   } as TextStyle,
   voteCountActive: {
-    color: 'rgba(8,15,10,0.6)',
+    color: COLORS.bgDarkGreenSoft,
   } as TextStyle,
   suggestRow: {
     flexDirection: 'row',

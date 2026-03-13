@@ -9,13 +9,8 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {
-  useFonts,
-  CormorantGaramond_700Bold,
-  CormorantGaramond_600SemiBold,
-} from '@expo-google-fonts/cormorant-garamond';
-import { DMSans_400Regular, DMSans_500Medium, DMSans_700Bold } from '@expo-google-fonts/dm-sans';
-import { DMMono_400Regular, DMMono_500Medium } from '@expo-google-fonts/dm-mono';
+// Self-hosted fonts — only the 7 weights we actually use (1.5MB vs 6.5MB)
+import { useFonts } from 'expo-font';
 
 import { supabase } from '../lib/supabase';
 import { useAppStore, checkActiveTripOnLoad, loadPersistedTrips, loadPersistedPets, loadPersistedTravelProfile } from '../lib/store';
@@ -28,6 +23,7 @@ import { COLORS } from '../lib/constants';
 import { getSharedTrip } from '../lib/sharing';
 import { trackOnboardingComplete } from '../lib/ab-test';
 import { captureRefOnLoad } from '../lib/waitlist-guest';
+import { tryRestoreGuestSession, clearGuestMode, isGuestSession } from '../lib/guest';
 import { checkStorageVersion } from '../lib/storage-version';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
 import OfflineBanner from '../components/ui/OfflineBanner';
@@ -84,13 +80,13 @@ export default function RootLayout() {
 
   // Load fonts
   const [fontsLoaded] = useFonts({
-    CormorantGaramond_700Bold,
-    CormorantGaramond_600SemiBold,
-    DMSans_400Regular,
-    DMSans_500Medium,
-    DMSans_700Bold,
-    DMMono_400Regular,
-    DMMono_500Medium,
+    CormorantGaramond_700Bold: require('../assets/fonts/CormorantGaramond_700Bold.ttf'),
+    CormorantGaramond_600SemiBold: require('../assets/fonts/CormorantGaramond_600SemiBold.ttf'),
+    DMSans_400Regular: require('../assets/fonts/DMSans_400Regular.ttf'),
+    DMSans_500Medium: require('../assets/fonts/DMSans_500Medium.ttf'),
+    DMSans_700Bold: require('../assets/fonts/DMSans_700Bold.ttf'),
+    DMMono_400Regular: require('../assets/fonts/DMMono_400Regular.ttf'),
+    DMMono_500Medium: require('../assets/fonts/DMMono_500Medium.ttf'),
   });
 
   // Bootstrap auth session + restore persisted data
@@ -108,18 +104,26 @@ export default function RootLayout() {
     ]).catch(() => {});
 
     // Get initial session (handle errors gracefully for dev/preview)
-    // Don't overwrite guest sessions — they're set by Continue as guest on web
+    // Don't overwrite guest sessions — they're set by Browse first / Continue as guest
     supabase.auth
       .getSession()
-      .then(({ data: { session: initialSession } }) => {
+      .then(async ({ data: { session: initialSession } }) => {
         const current = useAppStore.getState().session;
         if (current?.user?.id?.startsWith?.('guest-')) return;
-        setSession(initialSession);
+        if (initialSession && !isGuestSession(initialSession)) {
+          setSession(initialSession);
+          clearGuestMode().catch(() => {});
+          return;
+        }
+        // No real session — try restore persisted guest (survives page refresh)
+        const restored = await tryRestoreGuestSession();
+        if (!restored) setSession(initialSession);
       })
-      .catch(() => {
+      .catch(async () => {
         const current = useAppStore.getState().session;
         if (current?.user?.id?.startsWith?.('guest-')) return;
-        setSession(null);
+        const restored = await tryRestoreGuestSession();
+        if (!restored) setSession(null);
       })
       .finally(() => {
         setIsReady(true);
@@ -129,11 +133,12 @@ export default function RootLayout() {
     let subscription: { unsubscribe: () => void } | undefined;
     try {
       const result = supabase.auth.onAuthStateChange((_event, newSession) => {
-        if (newSession) {
+        if (newSession && !isGuestSession(newSession)) {
+          clearGuestMode().catch(() => {});
           setSession(newSession);
           AsyncStorage.setItem('@roam/onboarding_complete', 'true').catch(() => {});
           trackOnboardingComplete(newSession.user.id).catch(() => {});
-        } else {
+        } else if (!newSession) {
           const current = useAppStore.getState().session;
           if (current?.user?.id?.startsWith?.('guest-')) return;
           logoutRevenueCat().catch(() => {});

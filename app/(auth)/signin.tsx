@@ -20,6 +20,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 import { useAppStore } from '../../lib/store';
+import { enterGuestMode } from '../../lib/guest';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import Button from '../../components/ui/Button';
 
@@ -46,9 +47,7 @@ export default function SignInScreen() {
         return;
       }
     } catch {
-      const guestId = `guest-web-${Date.now()}`;
-      setSession({ user: { id: guestId, email: null }, access_token: '', refresh_token: '' } as any);
-      await AsyncStorage.setItem('@roam/onboarding_complete', 'true');
+      await enterGuestMode();
       router.replace('/(tabs)');
     }
   };

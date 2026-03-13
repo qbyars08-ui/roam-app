@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "scripts": {
+    "pre-push": "tsc --noEmit && npx expo export --platform web",
     "profile": "expo start --dev-client",
     "start": "expo start",
     "build:web": "npx expo export --platform web && echo '/*  /index.html  200' > dist/_redirects",

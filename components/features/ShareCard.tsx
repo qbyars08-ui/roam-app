@@ -15,7 +15,7 @@ import {
   type ImageStyle,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { captureRef } from 'react-native-view-shot';
+import { captureRef } from '../../lib/view-shot';
 import * as Sharing from 'expo-sharing';
 import { COLORS, FONTS, SPACING, RADIUS, BUDGETS } from '../../lib/constants';
 import BreathingLine from '../ui/BreathingLine';

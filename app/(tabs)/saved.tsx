@@ -26,6 +26,7 @@ import { COLORS, FONTS, SPACING, RADIUS, BUDGETS } from '../../lib/constants';
 import { getDestinationPhoto, BACKUP_FALLBACK } from '../../lib/photos';
 import ShimmerOverlay from '../../components/ui/ShimmerOverlay';
 import { useAppStore, type Trip } from '../../lib/store';
+import { isGuestUser } from '../../lib/guest';
 import { getMyGroups, type TripGroup } from '../../lib/group-trips';
 import { trackItineraryOutcome } from '../../lib/ai-improvement';
 import Button from '../../components/ui/Button';

@@ -22,6 +22,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Check, X } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
+import { isGuestUser } from '../lib/guest';
+import WaitlistCaptureModal from '../components/features/WaitlistCaptureModal';
 import {
   getOfferings,
   purchasePro,
@@ -105,9 +107,10 @@ function buildTiers(monthlyPrice: string, annualPrice: string): Tier[] {
 export default function PaywallScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const params = useLocalSearchParams<{ reason?: string }>();
+  const params = useLocalSearchParams<{ reason?: string; destination?: string }>();
   const setIsPro = useAppStore((s) => s.setIsPro);
   const session = useAppStore((s) => s.session);
+  const isGuest = isGuestUser();
 
   const [selectedTier, setSelectedTier] = useState<'pro' | 'global'>('global');
   const [loading, setLoading] = useState(false);
@@ -160,6 +163,29 @@ export default function PaywallScreen() {
       router.replace('/(tabs)');
     }
   }, [router]);
+
+  // Guest: show waitlist email capture instead of purchase tiers
+  if (isGuest) {
+    return (
+      <View style={[styles.screen, { paddingTop: insets.top }]}>
+        <Pressable
+          onPress={handleClose}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="Close"
+          style={({ pressed }) => [styles.closeBtn, { top: insets.top + SPACING.xs, opacity: pressed ? 0.6 : 1 }]}
+        >
+          <X size={20} color={COLORS.cream} strokeWidth={2} />
+        </Pressable>
+        <WaitlistCaptureModal
+          visible
+          destination={params.destination ?? ''}
+          onViewTrip={handleClose}
+          skipLabel="Maybe later"
+        />
+      </View>
+    );
+  }
 
   const handlePurchase = useCallback(async () => {
     if (loading) return;

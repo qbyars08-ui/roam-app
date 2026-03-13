@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../../lib/haptics';
 import { supabase } from '../../lib/supabase';
 import { useAppStore } from '../../lib/store';
+import { enterGuestMode } from '../../lib/guest';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 
 const DEV = __DEV__;
@@ -141,10 +142,7 @@ export default function SignUpScreen() {
         return;
       }
     } catch {
-      // Anonymous sign-in disabled — use fake guest session (browse only, trip gen may fail)
-      const guestId = `guest-web-${Date.now()}`;
-      setSession({ user: { id: guestId, email: null }, access_token: '', refresh_token: '' } as any);
-      await AsyncStorage.setItem('@roam/onboarding_complete', 'true');
+      await enterGuestMode();
       router.replace('/(tabs)');
     }
   };
@@ -238,7 +236,7 @@ export default function SignUpScreen() {
           </Text>
         </Animated.View>
 
-        {(isWeb || DEV) && (
+        {(
           <Pressable
             onPress={handleContinueAsGuest}
             accessibilityRole="button"

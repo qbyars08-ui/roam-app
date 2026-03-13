@@ -110,7 +110,7 @@ export default function WorldMap({ onCountryPress, stamps: stampsProp }: WorldMa
                 cx={x}
                 cy={y}
                 r={r}
-                fill={visited ? COLORS.sage : 'rgba(255,255,255,0.08)'}
+                fill={visited ? COLORS.sage : COLORS.whiteFaintBorder}
                 stroke={visited ? COLORS.sage : 'transparent'}
                 strokeWidth={1}
               />
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
   } as TextStyle,
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: COLORS.overlay,
     justifyContent: 'center',
     alignItems: 'center',
   } as ViewStyle,

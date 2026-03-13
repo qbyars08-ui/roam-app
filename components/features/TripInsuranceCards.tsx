@@ -57,14 +57,14 @@ export default function TripInsuranceCards({ destination }: TripInsuranceCardsPr
       <InsuranceCard
         name="Safetywing"
         tagline="Nomad insurance — global coverage from ~$1/day"
-        gradientColors={['#2563eb', '#3b82f6']}
+        gradientColors={[COLORS.blueGradientStart, COLORS.blueGradientEnd]}
         url={SAFETYWING_URL(destination)}
         onPress={() => {}}
       />
       <InsuranceCard
         name="World Nomads"
         tagline="Adventure & medical — 150+ activities covered"
-        gradientColors={['#059669', '#10b981']}
+        gradientColors={[COLORS.emeraldStart, COLORS.emeraldEnd]}
         url={WORLDNOMADS_URL(destination)}
         onPress={() => {}}
       />

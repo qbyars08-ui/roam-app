@@ -20,7 +20,7 @@ import {
   type ImageStyle,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { captureRef } from 'react-native-view-shot';
+import { captureRef } from '../../lib/view-shot';
 import * as Sharing from 'expo-sharing';
 import * as Haptics from '../../lib/haptics';
 
@@ -90,7 +90,7 @@ function ExportButton({
       ]}
     >
       <LinearGradient
-        colors={[COLORS.gold, '#B8943F']}
+        colors={[COLORS.gold, COLORS.goldDark]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={exportStyles.gradient}
@@ -181,7 +181,7 @@ export function TripRevealCard({ itinerary, destination, heroPhotoUrl }: TripRev
           resizeMode="cover"
         >
           <LinearGradient
-            colors={['rgba(8,15,10,0.3)', 'rgba(8,15,10,0.6)', 'rgba(8,15,10,0.95)']}
+            colors={[COLORS.bgDarkGreenFaint, COLORS.bgDarkGreenSoft, COLORS.bgDarkGreen]}
             locations={[0, 0.4, 1]}
             style={revealStyles.overlay}
           >
@@ -298,8 +298,8 @@ export function CostBreakdownCard({
   const categories = [
     { label: 'Accommodation', value: breakdown.accommodation, color: COLORS.gold },
     { label: 'Food', value: breakdown.food, color: COLORS.sage },
-    { label: 'Activities', value: breakdown.activities, color: '#E8614A' },
-    { label: 'Transport', value: breakdown.transportation, color: '#5B9BD5' },
+    { label: 'Activities', value: breakdown.activities, color: COLORS.coral },
+    { label: 'Transport', value: breakdown.transportation, color: COLORS.blueAccent },
     { label: 'Buffer (10%)', value: `$${buffer}`, color: COLORS.creamDimLight },
   ];
 
@@ -314,7 +314,7 @@ export function CostBreakdownCard({
           resizeMode="cover"
         >
           <LinearGradient
-            colors={['rgba(8,15,10,0.85)', 'rgba(8,15,10,0.92)', 'rgba(8,15,10,0.97)']}
+            colors={[COLORS.bgDarkGreenOverlay, COLORS.bgDarkGreenMedium, COLORS.bgDarkGreenDeeper]}
             style={costStyles.overlay}
           >
             {/* Header */}
@@ -444,7 +444,7 @@ export function AiVsRealityCard({
           resizeMode="cover"
         >
           <LinearGradient
-            colors={['rgba(8,15,10,0.88)', 'rgba(8,15,10,0.95)']}
+            colors={[COLORS.bgDarkGreen88, COLORS.bgDarkGreen]}
             style={vsStyles.overlay}
           >
             {/* Header */}
@@ -536,7 +536,7 @@ const watermarkStyles = StyleSheet.create({
   text: {
     fontFamily: FONTS.header,
     fontSize: 14,
-    color: 'rgba(201,168,76,0.4)',
+    color: COLORS.goldDim,
     letterSpacing: 3,
   } as TextStyle,
 });
@@ -556,7 +556,7 @@ const revealStyles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: COLORS.whiteFaintBorder,
   } as ViewStyle,
   bg: {
     flex: 1,
@@ -591,7 +591,7 @@ const revealStyles = StyleSheet.create({
     flex: 1,
     height: 3,
     borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: COLORS.whiteMuted,
   } as ViewStyle,
   dotActive: {
     backgroundColor: COLORS.gold,
@@ -655,10 +655,10 @@ const revealStyles = StyleSheet.create({
   } as ViewStyle,
   slotChip: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: COLORS.border,
     borderRadius: RADIUS.sm,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: COLORS.whiteFaintBorder,
     padding: SPACING.sm,
     alignItems: 'center',
   } as ViewStyle,
@@ -676,9 +676,9 @@ const revealStyles = StyleSheet.create({
     textAlign: 'center',
   } as TextStyle,
   costBadge: {
-    backgroundColor: 'rgba(201,168,76,0.15)',
+    backgroundColor: COLORS.goldHighlight,
     borderWidth: 1,
-    borderColor: 'rgba(201,168,76,0.3)',
+    borderColor: COLORS.goldBorderStrong,
     borderRadius: RADIUS.full,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
@@ -727,7 +727,7 @@ const costStyles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: COLORS.whiteFaintBorder,
   } as ViewStyle,
   bg: {
     flex: 1,
@@ -785,7 +785,7 @@ const costStyles = StyleSheet.create({
   barTrack: {
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: COLORS.border,
     overflow: 'hidden',
   } as ViewStyle,
   barFill: {
@@ -794,7 +794,7 @@ const costStyles = StyleSheet.create({
   } as ViewStyle,
   dailyAvg: {
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.08)',
+    borderTopColor: COLORS.whiteFaintBorder,
     paddingTop: SPACING.sm,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -828,7 +828,7 @@ const vsStyles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: COLORS.whiteFaintBorder,
   } as ViewStyle,
   bg: {
     flex: 1,
@@ -861,18 +861,18 @@ const vsStyles = StyleSheet.create({
     flex: 1,
     paddingBottom: SPACING.xs,
     borderBottomWidth: 2,
-    borderBottomColor: 'rgba(192,57,43,0.5)',
+    borderBottomColor: COLORS.dangerMedium,
   } as ViewStyle,
   colHeaderRight: {
     flex: 1,
     paddingBottom: SPACING.xs,
     borderBottomWidth: 2,
-    borderBottomColor: 'rgba(201,168,76,0.5)',
+    borderBottomColor: COLORS.goldMutedDim,
   } as ViewStyle,
   colLabel: {
     fontFamily: FONTS.mono,
     fontSize: 9,
-    color: 'rgba(192,57,43,0.8)',
+    color: COLORS.dangerMuted,
     letterSpacing: 1.5,
   } as TextStyle,
   colLabelGold: {
@@ -896,27 +896,27 @@ const vsStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 6,
-    backgroundColor: 'rgba(192,57,43,0.08)',
+    backgroundColor: COLORS.dangerFaint,
     borderRadius: RADIUS.sm,
     padding: SPACING.sm,
     borderWidth: 1,
-    borderColor: 'rgba(192,57,43,0.15)',
+    borderColor: COLORS.dangerFaintBorder,
   } as ViewStyle,
   cellRight: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 6,
-    backgroundColor: 'rgba(201,168,76,0.08)',
+    backgroundColor: COLORS.goldSoft,
     borderRadius: RADIUS.sm,
     padding: SPACING.sm,
     borderWidth: 1,
-    borderColor: 'rgba(201,168,76,0.15)',
+    borderColor: COLORS.goldHighlight,
   } as ViewStyle,
   rowDivider: {
     width: 1,
     alignSelf: 'stretch',
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: COLORS.border,
   } as ViewStyle,
   xIcon: {
     fontFamily: FONTS.mono,

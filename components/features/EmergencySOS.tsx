@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: '#B91C1C',
+    backgroundColor: COLORS.emergencyRed,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 999,
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
   } as TextStyle,
 
   sosButton: {
-    backgroundColor: '#B91C1C',
+    backgroundColor: COLORS.emergencyRed,
     borderRadius: RADIUS.lg,
     paddingVertical: SPACING.lg,
     alignItems: 'center',
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
   sosHint: {
     fontFamily: FONTS.mono,
     fontSize: 11,
-    color: 'rgba(255,255,255,0.6)',
+    color: COLORS.creamSoft,
     marginTop: SPACING.xs,
     letterSpacing: 0.5,
   } as TextStyle,

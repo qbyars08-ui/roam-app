@@ -21,6 +21,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Heart, Users, ChevronRight } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, BUDGETS, VIBES, FREE_TRIPS_PER_MONTH } from '../lib/constants';
 import { useAppStore } from '../lib/store';
+import { isGuestUser } from '../lib/guest';
 import { mergeProfiles } from '../lib/couples-overlap';
 import { generateItinerary } from '../lib/claude';
 import { DEFAULT_TRAVEL_PROFILE } from '../lib/types/travel-profile';
@@ -34,6 +35,7 @@ export default function RoamForDatesScreen() {
   const myProfile = useAppStore((s) => s.travelProfile);
   const hasProfile = useAppStore((s) => s.hasCompletedProfile);
   const addTrip = useAppStore((s) => s.addTrip);
+  const trips = useAppStore((s) => s.trips);
   const isPro = useAppStore((s) => s.isPro);
   const tripsThisMonth = useAppStore((s) => s.tripsThisMonth);
 
@@ -61,6 +63,10 @@ export default function RoamForDatesScreen() {
   const handleGenerate = useCallback(async () => {
     if (!destination.trim()) {
       Alert.alert('Pick a destination', 'Where do you two want to go?');
+      return;
+    }
+    if (isGuestUser() && trips.length >= 1) {
+      router.push({ pathname: '/paywall', params: { reason: 'limit', destination } });
       return;
     }
     if (!isPro && tripsThisMonth >= FREE_TRIPS_PER_MONTH) {
@@ -93,7 +99,7 @@ export default function RoamForDatesScreen() {
     } finally {
       setGenerating(false);
     }
-  }, [destination, days, budget, vibes, merged, addTrip, isPro, tripsThisMonth, router]);
+  }, [destination, days, budget, vibes, merged, addTrip, trips, isPro, tripsThisMonth, router]);
 
   if (result) {
     return (

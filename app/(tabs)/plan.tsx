@@ -30,6 +30,7 @@ import SafetyScoreBadge from '../../components/features/SafetyScoreBadge';
 import Tag from '../../components/ui/Tag';
 import { track } from '../../lib/analytics';
 import { trackItineraryOutcome } from '../../lib/ai-improvement';
+import { isGuestUser } from '../../lib/guest';
 import { learnFromTrip } from '../../lib/personalization';
 import { recordPlanned } from '../../lib/social-proof';
 
@@ -56,6 +57,7 @@ export default function PlanScreen() {
   const setIsGenerating = useAppStore((s) => s.setIsGenerating);
   const hasCompletedProfile = useAppStore((s) => s.hasCompletedProfile);
   const travelProfile = useAppStore((s) => s.travelProfile);
+  const trips = useAppStore((s) => s.trips);
 
   const [step, setStep] = useState(1);
   const [customDays, setCustomDays] = useState('');
@@ -145,12 +147,19 @@ export default function PlanScreen() {
   // prompt so AI swaps outdoor→indoor activities on rainy days)
   // ---------------------------------------------------------------------------
   const handleGenerate = async () => {
-    // On first trip, send to travel profile screen first
-    if (!hasCompletedProfile) {
+    const isGuest = isGuestUser();
+
+    // On first trip, send to travel profile screen first (skip for guests)
+    if (!isGuest && !hasCompletedProfile) {
       router.push('/travel-profile');
       return;
     }
 
+    // Guest limit: 1 trip; signed-in free: FREE_TRIPS_PER_MONTH
+    if (isGuest && trips.length >= 1) {
+      router.push({ pathname: '/paywall', params: { reason: 'limit', destination: planWizard.destination } });
+      return;
+    }
     if (!isPro && tripsThisMonth >= FREE_TRIPS_PER_MONTH) {
       router.push({ pathname: '/paywall', params: { reason: 'limit' } });
       return;
@@ -228,8 +237,19 @@ export default function PlanScreen() {
         <View style={[styles.progressFill, { width: `${(step / 3) * 100}%` }]} />
       </View>
 
-      {/* Trip limit banner — upgrade prompt when at limit */}
-      {!isPro && tripsThisMonth >= FREE_TRIPS_PER_MONTH && (
+      {/* Trip limit banner — upgrade prompt when at limit (guest: 1 trip; free: monthly limit) */}
+      {(isGuestUser() && trips.length >= 1) && (
+        <Pressable
+          style={styles.limitBanner}
+          onPress={() => router.push({ pathname: '/paywall', params: { reason: 'limit', destination: planWizard.destination } })}
+        >
+          <Text style={styles.limitBannerText}>
+            You've used your one free trip. Sign up to plan unlimited adventures.
+          </Text>
+          <Text style={styles.limitBannerCta}>Join waitlist</Text>
+        </Pressable>
+      )}
+      {!isPro && !isGuestUser() && tripsThisMonth >= FREE_TRIPS_PER_MONTH && (
         <Pressable
           style={styles.limitBanner}
           onPress={() => router.push('/paywall')}

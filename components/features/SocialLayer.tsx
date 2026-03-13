@@ -221,7 +221,7 @@ function CandidateCardContent({ candidate }: { candidate: SquadCandidate }) {
   void (profile.vibeTags ?? (profile as any).vibe_tags ?? []);
   return (
     <LinearGradient
-      colors={[COLORS.sageSubtle, 'rgba(201,168,76,0.04)', COLORS.bgCard]}
+      colors={[COLORS.sageSubtle, COLORS.goldFaint, COLORS.bgCard]}
       style={squadStyles.cardInner}
     >
       {/* Compatibility score */}
@@ -329,7 +329,7 @@ export function BreakfastClub({
         ]}
       >
         <LinearGradient
-          colors={[COLORS.gold, '#B8943F']}
+          colors={[COLORS.gold, COLORS.goldDark]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={breakfastStyles.createGradient}
@@ -602,7 +602,7 @@ export function GroupTripBuilder({ trips, onCreateTrip, onRequestJoin }: GroupTr
         ]}
       >
         <LinearGradient
-          colors={[COLORS.sage, '#6A9A78']}
+          colors={[COLORS.sage, COLORS.sageDarkMuted]}
           style={groupStyles.createGradient}
         >
           <Text style={groupStyles.createText}>+ Post my trip</Text>
@@ -861,7 +861,7 @@ const squadStyles = StyleSheet.create({
   cardInner: { padding: SPACING.lg, gap: SPACING.md, minHeight: 380 } as ViewStyle,
   scoreRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' } as ViewStyle,
   scoreBadge: {
-    backgroundColor: 'rgba(201,168,76,0.15)', borderWidth: 1, borderColor: 'rgba(201,168,76,0.3)',
+    backgroundColor: COLORS.goldHighlight, borderWidth: 1, borderColor: COLORS.goldBorderStrong,
     borderRadius: RADIUS.full, paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs,
   } as ViewStyle,
   scoreText: { fontFamily: FONTS.monoMedium, fontSize: 14, color: COLORS.gold } as TextStyle,
@@ -919,7 +919,7 @@ const breakfastStyles = StyleSheet.create({
   } as ViewStyle,
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' } as ViewStyle,
   typeBadge: {
-    backgroundColor: 'rgba(201,168,76,0.12)', borderRadius: RADIUS.full,
+    backgroundColor: COLORS.goldMutedLight, borderRadius: RADIUS.full,
     paddingHorizontal: SPACING.sm + 2, paddingVertical: SPACING.xs,
   } as ViewStyle,
   typeBadgeText: { fontFamily: FONTS.monoMedium, fontSize: 11, color: COLORS.gold, letterSpacing: 0.5 } as TextStyle,
@@ -1048,7 +1048,7 @@ const localStyles = StyleSheet.create({
   bio: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.creamMuted, lineHeight: 19 } as TextStyle,
   offers: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.xs } as ViewStyle,
   offerChip: {
-    backgroundColor: 'rgba(201,168,76,0.1)', borderWidth: 1, borderColor: 'rgba(201,168,76,0.2)',
+    backgroundColor: COLORS.goldSubtle, borderWidth: 1, borderColor: COLORS.goldBorder,
     borderRadius: RADIUS.full, paddingHorizontal: SPACING.sm + 2, paddingVertical: SPACING.xs,
   } as ViewStyle,
   offerText: { fontFamily: FONTS.body, fontSize: 12, color: COLORS.gold } as TextStyle,
@@ -1073,8 +1073,8 @@ const safetyStyles = StyleSheet.create({
   checkInText: { fontFamily: FONTS.bodySemiBold, fontSize: 15, color: COLORS.cream } as TextStyle,
   checkInSub: { fontFamily: FONTS.mono, fontSize: 11, color: COLORS.creamMuted } as TextStyle,
   sosBtn: {
-    width: 72, backgroundColor: 'rgba(192,57,43,0.15)', borderRadius: RADIUS.lg, borderWidth: 1,
-    borderColor: 'rgba(192,57,43,0.3)', alignItems: 'center', justifyContent: 'center',
+    width: 72, backgroundColor: COLORS.dangerHighlight, borderRadius: RADIUS.lg, borderWidth: 1,
+    borderColor: COLORS.dangerBorder, alignItems: 'center', justifyContent: 'center',
   } as ViewStyle,
   sosBtnInner: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs } as ViewStyle,
   sosBtnText: { fontFamily: FONTS.bodySemiBold, fontSize: 14, color: COLORS.coral } as TextStyle,

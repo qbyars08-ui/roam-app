@@ -23,6 +23,8 @@ jobs:
           fi
       - run: npm install --legacy-peer-deps
         working-directory: ${{ steps.ws.outputs.dir }}
+      - run: npx tsc --noEmit
+        working-directory: ${{ steps.ws.outputs.dir }}
       - run: npm run build:web
         working-directory: ${{ steps.ws.outputs.dir }}
       - uses: nwtgck/actions-netlify@v2

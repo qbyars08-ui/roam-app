@@ -21,6 +21,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { supabase } from '../../lib/supabase';
 import { useAppStore } from '../../lib/store';
+import { enterGuestMode } from '../../lib/guest';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { getDestinationPhoto } from '../../lib/photos';
 
@@ -96,17 +97,17 @@ export default function HookScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setBrowsing(true);
     try {
-      await AsyncStorage.setItem('@roam/onboarding_complete', 'true');
       const { data, error } = await supabase.auth.signInAnonymously();
       if (!error && data.session) {
         setSession(data.session);
+        await AsyncStorage.setItem('@roam/onboarding_complete', 'true');
         router.replace('/(tabs)');
       } else {
-        setSession({ user: { id: `guest-web-${Date.now()}`, email: null }, access_token: '', refresh_token: '' } as any);
+        await enterGuestMode();
         router.replace('/(tabs)');
       }
     } catch {
-      setSession({ user: { id: `guest-web-${Date.now()}`, email: null }, access_token: '', refresh_token: '' } as any);
+      await enterGuestMode();
       router.replace('/(tabs)');
     } finally {
       setBrowsing(false);
@@ -126,7 +127,7 @@ export default function HookScreen() {
       </Animated.View>
 
       <LinearGradient
-        colors={['transparent', 'rgba(8,15,10,0.4)', 'rgba(8,15,10,0.92)', COLORS.bg]}
+        colors={['transparent', COLORS.bgDarkGreenFull, COLORS.bgDarkGreenMedium, COLORS.bg]}
         locations={[0, 0.35, 0.65, 1]}
         style={StyleSheet.absoluteFill}
       />

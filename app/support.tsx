@@ -54,10 +54,10 @@ function FAQItem({ q, a }: { q: string; a: string }) {
   return (
     <Pressable
       onPress={() => setExpanded(!expanded)}
-      style={({ pressed }) => [styles.faqItem, { opacity: pressed ? 0.9 : 1 }]}
+      style={({ pressed }) => [viewStyles.faqItem, { opacity: pressed ? 0.9 : 1 }]}
     >
-      <View style={styles.faqHeader}>
-        <Text style={styles.faqQuestion}>{q}</Text>
+      <View style={viewStyles.faqHeader}>
+        <Text style={textStyles.faqQuestion}>{q}</Text>
         {expanded ? (
           <ChevronUp size={20} color={COLORS.creamMuted} />
         ) : (
@@ -110,23 +110,28 @@ export default function SupportScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const viewStyles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.border },
   backBtn: { marginRight: SPACING.sm },
-  headerTitle: { fontFamily: FONTS.header, fontSize: 20, color: COLORS.cream },
   scroll: { flex: 1 },
   scrollContent: { padding: SPACING.lg },
+  faqItem: { backgroundColor: COLORS.bgGlass, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, padding: SPACING.md, marginBottom: SPACING.sm },
+  faqHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  contactCard: { marginTop: SPACING.xl, backgroundColor: COLORS.bgGlass, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, padding: SPACING.xl, alignItems: 'center' },
+  emailBtn: { marginTop: SPACING.md, paddingVertical: SPACING.sm, paddingHorizontal: SPACING.lg },
+});
+
+const textStyles = StyleSheet.create({
+  headerTitle: { fontFamily: FONTS.header, fontSize: 20, color: COLORS.cream },
   hero: { fontFamily: FONTS.header, fontSize: 28, color: COLORS.cream, marginBottom: SPACING.xs },
   heroSub: { fontFamily: FONTS.body, fontSize: 16, color: COLORS.creamMuted, marginBottom: SPACING.xl },
   sectionLabel: { fontFamily: FONTS.mono, fontSize: 11, color: COLORS.sage, letterSpacing: 1.5, marginBottom: SPACING.md },
-  faqItem: { backgroundColor: COLORS.bgGlass, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, padding: SPACING.md, marginBottom: SPACING.sm },
-  faqHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   faqQuestion: { fontFamily: FONTS.bodyMedium, fontSize: 15, color: COLORS.cream, flex: 1 },
   faqAnswer: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.creamMuted, lineHeight: 22, marginTop: SPACING.sm },
-  contactCard: { marginTop: SPACING.xl, backgroundColor: COLORS.bgGlass, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, padding: SPACING.xl, alignItems: 'center' },
   contactTitle: { fontFamily: FONTS.bodySemiBold, fontSize: 16, color: COLORS.cream },
   contactSub: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.creamMuted, marginTop: 4 },
-  emailBtn: { marginTop: SPACING.md, paddingVertical: SPACING.sm, paddingHorizontal: SPACING.lg },
   emailBtnText: { fontFamily: FONTS.bodyMedium, fontSize: 15, color: COLORS.sage },
 });
+
+const styles = { ...viewStyles, ...textStyles };
