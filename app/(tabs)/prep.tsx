@@ -455,6 +455,7 @@ function PrepScreen() {
           subtitle="English widely spoken"
         >
           <View style={styles.emptySection}>
+            <Globe size={28} color={COLORS.creamMuted} strokeWidth={1.5} />
             <Text style={styles.emptySectionText}>
               English gets you far in {selectedDest}. A few local phrases never hurt though — people notice.
             </Text>
@@ -479,6 +480,7 @@ function PrepScreen() {
           subtitle="Select a destination above"
         >
           <View style={styles.emptySection}>
+            <Phone size={28} color={COLORS.coralSubtle} strokeWidth={1.5} />
             <Text style={styles.emptySectionText}>
               We're still gathering emergency info for {selectedDest}. In the meantime: 112 works as a universal emergency number in most countries.
             </Text>
@@ -503,6 +505,7 @@ function PrepScreen() {
           subtitle="Select a destination above"
         >
           <View style={styles.emptySection}>
+            <BookOpen size={28} color={COLORS.goldSubtle} strokeWidth={1.5} />
             <Text style={styles.emptySectionText}>
               Cultural guide for {selectedDest} is in the works. Ask the Concierge in the meantime — it knows things.
             </Text>
@@ -1010,13 +1013,9 @@ const styles = StyleSheet.create({
   // Empty section
   emptySection: {
     alignItems: 'center',
-    paddingVertical: SPACING.md,
+    paddingVertical: SPACING.lg,
     gap: SPACING.sm,
   } as ViewStyle,
-  emptySectionEmoji: {
-    fontSize: 40,
-    opacity: 0.5,
-  } as TextStyle,
   emptySectionTitle: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 16,

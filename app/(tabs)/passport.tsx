@@ -185,13 +185,34 @@ function PassportScreen() {
           </View>
         )}
 
+        {/* Empty state — shown prominently when no data exists */}
+        {stats.stamps.length === 0 && unstampedTrips.length === 0 && (
+          <View style={styles.emptyState}>
+            <EmptyPassport size={120} />
+            <Text style={styles.emptyTitle}>A blank passport</Text>
+            <Text style={styles.emptySubtitle}>
+              Every stamp is a story. Plan a trip, take it, and come back to make it official.
+            </Text>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/(tabs)/plan');
+              }}
+              style={({ pressed }) => [styles.emptyCta, { opacity: pressed ? 0.85 : 1 }]}
+            >
+              <Text style={styles.emptyCtaText}>Plan your first trip</Text>
+            </Pressable>
+          </View>
+        )}
+
         {/* Badges */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>BADGES</Text>
+          <Text style={styles.sectionLabel}>
+            {earnedBadges.length > 0 ? 'BADGES' : 'BADGES TO UNLOCK'}
+          </Text>
           <View style={styles.badgesGrid}>
             {earnedBadges.map((badge) => (
               <View key={badge.id} style={styles.badgeCard}>
-                {null}
                 <Text style={styles.badgeLabel}>{badge.label}</Text>
                 <Text style={styles.badgeDesc}>{badge.description}</Text>
               </View>
@@ -214,26 +235,6 @@ function PassportScreen() {
             ))}
           </View>
         </View>
-
-        {/* Empty state */}
-        {stats.stamps.length === 0 && unstampedTrips.length === 0 && (
-          <View style={styles.emptyState}>
-            <EmptyPassport size={120} />
-            <Text style={styles.emptyTitle}>A blank passport</Text>
-            <Text style={styles.emptySubtitle}>
-              Every stamp is a story. Plan a trip, take it, and come back to make it official.
-            </Text>
-            <Pressable
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/(tabs)/plan');
-              }}
-              style={({ pressed }) => [styles.emptyCta, { opacity: pressed ? 0.85 : 1 }]}
-            >
-              <Text style={styles.emptyCtaText}>Plan your first trip</Text>
-            </Pressable>
-          </View>
-        )}
       </ScrollView>
     </View>
   );
@@ -426,13 +427,10 @@ const styles = StyleSheet.create({
 
   emptyState: {
     alignItems: 'center',
-    paddingTop: SPACING.xxxl,
+    paddingVertical: SPACING.xl,
     gap: SPACING.md,
     paddingHorizontal: SPACING.xl,
   } as ViewStyle,
-  emptyEmoji: {
-    fontSize: 64,
-  } as TextStyle,
   emptyTitle: {
     fontFamily: FONTS.header,
     fontSize: 22,

@@ -536,12 +536,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.bgGlass,
     borderWidth: 1,
     borderColor: COLORS.border,
+    borderRadius: RADIUS.lg,
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
-  emptyEmoji: {
-    fontSize: 40,
-  } as TextStyle,
   emptyTitle: {
     fontFamily: FONTS.header,
     fontSize: 24,
@@ -550,8 +548,7 @@ const styles = StyleSheet.create({
   emptySubtitle: {
     fontFamily: FONTS.body,
     fontSize: 15,
-    color: COLORS.cream,
-    opacity: 0.5,
+    color: COLORS.creamMuted,
     textAlign: 'center',
     lineHeight: 22,
   } as TextStyle,

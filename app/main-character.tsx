@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
 import { withComingSoon } from '../lib/with-coming-soon';
+import { Film } from 'lucide-react-native';
 import ViewShot, { captureRef } from '../lib/view-shot';
 import * as Sharing from 'expo-sharing';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
@@ -232,6 +233,7 @@ function MainCharacterScreen() {
           <View style={{ width: 24 }} />
         </View>
         <View style={styles.emptyCenter}>
+          <Film size={48} color={COLORS.creamMuted} strokeWidth={1.5} />
           <Text style={styles.emptyTitle}>No trip to direct</Text>
           <Text style={styles.emptyBody}>
             Plan a trip first, then come back to find your cinematic moments.

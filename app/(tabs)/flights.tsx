@@ -19,6 +19,7 @@ import * as Haptics from '../../lib/haptics';
 import { Plane, Camera, TrendingDown, X } from 'lucide-react-native';
 
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { SkeletonCard } from '../../components/premium/LoadingStates';
 import { withComingSoon } from '../../lib/with-coming-soon';
 import BreathingLine from '../../components/ui/BreathingLine';
 import { EmptyPlane } from '../../components/ui/EmptyStateIllustrations';
@@ -377,7 +378,13 @@ function FlightsScreen() {
         contentContainerStyle={[styles.listContent, flights.length === 0 && styles.listContentEmpty]}
         showsVerticalScrollIndicator={false}
       >
-        {flights.length === 0 ? (
+        {loading ? (
+          <View style={styles.skeletonList}>
+            {[1, 2, 3].map((i) => (
+              <SkeletonCard key={i} height={160} borderRadius={RADIUS.lg} />
+            ))}
+          </View>
+        ) : flights.length === 0 ? (
           <View style={styles.emptyState}>
             <EmptyPlane size={120} />
             <Text style={styles.emptyTitle}>No flights on the radar</Text>
@@ -505,6 +512,10 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   listContentEmpty: {
     flexGrow: 1,
+  } as ViewStyle,
+  skeletonList: {
+    gap: SPACING.md,
+    paddingTop: SPACING.sm,
   } as ViewStyle,
   emptyState: {
     alignItems: 'center',

@@ -8,13 +8,13 @@ import {
   Text,
   Pressable,
   StyleSheet,
-  ActivityIndicator,
   Linking,
   ImageBackground,
   type ViewStyle,
   type TextStyle,
   type ImageStyle,
 } from 'react-native';
+import { PulseLoader } from '../components/premium/LoadingStates';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -52,7 +52,7 @@ function ChaosDareScreen() {
   if (loading) {
     return (
       <View style={[styles.container, styles.center, { paddingTop: insets.top }]}>
-        <ActivityIndicator color={COLORS.gold} size="large" />
+        <PulseLoader color={COLORS.gold} size={10} />
       </View>
     );
   }

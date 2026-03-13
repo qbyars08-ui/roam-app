@@ -9,8 +9,8 @@ import {
   ScrollView,
   StyleSheet,
   Pressable,
-  ActivityIndicator,
 } from 'react-native';
+import { PulseLoader } from '../components/premium/LoadingStates';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, Clock } from 'lucide-react-native';
@@ -51,7 +51,7 @@ function TravelTimeMachineScreen() {
 
       {loading ? (
         <View style={styles.loading}>
-          <ActivityIndicator color={COLORS.sage} size="large" />
+          <PulseLoader color={COLORS.sage} size={10} />
           <Text style={styles.loadingText}>Comparing {destination} then and now...</Text>
         </View>
       ) : error ? (

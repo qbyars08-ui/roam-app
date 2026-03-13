@@ -10,10 +10,10 @@ import {
   Pressable,
   StyleSheet,
   ImageBackground,
-  ActivityIndicator,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { PulseLoader } from '../components/premium/LoadingStates';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -94,7 +94,7 @@ function JoinGroupScreen() {
   if (loading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
-        <ActivityIndicator size="large" color={COLORS.sage} />
+        <PulseLoader color={COLORS.sage} size={10} />
       </View>
     );
   }

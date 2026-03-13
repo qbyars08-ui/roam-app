@@ -401,20 +401,31 @@ function PetsScreen() {
 
         {/* Section A — Your Pets */}
         <Text style={styles.sectionHeader}>Your Pets</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.petsScroll}
-        >
-          {pets.map((pet) => (
-            <PetAvatar
-              key={pet.id}
-              pet={pet}
-              onLongPress={() => handleRemovePet(pet)}
-            />
-          ))}
-          <AddPetCard onPress={() => setModalVisible(true)} />
-        </ScrollView>
+        {pets.length === 0 ? (
+          <View style={styles.petsEmptyRow}>
+            <PawPrint size={28} color={COLORS.sage} strokeWidth={1.5} />
+            <View style={styles.petsEmptyText}>
+              <Text style={styles.petsEmptyTitle}>Add your travel buddy</Text>
+              <Text style={styles.petsEmptySub}>Tap + to get pet-friendly recs, sitter links, and travel tips.</Text>
+            </View>
+            <AddPetCard onPress={() => setModalVisible(true)} />
+          </View>
+        ) : (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.petsScroll}
+          >
+            {pets.map((pet) => (
+              <PetAvatar
+                key={pet.id}
+                pet={pet}
+                onLongPress={() => handleRemovePet(pet)}
+              />
+            ))}
+            <AddPetCard onPress={() => setModalVisible(true)} />
+          </ScrollView>
+        )}
 
         {/* Section B — Find a Sitter */}
         <SitterCards />
@@ -475,6 +486,33 @@ const styles = StyleSheet.create({
   } as TextStyle,
 
   // Section A — Pets strip
+  petsEmptyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.lg,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+    padding: SPACING.md,
+  } as ViewStyle,
+  petsEmptyText: {
+    flex: 1,
+  } as ViewStyle,
+  petsEmptyTitle: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 15,
+    color: COLORS.cream,
+    marginBottom: 2,
+  } as TextStyle,
+  petsEmptySub: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+    lineHeight: 17,
+  } as TextStyle,
   petsScroll: {
     gap: SPACING.md,
     paddingRight: SPACING.md,

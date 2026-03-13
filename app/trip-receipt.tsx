@@ -23,6 +23,7 @@ import { COLORS, FONTS, SPACING, RADIUS, BUDGETS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import { parseItinerary, type Itinerary, type ItineraryDay } from '../lib/types/itinerary';
 import { withComingSoon } from '../lib/with-coming-soon';
+import { Receipt } from 'lucide-react-native';
 
 // =============================================================================
 // Helpers
@@ -195,6 +196,7 @@ function TripReceiptScreen() {
           <View style={{ width: 24 }} />
         </View>
         <View style={styles.emptyCenter}>
+          <Receipt size={48} color={COLORS.creamMuted} strokeWidth={1.5} />
           <Text style={styles.emptyTitle}>No trip to receipt-ify</Text>
           <Text style={styles.emptyBody}>
             Open one of your trips first, then come back to see what it costs.

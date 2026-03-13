@@ -836,9 +836,21 @@ export default function DiscoverScreen() {
         {filteredDestinations.length === 0 && (
           <View style={styles.emptyState}>
             <ICONS.empty size={48} color={COLORS.creamMuted} strokeWidth={1.5} />
+            <Text style={styles.emptyTitle}>Nothing here yet</Text>
             <Text style={styles.emptyText}>
-              No matches for that vibe. Try switching filters — there's always somewhere worth going.
+              No destinations match that combo. Try a different filter — there's always somewhere worth going.
             </Text>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setActiveCategory('all');
+                setActiveBudget(null);
+                setBudgetSliderMax(null);
+              }}
+              style={({ pressed }) => [styles.emptyCtaBtn, { opacity: pressed ? 0.75 : 1 }]}
+            >
+              <Text style={styles.emptyCtaText}>Clear filters</Text>
+            </Pressable>
           </View>
         )}
       </Animated.ScrollView>
@@ -1404,12 +1416,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.xl,
     gap: SPACING.md,
   } as ViewStyle,
+  emptyTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 22,
+    color: COLORS.cream,
+    textAlign: 'center',
+  } as TextStyle,
   emptyText: {
     fontFamily: FONTS.body,
     fontSize: 15,
     color: COLORS.creamMuted,
     textAlign: 'center',
     lineHeight: 22,
+  } as TextStyle,
+  emptyCtaBtn: {
+    marginTop: SPACING.sm,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.sm + 2,
+    backgroundColor: COLORS.bgElevated,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.whiteSoft,
+  } as ViewStyle,
+  emptyCtaText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
+    color: COLORS.creamSoft,
   } as TextStyle,
   errorBanner: {
     marginHorizontal: SPACING.lg,
