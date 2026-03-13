@@ -133,6 +133,18 @@ Test with ALL of these destinations (they cover edge cases):
 
 ---
 
+## Agent Board — Standing Rule
+
+After completing **any task**, update the Forge section in `docs/agents/AGENT_BOARD.md`:
+- **Status:** IDLE / IN PROGRESS / BLOCKED
+- **Last Updated:** today's date
+- **Action Needed:** YES / NO (YES = Cap must make a decision or unblock something)
+- **Latest Findings:** max 10 bullets, each with a file path where relevant
+
+This is how Cap reads Forge's work.
+
+---
+
 ## Cursor Cloud Specific Instructions
 
 - Use `npx tsc --noEmit` to type-check after every code change
