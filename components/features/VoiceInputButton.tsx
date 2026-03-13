@@ -5,7 +5,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, Text, StyleSheet, type ViewStyle } from 'react-native';
 import { Platform } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../../lib/haptics';
 import { Mic } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING } from '../../lib/constants';
 

@@ -13,7 +13,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../../lib/haptics';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MessageSquare, Shield, Plane, Globe, BookOpen, PawPrint, Users, Search, FlaskConical, Image, Wallet, Flag, Star, Map, Receipt, User, Gift, Shuffle, Clock, Building2, Heart, UserPlus, Languages, Repeat } from 'lucide-react-native';

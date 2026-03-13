@@ -15,7 +15,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../../lib/haptics';
 import { Plane, Camera, TrendingDown, X } from 'lucide-react-native';
 
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';

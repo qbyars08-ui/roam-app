@@ -19,7 +19,7 @@ import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { format } from 'date-fns';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../../lib/haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Users } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS, BUDGETS } from '../../lib/constants';

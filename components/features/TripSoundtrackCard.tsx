@@ -5,7 +5,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
 import { Music } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { openSpotifySearch } from '../../lib/trip-soundtrack';
 

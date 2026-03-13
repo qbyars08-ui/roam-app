@@ -17,6 +17,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
+import { Check } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { joinWaitlist, getGuestReferralUrl, getEmailFromUrl, getStoredRef, type WaitlistResult } from '../../lib/waitlist-guest';
 interface WaitlistCaptureModalProps {
@@ -141,7 +142,7 @@ export default function WaitlistCaptureModal({
             ) : (
               <>
                 <View style={styles.checkWrap}>
-                  <Text style={styles.check}>✓</Text>
+                  <Check size={28} color={COLORS.sage} strokeWidth={2.5} />
                 </View>
                 <Text style={styles.successTitle}>You're #{result.position} on the waitlist</Text>
                 <Text style={styles.successSub}>Share your link to move up — 3 friends = 1 month Pro free</Text>
@@ -276,10 +277,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: SPACING.md,
   } as ViewStyle,
-  check: {
-    fontSize: 24,
-    color: COLORS.sage,
-  } as TextStyle,
   successTitle: {
     fontFamily: FONTS.header,
     fontSize: 22,

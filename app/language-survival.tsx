@@ -16,7 +16,7 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Speech from 'expo-speech';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../lib/haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ChevronLeft, Volume2 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';

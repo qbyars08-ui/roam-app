@@ -15,7 +15,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../../lib/haptics';
 
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { getStats, type PassportStamp } from '../../lib/passport';

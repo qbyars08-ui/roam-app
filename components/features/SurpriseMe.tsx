@@ -18,7 +18,7 @@ import {
   type ImageStyle,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../../lib/haptics';
 import { useRouter } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, HIDDEN_DESTINATIONS } from '../../lib/constants';

@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../lib/haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { UtensilsCrossed, Compass, Mountain, Moon, BarChart3, Users, Calendar, Wallet, Tag, CreditCard, AlertTriangle } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';

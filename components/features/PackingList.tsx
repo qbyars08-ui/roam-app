@@ -11,7 +11,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../../lib/haptics';
 import { Luggage, Check, ShoppingBag } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import type { PackingList as PackingListResult } from '../../lib/packing-ai';

@@ -12,7 +12,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { Check, RefreshCw, Lightbulb } from 'lucide-react-native';
 import type { Vote, VoteResults } from '../../lib/types/group';

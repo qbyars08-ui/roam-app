@@ -129,4 +129,4 @@ const styles = StyleSheet.create({
   contactSub: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.creamMuted, marginTop: 4 },
   emailBtn: { marginTop: SPACING.md, paddingVertical: SPACING.sm, paddingHorizontal: SPACING.lg },
   emailBtnText: { fontFamily: FONTS.bodyMedium, fontSize: 15, color: COLORS.sage },
-} as Record<string, ViewStyle | TextStyle>);
+});

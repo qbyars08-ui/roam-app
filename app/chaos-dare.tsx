@@ -18,7 +18,7 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { getChaosDare, type ChaosDare } from '../lib/chaos-dare';
 import { getDestinationPhoto } from '../lib/photos';

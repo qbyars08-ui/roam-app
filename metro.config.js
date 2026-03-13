@@ -6,16 +6,22 @@ const { getDefaultConfig } = require('expo/metro-config');
 
 const config = getDefaultConfig(__dirname);
 
-const stubVectorIcons = path.resolve(__dirname, 'lib/stub-vector-icons');
+const stubVectorIcons = path.resolve(__dirname, 'lib/stub-vector-icons.tsx');
 
-// Web: stub @expo/vector-icons to cut ~2.5MB (Ionicons, FontAwesome, MaterialCommunityIcons)
-const defaultResolve = config.resolver.resolveRequest?.bind(config.resolver);
+// Web: stub @expo/vector-icons and react-native-vector-icons to cut ~2.5MB
+const originalResolve = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, moduleName, platform) => {
-  if (platform === 'web' && (moduleName === '@expo/vector-icons' || moduleName.startsWith('@expo/vector-icons/'))) {
+  const isVectorIcons =
+    platform === 'web' &&
+    (moduleName === '@expo/vector-icons' ||
+      moduleName.startsWith('@expo/vector-icons/') ||
+      moduleName === 'react-native-vector-icons' ||
+      moduleName.startsWith('react-native-vector-icons/'));
+  if (isVectorIcons) {
     return { type: 'sourceFile', filePath: stubVectorIcons };
   }
-  return defaultResolve
-    ? defaultResolve(context, moduleName, platform)
+  return originalResolve
+    ? originalResolve(context, moduleName, platform)
     : context.resolveRequest(context, moduleName, platform);
 };
 

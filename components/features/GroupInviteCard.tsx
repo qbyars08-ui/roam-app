@@ -17,7 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ViewShot, { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import * as Clipboard from 'expo-clipboard';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { Share2, Copy, Link, Users } from 'lucide-react-native';
 

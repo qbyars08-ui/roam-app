@@ -12,7 +12,7 @@ import {
   ImageBackground,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../../lib/haptics';
 import { useRouter } from 'expo-router';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import BreathingLine from '../ui/BreathingLine';

@@ -18,7 +18,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../lib/haptics';
 import ViewShot, { captureRef } from 'react-native-view-shot';
 import { Share as RNShare } from 'react-native';
 import * as ExpoSharing from 'expo-sharing';

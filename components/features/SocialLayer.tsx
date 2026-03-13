@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Globe, User, Coffee, MapPin, AlertTriangle, X, Check } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../../lib/haptics';
 
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import {

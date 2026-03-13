@@ -14,7 +14,7 @@ import {
   type TextStyle,
   type ImageStyle,
 } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { fetchTripEvents, type TripEvent } from '../../lib/ticketmaster';
 

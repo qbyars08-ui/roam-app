@@ -16,7 +16,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import * as Location from 'expo-location';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../../lib/haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { Shield, Phone, X } from 'lucide-react-native';

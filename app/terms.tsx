@@ -131,4 +131,4 @@ const styles = StyleSheet.create({
   sectionTitle: { fontFamily: FONTS.bodySemiBold, fontSize: 16, color: COLORS.sage, marginBottom: SPACING.sm },
   para: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.creamMuted, lineHeight: 22, marginBottom: SPACING.sm },
   bullet: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.creamMuted, lineHeight: 22, marginBottom: 4 },
-} as Record<string, ViewStyle | TextStyle>);
+});

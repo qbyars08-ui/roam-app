@@ -155,4 +155,4 @@ const styles = StyleSheet.create({
   subsection: { fontFamily: FONTS.bodyMedium, fontSize: 14, color: COLORS.cream, marginTop: SPACING.sm, marginBottom: SPACING.xs },
   para: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.creamMuted, lineHeight: 22, marginBottom: SPACING.sm },
   bullet: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.creamMuted, lineHeight: 22, marginBottom: 4 },
-} as Record<string, ViewStyle | TextStyle>);
+});

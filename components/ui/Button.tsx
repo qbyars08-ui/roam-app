@@ -4,7 +4,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, type ViewStyle, type TextStyle } from 'react-native';
 import BreathingLine from './BreathingLine';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 
 // ---------------------------------------------------------------------------

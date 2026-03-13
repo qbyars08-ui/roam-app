@@ -22,7 +22,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../../lib/haptics';
 
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { getHeroPhotoUrl } from '../../lib/heroPhotos';

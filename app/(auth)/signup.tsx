@@ -18,7 +18,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../../lib/haptics';
 import { supabase } from '../../lib/supabase';
 import { useAppStore } from '../../lib/store';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';

@@ -15,7 +15,7 @@ import {
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../lib/haptics';
 import Slider from '@react-native-community/slider';
 import {
   ChevronLeft,
@@ -485,11 +485,11 @@ export default function TripChemistryScreen() {
                     <XCircle size={22} color={COLORS.coral} strokeWidth={2} />
                   </TouchableOpacity>
                 )}
-                <Ionicons
-                  name={expandedId === traveler.id ? 'chevron-up' : 'chevron-down'}
-                  size={18}
-                  color={COLORS.creamMuted}
-                />
+                {expandedId === traveler.id ? (
+                  <ChevronUp size={18} color={COLORS.creamMuted} strokeWidth={2} />
+                ) : (
+                  <ChevronDown size={18} color={COLORS.creamMuted} strokeWidth={2} />
+                )}
               </View>
             </TouchableOpacity>
 
@@ -528,7 +528,7 @@ export default function TripChemistryScreen() {
         {/* Add Companion Button */}
         {travelers.length < 4 && !result && (
           <TouchableOpacity style={styles.addButton} onPress={addCompanion} activeOpacity={0.7}>
-            <Ionicons name="person-add-outline" size={20} color={COLORS.sage} />
+            <UserPlus size={20} color={COLORS.sage} strokeWidth={2} />
             <Text style={styles.addButtonText}>Add companion</Text>
           </TouchableOpacity>
         )}
@@ -547,7 +547,7 @@ export default function TripChemistryScreen() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
-              <Ionicons name="flask" size={20} color={COLORS.white} />
+              <FlaskConical size={20} color={COLORS.white} strokeWidth={2} />
               <Text style={styles.calculateText}>Calculate Chemistry</Text>
             </LinearGradient>
           </TouchableOpacity>
@@ -632,7 +632,7 @@ export default function TripChemistryScreen() {
                 {result.conflicts.map((conflict, i) => (
                   <View key={i} style={styles.conflictItem}>
                     <View style={styles.conflictIcon}>
-                      <Ionicons name="warning-outline" size={16} color={COLORS.gold} />
+                      <AlertTriangle size={16} color={COLORS.gold} strokeWidth={2} />
                     </View>
                     <Text style={styles.conflictText}>{conflict}</Text>
                   </View>
@@ -657,7 +657,7 @@ export default function TripChemistryScreen() {
             <View style={styles.destinationCard}>
               <Text style={styles.sectionTitle}>Best Destination Type</Text>
               <View style={styles.destinationContent}>
-                <Ionicons name="compass-outline" size={24} color={COLORS.sage} />
+                <Compass size={24} color={COLORS.sage} strokeWidth={2} />
                 <Text style={styles.destinationText}>{result.destinationType}</Text>
               </View>
             </View>
@@ -665,13 +665,13 @@ export default function TripChemistryScreen() {
             {/* Action Buttons */}
             <View style={styles.actionRow}>
               <TouchableOpacity style={styles.shareButton} onPress={handleShare} activeOpacity={0.7}>
-                <Ionicons name="share-outline" size={20} color={COLORS.cream} />
+                <Share2 size={20} color={COLORS.cream} strokeWidth={2} />
                 <Text style={styles.shareButtonText}>Share results</Text>
               </TouchableOpacity>
             </View>
 
             <TouchableOpacity style={styles.resetButton} onPress={handleReset} activeOpacity={0.7}>
-              <Ionicons name="refresh-outline" size={18} color={COLORS.creamMuted} />
+              <RotateCcw size={18} color={COLORS.creamMuted} strokeWidth={2} />
               <Text style={styles.resetButtonText}>Try different group</Text>
             </TouchableOpacity>
           </Animated.View>

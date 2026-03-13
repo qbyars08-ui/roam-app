@@ -18,6 +18,7 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import type { LucideIcon } from 'lucide-react-native';
 import {
   ChevronLeft,
   BookOpen,
@@ -40,7 +41,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 // ---------------------------------------------------------------------------
 // Milestone definitions
 // ---------------------------------------------------------------------------
-type MilestoneIcon = React.ComponentType<{ size?: number; color?: string; style?: object }>;
+type MilestoneIcon = LucideIcon;
 type Milestone = {
   id: string;
   label: string;

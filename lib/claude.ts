@@ -2,6 +2,7 @@
 // ROAM — Claude AI Integration (via Supabase Edge Function proxy)
 // =============================================================================
 
+import { Platform } from 'react-native';
 import { supabase } from './supabase';
 import { parseItinerary, type Itinerary } from './types/itinerary';
 import { type TravelProfile, profileToPromptString } from './types/travel-profile';
@@ -176,9 +177,9 @@ export async function callClaude(
   /** If true, this counts as a trip generation (rate-limited) */
   isTripGeneration = false
 ): Promise<ClaudeResponse> {
-  // If we have a direct API key, skip the edge function entirely in dev
-  // (edge functions hang forever when not deployed)
-  if (ANTHROPIC_KEY) {
+  // On web, never use direct API — keys would be bundled and exposed.
+  // In dev (native), direct API avoids edge function when not deployed.
+  if (Platform.OS !== 'web' && ANTHROPIC_KEY) {
     console.info('[claude] Using direct Anthropic API');
     const content = await callAnthropicDirect(systemPrompt, userMessage);
     return { content, tripsUsed: 0, limit: 99 };

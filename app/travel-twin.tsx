@@ -16,7 +16,7 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../lib/haptics';
 import { User, ArrowRight, ChevronLeft, ArrowRightCircle, ShoppingBag, Skull, Share2 } from 'lucide-react-native';
 
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';

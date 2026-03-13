@@ -18,7 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../../lib/haptics';
 
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import ConfettiBurst from '../../components/ui/ConfettiBurst';

@@ -5,7 +5,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, Linking } from 'react-native';
 import { Shield } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 const SAFETYWING_URL = (dest: string) =>
   `https://safetywing.com/nomad-insurance?referenceID=roam&utm_source=roam&utm_medium=app&utm_campaign=${encodeURIComponent(dest.toLowerCase())}`;

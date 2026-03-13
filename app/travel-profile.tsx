@@ -16,7 +16,7 @@ import {
 import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../lib/haptics';
 import { BookOpen, Zap, DollarSign, Users, UtensilsCrossed, Rocket, Building2, Compass } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useAppStore } from '../lib/store';

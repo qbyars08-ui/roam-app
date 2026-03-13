@@ -3,7 +3,7 @@
 // =============================================================================
 import React, { useCallback } from 'react';
 import { Pressable, StyleSheet, Text, type ViewStyle, type TextStyle } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 
 // ---------------------------------------------------------------------------

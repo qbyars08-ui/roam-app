@@ -16,7 +16,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS, CHAT_STARTERS } from '../../lib/constants';
 import BreathingLine from '../../components/ui/BreathingLine';
 import { EmptyMapPin } from '../../components/ui/EmptyStateIllustrations';

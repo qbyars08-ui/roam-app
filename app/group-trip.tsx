@@ -18,7 +18,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../lib/haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Share2, MapPin, DollarSign, MessageCircle, Package } from 'lucide-react-native';
 

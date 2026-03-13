@@ -32,7 +32,7 @@ const PROVIDER_GOOGLE = isWeb ? undefined : require('react-native-maps').PROVIDE
 import DraggableFlatList, {
   type RenderItemParams,
 } from 'react-native-draggable-flatlist';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../lib/haptics';
 
 import { COLORS, FONTS, SPACING, RADIUS, AFFILIATES } from '../lib/constants';
 import { useDestinationTheme } from '../lib/useDestinationTheme';

@@ -22,7 +22,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../../lib/haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, BUDGETS, VIBES, FREE_TRIPS_PER_MONTH } from '../../lib/constants';
@@ -35,7 +35,6 @@ import WaitlistCaptureModal from '../../components/features/WaitlistCaptureModal
 const ONBOARDING_COMPLETE_KEY = '@roam/onboarding_complete';
 const DESTINATION_CHOICES = DESTINATIONS.slice(0, 4);
 const DEV = __DEV__;
-const IS_WEB = Platform.OS === 'web';
 
 // ---------------------------------------------------------------------------
 // Step 1: Destination
@@ -290,11 +289,12 @@ export default function OnboardScreen() {
   const setPendingOnboardDestination = useAppStore((s) => s.setPendingOnboardDestination);
   const pendingOnboardDestination = useAppStore((s) => s.pendingOnboardDestination);
   const session = useAppStore((s) => s.session);
-  const isWebGuest = IS_WEB && !session;
+  const isGuest = !session;
+  const isWebGuest = Platform.OS === 'web' && (!session || String(session.user?.id ?? '').startsWith('guest-') || !!(session.user as { is_anonymous?: boolean })?.is_anonymous);
 
   const handleDestinationSelect = useCallback(
     (dest: string) => {
-      if (!hasCompletedProfile && !isWebGuest) {
+      if (!hasCompletedProfile && !isGuest) {
         setPendingOnboardDestination(dest);
         router.push('/travel-profile');
         return;
@@ -302,19 +302,28 @@ export default function OnboardScreen() {
       setDestination(dest);
       setStep(1);
     },
-    [hasCompletedProfile, isWebGuest, setPendingOnboardDestination, router]
+    [hasCompletedProfile, isGuest, setPendingOnboardDestination, router]
   );
 
   const handleSurpriseMe = useCallback(() => {
     const d = DESTINATIONS[Math.floor(Math.random() * DESTINATIONS.length)];
-    if (!hasCompletedProfile && !isWebGuest) {
+    if (!hasCompletedProfile && !isGuest) {
       setPendingOnboardDestination(d.label);
       router.push('/travel-profile');
       return;
     }
     setDestination(d.label);
     setStep(1);
-  }, [hasCompletedProfile, isWebGuest, setPendingOnboardDestination, router]);
+  }, [hasCompletedProfile, isGuest, setPendingOnboardDestination, router]);
+
+  // Web: sign in anonymously so generateItinerary (edge function) has a valid JWT
+  useEffect(() => {
+    if (Platform.OS === 'web' && !session) {
+      supabase.auth.signInAnonymously().then(({ data }) => {
+        if (data?.session) setSession(data.session);
+      }).catch(() => {});
+    }
+  }, [Platform.OS, session, setSession]);
 
   useFocusEffect(
     useCallback(() => {
@@ -424,8 +433,8 @@ export default function OnboardScreen() {
     );
   }
 
-  // Web guest: show waitlist capture modal instead of signup
-  if (isWebGuest) {
+  // Guest (no session): show waitlist capture modal instead of signup
+  if (isGuest) {
     return (
       <View style={styles.container}>
         <View style={[styles.step, { paddingTop: insets.top, justifyContent: 'center' }]}>

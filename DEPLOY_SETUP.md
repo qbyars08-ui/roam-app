@@ -39,8 +39,9 @@ Confirm `origin` points to `github.com` and your latest commits are on GitHub.
 2. Click **Import from Git**
 3. Connect your GitHub account
 4. Select the **roam-app** repository
-5. Set:
-   - **Build command:** `npx expo export --platform web`
+5. Set (or use `netlify.toml` in repo):
+   - **Base directory:** `roam` (if app is in a subfolder)
+   - **Build command:** `npx expo export --platform web && echo '/*    /index.html   200' > dist/_redirects`
    - **Publish directory:** `dist`
 6. Click **Deploy**
 

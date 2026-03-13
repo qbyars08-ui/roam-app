@@ -2,7 +2,7 @@
 // ROAM — Onboarding Screen 2: The Hook
 // Full-screen hero photo + "Travel like you know someone there"
 // =============================================================================
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
@@ -17,7 +17,10 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
+import { supabase } from '../../lib/supabase';
+import { useAppStore } from '../../lib/store';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { getDestinationPhoto } from '../../lib/photos';
 
@@ -81,10 +84,34 @@ export default function HookScreen() {
     ]).start();
   }, []);
 
+  const setSession = useAppStore((s) => s.setSession);
+  const [browsing, setBrowsing] = useState(false);
+
   const handleContinue = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push('/(auth)/onboard');
   };
+
+  const handleBrowseFirst = useCallback(async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setBrowsing(true);
+    try {
+      await AsyncStorage.setItem('@roam/onboarding_complete', 'true');
+      const { data, error } = await supabase.auth.signInAnonymously();
+      if (!error && data.session) {
+        setSession(data.session);
+        router.replace('/(tabs)');
+      } else {
+        setSession({ user: { id: `guest-web-${Date.now()}`, email: null }, access_token: '', refresh_token: '' } as any);
+        router.replace('/(tabs)');
+      }
+    } catch {
+      setSession({ user: { id: `guest-web-${Date.now()}`, email: null }, access_token: '', refresh_token: '' } as any);
+      router.replace('/(tabs)');
+    } finally {
+      setBrowsing(false);
+    }
+  }, [setSession, router]);
 
   return (
     <View style={styles.container}>
@@ -127,14 +154,27 @@ export default function HookScreen() {
         >
           <Pressable
             onPress={handleContinue}
+            disabled={browsing}
             accessibilityRole="button"
             accessibilityLabel="Build my first trip"
             style={({ pressed }) => [
               styles.btn,
-              { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
+              { opacity: pressed || browsing ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
             ]}
           >
             <Text style={styles.btnText}>Build my first trip</Text>
+          </Pressable>
+          <Pressable
+            onPress={handleBrowseFirst}
+            disabled={browsing}
+            accessibilityRole="button"
+            accessibilityLabel="Browse first"
+            style={({ pressed }) => [
+              styles.browseBtn,
+              { opacity: pressed || browsing ? 0.7 : 1 },
+            ]}
+          >
+            <Text style={styles.browseBtnText}>{browsing ? 'Loading...' : 'Browse first'}</Text>
           </Pressable>
         </Animated.View>
       </View>
@@ -183,5 +223,14 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: COLORS.bg,
     letterSpacing: 0.3,
+  } as TextStyle,
+  browseBtn: {
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+  } as ViewStyle,
+  browseBtnText: {
+    fontFamily: FONTS.body,
+    fontSize: 15,
+    color: COLORS.creamMuted,
   } as TextStyle,
 });

@@ -22,7 +22,7 @@ import { parseItinerary } from '../lib/types/itinerary';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../lib/haptics';
 import { ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useDestinationTheme } from '../lib/useDestinationTheme';
