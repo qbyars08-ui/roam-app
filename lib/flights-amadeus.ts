@@ -1,8 +1,10 @@
 // =============================================================================
 // ROAM — Amadeus Flight Search (Free Tier: 2,000 req/month)
 // Real flight prices from user's nearest airport to destination.
+// SECURITY: API keys kept server-side. All searches go through amadeus-proxy.
 // =============================================================================
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from './supabase';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -29,20 +31,6 @@ export interface FlightSearchResult {
   destination: string;
   searchedAt: string;
 }
-
-interface AmadeusToken {
-  access_token: string;
-  expires_at: number; // epoch ms
-}
-
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-const API_KEY = process.env.EXPO_PUBLIC_AMADEUS_KEY ?? '';
-const API_SECRET = process.env.EXPO_PUBLIC_AMADEUS_SECRET ?? '';
-const TOKEN_KEY = 'roam_amadeus_token';
-// Test environment (free tier)
-const BASE = 'https://test.api.amadeus.com';
 
 // Major airport codes for popular destinations
 const DESTINATION_AIRPORTS: Record<string, string> = {
@@ -132,81 +120,7 @@ export function getDestinationAirport(destination: string): string | null {
 }
 
 // ---------------------------------------------------------------------------
-// OAuth token management
-// ---------------------------------------------------------------------------
-
-async function getToken(): Promise<string> {
-  if (!API_KEY || !API_SECRET) {
-    throw new Error('Missing Amadeus API credentials');
-  }
-
-  // Check cached token
-  try {
-    const raw = await AsyncStorage.getItem(TOKEN_KEY);
-    if (raw) {
-      const cached: AmadeusToken = JSON.parse(raw);
-      if (cached.expires_at > Date.now() + 60_000) {
-        return cached.access_token;
-      }
-    }
-  } catch {
-    // Ignore
-  }
-
-  // Fetch new token
-  const res = await fetch(`${BASE}/v1/security/oauth2/token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `grant_type=client_credentials&client_id=${API_KEY}&client_secret=${API_SECRET}`,
-  });
-
-  if (!res.ok) {
-    throw new Error(`Amadeus auth failed: ${res.status}`);
-  }
-
-  const data = await res.json();
-  const token: AmadeusToken = {
-    access_token: data.access_token,
-    expires_at: Date.now() + data.expires_in * 1000,
-  };
-
-  await AsyncStorage.setItem(TOKEN_KEY, JSON.stringify(token)).catch(() => {});
-  return token.access_token;
-}
-
-// ---------------------------------------------------------------------------
-// Airline name lookup (top carriers)
-// ---------------------------------------------------------------------------
-const AIRLINE_NAMES: Record<string, string> = {
-  AA: 'American Airlines', UA: 'United', DL: 'Delta', WN: 'Southwest',
-  B6: 'JetBlue', NK: 'Spirit', F9: 'Frontier', AS: 'Alaska',
-  HA: 'Hawaiian', BA: 'British Airways', LH: 'Lufthansa',
-  AF: 'Air France', KL: 'KLM', IB: 'Iberia', AY: 'Finnair',
-  SK: 'SAS', LX: 'Swiss', OS: 'Austrian', TP: 'TAP Portugal',
-  TK: 'Turkish Airlines', EK: 'Emirates', QR: 'Qatar Airways',
-  EY: 'Etihad', SQ: 'Singapore Airlines', CX: 'Cathay Pacific',
-  NH: 'ANA', JL: 'JAL', OZ: 'Asiana', KE: 'Korean Air',
-  QF: 'Qantas', NZ: 'Air New Zealand', AC: 'Air Canada',
-  AM: 'Aeromexico', AV: 'Avianca', LA: 'LATAM', G3: 'Gol',
-  FR: 'Ryanair', U2: 'easyJet', W6: 'Wizz Air', VY: 'Vueling',
-  TG: 'Thai Airways', GA: 'Garuda', MH: 'Malaysia Airlines',
-  BR: 'EVA Air', CI: 'China Airlines', CA: 'Air China',
-  MU: 'China Eastern', CZ: 'China Southern', AI: 'Air India',
-  ET: 'Ethiopian', SA: 'South African', MS: 'EgyptAir',
-  RJ: 'Royal Jordanian', SV: 'Saudi Arabian',
-};
-
-function formatDuration(iso: string): string {
-  // PT2H30M → "2h 30m"
-  const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
-  if (!match) return iso;
-  const h = match[1] ? `${match[1]}h` : '';
-  const m = match[2] ? `${match[2]}m` : '';
-  return `${h} ${m}`.trim();
-}
-
-// ---------------------------------------------------------------------------
-// Search Flights
+// Search Flights (via amadeus-proxy edge function — keys stay server-side)
 // ---------------------------------------------------------------------------
 
 /**
@@ -221,72 +135,26 @@ export async function searchFlights(params: {
   adults?: number;
   maxOffers?: number;
 }): Promise<FlightSearchResult> {
-  const token = await getToken();
-  const { origin, destination, departureDate, returnDate } = params;
-  const adults = params.adults ?? 1;
-  const max = params.maxOffers ?? 5;
-
-  const url = new URL(`${BASE}/v2/shopping/flight-offers`);
-  url.searchParams.set('originLocationCode', origin);
-  url.searchParams.set('destinationLocationCode', destination);
-  url.searchParams.set('departureDate', departureDate);
-  url.searchParams.set('returnDate', returnDate);
-  url.searchParams.set('adults', String(adults));
-  url.searchParams.set('max', String(max));
-  url.searchParams.set('currencyCode', 'USD');
-  url.searchParams.set('nonStop', 'false');
-
-  const res = await fetch(url.toString(), {
-    headers: { Authorization: `Bearer ${token}` },
+  const { data, error } = await supabase.functions.invoke('amadeus-proxy', {
+    body: {
+      origin: params.origin,
+      destination: params.destination,
+      departureDate: params.departureDate,
+      returnDate: params.returnDate,
+      adults: params.adults ?? 1,
+      maxOffers: params.maxOffers ?? 5,
+    },
   });
 
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Amadeus flight search failed: ${res.status} ${body}`);
+  if (error) {
+    throw new Error(error.message ?? 'Flight search failed');
   }
 
-  const data = await res.json();
-  const rawOffers = data.data ?? [];
+  if (data?.error) {
+    throw new Error(typeof data.error === 'string' ? data.error : 'Flight search failed');
+  }
 
-  const offers: FlightOffer[] = rawOffers.map((offer: Record<string, unknown>) => {
-    const price = parseFloat((offer.price as Record<string, string>).total);
-    const currency = (offer.price as Record<string, string>).currency;
-    const itineraries = offer.itineraries as Array<Record<string, unknown>>;
-    const outbound = itineraries[0];
-    const returnFlight = itineraries[1];
-
-    const segments = outbound.segments as Array<Record<string, unknown>>;
-    const mainCarrier = (segments[0]?.carrierCode as string) ?? 'XX';
-    const stops = segments.length - 1;
-
-    return {
-      airline: mainCarrier,
-      airlineName: AIRLINE_NAMES[mainCarrier] ?? mainCarrier,
-      price,
-      currency,
-      departureDate,
-      returnDate,
-      outboundDuration: formatDuration(outbound.duration as string),
-      returnDuration: returnFlight
-        ? formatDuration(returnFlight.duration as string)
-        : '',
-      stops,
-      origin,
-      destination,
-      bookingUrl: `https://www.google.com/travel/flights?q=flights+from+${origin}+to+${destination}+on+${departureDate}`,
-    };
-  });
-
-  // Sort by price
-  offers.sort((a: FlightOffer, b: FlightOffer) => a.price - b.price);
-
-  return {
-    offers,
-    cheapest: offers[0] ?? null,
-    origin,
-    destination,
-    searchedAt: new Date().toISOString(),
-  };
+  return data as FlightSearchResult;
 }
 
 /**
