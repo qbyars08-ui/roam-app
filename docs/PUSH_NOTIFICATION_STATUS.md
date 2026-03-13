@@ -24,4 +24,7 @@ All 8 types from [push-notification-spec.md](./push-notification-spec.md).
 
 1. Run migration: `supabase db push` (includes push_tokens)
 2. Deploy send-push: `supabase functions deploy send-push`
-3. Callers (crons, edge functions) use service role to invoke send-push with `{ user_ids, title, body, data }`
+3. Set `SEND_PUSH_INTERNAL_SECRET` in Supabase Edge Function secrets
+4. Callers (crons, edge functions) invoke send-push with:
+   - Header: `Authorization: Bearer ${SEND_PUSH_INTERNAL_SECRET}`
+   - Body: `{ user_ids, title, body, data }`

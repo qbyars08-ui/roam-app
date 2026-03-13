@@ -23,6 +23,7 @@ import { supabase } from '../../lib/supabase';
 import { useAppStore } from '../../lib/store';
 import { enterGuestMode } from '../../lib/guest';
 import { COLORS, FONTS, SPACING } from '../../lib/constants';
+import { ONBOARDING_COMPLETE } from '../../lib/storage-keys';
 import { getDestinationPhoto } from '../../lib/photos';
 
 export default function SplashScreen() {
@@ -95,7 +96,7 @@ export default function SplashScreen() {
       const { data, error } = await supabase.auth.signInAnonymously();
       if (!error && data.session) {
         useAppStore.getState().setSession(data.session);
-        await AsyncStorage.setItem('@roam/onboarding_complete', 'true');
+        await AsyncStorage.setItem(ONBOARDING_COMPLETE, 'true');
         router.replace('/(tabs)');
       } else {
         await enterGuestMode();

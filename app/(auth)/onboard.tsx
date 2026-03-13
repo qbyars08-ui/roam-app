@@ -32,7 +32,7 @@ import { generateItinerary, TripLimitReachedError } from '../../lib/claude';
 import { supabase } from '../../lib/supabase';
 import WaitlistCaptureModal from '../../components/features/WaitlistCaptureModal';
 
-const ONBOARDING_COMPLETE_KEY = '@roam/onboarding_complete';
+import { ONBOARDING_COMPLETE } from '../../lib/storage-keys';
 const DESTINATION_CHOICES = DESTINATIONS.slice(0, 4);
 const DEV = __DEV__;
 
@@ -393,7 +393,7 @@ export default function OnboardScreen() {
   }, [destination, addTrip, setTripsThisMonth, router, isPro, tripsThisMonth, isGuestLike, session, setSession]);
 
   const handleSkipSignup = useCallback(async () => {
-    await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
+    await AsyncStorage.setItem(ONBOARDING_COMPLETE, 'true');
     if (DEV) {
       setSession({ user: { id: 'dev-user', email: 'dev@roam.app' } } as any);
     } else if (!session) {

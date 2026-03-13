@@ -22,6 +22,7 @@ import { ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useDestinationTheme } from '../lib/useDestinationTheme';
 import { withComingSoon } from '../lib/with-coming-soon';
+import { validateDestination } from '../lib/params-validator';
 
 // =============================================================================
 // Types
@@ -810,7 +811,7 @@ const VERDICT_SORT_VALUE: Record<Verdict, number> = {
 // Component
 // =============================================================================
 function HonestReviews() {
-  const { destination } = useLocalSearchParams<{ destination: string }>();
+  const params = useLocalSearchParams<{ destination: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -820,7 +821,7 @@ function HonestReviews() {
   // Animation refs for stagger
   const fadeAnims = useRef<Animated.Value[]>([]).current;
 
-  const cityName = destination || '';
+  const cityName = validateDestination(params.destination) ?? '';
   const rawReviews = REVIEWS_DATA[cityName] || [];
   const hasData = rawReviews.length > 0;
   const destTheme = useDestinationTheme(cityName);

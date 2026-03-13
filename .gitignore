@@ -35,6 +35,11 @@ yarn-error.*
 .env.local
 .env*.local
 
+# native secrets (keystores, Firebase config)
+*.keystore
+google-services.json
+GoogleService-Info.plist
+
 # typescript
 *.tsbuildinfo
 

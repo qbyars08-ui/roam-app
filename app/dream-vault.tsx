@@ -33,6 +33,7 @@ import {
 } from '../lib/flight-deals';
 import { useAppStore } from '../lib/store';
 import { withComingSoon } from '../lib/with-coming-soon';
+import { validateDestination } from '../lib/params-validator';
 import { getHomeAirport } from '../lib/flights-amadeus';
 
 function DreamVaultScreen() {
@@ -60,13 +61,14 @@ function DreamVaultScreen() {
   }, [load]);
 
   useEffect(() => {
-    if (!params.destination) return;
+    const dest = validateDestination(params.destination);
+    if (!dest) return;
     // Resolve home airport first to avoid race with stale 'JFK' default
     getHomeAirport()
-      .then((airport) => addSavedDestination(params.destination!, airport))
+      .then((airport) => addSavedDestination(dest, airport))
       .then(load)
       .catch(() => {});
-  }, [params.destination]);
+  }, [params.destination, load]);
 
   const handleSearchFlights = async (dest: SavedDestination) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

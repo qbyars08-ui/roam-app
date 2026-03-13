@@ -23,6 +23,7 @@ import { supabase } from '../../lib/supabase';
 import { useAppStore } from '../../lib/store';
 import { enterGuestMode } from '../../lib/guest';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { ONBOARDING_COMPLETE } from '../../lib/storage-keys';
 
 const DEV = __DEV__;
 const isWeb = Platform.OS === 'web';
@@ -137,7 +138,7 @@ export default function SignUpScreen() {
       if (error) throw error;
       if (data.session) {
         setSession(data.session);
-        await AsyncStorage.setItem('@roam/onboarding_complete', 'true');
+        await AsyncStorage.setItem(ONBOARDING_COMPLETE, 'true');
         router.replace('/(tabs)');
         return;
       }

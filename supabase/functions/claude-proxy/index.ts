@@ -75,6 +75,24 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // ── Input length limits (prevent token exhaustion / cost abuse) ──────
+    const MAX_SYSTEM_BYTES = 50 * 1024;   // 50KB
+    const MAX_MESSAGES_BYTES = 100 * 1024; // 100KB total
+    const systemBytes = new TextEncoder().encode(systemPrompt).length;
+    const messagesBytes = JSON.stringify(messages).length;
+    if (systemBytes > MAX_SYSTEM_BYTES) {
+      return new Response(
+        JSON.stringify({ error: "System prompt too long" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    if (messagesBytes > MAX_MESSAGES_BYTES) {
+      return new Response(
+        JSON.stringify({ error: "Messages too long" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     // ── Profile: fetch or use defaults ─────────────────────────────────
     let profile: { subscription_tier: string; trips_generated_this_month: number; month_reset_at: string } = {
       subscription_tier: "free",

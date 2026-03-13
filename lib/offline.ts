@@ -4,15 +4,12 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Itinerary } from './types/itinerary';
-
-// ---------------------------------------------------------------------------
-// Storage keys
-// ---------------------------------------------------------------------------
+import { OFFLINE_TRIPS, OFFLINE_ITINERARY_PREFIX, OFFLINE_LAST_SYNC } from './storage-keys';
 
 const KEYS = {
-  TRIPS: '@roam/trips',
-  ITINERARY_PREFIX: '@roam/itinerary/',
-  LAST_SYNC: '@roam/lastSync',
+  TRIPS: OFFLINE_TRIPS,
+  ITINERARY_PREFIX: OFFLINE_ITINERARY_PREFIX,
+  LAST_SYNC: OFFLINE_LAST_SYNC,
 } as const;
 
 // ---------------------------------------------------------------------------
