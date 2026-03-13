@@ -16,9 +16,10 @@ import {
 import * as Haptics from '../../lib/haptics';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MessageSquare, Shield, Plane, Globe, BookOpen, PawPrint, Users, Search, FlaskConical, Image, Wallet, Flag, Star, Map, Receipt, User, Gift, Shuffle, Clock, Building2, Heart, UserPlus, Languages, Repeat } from 'lucide-react-native';
+import { MessageSquare, Shield, Plane, Globe, BookOpen, PawPrint, Users, Search, FlaskConical, Image, Wallet, Flag, Star, Map, Receipt, User, Gift, Shuffle, Clock, Building2, Heart, UserPlus, Languages, Repeat, Lock } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useProGate } from '../../lib/pro-gate';
+import { useAppStore } from '../../lib/store';
 
 // ---------------------------------------------------------------------------
 // Feature definitions — 5 visible & functional; rest show "Coming Soon"
@@ -109,6 +110,7 @@ export default function ExploreHub({ standalone = false }: ExploreHubProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { canAccess: canAccessPro } = useProGate('travel-twin');
+  const isPro = useAppStore((s) => s.isPro);
 
   const handlePress = useCallback(
     (feature: Feature) => {
@@ -128,29 +130,40 @@ export default function ExploreHub({ standalone = false }: ExploreHubProps) {
     <View style={styles.grid}>
       {FEATURES.map((feature) => {
         const isLive = (LIVE_FEATURE_IDS as readonly string[]).includes(feature.id);
+        const isProGated = feature.pro && !isPro;
         return (
           <Pressable
             key={feature.id}
             style={({ pressed }) => [
               styles.card,
+              isProGated && styles.cardProGated,
               { opacity: pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
             ]}
             onPress={() => handlePress(feature)}
           >
-            {!isLive && (
+            {isProGated ? (
+              <View style={styles.proBadge}>
+                <Lock size={8} color={COLORS.gold} strokeWidth={2.5} />
+                <Text style={styles.proBadgeText}>PRO</Text>
+              </View>
+            ) : !isLive ? (
               <View style={styles.comingSoonBadge}>
                 <Text style={styles.comingSoonBadgeText}>COMING SOON</Text>
               </View>
-            )}
+            ) : null}
             {(() => {
               const IconComponent = ICON_MAP[feature.icon];
               return IconComponent ? (
                 <View style={styles.cardIcon}>
-                  <IconComponent size={24} color={isLive ? COLORS.accentGold : COLORS.creamMuted} strokeWidth={2} />
+                  <IconComponent
+                    size={24}
+                    color={isProGated ? COLORS.gold : isLive ? COLORS.accentGold : COLORS.creamMuted}
+                    strokeWidth={2}
+                  />
                 </View>
               ) : null;
             })()}
-            <Text style={[styles.cardName, !isLive && styles.cardNameMuted]}>{feature.name}</Text>
+            <Text style={[styles.cardName, !isLive && !isProGated && styles.cardNameMuted]}>{feature.name}</Text>
             <Text style={styles.cardDesc} numberOfLines={2}>
               {feature.description}
             </Text>
@@ -283,6 +296,30 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
     gap: SPACING.xs,
   } as ViewStyle,
+  cardProGated: {
+    borderColor: COLORS.gold + '30',
+  } as ViewStyle,
+  proBadge: {
+    position: 'absolute',
+    top: SPACING.sm,
+    right: SPACING.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: COLORS.gold + '20',
+    paddingHorizontal: SPACING.xs + 2,
+    paddingVertical: 2,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.gold + '40',
+    zIndex: 1,
+  } as ViewStyle,
+  proBadgeText: {
+    fontFamily: FONTS.mono,
+    fontSize: 9,
+    letterSpacing: 1,
+    color: COLORS.gold,
+  } as TextStyle,
   comingSoonBadge: {
     position: 'absolute',
     top: SPACING.sm,

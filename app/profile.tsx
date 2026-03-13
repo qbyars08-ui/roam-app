@@ -27,9 +27,10 @@ import { useAppStore } from '../lib/store';
 import { isGuestUser, clearGuestMode } from '../lib/guest';
 import { getCurrentStreak } from '../lib/streaks';
 import { logoutRevenueCat } from '../lib/revenue-cat';
-import { Sparkles, Repeat, Gift, Shield, ChevronRight, BarChart3, CreditCard, LogOut } from 'lucide-react-native';
+import { Sparkles, Repeat, Gift, Shield, ChevronRight, BarChart3, LogOut } from 'lucide-react-native';
 import Button from '../components/ui/Button';
 import ExploreHub from '../components/features/ExploreHub';
+import SubscriptionCard from '../components/monetization/SubscriptionCard';
 
 import { EMERGENCY_CONTACT, ONBOARDING_COMPLETE } from '../lib/storage-keys';
 
@@ -160,18 +161,10 @@ export default function ProfileScreen() {
             />
           </View>
         )}
-        {/* Upgrade CTA for signed-in free users */}
-        {!isPro && !isGuestUser() && (
-          <View style={styles.upgradeCard}>
-            <Text style={styles.upgradeTitle}>Plan unlimited trips</Text>
-            <Text style={styles.upgradeSubtitle}>
-              Never hold back. Plan as many adventures as you want, whenever inspiration strikes.
-            </Text>
-            <Button
-              label="See Pro plans"
-              variant="coral"
-              onPress={() => router.push('/paywall')}
-            />
+        {/* Subscription card — shows plan details, upgrade, or manage */}
+        {!isGuestUser() && (
+          <View style={{ marginTop: SPACING.lg }}>
+            <SubscriptionCard />
           </View>
         )}
 
@@ -237,12 +230,12 @@ export default function ProfileScreen() {
             style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.7 : 1 }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push({ pathname: '/coming-soon', params: { title: 'Refer Friends' } });
+              router.push('/referral');
             }}
           >
-            <View style={styles.menuIconWrap}><Gift size={18} color={COLORS.creamMuted} strokeWidth={2} /></View>
-            <Text style={[styles.menuLabel, { flex: 1, opacity: 0.85 }]}>Refer Friends</Text>
-            <View style={styles.comingSoonInlineBadge}><Text style={styles.comingSoonInlineText}>COMING SOON</Text></View>
+            <View style={styles.menuIconWrap}><Gift size={18} color={COLORS.sage} strokeWidth={2} /></View>
+            <Text style={[styles.menuLabel, { flex: 1 }]}>Refer Friends</Text>
+            <View style={styles.referralBadge}><Text style={styles.referralBadgeText}>EARN PRO</Text></View>
             <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
           </Pressable>
         </View>
@@ -255,20 +248,6 @@ export default function ProfileScreen() {
 
         {/* Menu items */}
         <View style={styles.menuSection}>
-          <Pressable
-            style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.7 : 1 }]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push('/paywall');
-            }}
-          >
-            <View style={styles.menuIconWrap}><CreditCard size={18} color={COLORS.accentGold} strokeWidth={2} /></View>
-            <Text style={[styles.menuLabel, { flex: 1 }]}>Your plan</Text>
-            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
-          </Pressable>
-
-          <View style={styles.menuDivider} />
-
           <Pressable
             style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.7 : 1 }]}
             onPress={() => {
@@ -410,6 +389,20 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.mono,
     fontSize: 9,
     color: COLORS.sage,
+    letterSpacing: 1,
+  } as TextStyle,
+  referralBadge: {
+    backgroundColor: COLORS.gold + '20',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.gold + '40',
+  } as ViewStyle,
+  referralBadgeText: {
+    fontFamily: FONTS.mono,
+    fontSize: 9,
+    color: COLORS.gold,
     letterSpacing: 1,
   } as TextStyle,
   tripWrappedContent: {

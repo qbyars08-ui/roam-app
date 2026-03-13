@@ -18,6 +18,7 @@ import GenerateModeSelect from '../../components/generate/GenerateModeSelect';
 import GenerateQuickMode from '../../components/generate/GenerateQuickMode';
 import GenerateConversationMode from '../../components/generate/GenerateConversationMode';
 import { TripGeneratingLoader } from '../../components/premium/LoadingStates';
+import TripLimitBanner from '../../components/monetization/TripLimitBanner';
 
 const RANDOM_CITIES = [
   'Tokyo', 'Bali', 'Lisbon', 'Mexico City', 'Bangkok', 'Barcelona', 'Cape Town',
@@ -206,6 +207,7 @@ export default function GenerateScreen() {
     if (generateMode === 'quick') {
       return (
         <View style={[styles.fill, { paddingTop: insets.top }]}>
+          <TripLimitBanner />
           {networkError ? (
             <View style={styles.errorBanner}>
               <Text style={styles.errorBannerText}>{networkError}</Text>
@@ -221,6 +223,7 @@ export default function GenerateScreen() {
 
     return (
       <View style={[styles.fill, { paddingTop: insets.top }]}>
+        <TripLimitBanner />
         {networkError ? (
           <View style={styles.errorBanner}>
             <Text style={styles.errorBannerText}>{networkError}</Text>
