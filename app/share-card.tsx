@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as Haptics from '../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS, BUDGETS } from '../lib/constants';
 import { getDestinationPhoto } from '../lib/photos';
 import BreathingLine from '../components/ui/BreathingLine';
@@ -95,7 +96,7 @@ function ShareCardPage() {
     return (
       <View style={styles.screen}>
         <Text style={styles.fallbackText}>No share data. Generate a trip first!</Text>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+        <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }} style={styles.backBtn}>
           <Text style={styles.backBtnText}>Go back</Text>
         </Pressable>
       </View>

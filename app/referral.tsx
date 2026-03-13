@@ -90,7 +90,7 @@ export default function ReferralScreen() {
       {/* Close button */}
       <View style={styles.headerRow}>
         <Pressable
-          onPress={() => router.back()}
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }}
           hitSlop={12}
           accessibilityRole="button"
           accessibilityLabel="Close"

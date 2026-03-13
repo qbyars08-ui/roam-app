@@ -20,6 +20,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { Check, X } from 'lucide-react-native';
+import * as Haptics from '../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import { isGuestUser } from '../lib/guest';
@@ -157,6 +158,7 @@ export default function PaywallScreen() {
     : "You've been planning for free.\nStart traveling for real.";
 
   const handleClose = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (router.canGoBack()) {
       router.back();
     } else {

@@ -243,7 +243,7 @@ function VisitedMapScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+        <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }} style={styles.backBtn}>
           <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
         <Text style={styles.headerTitle}>Visited Map</Text>

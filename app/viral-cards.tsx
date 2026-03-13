@@ -15,6 +15,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
+import * as Haptics from '../lib/haptics';
 
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
@@ -51,7 +52,7 @@ function ViralCardsScreen() {
   if (!trip) {
     return (
       <View style={[styles.screen, { paddingTop: insets.top }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+        <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }} style={styles.backBtn}>
           <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
         <View style={styles.empty}>
@@ -65,7 +66,7 @@ function ViralCardsScreen() {
   if (!parsed) {
     return (
       <View style={[styles.screen, { paddingTop: insets.top }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+        <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }} style={styles.backBtn}>
           <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
         <View style={styles.empty}>
@@ -80,7 +81,7 @@ function ViralCardsScreen() {
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+        <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }} style={styles.backBtn}>
           <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
         <Text style={styles.headerTitle}>Viral Cards</Text>

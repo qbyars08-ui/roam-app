@@ -435,7 +435,7 @@ function BudgetGuardianScreen() {
         style={styles.headerGradient}
       >
         <View style={styles.headerRow}>
-          <Pressable onPress={() => router.back()} hitSlop={12} style={[styles.backBtnWrap, { backgroundColor: `${destTheme.primary}20`, borderRadius: RADIUS.full }]}>
+          <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }} hitSlop={12} style={[styles.backBtnWrap, { backgroundColor: `${destTheme.primary}20`, borderRadius: RADIUS.full }]}>
             <ChevronLeft size={24} color={COLORS.cream} />
           </Pressable>
           <View style={{ flex: 1 }}>
@@ -599,7 +599,7 @@ function BudgetGuardianScreen() {
                   end={{ x: 1, y: 0 }}
                   style={styles.addButtonGradient}
                 >
-                  <Text style={styles.addButtonText}>Add Expense</Text>
+                  <Text style={styles.addButtonText}>Add expense</Text>
                 </LinearGradient>
               </Pressable>
             </>,

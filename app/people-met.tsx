@@ -23,7 +23,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../lib/haptics';
 import { withComingSoon } from '../lib/with-coming-soon';
-import { Plus, MapPin, Camera } from 'lucide-react-native';
+import { Plus, MapPin, Camera, ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import {
   getPeopleMet,
@@ -181,7 +181,7 @@ function PeopleMetScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Text style={styles.back}>{'\u2190'}</Text>
+          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
         </Pressable>
         <Text style={styles.title}>People You&apos;ve Met</Text>
         <Text style={styles.subtitle}>
@@ -376,7 +376,6 @@ function PeopleMetScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
   header: { padding: SPACING.lg },
-  back: { fontSize: 24, color: COLORS.cream, marginBottom: SPACING.sm },
   title: {
     fontFamily: FONTS.header,
     fontSize: 28,

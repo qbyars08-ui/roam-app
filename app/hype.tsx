@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
+import { X, Rocket, Share2 } from 'lucide-react-native';
 import {
   setHypeTrip,
   getHypeTrips,
@@ -111,7 +112,7 @@ function HypeScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     await Share.share({
-      message: `\u2708\uFE0F I'm going to ${hypeTrip.destination} in ${daysUntil} day${daysUntil === 1 ? '' : 's'}!\n\nCountdown powered by ROAM \u2728`,
+      message: `I'm going to ${hypeTrip.destination} in ${daysUntil} day${daysUntil === 1 ? '' : 's'}! Countdown powered by ROAM`,
     });
   }, [hypeTrip, daysUntil]);
 
@@ -141,7 +142,7 @@ function HypeScreen() {
             { opacity: pressed ? 0.6 : 1 },
           ]}
         >
-          <Text style={styles.closeBtnText}>{'\u2715'}</Text>
+          <X size={18} color={COLORS.cream} strokeWidth={2} />
         </Pressable>
       </View>
 
@@ -218,9 +219,10 @@ function HypeScreen() {
                   colors={[COLORS.sage, COLORS.sageDark]}
                   style={styles.shareGradient}
                 >
-                  <Text style={styles.shareButtonText}>
-                    {'\uD83D\uDCE4'} Share Countdown
-                  </Text>
+                  <View style={styles.shareBtnInner}>
+                    <Share2 size={16} color={COLORS.bg} strokeWidth={2} />
+                    <Text style={styles.shareButtonText}>Share countdown</Text>
+                  </View>
                 </LinearGradient>
               </Pressable>
 
@@ -236,7 +238,7 @@ function HypeScreen() {
         ) : (
           /* No hype trip set yet — show setup state */
           <View style={styles.setupContainer}>
-            <Text style={styles.setupEmoji}>{'\uD83D\uDE80'}</Text>
+            <Rocket size={48} color={COLORS.gold} strokeWidth={1.5} style={{ marginBottom: SPACING.md }} />
             <Text style={styles.setupTitle}>
               Set your departure date
             </Text>
@@ -272,7 +274,7 @@ function HypeScreen() {
                 style={styles.setDateGradient}
               >
                 <Text style={styles.setDateText}>
-                  {hasHypeTrip ? 'Update Date' : 'Start Countdown'}
+                  {hasHypeTrip ? 'Update date' : 'Start countdown'}
                 </Text>
               </LinearGradient>
             </Pressable>
@@ -317,10 +319,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
-  closeBtnText: {
-    fontSize: 16,
-    color: COLORS.cream,
-  } as TextStyle,
   scrollContent: {
     paddingHorizontal: SPACING.lg,
     paddingBottom: SPACING.xxxl,
@@ -445,6 +443,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: RADIUS.lg,
   } as ViewStyle,
+  shareBtnInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  } as ViewStyle,
   shareButtonText: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 16,
@@ -466,10 +469,6 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xxxl,
     gap: SPACING.sm,
   } as ViewStyle,
-  setupEmoji: {
-    fontSize: 56,
-    marginBottom: SPACING.md,
-  } as TextStyle,
   setupTitle: {
     fontFamily: FONTS.header,
     fontSize: 28,

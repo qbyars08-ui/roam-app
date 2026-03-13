@@ -14,6 +14,7 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, Clock } from 'lucide-react-native';
+import * as Haptics from '../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { compareDestinationOverTime } from '../lib/travel-time-machine';
 import { withComingSoon } from '../lib/with-coming-soon';
@@ -39,7 +40,7 @@ function TravelTimeMachineScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+        <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }} style={styles.backBtn}>
           <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
         <View style={styles.headerCenter}>

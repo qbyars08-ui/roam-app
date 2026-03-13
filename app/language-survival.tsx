@@ -163,7 +163,6 @@ function LanguageSurvivalScreen() {
               }}
               style={[styles.cityChip, isActive && styles.cityChipActive]}
             >
-              <Text style={styles.cityChipFlag}>{p.flag}</Text>
               <Text style={[styles.cityChipText, isActive && styles.cityChipTextActive]}>
                 {p.city}
               </Text>
@@ -174,7 +173,6 @@ function LanguageSurvivalScreen() {
 
       {/* Pack info */}
       <View style={styles.packInfo}>
-        <Text style={styles.packFlag}>{pack.flag}</Text>
         <View>
           <Text style={styles.packCity}>{pack.city}</Text>
           <Text style={styles.packLang}>{pack.language} · {pack.phrases.length} phrases</Text>
@@ -211,7 +209,6 @@ function LanguageSurvivalScreen() {
               }}
               style={[styles.catChip, isActive && styles.catChipActive]}
             >
-              {info.emoji ? <Text style={styles.catEmoji}>{info.emoji}</Text> : null}
               <Text style={[styles.catChipText, isActive && styles.catChipTextActive]}>
                 {info.label}
               </Text>

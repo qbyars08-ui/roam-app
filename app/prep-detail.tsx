@@ -44,7 +44,10 @@ export default function PrepDetailScreen() {
 
   if (!trip) return null;
 
-  const handleClose = () => router.back();
+  const handleClose = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.back();
+  };
 
   if (params.sectionId === 'language_kit' && content) {
     const phrases = (content.phrases as Array<{ english: string; local: string; phonetic: string }>) ?? [];

@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronRight, ChevronDown } from 'lucide-react-native';
+import { ChevronRight, ChevronDown, ChevronLeft } from 'lucide-react-native';
 import * as Haptics from '../lib/haptics';
 import { withComingSoon } from '../lib/with-coming-soon';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
@@ -212,7 +212,7 @@ function AirportGuideScreen() {
       <View style={[styles.screen, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <Pressable onPress={handleBack} hitSlop={12} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}>
-            <Text style={styles.backBtn}>{'\u2190'}</Text>
+            <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
           </Pressable>
           <Text style={styles.headerTitle}>{selected.code}</Text>
         </View>
@@ -225,7 +225,7 @@ function AirportGuideScreen() {
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={12} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}>
-          <Text style={styles.backBtn}>{'\u2190'}</Text>
+          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
         </Pressable>
         <Text style={styles.title}>Airport Survival Guide</Text>
         <Text style={styles.subtitle}>
@@ -257,12 +257,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     marginBottom: SPACING.lg,
   } as ViewStyle,
-  backBtn: {
-    fontFamily: FONTS.body,
-    fontSize: 18,
-    color: COLORS.cream,
-    marginBottom: SPACING.sm,
-  } as TextStyle,
   headerTitle: {
     fontFamily: FONTS.header,
     fontSize: 24,

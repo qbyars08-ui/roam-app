@@ -941,10 +941,10 @@ function HonestReviews() {
             Tokyo, Paris, Bali, New York, Barcelona, Rome, London, Bangkok, Marrakech, Lisbon, or Mexico City.
           </Text>
           <Pressable
-            onPress={() => router.back()}
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }}
             style={styles.fallbackButton}
           >
-            <Text style={styles.fallbackButtonText}>Go Back</Text>
+            <Text style={styles.fallbackButtonText}>Go back</Text>
           </Pressable>
         </View>
       ) : (

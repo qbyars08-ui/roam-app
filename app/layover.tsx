@@ -19,6 +19,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../lib/haptics';
 import { withComingSoon } from '../lib/with-coming-soon';
+import { ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { callClaude } from '../lib/claude';
 
@@ -134,7 +135,7 @@ function LayoverScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} hitSlop={12} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}>
-            <Text style={styles.backBtn}>{'\u2190'}</Text>
+            <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
           </Pressable>
           <Text style={styles.title}>Layover Optimizer</Text>
           <Text style={styles.subtitle}>
@@ -307,12 +308,6 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: SPACING.xl,
   } as ViewStyle,
-  backBtn: {
-    fontFamily: FONTS.body,
-    fontSize: 18,
-    color: COLORS.cream,
-    marginBottom: SPACING.sm,
-  } as TextStyle,
   title: {
     fontFamily: FONTS.header,
     fontSize: 28,

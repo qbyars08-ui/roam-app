@@ -92,7 +92,7 @@ export default function PublicTripScreen() {
     return (
       <View style={[styles.screen, styles.centerContent, { paddingTop: insets.top }]}>
         <Text style={styles.errorText}>{error ?? 'Trip not found'}</Text>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+        <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }} style={styles.backBtn}>
           <Text style={styles.backBtnText}>Go back</Text>
         </Pressable>
       </View>
@@ -126,7 +126,7 @@ export default function PublicTripScreen() {
 
         {parsed && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Itinerary</Text>
+            <Text style={styles.cardTitle}>Trip plan</Text>
             {parsed.days.map((day, i) => (
               <View key={i} style={styles.dayRow}>
                 <Text style={styles.dayLabel}>Day {day.day}</Text>
