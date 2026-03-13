@@ -24,8 +24,8 @@ ALTER TABLE error_logs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Service role full access" ON error_logs
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
-CREATE POLICY "Allow select error_logs" ON error_logs
-  FOR SELECT USING (true);
+CREATE POLICY "Authenticated read error_logs" ON error_logs
+  FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY "Allow insert error_logs" ON error_logs
-  FOR INSERT WITH CHECK (true);
+CREATE POLICY "Authenticated insert error_logs" ON error_logs
+  FOR INSERT TO authenticated WITH CHECK (true);

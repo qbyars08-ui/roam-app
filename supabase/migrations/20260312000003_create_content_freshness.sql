@@ -17,4 +17,9 @@ CREATE INDEX idx_content_freshness_destination ON content_freshness(destination)
 CREATE INDEX idx_content_freshness_updated ON content_freshness(last_updated_at DESC);
 
 ALTER TABLE content_freshness ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow all content_freshness" ON content_freshness FOR ALL USING (true) WITH CHECK (true);
+
+CREATE POLICY "Service role full access" ON content_freshness
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+CREATE POLICY "Authenticated read content_freshness" ON content_freshness
+  FOR SELECT TO authenticated USING (true);

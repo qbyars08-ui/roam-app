@@ -16,4 +16,9 @@ CREATE TABLE IF NOT EXISTS prompt_versions (
 CREATE INDEX idx_prompt_versions_type ON prompt_versions(prompt_type);
 
 ALTER TABLE prompt_versions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow all prompt_versions" ON prompt_versions FOR ALL USING (true) WITH CHECK (true);
+
+CREATE POLICY "Service role full access" ON prompt_versions
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+CREATE POLICY "Authenticated read prompt_versions" ON prompt_versions
+  FOR SELECT TO authenticated USING (true);
