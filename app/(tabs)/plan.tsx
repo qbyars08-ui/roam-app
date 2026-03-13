@@ -160,28 +160,25 @@ export default function PlanScreen() {
   // prompt so AI swaps outdoor→indoor activities on rainy days)
   // ---------------------------------------------------------------------------
   const handleGenerate = async () => {
-    console.log('[ROAM] handleGenerate called');
-    const isGuest = isGuestUser();
+    const isFakeGuest = isGuestUser(); // fake local session (access_token='')
     const session = useAppStore.getState().session;
-    const isAnon = isGuest || session?.user?.is_anonymous === true;
-    console.log('[ROAM] isGuest:', isGuest, 'isAnon:', isAnon, 'hasCompletedProfile:', hasCompletedProfile);
+    const isRealAnon = !isFakeGuest && session?.user?.is_anonymous === true;
+    const isAnyAnon = isFakeGuest || isRealAnon;
 
     // On first trip, send to travel profile screen first
     // Skip for guests and anonymous users — let them generate immediately
-    if (!isAnon && !hasCompletedProfile) {
-      console.log('[ROAM] Redirecting to travel profile (not anon, no profile)');
+    if (!isAnyAnon && !hasCompletedProfile) {
       router.push('/travel-profile');
       return;
     }
 
-    // Guest/anonymous limit: 1 trip; signed-in free: FREE_TRIPS_PER_MONTH
-    if (isAnon && trips.length >= 1) {
-      console.log('[ROAM] Anon user at trip limit, redirecting to paywall');
+    // Fake guests: limit to 1 local trip before upgrading
+    if (isFakeGuest && trips.length >= 1) {
       router.push({ pathname: '/paywall', params: { reason: 'limit', destination: planWizard.destination } });
       return;
     }
+    // All free users (including real anon): server-enforced monthly limit
     if (!isPro && tripsThisMonth >= FREE_TRIPS_PER_MONTH) {
-      console.log('[ROAM] Free user at monthly limit, redirecting to paywall');
       router.push({ pathname: '/paywall', params: { reason: 'limit' } });
       return;
     }
@@ -189,24 +186,23 @@ export default function PlanScreen() {
     // ── Ensure valid Supabase session for edge function call ──────────
     // Fake guest sessions (access_token='') can't call edge functions.
     // Try signInAnonymously to get a real JWT; if that fails, prompt signup.
-    if (isGuest) {
-      console.log('[ROAM] Fake guest detected, attempting signInAnonymously...');
+    if (isFakeGuest) {
       try {
         const { data, error } = await supabase.auth.signInAnonymously();
         if (error) throw error;
         if (data.session) {
-          console.log('[ROAM] Anonymous auth succeeded, got real session');
+          // Explicitly set session on the Supabase client to avoid race condition
+          // where the internal auth state hasn't propagated before the edge call
+          await supabase.auth.setSession({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+          });
           useAppStore.getState().setSession(data.session);
         } else {
           throw new Error('No session returned');
         }
-      } catch (anonErr: any) {
-        console.warn('[ROAM] signInAnonymously failed:', anonErr?.message);
+      } catch (_anonErr: unknown) {
         // Can't get a valid session — redirect to signup
-        showAlert(
-          'Sign up to create your trip',
-          'Creating your personalized itinerary requires a free account. Sign up in seconds — no credit card needed.'
-        );
         router.push('/(auth)/signup');
         return;
       }
@@ -214,7 +210,6 @@ export default function PlanScreen() {
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setIsGenerating(true);
-    console.log('[ROAM] Starting trip generation for:', planWizard.destination);
 
     try {
       const today = new Date().toISOString().split('T')[0];
@@ -227,10 +222,9 @@ export default function PlanScreen() {
         startDate: today, // align forecast to trip start
       });
 
-      console.log('[ROAM] Trip generated successfully, tripsUsed:', tripsUsed);
       const itineraryStr = JSON.stringify(parsedItinerary);
       const trip = {
-        id: Date.now().toString(),
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
         destination: planWizard.destination,
         days: Number(planWizard.days),
         budget: planWizard.budget,
@@ -250,7 +244,6 @@ export default function PlanScreen() {
       // Navigate to itinerary modal
       router.push({ pathname: '/itinerary', params: { tripId: trip.id } });
     } catch (err: any) {
-      console.error('[ROAM] Trip generation failed:', err?.message || err);
       if (err instanceof TripLimitReachedError) {
         router.push('/paywall');
       } else {
