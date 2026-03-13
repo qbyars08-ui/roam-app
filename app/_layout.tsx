@@ -3,10 +3,10 @@
 // Font loading, auth routing, session bootstrap, StatusBar
 // =============================================================================
 import React, { useEffect, useRef, useState } from 'react';
-import { AppState, Linking, Platform } from 'react-native';
+import { AppState, Linking } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import * as SplashScreen from 'expo-splash-screen';
+import { hideAsync as hideSplashScreen } from '../lib/splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // Self-hosted fonts — only the 7 weights we actually use (1.5MB vs 6.5MB)
@@ -271,11 +271,10 @@ export default function RootLayout() {
   // Auth guard
   useProtectedRoute(session);
 
-  // Hide splash and show app once fonts + session are ready
-  // SplashScreen.hideAsync can be undefined on web — guard to avoid "n is not a function"
+  // Hide splash and show app once fonts + session are ready (native only — web uses lib/splash-screen.web.ts no-op)
   useEffect(() => {
-    if (fontsLoaded && isReady && Platform.OS !== 'web' && typeof SplashScreen?.hideAsync === 'function') {
-      SplashScreen.hideAsync().catch(() => {});
+    if (fontsLoaded && isReady) {
+      hideSplashScreen().catch(() => {});
     }
   }, [fontsLoaded, isReady]);
 
