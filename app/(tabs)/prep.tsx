@@ -82,6 +82,11 @@ import { getWeatherForecast, type DailyForecast } from '../../lib/weather-foreca
 import { getExchangeRates } from '../../lib/exchange-rates';
 import { getPublicHolidays, getCountryCode, type PublicHoliday } from '../../lib/public-holidays';
 import { geocodeCity } from '../../lib/geocoding';
+import ForecastStrip from '../../components/prep/ForecastStrip';
+import AirQualitySunCard from '../../components/prep/AirQualitySunCard';
+import EmergencyQuickCard from '../../components/prep/EmergencyQuickCard';
+import CurrencyQuickCard from '../../components/prep/CurrencyQuickCard';
+import CostOfLivingCard from '../../components/prep/CostOfLivingCard';
 
 // ---------------------------------------------------------------------------
 // Survival phrase keys (6 phrases for Language tab)
@@ -1305,6 +1310,24 @@ function PrepScreen() {
             />
 
             <DestinationIntelCard destination={selectedDest} />
+
+            <View style={{ paddingHorizontal: SPACING.md, marginBottom: SPACING.lg }}>
+              <AirQualitySunCard destination={selectedDest} />
+            </View>
+
+            <ForecastStrip destination={selectedDest} />
+
+            <View style={{ marginTop: SPACING.lg }}>
+              <CostOfLivingCard destination={selectedDest} />
+            </View>
+
+            <View style={{ paddingHorizontal: SPACING.md, marginBottom: SPACING.lg }}>
+              <EmergencyQuickCard destination={selectedDest} />
+            </View>
+
+            <View style={{ paddingHorizontal: SPACING.md, marginBottom: SPACING.lg }}>
+              <CurrencyQuickCard destination={selectedDest} />
+            </View>
 
             <ScrollView
               horizontal
