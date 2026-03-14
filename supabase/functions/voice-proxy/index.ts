@@ -54,6 +54,20 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // ── Rate limit: 30 req/min per user ─────────────────────────────────
+    const RATE_LIMIT_PER_MINUTE = 30;
+    const supabaseAdmin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const { data: count } = await supabaseAdmin.rpc("increment_edge_rate_limit", {
+      p_user_id: user.id,
+      p_endpoint: "voice-proxy",
+    });
+    if ((count as number) > RATE_LIMIT_PER_MINUTE) {
+      return new Response(
+        JSON.stringify({ error: "Rate limit exceeded. Try again in a minute." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     // ── Read & validate request body ──────────────────────────────────
     let body: Record<string, unknown>;
     try {

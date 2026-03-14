@@ -76,8 +76,21 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Service-role client for cache
+    // Service-role client for rate limit + cache
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+    // ── Rate limit: 60 req/min per user ─────────────────────────────────
+    const RATE_LIMIT_PER_MINUTE = 60;
+    const { data: count } = await supabaseAdmin.rpc("increment_edge_rate_limit", {
+      p_user_id: user.id,
+      p_endpoint: "destination-photo",
+    });
+    if ((count as number) > RATE_LIMIT_PER_MINUTE) {
+      return new Response(
+        JSON.stringify({ error: "Rate limit exceeded. Try again in a minute." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     // ── Parse request ───────────────────────────────────────────────────
     const { query } = (await req.json()) as { query: string };

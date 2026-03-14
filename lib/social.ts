@@ -361,6 +361,7 @@ export async function joinHostel(params: {
         hostel_name: params.hostelName,
         city: params.city,
         expires_at: params.checkoutDate,
+        created_by: userId,
       })
       .select()
       .single();

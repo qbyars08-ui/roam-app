@@ -22,6 +22,9 @@ export async function saveChaosDare(params: {
   vibes: string[];
   itinerarySnapshot?: string;
 }): Promise<string | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
   const { data, error } = await supabase
     .from('chaos_dares')
     .insert({
@@ -30,6 +33,7 @@ export async function saveChaosDare(params: {
       budget: params.budget,
       vibes: params.vibes,
       itinerary_snapshot: params.itinerarySnapshot ?? null,
+      created_by: user.id,
     })
     .select('id')
     .single();

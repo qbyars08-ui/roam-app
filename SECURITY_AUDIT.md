@@ -35,7 +35,7 @@
 |----------|-------|-------|-----------|
 | CRITICAL | 5 | 5 | 0 |
 | HIGH | 10 | 10 | 0 |
-| MEDIUM | 7 | 0 | 7 |
+| MEDIUM | 7 | 5 | 2 |
 | LOW | 4 | 0 | 4 |
 
 ---
@@ -71,13 +71,13 @@
 
 | # | Finding | Location | Recommendation |
 |---|---------|----------|----------------|
-| 14 | Amadeus OAuth client secret in client bundle (`EXPO_PUBLIC_AMADEUS_SECRET`) | `lib/flights-amadeus.ts` | Move OAuth flow to an edge function; keep secret server-side |
-| 15 | Sensitive data in AsyncStorage (Amadeus token, user prefs) | `lib/flights-amadeus.ts` | Use `expo-secure-store` for tokens |
-| 16 | `chaos_dares` INSERT allows any authenticated user | `20260319_chaos_dare.sql` | Add per-user rate limit or ownership check |
-| 17 | `hostel_channels` INSERT open to all authenticated (no ownership) | `20260311_social_layer.sql:406` | Add `created_by = auth.uid()` check |
-| 18 | `safety_alerts` INSERT open to all authenticated | `20260311_social_layer.sql:485` | Verify security_fix migration drops this correctly (policy name mismatch) |
-| 19 | `nightlife_groups` security fix policy names may not match originals | `20260312_security_fix_rls.sql` | Verify `DROP POLICY` names align with `20260311_social_layer.sql` |
-| 20 | No rate limiting on `weather-intel`, `voice-proxy`, `destination-photo`, `enrich-venues` | Edge functions | Add per-user rate limiting |
+| 14 | Amadeus OAuth client secret in client bundle (`EXPO_PUBLIC_AMADEUS_SECRET`) | `lib/flights-amadeus.ts` | N/A — file removed; flights use Skyscanner affiliate links |
+| 15 | Sensitive data in AsyncStorage (Amadeus token, user prefs) | `lib/flights-amadeus.ts` | N/A — file removed |
+| 16 | `chaos_dares` INSERT allows any authenticated user | `20260319_chaos_dare.sql` | **Fixed:** Added `created_by`, RLS `WITH CHECK (created_by = auth.uid())` |
+| 17 | `hostel_channels` INSERT open to all authenticated (no ownership) | `20260311_social_layer.sql:406` | **Fixed:** Added `created_by`, RLS `WITH CHECK (created_by = auth.uid())` |
+| 18 | `safety_alerts` INSERT open to all authenticated | `20260311_social_layer.sql:485` | Verified: policy "System creates alerts" — acceptable for system-generated alerts |
+| 19 | `nightlife_groups` security fix policy names may not match originals | `20260312_security_fix_rls.sql` | Verified: policies align; "Authenticated join nightlife" allows members to join |
+| 20 | No rate limiting on `weather-intel`, `voice-proxy`, `destination-photo`, `enrich-venues` | Edge functions | **Fixed:** Per-user rate limits via `edge_function_rate_limits` + RPC |
 
 ---
 
@@ -142,11 +142,17 @@
 - `supabase/migrations/20260319_chaos_dare.sql`
 - `supabase/migrations/20260319_onboarding_ab_test.sql`
 - `supabase/migrations/20260313_security_audit_rls_fixes.sql` (NEW — patches live DB)
+- `supabase/migrations/20260324000002_edge_function_rate_limits.sql` (NEW — rate limiting)
+- `supabase/migrations/20260324000003_medium_security_rls.sql` (NEW — chaos_dares, hostel_channels)
 
-### Edge Functions (auth, CORS, error handling)
-- `supabase/functions/voice-proxy/index.ts`
-- `supabase/functions/weather-intel/index.ts`
-- `supabase/functions/enrich-venues/index.ts`
-- `supabase/functions/destination-photo/index.ts`
+### Edge Functions (auth, CORS, error handling, rate limiting)
+- `supabase/functions/voice-proxy/index.ts` — rate limit 30/min
+- `supabase/functions/weather-intel/index.ts` — rate limit 60/min
+- `supabase/functions/enrich-venues/index.ts` — rate limit 30/min
+- `supabase/functions/destination-photo/index.ts` — rate limit 60/min
 - `supabase/functions/claude-proxy/index.ts`
 - `supabase/functions/send-push/index.ts`
+
+### Client (created_by for RLS)
+- `lib/chaos-dare.ts` — pass `created_by` on insert
+- `lib/social.ts` — pass `created_by` on hostel_channels insert
