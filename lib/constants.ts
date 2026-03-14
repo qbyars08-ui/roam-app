@@ -505,12 +505,12 @@ export const VIBES: Vibe[] = [
 // ---------------------------------------------------------------------------
 export const DISCOVER_HEADERS: string[] = [
   'Travel like you know someone there',
-  'Pick a place. We\u2019ll handle the rest.',
-  'Plan less. Experience more.',
+  'Skip the research rabbit hole',
+  'Your next obsession is one tap away',
   '30 seconds to your next trip.',
   'Some trips plan themselves. This is one.',
-  'Tell us where. We\u2019ll tell you everything.',
-  'The hard part was picking. We did the rest.',
+  'Real recs from someone who\u2019s been',
+  'Where to next? We\u2019ve got opinions.',
 ];
 
 // ---------------------------------------------------------------------------

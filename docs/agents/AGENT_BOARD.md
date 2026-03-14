@@ -4,6 +4,25 @@ Status board for Cursor agents. Cap reads this to coordinate work.
 
 ---
 
+## Agent 04 BUILDER — UI Polish (P3)
+
+**Status:** COMPLETE
+**Date:** 2026-03-14
+**Branch:** `agent04/ui-polish-p3`
+**Action needed:** No
+
+### Findings
+
+- Tasks 1-3 already completed on main by other agents before this run
+- `app/(tabs)/generate.tsx` — TripGeneratingLoader already wired as full-screen overlay (lines 255-259) with `absoluteFillObject` + zIndex 100
+- `app/itinerary.tsx` — 5 API modules (air-quality, sun-times, public-holidays, cost-of-living, timezone) already wired into collapsible DestinationIntelSection
+- `app/(tabs)/flights.tsx` — SkeletonCard from `components/premium/LoadingStates` already imported and rendering 4 shimmer cards during search
+- Sharpened 4 generic discover headers in `lib/constants.ts` — replaced "Pick a place...", "Plan less...", "Tell us where...", "The hard part was picking..." with editorial copy
+- New headers: "Skip the research rabbit hole", "Your next obsession is one tap away", "Real recs from someone who's been", "Where to next? We've got opinions."
+- `npx tsc --noEmit` — zero new errors (pre-existing: react-i18next types missing, readonly array tests, route type mismatches)
+
+---
+
 ## Localization (Agent 09)
 
 **Status:** i18n infrastructure complete; core screens converted
