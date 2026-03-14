@@ -639,7 +639,7 @@ function HealthTab({
         ))}
 
       {!medicalGuide && (
-        <View style={[styles.insuranceCard, { backgroundColor: COLORS.gold + '14' }]}>
+        <View style={[styles.insuranceCard, { backgroundColor: COLORS.goldFaint }]}>
           <AlertTriangle size={18} color={COLORS.gold} />
           <Text style={styles.insuranceText}>Travel insurance strongly recommended</Text>
         </View>

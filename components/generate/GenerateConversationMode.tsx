@@ -503,7 +503,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     backgroundColor: COLORS.sage,
-    borderRadius: 14,
+    borderRadius: RADIUS.xl,
     height: 56,
     marginHorizontal: SPACING.md,
     marginBottom: SPACING.sm,
@@ -544,7 +544,7 @@ const styles = StyleSheet.create({
   sendBtn: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: RADIUS.full,
     backgroundColor: COLORS.sage,
     alignItems: 'center',
     justifyContent: 'center',
