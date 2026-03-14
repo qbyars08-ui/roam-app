@@ -32,6 +32,7 @@ import {
   type OfferingPackages,
 } from '../lib/revenue-cat';
 import { syncProStatusToSupabase } from '../lib/sync-pro-status';
+import { getPaywallSocialProof, getUpgradeMessage, recordGrowthEvent } from '../lib/growth-hooks';
 import { track } from '../lib/analytics';
 
 // =============================================================================
@@ -124,10 +125,6 @@ export default function PaywallScreen() {
   const cardsOpacity = useRef(new Animated.Value(0)).current;
   const cardsY = useRef(new Animated.Value(30)).current;
 
-  useEffect(() => {
-    track({ type: 'screen_view', screen: 'paywall', payload: { reason: params.reason } });
-  }, []);
-
   // Load offerings for live prices
   useEffect(() => {
     getOfferings().then(setPackages).catch(() => {});
@@ -156,24 +153,38 @@ export default function PaywallScreen() {
     ]).start();
   }, []);
 
+  // Dynamic headline based on trigger reason (growth hooks with destination-aware fallback)
+  const upgradeContext = params.reason === 'limit' ? 'trip_limit' as const
+    : params.reason === 'milestone' ? 'post_trip' as const
+    : params.reason === 'feature' ? 'feature_locked' as const
+    : 'default' as const;
+  const upgradeMsg = getUpgradeMessage(upgradeContext);
+  const socialProof = getPaywallSocialProof();
+
   const headline = (() => {
+    // Use destination-aware messaging when available
     switch (params.reason) {
       case 'limit':
         return params.destination
           ? `You just planned ${params.destination}.\nUnlock unlimited trips and keep the momentum.`
-          : 'You just built a real trip.\nUnlock unlimited trips and keep the momentum.';
+          : upgradeMsg.headline;
       case 'feature':
         return params.feature
           ? `${params.feature} is a Pro feature.\nUpgrade to unlock your full travel toolkit.`
-          : 'This is a Pro feature.\nUpgrade to unlock your full travel toolkit.';
+          : upgradeMsg.headline;
       case 'chaos':
         return 'Chaos Mode needs fuel.\nGo Pro for unlimited random trips.';
       case 'group':
         return 'Group planning unlocked with Pro.\nPlan trips together, split the fun.';
       default:
-        return "You've been planning for free.\nStart traveling for real.";
+        return upgradeMsg.headline;
     }
   })();
+
+  useEffect(() => {
+    track({ type: 'screen_view', screen: 'paywall', payload: { reason: params.reason ?? 'default' } }).catch(() => {});
+    recordGrowthEvent('paywall_view').catch(() => {});
+  }, []);
 
   const handleClose = useCallback(() => {
     if (router.canGoBack()) {
@@ -197,9 +208,10 @@ export default function PaywallScreen() {
         if (session?.user?.id && !String(session.user.id).startsWith('guest-')) {
           syncProStatusToSupabase(session.user.id, true).catch(() => {});
         }
+        track({ type: 'tap', screen: 'paywall', action: 'purchase_success', payload: { tier: selectedTier } }).catch(() => {});
+        recordGrowthEvent('purchase_success').catch(() => {});
         handleClose();
       }
-      // On cancel: purchasePro/purchaseGlobal return false, dismiss quietly
     } catch (err) {
       Alert.alert('Something went wrong', 'Try again — we\u2019ll be here.');
     } finally {
@@ -284,7 +296,11 @@ export default function PaywallScreen() {
         >
           <Text style={styles.heroTitle}>ROAM Pro</Text>
           <Text style={styles.heroSubtitle}>{headline}</Text>
-          <Text style={styles.socialProof}>Built for people who'd rather get lost on purpose</Text>
+          <View style={styles.socialProofRow}>
+            <View style={styles.socialProofDot} />
+            <Text style={styles.socialProof}>{socialProof.upgradeCount}</Text>
+          </View>
+          <Text style={styles.socialProofSub}>{upgradeMsg.subtext}</Text>
         </Animated.View>
 
         {/* Tier Cards */}
@@ -456,11 +472,30 @@ const styles = StyleSheet.create({
     lineHeight: 26,
     marginBottom: SPACING.md,
   } as TextStyle,
+  socialProofRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  } as ViewStyle,
+  socialProofDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.sage,
+  } as ViewStyle,
   socialProof: {
     fontFamily: FONTS.mono,
     fontSize: 12,
     color: COLORS.sage,
     letterSpacing: 0.5,
+  } as TextStyle,
+  socialProofSub: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamDim,
+    textAlign: 'center',
+    marginTop: 2,
   } as TextStyle,
 
   // Tier cards

@@ -18,6 +18,8 @@ import GenerateModeSelect from '../../components/generate/GenerateModeSelect';
 import GenerateQuickMode from '../../components/generate/GenerateQuickMode';
 import GenerateConversationMode from '../../components/generate/GenerateConversationMode';
 import { TripGeneratingLoader } from '../../components/premium/LoadingStates';
+import { recordGrowthEvent } from '../../lib/growth-hooks';
+import { evaluateTrigger } from '../../lib/smart-triggers';
 import TripLimitBanner from '../../components/monetization/TripLimitBanner';
 import { track, trackEvent } from '../../lib/analytics';
 
@@ -109,8 +111,9 @@ export default function GenerateScreen() {
 
       addTrip(trip);
       setTripsThisMonth(tripsUsed);
+      recordGrowthEvent('trip_generated').catch(() => {});
+      evaluateTrigger('post_generation').catch(() => {});
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      // Brief pause so the user sees the loader complete before navigating
       await new Promise((r) => setTimeout(r, 800));
       if (!isMountedRef.current) return;
       router.push({ pathname: '/itinerary', params: { tripId: trip.id } });
@@ -173,8 +176,9 @@ export default function GenerateScreen() {
 
       addTrip(trip);
       setTripsThisMonth(tripsUsed);
+      recordGrowthEvent('trip_generated').catch(() => {});
+      evaluateTrigger('post_generation').catch(() => {});
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      // Brief pause so the user sees the loader complete before navigating
       await new Promise((r) => setTimeout(r, 800));
       if (!isMountedRef.current) return;
       router.push({ pathname: '/itinerary', params: { tripId: trip.id } });
