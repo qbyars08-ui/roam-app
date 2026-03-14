@@ -174,7 +174,7 @@ export function TripRevealCard({ itinerary, destination, heroPhotoUrl }: TripRev
 
   return (
     <View style={revealStyles.wrapper}>
-      <View ref={cardRef} collapsable={false} style={revealStyles.card}>
+      <View ref={cardRef} {...(Platform.OS !== 'web' && { collapsable: false })} style={revealStyles.card}>
         <ImageBackground
           source={{ uri: heroUrl ?? getDestinationPhoto(destination ?? 'travel') }}
           style={revealStyles.bg}
@@ -307,7 +307,7 @@ export function CostBreakdownCard({
 
   return (
     <View style={costStyles.wrapper}>
-      <View ref={cardRef} collapsable={false} style={costStyles.card}>
+      <View ref={cardRef} {...(Platform.OS !== 'web' && { collapsable: false })} style={costStyles.card}>
         <ImageBackground
           source={{ uri: heroUrl ?? getDestinationPhoto(destination ?? 'travel') }}
           style={costStyles.bg}
@@ -437,7 +437,7 @@ export function AiVsRealityCard({
 
   return (
     <View style={vsStyles.wrapper}>
-      <View ref={cardRef} collapsable={false} style={vsStyles.card}>
+      <View ref={cardRef} {...(Platform.OS !== 'web' && { collapsable: false })} style={vsStyles.card}>
         <ImageBackground
           source={{ uri: heroUrl ?? getDestinationPhoto(destination ?? 'travel') }}
           style={vsStyles.bg}

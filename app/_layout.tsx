@@ -3,7 +3,17 @@
 // Font loading, auth routing, session bootstrap, StatusBar
 // =============================================================================
 import React, { useEffect, useRef, useState } from 'react';
-import { AppState, Linking } from 'react-native';
+import { AppState, Linking, LogBox, Platform } from 'react-native';
+
+if (Platform.OS === 'web') {
+  LogBox.ignoreLogs(['Received `false` for a non-boolean attribute']);
+  const origConsoleError = console.error;
+  console.error = (...args: unknown[]) => {
+    const joined = args.map(String).join(' ');
+    if (joined.includes('non-boolean attribute') && joined.includes('collapsable')) return;
+    origConsoleError(...args);
+  };
+}
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { hideAsync as hideSplashScreen } from '../lib/splash-screen';

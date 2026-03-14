@@ -123,7 +123,6 @@ export default function ShareCard({
       <View
         ref={cardRef}
         style={[styles.cardOuter, { aspectRatio: CARD_ASPECT }]}
-        collapsable={undefined}
       >
         {heroPhoto ? (
           <ImageBackground source={{ uri: heroPhoto }} style={styles.heroBg} resizeMode="cover">

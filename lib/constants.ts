@@ -395,7 +395,7 @@ export interface Destination {
 }
 
 export const DESTINATIONS: Destination[] = [
-  { label: 'Tokyo', emoji: '', country: 'JP', hook: 'More to do per block than most cities have total', photoQuery: 'Shibuya crossing Tokyo Japan', category: 'cities', unsplashUrl: 'https://images.unsplash.com/photo-1540959733332-eab42de406?w=800&q=85', dailyCost: 120, trendScore: 92, bestMonths: [3, 4, 10, 11] },
+  { label: 'Tokyo', emoji: '', country: 'JP', hook: 'More to do per block than most cities have total', photoQuery: 'Shibuya crossing Tokyo Japan', category: 'cities', unsplashUrl: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=85', dailyCost: 120, trendScore: 92, bestMonths: [3, 4, 10, 11] },
   { label: 'Paris', emoji: '', country: 'FR', hook: 'Skip the Eiffel Tower line. Walk the Marais instead.', photoQuery: 'Eiffel Tower Paris France', category: 'couples', unsplashUrl: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=85', dailyCost: 150, trendScore: 88, bestMonths: [4, 5, 6, 9, 10] },
   { label: 'Bali', emoji: '', country: 'ID', hook: 'Find the version everyone else missed', photoQuery: 'Tegallalang rice terrace Bali Indonesia', category: 'beaches', unsplashUrl: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=85', dailyCost: 45, trendScore: 95, bestMonths: [4, 5, 6, 9, 10] },
   { label: 'New York', emoji: '', country: 'US', hook: '$1 pizza, $1M views. Still unmatched.', photoQuery: 'Times Square New York City USA', category: 'cities', unsplashUrl: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&q=85', dailyCost: 180, trendScore: 85, bestMonths: [4, 5, 9, 10, 12] },
