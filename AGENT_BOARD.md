@@ -1,25 +1,27 @@
 # ROAM AGENT BOARD
 
-Last updated: 2026-03-13
+Last updated: 2026-03-14
 
 ## Agent Registry
 
 | # | Agent | Model | Rule File | Cursor Cloud Name | Output File | Status |
 |---|-------|-------|-----------|-------------------|-------------|--------|
-| 01 | Tester | sonnet | agent-01-tester.mdc | Medic | /test_results.md, /bugs_found.md | RUNNING |
-| 02 | Researcher | sonnet | agent-02-researcher.mdc | Research | /research_report.md | RUNNING |
-| 03 | Design Enforcer | sonnet | agent-03-design-enforcer.mdc | UI | /design_audit.md | RUNNING |
-| 04 | Builder | opus | agent-04-builder.mdc | Ideas | PRs + /analytics_spec.md | RUNNING |
-| 05 | Debugger | sonnet | agent-05-debugger.mdc | deployer | /system_health.md, /incidents.md | RUNNING |
-| 06 | Growth Hacker | sonnet | agent-06-growth.mdc | Office ops procedures | /growth_dashboard.md | RUNNING |
-| 07 | Monetization | sonnet | agent-07-monetization.mdc | Office documentation p... | /monetization_model.md | RUNNING |
-| 08 | Security | sonnet | agent-08-security.mdc | Scanguard | /security_audit.md | RUNNING |
-| 09 | Localization | sonnet | agent-09-localization.mdc | Dev environment set... | /localization_audit.md | RUNNING |
-| 10 | Analytics | sonnet | agent-10-analytics.mdc | communications | /analytics_spec.md | RUNNING |
-| 11 | Content | sonnet | agent-11-content.mdc | Security audit scan | /copy_library.md | RUNNING |
-| 12 | Investor | opus | agent-12-investor.mdc | Office innovate document | /investor_narrative.md, /weekly_memo.md | RUNNING |
-| CP | Captain | opus | captain.mdc | cap | /captain_status.md | ACTIVE |
-| -- | Orchestrator | opus | orchestrator.mdc | (Claude Code) | /AGENT_BOARD.md | ACTIVE |
+| 01 | Tester | claude-sonnet-4-5 | agent-01-tester.mdc | ROAM — 01 Tester | /test_results.md, /bugs_found.md | REBUILD |
+| 02 | Researcher | claude-sonnet-4-5 | agent-02-researcher.mdc | ROAM — 02 Researcher | /research_report.md | REBUILD |
+| 03 | Design | claude-sonnet-4-5 | agent-03-design-enforcer.mdc | ROAM — 03 Design | /design_audit.md | REBUILD |
+| 04 | Builder | claude-opus-4-5 | agent-04-builder.mdc | Ideas | PRs + /analytics_spec.md | KEEP |
+| 05 | Debugger | claude-sonnet-4-5 | agent-05-debugger.mdc | ROAM — 05 Debugger | /system_health.md, /incidents.md | REBUILD |
+| 06 | Growth | claude-sonnet-4-5 | agent-06-growth.mdc | ROAM — 06 Growth | /growth_dashboard.md | REBUILD |
+| 07 | Monetization | claude-sonnet-4-5 | agent-07-monetization.mdc | ROAM — 07 Monetization | /monetization_model.md | REBUILD |
+| 08 | Security | claude-sonnet-4-5 | agent-08-security.mdc | ROAM — 08 Security | /security_audit.md | REBUILD |
+| 09 | Localization | claude-sonnet-4-5 | agent-09-localization.mdc | ROAM — 09 Localization | /localization_audit.md | REBUILD |
+| 10 | Analytics | claude-sonnet-4-5 | agent-10-analytics.mdc | ROAM — 10 Analytics | /analytics_spec.md | REBUILD |
+| 11 | Content | claude-sonnet-4-5 | agent-11-content.mdc | ROAM — 11 Content | /copy_library.md | REBUILD |
+| 12 | Investor | claude-sonnet-4-5 | agent-12-investor.mdc | ROAM — 12 Investor | /investor_narrative.md, /weekly_memo.md | REBUILD |
+| 13 | DACH Growth | claude-sonnet-4-5 | (new) | ROAM — 13 DACH Growth | /dach_influencers.md, /dach_scripts.md, /ugc_research.md | NEW |
+| 14 | UGC Engine | claude-sonnet-4-5 | (new) | ROAM — 14 UGC Engine | /creator_outreach.md, /ambassador_program.md | NEW |
+| CP | Captain | claude-sonnet-4-5 | captain.mdc | ROAM — Captain | /captain_status.md | REBUILD |
+| -- | Orchestrator | claude-opus-4-5 | orchestrator.mdc | (Claude Code) | /AGENT_BOARD.md | ACTIVE |
 
 ## Reporting Protocol (ALL AGENTS)
 
@@ -32,25 +34,28 @@ Every agent MUST follow this after completing any task:
 
 **Flow: Agent does work → writes to output .md → Captain reads all → Quinn asks Captain**
 
-## Cursor Cloud Mapping
+## Cursor Cloud Mapping (POST-REBUILD)
 
-| Cursor Sidebar Name | Assigned Role | Archive? |
-|---------------------|--------------|----------|
-| Medic | Agent 01 — Tester | NO |
-| Scanguard | Agent 08 — Security | NO |
-| UI | Agent 03 — Design Enforcer | NO |
-| Ideas | Agent 04 — Builder | NO |
-| Research | Agent 02 — Researcher | NO |
-| deployer | Agent 05 — Debugger | NO |
-| Office ops procedures | Agent 06 — Growth Hacker | NO |
-| Office documentation p... | Agent 07 — Monetization | NO |
-| Dev environment set... | Agent 09 — Localization | NO |
-| communications | Agent 10 — Analytics | NO |
-| Security audit scan | Agent 11 — Content | NO |
-| Office innovate document | Agent 12 — Investor | NO |
-| cap | Captain — Intelligence Hub | NO |
-| Shipit document guid... | -- | ARCHIVE |
-| Office guardian documentation | -- | ARCHIVE |
+| Cursor Sidebar Name | Assigned Role | Model | Status |
+|---------------------|--------------|-------|--------|
+| Ideas | Agent 04 — Builder | claude-opus-4-5 | KEEP |
+| ROAM — 01 Tester | Agent 01 — Tester | claude-sonnet-4-5 | CREATE |
+| ROAM — 02 Researcher | Agent 02 — Researcher | claude-sonnet-4-5 | CREATE |
+| ROAM — 03 Design | Agent 03 — Design | claude-sonnet-4-5 | CREATE |
+| ROAM — 05 Debugger | Agent 05 — Debugger | claude-sonnet-4-5 | CREATE |
+| ROAM — 06 Growth | Agent 06 — Growth | claude-sonnet-4-5 | CREATE |
+| ROAM — 07 Monetization | Agent 07 — Monetization | claude-sonnet-4-5 | CREATE |
+| ROAM — 08 Security | Agent 08 — Security | claude-sonnet-4-5 | CREATE |
+| ROAM — 09 Localization | Agent 09 — Localization | claude-sonnet-4-5 | CREATE |
+| ROAM — 10 Analytics | Agent 10 — Analytics | claude-sonnet-4-5 | CREATE |
+| ROAM — 11 Content | Agent 11 — Content | claude-sonnet-4-5 | CREATE |
+| ROAM — 12 Investor | Agent 12 — Investor | claude-sonnet-4-5 | CREATE |
+| ROAM — 13 DACH Growth | Agent 13 — DACH Growth | claude-sonnet-4-5 | CREATE |
+| ROAM — 14 UGC Engine | Agent 14 — UGC Engine | claude-sonnet-4-5 | CREATE |
+| ROAM — Captain | Captain — Intelligence Hub | claude-sonnet-4-5 | CREATE |
+
+### Old agents to DELETE
+Medic, Scanguard, UI, Research, deployer, Office ops procedures, Office documentation p..., Dev environment set..., communications, Security audit scan, Office innovate document, cap, Shipit document guid..., Office guardian documentation
 
 ## File Ownership
 
@@ -84,19 +89,31 @@ Every agent MUST follow this after completing any task:
 | .eslintrc.js | Agent 05 (Debugger) | Lint config |
 | roam/captain_status.md | Captain | Live status board |
 | roam/*.md (all reports) | Captain (read), Individual agents (write) | Captain reads everything |
+| roam/dach_strategy.md | Agent 13 (DACH Growth) | DACH go-to-market plan |
+| roam/dach_influencers.md | Agent 13 (DACH Growth) | DACH creator database |
+| roam/dach_scripts.md | Agent 13 (DACH Growth) | German TikTok scripts |
+| roam/ugc_research.md | Agent 13 + 14 (shared) | UGC platform research |
+| roam/creator_outreach.md | Agent 14 (UGC Engine) | Creator outreach system |
+| roam/ambassador_program.md | Agent 14 (UGC Engine) | Ambassador program spec |
+| app/admin.tsx | Agent 14 (UGC Engine) | Content generator tool |
 
-## Current Sprint — REWORK PASS (2026-03-13)
+## Current Sprint — AGENT REBUILD + DACH LAUNCH (2026-03-14)
 
 | Priority | Task | Owner | Status |
 |----------|------|-------|--------|
-| P0 | Best free image API research | Agent 02 (Researcher) | ASSIGNED |
-| P0 | Full anti-AI-slop audit — fix 20 violations | Agent 03 (Design Enforcer) | ASSIGNED |
-| P0 | Image loading + Flights/Stays/Food rework | Agent 04 (Builder) | ASSIGNED |
-| P1 | Post-merge verification | Agent 05 (Debugger) | ASSIGNED |
-| P1 | First-time UX audit → growth_dashboard.md | Agent 06 (Growth) | ASSIGNED |
-| P1 | Admin test bypass for rate limiting | Agent 08 (Security) | ASSIGNED |
-| P1 | Prep tab live data (weather, time, phrases) | Agent 09 (Localization) | ASSIGNED |
-| P1 | Full copy audit → copy_library.md | Agent 11 (Content) | ASSIGNED |
+| P0 | Agent system rebuild (delete old, create new) | Quinn manual | PENDING |
+| P0 | DACH go-to-market strategy | Orchestrator | DONE |
+| P0 | Test new prep components | Agent 01 (Tester) | PENDING REBUILD |
+| P0 | Design audit new prep cards | Agent 03 (Design) | PENDING REBUILD |
+| P1 | German localization (de.ts) | Agent 09 (Localization) | PENDING REBUILD |
+| P1 | German App Store copy | Agent 11 (Content) | PENDING REBUILD |
+| P1 | DACH influencer research | Agent 13 (DACH Growth) | NEW |
+| P1 | German TikTok scripts x10 | Agent 13 (DACH Growth) | NEW |
+| P1 | Creator outreach system | Agent 14 (UGC Engine) | NEW |
+| P1 | Ambassador program spec | Agent 14 (UGC Engine) | NEW |
+| P2 | GDPR compliance audit | Agent 08 (Security) | PENDING REBUILD |
+| P2 | DACH analytics + UTM tracking | Agent 10 (Analytics) | PENDING REBUILD |
+| P2 | Creator payment model | Agent 07 (Monetization) | PENDING REBUILD |
 | P5 | Booking.com real AID | BLOCKED — Quinn manual | BLOCKED |
 
 ### Agent 02 — RESEARCHER: Free Image API
