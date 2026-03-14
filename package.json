@@ -57,6 +57,7 @@
     "i18next": "^25.8.18",
     "intl-pluralrules": "^2.0.1",
     "lucide-react-native": "^0.577.0",
+    "posthog-react-native": "^4.37.3",
     "react": "^19.2.4",
     "react-dom": "^19.2.0",
     "react-i18next": "^16.5.8",
