@@ -78,6 +78,7 @@ import FlightCard from '../components/features/FlightCard';
 import FlightDealCard from '../components/features/FlightDealCard';
 import LocalEventsSection from '../components/features/LocalEventsSection';
 import TripSoundtrackCard from '../components/features/TripSoundtrackCard';
+import PostTripUpgradeNudge from '../components/monetization/PostTripUpgradeNudge';
 import CarbonFootprintCard from '../components/features/CarbonFootprintCard';
 import PriceOracleCard from '../components/features/PriceOracleCard';
 import LanguageSurvivalSection from '../components/features/LanguageSurvivalSection';
@@ -1455,6 +1456,9 @@ export default function ItineraryScreen() {
               tripId={trip.id}
             />
           </View>
+
+          {/* Pro upgrade nudge for free users */}
+          <PostTripUpgradeNudge destination={trip.destination} />
 
           {/* Love this trip? Save it — one tap to Trips */}
           <View style={styles.section}>

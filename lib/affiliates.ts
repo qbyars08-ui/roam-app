@@ -162,8 +162,8 @@ export const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export const CATEGORY_ICONS: Record<string, string> = {
-  flights: '\u2708\uFE0F',
-  hotels: '\uD83C\uDFE8',
-  experiences: '\uD83C\uDFAD',
-  'car-rental': '\uD83D\uDE97',
+  flights: '',
+  hotels: '',
+  experiences: '',
+  'car-rental': '',
 };

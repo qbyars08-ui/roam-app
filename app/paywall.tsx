@@ -108,7 +108,7 @@ function buildTiers(monthlyPrice: string, annualPrice: string): Tier[] {
 export default function PaywallScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const params = useLocalSearchParams<{ reason?: string; destination?: string }>();
+  const params = useLocalSearchParams<{ reason?: string; destination?: string; feature?: string }>();
   const setIsPro = useAppStore((s) => s.setIsPro);
   const session = useAppStore((s) => s.session);
   const isGuest = isGuestUser();
@@ -156,10 +156,24 @@ export default function PaywallScreen() {
     ]).start();
   }, []);
 
-  // Dynamic headline based on trigger reason
-  const headline = params.reason === 'limit'
-    ? 'You just built a real trip.\nUnlock unlimited trips and keep the momentum.'
-    : "You've been planning for free.\nStart traveling for real.";
+  const headline = (() => {
+    switch (params.reason) {
+      case 'limit':
+        return params.destination
+          ? `You just planned ${params.destination}.\nUnlock unlimited trips and keep the momentum.`
+          : 'You just built a real trip.\nUnlock unlimited trips and keep the momentum.';
+      case 'feature':
+        return params.feature
+          ? `${params.feature} is a Pro feature.\nUpgrade to unlock your full travel toolkit.`
+          : 'This is a Pro feature.\nUpgrade to unlock your full travel toolkit.';
+      case 'chaos':
+        return 'Chaos Mode needs fuel.\nGo Pro for unlimited random trips.';
+      case 'group':
+        return 'Group planning unlocked with Pro.\nPlan trips together, split the fun.';
+      default:
+        return "You've been planning for free.\nStart traveling for real.";
+    }
+  })();
 
   const handleClose = useCallback(() => {
     if (router.canGoBack()) {
