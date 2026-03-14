@@ -19,7 +19,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { supabase } from '../lib/supabase';
+import { useAppStore } from '../lib/store';
 import { impactAsync, ImpactFeedbackStyle } from '../lib/haptics';
+
+const INVESTOR_EMAILS = (process.env.EXPO_PUBLIC_INVESTOR_EMAILS ?? '')
+  .split(',')
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean);
 
 // =============================================================================
 // Types
@@ -336,11 +342,20 @@ function computeCosts(tripsGenerated: number, mrr: number): CostStructure {
 export default function InvestorDashboard() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const session = useAppStore((s) => s.session);
 
   const [metrics, setMetrics] = useState<LiveMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!session?.user?.email) return;
+    const email = session.user.email.toLowerCase();
+    if (INVESTOR_EMAILS.length > 0 && !INVESTOR_EMAILS.includes(email)) {
+      router.replace('/(tabs)');
+    }
+  }, [session, router]);
 
   const loadData = useCallback(async (manual = false) => {
     if (manual) setIsRefreshing(true);

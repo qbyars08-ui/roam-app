@@ -28,7 +28,7 @@ export function getRefFromUrl(): string | null {
 export async function captureRefOnLoad(): Promise<void> {
   if (Platform.OS !== 'web') return;
   const ref = getRefFromUrl();
-  if (ref && ref !== 'direct' && ref !== 'share' && ref !== 'twitter') {
+  if (ref && ref !== 'direct' && ref !== 'share' && ref !== 'twitter' && ref.length <= 50) {
     await AsyncStorage.setItem(REF_STORAGE_KEY, ref);
     // Persist to Supabase for analytics (optional — we use it when they submit email)
   }
@@ -68,15 +68,21 @@ export interface WaitlistResult {
   email: string;
 }
 
+const MAX_EMAIL_LENGTH = 254;
+const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+
 export async function joinWaitlist(email: string): Promise<WaitlistResult> {
   const trimmed = email.trim().toLowerCase();
   if (!trimmed) throw new Error('Email required');
+  if (trimmed.length > MAX_EMAIL_LENGTH) throw new Error('Email too long');
+  if (!EMAIL_REGEX.test(trimmed)) throw new Error('Invalid email format');
 
   const referralSource = await getStoredRef();
+  const safeRef = referralSource && referralSource.length <= 50 ? referralSource : 'direct';
 
   const { data, error } = await supabase
     .from('waitlist_emails')
-    .insert({ email: trimmed, referral_source: referralSource || 'direct' })
+    .insert({ email: trimmed, referral_source: safeRef })
     .select('referral_code, created_at')
     .single();
 

@@ -103,18 +103,26 @@ export const AFFILIATE_PARTNERS: AffiliatePartner[] = [
 // ---------------------------------------------------------------------------
 // Click tracking
 // ---------------------------------------------------------------------------
+const MAX_PARTNER_ID_LENGTH = 50;
+const MAX_DESTINATION_LENGTH = 200;
+const MAX_TRIP_ID_LENGTH = 64;
+
 export async function trackAffiliateClick(
   partnerId: string,
   destination: string,
   tripId?: string,
 ): Promise<void> {
   try {
+    const safePartnerId = String(partnerId).slice(0, MAX_PARTNER_ID_LENGTH);
+    const safeDestination = String(destination).slice(0, MAX_DESTINATION_LENGTH);
+    const safeTripId = tripId ? String(tripId).slice(0, MAX_TRIP_ID_LENGTH) : null;
+
     const userId = useAppStore.getState().session?.user?.id;
     await supabase.from('affiliate_clicks').insert({
       user_id: userId ?? null,
-      partner_id: partnerId,
-      destination,
-      trip_id: tripId ?? null,
+      partner_id: safePartnerId,
+      destination: safeDestination,
+      trip_id: safeTripId,
       platform: Platform.OS,
       clicked_at: new Date().toISOString(),
     });

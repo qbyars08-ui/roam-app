@@ -1,8 +1,31 @@
 # ROAM Security Audit
 
-**Date:** 2026-03-13
-**Previous audit:** 2025-03-12
+**Date:** 2025-03-24 (post-merge)
+**Previous audit:** 2026-03-13
 **Scope:** `supabase/`, `lib/`, `app/` — RLS, edge functions, secrets, CORS, input validation, error handling
+
+---
+
+## Post-Merge Audit (2025-03-24) — New Files
+
+| File | Finding | Fix |
+|------|---------|-----|
+| `lib/waitlist-guest.ts` | joinWaitlist: no email validation, ref length unbounded | Email regex + max 254 chars; ref max 50 chars |
+| `lib/affiliates.ts` | trackAffiliateClick: partnerId, destination, tripId unbounded | Length limits: 50, 200, 64 |
+| `lib/growth-hooks.ts` | recordGrowthEvent(action): unbounded | Max 64 chars |
+| `app/investor.tsx` | No access control — any authenticated user sees metrics | EXPO_PUBLIC_INVESTOR_EMAILS allowlist; redirect non-allowed |
+| `lib/smart-triggers.ts` | No issues | Uses typed enums; JSON from AsyncStorage only |
+
+**Verified:** No hardcoded secrets, XSS vectors, or unsafe data handling in growth-hooks, smart-triggers, waitlist-guest, affiliates, investor.
+
+---
+
+## Previously Open HIGH — Now Fixed
+
+| # | Finding | Location | Status |
+|---|---------|----------|--------|
+| 4 | shareId not validated as UUID | `lib/sharing.ts` | Fixed: isValidShareId + UUID_REGEX |
+| 5 | claude-proxy lacks input length limits | `supabase/functions/claude-proxy/index.ts` | Fixed: 50KB system, 100KB messages |
 
 ---
 
@@ -11,7 +34,7 @@
 | Severity | Found | Fixed | Remaining |
 |----------|-------|-------|-----------|
 | CRITICAL | 5 | 5 | 0 |
-| HIGH | 8 | 8 | 0 |
+| HIGH | 10 | 10 | 0 |
 | MEDIUM | 7 | 0 | 7 |
 | LOW | 4 | 0 | 4 |
 
