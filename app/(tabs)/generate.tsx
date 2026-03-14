@@ -19,6 +19,7 @@ import GenerateQuickMode from '../../components/generate/GenerateQuickMode';
 import GenerateConversationMode from '../../components/generate/GenerateConversationMode';
 import { TripGeneratingLoader } from '../../components/premium/LoadingStates';
 import TripLimitBanner from '../../components/monetization/TripLimitBanner';
+import { track, trackEvent } from '../../lib/analytics';
 
 const RANDOM_CITIES = [
   'Tokyo', 'Bali', 'Lisbon', 'Mexico City', 'Bangkok', 'Barcelona', 'Cape Town',
@@ -42,6 +43,7 @@ export default function GenerateScreen() {
   const isMountedRef = useRef(true);
 
   useEffect(() => {
+    track({ type: 'screen_view', screen: 'generate' });
     return () => { isMountedRef.current = false; };
   }, []);
   const generateMode = useAppStore((s) => s.generateMode);
@@ -56,6 +58,7 @@ export default function GenerateScreen() {
 
   const handleModeSelect = useCallback((mode: 'quick' | 'conversation') => {
     setGenerateMode(mode);
+    trackEvent('generate_mode_selected', { mode }).catch(() => {});
   }, [setGenerateMode]);
 
   const handleQuickSubmit = useCallback(async (state: QuickModeState) => {
@@ -88,6 +91,11 @@ export default function GenerateScreen() {
         avoidList: state.avoidList,
         specialRequests: state.specialRequests,
       });
+
+      // Validate itinerary has required structure before storing
+      if (!itinerary?.destination || !itinerary?.days?.length) {
+        throw new Error('Generated itinerary is incomplete. Please try again.');
+      }
 
       const trip = {
         id: `gen-${Date.now()}`,

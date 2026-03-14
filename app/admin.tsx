@@ -329,14 +329,14 @@ async function fetchTopDestinations(): Promise<DestinationItem[]> {
   try {
     const { data, error } = await supabase
       .from('analytics_events')
-      .select('metadata')
+      .select('payload')
       .eq('event_type', 'trip_created');
 
     if (error || !data) return [];
 
     const counts: Record<string, number> = {};
     for (const row of data) {
-      const meta = row.metadata as Record<string, unknown> | null;
+      const meta = row.payload as Record<string, unknown> | null;
       const dest =
         (meta?.destination as string) ?? (meta?.city as string) ?? 'Unknown';
       if (typeof dest === 'string' && dest !== 'Unknown') {

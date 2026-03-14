@@ -26,6 +26,7 @@ import { trackOnboardingComplete } from '../lib/ab-test';
 import { captureRefOnLoad } from '../lib/waitlist-guest';
 import { tryRestoreGuestSession, clearGuestMode, isGuestSession } from '../lib/guest';
 import { checkStorageVersion } from '../lib/storage-version';
+import { track } from '../lib/analytics';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
 import OfflineBanner from '../components/ui/OfflineBanner';
 import PhoneFrame from '../components/ui/PhoneFrame';
@@ -130,6 +131,7 @@ export default function RootLayout() {
       })
       .finally(() => {
         setIsReady(true);
+        track({ type: 'session_start' }).catch(() => {});
       });
 
     // Listen for auth state changes (don't overwrite guest sessions)

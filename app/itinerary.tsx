@@ -94,7 +94,7 @@ import {
 import { formatDualPrice, formatLocalPrice, type ExchangeRates } from '../lib/currency';
 import { AlertTriangle, X, Pencil, Calendar, Link2, Share2, MapPin, Receipt, Film, Wallet, Train, ArrowDown, CreditCard, Plane, Heart, ShieldCheck, Droplets, Globe, Sun, Wind, PartyPopper } from 'lucide-react-native';
 import { getTransitGuide, type TransitGuide } from '../lib/transit-data';
-import { getHomeAirport } from '../lib/flights-amadeus';
+import { getHomeAirport } from '../lib/flights';
 import { getMedicalGuideByDestination, type MedicalGuide } from '../lib/medical-abroad';
 import { getTimezoneByDestination, getTimezoneInfo, getTimeDifference, type TimezoneInfo } from '../lib/timezone';
 import { getAirQuality, getDestinationCoords, type AirQuality } from '../lib/air-quality';
@@ -104,6 +104,7 @@ import { getCostOfLiving, type CostOfLiving } from '../lib/cost-of-living';
 import { getHeroPhotoUrl } from '../lib/heroPhotos';
 import { trackItineraryView, maybePromptForReview } from '../lib/rating';
 import { maybePromptNPS } from '../lib/nps';
+import { trackEvent } from '../lib/analytics';
 import MockDataBadge from '../components/ui/MockDataBadge';
 import ActivityEditModal from '../components/features/ActivityEditModal';
 
@@ -151,6 +152,7 @@ export default function ItineraryScreen() {
   const addTrip = useAppStore((s) => s.addTrip);
 
   const isSharedTrip = trip?.id?.startsWith('shared-') ?? false;
+  const packingTrackedRef = useRef(false);
 
   // Currency conversion hook — live exchange rates
   const { currency, rates } = useCurrency();
@@ -191,6 +193,12 @@ export default function ItineraryScreen() {
         maybePromptForReview().catch(() => {});
       });
 
+      trackEvent('itinerary_viewed', {
+        destination: resolved.destination,
+        days: resolved.days,
+        tripId: resolved.id,
+      }).catch(() => {});
+
       // NPS survey — after 3rd trip, delayed so user sees itinerary first
       const tripCount = trips.length;
       if (tripCount >= 3) {
@@ -217,7 +225,10 @@ export default function ItineraryScreen() {
       startDate,
       days: trip.days,
     })
-      .then(setWeather)
+      .then((forecast) => {
+        setWeather(forecast);
+        trackEvent('weather_check', { destination: trip.destination }).catch(() => {});
+      })
       .catch(() => setWeather(null));
   }, [trip?.destination, trip?.createdAt, trip?.days]);
 
@@ -326,6 +337,13 @@ export default function ItineraryScreen() {
       return null;
     }
   }, [parsed, trip?.destination, trip?.days, trip?.vibes, trip?.budget, weather]);
+
+  useEffect(() => {
+    if (packingResult && trip && !packingTrackedRef.current) {
+      packingTrackedRef.current = true;
+      trackEvent('packing_list_generated', { destination: trip.destination }).catch(() => {});
+    }
+  }, [packingResult, trip]);
 
   const narrationText = useMemo(() => {
     if (!currentDay || !trip) return '';
@@ -1192,7 +1210,7 @@ export default function ItineraryScreen() {
             })()}
           />
 
-          {/* Real flight prices from Amadeus */}
+          {/* Flight search — Skyscanner affiliate */}
           <View style={styles.section}>
             <FlightCard destination={trip.destination} tripDays={trip.days} />
           </View>

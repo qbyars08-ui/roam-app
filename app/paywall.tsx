@@ -32,6 +32,7 @@ import {
   type OfferingPackages,
 } from '../lib/revenue-cat';
 import { syncProStatusToSupabase } from '../lib/sync-pro-status';
+import { track } from '../lib/analytics';
 
 // =============================================================================
 // Tier definitions
@@ -122,6 +123,10 @@ export default function PaywallScreen() {
   const headerY = useRef(new Animated.Value(20)).current;
   const cardsOpacity = useRef(new Animated.Value(0)).current;
   const cardsY = useRef(new Animated.Value(30)).current;
+
+  useEffect(() => {
+    track({ type: 'screen_view', screen: 'paywall', payload: { reason: params.reason } });
+  }, []);
 
   // Load offerings for live prices
   useEffect(() => {
