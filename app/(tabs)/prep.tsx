@@ -44,6 +44,10 @@ import {
   Heart,
   Stethoscope,
   Pill,
+  Clock,
+  DollarSign,
+  CalendarDays,
+  Thermometer,
   type LucideIcon,
 } from 'lucide-react-native';
 
@@ -73,6 +77,11 @@ import { DESTINATIONS } from '../../lib/constants';
 import { parseItinerary, type Itinerary, type ItineraryDay } from '../../lib/types/itinerary';
 import { withComingSoon } from '../../lib/with-coming-soon';
 import { getMedicalGuideByDestination, type MedicalGuide } from '../../lib/medical-abroad';
+import { getTimezoneByDestination } from '../../lib/timezone';
+import { getWeatherForecast, type DailyForecast } from '../../lib/weather-forecast';
+import { getExchangeRates } from '../../lib/exchange-rates';
+import { getPublicHolidays, getCountryCode, type PublicHoliday } from '../../lib/public-holidays';
+import { geocodeCity } from '../../lib/geocoding';
 
 // ---------------------------------------------------------------------------
 // Survival phrase keys (6 phrases for Language tab)
@@ -1023,6 +1032,179 @@ function NoDataState({ destination }: { destination: string }) {
 }
 
 // ---------------------------------------------------------------------------
+// Right Now — live destination intelligence
+// ---------------------------------------------------------------------------
+function DestinationIntelCard({ destination }: { destination: string }) {
+  const [localTime, setLocalTime] = useState<string | null>(null);
+  const [timezone, setTimezone] = useState<string | null>(null);
+  const [weather, setWeather] = useState<DailyForecast | null>(null);
+  const [exchangeRate, setExchangeRate] = useState<string | null>(null);
+  const [currencyCode, setCurrencyCode] = useState<string | null>(null);
+  const [holidays, setHolidays] = useState<PublicHoliday[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    // Timezone & local time
+    const tz = getTimezoneByDestination(destination);
+    if (tz) {
+      setTimezone(tz.split('/').pop()?.replace(/_/g, ' ') ?? tz);
+      try {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('en-US', {
+          timeZone: tz,
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+        });
+        setLocalTime(timeStr);
+      } catch {
+        setLocalTime(null);
+      }
+    }
+
+    // Weather (needs geocoding first)
+    (async () => {
+      try {
+        const geo = await geocodeCity(destination);
+        if (geo && !cancelled) {
+          const forecast = await getWeatherForecast(geo.latitude, geo.longitude);
+          if (forecast?.days?.[0] && !cancelled) {
+            setWeather(forecast.days[0]);
+          }
+        }
+      } catch { /* silent */ }
+    })();
+
+    // Exchange rates
+    (async () => {
+      try {
+        const countryCode = getCountryCode(destination);
+        if (!countryCode) return;
+        const COUNTRY_CURRENCY: Record<string, string> = {
+          JP: 'JPY', FR: 'EUR', ID: 'IDR', TH: 'THB', US: 'USD',
+          ES: 'EUR', IT: 'EUR', GB: 'GBP', MA: 'MAD', PT: 'EUR',
+          KR: 'KRW', HU: 'HUF', TR: 'TRY', MX: 'MXN', NL: 'EUR',
+          AE: 'AED', ZA: 'ZAR', AU: 'AUD', AR: 'ARS', GE: 'GEL',
+          VN: 'VND', HR: 'EUR', CO: 'COP', IN: 'INR', NZ: 'NZD',
+          IS: 'ISK',
+        };
+        const curr = COUNTRY_CURRENCY[countryCode];
+        if (!curr || curr === 'USD') return;
+        if (!cancelled) setCurrencyCode(curr);
+        const rates = await getExchangeRates('USD');
+        if (rates?.rates?.[curr] && !cancelled) {
+          const rate = rates.rates[curr];
+          setExchangeRate(rate >= 100 ? Math.round(rate).toLocaleString() : rate.toFixed(2));
+        }
+      } catch { /* silent */ }
+    })();
+
+    // Public holidays
+    (async () => {
+      try {
+        const cc = getCountryCode(destination);
+        if (!cc) return;
+        const h = await getPublicHolidays(cc);
+        if (!cancelled) {
+          const now = new Date();
+          const thirtyDaysOut = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+          const upcoming = h.filter((hol) => {
+            const d = new Date(hol.date);
+            return d >= now && d <= thirtyDaysOut;
+          });
+          setHolidays(upcoming.slice(0, 2));
+        }
+      } catch { /* silent */ }
+    })();
+
+    return () => { cancelled = true; };
+  }, [destination]);
+
+  const hasAnyData = localTime || weather || exchangeRate || holidays.length > 0;
+  if (!hasAnyData) return null;
+
+  return (
+    <View style={intelStyles.container}>
+      <Text style={intelStyles.sectionTitle}>Right now in {destination}</Text>
+      <View style={intelStyles.grid}>
+        {localTime && (
+          <View style={intelStyles.card}>
+            <Clock size={16} color={COLORS.sage} strokeWidth={2} />
+            <Text style={intelStyles.cardValue}>{localTime}</Text>
+            <Text style={intelStyles.cardLabel}>{timezone ?? 'Local time'}</Text>
+          </View>
+        )}
+        {weather && (
+          <View style={intelStyles.card}>
+            <Thermometer size={16} color={COLORS.coral} strokeWidth={2} />
+            <Text style={intelStyles.cardValue}>
+              {Math.round(weather.tempMax)}{'\u00B0'}
+            </Text>
+            <Text style={intelStyles.cardLabel}>{weather.weatherLabel}</Text>
+          </View>
+        )}
+        {exchangeRate && currencyCode && (
+          <View style={intelStyles.card}>
+            <DollarSign size={16} color={COLORS.gold} strokeWidth={2} />
+            <Text style={intelStyles.cardValue}>{exchangeRate}</Text>
+            <Text style={intelStyles.cardLabel}>1 USD = {currencyCode}</Text>
+          </View>
+        )}
+        {holidays.length > 0 && (
+          <View style={intelStyles.card}>
+            <CalendarDays size={16} color={COLORS.sage} strokeWidth={2} />
+            <Text style={intelStyles.cardValue} numberOfLines={1}>{holidays[0].name}</Text>
+            <Text style={intelStyles.cardLabel}>
+              {new Date(holidays[0].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </Text>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+}
+
+const intelStyles = StyleSheet.create({
+  container: {
+    marginBottom: SPACING.lg,
+    paddingHorizontal: SPACING.md,
+  },
+  sectionTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 22,
+    color: COLORS.cream,
+    marginBottom: SPACING.md,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+  },
+  card: {
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.md,
+    minWidth: '47%' as unknown as number,
+    flex: 1,
+    gap: 4,
+  },
+  cardValue: {
+    fontFamily: FONTS.header,
+    fontSize: 24,
+    color: COLORS.cream,
+  },
+  cardLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.creamMuted,
+    textTransform: 'uppercase',
+  },
+});
+
+// ---------------------------------------------------------------------------
 // Main Screen
 // ---------------------------------------------------------------------------
 function PrepScreen() {
@@ -1121,6 +1303,8 @@ function PrepScreen() {
               destination={selectedDest}
               countryName={countryName}
             />
+
+            <DestinationIntelCard destination={selectedDest} />
 
             <ScrollView
               horizontal

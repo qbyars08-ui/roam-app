@@ -36,6 +36,7 @@ import { track } from '../lib/analytics';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
 import OfflineBanner from '../components/ui/OfflineBanner';
 import PhoneFrame from '../components/ui/PhoneFrame';
+import DestinationThemeOverlay from '../components/ui/DestinationThemeOverlay';
 import MilestoneModal from '../components/features/MilestoneModal';
 import { PostHogProvider } from 'posthog-react-native';
 import { initPostHog, identifyUser, resetIdentity, getPostHogClient } from '../lib/posthog';
@@ -90,6 +91,7 @@ export default function RootLayout() {
   const session = useAppStore((s) => s.session);
   const setSession = useAppStore((s) => s.setSession);
   const setTripsThisMonth = useAppStore((s) => s.setTripsThisMonth);
+  const activeDestination = useAppStore((s) => s.trips?.[0]?.destination ?? null);
 
   // Load fonts
   const [fontsLoaded] = useFonts({
@@ -321,6 +323,7 @@ export default function RootLayout() {
 
   const appContent = (
       <GestureHandlerRootView style={{ flex: 1 }}>
+        <DestinationThemeOverlay destination={activeDestination} />
         <PhoneFrame>
           <OfflineBanner />
           <Stack

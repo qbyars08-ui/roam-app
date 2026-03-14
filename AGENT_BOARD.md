@@ -85,32 +85,55 @@ Every agent MUST follow this after completing any task:
 | roam/captain_status.md | Captain | Live status board |
 | roam/*.md (all reports) | Captain (read), Individual agents (write) | Captain reads everything |
 
-## Current Sprint
+## Current Sprint — REWORK PASS (2026-03-13)
 
 | Priority | Task | Owner | Status |
 |----------|------|-------|--------|
-| P3 | PostHog analytics instrumentation | Agent 04 (Builder) | IN PROGRESS |
-| P4 | Rate limiting on 4 edge functions | Agent 08 (Security) | IN PROGRESS |
+| P0 | Best free image API research | Agent 02 (Researcher) | ASSIGNED |
+| P0 | Full anti-AI-slop audit — fix 20 violations | Agent 03 (Design Enforcer) | ASSIGNED |
+| P0 | Image loading + Flights/Stays/Food rework | Agent 04 (Builder) | ASSIGNED |
+| P1 | Post-merge verification | Agent 05 (Debugger) | ASSIGNED |
+| P1 | First-time UX audit → growth_dashboard.md | Agent 06 (Growth) | ASSIGNED |
+| P1 | Admin test bypass for rate limiting | Agent 08 (Security) | ASSIGNED |
+| P1 | Prep tab live data (weather, time, phrases) | Agent 09 (Localization) | ASSIGNED |
+| P1 | Full copy audit → copy_library.md | Agent 11 (Content) | ASSIGNED |
 | P5 | Booking.com real AID | BLOCKED — Quinn manual | BLOCKED |
-| -- | Design system audit | Agent 03 (Design Enforcer) | IN PROGRESS |
-| -- | Unit test coverage | Agent 01 (Tester) | IN PROGRESS |
-| -- | Competitor + API research | Agent 02 (Researcher) | STARTING |
-| -- | CI + performance audit | Agent 05 (Debugger) | STARTING |
-| -- | Growth strategy + ASO | Agent 06 (Growth) | STARTING |
-| -- | Affiliate optimization | Agent 07 (Monetization) | STARTING |
-| -- | Prep data coverage audit | Agent 09 (Localization) | STARTING |
-| -- | Event taxonomy review | Agent 10 (Analytics) | STARTING |
-| -- | Copy audit + App Store listing | Agent 11 (Content) | STARTING |
-| -- | Weekly memo + pitch doc | Agent 12 (Investor) | STARTING |
+
+### Agent 02 — RESEARCHER: Free Image API
+Find best free image API for travel destinations. Evaluate: Unsplash (50 req/hr), Pexels (200 req/hr), Pixabay. READ `supabase/functions/destination-photo/index.ts` first — edge function already exists. Deliverable: `research_report.md` with API choice, rate limits, implementation plan.
+
+### Agent 03 — DESIGN ENFORCER: Anti-AI-Slop Audit
+Hunt and fix: generic placeholder text, missing image grey boxes, template-y screens, inconsistent card heights, non-skeleton loading states. Generate tab should feel conversational not form-like. Flights and Stays tabs need full visual rework. Fix top 20 violations. Open PR.
+
+### Agent 04 — BUILDER: Four Major Builds
+1. **Image loading system** — fix edge function integration, add destination gradient fallbacks, add caching
+2. **Flights tab rework** — remove broken APIs/map, add hero search + popular routes + Skyscanner deep links
+3. **Stays tab rework** — remove broken elements, add curated sections + Booking.com deep links
+4. **Food tab live data** — wire enrich-venues edge function, add Overpass API for trending restaurants
+
+### Agent 05 — DEBUGGER: Post-Merge Verification
+After Builder PRs: run tsc, verify images on Tokyo/Paris/Bali/NYC/Barcelona, verify flights/stays/food tabs load clean. Update system_health.md.
+
+### Agent 06 — GROWTH: First-Time UX Audit
+Audit tryroam.netlify.app as a first-time Gen Z user. Does discover communicate value? Do cards make you tap? Does generate empty state guide you? Is the share moment obvious? Write recommendations to growth_dashboard.md. Focus: what makes a user screenshot and post this?
+
+### Agent 08 — SECURITY: Admin Test Bypass
+Add admin email whitelist to `supabase/functions/claude-proxy/index.ts`. Read `ADMIN_TEST_EMAILS` env var, skip rate limit for matching emails. Add `qbyars08@gmail.com` to Supabase secrets. Not visible to regular users.
+
+### Agent 09 — LOCALIZATION: Prep Tab Live Data
+Wire weather-intel edge function into prep header. Add "Right now in [destination]" section (time, weather, date). Verify emergency numbers for top 20 destinations. Add "Useful phrases" section with pronunciation placeholder.
+
+### Agent 11 — CONTENT: Full Copy Audit
+Keep "Travel like you know someone there". Every destination needs specific non-generic hook line. Generate empty state = invitation not form. All error messages: human, specific, actionable. Remove any AI-sounding copy. Write to copy_library.md.
 
 ## In Progress
 
 | Task | Agent | Notes |
 |------|-------|-------|
-| PostHog analytics | Agent 04 (Ideas) | Installing SDK, creating lib/analytics.ts |
-| Rate limiting | Agent 08 (Scanguard) | Adding to voice-proxy, weather-intel, destination-photo, enrich-venues |
-| Design audit | Agent 03 (UI) | Scanning for hardcoded values |
-| Unit tests | Agent 01 (Medic) | parseItinerary + buildTripPrompt |
+| Image API research | Agent 02 (Research) | Evaluating Unsplash/Pexels/Pixabay |
+| Anti-slop audit | Agent 03 (UI) | Hunting 20 violations across all screens |
+| Major builds x4 | Agent 04 (Ideas) | Image system → Flights → Stays → Food |
+| Admin bypass | Agent 08 (Scanguard) | claude-proxy rate limit whitelist |
 
 ## Completed This Session
 

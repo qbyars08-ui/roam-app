@@ -421,7 +421,7 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
                 onChangeText={(t) => { setDestination(t); setError(null); }}
                 onFocus={() => setInputFocused(true)}
                 onBlur={() => setInputFocused(false)}
-                placeholder="City, country, or region"
+                placeholder="Tokyo, Japan"
                 placeholderTextColor={COLORS.creamDim}
               />
             </View>
@@ -775,7 +775,7 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
           ) : (
             <>
               <Sparkles size={20} color={COLORS.bg} strokeWidth={2} />
-              <Text style={styles.ctaText}>Build My Trip</Text>
+              <Text style={styles.ctaText}>Generate My Trip</Text>
             </>
           )}
         </Pressable>
