@@ -25,32 +25,32 @@ Status board for Cursor agents. Cap reads this to coordinate work.
 
 ## Localization (Agent 09)
 
-**Status:** i18n infrastructure complete; core screens converted
+**Status:** Full i18n + weather intel + useful phrases + emergency data verified
 **Date:** 2026-03-14
 **Action needed:** No
 
 ### Deliverables
 
-- `lib/i18n/` — i18next + react-i18next + expo-localization infrastructure
-- `lib/i18n/locales/en.ts` — English base translations (~400 keys across 25 namespaces)
-- `lib/i18n/locales/es.ts` — Spanish translations (complete)
-- `lib/i18n/locales/fr.ts` — French translations (complete)
-- `lib/i18n/locales/ja.ts` — Japanese translations (complete)
-- `lib/i18n/helpers.ts` — tCategory, tBudgetLabel, tVibe, tExpense helper functions
-- Device locale auto-detection; persisted language choice via AsyncStorage
-- Language selector modal in Profile screen
+**i18n Infrastructure**
+- `lib/i18n/` — i18next + react-i18next + expo-localization
+- `lib/i18n/rtl.ts` — RTL support with I18nManager + logical layout
+- `lib/i18n/helpers.ts` — tCategory, tBudgetLabel, tVibe, tExpense helpers
+- 4 languages: en (~700 keys, 65 namespaces), es, fr, ja — all complete
+- 66 screens + 6 components converted
+- RTL: paddingStart/End, marginStart/End across 35 files
+- Language selector in Profile screen with device locale auto-detection
 
-### Converted screens/components
-- Tab bar (ROAMTabBar), OfflineBanner, ErrorBoundary, ComingSoon
-- Auth: signup, signin, welcome, hook
-- Tabs: Discover, Generate, Flights, Stays, Food, Prep
-- Screens: Profile, Paywall, Saved, Passport, Itinerary, NotFound
-- Components: GenerateModeSelect, LoadingStates
+**Prep Tab Enhancements**
+- `components/features/RightNowSection.tsx` — Live weather via Open-Meteo (no API key), 5-day forecast, packing suggestions
+- `components/features/UsefulPhrasesSection.tsx` — Categorized phrases with TTS (expo-speech), collapsible categories
+- "Right Now" pill added as default tab in Prep screen
+- UsefulPhrasesSection wired into Language tab
 
-### Remaining (lower priority)
-- ~40 additional feature screens (local-lens, honest-reviews, etc.) still have hardcoded strings
-- Destination hooks/descriptions are not translated (content is editorial)
-- AI-generated itinerary content is in English (Claude prompt language could be adjusted per locale)
+**Emergency Data Verification**
+- Cross-verified emergency numbers for all top 20 ROAM destinations against Wikipedia + emergencyphonenumbers.org
+- Fixed Hungary police: 112 → 107 (correct local number)
+- Added missing: New York (US 911), Santorini (Greece), Ljubljana (Slovenia)
+- All 25 countries in emergency-data.ts verified correct
 
 ---
 

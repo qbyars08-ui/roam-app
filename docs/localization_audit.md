@@ -168,6 +168,26 @@ lib/i18n/
 | Large data arrays | Alter-ego quiz questions, arrival-mode city data, honest-reviews attraction data — content arrays kept in English |
 | date-fns formatting | Date formatting uses date-fns which supports locale; not yet wired to i18n locale |
 
+### Prep Tab: Weather Intel ("Right Now" section)
+- `components/features/RightNowSection.tsx` — live weather for destination
+- Uses Open-Meteo (free, no API key) via `lib/weather-forecast.ts`
+- Geocoding fallback via `lib/geocoding.ts` for destinations not in DESTINATION_COORDS
+- Shows: today's conditions, 3-day forecast strip, AI packing suggestions
+- Default tab when opening Prep screen
+
+### Prep Tab: Useful Phrases section
+- `components/features/UsefulPhrasesSection.tsx` — categorized phrase browser
+- 7 categories: Greetings, Food, Directions, Emergency, Transport, Shopping, Social
+- TTS pronunciation via expo-speech
+- Collapsible categories with phrase count
+- Wired into Language tab below existing survival phrases
+
+### Emergency Numbers Verification
+- All 25 countries in `lib/prep/emergency-data.ts` cross-verified against Wikipedia + emergencyphonenumbers.org (March 2026)
+- Fixed: Hungary police 112 → 107
+- Added: New York (US), Santorini (Greece), Ljubljana (Slovenia)
+- All top 20 ROAM destinations now have verified emergency data
+
 ### Future languages
 
 To add a new language:

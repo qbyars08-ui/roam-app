@@ -268,6 +268,24 @@ const es: TranslationKeys = {
     allDone: '\u00a1Todo listo!',
     itemsLeft: '{{count}} elemento restante',
     itemsLeft_other: '{{count}} elementos restantes',
+    rightNow: 'Ahora mismo',
+  },
+
+  prepRightNow: {
+    title: 'AHORA MISMO',
+    packingTips: 'CONSEJOS DE EQUIPAJE',
+  },
+
+  usefulPhrases: {
+    title: 'FRASES \u00daTILES',
+    phrases: 'frases',
+    greetingsBasics: 'Saludos y b\u00e1sicos',
+    foodDining: 'Comida y restaurantes',
+    directions: 'Direcciones',
+    emergency: 'Emergencia',
+    gettingAround: 'C\u00f3mo moverse',
+    shopping: 'Compras',
+    social: 'Social',
   },
 
   profile: {

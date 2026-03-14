@@ -268,6 +268,24 @@ const ja: TranslationKeys = {
     allDone: '\u5168\u3066\u5b8c\u4e86\uff01',
     itemsLeft: '\u6b8b\u308a{{count}}\u9805\u76ee',
     itemsLeft_other: '\u6b8b\u308a{{count}}\u9805\u76ee',
+    rightNow: '\u4eca\u306e\u72b6\u6cc1',
+  },
+
+  prepRightNow: {
+    title: '\u4eca\u306e\u72b6\u6cc1',
+    packingTips: '\u8377\u7269\u306e\u30d2\u30f3\u30c8',
+  },
+
+  usefulPhrases: {
+    title: '\u4fbf\u5229\u306a\u30d5\u30ec\u30fc\u30ba',
+    phrases: '\u30d5\u30ec\u30fc\u30ba',
+    greetingsBasics: '\u6328\u62f6\u3068\u57fa\u672c',
+    foodDining: '\u98df\u4e8b\u3068\u30ec\u30b9\u30c8\u30e9\u30f3',
+    directions: '\u9053\u6848\u5185',
+    emergency: '\u7dca\u6025',
+    gettingAround: '\u79fb\u52d5\u624b\u6bb5',
+    shopping: '\u8cb7\u3044\u7269',
+    social: '\u793e\u4ea4',
   },
 
   profile: {

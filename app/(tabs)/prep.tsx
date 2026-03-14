@@ -73,6 +73,8 @@ import { DESTINATIONS } from '../../lib/constants';
 import { parseItinerary, type Itinerary, type ItineraryDay } from '../../lib/types/itinerary';
 import { withComingSoon } from '../../lib/with-coming-soon';
 import { getMedicalGuideByDestination, type MedicalGuide } from '../../lib/medical-abroad';
+import RightNowSection from '../../components/features/RightNowSection';
+import UsefulPhrasesSection from '../../components/features/UsefulPhrasesSection';
 
 // ---------------------------------------------------------------------------
 // Survival phrase keys (6 phrases for Language tab)
@@ -214,9 +216,10 @@ function SafetyScoreHero({
 // Section Pills (labelKey = i18n key when present)
 // ---------------------------------------------------------------------------
 const SECTIONS: Array<
-  | { id: 'schedule' | 'overview' | 'currency' | 'connectivity' | 'culture'; label: string }
+  | { id: 'rightnow' | 'schedule' | 'overview' | 'currency' | 'connectivity' | 'culture'; label: string }
   | { id: 'emergency' | 'health' | 'language' | 'visa'; labelKey: string }
 > = [
+  { id: 'rightnow', label: 'Right Now' },
   { id: 'schedule', label: 'Schedule' },
   { id: 'overview', label: 'Overview' },
   { id: 'emergency', labelKey: 'prep.emergency' },
@@ -1042,8 +1045,8 @@ function PrepScreen() {
     activeTrip?.destination ?? DESTINATIONS[0]?.label ?? 'Tokyo'
   );
   const [activeSection, setActiveSection] = useState<
-    'schedule' | 'overview' | 'emergency' | 'health' | 'language' | 'visa' | 'currency' | 'connectivity' | 'culture'
-  >('schedule');
+    'rightnow' | 'schedule' | 'overview' | 'emergency' | 'health' | 'language' | 'visa' | 'currency' | 'connectivity' | 'culture'
+  >('rightnow');
 
   useEffect(() => {
     if (activeTrip) setSelectedDest(activeTrip.destination);
@@ -1148,6 +1151,12 @@ function PrepScreen() {
               })}
             </ScrollView>
 
+            {activeSection === 'rightnow' && (
+              <View style={styles.tabContent}>
+                <RightNowSection destination={selectedDest} />
+              </View>
+            )}
+
             {activeSection === 'schedule' && (
               <ScheduleTab itinerary={parsedItinerary} />
             )}
@@ -1191,7 +1200,12 @@ function PrepScreen() {
 
             {activeSection === 'language' && (
               langPack ? (
-                <LanguageTab pack={langPack} />
+                <View style={styles.tabContent}>
+                  <LanguageTab pack={langPack} />
+                  <View style={{ marginTop: SPACING.lg }}>
+                    <UsefulPhrasesSection pack={langPack} />
+                  </View>
+                </View>
               ) : (
                 <View style={styles.tabContent}>
                   <Text style={styles.noDataText}>

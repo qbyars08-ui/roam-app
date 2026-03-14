@@ -297,6 +297,7 @@ const en = {
   // ---------------------------------------------------------------------------
   prep: {
     title: 'Trip Prep',
+    rightNow: 'Right Now',
     packing: 'Packing',
     documents: 'Documents',
     health: 'Health',
@@ -311,6 +312,29 @@ const en = {
     allDone: 'All done!',
     itemsLeft: '{{count}} item left',
     itemsLeft_other: '{{count}} items left',
+  },
+
+  // ---------------------------------------------------------------------------
+  // Prep: Right Now (weather intel)
+  // ---------------------------------------------------------------------------
+  prepRightNow: {
+    title: 'RIGHT NOW',
+    packingTips: 'PACKING TIPS',
+  },
+
+  // ---------------------------------------------------------------------------
+  // Useful Phrases
+  // ---------------------------------------------------------------------------
+  usefulPhrases: {
+    title: 'USEFUL PHRASES',
+    phrases: 'phrases',
+    greetingsBasics: 'Greetings & Basics',
+    foodDining: 'Food & Dining',
+    directions: 'Directions',
+    emergency: 'Emergency',
+    gettingAround: 'Getting Around',
+    shopping: 'Shopping',
+    social: 'Social',
   },
 
   // ---------------------------------------------------------------------------

@@ -268,6 +268,24 @@ const fr: TranslationKeys = {
     allDone: 'Tout est pr\u00eat\u00a0!',
     itemsLeft: '{{count}} \u00e9l\u00e9ment restant',
     itemsLeft_other: '{{count}} \u00e9l\u00e9ments restants',
+    rightNow: 'En ce moment',
+  },
+
+  prepRightNow: {
+    title: 'EN CE MOMENT',
+    packingTips: 'CONSEILS BAGAGES',
+  },
+
+  usefulPhrases: {
+    title: 'PHRASES UTILES',
+    phrases: 'phrases',
+    greetingsBasics: 'Salutations et bases',
+    foodDining: 'Nourriture et restaurants',
+    directions: 'Directions',
+    emergency: 'Urgence',
+    gettingAround: 'Se d\u00e9placer',
+    shopping: 'Achats',
+    social: 'Social',
   },
 
   profile: {
