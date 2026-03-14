@@ -155,13 +155,28 @@ Status board for Cursor agents. Cap reads this to coordinate work.
 
 ## Agent 05 (Debugger)
 
-**Status:** TS readonly fix
-**Date:** 2026-03-13
-**Action needed:** Quinn — review + merge PR #15
+**Status:** Post-merge verification complete — all checks green, all tabs verified
+**Date:** 2026-03-14
+**Action needed:** No
 
-### Deliverables
+### Post-merge verification (latest)
 
-- Fixed `buildTripPrompt()` array params to accept `readonly string[]`
+- `npx tsc --noEmit` — 0 errors
+- `npx jest` — 423 tests pass (14 suites)
+- `npx eslint . --ext .ts,.tsx` — 0 errors, 0 warnings
+- All 6 tabs verified on web: Discover, Generate, Flights, Stays, Food, Prep
+- All destination images load correctly (Tokyo image was broken — fixed)
+- No console error overlays on any tab
+
+### Bugs fixed
+
+- **Tokyo image**: truncated Unsplash photo ID in `lib/constants.ts`
+- **Web collapsable warning**: suppressed RN Web DOM prop warning from Animated SVG components
+- **3 ESLint regressions** from Builder PRs (test mock any, set-state-in-effect, exhaustive-deps)
+- **289 ESLint warnings** resolved in prior pass (unused vars, explicit-any, exhaustive-deps, hooks rules)
+- **9 rules-of-hooks violations** fixed (hooks above early returns)
+- **Missing i18n deps** installed (react-i18next, i18next, expo-localization)
+- **ESLint toolchain** added to devDependencies
 
 ---
 
