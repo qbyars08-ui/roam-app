@@ -79,9 +79,29 @@ jest.mock('expo-clipboard', () => ({
 }));
 
 // Mock react-native Share
-jest.mock('react-native/Libraries/Share/Share', () => ({
-  share: jest.fn(() => Promise.resolve({ action: 'sharedAction' })),
-}));
+// react-native/index.js accesses via require(...).default, so we must export default.
+jest.mock('react-native/Libraries/Share/Share', () => {
+  const Share = { share: jest.fn(() => Promise.resolve({ action: 'sharedAction' })) };
+  return { __esModule: true, default: Share, ...Share };
+});
+
+// Mock react-native Alert (exported via .default in RN 0.83)
+jest.mock('react-native/Libraries/Alert/Alert', () => {
+  const Alert = { alert: jest.fn(), prompt: jest.fn() };
+  return { __esModule: true, default: Alert, ...Alert };
+});
+
+// Mock react-native Linking (exported via .default in RN 0.83)
+jest.mock('react-native/Libraries/Linking/Linking', () => {
+  const Linking = {
+    canOpenURL: jest.fn(() => Promise.resolve(true)),
+    openURL: jest.fn(() => Promise.resolve(undefined)),
+    openSettings: jest.fn(() => Promise.resolve(undefined)),
+    addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+    getInitialURL: jest.fn(() => Promise.resolve(null)),
+  };
+  return { __esModule: true, default: Linking, ...Linking };
+});
 
 // Mock expo-linking
 jest.mock('expo-linking', () => ({
