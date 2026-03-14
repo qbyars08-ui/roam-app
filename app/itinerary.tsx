@@ -56,6 +56,8 @@ import { enrichVenues, getTodayHours, type EnrichedVenue } from '../lib/venues';
 import { saveItineraryOffline } from '../lib/offline';
 import { exportCalendar } from '../lib/calendar';
 import { shareTrip, copyShareableLink } from '../lib/sharing';
+import { recordGrowthEvent } from '../lib/growth-hooks';
+import { evaluateTrigger } from '../lib/smart-triggers';
 import { buildDayNarration } from '../lib/elevenlabs';
 import WeatherCard from '../components/features/WeatherCard';
 import FlightPriceCard from '../components/features/FlightPriceCard';
@@ -189,6 +191,9 @@ export default function ItineraryScreen() {
       trackItineraryView().then(() => {
         maybePromptForReview().catch(() => {});
       });
+
+      recordGrowthEvent('itinerary_view').catch(() => {});
+      evaluateTrigger('itinerary_view').catch(() => {});
 
       // NPS survey — after 3rd trip, delayed so user sees itinerary first
       const tripCount = trips.length;
@@ -481,6 +486,8 @@ export default function ItineraryScreen() {
   const handleShareLink = useCallback(async () => {
     if (!trip) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    recordGrowthEvent('trip_shared').catch(() => {});
+    evaluateTrigger('post_share').catch(() => {});
     const shared = await shareTrip(trip);
     if (!shared) {
       const copied = await copyShareableLink(trip);
