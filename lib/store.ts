@@ -176,6 +176,14 @@ export const useAppStore = create<AppState>((set) => ({
       if (userId) {
         import('./streaks').then((m) => m.recordTripPlanned(userId)).catch(() => {});
       }
+      import('./analytics').then((m) =>
+        m.trackEvent('trip_created', {
+          destination: trip.destination,
+          days: trip.days,
+          budget: trip.budget,
+          vibes: trip.vibes,
+        }),
+      ).catch(() => {});
       return { trips: updated };
     }),
   removeTrip: (id) =>

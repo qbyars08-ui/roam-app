@@ -21,6 +21,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { narrateText, stopNarration } from '../../lib/elevenlabs';
+import { trackEvent } from '../../lib/analytics';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -92,6 +93,7 @@ export default function VoiceGuide({
       setState('loading');
       await narrateText(text);
       setState('playing');
+      trackEvent('voice_guide_played').catch(() => {});
     } catch (error) {
       console.error('[VoiceGuide] Error:', error);
       setState('idle');
