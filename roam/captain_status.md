@@ -1,168 +1,90 @@
-# ROAM Captain Status — 2026-03-14 Feature Visibility Audit
+## ROAM STATUS — 2026-03-14T07:00Z
 
-## System: GREEN
+### System: YELLOW
 
-- **TypeScript:** 0 errors
-- **Tests:** 423 passed, 14 suites, 0 failures
-- **Web Export:** SUCCESS (dist/ built, 6.7MB main bundle)
-- **Netlify:** Auto-deploying commit `0c32807`
-- **Agents:** All 13 assigned new rework sprint tasks via AGENT_BOARD.md
-
----
-
-## Feature Visibility Audit — What Was Invisible Is Now Visible
-
-### APIs That Had No UI (now rendering in prep tab)
-- **Air Quality** (`lib/air-quality.ts`) — now shows AQI score + label + advice via `AirQualitySunCard`
-- **Sun Times** (`lib/sun-times.ts`) — now shows sunrise/sunset/golden hour/day length via `AirQualitySunCard`
-- **10-Day Forecast** (`lib/weather-forecast.ts`) — horizontal scrollable strip via `ForecastStrip`
-- **Emergency Numbers** (`lib/emergency-numbers.ts`) — compact police/ambulance/fire card via `EmergencyQuickCard`
-- **Currency Converter** (`lib/exchange-rates.ts`) — $100 conversion + quick amounts via `CurrencyQuickCard`
-- **Cost of Living** (`lib/cost-of-living.ts`) — budget/comfort/luxury daily totals via `CostOfLivingCard`
-
-### New Components Created
-- `components/prep/ForecastStrip.tsx` — 10-day weather strip with per-weather icons
-- `components/prep/AirQualitySunCard.tsx` — AQI + sunrise/sunset side-by-side
-- `components/prep/EmergencyQuickCard.tsx` — Emergency numbers with coral theme
-- `components/prep/CurrencyQuickCard.tsx` — Live exchange rates with quick converter
-- `components/prep/CostOfLivingCard.tsx` — Budget tiers from offline data
-
-### Prep Tab Now Shows (in order)
-1. Safety Score Hero (existing)
-2. Right Now intel card — time, weather, exchange, holidays (existing)
-3. Air Quality + Sun Times (NEW)
-4. 10-Day Forecast strip (NEW)
-5. Daily Budget tiers (NEW)
-6. Emergency Numbers (NEW)
-7. Currency Converter (NEW)
-8. Section pills + tab content (existing)
+- **TypeScript:** CLEAN (0 errors — required `npm install posthog-react-native` locally)
+- **Tests:** 423 passed / 0 failed / 14 suites
+- **ESLint:** 0 errors, 0 warnings (fully resolved on main)
+- **Main HEAD:** ccc8be1 — "app rework phase 1" megamerge
+- **Open PRs:** 0 (agents working on branches, PRs not yet opened)
+- **Security:** 5 CRITICAL + 10 HIGH fixed, MEDIUM RLS fixes applied, rate limiting on all edge functions
 
 ---
 
-## Rework Sprint — What Shipped (Phase 1)
+### Rework Sprint Assignments (from AGENT_BOARD.md)
 
-### New Components
-- `components/ui/DestinationImageFallback.tsx` — gradient fallback with destination theme colors (zero grey boxes)
-- `components/ui/DestinationThemeOverlay.tsx` — subtle per-destination background tinting (5% opacity)
-
-### Prep Tab Live Data
-- `DestinationIntelCard` added between safety hero and section pills
-- Shows: local time (timezone lookup), current weather (Open-Meteo), exchange rate (Frankfurter), upcoming holidays (Nager.Date)
-- All free APIs, no keys needed, AsyncStorage cached
-
-### Admin Test Bypass
-- `supabase/functions/claude-proxy/index.ts` now reads `ADMIN_TEST_EMAILS` env var
-- Quinn's email skips rate limit for unlimited testing
-- Quinn-only blocker: add `ADMIN_TEST_EMAILS=qbyars08@gmail.com` to Supabase edge function secrets
-
-### Generate Tab Polish
-- Destination placeholder: "Tokyo, Japan" (specific, not generic)
-- CTA button: "Generate My Trip" (action-oriented)
-
-### Agent Board Updated
-- All agents assigned extensive rework tasks in AGENT_BOARD.md
-- Agent 02 (Research) — already submitted task via Cursor Cloud
-- Agent 04 (Builder) — 4 major builds: images, flights, stays, food
+| Priority | Task | Agent | Status |
+|----------|------|-------|--------|
+| P0 | Best free image API research | 02 Researcher | DONE — branch active |
+| P0 | Full anti-AI-slop audit | 03 Design Enforcer | ASSIGNED (no new branch) |
+| P0 | Image loading + Flights/Stays/Food rework | 04 Builder | ASSIGNED (no new branch) |
+| P1 | Post-merge verification + lint cleanup | 05 Debugger | DONE — branch active |
+| P1 | First-time UX audit | 06 Growth | ASSIGNED (no new branch) |
+| P1 | Admin test bypass for rate limiting | 08 Security | DONE — branch active |
+| P1 | Prep tab live data | 09 Localization | DONE — branch active |
+| P1 | Full copy audit + email templates | 11 Content | DONE — branch active |
 
 ---
 
-## What Completed This Session
+### Active Branches — Merge Order
 
-### Phase 1 — Baseline Verified
-- `git pull origin main` — up to date
-- `npm install` — 1432 packages, 0 issues
-- `npx tsc --noEmit` — 0 errors
-- `npx jest` — 423 tests, 14 suites, all green
+| # | Branch | Agent | Ahead | Key deliverables | Risk |
+|---|--------|-------|-------|-----------------|------|
+| 1 | `agent-08-rate-limit-and-medium-fixes` | 08 Security | 1 | Edge function audit, admin bypass, MEDIUM RLS fixes, rate limiting | Low |
+| 2 | `cursor/agent-05-debugger-7503` | 05 Debugger | 4 | 28 files — unused var/import cleanup, 0 ESLint warnings, updated system_health.md | Low |
+| 3 | `cursor/agent-02-api-research-95b0` | 02 Researcher | 2 | 314-line image API research report, dead `source.unsplash.com` URL fixes, Pexels fallback in edge function | Medium |
+| 4 | `cursor/agent-09-localization-fd62` | 09 Localization | 8 | 44 screens converted to i18n, RTL support, 40 new translation namespaces (~700 keys), localization audit | **HIGH** |
+| 5 | `cursor/agent-11-rules-content-6875` | 11 Content | 1 | 5 HTML email templates, App Store listing copy, monetization_model.md, 125 files touched | **VERY HIGH** |
 
-### Phase 2 — Netlify Config
-- netlify.toml already configured (SPA fallback, security headers, cache headers)
-- `public/_redirects` present
-- `npx expo export --platform web` — built successfully to `dist/`
-- Netlify CLI not installed locally — Quinn-only blocker
-
-### Phase 3 — Generate Flow Audit
-- Flow traced: `generate.tsx` → `buildTripPrompt()` → `callClaude()` → `claude-proxy` edge function → `parseItinerary()` → Zustand store → `itinerary.tsx`
-- Input validation: destination required + trimmed, days 1-30 range check, budget required
-- Error handling: `TripLimitReachedError` → upgrade modal, network error → dismissible banner, parse error → caught in itinerary.tsx
-- Rate limiting: free tier check before API call, guest user check before API call
-- Itinerary validation: structure check before storing (`itinerary?.destination && itinerary?.days?.length`)
-
-### Phase 4 — Discover Tab Polish
-- Section headers now editorial and specific per category:
-  - All: "Where everyone is going right now"
-  - Beaches: "Sand, salt, and zero agenda"
-  - Mountains: "High altitude, higher expectations"
-  - Cities: "Concrete jungles worth the chaos"
-  - Food: "Book the flight for the food alone"
-  - Adventure: "Skip the tourist loop entirely"
-  - Budget: "Big trips, small spend"
-  - Couples: "Trips worth fighting over the window seat"
-- Removed hardcoded `#000` shadow color → `COLORS.black`
-- Trending badges render for trendScore >= 85 (Tokyo, Bali, Seoul, Lisbon, Mexico City, Medellín, Oaxaca, Tbilisi, Bangkok)
-- "Perfect timing" chips render for March-appropriate destinations
-- All 8 category filters working
-- Search filters by label, country, and hook text
-
-### Phase 5 — Onboarding Audit
-- 3 immersive steps with background images (travel style, priority, budget)
-- Progress indicator: animated glow bar tracks 33% → 66% → 100%
-- Skip button present → goes straight to tabs
-- Confetti burst on completion, answers saved to AsyncStorage
-- Personalization inference runs on completion
-
-### Phase 6 — Error States Audit
-- **generate.tsx:** Error banner with human-readable message + dismiss. Rate limit modal with upgrade CTA.
-- **itinerary.tsx:** Full error view with AlertTriangle icon, error message, hint, and "Go Back" button
-- **flights.tsx:** Error state with retry on search failure
-- **stays.tsx:** Deterministic mock data, no API failures possible. Empty state handled.
-- **prep.tsx:** Offline-first design, graceful fallbacks
-- **Root layout:** ErrorBoundary wraps entire app. OfflineBanner shown when disconnected.
-
-### Phase 7 — Performance
-- Main JS bundle: 6.3MB uncompressed (~1.5MB gzipped)
-- Expo Router auto-code-splits by route
-- react-native-maps excluded from web via Platform guards
-- FlatList optimized: `removeClippedSubviews`, `initialNumToRender=8`, `maxToRenderPerBatch=6`
-
-### Phase 8 — Final Verification
-- `npx tsc --noEmit` — 0 errors
-- `npx jest --passWithNoTests` — 423 tests, all green
-- `npx expo export --platform web` — built successfully
+**Stale branches (0 commits ahead — already merged, need cleanup):** `cursor/agent-10-analytics-cuda-7814`, `cursor/agent-07-monetization-current-7c01`, `test/edge-case-coverage`, `cursor/growth-hacker-curs-data-7a6d`, `cursor/fix-alpha-antipatterns`
 
 ---
 
-## All 13 Agents — Sprint Complete
+### What each agent did this run
 
-| # | Agent | Key Output | Lines |
-|---|-------|------------|-------|
-| 01 | Tester | 423 tests across 14 suites | +3,839 |
-| 02 | Researcher | 6 free API modules | +991 |
-| 03 | Design Enforcer | 35 design violations fixed | +359 |
-| 04 | Builder | PostHog SDK integrated | +997 |
-| 05 | Debugger | ESLint toolchain + hooks fixes | +4,393 |
-| 06 | Growth | Referral system + welcome page | +1,092 |
-| 07 | Monetization | Paywall optimization | +665 |
-| 08 | Scanguard | Input validation on edge functions | +67 |
-| 09 | Localization | 40+ screens i18n converted | +2,748 |
-| 10 | Analytics | PostHog event taxonomy | +92 |
-| 11 | Content | Copy library + waitlist rewrite | +320 |
-| 12 | Investor | Investor dashboard | +1,146 |
-| 13 | Captain | Status briefings | +506 |
+- **01 Tester:** No new branch. Tests already at 423 (14 suites) on main from prior merge.
+- **02 Researcher:** Found `source.unsplash.com` is dead (shut down June 2024) — 3 files broken. Recommends Pexels API (200 req/hr free, 4x Unsplash). Wrote 314-line research report. Fixed dead URLs in client code + added Pexels fallback to destination-photo edge function.
+- **03 Design Enforcer:** No new branch yet. Assigned: anti-AI-slop audit (generic placeholders, grey boxes, template screens).
+- **04 Builder:** No new branch yet. Assigned: image loading system, flights/stays/food tab reworks.
+- **05 Debugger:** Cleaned 289 ESLint warnings down to 0. Removed unused vars/imports across 28 files. Updated system_health.md with web build verification (6.3MB bundle, dist/ builds clean).
+- **06 Growth:** No new branch yet. Assigned: first-time UX audit of tryroam.netlify.app.
+- **07 Monetization:** Stale branch (0 ahead). No new work this run.
+- **08 Security:** Full edge function audit + admin email bypass for claude-proxy rate limiting. MEDIUM RLS fixes applied. Rate limiting on all edge functions.
+- **09 Localization:** Massive run — 8 commits, 148 files. Converted 44 remaining screens to i18n. Added 40 new translation namespaces (~700 keys). RTL support with `I18nManager` + logical layout props. Full localization audit written. All 4 locales (en/es/fr/ja) updated.
+- **10 Analytics:** Stale branch (0 ahead). PostHog already merged to main.
+- **11 Content:** 5 HTML email templates (welcome, Jay Fai story, spin-the-globe, alter-ego, pre-launch). App Store listing copy. Updated copy_library.md. Also carries forward monetization_model.md and analytics_spec.md. 125 files touched — largest branch.
+- **12 Investor:** No new branch activity.
+- **Captain:** Compiling this briefing.
 
 ---
 
-## What Still Needs Quinn (Human-Only)
+### Key Findings
 
-1. **Netlify Deploy** — `npm install -g netlify-cli && netlify deploy --prod --dir=dist` (or configure GitHub auto-deploy)
-2. **Supabase Secrets** — Verify all `EXPO_PUBLIC_*` env vars are set in Netlify Dashboard
-3. **Booking.com AID** — Sign up at partners.booking.com, replace `aid=roam` placeholder
-4. **RevenueCat Products** — Create `roam_pro_monthly` and `roam_pro_annual` in RevenueCat dashboard
-5. **Copy Approval** — Review `roam/copy_library.md` brand voice before email sequences go live
+**Agent 02 critical discovery:** `source.unsplash.com` has been dead since June 2024. Three files have broken fallback URLs affecting destination images across the app:
+- `lib/destination-photo-map.ts` — all 28 fallback URLs broken
+- `lib/curated-backgrounds.ts` — all 15 fallback URLs broken
+- `app/(tabs)/index.tsx` — `getUnsplashUrl()` function broken
+
+**Recommendation:** Merge Agent 02 branch to fix dead URLs. Builder (Agent 04) should then implement the Pexels API integration as part of the image loading system rework.
 
 ---
 
-## Top 3 Things to Look At First
+### Blocked (waiting on Quinn)
 
-1. **Preview the web build** — `npx serve dist` to preview locally, or deploy to Netlify
-2. **Open the Discover tab** — Editorial headers, category-specific section titles, trending badges, and "Perfect timing" chips are the first investor impression
-3. **Test the generate flow** — Pick any destination, run through quick mode. The flow generate → loading → itinerary is the core product moment
+| Item | Action | Time est. |
+|------|--------|-----------|
+| Netlify billing | Purchase credits or upgrade plan | 5 min |
+| Remove dead Amadeus secrets | Delete AMADEUS_KEY + AMADEUS_SECRET from Supabase Dashboard | 2 min |
+| Booking.com AID | Sign up at partners.booking.com | 15 min |
+| Review copy_library.md | Write APPROVED at top if voice is right | 20 min |
+| RevenueCat products | Create roam_pro_monthly $9.99 + roam_global_yearly $49.99 | 30 min |
+| PostHog project key | Set real key in environment | 5 min |
+| Open PRs for 5 active branches | Create drafts or instruct agents | 5 min |
+
+---
+
+### Top 3 things Quinn should look at right now
+
+1. **Merge Security (#08) then Debugger (#05) then Researcher (#02) — all clean, fix real bugs.** Agent 02 fixes broken image URLs across the app. These 3 branches are small and safe.
+2. **Wait for Builder (#04) and Design Enforcer (#03) to deliver** — the P0 rework tasks (image loading, flights/stays/food rework, anti-slop audit) are the highest-priority assigned work. No branches yet.
+3. **Localization (#09) and Content (#11) are massive — review before merge.** Agent 09 touched 148 files (44 screen conversions + RTL). Agent 11 touched 125 files (email templates + copy). Both need careful rebase and review. Merge one at a time.
