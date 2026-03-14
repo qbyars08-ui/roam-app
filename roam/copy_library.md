@@ -255,6 +255,92 @@ P.S. — Know someone who'd want this? Forward this email. They can join at roam
 
 ---
 
+## App Store Listing Copy — Approved
+
+### App Name
+ROAM - AI Trip Planner
+
+### Subtitle (30 chars)
+Your trip, planned in seconds
+
+### Promotional Text (170 chars max)
+Tell ROAM where you're going and your budget. Get a full day-by-day itinerary with real restaurant names, real costs, and the kind of tips a local friend would text you.
+
+### Description
+
+ROAM plans your trip the way a well-traveled friend would — specific restaurant names, the exact dish to order, and a tip that saves your afternoon. Not "explore the local cuisine."
+
+You pick a destination, set your budget, and tag how you like to travel. In 30 seconds, ROAM builds a complete day-by-day itinerary you can actually follow.
+
+**WHAT YOU GET**
+
+- The actual restaurant, not "try local food." Jay Fai in Bangkok. Pasta e Fagioli at Roscioli in Rome. The $3 banh mi stand on Phan Chu Trinh in Hoi An.
+- Costs for everything. No spreadsheet math on the plane.
+- Tips a local friend would text you. "Order the #3, skip the appetizers." "Get there by 3pm or you're waiting 45 min."
+- Hotels you'd actually book, in the right neighborhood, at the right price.
+
+**HOW IT WORKS**
+
+1. Pick a destination from 30+ places (or type your own)
+2. Set your budget — $25/day to $500/day
+3. Tag your vibes — local-eats, night-owl, off-the-grid, adrenaline
+4. Get a full itinerary in 30 seconds
+
+**MORE THAN AN ITINERARY**
+
+- Spin the Globe — can't decide where to go? One tap. Random destination. Full plan.
+- Trip Dupe — dream of Santorini on a hostel budget? ROAM finds Milos. Same blue water, 65% cheaper.
+- Travel Alter-Ego Quiz — 5 questions, 7 personality types, a shareable card for your Stories
+- Travel Passport — collect stamps for every destination you plan
+- AI Chat — ask anything about anywhere and get honest, specific answers
+- Calendar Export — one tap to add your entire trip to Apple Calendar
+- Emergency SOS — long-press for instant local emergency contacts with your GPS
+- Offline Access — your itineraries are saved for when you lose signal
+
+**PRICING**
+
+- Free: 1 trip per month. Full itinerary, all features.
+- Pro ($6.99/mo or $49.99/yr): Unlimited trips, priority generation.
+
+Plan your next trip in the time it takes to order coffee.
+
+### Keywords (100 chars)
+travel,trip,planner,itinerary,AI,budget,backpacker,restaurant,destination,passport,vibe,local,plan
+
+### Screenshot Text Overlays
+
+| # | Headline | Subtext |
+|---|----------|---------|
+| 1 | 30 seconds. Full itinerary. | Real restaurants, real costs, real tips. |
+| 2 | Day by day. Place by place. | Every meal, every activity, every cost — planned. |
+| 3 | Can't decide? Spin. | One tap. Random destination. Full trip. |
+| 4 | Santorini vibes, hostel budget. | Trip Dupe finds the affordable version. |
+| 5 | Collect stamps. Track trips. | Your travel passport, always up to date. |
+| 6 | Ask anything about anywhere. | Like texting the friend who's been everywhere. |
+| 7 | Destination. Budget. Vibes. Go. | Three inputs. One complete trip. |
+| 8 | What's your travel alter-ego? | 5 questions. 7 types. One shareable card. |
+
+### App Preview Video Script (30s)
+
+- **[0-5s]** ROAM wordmark on dark green. Text: "Your trip, planned in seconds."
+- **[5-10s]** Discover screen scrolling. User taps Tokyo.
+- **[10-15s]** Budget picker, vibe chips selected. Generating state with compass loader.
+- **[15-22s]** Itinerary reveals: day themes, specific restaurant names with costs, map pins. Scroll through.
+- **[22-27s]** Quick cuts: Spin the Globe landing on Bali, Travel Passport stamps, Alter-Ego quiz result card.
+- **[27-30s]** End card: "ROAM &#8212; Download free" with App Store badge.
+
+### What's New (v1.0.0)
+Your first trip starts here.
+- Full day-by-day itineraries with real places and real costs
+- 30+ destinations or type your own
+- Spin the Globe random trip picker
+- Trip Dupe budget alternatives
+- Travel Passport with stamps
+- Calendar export and trip sharing
+- Offline access for your itineraries
+
+---
+
 ## Voice Audit Notes
 
 | Location | Issue Found | Fix Applied |
