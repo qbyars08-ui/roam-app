@@ -28,6 +28,7 @@ import { isGuestUser, clearGuestMode } from '../lib/guest';
 import { getCurrentStreak } from '../lib/streaks';
 import { logoutRevenueCat } from '../lib/revenue-cat';
 import { Sparkles, Repeat, Gift, Shield, ChevronRight, BarChart3, CreditCard, LogOut } from 'lucide-react-native';
+import { track } from '../lib/analytics';
 import Button from '../components/ui/Button';
 import ExploreHub from '../components/features/ExploreHub';
 
@@ -43,6 +44,10 @@ export default function ProfileScreen() {
   const trips = useAppStore((s) => s.trips);
 
   const userEmail = session?.user?.email ?? 'Guest';
+
+  useEffect(() => {
+    track({ type: 'screen_view', screen: 'profile' });
+  }, []);
 
   // ---------------------------------------------------------------------------
   // Emergency contact + rating badge

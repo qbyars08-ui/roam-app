@@ -35,6 +35,7 @@ import {
   type DestinationCategory,
 } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
+import { track } from '../../lib/analytics';
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -237,6 +238,10 @@ export default function DiscoverScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [headerIndex, setHeaderIndex] = useState(0);
   const headerFade = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    track({ type: 'screen_view', screen: 'discover' });
+  }, []);
 
   // Rotate editorial header every 5s with crossfade
   useEffect(() => {
