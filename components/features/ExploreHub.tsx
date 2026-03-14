@@ -121,7 +121,7 @@ export default function ExploreHub({ standalone = false }: ExploreHubProps) {
         router.push({ pathname: '/paywall', params: { reason: 'feature', feature: feature.name } });
         return;
       }
-      router.push(feature.route as any);
+      router.push(feature.route as import('expo-router').Href);
     },
     [router, canAccessPro]
   );
@@ -203,8 +203,9 @@ export function FeatureQuickAccess() {
   const handlePress = useCallback(
     (feature: Feature) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      router.push(feature.route as any);
+      router.push(feature.route as import('expo-router').Href);
     },
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization
     [router]
   );
 

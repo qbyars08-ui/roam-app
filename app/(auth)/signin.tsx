@@ -82,8 +82,8 @@ export default function SignInScreen() {
         if (error) throw error;
         // Session change will trigger the auth guard redirect automatically
       }
-    } catch (err: any) {
-      Alert.alert('That didn\'t work', err.message ?? 'Try again — it usually does.');
+    } catch (err: unknown) {
+      Alert.alert('That didn\'t work', err instanceof Error ? err.message : 'Try again — it usually does.');
     } finally {
       setLoading(false);
     }

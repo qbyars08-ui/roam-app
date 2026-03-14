@@ -14,6 +14,7 @@ import {
   ImageBackground,
   type ViewStyle,
   type TextStyle,
+  type ImageStyle,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -467,7 +468,7 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   cardImageInner: {
     borderRadius: RADIUS.lg,
-  } as ViewStyle,
+  } as ImageStyle,
   cardGradient: {
     flex: 1,
     padding: SPACING.lg,

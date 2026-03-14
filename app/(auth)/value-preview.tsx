@@ -106,7 +106,7 @@ export default function ValuePreviewScreen() {
         useNativeDriver: true,
       }).start();
     }, 1800);
-  }, []);
+  }, [afterOpacity, afterY, beforeOpacity, beforeY, btnOpacity, dividerWidth, titleOpacity]);
 
   const handleContinue = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

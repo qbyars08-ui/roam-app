@@ -14,6 +14,7 @@ import {
   View,
   type TextStyle,
   type ViewStyle,
+  type ImageStyle,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -755,7 +756,7 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   dupeCardImageInner: {
     borderRadius: RADIUS.lg,
-  } as ViewStyle,
+  } as ImageStyle,
   dupeCardGradient: {
     flex: 1,
     padding: 0,

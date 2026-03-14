@@ -77,7 +77,8 @@ function DestinationCardInner({ dest, photoUrl: photoUrlProp, onPress, size = 's
     </View>
   );
 
-  const pressableProps: any = {
+  type PressableProps = React.ComponentProps<typeof Pressable> & { onMouseEnter?: () => void; onMouseLeave?: () => void };
+  const pressableProps: PressableProps = {
     onPress,
     style: ({ pressed }: { pressed: boolean }) => [
       styles.wrapper,

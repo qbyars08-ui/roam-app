@@ -103,7 +103,7 @@ export function SquadFinder({
           useNativeDriver: true,
         }),
       ]).start(() => {
-        onSwipe(candidate.tripPresence.id, candidate.profile.userId ?? (candidate.profile as any).user_id, direction);
+        onSwipe(candidate.tripPresence.id, candidate.profile.userId ?? (candidate.profile as unknown as Record<string, unknown>).user_id as string, direction);
         setCurrentIndex((i) => i + 1);
 
         // Reset animations
@@ -215,10 +215,13 @@ export function SquadFinder({
 
 function CandidateCardContent({ candidate }: { candidate: SquadCandidate }) {
   const profile = candidate.profile;
-  const displayName = profile.displayName ?? (profile as any).display_name ?? 'Traveler';
-  const ageRange = profile.ageRange ?? (profile as any).age_range ?? '';
-  const travelStyle = profile.travelStyle ?? (profile as any).travel_style ?? '';
-  void (profile.vibeTags ?? (profile as any).vibe_tags ?? []);
+  const p = profile as unknown as Record<string, unknown>;
+  const displayName = profile.displayName ?? p.display_name ?? 'Traveler';
+  const ageRange = profile.ageRange ?? p.age_range ?? '';
+  const travelStyle = profile.travelStyle ?? p.travel_style ?? '';
+  void (profile.vibeTags ?? p.vibe_tags ?? []);
+  const lookingFor = (candidate.tripPresence.lookingFor ?? (candidate.tripPresence as unknown as Record<string, unknown>).looking_for) ?? [];
+  const tags = Array.isArray(lookingFor) ? (lookingFor as string[]) : [];
   return (
     <LinearGradient
       colors={[COLORS.sageSubtle, COLORS.goldFaint, COLORS.bgCard]}
@@ -253,11 +256,11 @@ function CandidateCardContent({ candidate }: { candidate: SquadCandidate }) {
       ) : null}
 
       {/* Looking for */}
-      {candidate.tripPresence.lookingFor?.length > 0 && (
+      {tags.length > 0 && (
         <View style={squadStyles.tagsSection}>
           <Text style={squadStyles.tagsLabel}>LOOKING FOR</Text>
           <View style={squadStyles.tagsRow}>
-            {(candidate.tripPresence.lookingFor ?? (candidate.tripPresence as any).looking_for ?? []).map((tag: string, i: number) => (
+            {tags.map((tag: string, i: number) => (
               <View
                 key={i}
                 style={[
@@ -369,10 +372,11 @@ function MeetupCard({
   listing: BreakfastClubListing;
   onRequest: () => void;
 }) {
-  const meetupType = listing.meetupType ?? (listing as any).meetup_type;
-  const timeSlot = listing.timeSlot ?? (listing as any).time_slot;
-  const maxPeople = listing.maxPeople ?? (listing as any).max_people ?? 4;
-  const currentCount = listing.currentCount ?? (listing as any).current_count ?? 1;
+  const l = listing as unknown as Record<string, unknown>;
+  const meetupType = listing.meetupType ?? l.meetup_type;
+  const timeSlot = listing.timeSlot ?? l.time_slot;
+  const maxPeople = listing.maxPeople ?? l.max_people ?? 4;
+  const currentCount = listing.currentCount ?? l.current_count ?? 1;
   const spotsLeft = maxPeople - currentCount;
 
   return (
@@ -468,8 +472,9 @@ export function HostelSocial({
         <View style={hostelStyles.eventsList}>
           {events.map((event) => {
             const attendeeCount = event.attendees?.length ?? 0;
-            const maxPeople = event.maxPeople ?? (event as any).max_people ?? 10;
-            const meetingPoint = event.meetingPoint ?? (event as any).meeting_point ?? '';
+            const ev = event as unknown as Record<string, unknown>;
+            const maxPeople = event.maxPeople ?? ev.max_people ?? 10;
+            const meetingPoint = event.meetingPoint ?? ev.meeting_point ?? '';
 
             return (
               <View key={event.id} style={hostelStyles.eventCard}>
@@ -533,9 +538,10 @@ export function NightlifeCrew({ venues, city, onJoinVenue }: NightlifeCrewProps)
 
       <View style={nightlifeStyles.venueList}>
         {venues.map((venue) => {
-          const usersGoing = venue.roamUsersGoing ?? (venue as any).roam_users_going ?? 0;
-          const todayEvent = venue.todayEvent ?? (venue as any).today_event;
-          const venueType = venue.type ?? (venue as any).venue_type ?? 'bar';
+          const v = venue as unknown as Record<string, unknown>;
+          const usersGoing = (venue.roamUsersGoing ?? v.roam_users_going ?? 0) as number;
+          const todayEvent = (venue.todayEvent ?? v.today_event) as string | undefined;
+          const venueType = (venue.type ?? v.venue_type ?? 'bar') as string;
 
           return (
             <View key={venue.id} style={nightlifeStyles.venueCard}>
@@ -610,9 +616,10 @@ export function GroupTripBuilder({ trips, onCreateTrip, onRequestJoin }: GroupTr
       </Pressable>
 
       {trips.map((trip) => {
-        const currentMembers = trip.currentMembers ?? (trip as any).current_members ?? [];
-        const maxMembers = trip.maxMembers ?? (trip as any).max_members ?? 6;
-        const startDate = trip.startDate ?? (trip as any).start_date ?? '';
+        const t = trip as unknown as Record<string, unknown>;
+        const currentMembers = trip.currentMembers ?? t.current_members ?? [];
+        const maxMembers = trip.maxMembers ?? t.max_members ?? 6;
+        const startDate = trip.startDate ?? t.start_date ?? '';
         const spotsLeft = maxMembers - currentMembers.length;
 
         return (
@@ -674,8 +681,9 @@ export function LocalConnect({ locals, city, onBook }: LocalConnectProps) {
       </View>
 
       {locals.map((local) => {
-        const yearsInCity = local.yearsInCity ?? (local as any).years_in_city ?? 1;
-        const reviewCount = local.reviewCount ?? (local as any).review_count ?? 0;
+        const loc = local as unknown as Record<string, unknown>;
+        const yearsInCity = local.yearsInCity ?? loc.years_in_city ?? 1;
+        const reviewCount = local.reviewCount ?? loc.review_count ?? 0;
         void (local.bio ? local.bio.slice(0, 40) : 'Local');
 
         return (
@@ -695,7 +703,7 @@ export function LocalConnect({ locals, city, onBook }: LocalConnectProps) {
               </View>
               <View style={localStyles.pricingBadge}>
                 <Text style={localStyles.pricingText}>
-                  {local.pricing === 'free' ? 'Free' : local.pricing === 'tip-based' ? 'Tip-based' : `$${local.fixedPrice ?? (local as any).fixed_price ?? 0}`}
+                  {local.pricing === 'free' ? 'Free' : local.pricing === 'tip-based' ? 'Tip-based' : `$${local.fixedPrice ?? (local as unknown as Record<string, unknown>).fixed_price ?? 0}`}
                 </Text>
               </View>
             </View>
@@ -805,7 +813,7 @@ export function SafetyCircleView({
         <View style={safetyStyles.checkIns}>
           <Text style={safetyStyles.sectionLabel}>ACTIVE CHECK-INS</Text>
           {activeCheckIns.map((ci) => {
-            const expectedAt = ci.expectedCheckInAt ?? (ci as any).expected_checkin_at ?? '';
+            const expectedAt = ci.expectedCheckInAt ?? (ci as unknown as Record<string, unknown>).expected_checkin_at ?? '';
             const expectedTime = expectedAt ? new Date(expectedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 
             return (

@@ -219,6 +219,7 @@ export default function ItineraryScreen() {
       );
     }
     return () => { if (npsTimer) clearTimeout(npsTimer); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- trips intentionally excluded
   }, [params.data, params.tripId, trips.length, router]);
 
   // ---------------------------------------------------------------------------
@@ -236,6 +237,7 @@ export default function ItineraryScreen() {
         trackEvent('weather_check', { destination: trip.destination }).catch(() => {});
       })
       .catch(() => setWeather(null));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- trip intentionally excluded
   }, [trip?.destination, trip?.createdAt, trip?.days]);
 
   // Load user's home airport preference
@@ -272,6 +274,7 @@ export default function ItineraryScreen() {
         setTripHolidays(overlap);
       }).catch(() => {});
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- trip intentionally excluded
   }, [trip?.destination, parsed]);
 
   // ---------------------------------------------------------------------------
@@ -320,6 +323,7 @@ export default function ItineraryScreen() {
         setVenueData(map);
       })
       .catch(() => setVenueData(new Map()));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- trip intentionally excluded
   }, [parsed, trip?.destination]);
 
   // ---------------------------------------------------------------------------
@@ -349,6 +353,7 @@ export default function ItineraryScreen() {
       packingTrackedRef.current = true;
       trackEvent('packing_list_generated', { destination: trip.destination }).catch(() => {});
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- trip intentionally excluded
   }, [packingResult, trip]);
 
   const narrationText = useMemo(() => {
@@ -362,6 +367,20 @@ export default function ItineraryScreen() {
       evening: currentDay.evening,
     });
   }, [currentDay, trip]);
+
+  const fallbackNow = useMemo(
+    () => Date.now(), // eslint-disable-line react-hooks/purity -- fallback when trip.createdAt missing
+    []
+  );
+  const localEventsDates = useMemo(() => {
+    if (!trip) return { startDate: '', endDate: '' };
+    const startDate = trip.createdAt ? trip.createdAt.split('T')[0] : new Date(fallbackNow).toISOString().split('T')[0];
+    const d = new Date(trip.createdAt || fallbackNow);
+    d.setDate(d.getDate() + trip.days);
+    const endDate = d.toISOString().split('T')[0];
+    return { startDate, endDate };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- trip intentionally excluded
+  }, [fallbackNow, trip?.createdAt, trip?.days]);
 
   // ---------------------------------------------------------------------------
   // Map pins for the active day
@@ -1210,12 +1229,8 @@ export default function ItineraryScreen() {
           {/* Local events during trip dates */}
           <LocalEventsSection
             city={trip.destination}
-            startDate={trip.createdAt ? trip.createdAt.split('T')[0] : new Date().toISOString().split('T')[0]}
-            endDate={(() => {
-              const d = new Date(trip.createdAt || Date.now());
-              d.setDate(d.getDate() + trip.days);
-              return d.toISOString().split('T')[0];
-            })()}
+            startDate={localEventsDates.startDate}
+            endDate={localEventsDates.endDate}
           />
 
           {/* Flight search — Skyscanner affiliate */}

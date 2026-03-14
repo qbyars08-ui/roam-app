@@ -49,8 +49,8 @@ describe('Guest Mode', () => {
 
   // ── Guest detection (isGuestSession takes a session) ────────
   it('isGuestSession detects guest sessions', () => {
-    const guestSession = { user: { id: 'guest-123' } } as any;
-    const realSession = { user: { id: 'abc-def-ghi' } } as any;
+    const guestSession = { user: { id: 'guest-123' } } as Parameters<typeof isGuestSession>[0];
+    const realSession = { user: { id: 'abc-def-ghi' } } as Parameters<typeof isGuestSession>[0];
     expect(isGuestSession(guestSession)).toBe(true);
     expect(isGuestSession(realSession)).toBe(false);
     expect(isGuestSession(null)).toBe(false);

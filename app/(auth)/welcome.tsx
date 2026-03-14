@@ -28,7 +28,7 @@ export default function WelcomeScreen() {
   const setSession = useAppStore((s) => s.setSession);
 
   const handleSkipLogin = () => {
-    setSession({ user: { id: 'dev-user', email: 'dev@roam.app' } } as any);
+    setSession({ user: { id: 'dev-user', email: 'dev@roam.app' } } as import('@supabase/supabase-js').Session);
     router.replace('/(tabs)');
   };
 
@@ -59,8 +59,8 @@ export default function WelcomeScreen() {
       if (error) {
         Alert.alert('Couldn\u2019t sign in', 'Something got in the way. Check your connection and try again.');
       }
-    } catch (err: any) {
-      if (err.code === 'ERR_REQUEST_CANCELED') {
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'code' in err && err.code === 'ERR_REQUEST_CANCELED') {
         return;
       }
       Alert.alert('Hmm', 'Apple Sign-In hit a snag. One more try usually does it.');
