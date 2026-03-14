@@ -12,6 +12,7 @@ import en from './locales/en';
 import es from './locales/es';
 import fr from './locales/fr';
 import ja from './locales/ja';
+import { applyRTL } from './rtl';
 
 // ---------------------------------------------------------------------------
 // Supported locales
@@ -67,6 +68,7 @@ export async function persistLocale(locale: SupportedLanguage): Promise<void> {
 // ---------------------------------------------------------------------------
 export async function changeLanguage(locale: SupportedLanguage): Promise<void> {
   await i18n.changeLanguage(locale);
+  applyRTL(locale);
   await persistLocale(locale);
 }
 
@@ -76,6 +78,7 @@ export async function changeLanguage(locale: SupportedLanguage): Promise<void> {
 async function initI18n() {
   const persisted = await getPersistedLocale();
   const lng = persisted ?? getDeviceLanguage();
+  applyRTL(lng);
 
   await i18n.use(initReactI18next).init({
     resources: {

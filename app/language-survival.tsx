@@ -13,6 +13,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Speech from 'expo-speech';
@@ -90,6 +91,7 @@ function PhraseCard({
 // Main screen
 // -----------------------------------------------------------------------------
 function LanguageSurvivalScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ city?: string; destination?: string }>();
@@ -142,7 +144,7 @@ function LanguageSurvivalScreen() {
         <Pressable onPress={handleBack} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}>
           <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
-        <Text style={styles.headerTitle}>Language Survival</Text>
+        <Text style={styles.headerTitle}>{t('languageSurvival.title')}</Text>
       </View>
 
       {/* City picker */}
@@ -196,7 +198,7 @@ function LanguageSurvivalScreen() {
           style={[styles.catChip, activeCategory === 'all' && styles.catChipActive]}
         >
           <Text style={[styles.catChipText, activeCategory === 'all' && styles.catChipTextActive]}>
-            All
+            {t('categories.all')}
           </Text>
         </Pressable>
         {CATEGORY_ORDER.map((cat) => {

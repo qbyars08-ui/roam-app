@@ -12,6 +12,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../lib/haptics';
@@ -25,6 +26,7 @@ import type { PrepSectionId } from '../lib/prep/types';
 type Params = { sectionId: PrepSectionId; tripId: string };
 
 export default function PrepDetailScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const params = useLocalSearchParams<Params>();
@@ -52,7 +54,7 @@ export default function PrepDetailScreen() {
       <Modal visible animationType="slide" onRequestClose={handleClose}>
         <View style={[styles.screen, { paddingTop: insets.top }]}>
           <View style={styles.header}>
-            <Text style={styles.title}>Language Survival Kit</Text>
+            <Text style={styles.title}>{t('languageSurvival.title')}</Text>
             <Pressable onPress={handleClose} hitSlop={12}>
               <X size={20} color={COLORS.cream} strokeWidth={2} />
             </Pressable>
@@ -102,7 +104,7 @@ export default function PrepDetailScreen() {
       <Modal visible animationType="slide" onRequestClose={handleClose}>
         <View style={[styles.screen, { paddingTop: insets.top }]}>
           <View style={styles.header}>
-            <Text style={styles.title}>Emergency Toolkit</Text>
+            <Text style={styles.title}>{t('prep.emergency')}</Text>
             <Pressable onPress={handleClose} hitSlop={12}>
               <X size={20} color={COLORS.cream} strokeWidth={2} />
             </Pressable>
@@ -158,7 +160,7 @@ export default function PrepDetailScreen() {
       <Modal visible animationType="slide" onRequestClose={handleClose}>
         <View style={[styles.screen, { paddingTop: insets.top }]}>
           <View style={styles.header}>
-            <Text style={styles.title}>Smart Packing List</Text>
+            <Text style={styles.title}>{t('prep.packing')}</Text>
             <Pressable onPress={handleClose} hitSlop={12}>
               <X size={20} color={COLORS.cream} strokeWidth={2} />
             </Pressable>

@@ -12,6 +12,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
@@ -30,6 +31,7 @@ import { withComingSoon } from '../lib/with-coming-soon';
 type TabId = 'reveal' | 'cost' | 'reality';
 
 function ViralCardsScreen() {
+  const { t } = useTranslation();
   const { tripId } = useLocalSearchParams<{ tripId?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();

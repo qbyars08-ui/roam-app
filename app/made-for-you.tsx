@@ -14,6 +14,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../lib/haptics';
@@ -205,6 +206,7 @@ const TABS: { id: TabId; label: string }[] = [
 // Screen
 // ---------------------------------------------------------------------------
 function MadeForYouScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ destination?: string }>();
@@ -258,7 +260,7 @@ function MadeForYouScreen() {
         />
         <View style={styles.header}>
           <Pressable onPress={() => router.back()}>
-          <Text style={[styles.backButton, { color: destTheme.primary }]}>← Back</Text>
+          <Text style={[styles.backButton, { color: destTheme.primary }]}>{`← ${t('common.back')}`}</Text>
         </Pressable>
         <View>
           <Text style={styles.headerTitle}>Made for you</Text>

@@ -4,6 +4,7 @@
 // =============================================================================
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../../lib/haptics';
@@ -37,6 +38,7 @@ interface ConversationBrief {
 }
 
 export default function GenerateScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -224,7 +226,7 @@ export default function GenerateScreen() {
             <View style={styles.errorBanner}>
               <Text style={styles.errorBannerText}>{networkError}</Text>
               <Pressable onPress={clearError} hitSlop={8}>
-                <Text style={styles.errorBannerRetry}>Dismiss</Text>
+                <Text style={styles.errorBannerRetry}>{t('common.close')}</Text>
               </Pressable>
             </View>
           ) : null}
@@ -240,7 +242,7 @@ export default function GenerateScreen() {
           <View style={styles.errorBanner}>
             <Text style={styles.errorBannerText}>{networkError}</Text>
             <Pressable onPress={clearError} hitSlop={8}>
-              <Text style={styles.errorBannerRetry}>Dismiss</Text>
+              <Text style={styles.errorBannerRetry}>{t('common.close')}</Text>
             </Pressable>
           </View>
         ) : null}
