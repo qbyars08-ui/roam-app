@@ -153,7 +153,7 @@ export default function PaywallScreen() {
         }),
       ]),
     ]).start();
-  }, []);
+  }, [cardsOpacity, cardsY, headerOpacity, headerY]);
 
   // Dynamic headline based on trigger reason (growth hooks with destination-aware fallback)
   const upgradeContext = params.reason === 'limit' ? 'trip_limit' as const
@@ -186,6 +186,7 @@ export default function PaywallScreen() {
   useEffect(() => {
     track({ type: 'screen_view', screen: 'paywall', payload: { reason: params.reason ?? 'default' } }).catch(() => {});
     recordGrowthEvent('paywall_view').catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only
   }, []);
 
   const handleClose = useCallback(() => {
@@ -214,7 +215,7 @@ export default function PaywallScreen() {
         recordGrowthEvent('purchase_success').catch(() => {});
         handleClose();
       }
-    } catch (err) {
+    } catch {
       Alert.alert('Something went wrong', 'Try again — we\u2019ll be here.');
     } finally {
       setLoading(false);
@@ -237,7 +238,7 @@ export default function PaywallScreen() {
       } else {
         Alert.alert('Nothing to restore', 'We didn\u2019t find an active subscription on this account. If you subscribed with a different email, try that one.');
       }
-    } catch (err) {
+    } catch {
       Alert.alert('Couldn\u2019t restore', 'Check your connection and give it another shot.');
     } finally {
       setRestoring(false);

@@ -49,7 +49,7 @@ describe('Pro Gating Logic', () => {
 
   it('free user cannot access any Pro feature', () => {
     const { isPro } = useAppStore.getState();
-    for (const feature of PRO_FEATURES) {
+    for (const _feature of PRO_FEATURES) {
       const gated = !isPro;
       expect(gated).toBe(true);
     }
@@ -58,7 +58,7 @@ describe('Pro Gating Logic', () => {
   it('pro user can access all Pro features', () => {
     useAppStore.getState().setIsPro(true);
     const { isPro } = useAppStore.getState();
-    for (const feature of PRO_FEATURES) {
+    for (const _feature of PRO_FEATURES) {
       const gated = !isPro;
       expect(gated).toBe(false);
     }

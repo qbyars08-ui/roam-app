@@ -842,8 +842,8 @@ export default function GroupScreen() {
   const [addExpenseVisible, setAddExpenseVisible] = useState(false);
   const [currencyPickerFrom, setCurrencyPickerFrom] = useState<'from' | 'to' | null>(null);
   const [dailyBudget, setDailyBudget] = useState('150');
-  const [spentToday, setSpentToday] = useState(85);
-  const [expenses, setExpenses] = useState<Expense[]>(MOCK_EXPENSES);
+  const [spentToday] = useState(85);
+  const [expenses] = useState<Expense[]>(MOCK_EXPENSES);
   const [durationPickerVisible, setDurationPickerVisible] = useState(false);
   const swapRotation = useRef(new Animated.Value(0)).current;
 
@@ -866,6 +866,7 @@ export default function GroupScreen() {
       }
     }, 10000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleStopSharing intentionally excluded
   }, [locationSharing.isSharingLocation, locationSharing.sharingExpiresAt]);
 
   // Subscribe to realtime location updates when trip is active
@@ -880,6 +881,7 @@ export default function GroupScreen() {
       unsubscribeFromLocationUpdates(channel);
       setLocationSharing({ channel: null });
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- activeTrip, setLocationSharing, updateMemberLocation intentionally excluded
   }, [activeTrip?.id]);
 
   // Derive daily budget from active trip's itinerary when available
@@ -937,6 +939,7 @@ export default function GroupScreen() {
       (loc) => updateMemberLocation(loc),
     );
     setLocationSharing({ watchId: sub });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleStopSharing, setLocationSharing, updateMemberLocation intentionally excluded
   }, [activeTrip, userId]);
 
   const handleStopSharing = useCallback(() => {
@@ -947,6 +950,7 @@ export default function GroupScreen() {
       sharingDuration: 'off',
       watchId: null,
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- setLocationSharing stable setter
   }, [locationSharing.watchId]);
 
   const handleToggleSharing = useCallback(() => {
@@ -955,6 +959,7 @@ export default function GroupScreen() {
     } else {
       setDurationPickerVisible(true);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- handleStopSharing intentionally excluded
   }, [locationSharing.isSharingLocation]);
 
   useEffect(() => {
@@ -1006,6 +1011,7 @@ export default function GroupScreen() {
     const fromRate = effectiveRates[fromCurrency] ?? 1;
     const toRate = effectiveRates[toCurrency] ?? 1;
     return (num / fromRate) * toRate;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- effectiveRates derived from rates
   }, [fromAmount, fromCurrency, toCurrency, effectiveRates]);
 
   const handleSwap = useCallback(() => {
@@ -1024,6 +1030,7 @@ export default function GroupScreen() {
     const fromR = effectiveRates[fromCurrency] ?? 1;
     const oneToTarget = toR / fromR;
     return `1 ${fromCurrency} = ${oneToTarget.toFixed(4)} ${toCurrency}`;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- effectiveRates derived from rates
   }, [fromCurrency, toCurrency, effectiveRates]);
 
   const swapInterpolate = swapRotation.interpolate({

@@ -9,7 +9,6 @@ import {
   ScrollView,
   Pressable,
   StyleSheet,
-  Dimensions,
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
@@ -26,7 +25,6 @@ import {
   DESTINATION_PACKS,
   getPackForCity,
   PHRASE_CATEGORIES,
-  type DestinationPack,
   type Phrase,
   type PhraseCategory,
 } from '../lib/language-data';

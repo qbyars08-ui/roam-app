@@ -115,7 +115,7 @@ describe('parseItinerary', () => {
   });
 
   it('throws when destination is missing', () => {
-    const { destination, ...noDestination } = VALID_ITINERARY;
+    const { destination: _dest, ...noDestination } = VALID_ITINERARY;
     expect(() => parseItinerary(JSON.stringify(noDestination))).toThrow(
       'missing required string field: destination'
     );
@@ -136,7 +136,7 @@ describe('parseItinerary', () => {
   });
 
   it('throws when budgetBreakdown is missing', () => {
-    const { budgetBreakdown, ...noBudget } = VALID_ITINERARY;
+    const { budgetBreakdown: _budget, ...noBudget } = VALID_ITINERARY;
     expect(() => parseItinerary(JSON.stringify(noBudget))).toThrow(
       'must include budgetBreakdown'
     );

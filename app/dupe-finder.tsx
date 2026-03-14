@@ -175,7 +175,7 @@ function DupeFinderScreen() {
         setResult(parsed);
         animateResults();
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } catch (err) {
+      } catch {
         setError(
           "Couldn't find dupes for that destination. Try a different city."
         );
@@ -752,10 +752,10 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   dupeCardImage: {
     padding: SPACING.lg,
-  } as any,
+  } as ViewStyle,
   dupeCardImageInner: {
     borderRadius: RADIUS.lg,
-  } as any,
+  } as ViewStyle,
   dupeCardGradient: {
     flex: 1,
     padding: 0,

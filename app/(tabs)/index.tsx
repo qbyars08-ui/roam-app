@@ -266,7 +266,7 @@ export default function DiscoverScreen() {
       });
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [headerFade]);
 
   // Filter destinations by category + search
   const filteredDestinations = useMemo(() => {
@@ -300,7 +300,6 @@ export default function DiscoverScreen() {
     setActiveCategory(id);
   }, []);
 
-  const clearSearch = useCallback(() => setSearchQuery(''), []);
 
   // FlatList render
   const renderItem = useCallback(
@@ -389,6 +388,8 @@ export default function DiscoverScreen() {
       handleCategoryPress,
       filteredDestinations.length,
       router,
+      headerFade,
+      t,
     ]
   );
 

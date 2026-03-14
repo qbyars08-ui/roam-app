@@ -18,6 +18,7 @@ import {
   View,
   type TextStyle,
   type ViewStyle,
+  FlatList,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -30,9 +31,9 @@ const Polyline = isWeb ? View : require('react-native-maps').Polyline;
 const Circle = isWeb ? View : require('react-native-maps').Circle;
 const PROVIDER_GOOGLE = isWeb ? undefined : require('react-native-maps').PROVIDER_GOOGLE;
 // DraggableFlatList crashes on web — lazy import on native only
+type FlatListProps = React.ComponentProps<typeof FlatList>;
 const DraggableFlatList = Platform.OS === 'web'
-  ? ({ data, renderItem, keyExtractor, ...rest }: any) => {
-      const { FlatList } = require('react-native');
+  ? ({ data, renderItem, keyExtractor, ...rest }: FlatListProps) => {
       return <FlatList data={data} renderItem={renderItem} keyExtractor={keyExtractor} {...rest} />;
     }
   : require('react-native-draggable-flatlist').default;
@@ -92,10 +93,9 @@ import MapboxRouteMap from '../components/features/MapboxRouteMap';
 import {
   buildSafetyZones,
   SAFETY_COLORS,
-  type TimeOfDay,
 } from '../lib/neighborhood-safety';
 import { formatDualPrice, formatLocalPrice, type ExchangeRates } from '../lib/currency';
-import { AlertTriangle, X, Pencil, Calendar, Link2, Share2, MapPin, Receipt, Film, Wallet, Train, ArrowDown, CreditCard, Plane, Heart, ShieldCheck, Droplets, Globe, Sun, Wind, PartyPopper } from 'lucide-react-native';
+import { AlertTriangle, X, Pencil, Calendar, Link2, Share2, MapPin, Receipt, Film, Wallet, Train, CreditCard, Plane, Heart, ShieldCheck, Droplets, Globe, Sun, Wind, PartyPopper } from 'lucide-react-native';
 import { getTransitGuide, type TransitGuide } from '../lib/transit-data';
 import { getHomeAirport } from '../lib/flights';
 import { getMedicalGuideByDestination, type MedicalGuide } from '../lib/medical-abroad';

@@ -143,7 +143,7 @@ function OfflineBanner() {
 // ---------------------------------------------------------------------------
 function SafetyScoreHero({
   safety,
-  destination,
+  destination: _destination,
   countryName,
 }: {
   safety: SafetyData | null;
@@ -374,7 +374,7 @@ const SOS_HOLD_MS = 2000;
 
 function SOSButton({
   onActivate,
-  emergency,
+  emergency: _emergency,
 }: {
   onActivate: () => void;
   emergency: EmergencyData | null;
@@ -1047,6 +1047,7 @@ function PrepScreen() {
 
   useEffect(() => {
     if (activeTrip) setSelectedDest(activeTrip.destination);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only
   }, [activeTrip?.destination]);
 
   const emergency = getEmergencyForDestination(selectedDest);

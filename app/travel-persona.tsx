@@ -23,7 +23,6 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import {
   analyzePersona,
   getSavedPersona,
-  FAMOUS_TRAVELER_MATCH,
   type TravelPersona,
   type PersonaTrait,
 } from '../lib/travel-persona';
@@ -37,7 +36,7 @@ function TravelPersonaScreen() {
   const insets = useSafeAreaInsets();
   const [persona, setPersona] = useState<TravelPersona | null>(null);
   const [loading, setLoading] = useState(true);
-  const [revealPhase, setRevealPhase] = useState(0);
+  const [, setRevealPhase] = useState(0);
   const cardRef = useRef<React.ElementRef<typeof ViewShot> | null>(null);
 
   // Animations

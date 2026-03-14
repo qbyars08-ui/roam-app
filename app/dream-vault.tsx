@@ -8,7 +8,6 @@ import {
   Text,
   Pressable,
   ScrollView,
-  ImageBackground,
   StyleSheet,
   Linking,
   Alert,
@@ -21,17 +20,14 @@ import * as Haptics from '../lib/haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { SkeletonGrid } from '../components/ui/Skeleton';
-import { getDestinationPhoto } from '../lib/photos';
 import {
   getSavedDestinations,
   addSavedDestination,
   removeSavedDestination,
   isPricesLow,
   getSkyscannerUrl,
-  getDreamVaultExtra,
   type SavedDestination,
 } from '../lib/flight-deals';
-import { useAppStore } from '../lib/store';
 import { withComingSoon } from '../lib/with-coming-soon';
 import { validateDestination } from '../lib/params-validator';
 import { getHomeAirport } from '../lib/flights';
@@ -40,10 +36,9 @@ function DreamVaultScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const params = useLocalSearchParams<{ destination?: string }>();
-  const passport = useAppStore((s) => s.travelProfile?.passportNationality ?? 'US');
   const [destinations, setDestinations] = useState<SavedDestination[]>([]);
   const [loading, setLoading] = useState(true);
-  const [homeAirport, setHomeAirportLocal] = useState('JFK');
+  const [, setHomeAirportLocal] = useState('JFK');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -111,7 +106,6 @@ function DreamVaultScreen() {
           </View>
         ) : destinations.map((d) => {
           const low = isPricesLow(d);
-          const photoUrl = getDestinationPhoto(d.destination);
           return (
             <Pressable
               key={d.id}

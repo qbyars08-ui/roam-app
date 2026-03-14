@@ -18,8 +18,6 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../lib/haptics';
 import { withComingSoon } from '../lib/with-coming-soon';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Heart, Users, ChevronRight } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, BUDGETS, VIBES, FREE_TRIPS_PER_MONTH } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import { isGuestUser } from '../lib/guest';
@@ -43,10 +41,10 @@ function RoamForDatesScreen() {
   const [destination, setDestination] = useState('');
   const [days, setDays] = useState(7);
   const [budget, setBudget] = useState('');
-  const [vibes, setVibes] = useState<string[]>([]);
+  const [vibes] = useState<string[]>([]);
   const [partnerPace, setPartnerPace] = useState(5);
   const [partnerBudget, setPartnerBudget] = useState(5);
-  const [partnerFood, setPartnerFood] = useState(5);
+  const [partnerFood] = useState(5);
   const [partnerPurposes, setPartnerPurposes] = useState<string[]>([]);
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<Itinerary | null>(null);
@@ -95,8 +93,8 @@ function RoamForDatesScreen() {
         itinerary: JSON.stringify(itinerary),
         createdAt: new Date().toISOString(),
       });
-    } catch (e: any) {
-      Alert.alert('Oops', e?.message ?? 'Couldn\'t plan your trip. Try again.');
+    } catch (e: unknown) {
+      Alert.alert('Oops', e instanceof Error ? e.message : 'Couldn\'t plan your trip. Try again.');
     } finally {
       setGenerating(false);
     }

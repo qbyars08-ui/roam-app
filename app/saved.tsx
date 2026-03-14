@@ -18,7 +18,6 @@ import {
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import * as Haptics from '../lib/haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -465,10 +464,10 @@ const styles = StyleSheet.create({
   cardImage: {
     minHeight: 140,
     padding: SPACING.lg,
-  } as any,
+  } as ViewStyle,
   cardImageInner: {
     borderRadius: RADIUS.lg,
-  } as any,
+  } as ViewStyle,
   cardGradient: {
     flex: 1,
     padding: SPACING.lg,

@@ -105,7 +105,6 @@ function generateMockFlights(): FlightResult[] {
     { id: '4', airlineName: airlines[3].name, airlineCode: 'B6', departureTime: '11:00', arrivalTime: '14:35', duration: '5h 35m', stops: 0, price: 298 },
     { id: '5', airlineName: airlines[0].name, airlineCode: 'AA', departureTime: '19:20', arrivalTime: '23:00', duration: '5h 40m', stops: 0, price: 325 },
   ];
-  const minPrice = Math.min(...raw.map((r) => r.price));
   const directMins = raw
     .filter((r) => r.stops === 0)
     .map((r) => parseDurationMins(r.duration));
@@ -113,11 +112,11 @@ function generateMockFlights(): FlightResult[] {
   const withValue = raw.map((r) => {
     const mins = parseDurationMins(r.duration) || 1;
     const stopPenalty = r.stops > 0 ? 1.3 : 1;
-    const effectivePrice = (r.price * stopPenalty) / (mins / 60);
-    return { ...r, effectivePrice, mins };
+    const _effectivePrice = (r.price * stopPenalty) / (mins / 60);
+    return { ...r, effectivePrice: _effectivePrice, mins };
   });
   const bestValueId = [...withValue].sort((a, b) => a.effectivePrice - b.effectivePrice)[0]?.id;
-  return withValue.map(({ effectivePrice, mins, ...r }) => ({
+  return withValue.map(({ effectivePrice: _effectivePrice, mins, ...r }) => ({
     ...r,
     isBestDeal: r.id === bestValueId,
     isFastest: r.stops === 0 && mins === minMins,

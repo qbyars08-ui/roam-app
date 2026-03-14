@@ -79,11 +79,9 @@ function GlobeScreen() {
     setPicked(destination);
 
     // Start slot machine text cycling
-    let tick = 0;
     slotInterval.current = setInterval(() => {
       const idx = Math.floor(Math.random() * SPIN_POOL.length);
       setSlotText(SPIN_POOL[idx].emoji);
-      tick++;
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }, 80);
 
@@ -225,6 +223,7 @@ function GlobeScreen() {
       setPhase('idle');
       revealAnim.setValue(0);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- trips.length intentionally excluded
   }, [picked, addTrip, router, revealAnim, glowAnim, isPro, tripsThisMonth]);
 
   const handleReset = useCallback(() => {

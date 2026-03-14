@@ -26,7 +26,6 @@ import { COLORS, FONTS, SPACING, RADIUS, FREE_TRIPS_PER_MONTH } from '../lib/con
 import { hasRatedBadge } from '../lib/rating';
 import { useAppStore } from '../lib/store';
 import { isGuestUser, clearGuestMode } from '../lib/guest';
-import { getCurrentStreak } from '../lib/streaks';
 import { logoutRevenueCat } from '../lib/revenue-cat';
 import { Sparkles, Repeat, Gift, Shield, ChevronRight, BarChart3, CreditCard, LogOut, Globe } from 'lucide-react-native';
 import { track } from '../lib/analytics';
