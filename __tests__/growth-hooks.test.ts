@@ -14,7 +14,6 @@ import {
   getEngagementScore,
   getPaywallSocialProof,
   getUpgradeMessage,
-  type MilestoneType,
   type UpgradeContext,
 } from '../lib/growth-hooks';
 

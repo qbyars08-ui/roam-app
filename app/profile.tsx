@@ -26,7 +26,6 @@ import { COLORS, FONTS, SPACING, RADIUS, FREE_TRIPS_PER_MONTH } from '../lib/con
 import { hasRatedBadge } from '../lib/rating';
 import { useAppStore } from '../lib/store';
 import { isGuestUser, clearGuestMode } from '../lib/guest';
-import { getCurrentStreak } from '../lib/streaks';
 import { logoutRevenueCat } from '../lib/revenue-cat';
 import { Sparkles, Repeat, Gift, Shield, ChevronRight, BarChart3, CreditCard, LogOut, Globe } from 'lucide-react-native';
 import { track } from '../lib/analytics';
@@ -53,6 +52,7 @@ export default function ProfileScreen() {
   // Language selector state
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization, react-hooks/exhaustive-deps
   const handleLanguageChange = useCallback(async (lang: SupportedLanguage) => {
     await changeLanguage(lang);
     setLanguageModalVisible(false);
@@ -78,6 +78,7 @@ export default function ProfileScreen() {
     hasRatedBadge().then(setRatedBadge);
   }, []);
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization, react-hooks/exhaustive-deps
   const handleEditEmergencyContact = useCallback(() => {
     setEmergencyInputValue(emergencyContact);
     setEmergencyModalVisible(true);

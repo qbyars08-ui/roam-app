@@ -87,7 +87,7 @@ export default function PersonalizationScreen() {
         useNativeDriver: true,
       }).start();
     }, 1500);
-  }, []);
+  }, [btnOpacity, cardAnims, titleOpacity, titleY]);
 
   const handleContinue = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

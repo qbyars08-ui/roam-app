@@ -9,22 +9,21 @@ import {
   ScrollView,
   Pressable,
   TextInput,
-  Share,
   StyleSheet,
   ImageBackground,
   type ViewStyle,
   type TextStyle,
+  type ImageStyle,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from '../lib/haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronLeft, Share2 } from 'lucide-react-native';
+import { ChevronLeft } from 'lucide-react-native';
 
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { getDestinationPhoto } from '../lib/photos';
-import { useAppStore, type Trip } from '../lib/store';
-import { createGroup, generateInviteLink } from '../lib/group-trips';
+import { useAppStore } from '../lib/store';
+import { createGroup } from '../lib/group-trips';
 import { trackEvent } from '../lib/analytics';
 import Button from '../components/ui/Button';
 import GroupInviteCard from '../components/features/GroupInviteCard';
@@ -88,15 +87,6 @@ function CreateGroupScreen() {
     }
   }, [selectedTrip, groupName, suggestedName]);
 
-  const handleShare = useCallback(async () => {
-    if (!inviteCode) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const url = generateInviteLink(inviteCode);
-    await Share.share({
-      message: `Join my trip on ROAM: ${url}`,
-      url,
-    });
-  }, [inviteCode]);
 
   const handleGoToGroup = useCallback(() => {
     if (!createdGroupId) return;
@@ -222,7 +212,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   } as ViewStyle,
   tripCardBg: { flex: 1 } as ViewStyle,
-  tripCardImg: { borderRadius: RADIUS.lg } as any,
+  tripCardImg: { borderRadius: RADIUS.lg } as ImageStyle,
   tripCardGrad: {
     flex: 1,
     justifyContent: 'flex-end',

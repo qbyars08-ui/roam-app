@@ -107,7 +107,7 @@ export default function GrowthBanner({ variant, onDismiss }: GrowthBannerProps) 
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [opacityAnim, slideAnim]);
 
   const handleDismiss = useCallback(() => {
     Animated.parallel([
@@ -125,7 +125,7 @@ export default function GrowthBanner({ variant, onDismiss }: GrowthBannerProps) 
       setDismissed(true);
       onDismiss?.();
     });
-  }, [onDismiss]);
+  }, [onDismiss, opacityAnim, slideAnim]);
 
   const handleCTA = useCallback(() => {
     impactAsync(ImpactFeedbackStyle.Light).catch(() => {});

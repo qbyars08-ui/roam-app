@@ -90,6 +90,7 @@ function TripWrappedScreen() {
 
   useEffect(() => {
     loadReview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only
   }, []);
 
   const loadReview = async () => {

@@ -115,7 +115,7 @@ function LayoverScreen() {
       const parsed = JSON.parse(response.content) as LayoverResult;
       setResult(parsed);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch (err) {
+    } catch {
       setError("Couldn't generate a plan. Check your connection and try again.");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {

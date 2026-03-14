@@ -362,7 +362,7 @@ function TravelTwinScreen() {
         }),
       ]).start();
     });
-  }, [twin]);
+  }, [cardFades, cardSlides, emojiScale, fadeAnim, scaleAnim, twin]);
 
   if (!canAccess) return null;
 

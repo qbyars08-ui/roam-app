@@ -44,12 +44,15 @@ export default function MapboxRouteMap({
 
   useEffect(() => {
     if (!isMapboxConfigured()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
       setLoading(false);
       return;
     }
 
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
     setLoading(true);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
     setError(false);
 
     buildDayRouteMaps({
@@ -63,12 +66,16 @@ export default function MapboxRouteMap({
     })
       .then((maps) => {
         if (cancelled) return;
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
         setRouteMap(maps[0] ?? null);
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
         setLoading(false);
       })
       .catch(() => {
         if (cancelled) return;
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- async error handling
         setError(true);
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- async error handling
         setLoading(false);
       });
 
@@ -160,6 +167,7 @@ export function MapboxOverview({
   const mapUrl = useMemo(
     () =>
       buildDestinationMapUrl({ lat, lng, zoom: 11, width: 600, height: 200 }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- buildDestinationMapUrl from require
     [lat, lng]
   );
 

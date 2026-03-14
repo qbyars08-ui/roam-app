@@ -47,7 +47,11 @@ function TripTradingScreen() {
   }, []);
 
   useEffect(() => {
-    load().finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
+    load().finally(() => {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
+      setLoading(false);
+    });
   }, [load]);
 
   const onRefresh = useCallback(async () => {

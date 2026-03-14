@@ -2,7 +2,7 @@
 // ROAM — Pre-Trip Hype Mode
 // Countdown screen with daily destination intel
 // =============================================================================
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Platform,
@@ -63,16 +63,17 @@ function HypeScreen() {
     : null;
 
   // Calculate progress: percentage of time elapsed since hype was set
-  const progress = (() => {
+  const progress = useMemo(() => {
     if (!hypeTrip) return 0;
     const created = new Date(hypeTrip.createdAt).getTime();
     const departure = new Date(hypeTrip.departureDate).getTime();
+    // eslint-disable-next-line react-hooks/purity -- Date.now for progress bar, memoized
     const now = Date.now();
     const totalSpan = departure - created;
     if (totalSpan <= 0) return 1;
     const elapsed = now - created;
     return Math.min(1, Math.max(0, elapsed / totalSpan));
-  })();
+  }, [hypeTrip]);
 
   const handleSetDate = useCallback(async () => {
     const trimmed = dateInput.trim();

@@ -116,7 +116,7 @@ export default function OnboardingScreen() {
         await saveLocalPrefs(inferred);
       }
     },
-    [answers, currentStep, slideAnim, progressAnim, router]
+    [answers, currentStep, slideAnim, progressAnim]
   );
 
   const handleSkip = useCallback(async () => {

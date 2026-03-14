@@ -14,6 +14,7 @@ import {
   View,
   type TextStyle,
   type ViewStyle,
+  type ImageStyle,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -175,7 +176,7 @@ function DupeFinderScreen() {
         setResult(parsed);
         animateResults();
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } catch (err) {
+      } catch {
         setError(
           "Couldn't find dupes for that destination. Try a different city."
         );
@@ -752,10 +753,10 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   dupeCardImage: {
     padding: SPACING.lg,
-  } as any,
+  } as ViewStyle,
   dupeCardImageInner: {
     borderRadius: RADIUS.lg,
-  } as any,
+  } as ImageStyle,
   dupeCardGradient: {
     flex: 1,
     padding: 0,

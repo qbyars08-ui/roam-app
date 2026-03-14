@@ -11,7 +11,6 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  View,
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
@@ -87,7 +86,7 @@ export default function MilestoneModal({ milestone, onDismiss }: MilestoneModalP
         ])
       ).start();
     }
-  }, [milestone]);
+  }, [bgOpacity, cardOpacity, cardScale, iconRotation, milestone]);
 
   const handleDismiss = useCallback(() => {
     if (!milestone) return;
@@ -100,7 +99,7 @@ export default function MilestoneModal({ milestone, onDismiss }: MilestoneModalP
       dismissMilestone(milestone.type).catch(() => {});
       onDismiss();
     });
-  }, [milestone, onDismiss]);
+  }, [bgOpacity, cardOpacity, milestone, onDismiss]);
 
   const handleCTA = useCallback(() => {
     if (!milestone) return;

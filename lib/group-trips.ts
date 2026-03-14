@@ -32,8 +32,7 @@ import * as Clipboard from 'expo-clipboard';
 // ---------------------------------------------------------------------------
 // Snake-case DB row -> camelCase converters
 // ---------------------------------------------------------------------------
-type DbRow = Record<string, unknown>;
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase row boundary
 function toGroup(row: any): TripGroup {
   return {
     id: row.id,
@@ -51,6 +50,7 @@ function toGroup(row: any): TripGroup {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase row boundary
 function toMember(row: any): GroupMember {
   return {
     id: row.id,
@@ -63,6 +63,7 @@ function toMember(row: any): GroupMember {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase row boundary
 function toVote(row: any): Vote {
   return {
     id: row.id,
@@ -75,6 +76,7 @@ function toVote(row: any): Vote {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase row boundary
 function toExpense(row: any): TripExpense {
   return {
     id: row.id,
@@ -90,6 +92,7 @@ function toExpense(row: any): TripExpense {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase row boundary
 function toExpenseSplit(row: any): ExpenseSplit {
   return {
     id: row.id,
@@ -99,6 +102,7 @@ function toExpenseSplit(row: any): ExpenseSplit {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase row boundary
 function toMessage(row: any): GroupMessage {
   return {
     id: row.id,
@@ -110,6 +114,7 @@ function toMessage(row: any): GroupMessage {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase row boundary
 function toPackingItem(row: any): PackingItem {
   return {
     id: row.id,
@@ -423,7 +428,7 @@ export async function getVotes(groupId: string, dayNumber: number): Promise<Vote
   }
 }
 
-export function calculateVoteResults(votes: Vote[], memberCount: number): VoteResults {
+export function calculateVoteResults(votes: Vote[], _memberCount: number): VoteResults {
   let keep = 0;
   let swap = 0;
   const suggestions: string[] = [];

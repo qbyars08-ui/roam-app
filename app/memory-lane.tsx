@@ -20,7 +20,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { withComingSoon } from '../lib/with-coming-soon';
 import type { ComponentType } from 'react';
-import { type LucideIcon } from 'lucide-react-native';
 import {
   ChevronLeft,
   BookOpen,
@@ -187,7 +186,7 @@ function MemoryLaneScreen() {
       duration: 800,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [headerAnim]);
 
   useEffect(() => {
     if (!canAccess) router.replace('/paywall');

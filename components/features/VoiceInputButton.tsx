@@ -3,11 +3,11 @@
 // Speech-to-text via expo-speech-recognition. Native only.
 // =============================================================================
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, Text, StyleSheet, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, type ViewStyle } from 'react-native';
 import { Platform } from 'react-native';
 import * as Haptics from '../../lib/haptics';
 import { Mic } from 'lucide-react-native';
-import { COLORS, FONTS, SPACING } from '../../lib/constants';
+import { COLORS } from '../../lib/constants';
 
 interface VoiceInputButtonProps {
   onTranscript: (text: string) => void;
@@ -30,9 +30,14 @@ export default function VoiceInputButton({
       const mod = require('expo-speech-recognition');
       moduleRef.current = mod;
       mod.ExpoSpeechRecognitionModule?.isRecognitionAvailable?.().then((ok: boolean) => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- async check
         setAvailable(!!ok);
-      }).catch(() => setAvailable(false));
+      }).catch(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- async check
+        setAvailable(false);
+      });
     } catch {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync fallback
       setAvailable(false);
     }
   }, []);

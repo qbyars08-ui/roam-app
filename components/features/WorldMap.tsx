@@ -52,9 +52,13 @@ export default function WorldMap({ onCountryPress, stamps: stampsProp }: WorldMa
 
   useEffect(() => {
     if (Array.isArray(stampsProp)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync derived state
       setStamps(stampsProp);
     } else {
-      getStats().then((stats) => setStamps(stats.stamps));
+      getStats().then((stats) => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
+        setStamps(stats.stamps);
+      });
     }
   }, [stampsProp]);
 

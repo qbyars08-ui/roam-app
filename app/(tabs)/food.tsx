@@ -15,7 +15,6 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { impactAsync as hapticImpact } from '../../lib/haptics';
-import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Bookmark, ExternalLink, UtensilsCrossed } from 'lucide-react-native';
@@ -235,7 +234,6 @@ const FOOD_CATEGORIES: FoodCategory[] = [
 export default function FoodScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   const activeTrip = getActiveTrip();
   const planWizard = useAppStore((s) => s.planWizard);
   const bookmarkedIds = useAppStore((s) => s.bookmarkedRestaurantIds);

@@ -115,6 +115,7 @@ function AddPetModal({
     setBreed('');
     setType('dog');
     onClose();
+  // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/preserve-manual-memoization -- breed intentionally excluded
   }, [name, type, addPet, onClose]);
 
   return (

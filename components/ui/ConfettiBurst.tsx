@@ -94,6 +94,7 @@ export default function ConfettiBurst({ onComplete }: ConfettiBurstProps) {
     Animated.parallel(animations.flat()).start(() => {
       onComplete?.();
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- anims, onComplete, particles intentionally excluded
   }, []);
 
   return (

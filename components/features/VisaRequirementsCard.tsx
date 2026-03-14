@@ -31,16 +31,22 @@ export default function VisaRequirementsCard({ destination }: VisaRequirementsCa
 
   useEffect(() => {
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
     setLoading(true);
     checkVisaRequirements(destination)
       .then((data) => {
         if (!cancelled) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
           setVisa(data);
+          // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
           setLoading(false);
         }
       })
       .catch(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
+          setLoading(false);
+        }
       });
     return () => { cancelled = true; };
   }, [destination]);

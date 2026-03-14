@@ -11,7 +11,6 @@ import {
   TextInput,
   StyleSheet,
   Share,
-  ImageBackground,
   FlatList,
   type ViewStyle,
   type TextStyle,
@@ -19,11 +18,9 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../lib/haptics';
-import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Share2, MapPin, DollarSign, MessageCircle, Package } from 'lucide-react-native';
 
 import { COLORS, FONTS, SPACING, RADIUS, EXPENSE_CATEGORIES } from '../lib/constants';
-import { getDestinationPhoto } from '../lib/photos';
 import { useAppStore } from '../lib/store';
 import {
   getGroupDetails,
@@ -47,7 +44,6 @@ import {
 } from '../lib/group-trips';
 import { parseItinerary, type Itinerary, type ItineraryDay } from '../lib/types/itinerary';
 import { trackEvent } from '../lib/analytics';
-import Button from '../components/ui/Button';
 import { withComingSoon } from '../lib/with-coming-soon';
 
 type TabId = 'itinerary' | 'expenses' | 'chat' | 'packing';
@@ -82,13 +78,17 @@ function GroupTripScreen() {
   }, [groupId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
     loadDetails();
   }, [loadDetails]);
 
   useEffect(() => {
     if (!groupId) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
     getExpenses(groupId).then(setExpenses);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
     getMessages(groupId).then(setMessages);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
     getPackingList(groupId).then(setPackingItems);
   }, [groupId]);
 
@@ -236,8 +236,10 @@ function ItineraryTab({ group, members }: { group: TripGroup; members: GroupMemb
     if (group.itineraryJson) {
       try {
         const parsed = parseItinerary(JSON.stringify(group.itineraryJson));
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- sync derived state
         setItinerary(parsed);
       } catch {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- sync derived state
         setItinerary(null);
       }
     }
@@ -294,7 +296,7 @@ function ActivityVoteRow({
   dayNumber,
   timeSlot,
   activity,
-  members,
+  members: _members,
 }: {
   groupId: string;
   dayNumber: number;
@@ -373,7 +375,7 @@ function ExpensesTab({
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<TripExpense['category']>('food');
   const [description, setDescription] = useState('');
-  const [addError, setAddError] = useState<string | null>(null);
+  const [_addError, setAddError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
 
   const balances = calculateBalances(expenses, members);

@@ -50,7 +50,7 @@ function StepDestination({
   const fade = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.timing(fade, { toValue: 1, duration: 600, useNativeDriver: true }).start();
-  }, []);
+  }, [fade]);
 
   return (
     <Animated.View style={[styles.step, { opacity: fade, paddingTop: insets.top }]}>
@@ -122,7 +122,7 @@ function StepGenerating({ destination }: { destination: string }) {
     );
     loop.start();
     return () => loop.stop();
-  }, []);
+  }, [pulse]);
 
   useEffect(() => {
     const stagger = dotOpacity.map((anim, i) =>
@@ -136,7 +136,7 @@ function StepGenerating({ destination }: { destination: string }) {
     );
     stagger.forEach((s) => s.start());
     return () => stagger.forEach((s) => s.stop());
-  }, []);
+  }, [dotOpacity]);
 
   return (
     <View style={[styles.step, styles.generatingStep, { paddingTop: 0 }]}>
@@ -191,8 +191,10 @@ function StepSignup({
       } else {
         await AsyncStorage.setItem(ONBOARDING_COMPLETE, 'true');
       }
-    } catch (e: any) {
-      if (e.code !== 'ERR_REQUEST_CANCELED') Alert.alert('Try again', 'Apple Sign-In hit a snag.');
+    } catch (e: unknown) {
+      if (e && typeof e === 'object' && 'code' in e && e.code !== 'ERR_REQUEST_CANCELED') {
+        Alert.alert('Try again', 'Apple Sign-In hit a snag.');
+      }
     } finally {
       setLoading(false);
     }
@@ -299,7 +301,7 @@ export default function OnboardScreen() {
   const pendingOnboardDestination = useAppStore((s) => s.pendingOnboardDestination);
   const session = useAppStore((s) => s.session);
   const isGuest = !session;
-  const isGuestLike = isGuest || !!(session?.user as { is_anonymous?: boolean })?.is_anonymous;
+  const isGuestLike = isGuest || !!(session?.user && 'is_anonymous' in session.user && session.user.is_anonymous);
 
   const handleDestinationSelect = useCallback(
     (dest: string) => {
@@ -382,7 +384,7 @@ export default function OnboardScreen() {
       setTripsThisMonth(tripsUsed);
       setTripId(trip.id);
       setStep(2);
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err instanceof TripLimitReachedError) {
         router.push({ pathname: '/paywall', params: { reason: 'limit', destination } });
         return;
@@ -394,7 +396,7 @@ export default function OnboardScreen() {
   const handleSkipSignup = useCallback(async () => {
     await AsyncStorage.setItem(ONBOARDING_COMPLETE, 'true');
     if (DEV) {
-      setSession({ user: { id: 'dev-user', email: 'dev@roam.app' } } as any);
+      setSession({ user: { id: 'dev-user', email: 'dev@roam.app' } } as import('@supabase/supabase-js').Session);
     } else if (!session) {
       const { data, error } = await supabase.auth.signInAnonymously();
       if (!error && data.session) setSession(data.session);
@@ -407,8 +409,10 @@ export default function OnboardScreen() {
 
   useEffect(() => {
     if (step === 1 && destination) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- async trip generation
       handleGenerate();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally runs once on step change
   }, [step, destination]);
 
   if (step === 0) {

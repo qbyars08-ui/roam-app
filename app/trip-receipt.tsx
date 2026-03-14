@@ -47,16 +47,16 @@ function getBudgetLabel(budgetId: string): string {
 /** Calculate per-category costs from itinerary days */
 function calculateBreakdown(itinerary: Itinerary) {
   const days = itinerary.days;
-  let totalMorning = 0;
-  let totalAfternoon = 0;
-  let totalEvening = 0;
-  let totalAccommodation = 0;
+  let _totalMorning = 0;
+  let _totalAfternoon = 0;
+  let _totalEvening = 0;
+  let _totalAccommodation = 0;
 
   for (const day of days) {
-    totalMorning += parseCost(day.morning.cost);
-    totalAfternoon += parseCost(day.afternoon.cost);
-    totalEvening += parseCost(day.evening.cost);
-    totalAccommodation += parseCost(day.accommodation.pricePerNight);
+    _totalMorning += parseCost(day.morning.cost);
+    _totalAfternoon += parseCost(day.afternoon.cost);
+    _totalEvening += parseCost(day.evening.cost);
+    _totalAccommodation += parseCost(day.accommodation.pricePerNight);
   }
 
   const budget = itinerary.budgetBreakdown;

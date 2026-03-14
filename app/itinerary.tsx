@@ -18,6 +18,7 @@ import {
   View,
   type TextStyle,
   type ViewStyle,
+  FlatList,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -30,9 +31,9 @@ const Polyline = isWeb ? View : require('react-native-maps').Polyline;
 const Circle = isWeb ? View : require('react-native-maps').Circle;
 const PROVIDER_GOOGLE = isWeb ? undefined : require('react-native-maps').PROVIDER_GOOGLE;
 // DraggableFlatList crashes on web — lazy import on native only
+type FlatListProps = React.ComponentProps<typeof FlatList>;
 const DraggableFlatList = Platform.OS === 'web'
-  ? ({ data, renderItem, keyExtractor, ...rest }: any) => {
-      const { FlatList } = require('react-native');
+  ? ({ data, renderItem, keyExtractor, ...rest }: FlatListProps) => {
       return <FlatList data={data} renderItem={renderItem} keyExtractor={keyExtractor} {...rest} />;
     }
   : require('react-native-draggable-flatlist').default;
@@ -92,10 +93,9 @@ import MapboxRouteMap from '../components/features/MapboxRouteMap';
 import {
   buildSafetyZones,
   SAFETY_COLORS,
-  type TimeOfDay,
 } from '../lib/neighborhood-safety';
 import { formatDualPrice, formatLocalPrice, type ExchangeRates } from '../lib/currency';
-import { AlertTriangle, X, Pencil, Calendar, Link2, Share2, MapPin, Receipt, Film, Wallet, Train, ArrowDown, CreditCard, Plane, Heart, ShieldCheck, Droplets, Globe, Sun, Wind, PartyPopper } from 'lucide-react-native';
+import { AlertTriangle, X, Pencil, Calendar, Link2, Share2, MapPin, Receipt, Film, Wallet, Train, CreditCard, Plane, Heart, ShieldCheck, Droplets, Globe, Sun, Wind, PartyPopper } from 'lucide-react-native';
 import { getTransitGuide, type TransitGuide } from '../lib/transit-data';
 import { getHomeAirport } from '../lib/flights';
 import { getMedicalGuideByDestination, type MedicalGuide } from '../lib/medical-abroad';
@@ -220,6 +220,7 @@ export default function ItineraryScreen() {
       );
     }
     return () => { if (npsTimer) clearTimeout(npsTimer); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- trips intentionally excluded
   }, [params.data, params.tripId, trips.length, router]);
 
   // ---------------------------------------------------------------------------
@@ -237,6 +238,7 @@ export default function ItineraryScreen() {
         trackEvent('weather_check', { destination: trip.destination }).catch(() => {});
       })
       .catch(() => setWeather(null));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- trip intentionally excluded
   }, [trip?.destination, trip?.createdAt, trip?.days]);
 
   // Load user's home airport preference
@@ -273,6 +275,7 @@ export default function ItineraryScreen() {
         setTripHolidays(overlap);
       }).catch(() => {});
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- trip intentionally excluded
   }, [trip?.destination, parsed]);
 
   // ---------------------------------------------------------------------------
@@ -321,6 +324,7 @@ export default function ItineraryScreen() {
         setVenueData(map);
       })
       .catch(() => setVenueData(new Map()));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- trip intentionally excluded
   }, [parsed, trip?.destination]);
 
   // ---------------------------------------------------------------------------
@@ -343,6 +347,7 @@ export default function ItineraryScreen() {
     } catch {
       return null;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- trip destructured for stability
   }, [parsed, trip?.destination, trip?.days, trip?.vibes, trip?.budget, weather]);
 
   useEffect(() => {
@@ -350,6 +355,7 @@ export default function ItineraryScreen() {
       packingTrackedRef.current = true;
       trackEvent('packing_list_generated', { destination: trip.destination }).catch(() => {});
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- trip intentionally excluded
   }, [packingResult, trip]);
 
   const narrationText = useMemo(() => {
@@ -362,7 +368,22 @@ export default function ItineraryScreen() {
       afternoon: currentDay.afternoon,
       evening: currentDay.evening,
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- trip used for narration only
   }, [currentDay, trip]);
+
+  const fallbackNow = useMemo(
+    () => Date.now(), // eslint-disable-line react-hooks/purity -- fallback when trip.createdAt missing
+    []
+  );
+  const localEventsDates = useMemo(() => {
+    if (!trip) return { startDate: '', endDate: '' };
+    const startDate = trip.createdAt ? trip.createdAt.split('T')[0] : new Date(fallbackNow).toISOString().split('T')[0];
+    const d = new Date(trip.createdAt || fallbackNow);
+    d.setDate(d.getDate() + trip.days);
+    const endDate = d.toISOString().split('T')[0];
+    return { startDate, endDate };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- trip intentionally excluded
+  }, [fallbackNow, trip?.createdAt, trip?.days]);
 
   // ---------------------------------------------------------------------------
   // Map pins for the active day
@@ -1212,12 +1233,8 @@ export default function ItineraryScreen() {
           {/* Local events during trip dates */}
           <LocalEventsSection
             city={trip.destination}
-            startDate={trip.createdAt ? trip.createdAt.split('T')[0] : new Date().toISOString().split('T')[0]}
-            endDate={(() => {
-              const d = new Date(trip.createdAt || Date.now());
-              d.setDate(d.getDate() + trip.days);
-              return d.toISOString().split('T')[0];
-            })()}
+            startDate={localEventsDates.startDate}
+            endDate={localEventsDates.endDate}
           />
 
           {/* Flight search — Skyscanner affiliate */}

@@ -125,6 +125,7 @@ export async function findSquadCandidates(
     .eq('visibility', 'visible');
 
   const profileMap = new Map(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase row boundary
     (profiles ?? []).map((p: SocialProfile) => [p.userId ?? (p as any).user_id, p])
   );
 
@@ -141,6 +142,7 @@ export async function findSquadCandidates(
       const overlapDays = Math.max(1, Math.ceil((overlapEnd - overlapStart) / (1000 * 60 * 60 * 24)));
 
       const myVibes = new Set(p.looking_for ?? []);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase row boundary
       const sharedVibes = (profile.vibeTags ?? (profile as any).vibe_tags ?? []).filter(
         (v: string) => myVibes.has(v)
       );
@@ -148,6 +150,7 @@ export async function findSquadCandidates(
       // Simple compatibility score
       const vibeScore = Math.min(sharedVibes.length * 20, 60);
       const overlapScore = Math.min(overlapDays * 5, 30);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase row boundary
       const styleBonus = profile.travelStyle ?? (profile as any).travel_style ? 10 : 0;
       const compatibilityScore = Math.min(vibeScore + overlapScore + styleBonus, 100);
 
@@ -204,11 +207,13 @@ export async function swipeCandidate(
         channel_type: 'squad-match',
         reference_id: targetPresenceId,
         member_ids: [userId, targetUserId],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase row boundary
         name: `${(presence as any)?.destination ?? 'Trip'} Squad`,
       })
       .select()
       .single();
 
+    /* eslint-disable @typescript-eslint/no-explicit-any -- Supabase row boundary */
     const { data: match } = await supabase
       .from('squad_matches')
       .insert({
@@ -222,7 +227,9 @@ export async function swipeCandidate(
       })
       .select()
       .single();
+    /* eslint-enable @typescript-eslint/no-explicit-any */
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase row boundary
     return { matched: true, matchId: (match as any)?.id };
   }
 
@@ -230,6 +237,7 @@ export async function swipeCandidate(
 }
 
 /** Get my matches */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase row boundary
 export async function getMyMatches(): Promise<any[]> {
   const userId = getUserId();
   const { data } = await supabase
@@ -327,6 +335,7 @@ export async function acceptMeetupRequest(requestId: string): Promise<boolean> {
       .single();
 
     if (req) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase row boundary
       await supabase.rpc('increment_listing_count', { listing_id: (req as any).listing_id });
     }
   }
@@ -371,6 +380,7 @@ export async function joinHostel(params: {
   if (!channel) return null;
 
   // Add membership
+  /* eslint-disable @typescript-eslint/no-explicit-any -- Supabase row boundary */
   await supabase.from('hostel_memberships').upsert({
     user_id: userId,
     channel_id: (channel as any).id,
@@ -378,12 +388,15 @@ export async function joinHostel(params: {
     checkout_date: params.checkoutDate,
     is_active: true,
   }, { onConflict: 'user_id,channel_id' });
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 
   // Increment member count
+  /* eslint-disable @typescript-eslint/no-explicit-any -- Supabase row boundary */
   await supabase
     .from('hostel_channels')
     .update({ member_count: ((channel as any).member_count ?? 0) + 1 })
     .eq('id', (channel as any).id);
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 
   return channel as HostelChannel;
 }
@@ -429,6 +442,7 @@ export async function createSafetyCircle(name: string, memberIds: string[]): Pro
     .insert({ owner_id: userId, member_ids: memberIds, name })
     .select('id')
     .single();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase row boundary
   return (data as any)?.id ?? null;
 }
 
@@ -487,6 +501,7 @@ export async function sendChatMessage(
     .insert({
       channel_id: channelId,
       sender_id: userId,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase row boundary
       sender_name: profile?.displayName ?? (profile as any)?.display_name ?? 'Traveler',
       text,
       message_type: type,

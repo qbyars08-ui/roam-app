@@ -2,7 +2,8 @@
  * Test Suite 2: Zustand Store — Core app state
  * If this breaks, Pro gating, trip limits, and session management all fail.
  */
-import { useAppStore } from '../lib/store';
+import type { Session } from '@supabase/supabase-js';
+import { useAppStore, type Trip } from '../lib/store';
 
 // Reset store between tests
 beforeEach(() => {
@@ -22,13 +23,13 @@ describe('Zustand Store', () => {
   });
 
   it('sets session', () => {
-    const mockSession = { user: { id: 'user-123', email: 'test@roam.app' } } as any;
+    const mockSession = { user: { id: 'user-123', email: 'test@roam.app' } } as Session;
     useAppStore.getState().setSession(mockSession);
     expect(useAppStore.getState().session).toEqual(mockSession);
   });
 
   it('clears session on logout', () => {
-    const mockSession = { user: { id: 'user-123' } } as any;
+    const mockSession = { user: { id: 'user-123' } } as Session;
     useAppStore.getState().setSession(mockSession);
     useAppStore.getState().setSession(null);
     expect(useAppStore.getState().session).toBeNull();
@@ -62,23 +63,26 @@ describe('Zustand Store', () => {
 
   // ── Trip CRUD ───────────────────────────────────────────────
   it('adds a trip', () => {
-    const trip = {
+    const trip: Trip = {
       id: 'trip-1',
       destination: 'Tokyo',
-      itinerary: {} as any,
+      itinerary: '{}',
+      days: 1,
+      budget: 'mid',
+      vibes: [],
       createdAt: new Date().toISOString(),
     };
-    useAppStore.getState().addTrip(trip as any);
+    useAppStore.getState().addTrip(trip);
     expect(useAppStore.getState().trips).toHaveLength(1);
     expect(useAppStore.getState().trips[0].destination).toBe('Tokyo');
   });
 
   it('does not mutate existing trips array when adding', () => {
-    const trip1 = { id: 'trip-1', destination: 'Tokyo', itinerary: {} as any, createdAt: new Date().toISOString() };
-    const trip2 = { id: 'trip-2', destination: 'Paris', itinerary: {} as any, createdAt: new Date().toISOString() };
-    useAppStore.getState().addTrip(trip1 as any);
+    const trip1: Trip = { id: 'trip-1', destination: 'Tokyo', itinerary: '{}', days: 1, budget: 'mid', vibes: [], createdAt: new Date().toISOString() };
+    const trip2: Trip = { id: 'trip-2', destination: 'Paris', itinerary: '{}', days: 1, budget: 'mid', vibes: [], createdAt: new Date().toISOString() };
+    useAppStore.getState().addTrip(trip1);
     const firstTrips = useAppStore.getState().trips;
-    useAppStore.getState().addTrip(trip2 as any);
+    useAppStore.getState().addTrip(trip2);
     // Original reference should be unchanged (immutability)
     expect(firstTrips).toHaveLength(1);
     expect(useAppStore.getState().trips).toHaveLength(2);
