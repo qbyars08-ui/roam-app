@@ -487,6 +487,6 @@ const fr: TranslationKeys = {
     subtitle: 'Cette page n\u2019existe pas.',
     goHome: 'Retour \u00e0 l\u2019accueil',
   },
-} as const;
+};
 
 export default fr;

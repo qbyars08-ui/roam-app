@@ -487,6 +487,6 @@ const ja: TranslationKeys = {
     subtitle: '\u3053\u306e\u30da\u30fc\u30b8\u306f\u5b58\u5728\u3057\u307e\u305b\u3093\u3002',
     goHome: '\u30db\u30fc\u30e0\u306b\u623b\u308b',
   },
-} as const;
+};
 
 export default ja;

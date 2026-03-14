@@ -11,6 +11,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { Zap, MessageCircle, ChevronRight } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
@@ -27,6 +28,7 @@ const CARD_ACENTS: Record<GenerateMode, string> = {
 };
 
 export default function GenerateModeSelect({ onSelect }: GenerateModeSelectProps) {
+  const { t } = useTranslation();
   const fade = useRef(new Animated.Value(0)).current;
   const quickBorder = useRef(new Animated.Value(0)).current;
   const convBorder = useRef(new Animated.Value(0)).current;
@@ -45,8 +47,8 @@ export default function GenerateModeSelect({ onSelect }: GenerateModeSelectProps
 
   return (
     <Animated.View style={[styles.container, { opacity: fade }]}>
-      <Text style={styles.headline}>How do you like to plan?</Text>
-      <Text style={styles.subtitle}>You can always switch later</Text>
+      <Text style={styles.headline}>{t('generate.title')}</Text>
+      <Text style={styles.subtitle}>{t('generate.quickModeDesc')}</Text>
 
       <View style={styles.cards}>
         <Pressable
@@ -60,8 +62,8 @@ export default function GenerateModeSelect({ onSelect }: GenerateModeSelectProps
               <Zap size={28} color={COLORS.sage} strokeWidth={2} />
             </View>
             <View style={styles.cardText}>
-              <Text style={styles.cardTitle}>Build it for me</Text>
-              <Text style={styles.cardSub}>30 seconds, done</Text>
+              <Text style={styles.cardTitle}>{t('generate.quickMode')}</Text>
+              <Text style={styles.cardSub}>{t('generate.quickModeDesc')}</Text>
             </View>
             <ChevronRight size={22} color={COLORS.sage} strokeWidth={2} />
           </View>
@@ -78,8 +80,8 @@ export default function GenerateModeSelect({ onSelect }: GenerateModeSelectProps
               <MessageCircle size={28} color={COLORS.gold} strokeWidth={2} />
             </View>
             <View style={styles.cardText}>
-              <Text style={styles.cardTitle}>Let's figure it out</Text>
-              <Text style={styles.cardSub}>Tell me exactly what you want</Text>
+              <Text style={styles.cardTitle}>{t('generate.conversationMode')}</Text>
+              <Text style={styles.cardSub}>{t('generate.conversationModeDesc')}</Text>
             </View>
             <ChevronRight size={22} color={COLORS.gold} strokeWidth={2} />
           </View>

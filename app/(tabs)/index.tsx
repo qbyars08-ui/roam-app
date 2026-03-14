@@ -21,6 +21,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { Search, MapPin, Flame, Clock } from 'lucide-react-native';
 import * as Haptics from '../../lib/haptics';
 import {
@@ -35,6 +36,8 @@ import {
   type DestinationCategory,
 } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
+import i18n from '../../lib/i18n';
+import { tCategory } from '../../lib/i18n/helpers';
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -122,7 +125,7 @@ const DestinationPhotoCard = React.memo(function DestinationPhotoCard({
           pressed && { transform: [{ scale: 0.97 }], opacity: 0.92 },
         ]}
         accessibilityRole="button"
-        accessibilityLabel={`Plan trip to ${destination.label}, ${destination.country}`}
+        accessibilityLabel={`${destination.label}, ${destination.country}`}
       >
         {/* Placeholder gradient while image loads */}
         {!imageLoaded && (
@@ -157,7 +160,7 @@ const DestinationPhotoCard = React.memo(function DestinationPhotoCard({
           {isTrending && (
             <View style={styles.trendingBadge}>
               <Flame size={10} color={COLORS.coral} />
-              <Text style={styles.trendingText}>Trending</Text>
+              <Text style={styles.trendingText}>{i18n.t('discover.trending')}</Text>
             </View>
           )}
           {isPerfectTiming && (
@@ -205,6 +208,8 @@ const CategoryChip = React.memo(function CategoryChip({
     onPress(category.id);
   }, [category.id, onPress]);
 
+  const label = tCategory(category.id);
+
   return (
     <Pressable
       onPress={handlePress}
@@ -215,10 +220,10 @@ const CategoryChip = React.memo(function CategoryChip({
       ]}
       accessibilityRole="button"
       accessibilityState={{ selected: isActive }}
-      accessibilityLabel={category.label}
+      accessibilityLabel={label}
     >
       <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
-        {category.label}
+        {label}
       </Text>
     </Pressable>
   );
@@ -230,6 +235,7 @@ const CategoryChip = React.memo(function CategoryChip({
 export default function DiscoverScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const setPlanWizard = useAppStore((s) => s.setPlanWizard);
   const setGenerateMode = useAppStore((s) => s.setGenerateMode);
 
@@ -318,7 +324,7 @@ export default function DiscoverScreen() {
         <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
           <Text style={styles.brandMark}>ROAM</Text>
           <Animated.Text style={[styles.editorialSubtitle, { opacity: headerFade }]}>
-            {DISCOVER_HEADERS[headerIndex]}
+            {(t('discover.editorialHeaders', { returnObjects: true }) as string[])[headerIndex] ?? DISCOVER_HEADERS[headerIndex]}
           </Animated.Text>
         </View>
 
@@ -332,10 +338,10 @@ export default function DiscoverScreen() {
                 onPress={() => router.push('/(tabs)/generate')}
                 style={styles.searchTapArea}
                 accessibilityRole="button"
-                accessibilityLabel="Search destinations"
+                accessibilityLabel={t('discover.searchPlaceholder')}
               >
                 <Text style={styles.searchPlaceholder}>
-                  Where do you want to go?
+                  {t('discover.searchPlaceholder')}
                 </Text>
               </Pressable>
             </View>

@@ -581,7 +581,18 @@ const en = {
     subtitle: "This page doesn't exist.",
     goHome: 'Go home',
   },
-} as const;
+};
 
 export default en;
-export type TranslationKeys = typeof en;
+
+type DeepStringify<T> = {
+  [K in keyof T]: T[K] extends string
+    ? string
+    : T[K] extends readonly string[]
+      ? string[]
+      : T[K] extends Record<string, unknown>
+        ? DeepStringify<T[K]>
+        : T[K];
+};
+
+export type TranslationKeys = DeepStringify<typeof en>;
