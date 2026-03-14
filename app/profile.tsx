@@ -29,8 +29,10 @@ import { isGuestUser, clearGuestMode } from '../lib/guest';
 import { getCurrentStreak } from '../lib/streaks';
 import { logoutRevenueCat } from '../lib/revenue-cat';
 import { Sparkles, Repeat, Gift, Shield, ChevronRight, BarChart3, CreditCard, LogOut, Globe } from 'lucide-react-native';
+import { track } from '../lib/analytics';
 import Button from '../components/ui/Button';
 import ExploreHub from '../components/features/ExploreHub';
+import SubscriptionCard from '../components/monetization/SubscriptionCard';
 import { SUPPORTED_LANGUAGES, changeLanguage } from '../lib/i18n';
 import type { SupportedLanguage } from '../lib/i18n';
 
@@ -55,6 +57,10 @@ export default function ProfileScreen() {
     await changeLanguage(lang);
     setLanguageModalVisible(false);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  }, []);
+
+  useEffect(() => {
+    track({ type: 'screen_view', screen: 'profile' });
   }, []);
 
   // ---------------------------------------------------------------------------
@@ -187,6 +193,12 @@ export default function ProfileScreen() {
             />
           </View>
         )}
+        {/* Subscription card — shows plan details, upgrade, or manage */}
+        {!isGuestUser() && (
+          <View style={{ marginTop: SPACING.lg }}>
+            <SubscriptionCard />
+          </View>
+        )}
 
         {/* Trip Wrapped — Coming Soon badge */}
         <Pressable
@@ -250,12 +262,12 @@ export default function ProfileScreen() {
             style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.7 : 1 }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push({ pathname: '/coming-soon', params: { title: 'Refer Friends' } });
+              router.push('/referral');
             }}
           >
-            <View style={styles.menuIconWrap}><Gift size={18} color={COLORS.creamMuted} strokeWidth={2} /></View>
-            <Text style={[styles.menuLabel, { flex: 1, opacity: 0.85 }]}>{t('profile.referFriends')}</Text>
-            <View style={styles.comingSoonInlineBadge}><Text style={styles.comingSoonInlineText}>{t('common.comingSoon')}</Text></View>
+            <View style={styles.menuIconWrap}><Gift size={18} color={COLORS.sage} strokeWidth={2} /></View>
+            <Text style={[styles.menuLabel, { flex: 1 }]}>{t('profile.referFriends')}</Text>
+            <View style={styles.referralBadge}><Text style={styles.referralBadgeText}>EARN PRO</Text></View>
             <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
           </Pressable>
         </View>
@@ -479,6 +491,20 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.mono,
     fontSize: 9,
     color: COLORS.sage,
+    letterSpacing: 1,
+  } as TextStyle,
+  referralBadge: {
+    backgroundColor: COLORS.gold + '20',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.gold + '40',
+  } as ViewStyle,
+  referralBadgeText: {
+    fontFamily: FONTS.mono,
+    fontSize: 9,
+    color: COLORS.gold,
     letterSpacing: 1,
   } as TextStyle,
   tripWrappedContent: {

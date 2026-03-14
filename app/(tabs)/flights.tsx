@@ -33,6 +33,7 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
+import { track, trackEvent } from '../../lib/analytics';
 
 // Use COLORS design tokens — no hardcoded hex/rgba
 const CREAM_08 = COLORS.creamMinimal;
@@ -272,6 +273,10 @@ export default function FlightsScreen() {
   const [departPickerVisible, setDepartPickerVisible] = useState(false);
   const [returnPickerVisible, setReturnPickerVisible] = useState(false);
 
+  useEffect(() => {
+    track({ type: 'screen_view', screen: 'flights' });
+  }, []);
+
   const calendarRef = useRef<ScrollView>(null);
 
   useEffect(() => {
@@ -322,7 +327,8 @@ export default function FlightsScreen() {
     setSearchPerformed(true);
     const flights = generateMockFlights();
     setResults(flights);
-  }, []);
+    trackEvent('flight_search', { from, to, results: flights.length }).catch(() => {});
+  }, [from, to]);
 
   const flightMinPrice = results.length ? Math.min(...results.map((f) => f.price)) : 0;
   const flightMaxPrice = results.length ? Math.max(...results.map((f) => f.price)) : 1;

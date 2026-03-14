@@ -71,7 +71,9 @@ npx eslint . --ext .ts,.tsx
 ### Components
 - `TripGeneratingLoader` (in `components/premium/LoadingStates.tsx`) — full-screen compass loader, accepts `destination` prop
 - `SkeletonCard` (same file) — animated shimmer skeleton, use instead of static grey blocks
-- Free API modules: `lib/air-quality.ts`, `lib/sun-times.ts`, `lib/timezone.ts`, `lib/public-holidays.ts`, `lib/cost-of-living.ts` — all free, no API key, AsyncStorage cached
+- Free API modules (all free, no API key, AsyncStorage cached):
+  - Existing: `lib/air-quality.ts`, `lib/sun-times.ts`, `lib/timezone.ts`, `lib/public-holidays.ts`, `lib/cost-of-living.ts`
+  - New: `lib/weather-forecast.ts` (Open-Meteo), `lib/exchange-rates.ts` (Frankfurter), `lib/country-info.ts` (REST Countries), `lib/travel-safety.ts` (travel-advisory.info), `lib/emergency-numbers.ts` (emergencynumberapi.com), `lib/geocoding.ts` (Open-Meteo)
 
 ### Verification
 - After code changes: run `npx tsc --noEmit` before proceeding
