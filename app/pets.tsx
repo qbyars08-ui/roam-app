@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
   // Section A — Pets strip
   petsScroll: {
     gap: SPACING.md,
-    paddingRight: SPACING.md,
+    paddingEnd: SPACING.md,
   } as ViewStyle,
   petAvatar: {
     width: 100,
@@ -636,7 +636,7 @@ const styles = StyleSheet.create({
   // Section E — Pet destinations
   destScroll: {
     gap: SPACING.md,
-    paddingRight: SPACING.md,
+    paddingEnd: SPACING.md,
   } as ViewStyle,
   destCard: {
     width: 140,

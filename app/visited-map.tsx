@@ -784,7 +784,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodySemiBold,
     fontSize: 12,
     color: COLORS.sage,
-    marginRight: SPACING.xs,
+    marginEnd: SPACING.xs,
   } as TextStyle,
   countryPillText: {
     fontFamily: FONTS.bodyMedium,
@@ -799,10 +799,10 @@ const styles = StyleSheet.create({
 
   // Expanded cities
   expandedCities: {
-    marginLeft: SPACING.md,
+    marginStart: SPACING.md,
     marginTop: SPACING.xs,
     marginBottom: SPACING.sm,
-    paddingLeft: SPACING.md,
+    paddingStart: SPACING.md,
     borderLeftWidth: 1,
     borderLeftColor: COLORS.sage,
   } as ViewStyle,

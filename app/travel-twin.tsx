@@ -515,7 +515,7 @@ function TravelTwinScreen() {
         >
           <Text style={styles.sectionLabel}>· {t('travelTwin.packingMustHave')}</Text>
           <View style={styles.glassCard}>
-            <ShoppingBag size={22} color={COLORS.gold} strokeWidth={1.5} style={{ marginRight: SPACING.md }} />
+            <ShoppingBag size={22} color={COLORS.gold} strokeWidth={1.5} style={{ marginEnd: SPACING.md }} />
             <Text style={styles.cardText}>{twin.packingMustHave}</Text>
           </View>
         </Animated.View>
@@ -576,7 +576,7 @@ function TravelTwinScreen() {
         >
           <Text style={styles.sectionLabel}>· {t('travelTwin.worstNightmare')}</Text>
           <View style={[styles.glassCard, styles.nightmareCard]}>
-            <Skull size={20} color={COLORS.coral} strokeWidth={1.5} style={{ marginRight: SPACING.md }} />
+            <Skull size={20} color={COLORS.coral} strokeWidth={1.5} style={{ marginEnd: SPACING.md }} />
             <Text style={[styles.cardText, { color: COLORS.coral }]}>
               {twin.worstNightmare}
             </Text>
@@ -605,7 +605,7 @@ function TravelTwinScreen() {
               end={{ x: 1, y: 0 }}
               style={styles.shareGradient}
             >
-              <Share2 size={18} color={COLORS.bg} strokeWidth={2} style={{ marginRight: SPACING.sm }} />
+              <Share2 size={18} color={COLORS.bg} strokeWidth={2} style={{ marginEnd: SPACING.sm }} />
               <Text style={styles.shareText}>{t('travelTwin.shareTwin')}</Text>
             </LinearGradient>
           </TouchableOpacity>

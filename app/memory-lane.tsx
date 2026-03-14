@@ -323,7 +323,7 @@ function MemoryLaneScreen() {
                 />
                 <View style={styles.nostalgiaInner}>
                   <Clock size={20} color={COLORS.coral} strokeWidth={2} />
-                  <View style={{ flex: 1, marginLeft: SPACING.sm }}>
+                  <View style={{ flex: 1, marginStart: SPACING.sm }}>
                     <Text style={styles.nostalgiaTitle}>{t('memoryLane.onThisDay')}</Text>
                     <Text style={styles.nostalgiaBody}>
                       You were in {trip.destination} this time in{' '}
@@ -574,7 +574,7 @@ const styles = StyleSheet.create({
   // Header
   headerSection: {
     marginBottom: SPACING.xl,
-    paddingLeft: SPACING.xl,
+    paddingStart: SPACING.xl,
   } as ViewStyle,
   screenTitle: {
     fontFamily: FONTS.header,
@@ -744,7 +744,7 @@ const styles = StyleSheet.create({
   // Timeline
   timelineContainer: {
     position: 'relative',
-    paddingLeft: TIMELINE_LEFT + SPACING.lg,
+    paddingStart: TIMELINE_LEFT + SPACING.lg,
     marginBottom: SPACING.xl,
   } as ViewStyle,
   timelineLine: {

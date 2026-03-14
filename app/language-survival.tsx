@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodyMedium,
     fontSize: 11,
     color: COLORS.sage,
-    marginLeft: 'auto',
+    marginStart: 'auto',
   } as TextStyle,
   catScroll: {
     maxHeight: 48,

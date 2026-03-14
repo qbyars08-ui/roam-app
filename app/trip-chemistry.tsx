@@ -779,7 +779,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.sageLight,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: SPACING.sm,
+    marginEnd: SPACING.sm,
   },
   avatarCircleYou: {
     backgroundColor: COLORS.sage,
@@ -1006,7 +1006,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   conflictIcon: {
-    marginRight: SPACING.sm,
+    marginEnd: SPACING.sm,
     marginTop: 2,
   },
   conflictText: {
@@ -1037,7 +1037,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.sageLight,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: SPACING.sm,
+    marginEnd: SPACING.sm,
     marginTop: 1,
   },
   tipNumberText: {

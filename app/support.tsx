@@ -113,7 +113,7 @@ export default function SupportScreen() {
 const viewStyles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  backBtn: { marginRight: SPACING.sm },
+  backBtn: { marginEnd: SPACING.sm },
   scroll: { flex: 1 },
   scrollContent: { padding: SPACING.lg },
   faqItem: { backgroundColor: COLORS.bgGlass, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, padding: SPACING.md, marginBottom: SPACING.sm },

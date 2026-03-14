@@ -557,7 +557,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.receiptDark,
     flex: 1,
-    marginRight: SPACING.sm,
+    marginEnd: SPACING.sm,
   } as TextStyle,
   rowLabelDay: {
     fontSize: 11,

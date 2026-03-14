@@ -20,7 +20,7 @@ import { COLORS, FONTS, SPACING } from '../lib/constants';
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg } as ViewStyle,
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.border } as ViewStyle,
-  backBtn: { marginRight: SPACING.sm } as ViewStyle,
+  backBtn: { marginEnd: SPACING.sm } as ViewStyle,
   scroll: { flex: 1 } as ViewStyle,
   scrollContent: { padding: SPACING.lg } as ViewStyle,
   section: { marginBottom: SPACING.xl } as ViewStyle,

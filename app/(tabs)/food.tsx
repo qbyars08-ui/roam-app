@@ -601,7 +601,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.bgCard,
     borderWidth: 1,
     borderColor: COLORS.creamDim,
-    marginRight: SPACING.sm,
+    marginEnd: SPACING.sm,
   } as ViewStyle,
   categoryPillSelected: {
     backgroundColor: COLORS.coral,

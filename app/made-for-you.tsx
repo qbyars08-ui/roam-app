@@ -572,7 +572,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.sage,
   } as ViewStyle,
   tabIconWrap: {
-    marginRight: SPACING.xs,
+    marginEnd: SPACING.xs,
   } as ViewStyle,
   tabLabel: {
     fontFamily: FONTS.bodyMedium,

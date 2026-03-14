@@ -177,11 +177,11 @@ const styles = StyleSheet.create({
   currentIconImg: {
     width: 56,
     height: 56,
-    marginRight: SPACING.md,
+    marginEnd: SPACING.md,
   } as ImageStyle,
   currentIconText: {
     fontSize: 48,
-    marginRight: SPACING.md,
+    marginEnd: SPACING.md,
   } as TextStyle,
   currentInfo: {
     flex: 1,

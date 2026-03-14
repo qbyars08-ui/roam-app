@@ -922,7 +922,7 @@ const styles = StyleSheet.create({
   },
   revenueStreamInfo: {
     flex: 1,
-    marginRight: SPACING.sm,
+    marginEnd: SPACING.sm,
   },
   revenueStreamHeader: {
     flexDirection: 'row',
@@ -939,7 +939,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.creamMuted,
     marginTop: 2,
-    marginLeft: 16,
+    marginStart: 16,
   },
   statusDot: {
     width: 8,
@@ -1026,7 +1026,7 @@ const styles = StyleSheet.create({
     color: COLORS.creamMuted,
     lineHeight: 20,
     marginTop: SPACING.sm,
-    marginLeft: 32,
+    marginStart: 32,
   },
 
   // Traction

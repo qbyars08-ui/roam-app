@@ -1809,7 +1809,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.bgCard,
     borderWidth: 1,
     borderColor: COLORS.creamMuted,
-    marginRight: SPACING.sm,
+    marginEnd: SPACING.sm,
   } as ViewStyle,
   destChipActive: {
     backgroundColor: COLORS.sage,

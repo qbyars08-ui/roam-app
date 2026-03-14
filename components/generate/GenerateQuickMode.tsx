@@ -918,7 +918,7 @@ const styles = StyleSheet.create({
 
   // Text areas
   textArea: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.cream, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.whiteFaintBorder, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, minHeight: 72 } as TextStyle,
-  helper: { fontFamily: FONTS.body, fontSize: 11, color: COLORS.creamDim, marginTop: SPACING.xs, marginLeft: 4 } as TextStyle,
+  helper: { fontFamily: FONTS.body, fontSize: 11, color: COLORS.creamDim, marginTop: SPACING.xs, marginStart: 4 } as TextStyle,
 
   // CTA
   ctaWrap: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: SPACING.md, paddingBottom: SPACING.lg, backgroundColor: COLORS.bg } as ViewStyle,

@@ -870,7 +870,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     borderRadius: RADIUS.full,
     backgroundColor: COLORS.bgGlass,
-    marginRight: SPACING.sm,
+    marginEnd: SPACING.sm,
   } as ViewStyle,
   catPillActive: {
     backgroundColor: COLORS.sageLight,

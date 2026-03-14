@@ -1802,7 +1802,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.bgGlass,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: SPACING.md,
+    marginEnd: SPACING.md,
   } as ViewStyle,
   headerTextContainer: {
     flex: 1,
@@ -1872,7 +1872,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.sageHighlight,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: SPACING.sm,
+    marginEnd: SPACING.sm,
     flexShrink: 0,
   } as ViewStyle,
   ruleNumber: {
@@ -1910,7 +1910,7 @@ const styles = StyleSheet.create({
   chevron: {
     fontSize: 18,
     color: COLORS.sage,
-    marginLeft: SPACING.sm,
+    marginStart: SPACING.sm,
     marginTop: 2,
   } as TextStyle,
   localFavoriteLabel: {
@@ -1956,7 +1956,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: COLORS.cream,
     flex: 1,
-    marginRight: SPACING.sm,
+    marginEnd: SPACING.sm,
   } as TextStyle,
   priceBadge: {
     backgroundColor: COLORS.goldHighlight,
@@ -1988,7 +1988,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: COLORS.sage,
     letterSpacing: 1.5,
-    marginRight: SPACING.sm,
+    marginEnd: SPACING.sm,
     marginTop: 2,
   } as TextStyle,
   tipText: {

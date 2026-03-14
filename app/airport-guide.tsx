@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
     flex: 1,
   } as TextStyle,
   airportChev: {
-    marginLeft: SPACING.sm,
+    marginStart: SPACING.sm,
   } as ViewStyle,
 
   // Detail

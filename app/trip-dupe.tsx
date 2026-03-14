@@ -700,7 +700,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.mono,
     fontSize: 13,
     color: COLORS.sage,
-    marginLeft: SPACING.sm,
+    marginStart: SPACING.sm,
   } as TextStyle,
 
   bestMonthCard: {

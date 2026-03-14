@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
   } as TextStyle,
   card: {
     width: 160,
-    marginLeft: SPACING.lg,
+    marginStart: SPACING.lg,
     borderRadius: RADIUS.md,
     overflow: 'hidden',
     backgroundColor: COLORS.bgCard,

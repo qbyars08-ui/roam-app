@@ -595,7 +595,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.sage + '20',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: SPACING.sm,
+    marginEnd: SPACING.sm,
   } as ViewStyle,
   stepNumber: {
     fontFamily: FONTS.monoMedium,
@@ -609,7 +609,7 @@ const styles = StyleSheet.create({
     flex: 1,
   } as TextStyle,
   cardBody: {
-    marginLeft: 0,
+    marginStart: 0,
   } as ViewStyle,
 
   // Icon
@@ -619,7 +619,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.full,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: SPACING.sm,
+    marginEnd: SPACING.sm,
   } as ViewStyle,
   iconText: {
     fontSize: 14,
@@ -703,7 +703,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.full,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: SPACING.sm,
+    marginEnd: SPACING.sm,
     marginTop: 1,
   } as ViewStyle,
   safetyBulletText: {
@@ -730,7 +730,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.border,
     borderRadius: RADIUS.full,
     overflow: 'hidden',
-    marginRight: SPACING.sm,
+    marginEnd: SPACING.sm,
   } as ViewStyle,
   progressBarFill: {
     height: '100%',
@@ -757,7 +757,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.sage + '50',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: SPACING.sm + 4,
+    marginEnd: SPACING.sm + 4,
   } as ViewStyle,
   checkboxChecked: {
     backgroundColor: COLORS.sage + '30',

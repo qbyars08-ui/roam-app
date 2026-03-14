@@ -399,7 +399,7 @@ const styles = StyleSheet.create({
   } as ViewStyle,
 
   generateSpinner: {
-    marginRight: 0,
+    marginEnd: 0,
   } as ViewStyle,
 
   generateText: {

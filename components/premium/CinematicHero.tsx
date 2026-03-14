@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   kenBurns: {
     width: '120%',
     height: '120%',
-    marginLeft: -W * 0.1,
+    marginStart: -W * 0.1,
     marginTop: -H * 0.1,
   },
   image: {

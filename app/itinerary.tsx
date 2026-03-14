@@ -2270,7 +2270,7 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
   } as ViewStyle,
   shareCtaIconWrap: {
-    marginRight: SPACING.sm,
+    marginEnd: SPACING.sm,
   } as ViewStyle,
   shareCtaContent: {
     flex: 1,
@@ -2869,7 +2869,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.mono,
     fontSize: 9,
     color: COLORS.creamMuted,
-    marginRight: 4,
+    marginEnd: 4,
   } as TextStyle,
 
   // ── Map pins ──────────────────────────────────────────────────────────

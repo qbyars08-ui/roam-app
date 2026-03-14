@@ -1128,7 +1128,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodySemiBold,
     fontSize: 14,
     color: COLORS.coral,
-    marginLeft: 12,
+    marginStart: 12,
   } as TextStyle,
 
   // ── Skeleton loaders ──

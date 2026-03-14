@@ -1156,7 +1156,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: SPACING.md,
+    marginEnd: SPACING.md,
   } as ViewStyle,
   headerText: {
     flex: 1,
@@ -1225,7 +1225,7 @@ const styles = StyleSheet.create({
     color: COLORS.creamMuted,
     textTransform: 'uppercase',
     letterSpacing: 1,
-    marginRight: SPACING.xs,
+    marginEnd: SPACING.xs,
   } as TextStyle,
   sortChip: {
     paddingHorizontal: SPACING.sm + 4,
@@ -1411,7 +1411,7 @@ const styles = StyleSheet.create({
   tipCallout: {
     borderLeftWidth: 2,
     borderLeftColor: COLORS.sage,
-    paddingLeft: SPACING.md,
+    paddingStart: SPACING.md,
     paddingVertical: SPACING.xs,
   } as ViewStyle,
   tipLabel: {

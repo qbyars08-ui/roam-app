@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 14,
     color: COLORS.creamMuted,
-    marginLeft: 2,
+    marginStart: 2,
   } as TextStyle,
   right: {
     flex: 1,

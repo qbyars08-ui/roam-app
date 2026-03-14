@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
-  backBtn: { padding: 8, marginLeft: -8 },
+  backBtn: { padding: 8, marginStart: -8 },
   headerCenter: { flex: 1, alignItems: 'center' },
   headerRight: { width: 44 },
   title: {

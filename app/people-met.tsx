@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    marginRight: SPACING.md,
+    marginEnd: SPACING.md,
   } as ImageStyle,
   avatar: {
     width: 56,
@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.sageLight,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: SPACING.md,
+    marginEnd: SPACING.md,
   } as ViewStyle,
   avatarText: {
     fontFamily: FONTS.header,

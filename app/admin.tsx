@@ -1261,7 +1261,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.bgCard,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: SPACING.sm,
+    marginEnd: SPACING.sm,
   },
   rankNumber: {
     fontFamily: FONTS.mono,

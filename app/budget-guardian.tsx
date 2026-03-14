@@ -1007,7 +1007,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.header,
     fontSize: 36,
     color: COLORS.creamMuted,
-    marginRight: SPACING.xs,
+    marginEnd: SPACING.xs,
   } as TextStyle,
 
   amountInput: {
@@ -1122,7 +1122,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginRight: SPACING.sm,
+    marginEnd: SPACING.sm,
   } as ViewStyle,
 
   expenseCategory: {
@@ -1162,7 +1162,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginRight: 6,
+    marginEnd: 6,
   } as ViewStyle,
 
   catBarName: {
@@ -1265,7 +1265,7 @@ const styles = StyleSheet.create({
   // Smart alerts
   alertItem: {
     borderLeftWidth: 3,
-    paddingLeft: SPACING.md,
+    paddingStart: SPACING.md,
     paddingVertical: SPACING.sm,
     marginBottom: SPACING.sm,
   } as ViewStyle,

@@ -508,7 +508,7 @@ const styles = StyleSheet.create({
   },
   aiChips: {
     gap: SPACING.sm,
-    paddingRight: SPACING.md,
+    paddingEnd: SPACING.md,
   },
   aiChip: {
     flexDirection: 'row',

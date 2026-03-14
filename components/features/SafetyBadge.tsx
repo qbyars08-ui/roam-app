@@ -74,6 +74,6 @@ const styles = StyleSheet.create({
   note: {
     fontFamily: FONTS.body,
     fontSize: 10,
-    marginLeft: 4,
+    marginStart: 4,
   } as TextStyle,
 });

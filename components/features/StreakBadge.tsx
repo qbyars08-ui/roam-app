@@ -155,6 +155,6 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: FONTS.mono,
     letterSpacing: 0.3,
-    marginLeft: 2,
+    marginStart: 2,
   } as TextStyle,
 });

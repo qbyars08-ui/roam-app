@@ -144,7 +144,7 @@ export default function PrivacyScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  backBtn: { marginRight: SPACING.sm },
+  backBtn: { marginEnd: SPACING.sm },
   headerTitle: { fontFamily: FONTS.header, fontSize: 20, color: COLORS.cream },
   scroll: { flex: 1 },
   scrollContent: { padding: SPACING.lg },
