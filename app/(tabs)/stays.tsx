@@ -19,6 +19,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import {
   COLORS,
@@ -71,10 +72,10 @@ export interface StayListing {
   lng: number;
 }
 
-const STAY_TYPES: { id: StayType; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'hostel', label: 'Hostel' },
-  { id: 'hotel', label: 'Hotel' },
+const STAY_TYPES: { id: StayType; labelKey?: string; label?: string }[] = [
+  { id: 'all', labelKey: 'categories.all' },
+  { id: 'hostel', labelKey: 'stays.hostels' },
+  { id: 'hotel', labelKey: 'stays.hotels' },
   { id: 'airbnb', label: 'Airbnb' },
   { id: 'boutique', label: 'Boutique' },
   { id: 'villa', label: 'Villa' },
@@ -433,6 +434,7 @@ function StayCard({
 // ---------------------------------------------------------------------------
 
 export default function StaysScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const planWizard = useAppStore((s) => s.planWizard);
@@ -534,7 +536,7 @@ export default function StaysScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Section 1: Destination context bar */}
       <View style={styles.contextBar}>
-        <Text style={styles.contextTitle}>Stays in {destination}</Text>
+        <Text style={styles.contextTitle}>{t('stays.title')} in {destination}</Text>
         <Pressable
           hitSlop={12}
           style={({ pressed }) => [styles.filterIcon, { opacity: pressed ? 0.7 : 1 }]}
@@ -560,22 +562,22 @@ export default function StaysScreen() {
           contentContainerStyle={styles.pillsWrap}
           style={styles.pillsScroll}
         >
-          {STAY_TYPES.map((t) => (
+          {STAY_TYPES.map((stayType) => (
             <Pressable
-              key={t.id}
-              onPress={() => handleFilterChange(t.id)}
+              key={stayType.id}
+              onPress={() => handleFilterChange(stayType.id)}
               style={[
                 styles.pill,
-                selectedType === t.id ? styles.pillSelected : styles.pillUnselected,
+                selectedType === stayType.id ? styles.pillSelected : styles.pillUnselected,
               ]}
             >
               <Text
                 style={[
                   styles.pillText,
-                  selectedType === t.id ? styles.pillTextSelected : styles.pillTextUnselected,
+                  selectedType === stayType.id ? styles.pillTextSelected : styles.pillTextUnselected,
                 ]}
               >
-                {t.label}
+                {stayType.labelKey ? t(stayType.labelKey) : stayType.label!}
               </Text>
             </Pressable>
           ))}
@@ -603,8 +605,8 @@ export default function StaysScreen() {
           {filteredStays.length === 0 ? (
             <View style={styles.emptyState}>
               <Building2 size={48} color={COLORS.creamVeryFaint} strokeWidth={1.5} />
-              <Text style={styles.emptyTitle}>No stays found</Text>
-              <Text style={styles.emptySub}>Try adjusting your filters</Text>
+            <Text style={styles.emptyTitle}>{t('stays.noResults')}</Text>
+            <Text style={styles.emptySub}>Try adjusting your filters</Text>
             </View>
           ) : (
             filteredStays.map((stay, i) => (

@@ -13,6 +13,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import { useAppStore } from '../../lib/store';
@@ -22,6 +23,7 @@ import Button from '../../components/ui/Button';
 const DEV = !!process.env.EXPO_PUBLIC_DEV || __DEV__;
 
 export default function WelcomeScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const setSession = useAppStore((s) => s.setSession);
 
@@ -89,8 +91,8 @@ export default function WelcomeScreen() {
 
       {/* Brand */}
       <View style={styles.brandContainer}>
-        <Text style={styles.brandMark}>ROAM</Text>
-        <Text style={styles.tagline}>Plan less. Experience more.</Text>
+        <Text style={styles.brandMark}>{t('common.appName')}</Text>
+        <Text style={styles.tagline}>{t('discover.editorialHeaders.2')}</Text>
       </View>
 
       {/* Bottom actions */}
@@ -98,13 +100,13 @@ export default function WelcomeScreen() {
         {AppleSignInButton}
 
         <Button
-          label="Continue with Email"
+          label={t('auth.continueWith', { provider: 'Email' })}
           variant="outline"
           onPress={() => router.push('/(auth)/signin')}
         />
 
         <Text style={styles.disclaimer}>
-          By continuing, you agree to our Terms of Service and Privacy Policy.
+          By continuing, you agree to our {t('paywall.terms')} and {t('paywall.privacy')}.
         </Text>
 
         {DEV && (

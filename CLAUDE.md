@@ -38,11 +38,23 @@ npx eslint . --ext .ts,.tsx
 - File routing: `app/(tabs)/` for tab screens, `app/` for modals
 - Collapsible sections: `useState(false)` + Pressable header + ChevronDown rotation pattern
 
+### Localization (lib/i18n/)
+- i18next + react-i18next + expo-localization for multi-language support
+- Supported: English (en), Spanish (es), French (fr), Japanese (ja)
+- Translation files: `lib/i18n/locales/{en,es,fr,ja}.ts`
+- In functional components: `const { t } = useTranslation();` then `t('namespace.key')`
+- In class components / memo: `import i18n from '../../lib/i18n';` then `i18n.t('key')`
+- Helper functions in `lib/i18n/helpers.ts`: `tCategory()`, `tBudget*()`, `tVibe()`, `tExpense()`
+- Language persisted to AsyncStorage key `@roam/locale`
+- Device language auto-detected on first launch
+- Language selector in Profile screen
+
 ### Code Style
 - Always use `useCallback` and `useMemo` for handlers/computed values
 - Haptic feedback on all user interactions (`lib/haptics.ts` wrapper)
 - `type` imports for interfaces (not `import { MyType }`)
 - Keep `any` only at DB/SDK boundaries (Supabase rows, RevenueCat). Use `unknown` + type guards elsewhere.
+- All user-facing strings should use i18n `t()` function, not hardcoded English
 
 ## Learnings (update after every correction)
 
@@ -59,7 +71,9 @@ npx eslint . --ext .ts,.tsx
 ### Components
 - `TripGeneratingLoader` (in `components/premium/LoadingStates.tsx`) — full-screen compass loader, accepts `destination` prop
 - `SkeletonCard` (same file) — animated shimmer skeleton, use instead of static grey blocks
-- Free API modules: `lib/air-quality.ts`, `lib/sun-times.ts`, `lib/timezone.ts`, `lib/public-holidays.ts`, `lib/cost-of-living.ts` — all free, no API key, AsyncStorage cached
+- Free API modules (all free, no API key, AsyncStorage cached):
+  - Existing: `lib/air-quality.ts`, `lib/sun-times.ts`, `lib/timezone.ts`, `lib/public-holidays.ts`, `lib/cost-of-living.ts`
+  - New: `lib/weather-forecast.ts` (Open-Meteo), `lib/exchange-rates.ts` (Frankfurter), `lib/country-info.ts` (REST Countries), `lib/travel-safety.ts` (travel-advisory.info), `lib/emergency-numbers.ts` (emergencynumberapi.com), `lib/geocoding.ts` (Open-Meteo)
 
 ### Verification
 - After code changes: run `npx tsc --noEmit` before proceeding

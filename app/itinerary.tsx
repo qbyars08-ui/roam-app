@@ -38,6 +38,7 @@ const DraggableFlatList = Platform.OS === 'web'
   : require('react-native-draggable-flatlist').default;
 type RenderItemParams<T> = { item: T; drag: () => void; isActive: boolean };
 import * as Haptics from '../lib/haptics';
+import { useTranslation } from 'react-i18next';
 
 import { COLORS, FONTS, SPACING, RADIUS, AFFILIATES } from '../lib/constants';
 import { useDestinationTheme } from '../lib/useDestinationTheme';
@@ -56,6 +57,8 @@ import { enrichVenues, getTodayHours, type EnrichedVenue } from '../lib/venues';
 import { saveItineraryOffline } from '../lib/offline';
 import { exportCalendar } from '../lib/calendar';
 import { shareTrip, copyShareableLink } from '../lib/sharing';
+import { recordGrowthEvent } from '../lib/growth-hooks';
+import { evaluateTrigger } from '../lib/smart-triggers';
 import { buildDayNarration } from '../lib/elevenlabs';
 import WeatherCard from '../components/features/WeatherCard';
 import FlightPriceCard from '../components/features/FlightPriceCard';
@@ -78,6 +81,7 @@ import FlightCard from '../components/features/FlightCard';
 import FlightDealCard from '../components/features/FlightDealCard';
 import LocalEventsSection from '../components/features/LocalEventsSection';
 import TripSoundtrackCard from '../components/features/TripSoundtrackCard';
+import PostTripUpgradeNudge from '../components/monetization/PostTripUpgradeNudge';
 import CarbonFootprintCard from '../components/features/CarbonFootprintCard';
 import PriceOracleCard from '../components/features/PriceOracleCard';
 import LanguageSurvivalSection from '../components/features/LanguageSurvivalSection';
@@ -93,7 +97,7 @@ import {
 import { formatDualPrice, formatLocalPrice, type ExchangeRates } from '../lib/currency';
 import { AlertTriangle, X, Pencil, Calendar, Link2, Share2, MapPin, Receipt, Film, Wallet, Train, ArrowDown, CreditCard, Plane, Heart, ShieldCheck, Droplets, Globe, Sun, Wind, PartyPopper } from 'lucide-react-native';
 import { getTransitGuide, type TransitGuide } from '../lib/transit-data';
-import { getHomeAirport } from '../lib/flights-amadeus';
+import { getHomeAirport } from '../lib/flights';
 import { getMedicalGuideByDestination, type MedicalGuide } from '../lib/medical-abroad';
 import { getTimezoneByDestination, getTimezoneInfo, getTimeDifference, type TimezoneInfo } from '../lib/timezone';
 import { getAirQuality, getDestinationCoords, type AirQuality } from '../lib/air-quality';
@@ -103,6 +107,7 @@ import { getCostOfLiving, type CostOfLiving } from '../lib/cost-of-living';
 import { getHeroPhotoUrl } from '../lib/heroPhotos';
 import { trackItineraryView, maybePromptForReview } from '../lib/rating';
 import { maybePromptNPS } from '../lib/nps';
+import { trackEvent } from '../lib/analytics';
 import MockDataBadge from '../components/ui/MockDataBadge';
 import ActivityEditModal from '../components/features/ActivityEditModal';
 
@@ -112,6 +117,7 @@ import ActivityEditModal from '../components/features/ActivityEditModal';
 export default function ItineraryScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { t } = useTranslation();
   const params = useLocalSearchParams<{ data?: string; tripId?: string; map?: string }>();
   const trips = useAppStore((s) => s.trips);
 
@@ -150,6 +156,7 @@ export default function ItineraryScreen() {
   const addTrip = useAppStore((s) => s.addTrip);
 
   const isSharedTrip = trip?.id?.startsWith('shared-') ?? false;
+  const packingTrackedRef = useRef(false);
 
   // Currency conversion hook — live exchange rates
   const { currency, rates } = useCurrency();
@@ -190,6 +197,14 @@ export default function ItineraryScreen() {
         maybePromptForReview().catch(() => {});
       });
 
+      recordGrowthEvent('itinerary_view').catch(() => {});
+      evaluateTrigger('itinerary_view').catch(() => {});
+      trackEvent('itinerary_viewed', {
+        destination: resolved.destination,
+        days: resolved.days,
+        tripId: resolved.id,
+      }).catch(() => {});
+
       // NPS survey — after 3rd trip, delayed so user sees itinerary first
       const tripCount = trips.length;
       if (tripCount >= 3) {
@@ -216,7 +231,10 @@ export default function ItineraryScreen() {
       startDate,
       days: trip.days,
     })
-      .then(setWeather)
+      .then((forecast) => {
+        setWeather(forecast);
+        trackEvent('weather_check', { destination: trip.destination }).catch(() => {});
+      })
       .catch(() => setWeather(null));
   }, [trip?.destination, trip?.createdAt, trip?.days]);
 
@@ -325,6 +343,13 @@ export default function ItineraryScreen() {
       return null;
     }
   }, [parsed, trip?.destination, trip?.days, trip?.vibes, trip?.budget, weather]);
+
+  useEffect(() => {
+    if (packingResult && trip && !packingTrackedRef.current) {
+      packingTrackedRef.current = true;
+      trackEvent('packing_list_generated', { destination: trip.destination }).catch(() => {});
+    }
+  }, [packingResult, trip]);
 
   const narrationText = useMemo(() => {
     if (!currentDay || !trip) return '';
@@ -481,6 +506,8 @@ export default function ItineraryScreen() {
   const handleShareLink = useCallback(async () => {
     if (!trip) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    recordGrowthEvent('trip_shared').catch(() => {});
+    evaluateTrigger('post_share').catch(() => {});
     const shared = await shareTrip(trip);
     if (!shared) {
       const copied = await copyShareableLink(trip);
@@ -1191,7 +1218,7 @@ export default function ItineraryScreen() {
             })()}
           />
 
-          {/* Real flight prices from Amadeus */}
+          {/* Flight search — Skyscanner affiliate */}
           <View style={styles.section}>
             <FlightCard destination={trip.destination} tripDays={trip.days} />
           </View>
@@ -1214,7 +1241,7 @@ export default function ItineraryScreen() {
             <View style={styles.section}>
               <WeatherDayStrip
                 day={weather.days[activeDay]}
-                label={`Day ${currentDay.day}`}
+                label={t('itinerary.dayN', { n: currentDay.day })}
                 accentColor={destTheme.primary}
               />
               <View style={{ marginTop: SPACING.sm }}>
@@ -1437,6 +1464,9 @@ export default function ItineraryScreen() {
               tripId={trip.id}
             />
           </View>
+
+          {/* Pro upgrade nudge for free users */}
+          <PostTripUpgradeNudge destination={trip.destination} />
 
           {/* Love this trip? Save it — one tap to Trips */}
           <View style={styles.section}>

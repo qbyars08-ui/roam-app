@@ -3,7 +3,8 @@
   publish = "dist"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "18"
+  EXPO_NO_TELEMETRY = "1"
   # EXPO_PUBLIC_* env vars are set in Netlify Dashboard → Environment Variables
   # (Netlify's secret scanner blocks API keys in netlify.toml)
 

@@ -6,6 +6,27 @@ import { supabase } from './supabase';
 
 let sessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
+// ---------------------------------------------------------------------------
+// Lightweight event tracker for feature-level analytics
+// Used by the admin dashboard to count events by event_type
+// ---------------------------------------------------------------------------
+export async function trackEvent(
+  eventType: string,
+  payload?: Record<string, unknown>,
+): Promise<void> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    await supabase.from('analytics_events').insert({
+      event_type: eventType,
+      user_id: session?.user?.id ?? null,
+      session_id: sessionId,
+      payload: payload ?? {},
+    });
+  } catch {
+    // Silently fail — never block UX
+  }
+}
+
 export type AnalyticsEvent =
   | { type: 'tap'; screen: string; action: string; payload?: Record<string, unknown> }
   | { type: 'screen_view'; screen: string; payload?: Record<string, unknown> }

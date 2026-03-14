@@ -18,6 +18,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import * as Haptics from '../lib/haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -26,9 +27,11 @@ import { COLORS, FONTS, SPACING, RADIUS, BUDGETS } from '../lib/constants';
 import { getDestinationPhoto, BACKUP_FALLBACK } from '../lib/photos';
 import ShimmerOverlay from '../components/ui/ShimmerOverlay';
 import { useAppStore, type Trip } from '../lib/store';
+import i18n from '../lib/i18n';
 import { isGuestUser } from '../lib/guest';
 import { getMyGroups, type TripGroup } from '../lib/group-trips';
 import { trackItineraryOutcome } from '../lib/ai-improvement';
+import { track } from '../lib/analytics';
 import Button from '../components/ui/Button';
 import { EmptySuitcase } from '../components/ui/EmptyStateIllustrations';
 
@@ -176,6 +179,10 @@ export default function SavedScreen() {
   const removeTrip = useAppStore((s) => s.removeTrip);
   const [groups, setGroups] = useState<TripGroup[]>([]);
 
+  useEffect(() => {
+    track({ type: 'screen_view', screen: 'saved' });
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       getMyGroups().then(setGroups).catch(() => setGroups([]));
@@ -293,7 +300,7 @@ export default function SavedScreen() {
           </View>
         )}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>My Trips</Text>
+          <Text style={styles.headerTitle}>{i18n.t('saved.title')}</Text>
           <Text style={styles.headerCount}>
             {trips.length} {trips.length === 1 ? 'trip' : 'trips'}
           </Text>

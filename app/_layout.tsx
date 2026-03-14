@@ -13,6 +13,9 @@ import { ONBOARDING_COMPLETE } from '../lib/storage-keys';
 // Self-hosted fonts — only the 7 weights we actually use (1.5MB vs 6.5MB)
 import { useFonts } from 'expo-font';
 
+// i18n — must be imported before any component that uses useTranslation
+import '../lib/i18n';
+
 import { supabase } from '../lib/supabase';
 import { useAppStore, checkActiveTripOnLoad, loadPersistedTrips, loadPersistedPets, loadPersistedTravelProfile, loadPersistedBookmarks, loadGenerateMode } from '../lib/store';
 import { initRevenueCat, loginRevenueCat, logoutRevenueCat, isProActive, addCustomerInfoListener } from '../lib/revenue-cat';
@@ -26,9 +29,14 @@ import { trackOnboardingComplete } from '../lib/ab-test';
 import { captureRefOnLoad } from '../lib/waitlist-guest';
 import { tryRestoreGuestSession, clearGuestMode, isGuestSession } from '../lib/guest';
 import { checkStorageVersion } from '../lib/storage-version';
+import { checkMilestones, recordGrowthEvent } from '../lib/growth-hooks';
+import { resetSessionTracking } from '../lib/smart-triggers';
+import type { Milestone } from '../lib/growth-hooks';
+import { track } from '../lib/analytics';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
 import OfflineBanner from '../components/ui/OfflineBanner';
 import PhoneFrame from '../components/ui/PhoneFrame';
+import MilestoneModal from '../components/features/MilestoneModal';
 
 // ---------------------------------------------------------------------------
 // Auth guard — redirects based on session state
@@ -74,6 +82,7 @@ function useProtectedRoute(session: { user: { id: string } } | null) {
 // ---------------------------------------------------------------------------
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
+  const [activeMilestone, setActiveMilestone] = useState<Milestone | null>(null);
   const router = useRouter();
   const session = useAppStore((s) => s.session);
   const setSession = useAppStore((s) => s.setSession);
@@ -130,6 +139,7 @@ export default function RootLayout() {
       })
       .finally(() => {
         setIsReady(true);
+        track({ type: 'session_start' }).catch(() => {});
       });
 
     // Listen for auth state changes (don't overwrite guest sessions)
@@ -195,6 +205,15 @@ export default function RootLayout() {
       checkActiveTripOnLoad();
       recordAppOpen();
       cancelReengagementNotifications();
+      resetSessionTracking();
+      recordGrowthEvent('session_start').catch(() => {});
+
+      // Check milestones after a short delay so UI is settled
+      setTimeout(() => {
+        checkMilestones().then((m) => {
+          if (m) setActiveMilestone(m);
+        }).catch(() => {});
+      }, 2000);
 
       return addCustomerInfoListener((proFromPurchases) => {
         syncProStatusToSupabase(session.user.id, proFromPurchases);
@@ -529,6 +548,10 @@ export default function RootLayout() {
           />
         </Stack>
         </PhoneFrame>
+        <MilestoneModal
+          milestone={activeMilestone}
+          onDismiss={() => setActiveMilestone(null)}
+        />
         <StatusBar style="light" />
       </GestureHandlerRootView>
     </ErrorBoundary>

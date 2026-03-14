@@ -29,9 +29,11 @@ import {
   Plus,
 } from 'lucide-react-native';
 import { addDays, format, isSameDay, startOfDay } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
+import { track, trackEvent } from '../../lib/analytics';
 
 // Use COLORS design tokens — no hardcoded hex/rgba
 const CREAM_08 = COLORS.creamMinimal;
@@ -146,6 +148,7 @@ function DatePickerModal({
   onClose: () => void;
   minimumDate?: Date;
 }) {
+  const { t } = useTranslation();
   const minDate = minimumDate ?? startOfDay(new Date());
   const dates: Date[] = [];
   for (let i = 0; i < 90; i++) {
@@ -175,7 +178,7 @@ function DatePickerModal({
             ))}
           </ScrollView>
           <Pressable style={modalStyles.cancelBtn} onPress={onClose}>
-            <Text style={modalStyles.cancelText}>Cancel</Text>
+            <Text style={modalStyles.cancelText}>{t('common.cancel')}</Text>
           </Pressable>
         </Pressable>
       </Pressable>
@@ -243,6 +246,7 @@ const modalStyles = StyleSheet.create({
 // Main screen
 // ---------------------------------------------------------------------------
 export default function FlightsScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const planDestination = useAppStore((s) => s.planWizard.destination);
@@ -268,6 +272,10 @@ export default function FlightsScreen() {
   const [toFocused, setToFocused] = useState(false);
   const [departPickerVisible, setDepartPickerVisible] = useState(false);
   const [returnPickerVisible, setReturnPickerVisible] = useState(false);
+
+  useEffect(() => {
+    track({ type: 'screen_view', screen: 'flights' });
+  }, []);
 
   const calendarRef = useRef<ScrollView>(null);
 
@@ -319,7 +327,8 @@ export default function FlightsScreen() {
     setSearchPerformed(true);
     const flights = generateMockFlights();
     setResults(flights);
-  }, []);
+    trackEvent('flight_search', { from, to, results: flights.length }).catch(() => {});
+  }, [from, to]);
 
   const flightMinPrice = results.length ? Math.min(...results.map((f) => f.price)) : 0;
   const flightMaxPrice = results.length ? Math.max(...results.map((f) => f.price)) : 1;
@@ -371,7 +380,7 @@ export default function FlightsScreen() {
               style={styles.input}
               value={from}
               onChangeText={setFrom}
-              placeholder="From"
+              placeholder={t('flights.from')}
               placeholderTextColor={CREAM_40}
               onFocus={() => { setFromFocused(true); setToFocused(false); }}
               onBlur={() => setFromFocused(false)}
@@ -391,7 +400,7 @@ export default function FlightsScreen() {
               style={styles.input}
               value={to}
               onChangeText={setTo}
-              placeholder="To"
+              placeholder={t('flights.to')}
               placeholderTextColor={CREAM_40}
               onFocus={() => { setToFocused(true); setFromFocused(false); }}
               onBlur={() => setToFocused(false)}
@@ -424,21 +433,21 @@ export default function FlightsScreen() {
         </View>
 
         <View style={styles.tripTypeRow}>
-          {(['round-trip', 'one-way'] as const).map((t) => (
+          {(['round-trip', 'one-way'] as const).map((tripOpt) => (
             <Pressable
-              key={t}
+              key={tripOpt}
               style={[
                 styles.tripPill,
-                tripType === t ? styles.tripPillSelected : styles.tripPillUnselected,
+                tripType === tripOpt ? styles.tripPillSelected : styles.tripPillUnselected,
                 { opacity: 1 },
               ]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setTripType(t);
+                setTripType(tripOpt);
               }}
             >
-              <Text style={[styles.tripPillText, tripType === t ? styles.tripPillTextSelected : styles.tripPillTextUnselected]}>
-                {t === 'one-way' ? 'One Way' : 'Round Trip'}
+              <Text style={[styles.tripPillText, tripType === tripOpt ? styles.tripPillTextSelected : styles.tripPillTextUnselected]}>
+                {tripOpt === 'one-way' ? t('flights.oneWay') : t('flights.roundTrip')}
               </Text>
             </Pressable>
           ))}
@@ -565,10 +574,10 @@ export default function FlightsScreen() {
           {searching ? (
             <>
               <ActivityIndicator size="small" color={COLORS.bg} />
-              <Text style={styles.searchBtnText}>Searching...</Text>
+              <Text style={styles.searchBtnText}>{t('common.loading')}</Text>
             </>
           ) : (
-            <Text style={styles.searchBtnText}>Search Flights</Text>
+            <Text style={styles.searchBtnText}>{t('flights.searchFlights')}</Text>
           )}
         </Pressable>
       </View>
@@ -603,7 +612,7 @@ export default function FlightsScreen() {
         ) : results.length === 0 ? (
           <View style={styles.emptyState}>
             <Plane size={48} color={CREAM_40} strokeWidth={1.5} />
-            <Text style={styles.emptyTitle}>No flights found</Text>
+            <Text style={styles.emptyTitle}>{t('flights.noResults')}</Text>
             <Text style={styles.emptySubtitle}>
               Try different dates or airports
             </Text>
@@ -622,7 +631,7 @@ export default function FlightsScreen() {
                   }}
                 >
                   <Text style={[styles.sortPillText, sortBy === s && styles.sortPillTextSelected]}>
-                    {s.charAt(0).toUpperCase() + s.slice(1)}
+                    {s === 'cheapest' ? t('flights.cheapest') : s === 'fastest' ? t('flights.fastest') : t('flights.bestValue')}
                   </Text>
                 </Pressable>
               ))}

@@ -254,7 +254,7 @@ export function buildTripPrompt(params: {
   destination: string;
   days: number;
   budget: string;
-  vibes: string[];
+  vibes: readonly string[];
   travelProfile?: TravelProfile | null;
   weather?: WeatherContext | null;
   groupSize?: number;
@@ -262,16 +262,24 @@ export function buildTripPrompt(params: {
   accommodationStyle?: string;
   morningType?: string;
   tripComposition?: string;
-  dietary?: string[];
-  transport?: string[];
+  dietary?: readonly string[];
+  transport?: readonly string[];
   mustVisit?: string;
   avoidList?: string;
   specialRequests?: string;
 }): string {
+  // Validate required params at runtime
+  const dest = params.destination?.trim();
+  if (!dest) throw new Error('Destination is required');
+  if (!params.days || params.days < 1 || params.days > 30) {
+    throw new Error('Trip duration must be between 1 and 30 days');
+  }
+  if (!params.budget?.trim()) throw new Error('Budget tier is required');
+
   const vibeList = params.vibes.length > 0 ? params.vibes.join(', ') : 'general sightseeing';
 
   const lines = [
-    `Plan a ${params.days}-day trip to ${params.destination}.`,
+    `Plan a ${params.days}-day trip to ${dest}.`,
     `Budget tier: ${params.budget}.`,
     `Travel vibes: ${vibeList}.`,
   ];

@@ -6,6 +6,7 @@ import React, { Component, type ErrorInfo, type ReactNode } from 'react';
 import { View, Text, Pressable, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
 import { AlertTriangle } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import i18n from '../../lib/i18n';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -48,17 +49,17 @@ export default class ErrorBoundary extends Component<Props, State> {
           <View style={styles.iconWrap}>
             <AlertTriangle size={48} color={COLORS.coral} strokeWidth={2} />
           </View>
-          <Text style={styles.title}>Well, that wasn't supposed to happen</Text>
+          <Text style={styles.title}>{i18n.t('errorBoundary.title')}</Text>
           <Text style={styles.subtitle}>
-            ROAM tripped over itself. Hit the button below — that usually fixes it.
+            {i18n.t('errorBoundary.subtitle')}
           </Text>
           <Pressable
             onPress={this.handleRetry}
             accessibilityRole="button"
-            accessibilityLabel="Try again"
+            accessibilityLabel={i18n.t('errorBoundary.tryAgain')}
             style={({ pressed }) => [styles.button, { opacity: pressed ? 0.85 : 1 }]}
           >
-            <Text style={styles.buttonText}>Try Again</Text>
+            <Text style={styles.buttonText}>{i18n.t('errorBoundary.tryAgain')}</Text>
           </Pressable>
         </View>
       );

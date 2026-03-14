@@ -195,7 +195,7 @@ function GlobeScreen() {
       }, 500);
     } catch (err) {
       if (err instanceof TripLimitReachedError) {
-        router.push('/paywall');
+        router.push({ pathname: '/paywall', params: { reason: 'limit' } });
       } else {
         // Fallback: use mock itinerary when API unavailable
         const mockItinerary = getMockItinerary(picked.label, 5);

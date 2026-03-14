@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../lib/haptics';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -27,22 +28,40 @@ import { useAppStore } from '../lib/store';
 import { isGuestUser, clearGuestMode } from '../lib/guest';
 import { getCurrentStreak } from '../lib/streaks';
 import { logoutRevenueCat } from '../lib/revenue-cat';
-import { Sparkles, Repeat, Gift, Shield, ChevronRight, BarChart3, CreditCard, LogOut } from 'lucide-react-native';
+import { Sparkles, Repeat, Gift, Shield, ChevronRight, BarChart3, CreditCard, LogOut, Globe } from 'lucide-react-native';
+import { track } from '../lib/analytics';
 import Button from '../components/ui/Button';
 import ExploreHub from '../components/features/ExploreHub';
+import SubscriptionCard from '../components/monetization/SubscriptionCard';
+import { SUPPORTED_LANGUAGES, changeLanguage } from '../lib/i18n';
+import type { SupportedLanguage } from '../lib/i18n';
 
 import { EMERGENCY_CONTACT, ONBOARDING_COMPLETE } from '../lib/storage-keys';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t, i18n } = useTranslation();
 
   const session = useAppStore((s) => s.session);
   const isPro = useAppStore((s) => s.isPro);
   const tripsThisMonth = useAppStore((s) => s.tripsThisMonth);
   const trips = useAppStore((s) => s.trips);
 
-  const userEmail = session?.user?.email ?? 'Guest';
+  const userEmail = session?.user?.email ?? t('common.guest');
+
+  // Language selector state
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
+
+  const handleLanguageChange = useCallback(async (lang: SupportedLanguage) => {
+    await changeLanguage(lang);
+    setLanguageModalVisible(false);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  }, []);
+
+  useEffect(() => {
+    track({ type: 'screen_view', screen: 'profile' });
+  }, []);
 
   // ---------------------------------------------------------------------------
   // Emergency contact + rating badge
@@ -84,10 +103,10 @@ export default function ProfileScreen() {
   const setIsPro = useAppStore((s) => s.setIsPro);
 
   const handleSignOut = () => {
-    Alert.alert('Heading out?', 'You can always come back.', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('profile.logOutTitle'), t('profile.logOutMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Log out',
+        text: t('profile.logOut'),
         style: 'destructive',
         onPress: async () => {
           await clearGuestMode();
@@ -110,7 +129,7 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <Text style={styles.headerTitle}>Your profile</Text>
+        <Text style={styles.headerTitle}>{t('profile.title')}</Text>
 
         {/* User card */}
         <View style={styles.card}>
@@ -123,11 +142,11 @@ export default function ProfileScreen() {
           <View style={styles.badgeRow}>
             <View style={[styles.badge, isPro ? styles.badgePro : styles.badgeFree]}>
               <Text style={[styles.badgeText, isPro ? styles.badgeTextPro : styles.badgeTextFree]}>
-                {isPro ? 'PRO' : 'FREE'}
+                {isPro ? t('common.pro') : t('common.free')}
               </Text>
             </View>
             {ratedBadge && (
-              <Text style={styles.ratedBadge}>Thanks for rating</Text>
+              <Text style={styles.ratedBadge}>{t('profile.thanksForRating')}</Text>
             )}
           </View>
         </View>
@@ -136,25 +155,25 @@ export default function ProfileScreen() {
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
             <Text style={styles.statValue}>{trips.length}</Text>
-            <Text style={styles.statLabel}>TRIPS BUILT</Text>
+            <Text style={styles.statLabel}>{t('profile.tripsBuilt')}</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statValue}>
               {tripsThisMonth}/{isPro ? '\u221E' : FREE_TRIPS_PER_MONTH}
             </Text>
-            <Text style={styles.statLabel}>THIS MONTH</Text>
+            <Text style={styles.statLabel}>{t('profile.thisMonth')}</Text>
           </View>
         </View>
 
         {/* Guest: Create account CTA */}
         {isGuestUser() && (
           <View style={styles.upgradeCard}>
-            <Text style={styles.upgradeTitle}>Create account to unlock</Text>
+            <Text style={styles.upgradeTitle}>{t('profile.createAccountUnlock')}</Text>
             <Text style={styles.upgradeSubtitle}>
-              Sync your trips, plan unlimited adventures, and access all features.
+              {t('profile.createAccountSub')}
             </Text>
             <Button
-              label="Create account"
+              label={t('auth.createAccount')}
               variant="coral"
               onPress={() => router.push('/(auth)/signup')}
             />
@@ -163,15 +182,21 @@ export default function ProfileScreen() {
         {/* Upgrade CTA for signed-in free users */}
         {!isPro && !isGuestUser() && (
           <View style={styles.upgradeCard}>
-            <Text style={styles.upgradeTitle}>Plan unlimited trips</Text>
+            <Text style={styles.upgradeTitle}>{t('profile.planUnlimited')}</Text>
             <Text style={styles.upgradeSubtitle}>
-              Never hold back. Plan as many adventures as you want, whenever inspiration strikes.
+              {t('profile.planUnlimitedSub')}
             </Text>
             <Button
-              label="See Pro plans"
+              label={t('profile.seeProPlans')}
               variant="coral"
               onPress={() => router.push('/paywall')}
             />
+          </View>
+        )}
+        {/* Subscription card — shows plan details, upgrade, or manage */}
+        {!isGuestUser() && (
+          <View style={{ marginTop: SPACING.lg }}>
+            <SubscriptionCard />
           </View>
         )}
 
@@ -187,15 +212,15 @@ export default function ProfileScreen() {
           }}
         >
           <View style={styles.comingSoonBadgeWrap}>
-            <Text style={styles.comingSoonBadgeText}>COMING SOON</Text>
+            <Text style={styles.comingSoonBadgeText}>{t('common.comingSoon')}</Text>
           </View>
           <View style={styles.tripWrappedContent}>
             <View style={styles.tripWrappedIconWrap}>
               <BarChart3 size={24} color={COLORS.creamMuted} strokeWidth={2} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.tripWrappedTitle, { opacity: 0.85 }]}>Trip Wrapped</Text>
-              <Text style={styles.tripWrappedSub}>Your year in travel</Text>
+              <Text style={[styles.tripWrappedTitle, { opacity: 0.85 }]}>{t('profile.tripWrapped')}</Text>
+              <Text style={styles.tripWrappedSub}>{t('profile.tripWrappedSub')}</Text>
             </View>
             <ChevronRight size={22} color={COLORS.creamMuted} strokeWidth={2} />
           </View>
@@ -211,8 +236,8 @@ export default function ProfileScreen() {
             }}
           >
             <View style={styles.menuIconWrap}><Sparkles size={18} color={COLORS.creamMuted} strokeWidth={2} /></View>
-            <Text style={[styles.menuLabel, { flex: 1, opacity: 0.85 }]}>Travel Alter-Ego Quiz</Text>
-            <View style={styles.comingSoonInlineBadge}><Text style={styles.comingSoonInlineText}>COMING SOON</Text></View>
+            <Text style={[styles.menuLabel, { flex: 1, opacity: 0.85 }]}>{t('profile.travelAlterEgo')}</Text>
+            <View style={styles.comingSoonInlineBadge}><Text style={styles.comingSoonInlineText}>{t('common.comingSoon')}</Text></View>
             <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
           </Pressable>
 
@@ -226,8 +251,8 @@ export default function ProfileScreen() {
             }}
           >
             <View style={styles.menuIconWrap}><Repeat size={18} color={COLORS.creamMuted} strokeWidth={2} /></View>
-            <Text style={[styles.menuLabel, { flex: 1, opacity: 0.85 }]}>Trip Dupe Mode</Text>
-            <View style={styles.comingSoonInlineBadge}><Text style={styles.comingSoonInlineText}>COMING SOON</Text></View>
+            <Text style={[styles.menuLabel, { flex: 1, opacity: 0.85 }]}>{t('profile.tripDupeMode')}</Text>
+            <View style={styles.comingSoonInlineBadge}><Text style={styles.comingSoonInlineText}>{t('common.comingSoon')}</Text></View>
             <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
           </Pressable>
 
@@ -237,19 +262,19 @@ export default function ProfileScreen() {
             style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.7 : 1 }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push({ pathname: '/coming-soon', params: { title: 'Refer Friends' } });
+              router.push('/referral');
             }}
           >
-            <View style={styles.menuIconWrap}><Gift size={18} color={COLORS.creamMuted} strokeWidth={2} /></View>
-            <Text style={[styles.menuLabel, { flex: 1, opacity: 0.85 }]}>Refer Friends</Text>
-            <View style={styles.comingSoonInlineBadge}><Text style={styles.comingSoonInlineText}>COMING SOON</Text></View>
+            <View style={styles.menuIconWrap}><Gift size={18} color={COLORS.sage} strokeWidth={2} /></View>
+            <Text style={[styles.menuLabel, { flex: 1 }]}>{t('profile.referFriends')}</Text>
+            <View style={styles.referralBadge}><Text style={styles.referralBadgeText}>EARN PRO</Text></View>
             <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
           </Pressable>
         </View>
 
         {/* ── Explore Features grid ── */}
         <View style={{ marginTop: SPACING.lg }}>
-          <Text style={styles.sectionTitle}>Explore Features</Text>
+          <Text style={styles.sectionTitle}>{t('profile.exploreFeatures')}</Text>
           <ExploreHub />
         </View>
 
@@ -263,7 +288,7 @@ export default function ProfileScreen() {
             }}
           >
             <View style={styles.menuIconWrap}><CreditCard size={18} color={COLORS.accentGold} strokeWidth={2} /></View>
-            <Text style={[styles.menuLabel, { flex: 1 }]}>Your plan</Text>
+            <Text style={[styles.menuLabel, { flex: 1 }]}>{t('profile.yourPlan')}</Text>
             <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
           </Pressable>
 
@@ -278,10 +303,29 @@ export default function ProfileScreen() {
           >
             <View style={styles.menuIconWrap}><Shield size={18} color={COLORS.accentGold} strokeWidth={2} /></View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.menuLabel}>Emergency Contact</Text>
+              <Text style={styles.menuLabel}>{t('profile.emergencyContact')}</Text>
               {emergencyContact ? (
                 <Text style={styles.menuSubtext}>{emergencyContact}</Text>
               ) : null}
+            </View>
+            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
+          </Pressable>
+
+          <View style={styles.menuDivider} />
+
+          <Pressable
+            style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.7 : 1 }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setLanguageModalVisible(true);
+            }}
+          >
+            <View style={styles.menuIconWrap}><Globe size={18} color={COLORS.accentGold} strokeWidth={2} /></View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.menuLabel}>{t('profile.language')}</Text>
+              <Text style={styles.menuSubtext}>
+                {SUPPORTED_LANGUAGES.find((l) => l.code === i18n.language)?.nativeLabel ?? 'English'}
+              </Text>
             </View>
             <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
           </Pressable>
@@ -296,7 +340,7 @@ export default function ProfileScreen() {
             }}
           >
             <View style={styles.menuIconWrap}><LogOut size={18} color={COLORS.coral} strokeWidth={2} /></View>
-            <Text style={[styles.menuLabel, { flex: 1, color: COLORS.coral }]}>Log out</Text>
+            <Text style={[styles.menuLabel, { flex: 1, color: COLORS.coral }]}>{t('profile.logOut')}</Text>
             <ChevronRight size={18} color={COLORS.coral} strokeWidth={2} />
           </Pressable>
         </View>
@@ -316,10 +360,47 @@ export default function ProfileScreen() {
               await supabase.auth.signOut();
             }}
           >
-            <Text style={styles.devResetText}>Dev: Reset first-time</Text>
+            <Text style={styles.devResetText}>{t('profile.devReset')}</Text>
           </Pressable>
         )}
       </ScrollView>
+
+      {/* Language selector modal */}
+      <Modal
+        visible={languageModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLanguageModalVisible(false)}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={() => setLanguageModalVisible(false)}>
+          <Pressable style={styles.emergencyModalContent} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.emergencyModalTitle}>{t('settings.selectLanguage')}</Text>
+            <View style={{ gap: SPACING.xs, marginTop: SPACING.md }}>
+              {SUPPORTED_LANGUAGES.map((lang) => {
+                const isActive = i18n.language === lang.code;
+                return (
+                  <Pressable
+                    key={lang.code}
+                    onPress={() => handleLanguageChange(lang.code as SupportedLanguage)}
+                    style={({ pressed }) => [
+                      styles.languageOption,
+                      isActive && styles.languageOptionActive,
+                      { opacity: pressed ? 0.7 : 1 },
+                    ]}
+                  >
+                    <Text style={[styles.languageLabel, isActive && styles.languageLabelActive]}>
+                      {lang.nativeLabel}
+                    </Text>
+                    <Text style={[styles.languageSub, isActive && styles.languageSubActive]}>
+                      {lang.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       {/* Emergency Contact Modal (cross-platform; Alert.prompt crashes on iOS) */}
       <Modal
@@ -330,8 +411,8 @@ export default function ProfileScreen() {
       >
         <Pressable style={styles.modalBackdrop} onPress={handleCancelEmergencyModal}>
           <Pressable style={styles.emergencyModalContent} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.emergencyModalTitle}>Emergency contact</Text>
-            <Text style={styles.emergencyModalSub}>Enter a phone number for SOS alerts.</Text>
+            <Text style={styles.emergencyModalTitle}>{t('profile.emergencyContactTitle')}</Text>
+            <Text style={styles.emergencyModalSub}>{t('profile.emergencyContactSub')}</Text>
             <TextInput
               style={styles.emergencyModalInput}
               value={emergencyInputValue}
@@ -343,10 +424,10 @@ export default function ProfileScreen() {
             />
             <View style={styles.emergencyModalButtons}>
               <Pressable style={styles.emergencyModalCancel} onPress={handleCancelEmergencyModal}>
-                <Text style={styles.emergencyModalCancelText}>Cancel</Text>
+                <Text style={styles.emergencyModalCancelText}>{t('common.cancel')}</Text>
               </Pressable>
               <Pressable style={styles.emergencyModalSave} onPress={handleSaveEmergencyContact}>
-                <Text style={styles.emergencyModalSaveText}>Save</Text>
+                <Text style={styles.emergencyModalSaveText}>{t('common.save')}</Text>
               </Pressable>
             </View>
           </Pressable>
@@ -410,6 +491,20 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.mono,
     fontSize: 9,
     color: COLORS.sage,
+    letterSpacing: 1,
+  } as TextStyle,
+  referralBadge: {
+    backgroundColor: COLORS.gold + '20',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.gold + '40',
+  } as ViewStyle,
+  referralBadgeText: {
+    fontFamily: FONTS.mono,
+    fontSize: 9,
+    color: COLORS.gold,
     letterSpacing: 1,
   } as TextStyle,
   tripWrappedContent: {
@@ -702,5 +797,36 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.sage,
     letterSpacing: 0.5,
+  } as TextStyle,
+  // Language selector
+  languageOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  } as ViewStyle,
+  languageOptionActive: {
+    borderColor: COLORS.sage,
+    backgroundColor: COLORS.sageFaint,
+  } as ViewStyle,
+  languageLabel: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 16,
+    color: COLORS.cream,
+  } as TextStyle,
+  languageLabelActive: {
+    color: COLORS.sage,
+  } as TextStyle,
+  languageSub: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+  } as TextStyle,
+  languageSubActive: {
+    color: COLORS.sageMedium,
   } as TextStyle,
 });
