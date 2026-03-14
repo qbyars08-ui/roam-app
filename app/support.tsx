@@ -11,6 +11,7 @@ import {
   StyleSheet,
   Linking,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, ChevronDown, ChevronUp, Mail } from 'lucide-react-native';
@@ -68,6 +69,7 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 }
 
 export default function SupportScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -77,25 +79,25 @@ export default function SupportScreen() {
         <Pressable onPress={() => router.back()} hitSlop={12} style={viewStyles.backBtn}>
           <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
-        <Text style={textStyles.headerTitle}>Support</Text>
+        <Text style={textStyles.headerTitle}>{t('support.title')}</Text>
       </View>
       <ScrollView
         style={viewStyles.scroll}
         contentContainerStyle={[viewStyles.scrollContent, { paddingBottom: insets.bottom + SPACING.xxl }]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={textStyles.hero}>Need help with ROAM?</Text>
-        <Text style={textStyles.heroSub}>We're here for you.</Text>
+        <Text style={textStyles.hero}>{t('support.needHelp')}</Text>
+        <Text style={textStyles.heroSub}>{t('support.weAreHere')}</Text>
 
-        <Text style={textStyles.sectionLabel}>FREQUENTLY ASKED</Text>
+        <Text style={textStyles.sectionLabel}>{t('support.frequentlyAsked')}</Text>
         {FAQ_ITEMS.map((item, i) => (
           <FAQItem key={i} q={item.q} a={item.a} />
         ))}
 
         <View style={viewStyles.contactCard}>
           <Mail size={24} color={COLORS.sage} style={{ marginBottom: SPACING.sm }} />
-          <Text style={textStyles.contactTitle}>Contact us</Text>
-          <Text style={textStyles.contactSub}>Response within 48 hours</Text>
+          <Text style={textStyles.contactTitle}>{t('support.contactUs')}</Text>
+          <Text style={textStyles.contactSub}>{t('support.responseWithin48Hours')}</Text>
           <Pressable
             onPress={() => Linking.openURL('mailto:support@roamtravel.app')}
             style={({ pressed }) => [viewStyles.emailBtn, { opacity: pressed ? 0.9 : 1 }]}

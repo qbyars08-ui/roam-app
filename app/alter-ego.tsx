@@ -14,6 +14,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -159,6 +160,7 @@ const PERSONALITIES: Record<string, PersonalityType> = {
 type Phase = 'quiz' | 'calculating' | 'result';
 
 function AlterEgoScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -290,7 +292,7 @@ function AlterEgoScreen() {
         <View style={styles.calculatingContainer}>
           <Text style={styles.calculatingEmoji}>{'\uD83D\uDD2E'}</Text>
           <Text style={styles.calculatingText}>
-            Analyzing your travel soul...
+            {t('alterEgo.analyzingTravelSoul')}
           </Text>
         </View>
       )}
@@ -312,13 +314,13 @@ function AlterEgoScreen() {
               style={styles.resultGradient}
             >
               {null}
-              <Text style={styles.resultLabel}>YOUR TRAVEL ALTER-EGO</Text>
+              <Text style={styles.resultLabel}>{t('alterEgo.yourTravelAlterEgo')}</Text>
               <Text style={styles.resultTitle}>{result.title}</Text>
               <Text style={styles.resultSubtitle}>{result.subtitle}</Text>
               <View style={styles.resultDivider} />
               <Text style={styles.resultDesc}>{result.description}</Text>
               <View style={styles.resultDestsRow}>
-                <Text style={styles.resultDestsLabel}>IDEAL DESTINATIONS</Text>
+                <Text style={styles.resultDestsLabel}>{t('alterEgo.idealDestinations')}</Text>
                 <Text style={styles.resultDests}>
                   {result.destinations.join(' \u2022 ')}
                 </Text>
@@ -339,13 +341,13 @@ function AlterEgoScreen() {
                 style={styles.shareGradient}
               >
                 <Text style={styles.shareButtonText}>
-                  {'\uD83D\uDCE4'} Share Your Alter-Ego
+                  {'\uD83D\uDCE4'} {t('alterEgo.shareAlterEgo')}
                 </Text>
               </LinearGradient>
             </Pressable>
 
             <Pressable onPress={handleRetake} style={styles.retakeBtn}>
-              <Text style={styles.retakeText}>Retake quiz</Text>
+              <Text style={styles.retakeText}>{t('alterEgo.retakeQuiz')}</Text>
             </Pressable>
           </View>
         </ScrollView>

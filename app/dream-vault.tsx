@@ -15,6 +15,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../lib/haptics';
@@ -37,6 +38,7 @@ import { validateDestination } from '../lib/params-validator';
 import { getHomeAirport } from '../lib/flights';
 
 function DreamVaultScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const params = useLocalSearchParams<{ destination?: string }>();
@@ -79,10 +81,10 @@ function DreamVaultScreen() {
   };
 
   const handleRemove = (dest: SavedDestination) => {
-    Alert.alert('Remove from vault?', `Stop tracking ${dest.destination}?`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('dreamVault.alertRemoveTitle'), `${t('dreamVault.alertRemoveBody')} ${dest.destination}?`, [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Remove',
+        text: t('dreamVault.remove'),
         style: 'destructive',
         onPress: () => removeSavedDestination(dest.id).then(load),
       },
@@ -95,9 +97,9 @@ function DreamVaultScreen() {
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Text style={styles.back}>{'←'}</Text>
         </Pressable>
-        <Text style={styles.title}>Dream Trip Vault</Text>
+        <Text style={styles.title}>{t('dreamVault.title')}</Text>
         <Text style={styles.subtitle}>
-          {loading ? 'Loading...' : `${destinations.length} saved — we'll alert when prices drop`}
+          {loading ? t('common.loading') : `${destinations.length} ${t('dreamVault.savedCountAlert')}`}
         </Text>
       </View>
 
@@ -129,14 +131,14 @@ function DreamVaultScreen() {
                 <View style={styles.cardContent}>
                   {low && (
                     <View style={styles.badge}>
-                      <Text style={styles.badgeText}>Prices low</Text>
+                      <Text style={styles.badgeText}>{t('dreamVault.pricesLow')}</Text>
                     </View>
                   )}
                   <Text style={styles.destName}>{d.destination}</Text>
                   {d.baselinePrice != null && (
                     <Text style={styles.price}>From ${d.baselinePrice}</Text>
                   )}
-                  <Text style={styles.cta}>Tap to search flights →</Text>
+                  <Text style={styles.cta}>{t('dreamVault.tapToSearchFlights')} →</Text>
                 </View>
               </LinearGradient>
             </Pressable>
@@ -146,15 +148,15 @@ function DreamVaultScreen() {
 
       {!loading && destinations.length === 0 && (
         <View style={styles.empty}>
-          <Text style={styles.emptyText}>No dream destinations yet</Text>
+          <Text style={styles.emptyText}>{t('dreamVault.noDreamDestinations')}</Text>
           <Text style={styles.emptySub}>
-            Save destinations from itineraries to track flight prices
+            {t('dreamVault.saveFromItineraries')}
           </Text>
           <Pressable
             style={styles.addBtn}
             onPress={() => router.push('/(tabs)/generate')}
           >
-            <Text style={styles.addBtnText}>Plan a trip</Text>
+            <Text style={styles.addBtnText}>{t('dreamVault.planATrip')}</Text>
           </Pressable>
         </View>
       )}

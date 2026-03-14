@@ -12,6 +12,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../lib/haptics';
@@ -49,6 +50,7 @@ function CollectionCard({
 }
 
 function TripCollectionsScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const setPlanWizard = useAppStore((s) => s.setPlanWizard);
@@ -68,9 +70,9 @@ function TripCollectionsScreen() {
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Text style={styles.backBtn}>{'\u2190'}</Text>
         </Pressable>
-        <Text style={styles.title}>Trip Collections</Text>
+        <Text style={styles.title}>{t('tripCollections.title')}</Text>
         <Text style={styles.subtitle}>
-          Curated lists by vibe. Tap a destination to plan your own version.
+          {t('tripCollections.subtitle')}
         </Text>
       </View>
       <ScrollView

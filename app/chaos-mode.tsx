@@ -15,6 +15,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -98,6 +99,7 @@ function pickRandomDestination(): string {
 // Main Screen
 // =============================================================================
 function ChaosModeScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const addTrip = useAppStore((s) => s.addTrip);
@@ -269,12 +271,12 @@ function ChaosModeScreen() {
         return;
       }
       setError(
-        "Chaos mode hit a wall. The universe is taking a break. Try again."
+        t('chaosMode.errorMessage')
       );
       setPhase('idle');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
-  }, [addTrip, revealFade, revealScale, resultFade, resultSlide, isPro, tripsThisMonth, trips.length, router]);
+  }, [addTrip, revealFade, revealScale, resultFade, resultSlide, isPro, tripsThisMonth, trips.length, router, t]);
 
   const handleShare = useCallback(async () => {
     if (!cardRef.current) return;
@@ -287,12 +289,12 @@ function ChaosModeScreen() {
       });
       await ExpoSharing.shareAsync(uri, {
         mimeType: 'image/png',
-        dialogTitle: 'Send to the group chat',
+        dialogTitle: t('chaosMode.sendToGroupChat'),
       });
     } catch {
       // cancelled
     }
-  }, []);
+  }, [t]);
 
   const handleDareShare = useCallback(async () => {
     if (!destination || !itinerary) return;
@@ -318,13 +320,13 @@ function ChaosModeScreen() {
       });
       await RNShare.share({
         message: `${message}\n\n${url}`,
-        title: 'Dare you to do this trip',
+        title: t('chaosDare.dareYouToDoThisTrip'),
         url,
       });
     } catch {
       // cancelled
     }
-  }, [destination, days, budget, vibes, itinerary]);
+  }, [destination, days, budget, vibes, itinerary, t]);
 
   const handleReset = useCallback(() => {
     setPhase('idle');
@@ -358,8 +360,8 @@ function ChaosModeScreen() {
           <Text style={styles.backBtn}>{'\u2190'}</Text>
         </Pressable>
         <View>
-          <Text style={styles.headerEyebrow}>ZERO DECISIONS</Text>
-          <Text style={styles.headerTitle}>Chaos Mode</Text>
+          <Text style={styles.headerEyebrow}>{t('chaosMode.zeroDecisions')}</Text>
+          <Text style={styles.headerTitle}>{t('chaosMode.title')}</Text>
         </View>
         <View style={{ width: 24 }} />
       </View>
@@ -373,11 +375,10 @@ function ChaosModeScreen() {
         {phase === 'idle' && (
           <View style={styles.idleContainer}>
             <Text style={styles.idleTitle}>
-              One tap.{'\n'}We pick everything for you.
+              {t('chaosMode.idleTitle')}
             </Text>
             <Text style={styles.idleSubtitle}>
-              Destination. Duration. Budget. Vibes.{'\n'}
-              No decisions. Just hit the button and pack your bags.
+              {t('chaosMode.idleSubtitle')}
             </Text>
 
             <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
@@ -395,13 +396,13 @@ function ChaosModeScreen() {
                   style={styles.chaosButtonGradient}
                 >
                   <View style={styles.chaosButtonIcon}><DiceIcon size={28} color={COLORS.white} /></View>
-                  <Text style={styles.chaosButtonLabel}>SURPRISE ME</Text>
+                  <Text style={styles.chaosButtonLabel}>{t('chaosMode.surpriseMe')}</Text>
                 </LinearGradient>
               </Pressable>
             </Animated.View>
 
             <Text style={styles.disclaimer}>
-              Warning: You might end up somewhere incredible.
+              {t('chaosMode.disclaimer')}
             </Text>
 
             {error && (
@@ -420,15 +421,15 @@ function ChaosModeScreen() {
             </Animated.View>
             <Text style={styles.generatingText}>{chaosMessage}</Text>
             <View style={styles.chosenRow}>
-              <Text style={styles.chosenLabel}>Destination:</Text>
+              <Text style={styles.chosenLabel}>{t('chaosMode.destination')}</Text>
               <Text style={styles.chosenValue}>{destination}</Text>
             </View>
             <View style={styles.chosenRow}>
-              <Text style={styles.chosenLabel}>Duration:</Text>
+              <Text style={styles.chosenLabel}>{t('chaosMode.duration')}</Text>
               <Text style={styles.chosenValue}>{days} days</Text>
             </View>
             <View style={styles.chosenRow}>
-              <Text style={styles.chosenLabel}>Budget:</Text>
+              <Text style={styles.chosenLabel}>{t('chaosMode.budget')}</Text>
               <Text style={styles.chosenValue}>{budgetLabel}</Text>
             </View>
           </View>
@@ -490,8 +491,8 @@ function ChaosModeScreen() {
 
                 <View style={styles.chaosCardMeta}>
                   <ChaosMetaStat value={`${days}`} label="Days" />
-                  <ChaosMetaStat value={itinerary.totalBudget} label="Total" />
-                  <ChaosMetaStat value={budgetLabel} label="Style" />
+                  <ChaosMetaStat value={itinerary.totalBudget} label={t('chaosMode.total')} />
+                  <ChaosMetaStat value={budgetLabel} label={t('chaosMode.style')} />
                 </View>
 
                 {/* Day Highlights */}
@@ -522,10 +523,10 @@ function ChaosModeScreen() {
                 </View>
 
                 <Text style={styles.chaosCardDare}>
-                  I dare you.
+                  {t('chaosMode.iDareYou')}
                 </Text>
                 <Text style={styles.chaosCardFooter}>
-                  Go somewhere that changes you.
+                  {t('chaosMode.goSomewhereThatChangesYou')}
                 </Text>
               </ImageBackground>
               </View>
@@ -544,7 +545,7 @@ function ChaosModeScreen() {
                   colors={[COLORS.chaosGradientStart, COLORS.chaosGradientEnd]}
                   style={styles.shareBtnGradient}
                 >
-                  <Text style={styles.shareBtnText}>Send to the Group Chat</Text>
+                  <Text style={styles.shareBtnText}>{t('chaosMode.sendToGroupChat')}</Text>
                 </LinearGradient>
               </Pressable>
             </View>
@@ -560,7 +561,7 @@ function ChaosModeScreen() {
                   colors={[COLORS.gold + 'cc', COLORS.gold]}
                   style={styles.shareBtnGradient}
                 >
-                  <Text style={styles.shareBtnText}>Dare you to do this</Text>
+                  <Text style={styles.shareBtnText}>{t('chaosMode.dareYouToDoThis')}</Text>
                 </LinearGradient>
               </Pressable>
             </View>
@@ -583,7 +584,7 @@ function ChaosModeScreen() {
               }}
             >
               <Text style={styles.viewBtnText}>
-                See the full trip
+                {t('chaosMode.seeFullTrip')}
               </Text>
             </Pressable>
 
@@ -605,7 +606,7 @@ function ChaosModeScreen() {
               }}
             >
               <Text style={styles.viewBtnText}>
-                See The Receipt
+                {t('chaosMode.seeTheReceipt')}
               </Text>
             </Pressable>
 
@@ -619,7 +620,7 @@ function ChaosModeScreen() {
             >
               <View style={styles.rerollRow}>
                 <DiceIcon size={18} color={COLORS.danger} />
-                <Text style={styles.rerollText}>Try another surprise</Text>
+                <Text style={styles.rerollText}>{t('chaosMode.tryAnotherSurprise')}</Text>
               </View>
             </Pressable>
           </Animated.View>

@@ -14,6 +14,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { COLORS, FONTS, SPACING, RADIUS, BUDGETS } from '../lib/constants';
@@ -41,6 +42,7 @@ interface ShareCardData {
 // Component
 // ---------------------------------------------------------------------------
 function ShareCardPage() {
+  const { t } = useTranslation();
   const { k } = useLocalSearchParams<{ k?: string }>();
   const router = useRouter();
   const cardRef = useRef<View>(null);
@@ -94,9 +96,9 @@ function ShareCardPage() {
   if (!data) {
     return (
       <View style={styles.screen}>
-        <Text style={styles.fallbackText}>No share data. Generate a trip first!</Text>
+        <Text style={styles.fallbackText}>{t('shareCard.noShareData')}</Text>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backBtnText}>Go back</Text>
+          <Text style={styles.backBtnText}>{t('common.back')}</Text>
         </Pressable>
       </View>
     );
@@ -164,7 +166,7 @@ function ShareCardPage() {
               </View>
 
               {/* Very bottom: Built with ROAM */}
-              <Text style={styles.builtWith}>Built with ROAM</Text>
+              <Text style={styles.builtWith}>{t('shareCard.builtWithRoam')}</Text>
             </LinearGradient>
           </ImageBackground>
         </View>
@@ -179,10 +181,10 @@ function ShareCardPage() {
               {isDownloading ? (
                 <BreathingLine width={40} height={3} color={COLORS.bg} />
               ) : (
-                <Text style={styles.downloadBtnText}>Open image in new tab</Text>
+                <Text style={styles.downloadBtnText}>{t('shareCard.openImageInNewTab')}</Text>
               )}
             </Pressable>
-            <Text style={styles.hint}>Screenshot or right-click to save</Text>
+            <Text style={styles.hint}>{t('shareCard.screenshotHint')}</Text>
           </View>
         )}
       </ScrollView>

@@ -15,6 +15,7 @@ import {
   type TextStyle,
   type ImageStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -26,6 +27,7 @@ import { BUDGETS, VIBES } from '../lib/constants';
 import { withComingSoon } from '../lib/with-coming-soon';
 
 function ChaosDareScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ id?: string }>();
@@ -60,9 +62,9 @@ function ChaosDareScreen() {
   if (!dare) {
     return (
       <View style={[styles.container, styles.center, { paddingTop: insets.top }]}>
-        <Text style={styles.errorText}>Dare not found</Text>
+        <Text style={styles.errorText}>{t('chaosDare.dareNotFound')}</Text>
         <Pressable onPress={() => router.back()} style={styles.ctaBtn}>
-          <Text style={styles.ctaBtnText}>Go back</Text>
+          <Text style={styles.ctaBtnText}>{t('common.back')}</Text>
         </Pressable>
       </View>
     );
@@ -82,12 +84,12 @@ function ChaosDareScreen() {
           colors={[COLORS.overlaySoft, COLORS.overlayStrong]}
           style={styles.grad}
         >
-          <Text style={styles.eyebrow}>SOMEONE DARED YOU</Text>
+          <Text style={styles.eyebrow}>{t('chaosDare.someoneDaredYou')}</Text>
           <Text style={styles.title}>{dare.destination}</Text>
           <Text style={styles.meta}>
             {dare.days} days · {budgetLabel} · {vibeLabels.join(', ')}
           </Text>
-          <Text style={styles.dare}>Dare you to do this trip.</Text>
+          <Text style={styles.dare}>{t('chaosDare.dareYouToDoThisTrip')}</Text>
           <Pressable
             onPress={handleOpenROAM}
             style={({ pressed }) => [styles.ctaBtn, { opacity: pressed ? 0.9 : 1 }]}
@@ -96,7 +98,7 @@ function ChaosDareScreen() {
               colors={[COLORS.gold, COLORS.gold + 'cc']}
               style={styles.ctaGrad}
             >
-              <Text style={styles.ctaBtnText}>Open ROAM to claim it</Text>
+              <Text style={styles.ctaBtnText}>{t('chaosDare.openRoamToClaim')}</Text>
             </LinearGradient>
           </Pressable>
         </LinearGradient>

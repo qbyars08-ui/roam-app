@@ -10,6 +10,7 @@ import {
   StyleSheet,
   useWindowDimensions,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../lib/haptics';
@@ -17,14 +18,15 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { withComingSoon } from '../lib/with-coming-soon';
 
 const QUESTIONS = [
-  { q: 'Morning, afternoon, or evening?', options: ['Morning', 'Afternoon', 'Evening'] },
-  { q: 'Hungry, exploring, or resting?', options: ['Hungry', 'Exploring', 'Resting'] },
-  { q: "What's your budget for right now?", options: ['Cheap', 'Mid', 'Splurge'] },
-  { q: 'Indoors or outdoors?', options: ['Indoors', 'Outdoors'] },
-  { q: 'Solo or with people?', options: ['Solo', 'With people'] },
+  { q: 'Morning, afternoon, or evening?', options: ['morning', 'afternoon', 'evening'] },
+  { q: 'Hungry, exploring, or resting?', options: ['hungry', 'exploring', 'resting'] },
+  { q: "What's your budget for right now?", options: ['cheap', 'mid', 'splurge'] },
+  { q: 'Indoors or outdoors?', options: ['indoors', 'outdoors'] },
+  { q: 'Solo or with people?', options: ['solo', 'withPeople'] },
 ];
 
 function AntiItineraryScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -48,9 +50,9 @@ function AntiItineraryScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Text style={styles.badge}>ANTI-ITINERARY</Text>
-        <Text style={styles.title}>One decision at a time</Text>
-        <Text style={styles.subtitle}>No planning ahead. Spontaneous mode.</Text>
+        <Text style={styles.badge}>{t('antiItinerary.badge')}</Text>
+        <Text style={styles.title}>{t('antiItinerary.title')}</Text>
+        <Text style={styles.subtitle}>{t('antiItinerary.subtitle')}</Text>
       </View>
 
       <View style={styles.questionWrap}>
@@ -69,7 +71,7 @@ function AntiItineraryScreen() {
                 ]}
               >
                 <Text style={[styles.optionText, selected && styles.optionTextSelected]}>
-                  {opt}
+                  {t(`antiItinerary.${opt}`)}
                 </Text>
               </Pressable>
             );

@@ -16,6 +16,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../lib/haptics';
 
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, BUDGETS, VIBES, FREE_TRIPS_PER_MONTH } from '../lib/constants';
@@ -45,6 +46,7 @@ const SPIN_POOL = [
 type SpinPhase = 'idle' | 'spinning' | 'revealing' | 'generating' | 'done';
 
 function GlobeScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const addTrip = useAppStore((s) => s.addTrip);
@@ -266,9 +268,9 @@ function GlobeScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Spin the Globe</Text>
+          <Text style={styles.title}>{t('globe.title')}</Text>
           <Text style={styles.subtitle}>
-            One tap. One destination. Zero planning.
+            {t('globe.subtitle')}
           </Text>
         </View>
 
@@ -307,7 +309,7 @@ function GlobeScreen() {
                 },
               ]}
             >
-              <Text style={styles.revealLabel}>YOUR NEXT ADVENTURE</Text>
+              <Text style={styles.revealLabel}>{t('globe.revealLabel')}</Text>
               <Text style={styles.revealDestination}>{picked.label}</Text>
               <Text style={styles.revealCountry}>
                 {picked.country}
@@ -332,14 +334,14 @@ function GlobeScreen() {
                 style={styles.spinGradient}
               >
                 <Text style={styles.spinButtonText}>
-                  {'\uD83C\uDF0D'} Spin the Globe
+                  {'\uD83C\uDF0D'} {t('globe.spinButton')}
                 </Text>
               </LinearGradient>
             </Pressable>
           )}
 
           {phase === 'spinning' && (
-            <Text style={styles.spinningText}>Finding your destiny...</Text>
+            <Text style={styles.spinningText}>{t('globe.findingDestiny')}</Text>
           )}
 
           {phase === 'revealing' && (
@@ -356,12 +358,12 @@ function GlobeScreen() {
                   style={styles.spinGradient}
                 >
                   <Text style={styles.spinButtonText}>
-                    {'\u2728'} Build this trip
+                    {'\u2728'} {t('globe.buildTrip')}
                   </Text>
                 </LinearGradient>
               </Pressable>
               <Pressable onPress={handleReset} style={styles.respin}>
-                <Text style={styles.respinText}>Spin again</Text>
+                <Text style={styles.respinText}>{t('globe.spinAgain')}</Text>
               </Pressable>
             </View>
           )}
@@ -372,7 +374,7 @@ function GlobeScreen() {
                 Building your {picked?.label} adventure...
               </Text>
               <Text style={styles.generatingSubtext}>
-                AI is crafting your trip
+                {t('globe.generatingSubtext')}
               </Text>
             </View>
           )}
@@ -382,7 +384,7 @@ function GlobeScreen() {
 
         {/* Bottom hint */}
         <Text style={styles.hint}>
-          Every spin is a surprise. No takebacks.
+          {t('globe.hint')}
         </Text>
       </LinearGradient>
     </View>
