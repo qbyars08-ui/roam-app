@@ -6,6 +6,7 @@
 // Screen 3: Save your trip — create account
 // =============================================================================
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   Alert,
@@ -46,6 +47,7 @@ function StepDestination({
   onSelect: (dest: string) => void;
   onSurpriseMe: () => void;
 }) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const fade = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -54,8 +56,8 @@ function StepDestination({
 
   return (
     <Animated.View style={[styles.step, { opacity: fade, paddingTop: insets.top }]}>
-      <Text style={styles.title}>Where to?</Text>
-      <Text style={styles.subtitle}>We'll build you a real trip in seconds</Text>
+      <Text style={styles.title}>{t('onboard.whereTo')}</Text>
+      <Text style={styles.subtitle}>{t('onboard.subtitle')}</Text>
 
       <View style={styles.destGrid}>
         {DESTINATION_CHOICES.map((d) => (
@@ -100,7 +102,7 @@ function StepDestination({
           { opacity: pressed ? 0.85 : 1 },
         ]}
       >
-        <Text style={styles.surpriseBtnText}>Surprise me</Text>
+        <Text style={styles.surpriseBtnText}>{t('onboard.surpriseMe')}</Text>
       </Pressable>
     </Animated.View>
   );
@@ -110,6 +112,7 @@ function StepDestination({
 // Step 2: Generating (make it an experience)
 // ---------------------------------------------------------------------------
 function StepGenerating({ destination }: { destination: string }) {
+  const { t } = useTranslation();
   const pulse = useRef(new Animated.Value(1)).current;
   const dotOpacity = useRef([new Animated.Value(0), new Animated.Value(0), new Animated.Value(0)]).current;
 
@@ -144,7 +147,7 @@ function StepGenerating({ destination }: { destination: string }) {
         <View style={styles.generatingRing} />
       </Animated.View>
       <Text style={styles.generatingTitle}>Building your {destination} trip</Text>
-      <Text style={styles.generatingSub}>Real places. Real tips. No filler.</Text>
+      <Text style={styles.generatingSub}>{t('onboard.realPlaces')}</Text>
       <View style={styles.dots}>
         {dotOpacity.map((anim, i) => (
           <Animated.View key={i} style={[styles.dot, { opacity: anim }]} />
@@ -167,6 +170,7 @@ function StepSignup({
   onComplete?: () => void;
   onSkip: () => void;
 }) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(false);
 
@@ -234,7 +238,7 @@ function StepSignup({
               { opacity: pressed || loading ? 0.8 : 1 },
             ]}
           >
-            <Text style={styles.appleBtnText}>Continue with Apple</Text>
+            <Text style={styles.appleBtnText}>{t('onboard.continueApple')}</Text>
           </Pressable>
         )}
         <Pressable
@@ -246,7 +250,7 @@ function StepSignup({
             { opacity: pressed || loading ? 0.8 : 1 },
           ]}
         >
-          <Text style={styles.googleBtnText}>Continue with Google</Text>
+          <Text style={styles.googleBtnText}>{t('onboard.continueGoogle')}</Text>
         </Pressable>
         <Pressable
           onPress={onSignIn}
@@ -257,13 +261,13 @@ function StepSignup({
             { opacity: pressed || loading ? 0.8 : 1 },
           ]}
         >
-          <Text style={styles.emailBtnText}>Continue with Email</Text>
+          <Text style={styles.emailBtnText}>{t('onboard.continueEmail')}</Text>
         </Pressable>
       </View>
 
       <Pressable onPress={onSkip} style={({ pressed }) => [styles.skipWrap, { opacity: pressed ? 0.6 : 1 }]}>
-        <Text style={styles.skipText}>View my trip first</Text>
-        <Text style={styles.skipSubtext}>You can save it later</Text>
+        <Text style={styles.skipText}>{t('onboard.viewTripFirst')}</Text>
+        <Text style={styles.skipSubtext}>{t('onboard.saveLater')}</Text>
       </Pressable>
 
       {DEV && (

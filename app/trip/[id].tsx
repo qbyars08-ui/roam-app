@@ -3,6 +3,7 @@
 // Fetches shared trip by UUID, renders public view, "Steal this trip" CTA
 // =============================================================================
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -29,6 +30,7 @@ import { useAppStore } from '../../lib/store';
 const BASE_URL = 'https://roamappwait.netlify.app';
 
 export default function PublicTripScreen() {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -41,18 +43,18 @@ export default function PublicTripScreen() {
 
   useEffect(() => {
     if (!id) {
-      setError('Invalid link');
+      setError(t('tripDetail.invalidLink'));
       setLoading(false);
       return;
     }
     getSharedTrip(id)
-      .then((t) => {
-        setTrip(t);
-        setError(t ? null : 'Trip not found');
+      .then((tripData) => {
+        setTrip(tripData);
+        setError(tripData ? null : t('tripDetail.tripNotFound'));
       })
-      .catch(() => setError('Could not load trip'))
+      .catch(() => setError(t('tripDetail.couldNotLoad')))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, t]);
 
   const shareUrl = id ? `${BASE_URL}/trip/${id}` : '';
   const deepLink = id ? `roam://trip/${id}` : '';
@@ -91,7 +93,7 @@ export default function PublicTripScreen() {
   if (error || !trip) {
     return (
       <View style={[styles.screen, styles.centerContent, { paddingTop: insets.top }]}>
-        <Text style={styles.errorText}>{error ?? 'Trip not found'}</Text>
+        <Text style={styles.errorText}>{error ?? t('tripDetail.tripNotFound')}</Text>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backBtnText}>Go back</Text>
         </Pressable>
@@ -144,8 +146,8 @@ export default function PublicTripScreen() {
           style={({ pressed }) => [styles.stealBtn, { opacity: pressed ? 0.9 : 1 }]}
           onPress={handleStealTrip}
         >
-          <Text style={styles.stealBtnText}>Steal this trip</Text>
-          <Text style={styles.stealBtnSub}>Plan your own version in ROAM</Text>
+          <Text style={styles.stealBtnText}>{t('tripDetail.stealTrip')}</Text>
+          <Text style={styles.stealBtnSub}>{t('tripDetail.stealSub')}</Text>
         </Pressable>
 
         {/* Copy link */}
@@ -154,7 +156,7 @@ export default function PublicTripScreen() {
           onPress={handleCopyLink}
         >
           <Text style={styles.copyBtnText}>
-            {copied ? 'Copied to clipboard' : 'Copy link'}
+            {copied ? t('tripDetail.copied') : t('tripDetail.copyLink')}
           </Text>
         </Pressable>
 
@@ -163,11 +165,11 @@ export default function PublicTripScreen() {
             style={({ pressed }) => [styles.openAppBtn, { opacity: pressed ? 0.9 : 1 }]}
             onPress={handleOpenInApp}
           >
-            <Text style={styles.openAppBtnText}>Open in ROAM app</Text>
+            <Text style={styles.openAppBtnText}>{t('tripDetail.openInApp')}</Text>
           </Pressable>
         )}
 
-        <Text style={styles.footer}>Shared with ROAM</Text>
+        <Text style={styles.footer}>{t('tripDetail.footer')}</Text>
       </ScrollView>
     </View>
   );

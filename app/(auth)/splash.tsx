@@ -3,6 +3,7 @@
 // Cinematic logo reveal with travel backdrop, auto-advances to Hook
 // =============================================================================
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { assignOnboardingVariant } from '../../lib/ab-test';
 import {
   Animated,
@@ -27,6 +28,7 @@ import { ONBOARDING_COMPLETE } from '../../lib/storage-keys';
 import { getDestinationPhoto } from '../../lib/photos';
 
 export default function SplashScreen() {
+  const { t } = useTranslation();
   const [browsing, setBrowsing] = useState(false);
   const router = useRouter();
   const logoOpacity = useRef(new Animated.Value(0)).current;
@@ -140,7 +142,7 @@ export default function SplashScreen() {
       </Animated.Text>
 
       <Animated.Text style={[styles.tagline, { opacity: taglineOpacity }]}>
-        Go somewhere that changes you.
+        {t('splash.tagline')}
       </Animated.Text>
 
       <Pressable
@@ -154,7 +156,7 @@ export default function SplashScreen() {
         ]}
       >
         <Text style={styles.browseFirstText}>
-          {browsing ? 'Loading...' : 'Browse first'}
+          {browsing ? 'Loading...' : t('splash.browseFirst')}
         </Text>
       </Pressable>
     </View>

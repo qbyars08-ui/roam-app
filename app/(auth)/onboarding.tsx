@@ -3,6 +3,7 @@
 // Full-screen cinematic slides, glowing progress, no emojis
 // =============================================================================
 import React, { useCallback, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Animated,
   Easing,
@@ -72,6 +73,7 @@ const STEPS: OnboardingStep[] = [
 ];
 
 export default function OnboardingScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [currentStep, setCurrentStep] = useState(0);
@@ -155,7 +157,7 @@ export default function OnboardingScreen() {
           accessibilityRole="button"
           accessibilityLabel="Skip"
         >
-          <Text style={styles.skipText}>Skip</Text>
+          <Text style={styles.skipText}>{t('common.skip')}</Text>
         </Pressable>
       </View>
 

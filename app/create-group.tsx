@@ -3,6 +3,7 @@
 // Pick existing trip, name it, share invite link
 // =============================================================================
 import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -31,13 +32,14 @@ import GroupInviteCard from '../components/features/GroupInviteCard';
 import { withComingSoon } from '../lib/with-coming-soon';
 
 function CreateGroupScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ tripId?: string }>();
   const tripId = params.tripId ?? '';
 
   const trips = useAppStore((s) => s.trips);
-  const selectedTrip = trips.find((t) => t.id === tripId) ?? trips[0];
+  const selectedTrip = trips.find((trip) => trip.id === tripId) ?? trips[0];
 
   const [groupName, setGroupName] = useState('');
   const [creating, setCreating] = useState(false);
@@ -110,10 +112,10 @@ function CreateGroupScreen() {
           <Pressable onPress={() => router.back()} style={styles.backBtn}>
             <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
           </Pressable>
-          <Text style={styles.headerTitle}>Create group trip</Text>
+          <Text style={styles.headerTitle}>{t('createGroup.title')}</Text>
         </View>
         <View style={[styles.scrollInner, { flex: 1, justifyContent: 'center' }]}>
-          <Text style={styles.emptyMessage}>Plan a trip first, then come back to invite friends.</Text>
+          <Text style={styles.emptyMessage}>{t('createGroup.emptyMessage')}</Text>
           <Button label="Plan my trip" variant="sage" onPress={() => router.replace('/(tabs)/generate')} />
         </View>
       </View>
@@ -127,8 +129,8 @@ function CreateGroupScreen() {
           contentContainerStyle={styles.successScroll}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.successTitle}>Group created</Text>
-          <Text style={styles.successSub}>Share the invite so friends can join</Text>
+          <Text style={styles.successTitle}>{t('createGroup.successTitle')}</Text>
+          <Text style={styles.successSub}>{t('createGroup.successSub')}</Text>
           <GroupInviteCard
             groupName={createdGroupName || `${selectedTrip.destination} ${new Date().getFullYear()}`}
             destination={selectedTrip.destination}
@@ -137,7 +139,7 @@ function CreateGroupScreen() {
             ownerName={undefined}
           />
           <Pressable onPress={handleGoToGroup} style={styles.linkBtn}>
-            <Text style={styles.linkBtnText}>Open group trip</Text>
+            <Text style={styles.linkBtnText}>{t('createGroup.openGroup')}</Text>
           </Pressable>
         </ScrollView>
       </View>
@@ -150,7 +152,7 @@ function CreateGroupScreen() {
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
         </Pressable>
-        <Text style={styles.headerTitle}>Create group trip</Text>
+        <Text style={styles.headerTitle}>{t('createGroup.title')}</Text>
       </View>
 
       <ScrollView
@@ -176,7 +178,7 @@ function CreateGroupScreen() {
           </Pressable>
         )}
 
-        <Text style={styles.label}>Group name</Text>
+        <Text style={styles.label}>{t('createGroup.groupNameLabel')}</Text>
         <TextInput
           style={styles.input}
           value={groupName}
@@ -188,7 +190,7 @@ function CreateGroupScreen() {
         {error && <Text style={styles.errorText}>{error}</Text>}
 
         <Button
-          label={creating ? 'Creating...' : 'Create group'}
+          label={creating ? 'Creating...' : t('createGroup.createButton')}
           variant="sage"
           onPress={handleCreate}
           disabled={creating || !selectedTrip}

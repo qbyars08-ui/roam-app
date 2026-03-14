@@ -3,6 +3,7 @@
 // "ROAM learns you" — 3 feature cards + "Build my profile" CTA (no emojis)
 // =============================================================================
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Animated,
   Easing,
@@ -31,6 +32,7 @@ const FEATURES: Feature[] = [
 ];
 
 export default function PersonalizationScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -103,8 +105,8 @@ export default function PersonalizationScreen() {
             transform: [{ translateY: titleY }],
           }}
         >
-          <Text style={styles.eyebrow}>PERSONALIZED AI</Text>
-          <Text style={styles.title}>ROAM learns you</Text>
+          <Text style={styles.eyebrow}>{t('personalization.eyebrow')}</Text>
+          <Text style={styles.title}>{t('personalization.title')}</Text>
           <Text style={styles.sub}>
             Three questions. That's all it takes to build{'\n'}
             a travel profile that changes everything.
@@ -148,7 +150,7 @@ export default function PersonalizationScreen() {
             { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
           ]}
         >
-          <Text style={styles.btnText}>Build my profile</Text>
+          <Text style={styles.btnText}>{t('personalization.buildProfile')}</Text>
         </Pressable>
       </Animated.View>
     </View>

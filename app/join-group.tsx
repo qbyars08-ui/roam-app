@@ -4,6 +4,7 @@
 // Supports deferred signup: show trip preview before auth
 // =============================================================================
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -44,6 +45,7 @@ function getItinerarySummary(itinerary: Record<string, unknown> | null): string 
 }
 
 function JoinGroupScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ code?: string }>();
@@ -59,16 +61,16 @@ function JoinGroupScreen() {
 
   useEffect(() => {
     if (!code) {
-      setError('Invalid link');
+      setError(t('joinGroup.invalidLink'));
       setLoading(false);
       return;
     }
     getGroupPreviewByInviteCode(code).then((g) => {
       if (g) setGroup(g);
-      else setError('Trip not found');
+      else setError(t('joinGroup.tripNotFound'));
       setLoading(false);
     });
-  }, [code]);
+  }, [code, t]);
 
   const handleJoin = useCallback(async () => {
     if (!code) return;
@@ -102,7 +104,7 @@ function JoinGroupScreen() {
   if (error || !group) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
-        <Text style={styles.errorText}>{error ?? 'Trip not found'}</Text>
+        <Text style={styles.errorText}>{error ?? t('joinGroup.tripNotFound')}</Text>
         <Pressable onPress={() => router.back()} style={styles.backLink}>
           <Text style={styles.backLinkText}>Go back</Text>
         </Pressable>
@@ -126,7 +128,7 @@ function JoinGroupScreen() {
           style={styles.gradient}
         >
           <View style={styles.content}>
-            <Text style={styles.title}>You are invited</Text>
+            <Text style={styles.title}>{t('joinGroup.youAreInvited')}</Text>
             <Text style={styles.groupName}>{group.name}</Text>
             <Text style={styles.dest}>{group.destination}</Text>
             {dateRange ? (
@@ -153,13 +155,13 @@ function JoinGroupScreen() {
               Join to plan together, split expenses, and chat.
             </Text>
             <Button
-              label={joining ? 'Joining...' : 'Join the trip'}
+              label={joining ? 'Joining...' : t('joinGroup.joinButton')}
               variant="sage"
               onPress={handleJoin}
               disabled={joining}
             />
             <Pressable onPress={() => router.back()} style={styles.skipBtn}>
-              <Text style={styles.skipText}>Not now</Text>
+              <Text style={styles.skipText}>{t('joinGroup.notNow')}</Text>
             </Pressable>
           </View>
         </LinearGradient>

@@ -3,6 +3,7 @@
 // 4 tabs: Itinerary voting, Expenses, Chat, Packing
 // =============================================================================
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -56,6 +57,7 @@ type TabId = 'itinerary' | 'expenses' | 'chat' | 'packing';
 // Main Screen
 // ---------------------------------------------------------------------------
 function GroupTripScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ groupId: string }>();
@@ -137,10 +139,10 @@ function GroupTripScreen() {
       : 'Dates TBD';
 
   const TABS: { id: TabId; label: string; icon: typeof MapPin }[] = [
-    { id: 'itinerary', label: 'Itinerary', icon: MapPin },
-    { id: 'expenses', label: 'Expenses', icon: DollarSign },
-    { id: 'chat', label: 'Chat', icon: MessageCircle },
-    { id: 'packing', label: 'Packing', icon: Package },
+    { id: 'itinerary', label: t('groupTrip.tabItinerary'), icon: MapPin },
+    { id: 'expenses', label: t('groupTrip.tabExpenses'), icon: DollarSign },
+    { id: 'chat', label: t('groupTrip.tabChat'), icon: MessageCircle },
+    { id: 'packing', label: t('groupTrip.tabPacking'), icon: Package },
   ];
 
   return (
@@ -175,20 +177,20 @@ function GroupTripScreen() {
 
       {/* Tabs */}
       <View style={styles.tabs}>
-        {TABS.map((t) => {
-          const Icon = t.icon;
-          const active = activeTab === t.id;
+        {TABS.map((tab) => {
+          const Icon = tab.icon;
+          const active = activeTab === tab.id;
           return (
             <Pressable
-              key={t.id}
+              key={tab.id}
               style={[styles.tab, active && styles.tabActive]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setActiveTab(t.id);
+                setActiveTab(tab.id);
               }}
             >
               <Icon size={16} color={active ? COLORS.sage : COLORS.creamMuted} strokeWidth={2} />
-              <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>{t.label}</Text>
+              <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>{tab.label}</Text>
             </Pressable>
           );
         })}
@@ -230,6 +232,7 @@ function GroupTripScreen() {
 // Itinerary Tab
 // ---------------------------------------------------------------------------
 function ItineraryTab({ group, members }: { group: TripGroup; members: GroupMember[] }) {
+  const { t } = useTranslation();
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
 
   useEffect(() => {
@@ -246,8 +249,8 @@ function ItineraryTab({ group, members }: { group: TripGroup; members: GroupMemb
   if (!itinerary?.days?.length) {
     return (
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Itinerary</Text>
-        <Text style={styles.emptyText}>No itinerary yet. Add one from your trip.</Text>
+        <Text style={styles.cardTitle}>{t('groupTrip.tabItinerary')}</Text>
+        <Text style={styles.emptyText}>{t('groupTrip.noItinerary')}</Text>
       </View>
     );
   }
@@ -302,6 +305,7 @@ function ActivityVoteRow({
   activity: string;
   members: GroupMember[];
 }) {
+  const { t } = useTranslation();
   const session = useAppStore((s) => s.session);
   const [votes, setVotes] = useState<{ keep: number; swap: number }>({ keep: 0, swap: 0 });
   const [myVote, setMyVote] = useState<'keep' | 'swap' | null>(null);
@@ -318,16 +322,16 @@ function ActivityVoteRow({
   }, [groupId, dayNumber, timeSlot, session?.user?.id]);
 
   const handleVote = useCallback(
-    async (t: 'keep' | 'swap') => {
+    async (voteType: 'keep' | 'swap') => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const prevVote = myVote;
-      setMyVote(t);
+      setMyVote(voteType);
       setVotes((prev) => {
-        let next = { ...prev, [t]: prev[t] + 1 };
-        if (prevVote && prevVote !== t) next = { ...next, [prevVote]: Math.max(0, next[prevVote] - 1) };
+        let next = { ...prev, [voteType]: prev[voteType] + 1 };
+        if (prevVote && prevVote !== voteType) next = { ...next, [prevVote]: Math.max(0, next[prevVote] - 1) };
         return next;
       });
-      await castVote({ groupId, dayNumber, timeSlot, voteType: t });
+      await castVote({ groupId, dayNumber, timeSlot, voteType });
     },
     [groupId, dayNumber, timeSlot, myVote]
   );
@@ -342,13 +346,13 @@ function ActivityVoteRow({
           style={[styles.voteBtn, myVote === 'keep' && styles.voteBtnActive]}
           onPress={() => handleVote('keep')}
         >
-          <Text style={styles.voteBtnText}>Keep ({votes.keep})</Text>
+          <Text style={styles.voteBtnText}>{t('groupTrip.keep')} ({votes.keep})</Text>
         </Pressable>
         <Pressable
           style={[styles.voteBtn, myVote === 'swap' && styles.voteBtnActive]}
           onPress={() => handleVote('swap')}
         >
-          <Text style={styles.voteBtnText}>Swap ({votes.swap})</Text>
+          <Text style={styles.voteBtnText}>{t('groupTrip.swap')} ({votes.swap})</Text>
         </Pressable>
       </View>
     </View>
@@ -369,6 +373,7 @@ function ExpensesTab({
   members: GroupMember[];
   onRefresh: () => void;
 }) {
+  const { t } = useTranslation();
   const [showAdd, setShowAdd] = useState(false);
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<TripExpense['category']>('food');
@@ -403,12 +408,12 @@ function ExpensesTab({
     <View style={styles.tabSection}>
       {myBalance && (
         <View style={styles.balanceCard}>
-          <Text style={styles.balanceTitle}>Your balance</Text>
+          <Text style={styles.balanceTitle}>{t('groupTrip.yourBalance')}</Text>
           <Text style={[styles.balanceValue, myBalance.netBalance >= 0 ? styles.positive : styles.negative]}>
             {myBalance.netBalance >= 0 ? '+' : ''}${myBalance.netBalance.toFixed(0)}
           </Text>
           <Text style={styles.balanceSub}>
-            Paid ${myBalance.totalPaid.toFixed(0)} / Owed ${myBalance.totalOwed.toFixed(0)}
+            {t('groupTrip.paid')} ${myBalance.totalPaid.toFixed(0)} / {t('groupTrip.owed')} ${myBalance.totalOwed.toFixed(0)}
           </Text>
         </View>
       )}
@@ -417,7 +422,7 @@ function ExpensesTab({
         style={styles.addExpenseBtn}
         onPress={() => setShowAdd(true)}
       >
-        <Text style={styles.addExpenseBtnText}>Add expense</Text>
+        <Text style={styles.addExpenseBtnText}>{t('groupTrip.addExpense')}</Text>
       </Pressable>
 
       {expenses.map((e) => (
@@ -433,7 +438,7 @@ function ExpensesTab({
 
       {showAdd && (
         <View style={styles.modalCard}>
-          <Text style={styles.modalTitle}>Add expense</Text>
+          <Text style={styles.modalTitle}>{t('groupTrip.addExpense')}</Text>
           <TextInput
             style={styles.input}
             value={amount}
@@ -486,17 +491,18 @@ function ChatTab({
   messages: GroupMessage[];
   members: GroupMember[];
 }) {
+  const { t } = useTranslation();
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const session = useAppStore((s) => s.session);
 
   const handleSend = useCallback(async () => {
-    const t = input.trim();
-    if (!t || sending) return;
+    const trimmed = input.trim();
+    if (!trimmed || sending) return;
     setSending(true);
     setInput('');
     try {
-      await sendMessage({ groupId, content: t });
+      await sendMessage({ groupId, content: trimmed });
     } finally {
       setSending(false);
     }
@@ -522,7 +528,7 @@ function ChatTab({
           </View>
         )}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>No messages yet. Say something.</Text>
+          <Text style={styles.emptyText}>{t('groupTrip.noMessages')}</Text>
         }
         style={styles.msgList}
       />
@@ -536,7 +542,7 @@ function ChatTab({
           onSubmitEditing={handleSend}
         />
         <Pressable style={styles.sendBtn} onPress={handleSend} disabled={sending}>
-          <Text style={styles.sendBtnText}>{sending ? '...' : 'Send'}</Text>
+          <Text style={styles.sendBtnText}>{sending ? '...' : t('groupTrip.send')}</Text>
         </Pressable>
       </View>
     </View>
@@ -560,12 +566,12 @@ function PackingTab({
   const [adding, setAdding] = useState(false);
 
   const handleAdd = useCallback(async () => {
-    const t = newItem.trim();
-    if (!t) return;
+    const itemName = newItem.trim();
+    if (!itemName) return;
     setAddError(null);
     setAdding(true);
     try {
-      await addPackingItem({ groupId, itemName: t });
+      await addPackingItem({ groupId, itemName });
       setNewItem('');
       onRefresh();
     } catch {

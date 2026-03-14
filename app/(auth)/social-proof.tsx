@@ -3,6 +3,7 @@
 // Traveler count + testimonials + "I want this" CTA
 // =============================================================================
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Animated,
   Easing,
@@ -48,6 +49,7 @@ const TESTIMONIALS: Testimonial[] = [
 ];
 
 export default function SocialProofScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -128,7 +130,7 @@ export default function SocialProofScreen() {
           ]}
         >
           <Text style={styles.counterNumber}>New</Text>
-          <Text style={styles.counterLabel}>travelers joining daily</Text>
+          <Text style={styles.counterLabel}>{t('socialProof.counterLabel')}</Text>
         </Animated.View>
 
         {/* Testimonials */}
@@ -173,7 +175,7 @@ export default function SocialProofScreen() {
             { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
           ]}
         >
-          <Text style={styles.btnText}>I want this</Text>
+          <Text style={styles.btnText}>{t('socialProof.ctaButton')}</Text>
         </Pressable>
       </Animated.View>
     </View>

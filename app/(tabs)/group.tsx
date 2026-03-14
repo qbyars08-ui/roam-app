@@ -4,6 +4,7 @@
 // Currency: live exchange rates + offline fallback + budget tracker
 // =============================================================================
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   Animated,
@@ -276,6 +277,7 @@ function BudgetTrackerCard({
   rates: Record<string, number>;
   tripDays: number;
 }) {
+  const { t } = useTranslation();
   const totalSpent = expenses.reduce(
     (sum, e) => sum + convertToHome(e.amount, e.currency, homeCurrency, rates),
     0
@@ -311,14 +313,14 @@ function BudgetTrackerCard({
   return (
     <View style={styles.budgetTrackerCard}>
       <View style={styles.budgetTrackerRow}>
-        <Text style={styles.budgetTrackerLabel}>Total spent</Text>
+        <Text style={styles.budgetTrackerLabel}>{t('groupTab.totalSpent')}</Text>
         <Text style={styles.budgetTrackerValue}>
           {getCurrencySymbol(homeCurrency)}
           {totalSpent.toFixed(2)}
         </Text>
       </View>
       <View style={styles.budgetTrackerRow}>
-        <Text style={styles.budgetTrackerLabel}>Trip budget</Text>
+        <Text style={styles.budgetTrackerLabel}>{t('groupTab.tripBudget')}</Text>
         <Text style={styles.budgetTrackerValue}>
           {getCurrencySymbol(homeCurrency)}
           {tripBudget.toFixed(0)}
@@ -326,7 +328,7 @@ function BudgetTrackerCard({
       </View>
       <View style={styles.budgetTrackerRow}>
         <Text style={[styles.budgetTrackerLabel, { color: COLORS.sage }]}>
-          Remaining
+          {t('groupTab.remaining')}
         </Text>
         <Text style={[styles.budgetTrackerValue, { color: COLORS.sage }]}>
           {getCurrencySymbol(homeCurrency)}
@@ -344,7 +346,7 @@ function BudgetTrackerCard({
           ]}
         />
       </View>
-      <Text style={styles.budgetSubsection}>Per day</Text>
+      <Text style={styles.budgetSubsection}>{t('groupTab.perDay')}</Text>
       {Object.entries(byDay)
         .sort(([a], [b]) => Number(a) - Number(b))
         .map(([day, amt]) => (
@@ -356,7 +358,7 @@ function BudgetTrackerCard({
             </Text>
           </View>
         ))}
-      <Text style={styles.budgetSubsection}>By category</Text>
+      <Text style={styles.budgetSubsection}>{t('groupTab.byCategory')}</Text>
       {Object.entries(byCategory).map(([cat, amt]) => (
         <View key={cat} style={styles.budgetTrackerRow}>
           <Text style={styles.budgetTrackerMeta}>
@@ -507,11 +509,12 @@ function DurationPickerModal({
   onSelect: (duration: SharingDuration) => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={locationStyles.durationOverlay}>
         <View style={locationStyles.durationSheet}>
-          <Text style={locationStyles.durationTitle}>Share Location</Text>
+          <Text style={locationStyles.durationTitle}>{t('groupTab.shareLocation')}</Text>
           <Text style={locationStyles.durationSubtitle}>
             Your location is only visible to trip members and auto-expires.
           </Text>
@@ -827,6 +830,7 @@ const locationStyles = StyleSheet.create({
 // Component
 // ---------------------------------------------------------------------------
 export default function GroupScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const activeTrip = getActiveTrip();
@@ -1067,7 +1071,7 @@ export default function GroupScreen() {
         {mode === 'group' ? (
           <>
             <Text style={styles.title}>Group</Text>
-            <Text style={styles.subtitle}>Plan together. Split fairly.</Text>
+            <Text style={styles.subtitle}>{t('groupTab.subtitle')}</Text>
 
             {hasTrip ? (
               <>
@@ -1078,7 +1082,7 @@ export default function GroupScreen() {
                   </Text>
                   <Pressable style={styles.inviteBtn}>
                     <UserPlus size={16} color={COLORS.sage} strokeWidth={2} />
-                    <Text style={styles.inviteBtnText}>Invite friends</Text>
+                    <Text style={styles.inviteBtnText}>{t('groupTab.inviteFriends')}</Text>
                   </Pressable>
                 </View>
 
@@ -1101,7 +1105,7 @@ export default function GroupScreen() {
                   </Pressable>
                 </View>
 
-                <Text style={styles.sectionTitle}>Location Sharing</Text>
+                <Text style={styles.sectionTitle}>{t('groupTab.locationSharing')}</Text>
                 <PrivacyBanner />
                 <LocationMapPlaceholder memberLocations={locationSharing.memberLocations} />
                 {MOCK_MEMBERS.map((m) => {
@@ -1137,13 +1141,13 @@ export default function GroupScreen() {
                   style={styles.addExpenseBtn}
                 >
                   <Plus size={20} color={COLORS.bg} strokeWidth={2.5} />
-                  <Text style={styles.addExpenseBtnText}>Add Expense</Text>
+                  <Text style={styles.addExpenseBtnText}>{t('groupTab.addExpense')}</Text>
                 </Pressable>
 
                 {expenses.length === 0 ? (
                   <View style={styles.listEmpty}>
                     <Wallet size={32} color={COLORS.creamDim} strokeWidth={1.5} />
-                    <Text style={styles.listEmptyText}>No expenses yet</Text>
+                    <Text style={styles.listEmptyText}>{t('groupTab.noExpenses')}</Text>
                     <Text style={styles.listEmptySub}>Add one to start tracking</Text>
                   </View>
                 ) : expenses.map((e) => {
@@ -1172,7 +1176,7 @@ export default function GroupScreen() {
                 {MOCK_BALANCES.length === 0 ? (
                   <View style={styles.listEmpty}>
                     <Users size={32} color={COLORS.creamDim} strokeWidth={1.5} />
-                    <Text style={styles.listEmptyText}>All settled up</Text>
+                    <Text style={styles.listEmptyText}>{t('groupTab.allSettled')}</Text>
                     <Text style={styles.listEmptySub}>No outstanding balances</Text>
                   </View>
                 ) : MOCK_BALANCES.map((b, i) => (
@@ -1185,7 +1189,7 @@ export default function GroupScreen() {
                       {b.amount.toFixed(2)}
                     </Text>
                     <Pressable style={styles.settleBtn}>
-                      <Text style={styles.settleBtnText}>Settle Up</Text>
+                      <Text style={styles.settleBtnText}>{t('groupTab.settleUp')}</Text>
                     </Pressable>
                   </View>
                 ))}
@@ -1193,15 +1197,15 @@ export default function GroupScreen() {
             ) : (
               <View style={styles.emptyState}>
                 <Users size={56} color={COLORS.sage} strokeWidth={1.5} />
-                <Text style={styles.emptyTitle}>No trip yet</Text>
+                <Text style={styles.emptyTitle}>{t('groupTab.noTripYet')}</Text>
                 <Text style={styles.emptyBody}>
-                  Generate a trip first, then invite your crew.
+                  {t('groupTab.generateFirst')}
                 </Text>
                 <Pressable
                   onPress={() => router.push('/(tabs)/generate')}
                   style={styles.emptyCta}
                 >
-                  <Text style={styles.emptyCtaText}>Generate Trip</Text>
+                  <Text style={styles.emptyCtaText}>{t('groupTab.generateTrip')}</Text>
                 </Pressable>
               </View>
             )}
@@ -1288,7 +1292,7 @@ export default function GroupScreen() {
             <View style={styles.budgetSection}>
               <View style={styles.budgetHeader}>
                 <Wallet size={20} color={COLORS.sage} strokeWidth={2} />
-                <Text style={styles.budgetTitle}>Trip Budget</Text>
+                <Text style={styles.budgetTitle}>{t('groupTab.tripBudgetTitle')}</Text>
               </View>
               <TextInput
                 style={styles.budgetInput}
@@ -1339,7 +1343,7 @@ export default function GroupScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalSheet, { paddingBottom: insets.bottom + SPACING.lg }]}>
-            <Text style={styles.modalTitle}>Add Expense</Text>
+            <Text style={styles.modalTitle}>{t('groupTab.addExpense')}</Text>
             <TextInput
               style={styles.modalInput}
               placeholder="Amount"
@@ -1370,7 +1374,7 @@ export default function GroupScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalSheet, { paddingBottom: insets.bottom + SPACING.lg }]}>
-            <Text style={styles.modalTitle}>Select currency</Text>
+            <Text style={styles.modalTitle}>{t('groupTab.selectCurrency')}</Text>
             <ScrollView style={styles.currencyListScroll}>
               {CURRENCY_LIST.map((c) => (
                 <Pressable

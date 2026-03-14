@@ -3,6 +3,7 @@
 // Before/After split — generic search vs ROAM's personalized result
 // =============================================================================
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Animated,
   Easing,
@@ -33,6 +34,7 @@ const AFTER_ITEMS = [
 ];
 
 export default function ValuePreviewScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [, setShowAfter] = useState(false);
@@ -122,7 +124,7 @@ export default function ValuePreviewScreen() {
     <View style={[styles.container, { paddingTop: insets.top + 40 }]}>
       <View style={styles.content}>
         <Animated.Text style={[styles.title, { opacity: titleOpacity }]}>
-          Stop Googling.{'\n'}Start experiencing.
+          {t('valuePreview.title')}
         </Animated.Text>
 
         {/* Before */}
@@ -135,7 +137,7 @@ export default function ValuePreviewScreen() {
             },
           ]}
         >
-          <Text style={styles.sectionLabel}>WITHOUT ROAM</Text>
+          <Text style={styles.sectionLabel}>{t('valuePreview.withoutRoam')}</Text>
           {BEFORE_ITEMS.map((item, i) => (
             <View key={i} style={styles.row}>
               <Text style={styles.xMark}>x</Text>
@@ -161,7 +163,7 @@ export default function ValuePreviewScreen() {
             },
           ]}
         >
-          <Text style={styles.sectionLabelGold}>WITH ROAM</Text>
+          <Text style={styles.sectionLabelGold}>{t('valuePreview.withRoam')}</Text>
           {AFTER_ITEMS.map((item, i) => (
             <View key={i} style={styles.row}>
               <Text style={styles.checkMark}>&#10003;</Text>
@@ -184,7 +186,7 @@ export default function ValuePreviewScreen() {
             { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
           ]}
         >
-          <Text style={styles.btnText}>Let's go</Text>
+          <Text style={styles.btnText}>{t('valuePreview.ctaButton')}</Text>
         </Pressable>
       </Animated.View>
     </View>
