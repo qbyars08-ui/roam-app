@@ -13,6 +13,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { impactAsync as hapticImpact } from '../../lib/haptics';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -232,6 +233,7 @@ const FOOD_CATEGORIES: FoodCategory[] = [
 // Component
 // ---------------------------------------------------------------------------
 export default function FoodScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const activeTrip = getActiveTrip();
@@ -374,7 +376,7 @@ export default function FoodScreen() {
                       isSelected && styles.categoryPillTextSelected,
                     ]}
                   >
-                    {cat === 'all' ? 'All' : cat}
+                    {cat === 'all' ? t('categories.all') : cat}
                   </Text>
                 </Pressable>
               );
@@ -464,7 +466,7 @@ export default function FoodScreen() {
           {filteredRestaurants.length === 0 ? (
             <View style={styles.emptyList}>
               <UtensilsCrossed size={40} color={COLORS.creamVeryFaint} strokeWidth={1.5} />
-              <Text style={styles.emptyListTitle}>No picks in this category</Text>
+              <Text style={styles.emptyListTitle}>{t('food.noResults')}</Text>
               <Text style={styles.emptyListSub}>Try another filter</Text>
             </View>
           ) : morePicks.length > 0 ? (
@@ -548,7 +550,7 @@ export default function FoodScreen() {
 
       {/* Saved toast */}
       {savedToast && (
-        <View style={styles.toastWrap}>
+          <View style={styles.toastWrap}>
           <Text style={styles.toastText}>Saved</Text>
         </View>
       )}

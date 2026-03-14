@@ -15,6 +15,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -107,6 +108,7 @@ function buildTiers(monthlyPrice: string, annualPrice: string): Tier[] {
 // Component
 // =============================================================================
 export default function PaywallScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const params = useLocalSearchParams<{ reason?: string; destination?: string; feature?: string }>();
@@ -250,7 +252,7 @@ export default function PaywallScreen() {
           onPress={handleClose}
           hitSlop={12}
           accessibilityRole="button"
-          accessibilityLabel="Close"
+          accessibilityLabel={t('common.close')}
           style={({ pressed }) => [styles.closeBtn, { top: insets.top + SPACING.xs, opacity: pressed ? 0.6 : 1 }]}
         >
           <X size={20} color={COLORS.cream} strokeWidth={2} />
@@ -276,7 +278,7 @@ export default function PaywallScreen() {
         onPress={handleClose}
         hitSlop={12}
         accessibilityRole="button"
-        accessibilityLabel="Close"
+        accessibilityLabel={t('common.close')}
         style={({ pressed }) => [styles.closeBtn, { top: insets.top + SPACING.xs, opacity: pressed ? 0.6 : 1 }]}
       >
         <X size={20} color={COLORS.cream} strokeWidth={2} />
@@ -328,7 +330,7 @@ export default function PaywallScreen() {
                 {/* Badge */}
                 {tier.badge && (
                   <View style={styles.bestValueBadge}>
-                    <Text style={styles.bestValueText}>{tier.badge}</Text>
+                    <Text style={styles.bestValueText}>{t('paywall.bestValue')}</Text>
                   </View>
                 )}
 
@@ -341,7 +343,7 @@ export default function PaywallScreen() {
                       </View>
                     )}
                     <Text style={[styles.tierName, tier.highlighted && styles.tierNameGold]}>
-                      {tier.name}
+                      {tier.id === 'free' ? t('common.free') : tier.name}
                     </Text>
                   </View>
                   <View style={styles.priceRow}>
@@ -406,7 +408,7 @@ export default function PaywallScreen() {
           style={({ pressed }) => [styles.restoreBtn, { opacity: restoring ? 0.4 : pressed ? 0.6 : 1 }]}
         >
           <Text style={styles.restoreText}>
-            {restoring ? 'Looking for your subscription...' : 'Restore Purchases'}
+            {restoring ? 'Looking for your subscription...' : t('paywall.restore')}
           </Text>
         </Pressable>
 

@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../lib/haptics';
 
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../lib/constants';
@@ -33,6 +34,7 @@ import {
 import WorldMap from '../components/features/WorldMap';
 
 function PassportScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const trips = useAppStore((s) => s.trips);
@@ -107,7 +109,7 @@ function PassportScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Your Passport</Text>
+          <Text style={styles.title}>{t('passport.title')}</Text>
           <Pressable onPress={handleShare} hitSlop={8} style={styles.shareBtn}>
             <Share2 size={22} color={COLORS.cream} strokeWidth={2} />
           </Pressable>
@@ -136,7 +138,7 @@ function PassportScreen() {
         {/* Stamps grid */}
         {stats.stamps.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>YOUR STAMPS</Text>
+            <Text style={styles.sectionLabel}>{t('passport.stamps').toUpperCase()}</Text>
             <View style={styles.stampsGrid}>
               {stats.stamps.map((stamp, i) => (
                 <View key={`${stamp.tripId}-${i}`} style={styles.stampCard}>
@@ -187,7 +189,7 @@ function PassportScreen() {
 
         {/* Badges */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>BADGES</Text>
+            <Text style={styles.sectionLabel}>{t('passport.badges').toUpperCase()}</Text>
           <View style={styles.badgesGrid}>
             {earnedBadges.map((badge) => (
               <View key={badge.id} style={styles.badgeCard}>

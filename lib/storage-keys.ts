@@ -102,3 +102,8 @@ export const APP_VERSION = '@roam/app_version';
 // Language survival
 // ---------------------------------------------------------------------------
 export const LANGUAGE_SURVIVAL_CACHE = '@roam/language-survival-cache';
+
+// ---------------------------------------------------------------------------
+// Locale / i18n
+// ---------------------------------------------------------------------------
+export const LOCALE = '@roam/locale';

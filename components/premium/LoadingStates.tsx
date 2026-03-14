@@ -7,12 +7,23 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, View, type DimensionValue, type ViewStyle } from 'react-native';
 import { COLORS, FONTS, SPACING } from '../../lib/constants';
 import { getDestinationTheme } from '../../lib/destination-themes';
+import i18n from '../../lib/i18n';
 
 // ---------------------------------------------------------------------------
 // 1. TripGeneratingLoader
 //    Full-screen loader shown while Claude generates an itinerary.
 //    Rotating compass, cycling status text, floating particle dots.
 // ---------------------------------------------------------------------------
+
+function getStatusMessages(): string[] {
+  return [
+    i18n.t('loadingStates.generatingTrip'),
+    i18n.t('loadingStates.findingPlaces'),
+    i18n.t('loadingStates.buildingItinerary'),
+    i18n.t('loadingStates.addingLocalTips'),
+    i18n.t('loadingStates.almostReady'),
+  ];
+}
 
 const STATUS_MESSAGES = [
   'Building your trip from scratch...',
@@ -85,17 +96,19 @@ export function TripGeneratingLoader({ destination }: TripGeneratingLoaderProps)
   // --- Text cycling ---
   const messageIndex = useRef(0);
   const textOpacity = useRef(new Animated.Value(1)).current;
-  const [currentMessage, setCurrentMessage] = React.useState(STATUS_MESSAGES[0]);
+  const messages = getStatusMessages();
+  const [currentMessage, setCurrentMessage] = React.useState(messages[0]);
 
   useEffect(() => {
+    const msgs = getStatusMessages();
     const interval = setInterval(() => {
       Animated.timing(textOpacity, {
         toValue: 0,
         duration: 300,
         useNativeDriver: true,
       }).start(() => {
-        messageIndex.current = (messageIndex.current + 1) % STATUS_MESSAGES.length;
-        setCurrentMessage(STATUS_MESSAGES[messageIndex.current]);
+        messageIndex.current = (messageIndex.current + 1) % msgs.length;
+        setCurrentMessage(msgs[messageIndex.current]);
         Animated.timing(textOpacity, {
           toValue: 1,
           duration: 300,
