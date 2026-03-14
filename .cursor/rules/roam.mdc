@@ -1,62 +1,74 @@
 ---
-description: ROAM AI Travel Planner — codebase rules for Cursor agents
+description: "ROAM AI Travel Planner — codebase rules for all Cursor agents"
 globs: ["**/*.ts", "**/*.tsx"]
 ---
 
 # ROAM Codebase Rules
 
 ## Stack
-- React Native + Expo Router (file-based routing in app/)
+- React Native + Expo 55 + Expo Router (file-based routing in app/)
 - Supabase (auth, Postgres, edge functions, Realtime)
 - Zustand (state management in lib/store.ts)
 - RevenueCat (subscriptions)
 - TypeScript strict mode
 
-## Design System (lib/constants.ts)
-- Colors: bg=#080F0A, sage=#7CAF8A, cream=#F5EDD8, coral=#E8614A, accentGold=#C9A84C
+## Design System (lib/constants.ts) — NON-NEGOTIABLE
+- Colors: bg=#080F0A, sage=#7CAF8A, cream=#F5EDD8, coral=#E8614A, gold=#C9A84C
 - Fonts: Cormorant Garamond Bold (headers), DM Sans (body), DM Mono (labels)
-- Dark-only UI. No light mode.
-- NO EMOJIS ANYWHERE. Use colored dots, text pills, or lucide-react-native icons.
+- Icons: lucide-react-native ONLY. strokeWidth={2}, size={20} default.
+- Dark-only UI. No light mode. No emojis anywhere.
+- Use COLORS/FONTS/SPACING/RADIUS constants — NEVER hardcode values.
 
 ## Architecture
-- All AI calls go through `supabase/functions/claude-proxy/` — NEVER call Anthropic directly from client
+- All AI calls: supabase/functions/claude-proxy/ — NEVER call Anthropic directly from client
+- All flight links: Skyscanner affiliate (no flight API, amadeus is dead)
+- All hotel links: Booking.com affiliate (https://www.booking.com/search.html?ss=[dest]&aid=[AID])
+- All activity links: GetYourGuide affiliate
 - Free tier: 1 trip/month, enforced server-side in edge function
 - Pro tier: unlimited, managed via RevenueCat
-- Guest mode: anonymous auth + waitlist email capture
+- Guest mode: anonymous auth + 1 trip ever
+
+## Key Files
+- lib/claude.ts — System prompt, callClaude(), buildTripPrompt(), generateItinerary()
+- lib/store.ts — Zustand store (session, trips, isPro, currency, travelProfile)
+- lib/constants.ts — COLORS, FONTS, SPACING, RADIUS, DESTINATIONS
+- lib/types/itinerary.ts — Itinerary type + parseItinerary() runtime validator
+- lib/flights.ts — Airport codes, home airport, Skyscanner affiliate links
+- lib/booking-links.ts — Affiliate deep links (Booking, Skyscanner, GYG, SafetyWing, Airalo)
+- lib/pro-gate.ts — Feature gating (free vs pro)
+- lib/revenue-cat.ts — RevenueCat init, purchase, restore
+- supabase/functions/claude-proxy/index.ts — Rate-limited AI proxy with JWT auth
 
 ## Code Standards
 - Immutability always — never mutate, return new objects
 - Files: 200-400 lines typical, 800 max
 - Functions: <50 lines
 - Nesting: <4 levels deep
-- Handle errors explicitly at every level
-- Validate all inputs at system boundaries
-- No hardcoded secrets — use env vars
-
-## Key Files
-- `lib/claude.ts` — System prompt, callClaude(), buildTripPrompt()
-- `lib/store.ts` — Zustand store (session, trips, isPro, currency)
-- `lib/constants.ts` — COLORS, FONTS, SPACING, RADIUS
-- `lib/types/itinerary.ts` — Itinerary type + parseItinerary() validator
-- `lib/pro-gate.ts` — Feature gating (free vs pro)
-- `lib/revenue-cat.ts` — RevenueCat init, purchase, restore
+- useCallback for handlers, useMemo for computed values
+- Haptic feedback on all user interactions (lib/haptics.ts)
+- Loading state on every async action
+- User-facing error message on every failure
+- Handle errors explicitly — never silently swallow
 
 ## Conventions
 - Conventional commits: type(scope): description
 - Types: feat, fix, docs, style, refactor, test, chore
 - All Supabase tables use RLS with auth.uid() ownership checks
 - Edge functions use Deno.env.get() for secrets
-- Web builds stub expo-haptics and react-native-view-shot (see lib/haptics.ts, lib/view-shot.ts)
+- Hooks MUST be declared before any conditional early returns (React Rules of Hooks)
 
 ## Testing
-- TSC check: `npx tsc --noEmit`
-- Web build: `npx expo export --platform web`
-- Always verify new code compiles before committing
+- npx tsc --noEmit — must pass after every change
+- npx expo export --platform web — must pass before deploy
+- Test with diverse destinations: Tokyo, Marrakech, Bali, Reykjavik, Oaxaca
 
-## Do NOT
+## NEVER
 - Use emojis in UI code
-- Put API keys in EXPO_PUBLIC_ vars (except Supabase anon key, Google Places)
-- Call Anthropic API directly from client code
-- Use `WITH CHECK (true)` in RLS policies
+- Put API keys in client code (except Supabase anon key, Google Places)
+- Call Anthropic API directly from client
+- Use WITH CHECK (true) in RLS policies on sensitive tables
 - Ship console.log with sensitive data
+- Use any icon library other than lucide-react-native
+- Hardcode hex colors, font families, or spacing values
 - Mutate state — always create new objects
+- Reference amadeus anywhere — it is dead and removed
