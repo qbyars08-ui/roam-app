@@ -120,6 +120,7 @@ export default function PaywallScreen() {
   useEffect(() => {
     getOfferings().then(setPackages).catch(() => {});
     captureEvent('paywall_viewed', { reason: params.reason ?? null, destination: params.destination ?? null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

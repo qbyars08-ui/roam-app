@@ -1048,6 +1048,7 @@ function DestinationIntelCard({ destination }: { destination: string }) {
     // Timezone & local time
     const tz = getTimezoneByDestination(destination);
     if (tz) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTimezone(tz.split('/').pop()?.replace(/_/g, ' ') ?? tz);
       try {
         const now = new Date();

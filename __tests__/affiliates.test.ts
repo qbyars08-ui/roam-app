@@ -246,6 +246,7 @@ describe('trackAffiliateClick', () => {
   });
 
   it('uses logged-in user_id when session is present', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- test mock
     useAppStore.setState({ session: { user: { id: 'uid-abc' } } as any });
     await trackAffiliateClick('skyscanner', 'Seoul');
     const row = insertSpy.mock.calls[0][0] as Record<string, unknown>;
