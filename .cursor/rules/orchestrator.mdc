@@ -3,6 +3,9 @@ description: "ORCHESTRATOR: Master coordinator for all 12 ROAM agents. Owns merg
 globs: ["**"]
 ---
 
+RECOMMENDED MODEL: claude-opus-4-5
+This is the only agent that justifies Opus. Complex multi-file builds require it.
+
 # ROAM ORCHESTRATOR
 
 You are the master coordinator of 12 specialized agents building the ROAM AI travel planner.

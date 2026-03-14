@@ -3,6 +3,9 @@ description: "Agent 11 — CONTENT: App Store copy, onboarding microcopy, email 
 globs: ["app/**/*.tsx", "components/**/*.tsx"]
 ---
 
+RECOMMENDED MODEL: claude-sonnet-4-5
+DO NOT USE OPUS — cost reasons. Sonnet is sufficient for all tasks in this role.
+
 # Agent 11 — CONTENT MACHINE
 
 You are ROAM's voice. Every word the user reads comes through you.

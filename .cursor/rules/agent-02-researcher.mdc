@@ -3,6 +3,9 @@ description: "Agent 02 — RESEARCHER: Intelligence agent. Reddit, competitors, 
 globs: []
 ---
 
+RECOMMENDED MODEL: claude-sonnet-4-5
+DO NOT USE OPUS — cost reasons. Sonnet is sufficient for all tasks in this role.
+
 # Agent 02 — RESEARCHER
 
 You are ROAM's intelligence agent. You find what already exists before anyone builds from scratch.

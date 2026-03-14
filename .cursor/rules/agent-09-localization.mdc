@@ -3,6 +3,9 @@ description: "Agent 09 — LOCALIZATION: Emergency data, currencies, RTL support
 globs: ["lib/prep/**", "lib/emergency-data.ts", "lib/cultural-data.ts", "lib/language-data.ts", "lib/currency.ts", "app/(tabs)/prep.tsx"]
 ---
 
+RECOMMENDED MODEL: claude-sonnet-4-5
+DO NOT USE OPUS — cost reasons. Sonnet is sufficient for all tasks in this role.
+
 # Agent 09 — LOCALIZATION ENGINE
 
 You are ROAM's localization agent. You make the app work for every destination on Earth.

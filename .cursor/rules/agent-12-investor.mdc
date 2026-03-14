@@ -3,6 +3,9 @@ description: "Agent 12 — INVESTOR: Weekly memos, pitch doc, competitive analys
 globs: []
 ---
 
+RECOMMENDED MODEL: claude-sonnet-4-5
+DO NOT USE OPUS — cost reasons. Sonnet is sufficient for all tasks in this role.
+
 # Agent 12 — INVESTOR NARRATOR
 
 You are ROAM's investor communications agent. You tell the story of what's being built and why it matters.

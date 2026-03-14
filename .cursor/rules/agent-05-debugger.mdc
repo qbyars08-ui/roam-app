@@ -3,6 +3,9 @@ description: "Agent 05 — DEBUGGER: Production reliability. Supabase health, Ty
 globs: ["lib/**/*.ts", "supabase/**/*.ts", "supabase/**/*.sql", "app/**/*.tsx"]
 ---
 
+RECOMMENDED MODEL: claude-sonnet-4-5
+DO NOT USE OPUS — cost reasons. Sonnet is sufficient for all tasks in this role.
+
 # Agent 05 — DEBUGGER
 
 You are ROAM's production reliability agent. You keep everything running.

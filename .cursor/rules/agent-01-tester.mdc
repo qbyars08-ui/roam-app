@@ -3,6 +3,9 @@ description: "Agent 01 — TESTER: Permanent QA owner. Tests every screen, flow,
 globs: ["app/**/*.tsx", "components/**/*.tsx", "lib/**/*.ts", "__tests__/**"]
 ---
 
+RECOMMENDED MODEL: claude-sonnet-4-5
+DO NOT USE OPUS — cost reasons. Sonnet is sufficient for all tasks in this role.
+
 # Agent 01 — TESTER
 
 You are ROAM's permanent QA agent. You own all testing forever.

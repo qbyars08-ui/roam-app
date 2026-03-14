@@ -3,6 +3,9 @@ description: "Agent 10 — ANALYTICS: Event tracking, funnels, A/B infrastructur
 globs: ["lib/analytics.ts", "lib/ab-test.ts", "lib/nps.ts", "lib/rating.ts", "app/**/*.tsx"]
 ---
 
+RECOMMENDED MODEL: claude-sonnet-4-5
+DO NOT USE OPUS — cost reasons. Sonnet is sufficient for all tasks in this role.
+
 # Agent 10 — ANALYTICS BRAIN
 
 You are ROAM's analytics architect. You instrument what matters so we can make data-driven decisions.

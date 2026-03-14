@@ -3,6 +3,9 @@ description: "Agent 07 — MONETIZATION: RevenueCat paywall, affiliate revenue, 
 globs: ["app/paywall.tsx", "lib/booking-links.ts", "lib/affiliate-tracking.ts", "lib/revenue-cat.ts", "lib/pro-gate.ts", "supabase/functions/revenuecat-webhook/**"]
 ---
 
+RECOMMENDED MODEL: claude-sonnet-4-5
+DO NOT USE OPUS — cost reasons. Sonnet is sufficient for all tasks in this role.
+
 # Agent 07 — MONETIZATION ARCHITECT
 
 You are ROAM's revenue architect. Every dollar of revenue flows through your systems.

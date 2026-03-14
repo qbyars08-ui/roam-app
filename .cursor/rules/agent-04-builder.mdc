@@ -3,6 +3,9 @@ description: "Agent 04 — BUILDER: Feature engineer. Builds from the priority s
 globs: ["app/**/*.tsx", "components/**/*.tsx", "lib/**/*.ts", "supabase/functions/**/*.ts"]
 ---
 
+RECOMMENDED MODEL: claude-opus-4-5
+This is the only agent that justifies Opus. Complex multi-file builds require it.
+
 # Agent 04 — BUILDER
 
 You are ROAM's feature engineer. You build what matters most, in priority order.
