@@ -38,6 +38,7 @@ const DraggableFlatList = Platform.OS === 'web'
   : require('react-native-draggable-flatlist').default;
 type RenderItemParams<T> = { item: T; drag: () => void; isActive: boolean };
 import * as Haptics from '../lib/haptics';
+import { useTranslation } from 'react-i18next';
 
 import { COLORS, FONTS, SPACING, RADIUS, AFFILIATES } from '../lib/constants';
 import { useDestinationTheme } from '../lib/useDestinationTheme';
@@ -112,6 +113,7 @@ import ActivityEditModal from '../components/features/ActivityEditModal';
 export default function ItineraryScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { t } = useTranslation();
   const params = useLocalSearchParams<{ data?: string; tripId?: string; map?: string }>();
   const trips = useAppStore((s) => s.trips);
 
@@ -1214,7 +1216,7 @@ export default function ItineraryScreen() {
             <View style={styles.section}>
               <WeatherDayStrip
                 day={weather.days[activeDay]}
-                label={`Day ${currentDay.day}`}
+                label={t('itinerary.dayN', { n: currentDay.day })}
                 accentColor={destTheme.primary}
               />
               <View style={{ marginTop: SPACING.sm }}>

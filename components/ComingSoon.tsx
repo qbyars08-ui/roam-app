@@ -7,6 +7,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 
 interface ComingSoonProps {
@@ -18,6 +19,7 @@ interface ComingSoonProps {
 
 export default function ComingSoon({ title, description }: ComingSoonProps) {
   const router = useRouter();
+  const { t } = useTranslation();
 
   return (
     <LinearGradient
@@ -26,7 +28,7 @@ export default function ComingSoon({ title, description }: ComingSoonProps) {
     >
       <View style={styles.content}>
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>COMING SOON</Text>
+          <Text style={styles.badgeText}>{t('common.comingSoon')}</Text>
         </View>
 
         <Text style={styles.title}>{title}</Text>
@@ -50,7 +52,7 @@ export default function ComingSoon({ title, description }: ComingSoonProps) {
           style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
           onPress={() => router.back()}
         >
-          <Text style={styles.buttonText}>Go back</Text>
+          <Text style={styles.buttonText}>{t('common.back')}</Text>
         </Pressable>
       </View>
     </LinearGradient>
