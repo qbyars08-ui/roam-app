@@ -125,7 +125,7 @@ function LanguageSurvivalScreen() {
           cachedAt: Date.now(),
         }));
         setCachedCity(selectedCity);
-      } catch {}
+      } catch { /* silent */ }
     };
     cache();
   }, [selectedCity, pack]);
