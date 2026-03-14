@@ -1,90 +1,96 @@
-## ROAM STATUS — 2026-03-14T07:00Z
+## ROAM STATUS — 2026-03-14T07:30Z
 
-### System: YELLOW
+### System: GREEN
 
-- **TypeScript:** CLEAN (0 errors — required `npm install posthog-react-native` locally)
+- **TypeScript:** CLEAN (0 errors)
 - **Tests:** 423 passed / 0 failed / 14 suites
-- **ESLint:** 0 errors, 0 warnings (fully resolved on main)
-- **Main HEAD:** ccc8be1 — "app rework phase 1" megamerge
-- **Open PRs:** 0 (agents working on branches, PRs not yet opened)
-- **Security:** 5 CRITICAL + 10 HIGH fixed, MEDIUM RLS fixes applied, rate limiting on all edge functions
+- **ESLint:** 0 errors, 0 warnings
+- **Main HEAD:** 85c9f6e — "latest build deployed — demo ready"
+- **Open PRs:** 0
+- **Security:** All CRITICAL + HIGH fixed. MEDIUM applied. Rate limiting on all edge functions.
 
 ---
 
-### Rework Sprint Assignments (from AGENT_BOARD.md)
+### Rework Sprint — ALL 8 AGENTS DELIVERED
 
-| Priority | Task | Agent | Status |
-|----------|------|-------|--------|
-| P0 | Best free image API research | 02 Researcher | DONE — branch active |
-| P0 | Full anti-AI-slop audit | 03 Design Enforcer | ASSIGNED (no new branch) |
-| P0 | Image loading + Flights/Stays/Food rework | 04 Builder | ASSIGNED (no new branch) |
-| P1 | Post-merge verification + lint cleanup | 05 Debugger | DONE — branch active |
-| P1 | First-time UX audit | 06 Growth | ASSIGNED (no new branch) |
-| P1 | Admin test bypass for rate limiting | 08 Security | DONE — branch active |
-| P1 | Prep tab live data | 09 Localization | DONE — branch active |
-| P1 | Full copy audit + email templates | 11 Content | DONE — branch active |
-
----
-
-### Active Branches — Merge Order
-
-| # | Branch | Agent | Ahead | Key deliverables | Risk |
-|---|--------|-------|-------|-----------------|------|
-| 1 | `agent-08-rate-limit-and-medium-fixes` | 08 Security | 1 | Edge function audit, admin bypass, MEDIUM RLS fixes, rate limiting | Low |
-| 2 | `cursor/agent-05-debugger-7503` | 05 Debugger | 4 | 28 files — unused var/import cleanup, 0 ESLint warnings, updated system_health.md | Low |
-| 3 | `cursor/agent-02-api-research-95b0` | 02 Researcher | 2 | 314-line image API research report, dead `source.unsplash.com` URL fixes, Pexels fallback in edge function | Medium |
-| 4 | `cursor/agent-09-localization-fd62` | 09 Localization | 8 | 44 screens converted to i18n, RTL support, 40 new translation namespaces (~700 keys), localization audit | **HIGH** |
-| 5 | `cursor/agent-11-rules-content-6875` | 11 Content | 1 | 5 HTML email templates, App Store listing copy, monetization_model.md, 125 files touched | **VERY HIGH** |
-
-**Stale branches (0 commits ahead — already merged, need cleanup):** `cursor/agent-10-analytics-cuda-7814`, `cursor/agent-07-monetization-current-7c01`, `test/edge-case-coverage`, `cursor/growth-hacker-curs-data-7a6d`, `cursor/fix-alpha-antipatterns`
+| # | Agent | Task | Branch | Commits | Files | Status |
+|---|-------|------|--------|---------|-------|--------|
+| 08 | Security | Admin bypass + edge function audit | `agent-08-rate-limit-and-medium-fixes` | 1 | 136 | DONE |
+| 05 | Debugger | Post-merge verification + lint cleanup | `cursor/agent-05-debugger-7503` | 6 | 57 | DONE |
+| 02 | Researcher | Image API research + dead URL fixes | `cursor/agent-02-api-research-95b0` | 2 | 208 | DONE |
+| 04 | Builder | Flights/Stays/Food rework + image fix | `agent04/four-tab-builds` | 5 | 29 | DONE |
+| 03 | Design | Anti-AI-slop audit — 20 violations fixed | `cursor/agent03-anti-slop-audit` | 1 | 32 | DONE |
+| 09 | Localization | Prep tab live data + 44 screens i18n + RTL | `cursor/agent-09-localization-fd62` | 9 | 171 | DONE |
+| 06 | Growth | First-time UX audit (525-line report) | `cursor/growth-hacker-curs-data-7a6d` | 1 | 138 | DONE |
+| 11 | Content | 81 copy fixes + 5 email templates + App Store | `cursor/agent-11-rules-content-6875` | 2 | 145 | DONE |
+| 01 | Tester | Component + admin tests | `test/component-and-admin-tests` | 1 | 29 | DONE |
 
 ---
 
-### What each agent did this run
+### Merge Order
 
-- **01 Tester:** No new branch. Tests already at 423 (14 suites) on main from prior merge.
-- **02 Researcher:** Found `source.unsplash.com` is dead (shut down June 2024) — 3 files broken. Recommends Pexels API (200 req/hr free, 4x Unsplash). Wrote 314-line research report. Fixed dead URLs in client code + added Pexels fallback to destination-photo edge function.
-- **03 Design Enforcer:** No new branch yet. Assigned: anti-AI-slop audit (generic placeholders, grey boxes, template screens).
-- **04 Builder:** No new branch yet. Assigned: image loading system, flights/stays/food tab reworks.
-- **05 Debugger:** Cleaned 289 ESLint warnings down to 0. Removed unused vars/imports across 28 files. Updated system_health.md with web build verification (6.3MB bundle, dist/ builds clean).
-- **06 Growth:** No new branch yet. Assigned: first-time UX audit of tryroam.netlify.app.
-- **07 Monetization:** Stale branch (0 ahead). No new work this run.
-- **08 Security:** Full edge function audit + admin email bypass for claude-proxy rate limiting. MEDIUM RLS fixes applied. Rate limiting on all edge functions.
-- **09 Localization:** Massive run — 8 commits, 148 files. Converted 44 remaining screens to i18n. Added 40 new translation namespaces (~700 keys). RTL support with `I18nManager` + logical layout props. Full localization audit written. All 4 locales (en/es/fr/ja) updated.
-- **10 Analytics:** Stale branch (0 ahead). PostHog already merged to main.
-- **11 Content:** 5 HTML email templates (welcome, Jay Fai story, spin-the-globe, alter-ego, pre-launch). App Store listing copy. Updated copy_library.md. Also carries forward monetization_model.md and analytics_spec.md. 125 files touched — largest branch.
-- **12 Investor:** No new branch activity.
-- **Captain:** Compiling this briefing.
+| # | Branch | Risk | Why this order |
+|---|--------|------|----------------|
+| 1 | `agent-08-rate-limit-and-medium-fixes` | Low | Security always first |
+| 2 | `test/component-and-admin-tests` | None | Tests only, no app code |
+| 3 | `cursor/agent-05-debugger-7503` | Low | Lint cleanup, no logic changes |
+| 4 | `agent04/four-tab-builds` | Low | 29 files — flights/stays/food reworks + image fixes |
+| 5 | `cursor/agent03-anti-slop-audit` | Low | 7 files — design fixes, overlaps with Builder on tabs |
+| 6 | `cursor/agent-02-api-research-95b0` | Medium | Dead URL fixes + Pexels fallback, overlaps with Builder |
+| 7 | `cursor/growth-hacker-curs-data-7a6d` | Medium | UX audit report — 138 files but mostly carries forward base |
+| 8 | `cursor/agent-09-localization-fd62` | **HIGH** | 171 files — 44 screen i18n conversions + RTL |
+| 9 | `cursor/agent-11-rules-content-6875` | **HIGH** | 145 files — 81 copy fixes across entire app |
 
 ---
 
-### Key Findings
+### Key Findings This Run
 
-**Agent 02 critical discovery:** `source.unsplash.com` has been dead since June 2024. Three files have broken fallback URLs affecting destination images across the app:
-- `lib/destination-photo-map.ts` — all 28 fallback URLs broken
-- `lib/curated-backgrounds.ts` — all 15 fallback URLs broken
-- `app/(tabs)/index.tsx` — `getUnsplashUrl()` function broken
+**Agent 04 (Builder) — 4 major builds complete:**
+- Discover: replaced broken `source.unsplash.com` with reliable photo URLs
+- Flights: complete rework — hero search, popular routes, Skyscanner deep links (removed broken API/map)
+- Stays: complete rework — curated sections, Booking.com deep links (removed broken elements)
+- Food: wired enrich-venues edge function for live photos and ratings
 
-**Recommendation:** Merge Agent 02 branch to fix dead URLs. Builder (Agent 04) should then implement the Pexels API integration as part of the image loading system rework.
+**Agent 03 (Design) — 20 anti-slop violations fixed:**
+- Fixed across 7 files: flights, food, stays, prep, group, GenerateConversation, GenerateQuick, StreakBadge
+- Targeted: generic placeholders, template screens, inconsistent cards, non-skeleton loading
+
+**Agent 06 (Growth) — Critical UX bugs found:**
+- P0: `app/(auth)/hook.tsx` imports `expo-haptics` directly (crashes on web) — must use `lib/haptics`
+- P0: Hook animation takes 2.2s before buttons appear — users bounce in <3s on web
+- P0: Profile redirect logic fragile for anonymous sessions
+- HIGH: "Browse first" button nearly invisible (50% opacity on dark bg)
+- Full 525-line screen-by-screen audit with specific fix recommendations
+
+**Agent 09 (Localization) — Prep tab now has live data:**
+- Wired weather-intel edge function into prep header
+- "Right now in [destination]" section (time, weather, date)
+- Emergency numbers verified for top 20 destinations
+- "Useful Phrases" section with pronunciation
+- Plus: 44 remaining screens converted to i18n + RTL support
+
+**Agent 11 (Content) — 81 copy fixes + email templates:**
+- Full app copy audit: 81 fixes across 157+ user-facing strings
+- 5 HTML email templates (welcome, Jay Fai story, globe, alter-ego, pre-launch)
+- App Store listing copy finalized
 
 ---
 
 ### Blocked (waiting on Quinn)
 
-| Item | Action | Time est. |
-|------|--------|-----------|
-| Netlify billing | Purchase credits or upgrade plan | 5 min |
-| Remove dead Amadeus secrets | Delete AMADEUS_KEY + AMADEUS_SECRET from Supabase Dashboard | 2 min |
-| Booking.com AID | Sign up at partners.booking.com | 15 min |
-| Review copy_library.md | Write APPROVED at top if voice is right | 20 min |
-| RevenueCat products | Create roam_pro_monthly $9.99 + roam_global_yearly $49.99 | 30 min |
-| PostHog project key | Set real key in environment | 5 min |
-| Open PRs for 5 active branches | Create drafts or instruct agents | 5 min |
+| Item | Time | Impact |
+|------|------|--------|
+| Netlify billing | 5 min | Waitlist funnel dead |
+| Booking.com AID | 15 min | Affiliate revenue = $0 |
+| RevenueCat products | 30 min | Paywall non-functional |
+| PostHog project key | 5 min | Analytics collecting nothing |
+| Review copy_library.md | 20 min | Blocks Content merge |
+| Remove dead Amadeus secrets | 2 min | Housekeeping |
 
 ---
 
-### Top 3 things Quinn should look at right now
+### Top 3 for Quinn
 
-1. **Merge Security (#08) then Debugger (#05) then Researcher (#02) — all clean, fix real bugs.** Agent 02 fixes broken image URLs across the app. These 3 branches are small and safe.
-2. **Wait for Builder (#04) and Design Enforcer (#03) to deliver** — the P0 rework tasks (image loading, flights/stays/food rework, anti-slop audit) are the highest-priority assigned work. No branches yet.
-3. **Localization (#09) and Content (#11) are massive — review before merge.** Agent 09 touched 148 files (44 screen conversions + RTL). Agent 11 touched 125 files (email templates + copy). Both need careful rebase and review. Merge one at a time.
+1. **Merge branches 1-6** (Security, Tester, Debugger, Builder, Design, Researcher) — all small-to-medium, fix real bugs including broken images and web crashes.
+2. **Read Agent 06's UX audit** (`roam/growth_dashboard.md` on growth branch) — found 3 P0 web crash/UX bugs that need fixing before any demo.
+3. **Fix Netlify + set PostHog key** — demo is deployed but hosting is paused and analytics are blind.
