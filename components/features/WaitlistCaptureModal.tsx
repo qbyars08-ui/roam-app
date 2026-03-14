@@ -58,8 +58,8 @@ export default function WaitlistCaptureModal({
     try {
       const r = await joinWaitlist(trimmed);
       setResult(r);
-    } catch (e: any) {
-      setError(e?.message ?? 'Something went wrong. Try again.');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Something went wrong. Try again.');
     } finally {
       setLoading(false);
     }
@@ -84,7 +84,7 @@ export default function WaitlistCaptureModal({
             text: shareMessage,
             url: referralUrl,
           });
-        } catch (e) {
+        } catch {
           handleCopy();
         }
       } else {

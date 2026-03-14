@@ -14,7 +14,6 @@ import {
   Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { supabase } from '../lib/supabase';
 
@@ -113,11 +112,6 @@ function formatCurrency(n: number): string {
   return '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
-function formatPercentage(numerator: number, denominator: number): string {
-  if (denominator === 0) return '0.0%';
-  return ((numerator / denominator) * 100).toFixed(1) + '%';
-}
-
 function formatTimestamp(date: Date): string {
   const hours = date.getHours();
   const minutes = date.getMinutes().toString().padStart(2, '0');
@@ -177,7 +171,7 @@ function SkeletonBar({
       style={[
         styles.skeletonBar,
         {
-          width: width as any,
+          width: width as number,
           height,
           opacity: pulseAnim,
         },
@@ -417,7 +411,7 @@ async function fetchGroupStats(): Promise<GroupTripStats> {
 
     let avgMembers = 0;
     let totalExpenses = 0;
-    let inviteConversion = 0;
+    const inviteConversion = 0;
 
     try {
       const { data: members } = await supabase
@@ -506,7 +500,6 @@ async function fetchAllData(): Promise<DashboardData> {
 
 export default function AdminDashboard() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
 
   const [data, setData] = useState<DashboardData | null>(null);
   const [previousMetrics, setPreviousMetrics] =

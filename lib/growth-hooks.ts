@@ -186,11 +186,14 @@ async function getGrowthEvents(): Promise<GrowthEvent[]> {
   }
 }
 
+const MAX_ACTION_LENGTH = 64;
+
 export async function recordGrowthEvent(action: string): Promise<void> {
+  const safeAction = String(action).slice(0, MAX_ACTION_LENGTH);
   const events = await getGrowthEvents();
   const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
   const recent = events.filter((e) => e.ts > cutoff);
-  recent.push({ action, ts: Date.now() });
+  recent.push({ action: safeAction, ts: Date.now() });
   await AsyncStorage.setItem(GROWTH_EVENTS_KEY, JSON.stringify(recent.slice(-200)));
 }
 

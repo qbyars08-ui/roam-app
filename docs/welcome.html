@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome to ROAM</title>
+<meta name="description" content="You're on the waitlist. See your demo trip and share to earn Pro.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0D1F1A;--bg-light:#132B24;--sage:#7CAF8A;--cream:#F5EDD8;--coral:#E8614A;
+  --gold:#C9A84C;--white:rgba(245,237,216,0.92);--muted:rgba(245,237,216,0.5);
+  --glass:rgba(124,175,138,0.06);--glass-border:rgba(124,175,138,0.12);
+}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--cream);
+  min-height:100vh;overflow-x:hidden;
+}
+.orb{position:fixed;border-radius:50%;filter:blur(120px);opacity:.3;pointer-events:none;z-index:0}
+.orb-1{width:500px;height:500px;background:radial-gradient(circle,var(--sage),transparent 70%);top:-10%;left:-10%;animation:drift1 18s ease-in-out infinite}
+.orb-2{width:400px;height:400px;background:radial-gradient(circle,var(--coral),transparent 70%);bottom:-5%;right:-8%;animation:drift2 22s ease-in-out infinite}
+@keyframes drift1{0%,100%{transform:translate(0,0)}50%{transform:translate(80px,60px)}}
+@keyframes drift2{0%,100%{transform:translate(0,0)}50%{transform:translate(-70px,-50px)}}
+body::before{
+  content:'';position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.03;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+.wrapper{position:relative;z-index:2;max-width:640px;margin:0 auto;padding:32px 24px 80px}
+
+/* ── nav ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(13,31,26,0.8);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--glass-border);
+}
+nav .nav-inner{
+  max-width:640px;margin:0 auto;padding:14px 24px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.logo{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:1.4rem;letter-spacing:.08em;color:var(--cream)}
+.logo span{color:var(--coral)}
+.nav-cta{
+  font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--cream);background:transparent;border:1px solid var(--glass-border);
+  padding:7px 14px;border-radius:999px;cursor:pointer;transition:all .3s;text-decoration:none;
+}
+.nav-cta:hover{background:var(--glass);border-color:var(--sage)}
+
+/* ── hero ── */
+.hero{padding-top:80px;text-align:center;margin-bottom:40px}
+.hero h1{
+  font-family:'Cormorant Garamond',serif;font-weight:700;
+  font-size:clamp(2rem,5vw,2.8rem);line-height:1.15;margin-bottom:8px;
+}
+.hero h1 em{font-style:italic;color:var(--gold)}
+.hero .position-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--sage);background:var(--glass);
+  border:1px solid var(--glass-border);border-radius:999px;padding:8px 20px;
+  margin-bottom:16px;
+}
+.hero .position-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--sage);animation:pulse-dot 2s ease-in-out infinite}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+.hero p{color:var(--muted);font-size:1rem;line-height:1.6;max-width:480px;margin:0 auto}
+
+/* ── referral card ── */
+.ref-card{
+  background:var(--glass);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border:1px solid var(--glass-border);border-radius:20px;padding:28px;margin-bottom:32px;
+}
+.ref-card h2{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:700;margin-bottom:4px}
+.ref-card .subtitle{color:var(--muted);font-size:.9rem;margin-bottom:20px}
+.ref-link-row{display:flex;gap:8px;margin-bottom:16px}
+.ref-link-row input{
+  flex:1;font-family:'DM Mono',monospace;font-size:.8rem;
+  background:rgba(245,237,216,0.06);border:1px solid var(--glass-border);
+  color:var(--cream);padding:12px 14px;border-radius:10px;outline:none;
+  text-overflow:ellipsis;
+}
+.btn-copy{
+  font-family:'DM Sans',sans-serif;font-weight:600;font-size:.85rem;
+  background:var(--sage);color:var(--bg);border:none;
+  padding:12px 20px;border-radius:10px;cursor:pointer;
+  transition:transform .2s;white-space:nowrap;
+}
+.btn-copy:hover{transform:translateY(-1px)}
+
+/* ── progress ── */
+.progress-section{margin-bottom:20px}
+.progress-header{
+  display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;
+}
+.progress-header .count{
+  font-family:'DM Mono',monospace;font-size:.85rem;color:var(--sage);
+}
+.progress-header .reward{
+  font-family:'DM Mono',monospace;font-size:.75rem;color:var(--gold);
+}
+.progress-track{
+  width:100%;height:10px;border-radius:5px;
+  background:rgba(124,175,138,0.1);overflow:hidden;
+}
+.progress-fill{
+  height:100%;border-radius:5px;
+  background:linear-gradient(90deg,var(--sage),var(--gold));
+  transition:width .8s cubic-bezier(0.22,1,0.36,1);
+}
+.tiers{display:flex;justify-content:space-between;margin-top:8px;font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted)}
+
+/* ── demo trip ── */
+.trip-section{margin-bottom:32px}
+.trip-section h2{
+  font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:700;
+  margin-bottom:4px;
+}
+.trip-section .trip-meta{
+  font-family:'DM Mono',monospace;font-size:.75rem;color:var(--muted);
+  letter-spacing:.06em;text-transform:uppercase;margin-bottom:20px;
+}
+.day-card{
+  background:var(--glass);border:1px solid var(--glass-border);
+  border-radius:16px;padding:20px;margin-bottom:12px;
+  transition:transform .3s,border-color .3s;
+}
+.day-card:hover{transform:translateY(-2px);border-color:rgba(124,175,138,0.2)}
+.day-card .day-label{
+  font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--coral);margin-bottom:10px;
+}
+.day-card h3{
+  font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;margin-bottom:8px;
+}
+.day-card ul{list-style:none;padding:0}
+.day-card li{
+  font-size:.9rem;color:var(--muted);line-height:1.7;
+  padding-left:16px;position:relative;
+}
+.day-card li::before{
+  content:'';position:absolute;left:0;top:10px;
+  width:6px;height:6px;border-radius:50%;background:var(--sage);
+}
+.day-card .budget-tag{
+  display:inline-block;margin-top:8px;
+  font-family:'DM Mono',monospace;font-size:.7rem;
+  color:var(--gold);background:rgba(201,168,76,0.08);
+  border:1px solid rgba(201,168,76,0.2);border-radius:999px;
+  padding:4px 12px;
+}
+
+/* ── CTA bottom ── */
+.bottom-cta{text-align:center;padding:20px 0}
+.bottom-cta p{color:var(--muted);font-size:.9rem;margin-bottom:20px;line-height:1.5}
+.btn-app{
+  font-family:'DM Sans',sans-serif;font-weight:600;font-size:1rem;
+  background:var(--coral);color:#fff;border:none;
+  padding:16px 36px;border-radius:14px;cursor:pointer;
+  transition:transform .2s,box-shadow .3s;text-decoration:none;display:inline-block;
+}
+.btn-app:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(232,97,74,0.35)}
+
+/* ── share row ── */
+.share-row{display:flex;gap:10px;justify-content:center}
+.share-btn{
+  font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;
+  padding:10px 20px;border-radius:12px;border:1px solid var(--glass-border);
+  background:var(--glass);color:var(--cream);cursor:pointer;transition:all .3s;
+}
+.share-btn:hover{background:rgba(124,175,138,0.12);border-color:var(--sage)}
+
+footer{
+  text-align:center;padding:24px;
+  border-top:1px solid var(--glass-border);
+  font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);
+}
+
+@media(max-width:639px){
+  .ref-link-row{flex-direction:column}
+  .btn-copy{width:100%}
+}
+@media(prefers-reduced-motion:reduce){.orb{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<nav>
+  <div class="nav-inner">
+    <div class="logo">R<span>O</span>AM</div>
+    <a href="https://tryroam.netlify.app" class="nav-cta">Open the app &rarr;</a>
+  </div>
+</nav>
+
+<div class="wrapper">
+
+  <!-- hero -->
+  <section class="hero">
+    <div class="position-badge"><span class="dot"></span> Waitlist Position <strong id="w-pos">#--</strong></div>
+    <h1>Welcome to <em>ROAM</em></h1>
+    <p>You're on the list. Here's a preview of what ROAM builds for you. Share your link below to earn free Pro months.</p>
+  </section>
+
+  <!-- referral card -->
+  <div class="ref-card">
+    <h2>Earn free Pro</h2>
+    <p class="subtitle">3 referrals = 1 month free. 10 referrals = 1 year free.</p>
+
+    <div class="ref-link-row">
+      <input type="text" id="ref-link" readonly value="Loading..." aria-label="Your referral link">
+      <button class="btn-copy" id="btn-copy" onclick="copyLink()">Copy Link</button>
+    </div>
+
+    <div class="progress-section">
+      <div class="progress-header">
+        <span class="count"><span id="ref-count">0</span> referrals</span>
+        <span class="reward" id="ref-reward">3 more for 1 month free</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="ref-bar" style="width:0%"></div>
+      </div>
+      <div class="tiers">
+        <span>0</span>
+        <span>3 = 1 mo</span>
+        <span>10 = 1 yr</span>
+      </div>
+    </div>
+
+    <div class="share-row">
+      <button class="share-btn" onclick="copyLink()">Copy Link</button>
+      <button class="share-btn" onclick="shareTwitter()">Share on X</button>
+    </div>
+  </div>
+
+  <!-- demo trip: Tokyo -->
+  <section class="trip-section">
+    <h2>Tokyo, Japan</h2>
+    <div class="trip-meta">5 days &middot; Comfort &middot; Hidden gems, Local eats</div>
+
+    <div class="day-card">
+      <div class="day-label">Day 1 &mdash; Arrival & Shinjuku</div>
+      <h3>Get lost on purpose</h3>
+      <ul>
+        <li>Arrive Narita/Haneda, grab Suica card at the airport</li>
+        <li>Check in at hotel in Shinjuku (walk to Golden Gai)</li>
+        <li>Afternoon: Shinjuku Gyoen for jet-lag reset</li>
+        <li>Evening: Omoide Yokocho for yakitori and cold beer</li>
+        <li>Late night: Golden Gai bar hop (pick the one with 6 seats)</li>
+      </ul>
+      <span class="budget-tag">~$85/day</span>
+    </div>
+
+    <div class="day-card">
+      <div class="day-label">Day 2 &mdash; Shibuya & Harajuku</div>
+      <h3>Culture overload (the good kind)</h3>
+      <ul>
+        <li>Morning: Meiji Shrine before the crowds (go by 8am)</li>
+        <li>Brunch: Harajuku crepe from Marion Crepes</li>
+        <li>Afternoon: Shibuya crossing, then Nonbei Yokocho</li>
+        <li>Evening: Standing sushi bar in Shibuya (follow the salary-men)</li>
+        <li>Night: Shibuya Sky observation deck at sunset</li>
+      </ul>
+      <span class="budget-tag">~$70/day</span>
+    </div>
+
+    <div class="day-card">
+      <div class="day-label">Day 3 &mdash; Asakusa & Akihabara</div>
+      <h3>Old meets new</h3>
+      <ul>
+        <li>Morning: Senso-ji temple (arrive 7am for empty photos)</li>
+        <li>Lunch: Tempura at Daikokuya (cash only, worth the wait)</li>
+        <li>Afternoon: Akihabara arcades and retro game shops</li>
+        <li>Evening: Ramen at Fuunji (tsukemen style, Shinjuku)</li>
+        <li>Night: Robot Restaurant or TeamLab Borderless</li>
+      </ul>
+      <span class="budget-tag">~$90/day</span>
+    </div>
+
+    <div class="day-card">
+      <div class="day-label">Day 4 &mdash; Tsukiji & Ginza</div>
+      <h3>Eat everything</h3>
+      <ul>
+        <li>Morning: Tsukiji Outer Market (tamagoyaki, fresh uni)</li>
+        <li>Lunch: Sushi Dai or Daiwa Sushi (queue early)</li>
+        <li>Afternoon: Ginza window shopping, Itoya stationery</li>
+        <li>Evening: Izakaya dinner in Yurakucho under the tracks</li>
+        <li>Night: Ginza whiskey bar (Hibiki 17 if they have it)</li>
+      </ul>
+      <span class="budget-tag">~$110/day</span>
+    </div>
+
+    <div class="day-card">
+      <div class="day-label">Day 5 &mdash; Day Trip or Departure</div>
+      <h3>One more for the road</h3>
+      <ul>
+        <li>Option A: Day trip to Kamakura (Great Buddha + beach)</li>
+        <li>Option B: Shimokitazawa vintage shops + coffee</li>
+        <li>Lunch: Final bowl of ramen (dealer's choice)</li>
+        <li>Pack up, Narita Express to airport</li>
+      </ul>
+      <span class="budget-tag">~$75/day</span>
+    </div>
+  </section>
+
+  <!-- bottom CTA -->
+  <section class="bottom-cta">
+    <p>This is just a preview. The real app builds personalized itineraries with maps, booking links, packing lists, and more.</p>
+    <a href="https://tryroam.netlify.app" id="try-app-link" class="btn-app">Try ROAM Now &rarr;</a>
+  </section>
+
+</div>
+
+<footer>&copy; 2026 ROAM &middot; Built with AI, made for explorers</footer>
+
+<script>
+var SUPABASE_URL = 'YOUR_SUPABASE_URL';
+var SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
+var REFS_FOR_1_MONTH = 3;
+var REFS_FOR_1_YEAR = 10;
+var userRefCode = '';
+
+function getParam(name) {
+  try { return new URLSearchParams(window.location.search).get(name) || ''; }
+  catch { return ''; }
+}
+
+function generateReferralCode(email) {
+  var str = email.trim().toLowerCase();
+  var h = 0;
+  for (var i = 0; i < str.length; i++) {
+    h = ((h << 5) - h + str.charCodeAt(i)) | 0;
+  }
+  var chars = 'abcdefghjkmnpqrstuvwxyz23456789';
+  var result = '';
+  h = Math.abs(h);
+  for (var j = 0; j < 6; j++) {
+    result += chars[h % chars.length];
+    h = Math.floor(h / chars.length);
+  }
+  return result;
+}
+
+function updateProgress(count) {
+  document.getElementById('ref-count').textContent = count;
+  var rewardMsg, pct;
+  if (count >= REFS_FOR_1_YEAR) {
+    rewardMsg = '1 year of Pro earned';
+    pct = 100;
+  } else if (count >= REFS_FOR_1_MONTH) {
+    var extra = count % REFS_FOR_1_MONTH;
+    rewardMsg = (REFS_FOR_1_MONTH - extra) + ' more for another month free';
+    pct = 30 + ((count - REFS_FOR_1_MONTH) / (REFS_FOR_1_YEAR - REFS_FOR_1_MONTH)) * 70;
+  } else {
+    rewardMsg = (REFS_FOR_1_MONTH - count) + ' more for 1 month free';
+    pct = (count / REFS_FOR_1_MONTH) * 30;
+  }
+  document.getElementById('ref-reward').textContent = rewardMsg;
+  document.getElementById('ref-bar').style.width = Math.min(100, Math.round(pct)) + '%';
+}
+
+async function loadData() {
+  var email = getParam('email');
+  if (!email) {
+    document.getElementById('ref-link').value = 'No email provided. Join the waitlist first.';
+    return;
+  }
+
+  var trimmed = email.trim().toLowerCase();
+  var fallbackCode = generateReferralCode(trimmed);
+  var baseUrl = window.location.origin + '/waitlist.html';
+
+  // Set try-app link
+  var tryLink = document.getElementById('try-app-link');
+  if (tryLink) tryLink.href = 'https://tryroam.netlify.app?email=' + encodeURIComponent(trimmed);
+
+  try {
+    var res = await fetch(
+      SUPABASE_URL + '/rest/v1/waitlist_emails?email=eq.' + encodeURIComponent(trimmed) + '&select=referral_code,referral_count,created_at',
+      { headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON } }
+    );
+    var rows = await res.json();
+    var row = Array.isArray(rows) ? rows[0] : rows;
+
+    if (row) {
+      userRefCode = row.referral_code || fallbackCode;
+      var refCount = row.referral_count || 0;
+
+      document.getElementById('ref-link').value = baseUrl + '?ref=' + userRefCode;
+      updateProgress(refCount);
+
+      // Position
+      var posRes = await fetch(
+        SUPABASE_URL + '/rest/v1/waitlist_emails?select=id&created_at=lte.' + encodeURIComponent(row.created_at),
+        { headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON, 'Prefer': 'count=exact' } }
+      );
+      var pos = parseInt(posRes.headers.get('content-range')?.split('/')[1] || '0') || 1;
+      document.getElementById('w-pos').textContent = '#' + pos;
+    } else {
+      userRefCode = fallbackCode;
+      document.getElementById('ref-link').value = baseUrl + '?ref=' + fallbackCode;
+      document.getElementById('w-pos').textContent = '#--';
+      updateProgress(0);
+    }
+  } catch (err) {
+    console.error('Load error:', err);
+    userRefCode = fallbackCode;
+    document.getElementById('ref-link').value = baseUrl + '?ref=' + fallbackCode;
+    updateProgress(0);
+  }
+}
+
+function copyLink() {
+  var input = document.getElementById('ref-link');
+  navigator.clipboard.writeText(input.value).then(function() {
+    var btn = document.getElementById('btn-copy');
+    btn.textContent = 'Copied!';
+    setTimeout(function() { btn.textContent = 'Copy Link'; }, 2000);
+  });
+}
+
+function shareTwitter() {
+  var refLink = document.getElementById('ref-link').value;
+  var text = encodeURIComponent("I'm on the waitlist for ROAM \u2014 an AI travel planner that builds trips in 30 seconds. Join me:\n\n");
+  window.open('https://twitter.com/intent/tweet?text=' + text + '&url=' + encodeURIComponent(refLink), '_blank');
+}
+
+loadData();
+</script>
+</body>
+</html>

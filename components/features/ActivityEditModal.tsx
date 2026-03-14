@@ -46,7 +46,7 @@ const AI_ACTIONS = [
     id: 'cheaper',
     label: 'Make cheaper',
     icon: TrendingDown,
-    color: '#4CAF50',
+    color: COLORS.carbonGreen,
     prompt: (activity: TimeSlotActivity, dest: string) =>
       `I'm visiting ${dest}. I have this activity planned: "${activity.activity}" at "${activity.location}" costing ${activity.cost}. Suggest a CHEAPER alternative in the same neighborhood (${activity.neighborhood ?? 'nearby'}). Keep the same vibe but cut the cost. Return ONLY a JSON object with these fields: activity, location, cost, tip, time, duration, neighborhood, address. No markdown, no explanation.`,
   },
@@ -54,7 +54,7 @@ const AI_ACTIONS = [
     id: 'adventurous',
     label: 'More adventurous',
     icon: Compass,
-    color: '#FF9800',
+    color: COLORS.amber,
     prompt: (activity: TimeSlotActivity, dest: string) =>
       `I'm visiting ${dest}. I have this activity planned: "${activity.activity}" at "${activity.location}". Replace it with something MORE ADVENTUROUS and unique in the same area (${activity.neighborhood ?? 'nearby'}). Think off-the-beaten-path, adrenaline, or once-in-a-lifetime. Return ONLY a JSON object with these fields: activity, location, cost, tip, time, duration, neighborhood, address. No markdown, no explanation.`,
   },
@@ -62,7 +62,7 @@ const AI_ACTIONS = [
     id: 'foodie',
     label: 'Food alternative',
     icon: Utensils,
-    color: '#E91E63',
+    color: COLORS.coral,
     prompt: (activity: TimeSlotActivity, dest: string) =>
       `I'm visiting ${dest}. I have this activity planned: "${activity.activity}" at "${activity.location}". Replace it with an INCREDIBLE food experience in the same area (${activity.neighborhood ?? 'nearby'}). Think local food markets, legendary street stalls, hidden restaurants locals love, or a food tour. Return ONLY a JSON object with these fields: activity, location, cost, tip, time, duration, neighborhood, address. No markdown, no explanation.`,
   },
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: RADIUS.full,
     borderWidth: 1.5,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: COLORS.bgGlass,
   },
   aiChipText: {
     fontFamily: FONTS.bodySemiBold,

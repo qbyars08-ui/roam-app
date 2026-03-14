@@ -81,7 +81,7 @@ export async function ensureReferralCode(userId: string): Promise<string> {
       { user_id: userId, code, referral_count: 0, free_trips_earned: 0 },
       { onConflict: 'user_id', ignoreDuplicates: true }
     );
-  } catch {}
+  } catch { /* silent */ }
   return code;
 }
 
@@ -111,7 +111,7 @@ export async function getReferralStats(userId: string): Promise<ReferralStats> {
         nextMilestoneMessage: nextMilestoneMessage(count),
       };
     }
-  } catch {}
+  } catch { /* silent */ }
 
   try {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
@@ -126,7 +126,7 @@ export async function getReferralStats(userId: string): Promise<ReferralStats> {
         nextMilestoneMessage: nextMilestoneMessage(count),
       };
     }
-  } catch {}
+  } catch { /* silent */ }
 
   return {
     code,
@@ -144,14 +144,14 @@ export async function recordReferral(referrerUserId?: string): Promise<void> {
     const data = raw ? (JSON.parse(raw) as { referralsCount?: number }) : {};
     const count = (data.referralsCount ?? 0) + 1;
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ referralsCount: count }));
-  } catch {}
+  } catch { /* silent */ }
   if (referrerUserId) {
     try {
       const code = getReferralCode(referrerUserId);
       const { data: existing } = await supabase.from('referral_codes').select('referral_count').eq('code', code).single();
       const next = ((existing as { referral_count?: number })?.referral_count ?? 0) + 1;
       await supabase.from('referral_codes').upsert({ user_id: referrerUserId, code, referral_count: next }, { onConflict: 'user_id' });
-    } catch {}
+    } catch { /* silent */ }
   }
 }
 
@@ -165,4 +165,132 @@ export async function shareReferralLink(code: string): Promise<void> {
     url,
     title: 'Join ROAM',
   });
+}
+
+// =============================================================================
+// Waitlist Referral Tracking
+// Functions for the public waitlist flow (waitlist.html / welcome.html).
+// These operate on the waitlist_emails table, not referral_codes.
+// =============================================================================
+
+export interface WaitlistReferralStats {
+  code: string;
+  referralCount: number;
+  proMonthsEarned: number;
+  nextMilestoneMessage: string | null;
+  referralsToNextReward: number;
+}
+
+/**
+ * Generate a deterministic 6-char alphanumeric referral code from an email.
+ * Mirrors the Supabase function waitlist_referral_code() so the client can
+ * compute the code without a round-trip when needed.
+ */
+export function generateReferralCode(email: string): string {
+  return seededHash(email.trim().toLowerCase());
+}
+
+/**
+ * Track a referral: find the referrer by code and increment their
+ * referral_count in waitlist_emails. Called when a new user signs up
+ * with ?ref=CODE.
+ *
+ * The Supabase trigger credit_referrer_on_waitlist_insert handles this
+ * server-side, but this function exists for explicit client-side calls
+ * or edge-function use when the trigger is bypassed.
+ */
+export async function trackReferral(referralCode: string): Promise<boolean> {
+  const code = referralCode.trim().toLowerCase();
+  if (!code || code === 'direct' || code === 'share' || code === 'twitter') {
+    return false;
+  }
+  try {
+    const { data: referrer } = await supabase
+      .from('waitlist_emails')
+      .select('id, referral_count')
+      .eq('referral_code', code)
+      .single();
+
+    if (!referrer) return false;
+
+    const nextCount = ((referrer as { referral_count?: number }).referral_count ?? 0) + 1;
+    await supabase
+      .from('waitlist_emails')
+      .update({ referral_count: nextCount })
+      .eq('referral_code', code);
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get referral stats for a waitlist email.
+ * Returns count, months earned (every 3 referrals = 1 month Pro), and
+ * progress toward next reward.
+ */
+export async function getWaitlistReferralStats(
+  email: string
+): Promise<WaitlistReferralStats> {
+  const trimmed = email.trim().toLowerCase();
+  const fallbackCode = generateReferralCode(trimmed);
+
+  try {
+    const { data } = await supabase
+      .from('waitlist_emails')
+      .select('referral_code, referral_count')
+      .eq('email', trimmed)
+      .single();
+
+    if (data) {
+      const code = (data.referral_code as string) ?? fallbackCode;
+      const count = (data.referral_count as number) ?? 0;
+      return {
+        code,
+        referralCount: count,
+        proMonthsEarned: proMonthsFromCount(count),
+        nextMilestoneMessage: nextMilestoneMessage(count),
+        referralsToNextReward: count < REFS_FOR_1_MONTH
+          ? REFS_FOR_1_MONTH - count
+          : count < REFS_FOR_1_YEAR
+            ? REFS_FOR_1_MONTH - (count % REFS_FOR_1_MONTH)
+            : 0,
+      };
+    }
+  } catch {}
+
+  return {
+    code: fallbackCode,
+    referralCount: 0,
+    proMonthsEarned: 0,
+    nextMilestoneMessage: `${REFS_FOR_1_MONTH} more = 1 month free`,
+    referralsToNextReward: REFS_FOR_1_MONTH,
+  };
+}
+
+/**
+ * Get waitlist position for an email — ordered by created_at ascending.
+ * Position 1 = earliest signup.
+ */
+export async function getWaitlistPosition(email: string): Promise<number> {
+  const trimmed = email.trim().toLowerCase();
+  try {
+    const { data: row } = await supabase
+      .from('waitlist_emails')
+      .select('created_at')
+      .eq('email', trimmed)
+      .single();
+
+    if (!row?.created_at) return 0;
+
+    const { count } = await supabase
+      .from('waitlist_emails')
+      .select('*', { count: 'exact', head: true })
+      .lte('created_at', row.created_at as string);
+
+    return count ?? 0;
+  } catch {
+    return 0;
+  }
 }

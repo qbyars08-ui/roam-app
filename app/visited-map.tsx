@@ -104,7 +104,8 @@ function VisitedMapScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadData intentionally excluded
+  }, [fadeAnim, slideAnim]);
 
   // Derived data
   const visitedCountries = useMemo(() => {
@@ -665,7 +666,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.sageSoft,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
-    borderColor: COLORS.sageStrong,
+    borderColor: COLORS.sageBorder,
     padding: SPACING.lg,
     alignItems: 'center',
   } as ViewStyle,

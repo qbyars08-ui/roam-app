@@ -100,7 +100,7 @@ export async function maybePromptForReview(): Promise<void> {
             try {
               await StoreReview.requestReview();
               await AsyncStorage.setItem(RATED_BADGE_KEY, 'true');
-            } catch {}
+            } catch { /* silent */ }
 
             resolve();
           },

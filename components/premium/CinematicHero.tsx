@@ -11,6 +11,7 @@ import {
   Animated,
   Dimensions,
   Platform,
+  type ViewStyle,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, FONTS, SPACING } from '../../lib/constants';
@@ -45,7 +46,7 @@ export default function CinematicHero() {
     );
     loop.start();
     return () => loop.stop();
-  }, []);
+  }, [kenScale, kenTranslateX, kenTranslateY]);
 
   // Cycle destinations
   useEffect(() => {
@@ -68,7 +69,7 @@ export default function CinematicHero() {
       });
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fadeAnim]);
 
   const AnimatedView = Animated.View;
 
@@ -143,10 +144,9 @@ const styles = StyleSheet.create({
   overlayWeb: {
     // Glassmorphism on web
     backgroundColor: COLORS.whiteVeryFaint,
-    // @ts-ignore - web-only
     backdropFilter: 'blur(12px)',
     WebkitBackdropFilter: 'blur(12px)',
-  } as any,
+  } as ViewStyle,
   subhead: {
     fontFamily: FONTS.mono,
     fontSize: 12,

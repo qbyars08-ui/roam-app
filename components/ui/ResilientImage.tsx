@@ -3,7 +3,7 @@
 // =============================================================================
 
 import React, { useState } from 'react';
-import { Image, type ImageProps } from 'react-native';
+import { Image, type ImageProps, type NativeSyntheticEvent, type ImageErrorEventData } from 'react-native';
 
 import { BACKUP_FALLBACK } from '../../lib/photos';
 
@@ -23,7 +23,8 @@ export default function ResilientImage({
 
   const handleError = () => {
     if (!failed) setFailed(true);
-    onError?.({ nativeEvent: { error: 'Load failed' } } as any);
+    const event = { nativeEvent: { error: 'Load failed' } } as NativeSyntheticEvent<ImageErrorEventData>;
+    onError?.(event);
   };
 
   const imageSource = uri ? { uri } : source;

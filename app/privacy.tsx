@@ -9,9 +9,6 @@ import {
   ScrollView,
   Pressable,
   StyleSheet,
-  useWindowDimensions,
-  type ViewStyle,
-  type TextStyle,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -42,8 +39,6 @@ function Bullet({ children }: { children: React.ReactNode }) {
 export default function PrivacyScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
-  const isNarrow = width < 400;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>

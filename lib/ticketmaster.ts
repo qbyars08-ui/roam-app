@@ -140,27 +140,34 @@ export async function fetchTripEvents(
     const res = await fetch(`${BASE}/events.json?${params}`);
     if (!res.ok) return [];
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data: any = await res.json();
-    const rawEvents: any[] = data?._embedded?.events ?? [];
+    const data: unknown = await res.json();
+    const d = data && typeof data === 'object' ? data as Record<string, unknown> : null;
+    const embedded = d?._embedded;
+    const eventsArr = embedded && typeof embedded === 'object' && embedded !== null && 'events' in embedded
+      ? (embedded as { events: unknown[] }).events
+      : [];
+    const rawEvents = Array.isArray(eventsArr) ? eventsArr : [];
     if (!Array.isArray(rawEvents) || rawEvents.length === 0) return [];
 
-    const events: TripEvent[] = rawEvents.slice(0, 10).map((e) => {
-      const classification = e.classifications?.[0];
-      const segmentName = classification?.segment?.name as string | undefined;
-      const genreName = classification?.genre?.name as string | undefined;
-      const venueName = e._embedded?.venues?.[0]?.name as string | undefined;
+    const events: TripEvent[] = rawEvents.slice(0, 10).map((e: unknown) => {
+      const ev = e as Record<string, unknown>;
+      const classification = (ev.classifications as unknown[])?.[0] as Record<string, unknown> | undefined;
+      const segmentName = classification?.segment as Record<string, unknown> | undefined;
+      const genreName = classification?.genre as Record<string, unknown> | undefined;
+      const evEmbedded = ev._embedded as Record<string, unknown> | undefined;
+      const venueName = (evEmbedded?.venues as unknown[])?.[0] as Record<string, unknown> | undefined;
 
       // Pick best image (medium size preferred)
-      const images: Array<{ url: string; width: number }> = e.images ?? [];
+      const images: Array<{ url: string; width: number }> = (ev.images as Array<{ url: string; width: number }>) ?? [];
       const bestImage = images
         .filter((i) => i.width >= 200 && i.width <= 800)
         .sort((a, b) => b.width - a.width)[0] ?? images[0];
 
       // Price range
       let priceRange: string | null = null;
-      if (e.priceRanges?.[0]) {
-        const pr = e.priceRanges[0];
+      const priceRanges = ev.priceRanges as Array<{ currency?: string; min?: number; max?: number }> | undefined;
+      if (priceRanges?.[0]) {
+        const pr = priceRanges[0];
         const currency = pr.currency ?? 'USD';
         if (pr.min && pr.max) {
           priceRange = `${currency === 'USD' ? '$' : ''}${Math.round(pr.min)} – ${currency === 'USD' ? '$' : ''}${Math.round(pr.max)}`;
@@ -169,16 +176,18 @@ export async function fetchTripEvents(
         }
       }
 
+      const dates = ev.dates as Record<string, unknown> | undefined;
+      const start = dates?.start as Record<string, unknown> | undefined;
       return {
-        id: String(e.id ?? ''),
-        name: String(e.name ?? 'Event'),
-        type: mapType(segmentName, genreName),
-        venue: String(venueName ?? ''),
-        date: String(e.dates?.start?.localDate ?? startStr),
-        time: e.dates?.start?.localTime
-          ? String(e.dates.start.localTime).slice(0, 5)
+        id: String(ev.id ?? ''),
+        name: String(ev.name ?? 'Event'),
+        type: mapType(segmentName?.name as string | undefined, genreName?.name as string | undefined),
+        venue: String(venueName?.name ?? ''),
+        date: String(start?.localDate ?? startStr),
+        time: start?.localTime
+          ? String(start.localTime).slice(0, 5)
           : null,
-        url: String(e.url ?? ''),
+        url: String(ev.url ?? ''),
         imageUrl: bestImage?.url ?? null,
         priceRange,
       };

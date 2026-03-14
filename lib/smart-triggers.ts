@@ -153,7 +153,7 @@ async function recordTriggerFired(trigger: SmartTrigger): Promise<void> {
     history.push({ action: trigger.action, context: trigger.context, ts: Date.now() });
     const recent = history.slice(-50);
     await AsyncStorage.setItem(TRIGGER_HISTORY_KEY, JSON.stringify(recent));
-  } catch {}
+  } catch { /* silent */ }
 }
 
 async function shouldPromptRating(): Promise<boolean> {

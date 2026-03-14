@@ -68,7 +68,7 @@ export default function SubscriptionCard() {
     return (
       <View style={styles.proCard}>
         <LinearGradient
-          colors={[COLORS.gold + '18', COLORS.gold + '08']}
+          colors={[COLORS.goldSubtle, COLORS.goldVeryFaint]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.proGradient}
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: COLORS.gold + '30',
+    borderColor: COLORS.goldBorder,
   } as ViewStyle,
   proGradient: {
     padding: SPACING.lg,

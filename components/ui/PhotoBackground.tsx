@@ -43,8 +43,11 @@ export default function PhotoBackground({
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync derived state
     setCurrentUri(resolvedUri ?? BACKUP_FALLBACK);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync derived state
     setLoading(true);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync derived state
     setFailed(false);
   }, [resolvedUri]);
 

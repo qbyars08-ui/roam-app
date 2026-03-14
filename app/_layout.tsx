@@ -36,7 +36,10 @@ import { track } from '../lib/analytics';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
 import OfflineBanner from '../components/ui/OfflineBanner';
 import PhoneFrame from '../components/ui/PhoneFrame';
+import DestinationThemeOverlay from '../components/ui/DestinationThemeOverlay';
 import MilestoneModal from '../components/features/MilestoneModal';
+import { PostHogProvider } from 'posthog-react-native';
+import { initPostHog, identifyUser, resetIdentity, getPostHogClient } from '../lib/posthog';
 
 // ---------------------------------------------------------------------------
 // Auth guard — redirects based on session state
@@ -74,6 +77,7 @@ function useProtectedRoute(session: { user: { id: string } } | null) {
       // Has session but in auth screens → go to tabs
       router.replace('/(tabs)');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- router intentional mount-only
   }, [session, segments]);
 }
 
@@ -87,6 +91,7 @@ export default function RootLayout() {
   const session = useAppStore((s) => s.session);
   const setSession = useAppStore((s) => s.setSession);
   const setTripsThisMonth = useAppStore((s) => s.setTripsThisMonth);
+  const activeDestination = useAppStore((s) => s.trips?.[0]?.destination ?? null);
 
   // Load fonts
   const [fontsLoaded] = useFonts({
@@ -101,8 +106,9 @@ export default function RootLayout() {
 
   // Bootstrap auth session + restore persisted data
   useEffect(() => {
-    // Initialize RevenueCat on app start (anonymous); links to user when session loads
+    // Initialize RevenueCat + PostHog on app start
     initRevenueCat().catch(() => {});
+    initPostHog().catch(() => {});
     checkStorageVersion().catch(() => {});
     captureRefOnLoad().catch(() => {}); // Web: track ?ref= for referral attribution
     // Restore persisted data (trips, pets, travel profile, currency) before session check
@@ -155,15 +161,17 @@ export default function RootLayout() {
           const current = useAppStore.getState().session;
           if (current?.user?.id?.startsWith?.('guest-')) return;
           logoutRevenueCat().catch(() => {});
+          resetIdentity();
           setSession(null);
         }
       });
       subscription = result.data.subscription;
-    } catch {}
+    } catch { /* silent */ }
 
     return () => {
       subscription?.unsubscribe();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setSession stable setter
   }, []);
 
   // Once session is loaded with a user, bootstrap RevenueCat + profile data
@@ -194,13 +202,14 @@ export default function RootLayout() {
         setTripsThisMonth(profile.trips_generated_this_month ?? 0);
       }
 
+      identifyUser(session.user.id, { isPro: proFromPurchases });
       ensureReferralCode(session.user.id).catch(() => {});
 
       try {
         await requestNotificationPermission();
         await scheduleDailyDiscovery();
         await registerPushToken(session.user.id);
-      } catch {}
+      } catch { /* silent */ }
 
       checkActiveTripOnLoad();
       recordAppOpen();
@@ -223,6 +232,7 @@ export default function RootLayout() {
     let unsub: (() => void) | undefined;
     bootstrap().then((fn) => { unsub = fn; });
     return () => { unsub?.(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- session.user, setTripsThisMonth intentionally excluded
   }, [session?.user?.id]);
 
   // Re-engagement: when app goes to background, schedule Day 1/3/7/14 notifications
@@ -309,9 +319,11 @@ export default function RootLayout() {
     );
   }
 
-  return (
-    <ErrorBoundary>
+  const posthogClient = getPostHogClient();
+
+  const appContent = (
       <GestureHandlerRootView style={{ flex: 1 }}>
+        <DestinationThemeOverlay destination={activeDestination} />
         <PhoneFrame>
           <OfflineBanner />
           <Stack
@@ -554,6 +566,17 @@ export default function RootLayout() {
         />
         <StatusBar style="light" />
       </GestureHandlerRootView>
+  );
+
+  return (
+    <ErrorBoundary>
+      {posthogClient ? (
+        <PostHogProvider client={posthogClient} autocapture={false}>
+          {appContent}
+        </PostHogProvider>
+      ) : (
+        appContent
+      )}
     </ErrorBoundary>
   );
 }

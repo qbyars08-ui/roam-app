@@ -23,7 +23,6 @@ import { COLORS, FONTS, SPACING, RADIUS, BUDGETS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import { parseItinerary, type Itinerary, type ItineraryDay } from '../lib/types/itinerary';
 import { withComingSoon } from '../lib/with-coming-soon';
-import { Receipt } from 'lucide-react-native';
 
 // =============================================================================
 // Helpers
@@ -48,16 +47,16 @@ function getBudgetLabel(budgetId: string): string {
 /** Calculate per-category costs from itinerary days */
 function calculateBreakdown(itinerary: Itinerary) {
   const days = itinerary.days;
-  let totalMorning = 0;
-  let totalAfternoon = 0;
-  let totalEvening = 0;
-  let totalAccommodation = 0;
+  let _totalMorning = 0;
+  let _totalAfternoon = 0;
+  let _totalEvening = 0;
+  let _totalAccommodation = 0;
 
   for (const day of days) {
-    totalMorning += parseCost(day.morning.cost);
-    totalAfternoon += parseCost(day.afternoon.cost);
-    totalEvening += parseCost(day.evening.cost);
-    totalAccommodation += parseCost(day.accommodation.pricePerNight);
+    _totalMorning += parseCost(day.morning.cost);
+    _totalAfternoon += parseCost(day.afternoon.cost);
+    _totalEvening += parseCost(day.evening.cost);
+    _totalAccommodation += parseCost(day.accommodation.pricePerNight);
   }
 
   const budget = itinerary.budgetBreakdown;
@@ -196,7 +195,6 @@ function TripReceiptScreen() {
           <View style={{ width: 24 }} />
         </View>
         <View style={styles.emptyCenter}>
-          <Receipt size={48} color={COLORS.creamMuted} strokeWidth={1.5} />
           <Text style={styles.emptyTitle}>No trip to receipt-ify</Text>
           <Text style={styles.emptyBody}>
             Open one of your trips first, then come back to see what it costs.
@@ -373,7 +371,7 @@ function TripReceiptScreen() {
           onPress={handleShare}
         >
           <LinearGradient
-            colors={[COLORS.sage, COLORS.sageMedium]}
+            colors={[COLORS.sage, COLORS.sageAlpha80]}
             style={styles.shareBtnGradient}
           >
             <Text style={styles.shareBtnText}>Share the Receipt</Text>

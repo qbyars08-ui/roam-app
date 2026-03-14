@@ -9,7 +9,6 @@ import {
   ScrollView,
   Pressable,
   StyleSheet,
-  Dimensions,
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
@@ -26,7 +25,6 @@ import {
   DESTINATION_PACKS,
   getPackForCity,
   PHRASE_CATEGORIES,
-  type DestinationPack,
   type Phrase,
   type PhraseCategory,
 } from '../lib/language-data';
@@ -98,7 +96,10 @@ function LanguageSurvivalScreen() {
 
   useEffect(() => {
     const city = (params.city ?? params.destination) as string | undefined;
-    if (city && getPackForCity(city)) setSelectedCity(city);
+    if (city && getPackForCity(city)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync derived state
+      setSelectedCity(city);
+    }
   }, [params.city, params.destination]);
   const [activeCategory, setActiveCategory] = useState<PhraseCategory | 'all'>('all');
   const [cachedCity, setCachedCity] = useState<string | null>(null);
@@ -125,7 +126,7 @@ function LanguageSurvivalScreen() {
           cachedAt: Date.now(),
         }));
         setCachedCity(selectedCity);
-      } catch {}
+      } catch { /* silent */ }
     };
     cache();
   }, [selectedCity, pack]);
@@ -398,7 +399,7 @@ const styles = StyleSheet.create({
   atStopBadge: {
     marginTop: 8,
     alignSelf: 'flex-start',
-    backgroundColor: COLORS.sageSoft,
+    backgroundColor: COLORS.sageMuted,
     paddingHorizontal: SPACING.sm,
     paddingVertical: 2,
     borderRadius: RADIUS.sm,
@@ -412,7 +413,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.goldSubtle,
+    backgroundColor: COLORS.goldSoft,
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,

@@ -117,10 +117,10 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   card: {
     backgroundColor: COLORS.bgCard,
-    borderRadius: 16,
+    borderRadius: RADIUS.xl,
     borderWidth: 1,
     borderColor: COLORS.whiteFaintBorder,
-    padding: 20,
+    padding: SPACING.lg,
   } as ViewStyle,
   cardInner: {
     flexDirection: 'row',

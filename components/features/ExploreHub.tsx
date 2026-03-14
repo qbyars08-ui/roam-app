@@ -121,7 +121,7 @@ export default function ExploreHub({ standalone = false }: ExploreHubProps) {
         router.push({ pathname: '/paywall', params: { reason: 'feature', feature: feature.name } });
         return;
       }
-      router.push(feature.route as any);
+      router.push(feature.route as import('expo-router').Href);
     },
     [router, canAccessPro]
   );
@@ -200,13 +200,15 @@ export function FeatureQuickAccess() {
   // Subset of features to show on home — the most useful quick-access items
   const QUICK_FEATURES = FEATURES.slice(0, 8);
 
+  /* eslint-disable react-hooks/preserve-manual-memoization */
   const handlePress = useCallback(
     (feature: Feature) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      router.push(feature.route as any);
+      router.push(feature.route as import('expo-router').Href);
     },
     [router]
   );
+  /* eslint-enable react-hooks/preserve-manual-memoization */
 
   return (
     <View style={quickStyles.section}>
@@ -297,7 +299,7 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   } as ViewStyle,
   cardProGated: {
-    borderColor: COLORS.gold + '30',
+    borderColor: COLORS.goldBorder,
   } as ViewStyle,
   proBadge: {
     position: 'absolute',
@@ -306,12 +308,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: COLORS.gold + '20',
+    backgroundColor: COLORS.goldMutedLight,
     paddingHorizontal: SPACING.xs + 2,
     paddingVertical: 2,
     borderRadius: RADIUS.full,
     borderWidth: 1,
-    borderColor: COLORS.gold + '40',
+    borderColor: COLORS.goldBorderStrong,
     zIndex: 1,
   } as ViewStyle,
   proBadgeText: {

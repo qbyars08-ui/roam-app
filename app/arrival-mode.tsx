@@ -294,7 +294,7 @@ function ArrivalModeScreen() {
       ])
     );
     Animated.stagger(0, animations).start();
-  }, []);
+  }, [fadeAnims, headerFade, headerSlide, slideAnims]);
 
   const toggleCheck = (id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -363,7 +363,7 @@ function ArrivalModeScreen() {
     <View>
       {data.safetyHeadsUp.map((item, i) => (
         <View key={i} style={styles.safetyItem}>
-          <View style={[styles.safetyBullet, { backgroundColor: COLORS.coralMuted }]}>
+          <View style={[styles.safetyBullet, { backgroundColor: COLORS.coralLight }]}>
             <Text style={[styles.safetyBulletText, { color: COLORS.coral }]}>{i + 1}</Text>
           </View>
           <Text style={styles.safetyText}>{item}</Text>
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.sageSoft,
+    backgroundColor: COLORS.sageMuted,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: SPACING.sm,
@@ -636,11 +636,11 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   } as ViewStyle,
   transportPill: {
-    backgroundColor: COLORS.sageFaint,
+    backgroundColor: COLORS.sageSubtle,
     borderRadius: RADIUS.md,
     padding: SPACING.md,
     borderWidth: 1,
-    borderColor: COLORS.sageSoft,
+    borderColor: COLORS.sageMuted,
   } as ViewStyle,
   transportLabel: {
     fontFamily: FONTS.mono,
@@ -758,7 +758,7 @@ const styles = StyleSheet.create({
     marginRight: SPACING.sm + 4,
   } as ViewStyle,
   checkboxChecked: {
-    backgroundColor: COLORS.sageBorder,
+    backgroundColor: COLORS.sageLight,
     borderColor: COLORS.sage,
   } as ViewStyle,
   checkmark: {

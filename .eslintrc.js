@@ -16,14 +16,30 @@ module.exports = {
   plugins: ['@typescript-eslint', 'react', 'react-hooks'],
   rules: {
     'react/react-in-jsx-scope': 'off',
-    'no-unused-vars': 'warn',
+    'react/no-unescaped-entities': 'off',
+
+    'no-unused-vars': 'off',
+    '@typescript-eslint/no-unused-vars': ['warn', {
+      argsIgnorePattern: '^_',
+      varsIgnorePattern: '^_',
+      caughtErrorsIgnorePattern: '^_',
+    }],
     '@typescript-eslint/no-explicit-any': 'warn',
+    '@typescript-eslint/no-require-imports': 'off',
+
     'react-hooks/rules-of-hooks': 'error',
     'react-hooks/exhaustive-deps': 'warn',
+    'react-hooks/refs': 'off',
+    'react-hooks/set-state-in-effect': 'warn',
+    'react-hooks/static-components': 'warn',
+    'react-hooks/purity': 'warn',
+    'react-hooks/preserve-manual-memoization': 'warn',
+    'react-hooks/immutability': 'warn',
   },
   settings: {
     react: {
       version: 'detect',
     },
   },
+  ignorePatterns: ['supabase/functions/**'],
 };

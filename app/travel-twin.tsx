@@ -320,8 +320,6 @@ function TravelTwinScreen() {
     if (!canAccess) router.replace('/paywall');
   }, [canAccess, router]);
 
-  if (!canAccess) return null;
-
   useEffect(() => {
     if (!twin) return;
 
@@ -364,7 +362,9 @@ function TravelTwinScreen() {
         }),
       ]).start();
     });
-  }, [twin]);
+  }, [cardFades, cardSlides, emojiScale, fadeAnim, scaleAnim, twin]);
+
+  if (!canAccess) return null;
 
   // ------ Empty state: no profile ------
   if (!hasCompletedProfile || !twin) {

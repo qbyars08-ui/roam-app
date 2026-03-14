@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.bgCard,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
-    borderColor: COLORS.gold + '30',
+    borderColor: COLORS.goldBorder,
     padding: SPACING.lg,
     gap: SPACING.sm,
   } as ViewStyle,

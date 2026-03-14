@@ -14,6 +14,7 @@ import {
   View,
   type TextStyle,
   type ViewStyle,
+  type ImageStyle,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -557,7 +558,7 @@ function ChaosModeScreen() {
                 onPress={handleDareShare}
               >
                 <LinearGradient
-                  colors={[COLORS.goldMutedDim, COLORS.gold]}
+                  colors={[COLORS.goldAlpha80, COLORS.gold]}
                   style={styles.shareBtnGradient}
                 >
                   <Text style={styles.shareBtnText}>Dare you to do this</Text>
@@ -839,10 +840,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: SPACING.lg,
     overflow: 'hidden',
-  } as any,
+  } as ViewStyle,
   chaosCardImageInner: {
     borderRadius: RADIUS.lg,
-  } as any,
+  } as ImageStyle,
   chaosCardBrand: {
     fontFamily: FONTS.mono,
     fontSize: 12,

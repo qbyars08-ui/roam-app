@@ -87,7 +87,7 @@ export default function SplashScreen() {
     }, 2400));
 
     return () => timers.forEach(clearTimeout);
-  }, [router]);
+  }, [bgOpacity, glowOpacity, logoOpacity, logoScale, router, taglineOpacity]);
 
   const handleBrowseFirst = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

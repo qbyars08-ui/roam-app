@@ -8,13 +8,13 @@ import {
   Text,
   Pressable,
   StyleSheet,
+  ActivityIndicator,
   Linking,
   ImageBackground,
   type ViewStyle,
   type TextStyle,
   type ImageStyle,
 } from 'react-native';
-import { PulseLoader } from '../components/premium/LoadingStates';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -35,11 +35,14 @@ function ChaosDareScreen() {
   useEffect(() => {
     const id = params.id as string | undefined;
     if (!id) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
       setLoading(false);
       return;
     }
     getChaosDare(id).then((d) => {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
       setDare(d);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
       setLoading(false);
     });
   }, [params.id]);
@@ -52,7 +55,7 @@ function ChaosDareScreen() {
   if (loading) {
     return (
       <View style={[styles.container, styles.center, { paddingTop: insets.top }]}>
-        <PulseLoader color={COLORS.gold} size={10} />
+        <ActivityIndicator color={COLORS.gold} size="large" />
       </View>
     );
   }
@@ -93,7 +96,7 @@ function ChaosDareScreen() {
             style={({ pressed }) => [styles.ctaBtn, { opacity: pressed ? 0.9 : 1 }]}
           >
             <LinearGradient
-              colors={[COLORS.gold, COLORS.goldMutedDim]}
+              colors={[COLORS.gold, COLORS.goldAlpha80]}
               style={styles.ctaGrad}
             >
               <Text style={styles.ctaBtnText}>Open ROAM to claim it</Text>

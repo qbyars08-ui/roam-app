@@ -19,7 +19,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
-import { addDays, format, isSameDay, startOfDay, isWeekend, getDay } from 'date-fns';
+import { addDays, format, isSameDay, startOfDay, isWeekend } from 'date-fns';
 import * as Haptics from '../../lib/haptics';
 import {
   Shuffle,
@@ -29,16 +29,13 @@ import {
   Minus,
   Plus,
   Calendar,
-  Clock,
   ChevronDown,
   ChevronUp,
   X,
   Sparkles,
-  Sun,
   Moon,
   Sunrise,
   Coffee,
-  UtensilsCrossed,
   Train,
   Car,
   Footprints,
@@ -48,7 +45,6 @@ import {
   Users,
   User,
   Briefcase,
-  Star,
   MapPin,
   AlertCircle,
 } from 'lucide-react-native';
@@ -394,11 +390,13 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
   });
 
   // Destination suggestion that matches current state
-  const suggestionHint = useMemo(() => {
+  const _suggestionHint = useMemo(() => {
     if (destination.trim()) return null;
+    // eslint-disable-next-line react-hooks/purity -- random pick for empty state, stable with empty deps
     const pick = TRENDING_DESTINATIONS[Math.floor(Math.random() * 5)];
     return pick;
-  }, [destination]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: stable hint when destination empty
+  }, []);
 
   return (
     <KeyboardAvoidingView
@@ -423,7 +421,7 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
                 onChangeText={(t) => { setDestination(t); setError(null); }}
                 onFocus={() => setInputFocused(true)}
                 onBlur={() => setInputFocused(false)}
-                placeholder="City, country, or region"
+                placeholder="Tokyo, Japan"
                 placeholderTextColor={COLORS.creamDim}
               />
             </View>
@@ -777,7 +775,7 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
           ) : (
             <>
               <Sparkles size={20} color={COLORS.bg} strokeWidth={2} />
-              <Text style={styles.ctaText}>Build My Trip</Text>
+              <Text style={styles.ctaText}>Generate My Trip</Text>
             </>
           )}
         </Pressable>
@@ -859,7 +857,7 @@ const styles = StyleSheet.create({
   groupInline: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: SPACING.md, paddingHorizontal: SPACING.xs } as ViewStyle,
   groupInlineLabel: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.cream } as TextStyle,
   groupRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md } as ViewStyle,
-  groupBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.bgCard, alignItems: 'center', justifyContent: 'center' } as ViewStyle,
+  groupBtn: { width: 36, height: 36, borderRadius: RADIUS.full, backgroundColor: COLORS.bgCard, alignItems: 'center', justifyContent: 'center' } as ViewStyle,
   groupBtnDisabled: { opacity: 0.4 } as ViewStyle,
   groupValue: { fontFamily: FONTS.mono, fontSize: 22, color: COLORS.gold, minWidth: 30, textAlign: 'center' } as TextStyle,
 
@@ -922,7 +920,7 @@ const styles = StyleSheet.create({
 
   // CTA
   ctaWrap: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: SPACING.md, paddingBottom: SPACING.lg, backgroundColor: COLORS.bg } as ViewStyle,
-  cta: { height: 56, borderRadius: 14, backgroundColor: COLORS.sage, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: SPACING.sm } as ViewStyle,
+  cta: { height: 56, borderRadius: RADIUS.xl, backgroundColor: COLORS.sage, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: SPACING.sm } as ViewStyle,
   ctaPressed: { opacity: 0.85 } as ViewStyle,
   ctaText: { fontFamily: FONTS.header, fontSize: 22, color: COLORS.bg } as TextStyle,
   ctaLoading: { fontFamily: FONTS.body, fontSize: 15, color: COLORS.bg } as TextStyle,

@@ -27,7 +27,6 @@ import { getDestinationPhoto } from '../lib/photos';
 import { useAppStore } from '../lib/store';
 import { callClaude, TripLimitReachedError } from '../lib/claude';
 import { getMockDupeResult } from '../lib/mock-fallback';
-import MockDataBadge from '../components/ui/MockDataBadge';
 import { withComingSoon } from '../lib/with-coming-soon';
 
 // ---------------------------------------------------------------------------
@@ -114,7 +113,7 @@ function TripDupeScreen() {
   const [phase, setPhase] = useState<Phase>('pick');
   const [selectedDream, setSelectedDream] = useState<string | null>(null);
   const [dupeResult, setDupeResult] = useState<DupeResult | null>(null);
-  const [isMockResult, setIsMockResult] = useState(false);
+  const [, setIsMockResult] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const cardScale = useRef(new Animated.Value(0)).current;

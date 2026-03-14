@@ -25,7 +25,6 @@ import {
   type TravelProfile,
   type TransportPreference,
   type TripPurpose,
-  type PassportNationality,
   TRAVEL_FREQUENCY_OPTIONS,
   PACE_LABELS,
   BUDGET_STYLE_LABELS,

@@ -26,7 +26,6 @@ import {
   type YearInReview,
 } from '../lib/travel-year';
 import { withComingSoon } from '../lib/with-coming-soon';
-import { TrendingUp } from 'lucide-react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - SPACING.lg * 2;
@@ -91,6 +90,7 @@ function TripWrappedScreen() {
 
   useEffect(() => {
     loadReview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only
   }, []);
 
   const loadReview = async () => {
@@ -179,10 +179,9 @@ function TripWrappedScreen() {
           <View style={{ width: 24 }} />
         </View>
         <View style={styles.emptyCenter}>
-          <TrendingUp size={48} color={COLORS.creamMuted} strokeWidth={1.5} />
           <Text style={styles.emptyTitle}>Nothing to wrap yet</Text>
           <Text style={styles.emptyBody}>
-            Plan some trips and come back at the end of the year. We'll have your recap ready.
+            Plan some trips and come back at the end of the year. We will have your recap ready.
           </Text>
         </View>
       </View>
@@ -471,7 +470,7 @@ function TripWrappedScreen() {
           onPress={handleShareAll}
         >
           <LinearGradient
-            colors={[COLORS.sage, COLORS.sageMedium]}
+            colors={[COLORS.sage, COLORS.sageAlpha80]}
             style={styles.shareBtnGradient}
           >
             <Text style={styles.shareBtnText}>

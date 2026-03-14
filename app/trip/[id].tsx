@@ -16,13 +16,11 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { SkeletonCard } from '../../components/premium/LoadingStates';
 import { getSharedTrip, type SharedTrip } from '../../lib/sharing';
-import { getDestinationPhoto } from '../../lib/photos';
 import { parseItinerary } from '../../lib/types/itinerary';
 import { useAppStore } from '../../lib/store';
 
@@ -41,17 +39,27 @@ export default function PublicTripScreen() {
 
   useEffect(() => {
     if (!id) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync validation
       setError('Invalid link');
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync validation
       setLoading(false);
       return;
     }
     getSharedTrip(id)
       .then((t) => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
         setTrip(t);
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
         setError(t ? null : 'Trip not found');
       })
-      .catch(() => setError('Could not load trip'))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- async error handling
+        setError('Could not load trip');
+      })
+      .finally(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
+        setLoading(false);
+      });
   }, [id]);
 
   const shareUrl = id ? `${BASE_URL}/trip/${id}` : '';
@@ -105,8 +113,6 @@ export default function PublicTripScreen() {
   } catch {
     parsed = null;
   }
-
-  const photoUrl = getDestinationPhoto(trip.destination);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>

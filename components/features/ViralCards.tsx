@@ -157,7 +157,7 @@ export function TripRevealCard({ itinerary, destination, heroPhotoUrl }: TripRev
     }, 5000);
 
     return () => clearInterval(timer);
-  }, [isPlaying, totalDays]);
+  }, [fadeAnim, isPlaying, scaleAnim, totalDays]);
 
   // Entrance animation
   useEffect(() => {
@@ -167,7 +167,7 @@ export function TripRevealCard({ itinerary, destination, heroPhotoUrl }: TripRev
       friction: 7,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [scaleAnim]);
 
   const day = days[currentDay];
   const topActivity = day.morning.activity;

@@ -141,9 +141,17 @@ Deno.serve(async (req: Request) => {
       profile.trips_generated_this_month = 0;
     }
 
+    // ── Admin bypass: skip rate limit for test accounts ──────────────
+    const adminEmails = (Deno.env.get("ADMIN_TEST_EMAILS") || "").split(",").map((e: string) => e.trim().toLowerCase()).filter(Boolean);
+    const userEmail = (user.email || "").toLowerCase();
+    const isAdmin = adminEmails.includes(userEmail);
+    if (isAdmin) {
+      console.log(`Admin bypass: ${userEmail} — skipping rate limit`);
+    }
+
     // ── Rate limit only for trip generation ────────────────────────────
     const isFree = profile.subscription_tier === "free" || !profile.subscription_tier;
-    if (isTripGeneration && isFree && profile.trips_generated_this_month >= FREE_TIER_LIMIT) {
+    if (isTripGeneration && isFree && !isAdmin && profile.trips_generated_this_month >= FREE_TIER_LIMIT) {
       return new Response(
         JSON.stringify({
           error: "Trip limit reached",

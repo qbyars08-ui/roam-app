@@ -12,13 +12,14 @@ import {
   ImageBackground,
   type ViewStyle,
   type TextStyle,
+  type ImageStyle,
 } from 'react-native';
 import { PulseLoader } from '../components/premium/LoadingStates';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
+import { COLORS, FONTS, SPACING } from '../lib/constants';
 import { getDestinationPhoto } from '../lib/photos';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../lib/store';
@@ -176,7 +177,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   } as ViewStyle,
   bg: { flex: 1, width: '100%' } as ViewStyle,
-  bgImg: { resizeMode: 'cover' } as any,
+  bgImg: { resizeMode: 'cover' } as ImageStyle,
   gradient: { flex: 1, justifyContent: 'flex-end', padding: SPACING.xl } as ViewStyle,
   content: { paddingBottom: SPACING.xxxl } as ViewStyle,
   title: {

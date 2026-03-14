@@ -51,10 +51,13 @@ export default function TripEventsCard({
 
   useEffect(() => {
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
     setLoading(true);
     fetchTripEvents(destination, startDate, endDate).then((list) => {
       if (!cancelled) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
         setEvents(list);
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
         setLoading(false);
       }
     });

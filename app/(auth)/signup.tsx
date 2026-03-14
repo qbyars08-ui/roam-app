@@ -26,9 +26,6 @@ import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { ONBOARDING_COMPLETE } from '../../lib/storage-keys';
 
-const DEV = __DEV__;
-const isWeb = Platform.OS === 'web';
-
 export default function SignUpScreen() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -76,7 +73,7 @@ export default function SignUpScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [btnsOpacity, btnsY, noteOpacity, titleOpacity, titleY]);
 
   // -------------------------------------------------------------------------
   // Apple Sign-In
@@ -104,8 +101,8 @@ export default function SignUpScreen() {
 
       if (error) Alert.alert('Couldn\u2019t sign in', 'Something got in the way. Check your connection and try again.');
       // Auth listener in _layout.tsx will redirect to onboarding profile
-    } catch (err: any) {
-      if (err.code === 'ERR_REQUEST_CANCELED') return;
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'code' in err && err.code === 'ERR_REQUEST_CANCELED') return;
       Alert.alert('Hmm', 'Apple Sign-In hit a snag. One more try usually does it.');
     }
   };

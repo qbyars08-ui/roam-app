@@ -26,6 +26,47 @@ _Awaiting next assignment from Cap._
 
 ---
 
+## Agent 04 BUILDER — PostHog SDK + Rate Limit UX
+
+**Status:** COMPLETE
+**Date:** 2026-03-14
+**Branch:** `agent04/posthog-sdk`
+**Action needed:** Yes — set `EXPO_PUBLIC_POSTHOG_KEY` env var
+
+### Findings
+
+- Installed `posthog-react-native` ^4.37.3 via `npx expo install`
+- Created `lib/posthog.ts` — singleton wrapper with `initPostHog`, `captureEvent`, `identifyUser`, `resetIdentity`, `captureScreen`
+- Added `PostHogProvider` to `app/_layout.tsx` wrapping full app tree; autocapture disabled
+- `identifyUser()` called on session bootstrap with `isPro` trait; `resetIdentity()` on sign-out
+- Wired `trip_generation_completed` in `app/(tabs)/generate.tsx` — both quick and conversation modes
+- Wired `paywall_viewed` in `app/paywall.tsx` — fires on mount with reason/destination
+- Wired `itinerary_shared` in `app/itinerary.tsx` — fires on share tap with destination/tripId
+- Added 429 rate-limit upgrade modal in `app/(tabs)/generate.tsx` — replaces instant paywall redirect with contextual modal showing limit info + gold "See Pro Plans" CTA
+- Wired `rate_limit_hit` PostHog event when modal triggers
+- `npx tsc --noEmit` — zero new errors
+
+---
+
+## Agent 04 BUILDER — UI Polish (P3)
+
+**Status:** COMPLETE
+**Date:** 2026-03-14
+**Branch:** `agent04/ui-polish-p3`
+**Action needed:** No
+
+### Findings
+
+- Tasks 1-3 already completed on main by other agents before this run
+- `app/(tabs)/generate.tsx` — TripGeneratingLoader already wired as full-screen overlay (lines 255-259) with `absoluteFillObject` + zIndex 100
+- `app/itinerary.tsx` — 5 API modules (air-quality, sun-times, public-holidays, cost-of-living, timezone) already wired into collapsible DestinationIntelSection
+- `app/(tabs)/flights.tsx` — SkeletonCard from `components/premium/LoadingStates` already imported and rendering 4 shimmer cards during search
+- Sharpened 4 generic discover headers in `lib/constants.ts` — replaced "Pick a place...", "Plan less...", "Tell us where...", "The hard part was picking..." with editorial copy
+- New headers: "Skip the research rabbit hole", "Your next obsession is one tap away", "Real recs from someone who's been", "Where to next? We've got opinions."
+- `npx tsc --noEmit` — zero new errors (pre-existing: react-i18next types missing, readonly array tests, route type mismatches)
+
+---
+
 ## Localization (Agent 09)
 
 **Status:** i18n infrastructure complete; core screens converted
@@ -107,17 +148,17 @@ _Awaiting next assignment from Cap._
 
 ## Shield (Dependency & Security Scanner)
 
-**Status:** Dead code purge + deep link validation complete
+**Status:** Rate limiting + MEDIUM RLS fixes complete
 **Date:** 2026-03-13
-**Action needed:** No
+**Action needed:** Run `supabase db push` for edge_function_rate_limits + medium security migrations
 
 ### Findings
 
-- Deleted orphaned: lib/gamification.ts, lib/google-places.ts, lib/content-freshness.ts (aviationstack has imports, kept)
-- `lib/params-validator.ts` — Created; validateDestination, validateUuid, validateCode
-- dream-vault, local-lens, honest-reviews, arrival-mode — destination param validation
-- `lib/storage-keys.ts` — Centralized AsyncStorage keys; store, guest, offline, auth screens updated
-- `docs/SECURITY_AUDIT_2025-03-13.md` — Full audit report
+- Rate limiting: voice-proxy (30/min), weather-intel (60/min), destination-photo (60/min), enrich-venues (30/min)
+- `supabase/migrations/20260324000002_edge_function_rate_limits.sql` — table + increment_edge_rate_limit RPC
+- `supabase/migrations/20260324000003_medium_security_rls.sql` — chaos_dares, hostel_channels created_by + RLS
+- `lib/chaos-dare.ts`, `lib/social.ts` — pass created_by on insert for RLS compliance
+- SECURITY_AUDIT.md — 5 MEDIUM items fixed (16, 17, 18, 19, 20); 14–15 N/A (Amadeus removed)
 
 ---
 
