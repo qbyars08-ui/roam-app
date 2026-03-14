@@ -178,11 +178,11 @@ function ChaosModeScreen() {
 
   const handleChaos = useCallback(async () => {
     if (isGuestUser() && trips.length >= 1) {
-      router.push({ pathname: '/paywall', params: { reason: 'limit' } });
+      router.push({ pathname: '/paywall', params: { reason: 'chaos' } });
       return;
     }
     if (!isPro && tripsThisMonth >= FREE_TRIPS_PER_MONTH) {
-      router.push({ pathname: '/paywall', params: { reason: 'limit' } });
+      router.push({ pathname: '/paywall', params: { reason: 'chaos' } });
       return;
     }
     setPhase('generating');
@@ -265,7 +265,7 @@ function ChaosModeScreen() {
       });
     } catch (err) {
       if (err instanceof TripLimitReachedError) {
-        router.push('/paywall');
+        router.push({ pathname: '/paywall', params: { reason: 'chaos' } });
         return;
       }
       setError(

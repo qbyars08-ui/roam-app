@@ -46,6 +46,7 @@ import {
   type PackingItem,
 } from '../lib/group-trips';
 import { parseItinerary, type Itinerary, type ItineraryDay } from '../lib/types/itinerary';
+import { trackEvent } from '../lib/analytics';
 import Button from '../components/ui/Button';
 import { withComingSoon } from '../lib/with-coming-soon';
 
@@ -386,6 +387,7 @@ function ExpensesTab({
     setAdding(true);
     try {
       await addExpense({ groupId, amount: num, category, description });
+      trackEvent('expense_added', { groupId, amount: num, category }).catch(() => {});
       setAmount('');
       setDescription('');
       setShowAdd(false);

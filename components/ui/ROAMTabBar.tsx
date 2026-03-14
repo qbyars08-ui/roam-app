@@ -6,19 +6,24 @@ import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING } from '../../lib/constants';
-import { IconDiscover, IconPlan, IconSaved, IconYou } from './TabIcons';
+import { IconDiscover, IconGenerate, IconFlights, IconStays, IconFood, IconPrep } from './TabIcons';
 
-const TAB_ORDER = ['index', 'plan', 'saved', 'profile'] as const;
-const TAB_CONFIG: Record<string, { label: string; Icon: React.ComponentType<{ size?: number; color?: string; focused?: boolean }>; showPulse?: boolean }> = {
-  index: { label: 'Discover', Icon: IconDiscover },
-  plan: { label: 'Plan', Icon: IconPlan },
-  saved: { label: 'My Trips', Icon: IconSaved },
-  profile: { label: 'You', Icon: IconYou },
+const TAB_ORDER = ['index', 'generate', 'flights', 'stays', 'food', 'prep'] as const;
+type TabIconComponent = React.ComponentType<{ size?: number; color?: string; focused?: boolean }>;
+const TAB_ICONS: Record<string, { i18nKey: string; Icon: TabIconComponent }> = {
+  index: { i18nKey: 'tabs.discover', Icon: IconDiscover },
+  generate: { i18nKey: 'tabs.generate', Icon: IconGenerate },
+  flights: { i18nKey: 'tabs.flights', Icon: IconFlights },
+  stays: { i18nKey: 'tabs.stays', Icon: IconStays },
+  food: { i18nKey: 'tabs.food', Icon: IconFood },
+  prep: { i18nKey: 'tabs.prep', Icon: IconPrep },
 };
 
 export default function ROAMTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const visibleRoutes = TAB_ORDER.map((name) => state.routes.find((r) => r.name === name)).filter(Boolean) as typeof state.routes;
 
   const barContent = (
@@ -26,8 +31,10 @@ export default function ROAMTabBar({ state, descriptors, navigation }: BottomTab
       {visibleRoutes.map((route) => {
         const { options } = descriptors[route.key];
         const isFocused = state.routes[state.index]?.key === route.key;
-        const config = TAB_CONFIG[route.name as keyof typeof TAB_CONFIG];
+        const config = TAB_ICONS[route.name as keyof typeof TAB_ICONS];
         if (!config) return null;
+
+        const label = t(config.i18nKey);
 
         const onPress = () => {
           const event = navigation.emit({
@@ -49,14 +56,14 @@ export default function ROAMTabBar({ state, descriptors, navigation }: BottomTab
             style={({ pressed }) => [styles.tab, pressed && styles.tabPressed]}
             accessibilityRole="button"
             accessibilityState={isFocused ? { selected: true } : {}}
-            accessibilityLabel={options.tabBarAccessibilityLabel ?? config.label}
+            accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
           >
             <View style={styles.iconWrap}>
               <config.Icon size={24} color={color} focused={isFocused} />
             </View>
             {isFocused && (
               <Text style={[styles.label, { color }]} numberOfLines={1}>
-                {config.label}
+                {label}
               </Text>
             )}
           </Pressable>
@@ -116,11 +123,6 @@ const styles = StyleSheet.create({
   iconWrap: {
     position: 'relative',
     marginBottom: 2,
-  },
-  pulseDot: {
-    position: 'absolute',
-    top: -2,
-    right: -4,
   },
   label: {
     fontFamily: FONTS.mono,

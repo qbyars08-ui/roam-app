@@ -25,6 +25,7 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { getDestinationPhoto } from '../lib/photos';
 import { useAppStore, type Trip } from '../lib/store';
 import { createGroup, generateInviteLink } from '../lib/group-trips';
+import { trackEvent } from '../lib/analytics';
 import Button from '../components/ui/Button';
 import GroupInviteCard from '../components/features/GroupInviteCard';
 import { withComingSoon } from '../lib/with-coming-soon';
@@ -79,6 +80,7 @@ function CreateGroupScreen() {
       setCreatedGroupId(group.id);
       setCreatedGroupName(name);
       setInviteCode(group.inviteCode);
+      trackEvent('group_trip_created', { destination: selectedTrip.destination, groupId: group.id }).catch(() => {});
     } catch {
       setError('Something went wrong');
     } finally {
@@ -112,7 +114,7 @@ function CreateGroupScreen() {
         </View>
         <View style={[styles.scrollInner, { flex: 1, justifyContent: 'center' }]}>
           <Text style={styles.emptyMessage}>Plan a trip first, then come back to invite friends.</Text>
-          <Button label="Plan my trip" variant="sage" onPress={() => router.replace('/(tabs)/plan')} />
+          <Button label="Plan my trip" variant="sage" onPress={() => router.replace('/(tabs)/generate')} />
         </View>
       </View>
     );

@@ -32,7 +32,7 @@ import { generateItinerary, TripLimitReachedError } from '../../lib/claude';
 import { supabase } from '../../lib/supabase';
 import WaitlistCaptureModal from '../../components/features/WaitlistCaptureModal';
 
-const ONBOARDING_COMPLETE_KEY = '@roam/onboarding_complete';
+import { ONBOARDING_COMPLETE } from '../../lib/storage-keys';
 const DESTINATION_CHOICES = DESTINATIONS.slice(0, 4);
 const DEV = __DEV__;
 
@@ -186,7 +186,11 @@ function StepSignup({
         provider: 'apple',
         token: cred.identityToken,
       });
-      if (error) Alert.alert('Sign-in failed', error.message);
+      if (error) {
+        Alert.alert('Sign-in failed', error.message);
+      } else {
+        await AsyncStorage.setItem(ONBOARDING_COMPLETE, 'true');
+      }
     } catch (e: any) {
       if (e.code !== 'ERR_REQUEST_CANCELED') Alert.alert('Try again', 'Apple Sign-In hit a snag.');
     } finally {
@@ -203,7 +207,12 @@ function StepSignup({
           redirectTo: Platform.OS === 'web' ? window.location.origin : 'roam://auth/callback',
         },
       });
-      if (error) Alert.alert('Sign-in failed', error.message);
+      if (error) {
+        Alert.alert('Sign-in failed', error.message);
+      }
+      // Note: ONBOARDING_COMPLETE_KEY is set by the auth callback handler
+      // after the OAuth redirect completes — not here, since the browser
+      // flow hasn't finished yet when signInWithOAuth returns.
     } finally {
       setLoading(false);
     }
@@ -338,12 +347,11 @@ export default function OnboardScreen() {
   const handleGenerate = useCallback(async () => {
     if (!destination) return;
     if (!isGuestLike && !isPro && tripsThisMonth >= FREE_TRIPS_PER_MONTH) {
-      router.push('/paywall');
+      router.push({ pathname: '/paywall', params: { reason: 'limit', destination } });
       return;
     }
     setError(null);
     try {
-      // Edge function requires a valid JWT; ensure session before generate
       if (!session) {
         const { data, error: signErr } = await supabase.auth.signInAnonymously();
         if (!signErr && data?.session) setSession(data.session);
@@ -376,7 +384,7 @@ export default function OnboardScreen() {
       setStep(2);
     } catch (err: any) {
       if (err instanceof TripLimitReachedError) {
-        router.push('/paywall');
+        router.push({ pathname: '/paywall', params: { reason: 'limit', destination } });
         return;
       }
       setError('We couldn\'t build your trip right now. Check your connection and try again.');
@@ -384,7 +392,7 @@ export default function OnboardScreen() {
   }, [destination, addTrip, setTripsThisMonth, router, isPro, tripsThisMonth, isGuestLike, session, setSession]);
 
   const handleSkipSignup = useCallback(async () => {
-    await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
+    await AsyncStorage.setItem(ONBOARDING_COMPLETE, 'true');
     if (DEV) {
       setSession({ user: { id: 'dev-user', email: 'dev@roam.app' } } as any);
     } else if (!session) {

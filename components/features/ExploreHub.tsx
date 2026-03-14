@@ -16,9 +16,10 @@ import {
 import * as Haptics from '../../lib/haptics';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MessageSquare, Shield, Plane, Globe, BookOpen, PawPrint, Users, Search, FlaskConical, Image, Wallet, Flag, Star, Map, Receipt, User, Gift, Shuffle, Clock, Building2, Heart, UserPlus, Languages, Repeat } from 'lucide-react-native';
+import { MessageSquare, Shield, Plane, Globe, BookOpen, PawPrint, Users, Search, FlaskConical, Image, Wallet, Flag, Star, Map, Receipt, User, Gift, Shuffle, Clock, Building2, Heart, UserPlus, Languages, Repeat, Lock } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useProGate } from '../../lib/pro-gate';
+import { useAppStore } from '../../lib/store';
 
 // ---------------------------------------------------------------------------
 // Feature definitions — 5 visible & functional; rest show "Coming Soon"
@@ -61,23 +62,23 @@ type Feature = {
 };
 
 const FEATURES: Feature[] = [
-  { id: 'chat', icon: 'MessageSquare', name: 'Ask AI', description: 'Chat with your travel assistant', route: '/(tabs)/chat' },
+  { id: 'chat', icon: 'MessageSquare', name: 'Ask AI', description: 'Chat with your travel assistant', route: '/(tabs)/generate' },
   { id: 'prep', icon: 'Shield', name: 'Trip Prep', description: 'Packing lists, visas & essentials', route: '/(tabs)/prep' },
   { id: 'flights', icon: 'Plane', name: 'Flights', description: 'Track and manage your flights', route: '/(tabs)/flights' },
-  { id: 'globe', icon: 'Globe', name: 'Globe', description: 'Explore the interactive map', route: '/(tabs)/globe' },
-  { id: 'passport', icon: 'BookOpen', name: 'Passport', description: 'Visa info & travel documents', route: '/(tabs)/passport' },
-  { id: 'pets', icon: 'PawPrint', name: 'Pet Travel', description: 'Plan trips with your pet', route: '/(tabs)/pets' },
+  { id: 'globe', icon: 'Globe', name: 'Globe', description: 'Explore the interactive map', route: '/globe' },
+  { id: 'passport', icon: 'BookOpen', name: 'Passport', description: 'Visa info & travel documents', route: '/passport' },
+  { id: 'pets', icon: 'PawPrint', name: 'Pet Travel', description: 'Plan trips with your pet', route: '/pets' },
   { id: 'travel-twin', icon: 'Users', name: 'Travel Twin', description: 'Find your travel style match', route: '/travel-twin', pro: true },
   { id: 'roam-for-dates', icon: 'Heart', name: 'ROAM for Dates', description: 'Couples planner — merge your travel styles', route: '/roam-for-dates' },
   { id: 'trip-trading', icon: 'Repeat', name: 'Trip Trading', description: 'Swap itineraries, claim others\' trips', route: '/trip-trading' },
-  { id: 'local-lens', icon: 'Search', name: 'Local Lens', description: 'See destinations like a local', route: '/(tabs)/chat' },
+  { id: 'local-lens', icon: 'Search', name: 'Local Lens', description: 'See destinations like a local', route: '/(tabs)/generate' },
   { id: 'group-trips', icon: 'Users', name: 'Group Trips', description: 'Plan with friends — vote, chat, split costs', route: '/create-group' },
   { id: 'trip-chemistry', icon: 'FlaskConical', name: 'Trip Chemistry', description: 'Group travel compatibility', route: '/trip-chemistry', pro: true },
   { id: 'memory-lane', icon: 'Image', name: 'Memory Lane', description: 'Relive your past adventures', route: '/memory-lane', pro: true },
   { id: 'budget-guardian', icon: 'Wallet', name: 'Budget Guardian', description: 'Track spending & get alerts', route: '/budget-guardian' },
   { id: 'arrival-mode', icon: 'Flag', name: 'Arrival Mode', description: 'First-day city survival guide', route: '/(tabs)/prep' },
-  { id: 'honest-reviews', icon: 'Star', name: 'Honest Reviews', description: 'Real traveler feedback', route: '/(tabs)/chat' },
-  { id: 'visited-map', icon: 'Map', name: 'Visited Map', description: 'Track where you\'ve been', route: '/(tabs)/globe' },
+  { id: 'honest-reviews', icon: 'Star', name: 'Honest Reviews', description: 'Real traveler feedback', route: '/(tabs)/generate' },
+  { id: 'visited-map', icon: 'Map', name: 'Visited Map', description: 'Track where you\'ve been', route: '/globe' },
   { id: 'receipt', icon: 'Receipt', name: 'The Receipt', description: 'See your trip cost breakdown', route: '/trip-receipt' },
   { id: 'dupe-finder', icon: 'Search', name: 'Dupe Finder', description: 'Find cheaper alternatives', route: '/dupe-finder' },
   { id: 'main-character', icon: 'User', name: 'Main Character', description: 'Your trip as a story', route: '/main-character' },
@@ -109,6 +110,7 @@ export default function ExploreHub({ standalone = false }: ExploreHubProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { canAccess: canAccessPro } = useProGate('travel-twin');
+  const isPro = useAppStore((s) => s.isPro);
 
   const handlePress = useCallback(
     (feature: Feature) => {
@@ -116,7 +118,7 @@ export default function ExploreHub({ standalone = false }: ExploreHubProps) {
       if (!isLive) return;
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       if (feature.pro && !canAccessPro) {
-        router.push('/paywall');
+        router.push({ pathname: '/paywall', params: { reason: 'feature', feature: feature.name } });
         return;
       }
       router.push(feature.route as any);
@@ -128,29 +130,40 @@ export default function ExploreHub({ standalone = false }: ExploreHubProps) {
     <View style={styles.grid}>
       {FEATURES.map((feature) => {
         const isLive = (LIVE_FEATURE_IDS as readonly string[]).includes(feature.id);
+        const isProGated = feature.pro && !isPro;
         return (
           <Pressable
             key={feature.id}
             style={({ pressed }) => [
               styles.card,
+              isProGated && styles.cardProGated,
               { opacity: pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
             ]}
             onPress={() => handlePress(feature)}
           >
-            {!isLive && (
+            {isProGated ? (
+              <View style={styles.proBadge}>
+                <Lock size={8} color={COLORS.gold} strokeWidth={2.5} />
+                <Text style={styles.proBadgeText}>PRO</Text>
+              </View>
+            ) : !isLive ? (
               <View style={styles.comingSoonBadge}>
                 <Text style={styles.comingSoonBadgeText}>COMING SOON</Text>
               </View>
-            )}
+            ) : null}
             {(() => {
               const IconComponent = ICON_MAP[feature.icon];
               return IconComponent ? (
                 <View style={styles.cardIcon}>
-                  <IconComponent size={24} color={isLive ? COLORS.accentGold : COLORS.creamMuted} strokeWidth={2} />
+                  <IconComponent
+                    size={24}
+                    color={isProGated ? COLORS.gold : isLive ? COLORS.accentGold : COLORS.creamMuted}
+                    strokeWidth={2}
+                  />
                 </View>
               ) : null;
             })()}
-            <Text style={[styles.cardName, !isLive && styles.cardNameMuted]}>{feature.name}</Text>
+            <Text style={[styles.cardName, !isLive && !isProGated && styles.cardNameMuted]}>{feature.name}</Text>
             <Text style={styles.cardDesc} numberOfLines={2}>
               {feature.description}
             </Text>
@@ -202,7 +215,7 @@ export function FeatureQuickAccess() {
         <Pressable
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.push('/(tabs)/profile');
+            router.push('/profile');
           }}
           style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
         >
@@ -283,6 +296,30 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
     gap: SPACING.xs,
   } as ViewStyle,
+  cardProGated: {
+    borderColor: COLORS.gold + '30',
+  } as ViewStyle,
+  proBadge: {
+    position: 'absolute',
+    top: SPACING.sm,
+    right: SPACING.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: COLORS.gold + '20',
+    paddingHorizontal: SPACING.xs + 2,
+    paddingVertical: 2,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.gold + '40',
+    zIndex: 1,
+  } as ViewStyle,
+  proBadgeText: {
+    fontFamily: FONTS.mono,
+    fontSize: 9,
+    letterSpacing: 1,
+    color: COLORS.gold,
+  } as TextStyle,
   comingSoonBadge: {
     position: 'absolute',
     top: SPACING.sm,

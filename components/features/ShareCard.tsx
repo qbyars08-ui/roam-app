@@ -19,7 +19,8 @@ import { captureRef } from '../../lib/view-shot';
 import * as Sharing from 'expo-sharing';
 import { COLORS, FONTS, SPACING, RADIUS, BUDGETS } from '../../lib/constants';
 import BreathingLine from '../ui/BreathingLine';
-import { getHeroPhotoUrl } from '../../lib/heroPhotos'; // uses getDestinationPhoto internally
+import { getHeroPhotoUrl } from '../../lib/heroPhotos';
+import { trackEvent } from '../../lib/analytics';
 import type { Trip } from '../../lib/store';
 
 const SHARE_STORAGE_KEY = 'roam_share_card';
@@ -92,6 +93,7 @@ export default function ShareCard({
         }
         const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/share-card?k=${key}`;
         window.open(url, '_blank');
+        trackEvent('share_card_generated', { destination: trip.destination, platform: 'web' }).catch(() => {});
       } else {
         if (!cardRef.current) return;
         const uri = await captureRef(cardRef, {
@@ -105,6 +107,7 @@ export default function ShareCard({
             mimeType: 'image/png',
             dialogTitle: `My ${trip.destination} trip on ROAM`,
           });
+          trackEvent('share_card_generated', { destination: trip.destination, platform: 'native' }).catch(() => {});
         }
       }
     } catch (error) {
@@ -120,7 +123,7 @@ export default function ShareCard({
       <View
         ref={cardRef}
         style={[styles.cardOuter, { aspectRatio: CARD_ASPECT }]}
-        collapsable={false}
+        collapsable={undefined}
       >
         {heroPhoto ? (
           <ImageBackground source={{ uri: heroPhoto }} style={styles.heroBg} resizeMode="cover">

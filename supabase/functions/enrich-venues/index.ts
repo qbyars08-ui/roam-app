@@ -6,12 +6,23 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 
 // ── CORS ────────────────────────────────────────────────────────────────────
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const ALLOWED_ORIGINS = [
+  "https://tryroam.netlify.app",
+  "https://roamtravel.app",
+  "http://localhost:8081",
+  "http://localhost:19006",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") ?? "";
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+}
 
 // ── Cache duration: 7 days ──────────────────────────────────────────────────
 const CACHE_DAYS = 7;
@@ -167,6 +178,8 @@ async function fetchVenueFromGoogle(
 
 // ── Main handler ────────────────────────────────────────────────────────────
 Deno.serve(async (req: Request) => {
+  const corsHeaders = getCorsHeaders(req);
+
   // ── CORS preflight ────────────────────────────────────────────────────
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -317,9 +330,9 @@ Deno.serve(async (req: Request) => {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (err) {
+  } catch {
     return new Response(
-      JSON.stringify({ error: "Internal server error", details: String(err) }),
+      JSON.stringify({ error: "Internal server error" }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

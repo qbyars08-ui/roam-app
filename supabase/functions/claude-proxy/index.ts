@@ -75,6 +75,24 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // ── Input length limits (prevent token exhaustion / cost abuse) ──────
+    const MAX_SYSTEM_BYTES = 50 * 1024;   // 50KB
+    const MAX_MESSAGES_BYTES = 100 * 1024; // 100KB total
+    const systemBytes = new TextEncoder().encode(systemPrompt).length;
+    const messagesBytes = JSON.stringify(messages).length;
+    if (systemBytes > MAX_SYSTEM_BYTES) {
+      return new Response(
+        JSON.stringify({ error: "System prompt too long" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    if (messagesBytes > MAX_MESSAGES_BYTES) {
+      return new Response(
+        JSON.stringify({ error: "Messages too long" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     // ── Profile: fetch or use defaults ─────────────────────────────────
     let profile: { subscription_tier: string; trips_generated_this_month: number; month_reset_at: string } = {
       subscription_tier: "free",
@@ -154,11 +172,14 @@ Deno.serve(async (req: Request) => {
     });
 
     if (!anthropicResponse.ok) {
-      const errBody = await anthropicResponse.text();
+      const status = anthropicResponse.status;
+      const clientMessage = status === 429
+        ? "AI service is busy, please try again shortly"
+        : "AI service temporarily unavailable";
       return new Response(
-        JSON.stringify({ error: "Anthropic API error", details: errBody }),
+        JSON.stringify({ error: clientMessage }),
         {
-          status: anthropicResponse.status,
+          status: status >= 500 ? 502 : status,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
@@ -176,14 +197,27 @@ Deno.serve(async (req: Request) => {
       content = raw;
     }
 
+    // Reject empty content — prevents client from trying to parse ""
+    if (!content || content.trim().length === 0) {
+      return new Response(
+        JSON.stringify({ error: "AI returned empty response. Please try again." }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     // ── Increment trip count only for trip generation ──────────────────
     let newCount = profile.trips_generated_this_month;
     if (isTripGeneration) {
       newCount = profile.trips_generated_this_month + 1;
-      await supabaseAdmin
-        .from("profiles")
-        .update({ trips_generated_this_month: newCount })
-        .eq("id", user.id);
+      try {
+        await supabaseAdmin
+          .from("profiles")
+          .update({ trips_generated_this_month: newCount })
+          .eq("id", user.id);
+      } catch (incrementErr) {
+        console.error("Failed to increment trip count:", incrementErr);
+        // Continue — user already got their trip, don't block response
+      }
     }
 
     return new Response(

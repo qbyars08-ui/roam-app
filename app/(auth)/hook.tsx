@@ -22,12 +22,15 @@ import * as Haptics from 'expo-haptics';
 import { supabase } from '../../lib/supabase';
 import { useAppStore } from '../../lib/store';
 import { enterGuestMode } from '../../lib/guest';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { ONBOARDING_COMPLETE } from '../../lib/storage-keys';
 import { getDestinationPhoto } from '../../lib/photos';
 
 const HERO_IMAGE = () => getDestinationPhoto('travel');
 
 export default function HookScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -100,7 +103,7 @@ export default function HookScreen() {
       const { data, error } = await supabase.auth.signInAnonymously();
       if (!error && data.session) {
         setSession(data.session);
-        await AsyncStorage.setItem('@roam/onboarding_complete', 'true');
+        await AsyncStorage.setItem(ONBOARDING_COMPLETE, 'true');
         router.replace('/(tabs)');
       } else {
         await enterGuestMode();
@@ -169,13 +172,13 @@ export default function HookScreen() {
             onPress={handleBrowseFirst}
             disabled={browsing}
             accessibilityRole="button"
-            accessibilityLabel="Browse first"
+            accessibilityLabel={t('auth.browseFirst')}
             style={({ pressed }) => [
               styles.browseBtn,
               { opacity: pressed || browsing ? 0.7 : 1 },
             ]}
           >
-            <Text style={styles.browseBtnText}>{browsing ? 'Loading...' : 'Browse first'}</Text>
+            <Text style={styles.browseBtnText}>{browsing ? t('common.loading') : t('auth.browseFirst')}</Text>
           </Pressable>
         </Animated.View>
       </View>

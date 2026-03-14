@@ -1,0 +1,832 @@
+// =============================================================================
+// ROAM — Profile Screen
+// User info, subscription status, sign out
+// =============================================================================
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  Alert,
+  Modal,
+  TextInput,
+  StyleSheet,
+  type ViewStyle,
+  type TextStyle,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import * as Haptics from '../lib/haptics';
+import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '../lib/supabase';
+import { COLORS, FONTS, SPACING, RADIUS, FREE_TRIPS_PER_MONTH } from '../lib/constants';
+import { hasRatedBadge } from '../lib/rating';
+import { useAppStore } from '../lib/store';
+import { isGuestUser, clearGuestMode } from '../lib/guest';
+import { getCurrentStreak } from '../lib/streaks';
+import { logoutRevenueCat } from '../lib/revenue-cat';
+import { Sparkles, Repeat, Gift, Shield, ChevronRight, BarChart3, CreditCard, LogOut, Globe } from 'lucide-react-native';
+import { track } from '../lib/analytics';
+import Button from '../components/ui/Button';
+import ExploreHub from '../components/features/ExploreHub';
+import SubscriptionCard from '../components/monetization/SubscriptionCard';
+import { SUPPORTED_LANGUAGES, changeLanguage } from '../lib/i18n';
+import type { SupportedLanguage } from '../lib/i18n';
+
+import { EMERGENCY_CONTACT, ONBOARDING_COMPLETE } from '../lib/storage-keys';
+
+export default function ProfileScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { t, i18n } = useTranslation();
+
+  const session = useAppStore((s) => s.session);
+  const isPro = useAppStore((s) => s.isPro);
+  const tripsThisMonth = useAppStore((s) => s.tripsThisMonth);
+  const trips = useAppStore((s) => s.trips);
+
+  const userEmail = session?.user?.email ?? t('common.guest');
+
+  // Language selector state
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
+
+  const handleLanguageChange = useCallback(async (lang: SupportedLanguage) => {
+    await changeLanguage(lang);
+    setLanguageModalVisible(false);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  }, []);
+
+  useEffect(() => {
+    track({ type: 'screen_view', screen: 'profile' });
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // Emergency contact + rating badge
+  // ---------------------------------------------------------------------------
+  const [emergencyContact, setEmergencyContact] = useState('');
+  const [ratedBadge, setRatedBadge] = useState(false);
+  const [emergencyModalVisible, setEmergencyModalVisible] = useState(false);
+  const [emergencyInputValue, setEmergencyInputValue] = useState('');
+
+  useEffect(() => {
+    AsyncStorage.getItem(EMERGENCY_CONTACT).then((val) => {
+      if (val) setEmergencyContact(val);
+    });
+    hasRatedBadge().then(setRatedBadge);
+  }, []);
+
+  const handleEditEmergencyContact = useCallback(() => {
+    setEmergencyInputValue(emergencyContact);
+    setEmergencyModalVisible(true);
+  }, [emergencyContact]);
+
+  const handleSaveEmergencyContact = useCallback(async () => {
+    const cleaned = emergencyInputValue.trim();
+    if (cleaned) {
+      await AsyncStorage.setItem(EMERGENCY_CONTACT, cleaned);
+      setEmergencyContact(cleaned);
+    }
+    setEmergencyModalVisible(false);
+  }, [emergencyInputValue]);
+
+  const handleCancelEmergencyModal = useCallback(() => {
+    setEmergencyModalVisible(false);
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // Sign out
+  // ---------------------------------------------------------------------------
+  const setSession = useAppStore((s) => s.setSession);
+  const setIsPro = useAppStore((s) => s.setIsPro);
+
+  const handleSignOut = () => {
+    Alert.alert(t('profile.logOutTitle'), t('profile.logOutMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('profile.logOut'),
+        style: 'destructive',
+        onPress: async () => {
+          await clearGuestMode();
+          await logoutRevenueCat();
+          setIsPro(false);
+          setSession(null);
+          await supabase.auth.signOut();
+        },
+      },
+    ]);
+  };
+
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
+  return (
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
+        <Text style={styles.headerTitle}>{t('profile.title')}</Text>
+
+        {/* User card */}
+        <View style={styles.card}>
+          <View style={styles.avatarCircle}>
+            <Text style={styles.avatarText}>
+              {userEmail.charAt(0).toUpperCase()}
+            </Text>
+          </View>
+          <Text style={styles.email}>{userEmail}</Text>
+          <View style={styles.badgeRow}>
+            <View style={[styles.badge, isPro ? styles.badgePro : styles.badgeFree]}>
+              <Text style={[styles.badgeText, isPro ? styles.badgeTextPro : styles.badgeTextFree]}>
+                {isPro ? t('common.pro') : t('common.free')}
+              </Text>
+            </View>
+            {ratedBadge && (
+              <Text style={styles.ratedBadge}>{t('profile.thanksForRating')}</Text>
+            )}
+          </View>
+        </View>
+
+        {/* Stats */}
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{trips.length}</Text>
+            <Text style={styles.statLabel}>{t('profile.tripsBuilt')}</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>
+              {tripsThisMonth}/{isPro ? '\u221E' : FREE_TRIPS_PER_MONTH}
+            </Text>
+            <Text style={styles.statLabel}>{t('profile.thisMonth')}</Text>
+          </View>
+        </View>
+
+        {/* Guest: Create account CTA */}
+        {isGuestUser() && (
+          <View style={styles.upgradeCard}>
+            <Text style={styles.upgradeTitle}>{t('profile.createAccountUnlock')}</Text>
+            <Text style={styles.upgradeSubtitle}>
+              {t('profile.createAccountSub')}
+            </Text>
+            <Button
+              label={t('auth.createAccount')}
+              variant="coral"
+              onPress={() => router.push('/(auth)/signup')}
+            />
+          </View>
+        )}
+        {/* Upgrade CTA for signed-in free users */}
+        {!isPro && !isGuestUser() && (
+          <View style={styles.upgradeCard}>
+            <Text style={styles.upgradeTitle}>{t('profile.planUnlimited')}</Text>
+            <Text style={styles.upgradeSubtitle}>
+              {t('profile.planUnlimitedSub')}
+            </Text>
+            <Button
+              label={t('profile.seeProPlans')}
+              variant="coral"
+              onPress={() => router.push('/paywall')}
+            />
+          </View>
+        )}
+        {/* Subscription card — shows plan details, upgrade, or manage */}
+        {!isGuestUser() && (
+          <View style={{ marginTop: SPACING.lg }}>
+            <SubscriptionCard />
+          </View>
+        )}
+
+        {/* Trip Wrapped — Coming Soon badge */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.tripWrappedCard,
+            { opacity: pressed ? 0.9 : 1 },
+          ]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            router.push({ pathname: '/coming-soon', params: { title: 'Trip Wrapped' } });
+          }}
+        >
+          <View style={styles.comingSoonBadgeWrap}>
+            <Text style={styles.comingSoonBadgeText}>{t('common.comingSoon')}</Text>
+          </View>
+          <View style={styles.tripWrappedContent}>
+            <View style={styles.tripWrappedIconWrap}>
+              <BarChart3 size={24} color={COLORS.creamMuted} strokeWidth={2} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.tripWrappedTitle, { opacity: 0.85 }]}>{t('profile.tripWrapped')}</Text>
+              <Text style={styles.tripWrappedSub}>{t('profile.tripWrappedSub')}</Text>
+            </View>
+            <ChevronRight size={22} color={COLORS.creamMuted} strokeWidth={2} />
+          </View>
+        </Pressable>
+
+        {/* Fun features — Coming Soon badges */}
+        <View style={[styles.menuSection, { marginTop: SPACING.lg }]}>
+          <Pressable
+            style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.7 : 1 }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push({ pathname: '/coming-soon', params: { title: 'Travel Alter-Ego Quiz' } });
+            }}
+          >
+            <View style={styles.menuIconWrap}><Sparkles size={18} color={COLORS.creamMuted} strokeWidth={2} /></View>
+            <Text style={[styles.menuLabel, { flex: 1, opacity: 0.85 }]}>{t('profile.travelAlterEgo')}</Text>
+            <View style={styles.comingSoonInlineBadge}><Text style={styles.comingSoonInlineText}>{t('common.comingSoon')}</Text></View>
+            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
+          </Pressable>
+
+          <View style={styles.menuDivider} />
+
+          <Pressable
+            style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.7 : 1 }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push({ pathname: '/coming-soon', params: { title: 'Trip Dupe Mode' } });
+            }}
+          >
+            <View style={styles.menuIconWrap}><Repeat size={18} color={COLORS.creamMuted} strokeWidth={2} /></View>
+            <Text style={[styles.menuLabel, { flex: 1, opacity: 0.85 }]}>{t('profile.tripDupeMode')}</Text>
+            <View style={styles.comingSoonInlineBadge}><Text style={styles.comingSoonInlineText}>{t('common.comingSoon')}</Text></View>
+            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
+          </Pressable>
+
+          <View style={styles.menuDivider} />
+
+          <Pressable
+            style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.7 : 1 }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/referral');
+            }}
+          >
+            <View style={styles.menuIconWrap}><Gift size={18} color={COLORS.sage} strokeWidth={2} /></View>
+            <Text style={[styles.menuLabel, { flex: 1 }]}>{t('profile.referFriends')}</Text>
+            <View style={styles.referralBadge}><Text style={styles.referralBadgeText}>EARN PRO</Text></View>
+            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
+          </Pressable>
+        </View>
+
+        {/* ── Explore Features grid ── */}
+        <View style={{ marginTop: SPACING.lg }}>
+          <Text style={styles.sectionTitle}>{t('profile.exploreFeatures')}</Text>
+          <ExploreHub />
+        </View>
+
+        {/* Menu items */}
+        <View style={styles.menuSection}>
+          <Pressable
+            style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.7 : 1 }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/paywall');
+            }}
+          >
+            <View style={styles.menuIconWrap}><CreditCard size={18} color={COLORS.accentGold} strokeWidth={2} /></View>
+            <Text style={[styles.menuLabel, { flex: 1 }]}>{t('profile.yourPlan')}</Text>
+            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
+          </Pressable>
+
+          <View style={styles.menuDivider} />
+
+          <Pressable
+            style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.7 : 1 }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              handleEditEmergencyContact();
+            }}
+          >
+            <View style={styles.menuIconWrap}><Shield size={18} color={COLORS.accentGold} strokeWidth={2} /></View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.menuLabel}>{t('profile.emergencyContact')}</Text>
+              {emergencyContact ? (
+                <Text style={styles.menuSubtext}>{emergencyContact}</Text>
+              ) : null}
+            </View>
+            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
+          </Pressable>
+
+          <View style={styles.menuDivider} />
+
+          <Pressable
+            style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.7 : 1 }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setLanguageModalVisible(true);
+            }}
+          >
+            <View style={styles.menuIconWrap}><Globe size={18} color={COLORS.accentGold} strokeWidth={2} /></View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.menuLabel}>{t('profile.language')}</Text>
+              <Text style={styles.menuSubtext}>
+                {SUPPORTED_LANGUAGES.find((l) => l.code === i18n.language)?.nativeLabel ?? 'English'}
+              </Text>
+            </View>
+            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
+          </Pressable>
+
+          <View style={styles.menuDivider} />
+
+          <Pressable
+            style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.7 : 1 }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              handleSignOut();
+            }}
+          >
+            <View style={styles.menuIconWrap}><LogOut size={18} color={COLORS.coral} strokeWidth={2} /></View>
+            <Text style={[styles.menuLabel, { flex: 1, color: COLORS.coral }]}>{t('profile.logOut')}</Text>
+            <ChevronRight size={18} color={COLORS.coral} strokeWidth={2} />
+          </Pressable>
+        </View>
+
+        {/* App version */}
+        <Text style={styles.version}>ROAM v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
+
+        {/* Dev: Reset first-time experience */}
+        {__DEV__ && (
+          <Pressable
+            style={({ pressed }) => [styles.devReset, { opacity: pressed ? 0.7 : 1 }]}
+            onPress={async () => {
+              await AsyncStorage.removeItem(ONBOARDING_COMPLETE);
+              await logoutRevenueCat();
+              setIsPro(false);
+              setSession(null);
+              await supabase.auth.signOut();
+            }}
+          >
+            <Text style={styles.devResetText}>{t('profile.devReset')}</Text>
+          </Pressable>
+        )}
+      </ScrollView>
+
+      {/* Language selector modal */}
+      <Modal
+        visible={languageModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLanguageModalVisible(false)}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={() => setLanguageModalVisible(false)}>
+          <Pressable style={styles.emergencyModalContent} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.emergencyModalTitle}>{t('settings.selectLanguage')}</Text>
+            <View style={{ gap: SPACING.xs, marginTop: SPACING.md }}>
+              {SUPPORTED_LANGUAGES.map((lang) => {
+                const isActive = i18n.language === lang.code;
+                return (
+                  <Pressable
+                    key={lang.code}
+                    onPress={() => handleLanguageChange(lang.code as SupportedLanguage)}
+                    style={({ pressed }) => [
+                      styles.languageOption,
+                      isActive && styles.languageOptionActive,
+                      { opacity: pressed ? 0.7 : 1 },
+                    ]}
+                  >
+                    <Text style={[styles.languageLabel, isActive && styles.languageLabelActive]}>
+                      {lang.nativeLabel}
+                    </Text>
+                    <Text style={[styles.languageSub, isActive && styles.languageSubActive]}>
+                      {lang.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Emergency Contact Modal (cross-platform; Alert.prompt crashes on iOS) */}
+      <Modal
+        visible={emergencyModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelEmergencyModal}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={handleCancelEmergencyModal}>
+          <Pressable style={styles.emergencyModalContent} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.emergencyModalTitle}>{t('profile.emergencyContactTitle')}</Text>
+            <Text style={styles.emergencyModalSub}>{t('profile.emergencyContactSub')}</Text>
+            <TextInput
+              style={styles.emergencyModalInput}
+              value={emergencyInputValue}
+              onChangeText={setEmergencyInputValue}
+              placeholder="+1 555 123 4567"
+              placeholderTextColor={COLORS.creamMuted}
+              keyboardType="phone-pad"
+              autoFocus
+            />
+            <View style={styles.emergencyModalButtons}>
+              <Pressable style={styles.emergencyModalCancel} onPress={handleCancelEmergencyModal}>
+                <Text style={styles.emergencyModalCancelText}>{t('common.cancel')}</Text>
+              </Pressable>
+              <Pressable style={styles.emergencyModalSave} onPress={handleSaveEmergencyContact}>
+                <Text style={styles.emergencyModalSaveText}>{t('common.save')}</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.bg,
+  } as ViewStyle,
+  scrollContent: {
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.xxxl,
+  } as ViewStyle,
+  headerTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 28,
+    color: COLORS.cream,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.xl,
+  } as TextStyle,
+  tripWrappedCard: {
+    marginTop: SPACING.lg,
+    backgroundColor: COLORS.bgGlass,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: 'hidden',
+    position: 'relative',
+  } as ViewStyle,
+  comingSoonBadgeWrap: {
+    position: 'absolute',
+    top: SPACING.sm,
+    right: SPACING.md,
+    zIndex: 1,
+    backgroundColor: COLORS.sageLight,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: RADIUS.full,
+  } as ViewStyle,
+  comingSoonBadgeText: {
+    fontFamily: FONTS.mono,
+    fontSize: 9,
+    color: COLORS.sage,
+    letterSpacing: 1,
+  } as TextStyle,
+  comingSoonInlineBadge: {
+    backgroundColor: COLORS.sageLight,
+    paddingHorizontal: SPACING.xs + 2,
+    paddingVertical: 2,
+    borderRadius: RADIUS.full,
+  } as ViewStyle,
+  comingSoonInlineText: {
+    fontFamily: FONTS.mono,
+    fontSize: 9,
+    color: COLORS.sage,
+    letterSpacing: 1,
+  } as TextStyle,
+  referralBadge: {
+    backgroundColor: COLORS.gold + '20',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.gold + '40',
+  } as ViewStyle,
+  referralBadgeText: {
+    fontFamily: FONTS.mono,
+    fontSize: 9,
+    color: COLORS.gold,
+    letterSpacing: 1,
+  } as TextStyle,
+  tripWrappedContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.lg,
+    gap: SPACING.md,
+  } as ViewStyle,
+  tripWrappedIconWrap: {},
+  tripWrappedTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 20,
+    color: COLORS.cream,
+  } as TextStyle,
+  tripWrappedSub: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamMuted,
+    marginTop: 2,
+  } as TextStyle,
+
+  // User card
+  card: {
+    backgroundColor: COLORS.bgGlass,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.xl,
+    alignItems: 'center',
+    gap: SPACING.md,
+  } as ViewStyle,
+  avatarCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: COLORS.sageLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
+  avatarText: {
+    fontFamily: FONTS.header,
+    fontSize: 28,
+    color: COLORS.sage,
+  } as TextStyle,
+  email: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 16,
+    color: COLORS.cream,
+  } as TextStyle,
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    flexWrap: 'wrap',
+  } as ViewStyle,
+  badge: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.full,
+  } as ViewStyle,
+  ratedBadge: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.gold,
+  } as TextStyle,
+  badgePro: {
+    backgroundColor: COLORS.gold,
+  } as ViewStyle,
+  badgeFree: {
+    backgroundColor: COLORS.bgCard,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  } as ViewStyle,
+  badgeText: {
+    fontFamily: FONTS.monoMedium,
+    fontSize: 11,
+    letterSpacing: 1.5,
+  } as TextStyle,
+  badgeTextPro: {
+    color: COLORS.bg,
+  } as TextStyle,
+  badgeTextFree: {
+    color: COLORS.cream,
+    opacity: 0.6,
+  } as TextStyle,
+  // Stats
+  statsRow: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+    marginTop: SPACING.lg,
+  } as ViewStyle,
+  statCard: {
+    flex: 1,
+    backgroundColor: COLORS.bgGlass,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.lg,
+    alignItems: 'center',
+    gap: SPACING.xs,
+  } as ViewStyle,
+  streakCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    marginTop: SPACING.md,
+    backgroundColor: COLORS.goldSubtle,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.goldDim,
+    padding: SPACING.md,
+  } as ViewStyle,
+  streakEmoji: {
+    fontSize: 28,
+  } as TextStyle,
+  streakValue: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 16,
+    color: COLORS.cream,
+  } as TextStyle,
+  streakLabel: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+    marginTop: 2,
+  } as TextStyle,
+  statValue: {
+    fontFamily: FONTS.header,
+    fontSize: 32,
+    color: COLORS.cream,
+  } as TextStyle,
+  statLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.sage,
+    letterSpacing: 1,
+  } as TextStyle,
+  // Upgrade card
+  upgradeCard: {
+    backgroundColor: COLORS.coralLight,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.coralLight,
+    padding: SPACING.xl,
+    gap: SPACING.md,
+    marginTop: SPACING.lg,
+  } as ViewStyle,
+  upgradeTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 22,
+    color: COLORS.cream,
+  } as TextStyle,
+  upgradeSubtitle: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.cream,
+    opacity: 0.7,
+    lineHeight: 20,
+  } as TextStyle,
+  // Section title
+  sectionTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 22,
+    color: COLORS.cream,
+    marginBottom: SPACING.md,
+  } as TextStyle,
+  // Menu
+  menuSection: {
+    backgroundColor: COLORS.bgGlass,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginTop: SPACING.lg,
+    overflow: 'hidden',
+  } as ViewStyle,
+  menuItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md + 2,
+    gap: SPACING.sm,
+  } as ViewStyle,
+  menuIconWrap: {
+    width: 24,
+    alignItems: 'center',
+  } as ViewStyle,
+  menuLabel: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 15,
+    color: COLORS.cream,
+  } as TextStyle,
+  menuArrow: {
+    fontFamily: FONTS.body,
+    fontSize: 20,
+    color: COLORS.cream,
+    opacity: 0.4,
+  } as TextStyle,
+  menuSubtext: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.sage,
+    marginTop: 2,
+  } as TextStyle,
+  menuDivider: {
+    height: 1,
+    backgroundColor: COLORS.border,
+    marginHorizontal: SPACING.lg,
+  } as ViewStyle,
+  // Emergency contact modal
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: COLORS.overlay,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.lg,
+  } as ViewStyle,
+  emergencyModalContent: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.xl,
+  } as ViewStyle,
+  emergencyModalTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 20,
+    color: COLORS.cream,
+    marginBottom: SPACING.xs,
+  } as TextStyle,
+  emergencyModalSub: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.creamMuted,
+    marginBottom: SPACING.lg,
+  } as TextStyle,
+  emergencyModalInput: {
+    fontFamily: FONTS.body,
+    fontSize: 16,
+    color: COLORS.cream,
+    backgroundColor: COLORS.bg,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.md,
+    marginBottom: SPACING.lg,
+  } as TextStyle,
+  emergencyModalButtons: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+    justifyContent: 'flex-end',
+  } as ViewStyle,
+  emergencyModalCancel: {
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
+  } as ViewStyle,
+  emergencyModalCancelText: {
+    fontFamily: FONTS.body,
+    fontSize: 15,
+    color: COLORS.creamMuted,
+  } as TextStyle,
+  emergencyModalSave: {
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
+    backgroundColor: COLORS.sage,
+    borderRadius: RADIUS.md,
+  } as ViewStyle,
+  emergencyModalSaveText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 15,
+    color: COLORS.bg,
+  } as TextStyle,
+  // Version
+  version: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.cream,
+    opacity: 0.25,
+    textAlign: 'center',
+  } as TextStyle,
+  devReset: {
+    marginTop: SPACING.lg,
+    padding: SPACING.md,
+    alignSelf: 'center',
+  } as ViewStyle,
+  devResetText: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.sage,
+    letterSpacing: 0.5,
+  } as TextStyle,
+  // Language selector
+  languageOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  } as ViewStyle,
+  languageOptionActive: {
+    borderColor: COLORS.sage,
+    backgroundColor: COLORS.sageFaint,
+  } as ViewStyle,
+  languageLabel: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 16,
+    color: COLORS.cream,
+  } as TextStyle,
+  languageLabelActive: {
+    color: COLORS.sage,
+  } as TextStyle,
+  languageSub: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+  } as TextStyle,
+  languageSubActive: {
+    color: COLORS.sageMedium,
+  } as TextStyle,
+});

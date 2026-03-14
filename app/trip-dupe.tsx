@@ -159,7 +159,7 @@ function TripDupeScreen() {
         ]).start();
       } catch (err) {
         if (err instanceof TripLimitReachedError) {
-          router.push('/paywall');
+          router.push({ pathname: '/paywall', params: { reason: 'limit' } });
         } else {
           // Fallback: use mock dupe when API unavailable
           const parsed = getMockDupeResult(dream);
@@ -200,7 +200,7 @@ function TripDupeScreen() {
       budget: 'backpacker',
       vibes: dupeResult.similarVibes.slice(0, 3),
     });
-    router.push('/(tabs)/plan');
+    router.push('/(tabs)/generate');
   }, [dupeResult, router]);
 
   const handleShare = useCallback(async () => {

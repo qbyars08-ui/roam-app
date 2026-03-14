@@ -14,9 +14,9 @@ import {
 import * as Haptics from '../../lib/haptics';
 
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { Plane, Hotel, Ticket, Car } from 'lucide-react-native';
 import {
   AFFILIATE_PARTNERS,
-  CATEGORY_ICONS,
   openAffiliateLink,
   type AffiliateParams,
 } from '../../lib/affiliates';
@@ -85,9 +85,12 @@ export default function BookingCards({
 
             <View style={styles.cardContent}>
               <View style={styles.cardHeader}>
-                <Text style={styles.categoryIcon}>
-                  {CATEGORY_ICONS[partner.category] ?? ''}
-                </Text>
+                <View style={styles.categoryIconWrap}>
+                  {partner.category === 'flights' && <Plane size={16} color={partner.color} strokeWidth={2} />}
+                  {partner.category === 'hotels' && <Hotel size={16} color={partner.color} strokeWidth={2} />}
+                  {partner.category === 'experiences' && <Ticket size={16} color={partner.color} strokeWidth={2} />}
+                  {partner.category === 'car-rental' && <Car size={16} color={partner.color} strokeWidth={2} />}
+                </View>
                 <Text style={styles.partnerName}>{partner.name}</Text>
               </View>
 
@@ -154,9 +157,11 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
     marginBottom: SPACING.xs,
   } as ViewStyle,
-  categoryIcon: {
-    fontSize: 18,
-  } as TextStyle,
+  categoryIconWrap: {
+    width: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
   partnerName: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 15,

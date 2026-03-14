@@ -6,9 +6,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Session } from '@supabase/supabase-js';
 import { useAppStore } from './store';
-
-const GUEST_MODE_KEY = '@roam/guest_mode';
-const GUEST_ID_KEY = '@roam/guest_id';
+import { GUEST_MODE, GUEST_ID, ONBOARDING_COMPLETE } from './storage-keys';
 
 /** True when session is a fake guest (no real auth) */
 export function isGuestSession(session: Session | null): boolean {
@@ -32,23 +30,23 @@ export async function enterGuestMode(): Promise<Session> {
     expires_in: 0,
     token_type: 'bearer',
   };
-  await AsyncStorage.setItem(GUEST_MODE_KEY, 'true');
-  await AsyncStorage.setItem(GUEST_ID_KEY, guestId);
-  await AsyncStorage.setItem('@roam/onboarding_complete', 'true');
+  await AsyncStorage.setItem(GUEST_MODE, 'true');
+  await AsyncStorage.setItem(GUEST_ID, guestId);
+  await AsyncStorage.setItem(ONBOARDING_COMPLETE, 'true');
   useAppStore.getState().setSession(session);
   return session;
 }
 
 /** Clear guest mode when user signs in for real */
 export async function clearGuestMode(): Promise<void> {
-  await AsyncStorage.multiRemove([GUEST_MODE_KEY, GUEST_ID_KEY]);
+  await AsyncStorage.multiRemove([GUEST_MODE, GUEST_ID]);
 }
 
 /** Restore guest session after page refresh (call when no real session) */
 export async function tryRestoreGuestSession(): Promise<Session | null> {
   const [mode, id] = await Promise.all([
-    AsyncStorage.getItem(GUEST_MODE_KEY),
-    AsyncStorage.getItem(GUEST_ID_KEY),
+    AsyncStorage.getItem(GUEST_MODE),
+    AsyncStorage.getItem(GUEST_ID),
   ]);
   if (mode !== 'true' || !id?.startsWith('guest-')) return null;
   const session: Session = {

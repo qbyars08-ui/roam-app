@@ -3,8 +3,7 @@
 // =============================================================================
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
-
-const VERSION_KEY = '@roam/app_version';
+import { APP_VERSION } from './storage-keys';
 
 /** Known cache/data keys that can be cleared on version bump (optional) */
 const CACHE_KEYS_TO_CLEAR = [
@@ -18,7 +17,7 @@ const CACHE_KEYS_TO_CLEAR = [
   '@roam/visa_',
   '@roam/weather_',
   '@roam/ticketmaster_',
-  '@roam/amadeus_token',
+  // amadeus_token removed — Amadeus integration deprecated
 ];
 
 /**
@@ -27,10 +26,10 @@ const CACHE_KEYS_TO_CLEAR = [
  */
 export async function checkStorageVersion(): Promise<void> {
   try {
-    const stored = await AsyncStorage.getItem(VERSION_KEY);
+    const stored = await AsyncStorage.getItem(APP_VERSION);
     const current = Constants.expoConfig?.version ?? '1.0.0';
     if (stored === current) return;
-    await AsyncStorage.setItem(VERSION_KEY, current);
+    await AsyncStorage.setItem(APP_VERSION, current);
     const allKeys = await AsyncStorage.getAllKeys();
     const toRemove = allKeys.filter((k) =>
       CACHE_KEYS_TO_CLEAR.some((prefix) => k.startsWith(prefix) || k === prefix)

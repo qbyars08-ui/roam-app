@@ -132,9 +132,9 @@ export async function purchaseProMonthly(): Promise<boolean> {
 
     const { customerInfo } = await Purchases.purchasePackage(monthly);
     return isProFromCustomerInfo(customerInfo);
-  } catch (err: any) {
+  } catch (err: unknown) {
     // User cancelled — not an error
-    if (err.userCancelled) return false;
+    if (err && typeof err === 'object' && 'userCancelled' in err && (err as Record<string, unknown>).userCancelled) return false;
     console.error('[RevenueCat] Monthly purchase error:', err);
     throw err;
   }
@@ -157,8 +157,8 @@ export async function purchaseProAnnual(): Promise<boolean> {
 
     const { customerInfo } = await Purchases.purchasePackage(annual);
     return isProFromCustomerInfo(customerInfo);
-  } catch (err: any) {
-    if (err.userCancelled) return false;
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && 'userCancelled' in err && (err as Record<string, unknown>).userCancelled) return false;
     console.error('[RevenueCat] Annual purchase error:', err);
     throw err;
   }

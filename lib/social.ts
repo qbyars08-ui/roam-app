@@ -134,7 +134,7 @@ export async function findSquadCandidates(
 
   return unswiped
     .filter((p: { user_id: string }) => profileMap.has(p.user_id))
-    .map((p: any) => {
+    .map((p: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any -- untyped Supabase row
       const profile = profileMap.get(p.user_id)!;
       const overlapStart = Math.max(myArrival, new Date(p.arrival_date).getTime());
       const overlapEnd = Math.min(myDeparture, new Date(p.departure_date).getTime());

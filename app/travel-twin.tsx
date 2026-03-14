@@ -300,12 +300,7 @@ function TravelTwinScreen() {
   const { canAccess } = useProGate('travel-twin');
   const { travelProfile, hasCompletedProfile } = useAppStore();
 
-  useEffect(() => {
-    if (!canAccess) router.replace('/paywall');
-  }, [canAccess, router]);
-  if (!canAccess) return null;
-
-  // Animation refs
+  // Animation refs — must be declared before any early return (Rules of Hooks)
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.85)).current;
   const emojiScale = useRef(new Animated.Value(0)).current;
@@ -320,6 +315,12 @@ function TravelTwinScreen() {
     () => (hasCompletedProfile ? computeTravelTwin(travelProfile) : null),
     [travelProfile, hasCompletedProfile]
   );
+
+  useEffect(() => {
+    if (!canAccess) router.replace('/paywall');
+  }, [canAccess, router]);
+
+  if (!canAccess) return null;
 
   useEffect(() => {
     if (!twin) return;

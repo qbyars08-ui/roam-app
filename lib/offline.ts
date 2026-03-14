@@ -4,15 +4,12 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Itinerary } from './types/itinerary';
-
-// ---------------------------------------------------------------------------
-// Storage keys
-// ---------------------------------------------------------------------------
+import { OFFLINE_TRIPS, OFFLINE_ITINERARY_PREFIX, OFFLINE_LAST_SYNC } from './storage-keys';
 
 const KEYS = {
-  TRIPS: '@roam/trips',
-  ITINERARY_PREFIX: '@roam/itinerary/',
-  LAST_SYNC: '@roam/lastSync',
+  TRIPS: OFFLINE_TRIPS,
+  ITINERARY_PREFIX: OFFLINE_ITINERARY_PREFIX,
+  LAST_SYNC: OFFLINE_LAST_SYNC,
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -61,12 +58,10 @@ export async function saveTripOffline(trip: OfflineTrip): Promise<void> {
   try {
     const existing = await loadTripsOffline();
     const idx = existing.findIndex((t) => t.id === trip.id);
-    if (idx >= 0) {
-      existing[idx] = trip;
-    } else {
-      existing.unshift(trip);
-    }
-    await saveTripsOffline(existing);
+    const updated = idx >= 0
+      ? [...existing.slice(0, idx), trip, ...existing.slice(idx + 1)]
+      : [trip, ...existing];
+    await saveTripsOffline(updated);
   } catch (err) {
     console.warn('[offline] Failed to save single trip:', err);
   }

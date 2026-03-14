@@ -24,8 +24,7 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import ConfettiBurst from '../../components/ui/ConfettiBurst';
 import { inferFromOnboarding, saveLocalPrefs } from '../../lib/personalization';
 
-const ONBOARDING_COMPLETE_KEY = '@roam/onboarding_complete';
-const ONBOARDING_ANSWERS_KEY = '@roam/onboarding_answers';
+import { ONBOARDING_COMPLETE, ONBOARDING_ANSWERS } from '../../lib/storage-keys';
 
 interface StepOption {
   label: string;
@@ -106,13 +105,13 @@ export default function OnboardingScreen() {
       } else {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setShowConfetti(true);
-        await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
+        await AsyncStorage.setItem(ONBOARDING_COMPLETE, 'true');
         const answersPayload = {
           travelStyle: newAnswers[0],
           priority: newAnswers[1],
           budget: newAnswers[2],
         };
-        await AsyncStorage.setItem(ONBOARDING_ANSWERS_KEY, JSON.stringify(answersPayload));
+        await AsyncStorage.setItem(ONBOARDING_ANSWERS, JSON.stringify(answersPayload));
         const inferred = inferFromOnboarding(answersPayload);
         await saveLocalPrefs(inferred);
       }
@@ -121,7 +120,7 @@ export default function OnboardingScreen() {
   );
 
   const handleSkip = useCallback(async () => {
-    await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
+    await AsyncStorage.setItem(ONBOARDING_COMPLETE, 'true');
     router.replace('/(tabs)');
   }, [router]);
 

@@ -22,6 +22,7 @@ import { ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useDestinationTheme } from '../lib/useDestinationTheme';
 import { withComingSoon } from '../lib/with-coming-soon';
+import { validateDestination } from '../lib/params-validator';
 
 // =============================================================================
 // Types
@@ -244,10 +245,10 @@ function SectionIcon({ icon, color }: { icon: string; color: string }) {
 // Main component
 // =============================================================================
 function ArrivalModeScreen() {
-  const { destination } = useLocalSearchParams<{ destination: string }>();
+  const params = useLocalSearchParams<{ destination: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const city = destination || 'Unknown';
+  const city = validateDestination(params.destination) ?? 'Unknown';
   const data = ARRIVAL_DATA[city];
   const destTheme = useDestinationTheme(city);
 
