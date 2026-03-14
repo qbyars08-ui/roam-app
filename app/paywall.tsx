@@ -143,7 +143,7 @@ export default function PaywallScreen() {
         }),
       ]),
     ]).start();
-  }, [cardsOpacity, cardsY, headerOpacity, headerY]);
+  }, [contentOpacity, contentY, headerOpacity, headerY]);
 
   const handleToggle = useCallback((cycle: 'annual' | 'monthly') => {
     setBillingCycle(cycle);
@@ -213,11 +213,7 @@ export default function PaywallScreen() {
         handleClose();
       }
     } catch {
-<<<<<<< HEAD
-      Alert.alert('Something went wrong', 'Try again — we\u2019ll be here.');
-=======
       Alert.alert('Something went wrong', 'Try again \u2014 we\u2019ll be here.');
->>>>>>> origin/cursor/agent-07-monetization-current-7c01
     } finally {
       setLoading(false);
     }
@@ -240,11 +236,7 @@ export default function PaywallScreen() {
         Alert.alert('Nothing to restore', 'We didn\u2019t find an active subscription. Try with the email you subscribed with.');
       }
     } catch {
-<<<<<<< HEAD
-      Alert.alert('Couldn\u2019t restore', 'Check your connection and give it another shot.');
-=======
       Alert.alert('Couldn\u2019t restore', 'Check your connection and try again.');
->>>>>>> origin/cursor/agent-07-monetization-current-7c01
     } finally {
       setRestoring(false);
     }
