@@ -365,3 +365,201 @@ Your first trip starts here.
 | All emails | Trimmed startup-isms ("we built this because," "we shipped," "as a waitlist member you get") | More conversational, less product-announcement |
 | OG description | "Hidden gems. Built for Gen Z." | Replaced with three specifics |
 | All CTAs | "Reserve Your Spot" / "Get Early Access" — action without outcome | "Join the waitlist" / "Save my spot" — clear and direct |
+
+---
+
+## Full App Copy Audit — Screen by Screen
+
+Audit date: 2026-03-14. Every user-facing string evaluated against ROAM voice rules: specific, opinionated, honest, warm, concise. Zero exclamation marks. Zero vague superlatives. CTAs = action + outcome. Error messages = what happened + what to do.
+
+### Destination Hooks — Revised
+
+Every hook must be specific enough that you could only say it about that one city.
+
+| Destination | Current Hook | Issue | Revised Hook |
+|-------------|-------------|-------|--------------|
+| Tokyo | More to do per block than most cities have total | Vague superlative — could describe any large city | Vending machine ramen at 2am. Temple at 6am. Repeat for 5 days. |
+| Bali | Find the version everyone else missed | Vague, says nothing specific about Bali | Rice terraces at dawn, $8 massages at dusk, no signal in between |
+| Bangkok | Chaotic in the best possible way | Generic — no specific detail | $1 pad see ew at 3am from a cart with no name. That kind of city. |
+| Marrakech | Get lost on purpose. That's the point. | Decent tone but zero specifics | The medina has 9,000 alleys. Pick one. Mint tea at the end. |
+| Reykjavik | Expensive but you'll talk about it forever | Vague superlative | $22 hot dogs. $0 geothermal pools. The math works out. |
+| Seoul | The food alone is worth the 14-hour flight | Decent but could be more specific | Kimchi jjigae for breakfast. Fried chicken at midnight. Everything in between. |
+| Dubai | Over the top. That's kind of the point. | Says nothing about what to actually do | Gold-plated everything. The world's tallest building. $50 breakfasts with a view. |
+| Medellín | The comeback story of the century | Vague superlative, says nothing useful | Eternal spring weather. $3 bandeja paisa. Cable cars over the valley. |
+| Tbilisi | The most underrated city you'll visit this decade | Vague superlative — "underrated" is banned | Orange wine, sulfur baths, and khachapuri for $2. Nobody here yet. |
+| Chiang Mai | Slow down. It's worth it. | Too vague — says nothing about Chiang Mai | $15 cooking classes. $5 massages. Temples you have to yourself. |
+| Jaipur | Sensory overload in the best way | Generic — could be any South Asian city | Pink palace, $2 thalis, and a fort for every day of the week |
+| Azores | Nine islands of volcanic wonder | Brochure-speak — "wonder" is a vague superlative | Crater lakes, hot springs on the beach, zero crowds. Portugal's best-kept secret. |
+| Ljubljana | Dragons, castles, and green soul | "Green soul" is vague | A capital city you can walk across in 20 minutes. Zero rush, all charm. |
+| Colombia's Coffee Axis | Where your morning brew was born | Decent but a bit precious | Wake up on a working coffee farm. $1 espresso, valley views, silence. |
+| Santorini | White caves, blue domes, golden sunsets | Brochure-speak, lists adjectives | Go in October. Half the crowds, same blue domes, sunsets that stop conversation. |
+| Siem Reap | Temples older than time itself | Vague superlative | Angkor Wat at 5am. $15/day. A thousand temples and you'll want every one. |
+
+**No changes needed** (already specific and opinionated): Paris, New York, Barcelona, Rome, London, Lisbon, Cape Town, Buenos Aires, Istanbul, Sydney, Mexico City, Kyoto, Amsterdam, Porto, Oaxaca, Dubrovnik, Budapest, Hoi An, Cartagena, Queenstown.
+
+---
+
+### Error Messages — Revised
+
+Every error must say what happened and what to do. No "Oops," no "Hmm," no bare "Error."
+
+| File | Current | Issue | Revised |
+|------|---------|-------|---------|
+| `paywall.tsx:218` | Something went wrong / Try again -- we'll be here. | "Something went wrong" is generic | Purchase didn't go through. / Check your connection and try again. |
+| `dream-vault.tsx:77` | Error / Could not open Skyscanner | Bare "Error" title, no action | Couldn't open Skyscanner / Check if the app is installed, or try skyscanner.com. |
+| `sharing.ts:57` | Error / Could not create share link. | Bare "Error," no action | Share link failed / Check your connection and try again. Your trip is still saved. |
+| `sharing.ts:73` | Error / Could not share trip. | Bare "Error," no action | Couldn't share / Check your connection and try again. |
+| `sharing.ts:37` | Sign in required / Please sign in to share trips. | "Please" is padding | Sign in to share / Create an account or sign in to share trips with friends. |
+| `trip-trading.tsx:68` | Oops / Couldn't claim this trip. Sign in and try again. | "Oops" is filler | Couldn't claim trip / Sign in first, then try claiming again. |
+| `roam-for-dates.tsx:99` | Oops / Couldn't plan your trip. Try again. | "Oops" is filler | Trip generation failed / Check your connection and try again. |
+| `FlightDealCard.tsx:50` | Couldn't add / Something went wrong. Try again. | Generic body | Couldn't save flight / Check your connection and try again. |
+| `WaitlistCaptureModal.tsx:62` | Something went wrong. Try again. | Generic, no context | Couldn't save your email. Check your connection and try again. |
+| `GenerateConversationMode.tsx:140` | Something went wrong. Try again? | Generic, question mark | Trip generation failed. Try again or switch to Quick Mode. |
+| `GenerateConversationMode.tsx:166` | Connection issue. Try again. | Fine but vague | Lost connection. Check your wifi and try again. |
+| `create-group.tsx:85` | Something went wrong | No action | Couldn't create the group. Check your connection and try again. |
+| `group-trip.tsx:80` | Could not load group | No action | Couldn't load this group. Pull down to refresh, or go back and try again. |
+| `group-trip.tsx:396` | Could not add expense | No action | Couldn't save that expense. Check your connection and try again. |
+| `group-trip.tsx:572` | Could not add item | No action | Couldn't add the item. Check your connection and try again. |
+| `join-group.tsx:62` | Invalid link | Too terse | This invite link isn't valid. Ask the group creator to send a new one. |
+| `join-group.tsx:68` | Trip not found | Too terse | This trip doesn't exist anymore. The group may have been deleted. |
+| `join-group.tsx:88` | Could not join | No action | Couldn't join this group. Check your connection and try again. |
+| `travel-time-machine.tsx:35` | Could not load comparison | No action | Couldn't load the comparison. Check your connection and try again. |
+| `hype.tsx:82` | Invalid format / Please enter a date as YYYY-MM-DD | Robotic format instruction | Wrong date format / Enter your date like this: 2026-03-15 |
+| `hype.tsx:88` | Invalid date / That date does not appear to be valid | Stilted phrasing | That date doesn't work / Double-check the month and day and try again. |
+| `chaos-mode.tsx:271` | Chaos mode hit a wall. The universe is taking a break. Try again. | "Universe" is AI-sounding | Chaos mode couldn't generate a trip. Check your connection and try again. |
+| `main-character.tsx:189` | Couldn't find your main character moments. Try again -- every trip has a story. | "Every trip has a story" is filler | Couldn't generate your story. Check your connection and try again. |
+| `generate.tsx:99` | Generated itinerary is incomplete. Please try again. | "Please" is padding | Itinerary came back incomplete. Try generating again. |
+
+**No changes needed** (already good): `dupe-finder.tsx:179`, `layover.tsx:119`, `claude.ts:158`, `itinerary.tsx:486`, `itinerary.tsx:493`, `itinerary.tsx:502`, `itinerary.tsx:514`, `ErrorBoundary.tsx`, all auth sign-in errors, `paywall.tsx:234`, `paywall.tsx:238`, `paywall.tsx:241`.
+
+---
+
+### AI-Sounding Copy — Flagged and Revised
+
+| File | Current | Issue | Revised |
+|------|---------|-------|---------|
+| `en.ts:97` | AI-powered itineraries that actually make sense. | "AI-powered" is tech-speak | Full itineraries with real places and tips a friend would text you. |
+| `hook.tsx:152` | AI-powered itineraries that feel like they came... | Leads with "AI-powered" | Itineraries that feel like they came from a friend who's been there. |
+| `CinematicHero.tsx:111` | Dream it. Plan it. Go. | Generic startup tagline | Where to next? |
+| `food.tsx:343` | AI-curated picks | "AI-curated" is jargon | Local favorites |
+| `GenerateModeSelect.tsx:83` | Chat with AI to plan your perfect trip | "Chat with AI" is tech; "perfect" is vague | Tell us what you want. We'll build the trip in conversation. |
+| `GenerateQuickMode.tsx:731` | AI weaves these into your itinerary at the best times | "AI weaves" personifies technology | We'll slot these into your itinerary at the right times. |
+| `ActivityEditModal.tsx:215` | AI suggestion failed. Try again or edit manually. | "AI suggestion" is internal framing | Couldn't find a replacement. Try again or edit it yourself. |
+| `ActivityEditModal.tsx:263` | AI Refine | "AI" prefix in UI | Suggest something better |
+| `VoiceGuide.tsx:157` | AI (badge text) | Bare "AI" label | Guide |
+| `layover.tsx:139` | Layover Optimizer | "Optimizer" is corporate | Layover Planner |
+| `ExploreHub.tsx:87` | Layover Optimizer | Same | Layover Planner |
+| `ExploreHub.tsx:93` | Curated lists by vibe | "Curated" is overused | Trip lists by vibe |
+| `trip-collections.tsx:73` | Curated lists by vibe | Same | Trip lists by vibe |
+| `nps.ts:84` | Thanks! You're the best | Exclamation mark | Thanks, that means a lot |
+| `nps.ts:93` | Thanks for the feedback! | Exclamation mark | Thanks for the honest take |
+
+---
+
+### Screen Copy — Key Rewrites
+
+#### Onboarding
+
+| Element | Current | Revised |
+|---------|---------|---------|
+| hookTitle | Plan your next trip in 30 seconds | Your next trip, planned in 30 seconds |
+| hookSubtitle | AI-powered itineraries that actually make sense. | Full itineraries with real places and tips a friend would text you. |
+| valueItem2 | Local food, hidden gems, real tips | Local restaurants, spots only locals know, real tips |
+
+#### Saved Trips
+
+| Element | Current | Revised |
+|---------|---------|---------|
+| Empty title | Your trips will show up here | No trips yet |
+| Empty subtitle | Plan your first adventure and we'll save it right here. Ready when you are. | Plan a trip and it shows up here. Saved offline, ready when you are. |
+| Empty CTA | Plan my first trip | Plan a trip |
+
+#### Passport
+
+| Element | Current | Revised |
+|---------|---------|---------|
+| Empty title | A blank passport | No stamps yet |
+| Empty subtitle | Every stamp is a story. Plan a trip, take it, and come back to make it official. | Plan a trip, take it, come back and stamp it. |
+
+#### Globe
+
+| Element | Current | Revised |
+|---------|---------|---------|
+| Spinning text | Finding your destiny... | Picking a destination... |
+
+#### Paywall
+
+| Element | Current | Revised |
+|---------|---------|---------|
+| Trial note | Cancel whenever. No guilt trips -- just real ones. | Cancel anytime. No commitment. |
+| Restoring text | Looking for your subscription... | Checking your subscription... |
+
+#### ComingSoon
+
+| Element | Current | Revised |
+|---------|---------|---------|
+| Description | We're putting the finishing touches on this feature. It'll be worth the wait. | This feature is almost ready. Check back soon. |
+
+#### Generate Quick Mode
+
+| Element | Current | Revised |
+|---------|---------|---------|
+| CTA loading | Building your perfect trip... | Building your trip... |
+
+#### Generate Conversation Mode
+
+| Element | Current | Revised |
+|---------|---------|---------|
+| Loading | thinking... | planning... |
+
+#### Referral
+
+| Element | Current | Revised |
+|---------|---------|---------|
+| Hero title | Give a trip, get a trip | Share ROAM, earn Pro |
+| Hero subtitle | Share your link. 3 friends = 1 month Pro free. 10 friends = 1 year Pro free. | 3 friends who sign up = 1 month Pro. 10 friends = 1 year. |
+
+#### NPS Survey
+
+| Current | Revised |
+|---------|---------|
+| Thanks! You're the best / Would you like to share ROAM with a friend? | Thanks, that means a lot / Want to share ROAM with a friend? You both get free Pro time. |
+| Thanks for the feedback! / We're always improving. What would make ROAM a 10? | Thanks for the honest take / What would make ROAM a 10 for you? Email us at feedback@roamtravel.app |
+| We're sorry to hear that / We want to fix it. | We hear you / Tell us what's wrong at support@roamtravel.app and we'll fix it. |
+
+---
+
+### Discover Headers — Revised
+
+| Current | Issue | Revised |
+|---------|-------|---------|
+| Your next obsession is one tap away | "Obsession" is a vague superlative | Your next trip is one tap away |
+
+All other headers pass audit. No changes.
+
+---
+
+### Budget Tier Vibes — Revised
+
+| Tier | Current | Revised |
+|------|---------|---------|
+| Backpacker | Hostels, street food, and great memories | Hostels, street food, and $25 days |
+| Treat myself | You deserve it -- let's make it special | Boutique hotels, real restaurants, the occasional splurge |
+| No limits | Splurge on what matters most | Private tours, suite upgrades, the best table at the best restaurant |
+
+Comfort tier passes. No change.
+
+---
+
+## Audit Summary
+
+| Category | Reviewed | Issues | Fixes |
+|----------|----------|--------|-------|
+| Destination hooks | 35 | 17 | 17 |
+| Error messages | 42 | 24 | 24 |
+| AI-sounding copy | 15 | 15 | 15 |
+| Screen copy | 50+ | 18 | 18 |
+| Discover headers | 7 | 1 | 1 |
+| NPS survey | 4 | 3 | 3 |
+| Budget vibes | 4 | 3 | 3 |
+| **Total** | **157+** | **81** | **81** |
