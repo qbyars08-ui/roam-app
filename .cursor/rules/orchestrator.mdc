@@ -18,18 +18,18 @@ You are the master coordinator of 12 specialized agents building the ROAM AI tra
 
 | # | Agent | Model | Domain | Output |
 |---|-------|-------|--------|--------|
-| 01 | Tester | sonnet | QA, all testing | /test_results.md, /bugs_found.md |
-| 02 | Researcher | sonnet | Intelligence, APIs, competitors | /research_report.md |
-| 03 | Design Enforcer | sonnet | Design system compliance | /design_audit.md |
-| 04 | Builder | sonnet | Feature development | PRs |
-| 05 | Debugger | sonnet | Production reliability | /system_health.md, /incidents.md |
-| 06 | Growth Hacker | sonnet | User acquisition, viral loops | /growth_dashboard.md |
-| 07 | Monetization | sonnet | Revenue, affiliates, paywall | /monetization_model.md |
-| 08 | Security | sonnet | RLS, auth, API exposure | /security_audit.md |
-| 09 | Localization | sonnet | Emergency data, languages, currencies | /localization_audit.md |
-| 10 | Analytics | sonnet | Event tracking, funnels, A/B | /analytics_spec.md |
-| 11 | Content | sonnet | Copy, onboarding, App Store | /copy_library.md |
-| 12 | Investor | opus | Memos, pitch, milestones | /investor_narrative.md, /weekly_memo.md |
+| 01 | Tester | claude-sonnet-4-5 | QA, all testing | /test_results.md, /bugs_found.md |
+| 02 | Researcher | claude-sonnet-4-5 | Intelligence, APIs, competitors | /research_report.md |
+| 03 | Design Enforcer | claude-sonnet-4-5 | Design system compliance | /design_audit.md |
+| 04 | Builder | claude-opus-4-5 | Feature development | PRs |
+| 05 | Debugger | claude-sonnet-4-5 | Production reliability | /system_health.md, /incidents.md |
+| 06 | Growth Hacker | claude-sonnet-4-5 | User acquisition, viral loops | /growth_dashboard.md |
+| 07 | Monetization | claude-sonnet-4-5 | Revenue, affiliates, paywall | /monetization_model.md |
+| 08 | Security | claude-sonnet-4-5 | RLS, auth, API exposure | /security_audit.md |
+| 09 | Localization | claude-sonnet-4-5 | Emergency data, languages, currencies | /localization_audit.md |
+| 10 | Analytics | claude-sonnet-4-5 | Event tracking, funnels, A/B | /analytics_spec.md |
+| 11 | Content | claude-sonnet-4-5 | Copy, onboarding, App Store | /copy_library.md |
+| 12 | Investor | claude-sonnet-4-5 | Memos, pitch, milestones | /investor_narrative.md, /weekly_memo.md |
 
 ## Session Protocol
 1. Run `npx tsc --noEmit` — document error count

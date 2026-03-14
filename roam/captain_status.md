@@ -1,12 +1,68 @@
-# ROAM Captain Status — 2026-03-13 Demo Polish Pass
+# ROAM Captain Status — 2026-03-14 Feature Visibility Audit
 
 ## System: GREEN
 
 - **TypeScript:** 0 errors
 - **Tests:** 423 passed, 14 suites, 0 failures
-- **Web Export:** SUCCESS (dist/ built, 6.3MB main bundle)
-- **Netlify Config:** netlify.toml + _redirects ready
-- **Agents:** All 13 completed their sprint tasks
+- **Web Export:** SUCCESS (dist/ built, 6.7MB main bundle)
+- **Netlify:** Auto-deploying commit `0c32807`
+- **Agents:** All 13 assigned new rework sprint tasks via AGENT_BOARD.md
+
+---
+
+## Feature Visibility Audit — What Was Invisible Is Now Visible
+
+### APIs That Had No UI (now rendering in prep tab)
+- **Air Quality** (`lib/air-quality.ts`) — now shows AQI score + label + advice via `AirQualitySunCard`
+- **Sun Times** (`lib/sun-times.ts`) — now shows sunrise/sunset/golden hour/day length via `AirQualitySunCard`
+- **10-Day Forecast** (`lib/weather-forecast.ts`) — horizontal scrollable strip via `ForecastStrip`
+- **Emergency Numbers** (`lib/emergency-numbers.ts`) — compact police/ambulance/fire card via `EmergencyQuickCard`
+- **Currency Converter** (`lib/exchange-rates.ts`) — $100 conversion + quick amounts via `CurrencyQuickCard`
+- **Cost of Living** (`lib/cost-of-living.ts`) — budget/comfort/luxury daily totals via `CostOfLivingCard`
+
+### New Components Created
+- `components/prep/ForecastStrip.tsx` — 10-day weather strip with per-weather icons
+- `components/prep/AirQualitySunCard.tsx` — AQI + sunrise/sunset side-by-side
+- `components/prep/EmergencyQuickCard.tsx` — Emergency numbers with coral theme
+- `components/prep/CurrencyQuickCard.tsx` — Live exchange rates with quick converter
+- `components/prep/CostOfLivingCard.tsx` — Budget tiers from offline data
+
+### Prep Tab Now Shows (in order)
+1. Safety Score Hero (existing)
+2. Right Now intel card — time, weather, exchange, holidays (existing)
+3. Air Quality + Sun Times (NEW)
+4. 10-Day Forecast strip (NEW)
+5. Daily Budget tiers (NEW)
+6. Emergency Numbers (NEW)
+7. Currency Converter (NEW)
+8. Section pills + tab content (existing)
+
+---
+
+## Rework Sprint — What Shipped (Phase 1)
+
+### New Components
+- `components/ui/DestinationImageFallback.tsx` — gradient fallback with destination theme colors (zero grey boxes)
+- `components/ui/DestinationThemeOverlay.tsx` — subtle per-destination background tinting (5% opacity)
+
+### Prep Tab Live Data
+- `DestinationIntelCard` added between safety hero and section pills
+- Shows: local time (timezone lookup), current weather (Open-Meteo), exchange rate (Frankfurter), upcoming holidays (Nager.Date)
+- All free APIs, no keys needed, AsyncStorage cached
+
+### Admin Test Bypass
+- `supabase/functions/claude-proxy/index.ts` now reads `ADMIN_TEST_EMAILS` env var
+- Quinn's email skips rate limit for unlimited testing
+- Quinn-only blocker: add `ADMIN_TEST_EMAILS=qbyars08@gmail.com` to Supabase edge function secrets
+
+### Generate Tab Polish
+- Destination placeholder: "Tokyo, Japan" (specific, not generic)
+- CTA button: "Generate My Trip" (action-oriented)
+
+### Agent Board Updated
+- All agents assigned extensive rework tasks in AGENT_BOARD.md
+- Agent 02 (Research) — already submitted task via Cursor Cloud
+- Agent 04 (Builder) — 4 major builds: images, flights, stays, food
 
 ---
 
