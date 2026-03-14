@@ -88,6 +88,11 @@ export default function GenerateScreen() {
         specialRequests: state.specialRequests,
       });
 
+      // Validate itinerary has required structure before storing
+      if (!itinerary?.destination || !itinerary?.days?.length) {
+        throw new Error('Generated itinerary is incomplete. Please try again.');
+      }
+
       const trip = {
         id: `gen-${Date.now()}`,
         destination: state.destination,

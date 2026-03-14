@@ -17,7 +17,7 @@ const CACHE_KEYS_TO_CLEAR = [
   '@roam/visa_',
   '@roam/weather_',
   '@roam/ticketmaster_',
-  '@roam/amadeus_token',
+  // amadeus_token removed — Amadeus integration deprecated
 ];
 
 /**
