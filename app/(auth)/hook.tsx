@@ -86,7 +86,7 @@ export default function HookScreen() {
         }),
       ]),
     ]).start();
-  }, []);
+  }, [btnOpacity, btnY, headlineOpacity, headlineY, imageScale, subOpacity]);
 
   const setSession = useAppStore((s) => s.setSession);
   const [browsing, setBrowsing] = useState(false);

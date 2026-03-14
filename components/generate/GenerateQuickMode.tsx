@@ -19,7 +19,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
-import { addDays, format, isSameDay, startOfDay, isWeekend, getDay } from 'date-fns';
+import { addDays, format, isSameDay, startOfDay, isWeekend } from 'date-fns';
 import * as Haptics from '../../lib/haptics';
 import {
   Shuffle,
@@ -29,16 +29,13 @@ import {
   Minus,
   Plus,
   Calendar,
-  Clock,
   ChevronDown,
   ChevronUp,
   X,
   Sparkles,
-  Sun,
   Moon,
   Sunrise,
   Coffee,
-  UtensilsCrossed,
   Train,
   Car,
   Footprints,
@@ -48,7 +45,6 @@ import {
   Users,
   User,
   Briefcase,
-  Star,
   MapPin,
   AlertCircle,
 } from 'lucide-react-native';
@@ -394,11 +390,13 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
   });
 
   // Destination suggestion that matches current state
-  const suggestionHint = useMemo(() => {
+  const _suggestionHint = useMemo(() => {
     if (destination.trim()) return null;
+    // eslint-disable-next-line react-hooks/purity -- random pick for empty state, stable with empty deps
     const pick = TRENDING_DESTINATIONS[Math.floor(Math.random() * 5)];
     return pick;
-  }, [destination]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: stable hint when destination empty
+  }, []);
 
   return (
     <KeyboardAvoidingView

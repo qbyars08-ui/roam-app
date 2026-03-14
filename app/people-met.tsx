@@ -37,6 +37,31 @@ import { useAppStore } from '../lib/store';
 
 const DEFAULT_CITY = '';
 
+function FormInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <View style={formStyles.field}>
+      <Text style={formStyles.label}>{label}</Text>
+      <TextInput
+        style={formStyles.input}
+        value={value}
+        onChangeText={onChange}
+        placeholder={placeholder}
+        placeholderTextColor={COLORS.creamMuted}
+      />
+    </View>
+  );
+}
+
 function PeopleMetScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -64,10 +89,12 @@ function PeopleMetScreen() {
 
   const load = useCallback(async () => {
     const list = await getPeopleMet();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
     setPeople(list);
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
     load();
   }, [load]);
 
@@ -152,29 +179,6 @@ function PeopleMetScreen() {
       ]);
     },
     [load]
-  );
-
-  const Input = ({
-    label,
-    value,
-    onChange,
-    placeholder,
-  }: {
-    label: string;
-    value: string;
-    onChange: (v: string) => void;
-    placeholder?: string;
-  }) => (
-    <View style={formStyles.field}>
-      <Text style={formStyles.label}>{label}</Text>
-      <TextInput
-        style={formStyles.input}
-        value={value}
-        onChangeText={onChange}
-        placeholder={placeholder}
-        placeholderTextColor={COLORS.creamMuted}
-      />
-    </View>
   );
 
   return (
@@ -292,55 +296,55 @@ function PeopleMetScreen() {
             <View style={modalStyles.handle} />
             <Text style={modalStyles.title}>{editing ? 'Edit contact' : 'Add contact'}</Text>
             <ScrollView showsVerticalScrollIndicator={false}>
-              <Input
+              <FormInput
                 label="Name"
                 value={form.name}
                 onChange={(v) => setForm((f) => ({ ...f, name: v }))}
                 placeholder="Full name"
               />
-              <Input
+              <FormInput
                 label="Where you met"
                 value={form.whereMet}
                 onChange={(v) => setForm((f) => ({ ...f, whereMet: v }))}
                 placeholder="e.g. Hostel common room, walking tour"
               />
-              <Input
+              <FormInput
                 label="Destination"
                 value={form.destination}
                 onChange={(v) => setForm((f) => ({ ...f, destination: v }))}
                 placeholder="e.g. Lisbon, Portugal"
               />
-              <Input
+              <FormInput
                 label="Trip dates"
                 value={form.tripDates}
                 onChange={(v) => setForm((f) => ({ ...f, tripDates: v }))}
                 placeholder="e.g. March 2025"
               />
-              <Input
+              <FormInput
                 label="Photo URL"
                 value={form.photoUrl}
                 onChange={(v) => setForm((f) => ({ ...f, photoUrl: v }))}
                 placeholder="Optional image URL"
               />
-              <Input
+              <FormInput
                 label="Instagram"
                 value={form.instagram}
                 onChange={(v) => setForm((f) => ({ ...f, instagram: v.replace('@', '') }))}
                 placeholder="@username"
               />
-              <Input
+              <FormInput
                 label="LinkedIn"
                 value={form.linkedin}
                 onChange={(v) => setForm((f) => ({ ...f, linkedin: v }))}
                 placeholder="Username or profile URL"
               />
-              <Input
+              <FormInput
                 label="Twitter"
                 value={form.twitter}
                 onChange={(v) => setForm((f) => ({ ...f, twitter: v.replace('@', '') }))}
                 placeholder="@username"
               />
-              <Input
+              <FormInput
                 label="Their city (proximity)"
                 value={form.city}
                 onChange={(v) => setForm((f) => ({ ...f, city: v }))}

@@ -200,14 +200,15 @@ export function FeatureQuickAccess() {
   // Subset of features to show on home — the most useful quick-access items
   const QUICK_FEATURES = FEATURES.slice(0, 8);
 
+  /* eslint-disable react-hooks/preserve-manual-memoization */
   const handlePress = useCallback(
     (feature: Feature) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       router.push(feature.route as import('expo-router').Href);
     },
-    // eslint-disable-next-line react-hooks/preserve-manual-memoization
     [router]
   );
+  /* eslint-enable react-hooks/preserve-manual-memoization */
 
   return (
     <View style={quickStyles.section}>

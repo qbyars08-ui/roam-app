@@ -346,6 +346,7 @@ export default function ItineraryScreen() {
     } catch {
       return null;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- trip destructured for stability
   }, [parsed, trip?.destination, trip?.days, trip?.vibes, trip?.budget, weather]);
 
   useEffect(() => {
@@ -366,6 +367,7 @@ export default function ItineraryScreen() {
       afternoon: currentDay.afternoon,
       evening: currentDay.evening,
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- trip used for narration only
   }, [currentDay, trip]);
 
   const fallbackNow = useMemo(
@@ -379,7 +381,7 @@ export default function ItineraryScreen() {
     d.setDate(d.getDate() + trip.days);
     const endDate = d.toISOString().split('T')[0];
     return { startDate, endDate };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- trip intentionally excluded
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- trip intentionally excluded
   }, [fallbackNow, trip?.createdAt, trip?.days]);
 
   // ---------------------------------------------------------------------------

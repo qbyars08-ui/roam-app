@@ -8,12 +8,11 @@ import {
   Easing,
   StyleSheet,
   Text,
-  View,
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
 import { Flame, Zap } from 'lucide-react-native';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { COLORS, FONTS, RADIUS } from '../../lib/constants';
 import { getCurrentStreak } from '../../lib/streaks';
 
 interface StreakBadgeProps {
@@ -106,7 +105,7 @@ export default function StreakBadge({
     );
     loop.start();
     return () => loop.stop();
-  }, [animated, streak]);
+  }, [animated, pulseAnim, streak]);
 
   if (streak < 1) return null;
 

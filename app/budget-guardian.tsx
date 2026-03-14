@@ -217,7 +217,7 @@ function BudgetGuardianScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [fadeAnim, slideAnim]);
 
   // Animate bars when expenses change
   useEffect(() => {
@@ -230,7 +230,8 @@ function BudgetGuardianScreen() {
         useNativeDriver: false,
       }).start();
     });
-  }, [expenses]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- getCategoryBreakdown intentionally excluded
+  }, [barAnims, expenses]);
 
   useEffect(() => {
     const maxDay = Math.max(...getDailySpending().map((d) => d.amount), dailyBudget);
@@ -242,6 +243,7 @@ function BudgetGuardianScreen() {
         useNativeDriver: false,
       }).start();
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- dailyBudget, dayBarAnims, getDailySpending intentionally excluded
   }, [expenses]);
 
   // ---------------------------------------------------------------------------

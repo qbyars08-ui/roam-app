@@ -3,7 +3,7 @@
 // Beautiful, brand-aligned loading animations using React Native Animated API
 // =============================================================================
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, StyleSheet, View, type DimensionValue, type ViewStyle } from 'react-native';
 import { COLORS, FONTS, SPACING } from '../../lib/constants';
 import { getDestinationTheme } from '../../lib/destination-themes';
@@ -24,13 +24,6 @@ function getStatusMessages(): string[] {
     i18n.t('loadingStates.almostReady'),
   ];
 }
-
-const STATUS_MESSAGES = [
-  'Building your trip from scratch...',
-  'Digging up the spots locals won\u2019t shut up about...',
-  'Cross-checking with people who\u2019ve actually been...',
-  'Putting the finishing touches on...',
-];
 
 interface TripGeneratingLoaderProps {
   destination?: string;
@@ -120,15 +113,19 @@ export function TripGeneratingLoader({ destination }: TripGeneratingLoaderProps)
   }, [textOpacity]);
 
   // --- Floating particles ---
-  const particles = useRef(
-    Array.from({ length: 5 }, () => ({
-      translateY: new Animated.Value(0),
-      opacity: new Animated.Value(0),
-      translateX: Math.random() * 160 - 80,
-      size: 3 + Math.random() * 4,
-      delay: Math.random() * 2000,
-    })),
-  ).current;
+  /* eslint-disable react-hooks/purity -- Math.random for particle positions, stable with empty deps */
+  const particles = useMemo(
+    () =>
+      Array.from({ length: 5 }, () => ({
+        translateY: new Animated.Value(0),
+        opacity: new Animated.Value(0),
+        translateX: Math.random() * 160 - 80,
+        size: 3 + Math.random() * 4,
+        delay: Math.random() * 2000,
+      })),
+    []
+  );
+  /* eslint-enable react-hooks/purity */
 
   useEffect(() => {
     const anims = particles.map((p) =>

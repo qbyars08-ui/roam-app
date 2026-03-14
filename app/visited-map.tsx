@@ -104,7 +104,8 @@ function VisitedMapScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadData intentionally excluded
+  }, [fadeAnim, slideAnim]);
 
   // Derived data
   const visitedCountries = useMemo(() => {

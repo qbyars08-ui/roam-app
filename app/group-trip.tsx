@@ -78,13 +78,17 @@ function GroupTripScreen() {
   }, [groupId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
     loadDetails();
   }, [loadDetails]);
 
   useEffect(() => {
     if (!groupId) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
     getExpenses(groupId).then(setExpenses);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
     getMessages(groupId).then(setMessages);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
     getPackingList(groupId).then(setPackingItems);
   }, [groupId]);
 
@@ -232,8 +236,10 @@ function ItineraryTab({ group, members }: { group: TripGroup; members: GroupMemb
     if (group.itineraryJson) {
       try {
         const parsed = parseItinerary(JSON.stringify(group.itineraryJson));
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- sync derived state
         setItinerary(parsed);
       } catch {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- sync derived state
         setItinerary(null);
       }
     }

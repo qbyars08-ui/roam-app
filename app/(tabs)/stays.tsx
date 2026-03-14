@@ -303,7 +303,7 @@ function StayCard({
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [index, opacityAnim, translateY]);
 
   const handleSave = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

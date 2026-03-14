@@ -74,6 +74,7 @@ function useProtectedRoute(session: { user: { id: string } } | null) {
       // Has session but in auth screens → go to tabs
       router.replace('/(tabs)');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- router intentional mount-only
   }, [session, segments]);
 }
 
@@ -164,6 +165,7 @@ export default function RootLayout() {
     return () => {
       subscription?.unsubscribe();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setSession stable setter
   }, []);
 
   // Once session is loaded with a user, bootstrap RevenueCat + profile data
@@ -223,6 +225,7 @@ export default function RootLayout() {
     let unsub: (() => void) | undefined;
     bootstrap().then((fn) => { unsub = fn; });
     return () => { unsub?.(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- session.user, setTripsThisMonth intentionally excluded
   }, [session?.user?.id]);
 
   // Re-engagement: when app goes to background, schedule Day 1/3/7/14 notifications

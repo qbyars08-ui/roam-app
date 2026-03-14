@@ -50,11 +50,7 @@ function TravelPersonaScreen() {
   ).current;
   const famousOpacity = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    loadPersona();
-  }, []);
-
-  const loadPersona = async () => {
+  const loadPersona = useCallback(async () => {
     setLoading(true);
     setRevealPhase(0);
     let p = await getSavedPersona();
@@ -95,7 +91,12 @@ function TravelPersonaScreen() {
     setTimeout(() => {
       Animated.timing(famousOpacity, { toValue: 1, duration: 500, useNativeDriver: true }).start();
     }, 1400);
-  };
+  }, [cardScale, emojiScale, fadeIn, famousOpacity, subtitleOpacity, titleOpacity, traitAnims]);
+
+  useEffect(() => {
+    loadPersona();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only
+  }, []);
 
   const handleRefresh = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

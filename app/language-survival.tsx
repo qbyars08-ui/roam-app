@@ -96,7 +96,10 @@ function LanguageSurvivalScreen() {
 
   useEffect(() => {
     const city = (params.city ?? params.destination) as string | undefined;
-    if (city && getPackForCity(city)) setSelectedCity(city);
+    if (city && getPackForCity(city)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync derived state
+      setSelectedCity(city);
+    }
   }, [params.city, params.destination]);
   const [activeCategory, setActiveCategory] = useState<PhraseCategory | 'all'>('all');
   const [cachedCity, setCachedCity] = useState<string | null>(null);

@@ -1,7 +1,7 @@
 // =============================================================================
 // ROAM — Floating light orbs in background
 // =============================================================================
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, StyleSheet, Animated, Dimensions } from 'react-native';
 import { COLORS } from '../../lib/constants';
 
@@ -9,12 +9,16 @@ const { width: W, height: H } = Dimensions.get('window');
 const ORB_COUNT = 6;
 
 export default function ParticleOrbs() {
-  const orbs = useRef(
-    Array.from({ length: ORB_COUNT }, () => ({
-      opacity: new Animated.Value(0.06 + Math.random() * 0.1),
-      scale: new Animated.Value(0.4 + Math.random() * 0.5),
-    }))
-  ).current;
+  /* eslint-disable react-hooks/purity -- Math.random for orb variety, stable with empty deps */
+  const orbs = useMemo(
+    () =>
+      Array.from({ length: ORB_COUNT }, () => ({
+        opacity: new Animated.Value(0.06 + Math.random() * 0.1),
+        scale: new Animated.Value(0.4 + Math.random() * 0.5),
+      })),
+    []
+  );
+  /* eslint-enable react-hooks/purity */
 
   useEffect(() => {
     const animations = orbs.map((orb, i) =>
@@ -27,7 +31,7 @@ export default function ParticleOrbs() {
     );
     animations.forEach((a) => a.start());
     return () => animations.forEach((a) => a.stop());
-  }, []);
+  }, [orbs]);
 
   const positions = [
     { left: W * 0.1, top: H * 0.15 },

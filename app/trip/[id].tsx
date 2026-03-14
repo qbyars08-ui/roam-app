@@ -39,17 +39,27 @@ export default function PublicTripScreen() {
 
   useEffect(() => {
     if (!id) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync validation
       setError('Invalid link');
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync validation
       setLoading(false);
       return;
     }
     getSharedTrip(id)
       .then((t) => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
         setTrip(t);
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
         setError(t ? null : 'Trip not found');
       })
-      .catch(() => setError('Could not load trip'))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- async error handling
+        setError('Could not load trip');
+      })
+      .finally(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
+        setLoading(false);
+      });
   }, [id]);
 
   const shareUrl = id ? `${BASE_URL}/trip/${id}` : '';

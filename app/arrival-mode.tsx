@@ -294,7 +294,7 @@ function ArrivalModeScreen() {
       ])
     );
     Animated.stagger(0, animations).start();
-  }, []);
+  }, [fadeAnims, headerFade, headerSlide, slideAnims]);
 
   const toggleCheck = (id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

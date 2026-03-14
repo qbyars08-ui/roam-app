@@ -35,11 +35,14 @@ function ChaosDareScreen() {
   useEffect(() => {
     const id = params.id as string | undefined;
     if (!id) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
       setLoading(false);
       return;
     }
     getChaosDare(id).then((d) => {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
       setDare(d);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- async data load
       setLoading(false);
     });
   }, [params.id]);

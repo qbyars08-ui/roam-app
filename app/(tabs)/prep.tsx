@@ -1046,7 +1046,10 @@ function PrepScreen() {
   >('schedule');
 
   useEffect(() => {
-    if (activeTrip) setSelectedDest(activeTrip.destination);
+    if (activeTrip) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync derived state
+      setSelectedDest(activeTrip.destination);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only
   }, [activeTrip?.destination]);
 

@@ -56,6 +56,18 @@ export default function GroupInviteCard({
   const cardRef = useRef<React.ElementRef<typeof ViewShot> | null>(null);
   const inviteUrl = `https://roamtravel.app/join/${inviteCode}`;
 
+  const handleShareLink = useCallback(async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      await Share.share({
+        message: `Join my trip to ${destination} on ROAM!\n\n${inviteUrl}`,
+        url: inviteUrl,
+      });
+    } catch {
+      // User cancelled
+    }
+  }, [destination, inviteUrl]);
+
   const handleShareImage = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
@@ -73,19 +85,7 @@ export default function GroupInviteCard({
       // Fallback to text share
       handleShareLink();
     }
-  }, [destination, inviteCode]);
-
-  const handleShareLink = useCallback(async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    try {
-      await Share.share({
-        message: `Join my trip to ${destination} on ROAM!\n\n${inviteUrl}`,
-        url: inviteUrl,
-      });
-    } catch {
-      // User cancelled
-    }
-  }, [destination, inviteUrl]);
+  }, [destination, handleShareLink]);
 
   const handleCopyLink = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

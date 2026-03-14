@@ -2,7 +2,7 @@
 // ROAM — Affiliate Booking Cards
 // Non-intrusive partner cards shown at bottom of every itinerary
 // =============================================================================
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   Pressable,
   StyleSheet,
@@ -42,12 +42,10 @@ export default function BookingCards({
   const safeCurrency = currency ?? 'USD';
   const safeRates = rates ?? null;
   const canConvert = safeCurrency !== 'USD' && safeRates != null;
-  const params: AffiliateParams = {
-    destination,
-    countryCode,
-    days,
-    budget,
-  };
+  const params = useMemo<AffiliateParams>(
+    () => ({ destination, countryCode, days, budget }),
+    [destination, countryCode, days, budget]
+  );
 
   const handlePress = useCallback(
     (partnerId: string) => {

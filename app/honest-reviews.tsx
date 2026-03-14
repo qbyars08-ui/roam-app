@@ -852,6 +852,7 @@ function HonestReviews() {
       }),
     );
     Animated.stagger(80, animations).start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fadeAnims, reviews intentionally excluded
   }, [activeFilter, activeSort, cityName]);
 
   // -------------------------------------------------------------------------

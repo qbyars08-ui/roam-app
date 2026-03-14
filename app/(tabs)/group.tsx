@@ -1004,7 +1004,10 @@ export default function GroupScreen() {
     return () => { cancelled = true; };
   }, []);
 
-  const effectiveRates = rates?.rates ?? { USD: 1, ...FALLBACK_RATES };
+  const effectiveRates = useMemo(
+    () => rates?.rates ?? { USD: 1, ...FALLBACK_RATES },
+    [rates?.rates]
+  );
 
   const toAmount = useMemo(() => {
     const num = parseFloat(fromAmount) || 0;

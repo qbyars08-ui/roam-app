@@ -104,7 +104,7 @@ export default function SocialProofScreen() {
         useNativeDriver: true,
       }).start();
     }, 1300);
-  }, []);
+  }, [btnOpacity, cardAnims, counterOpacity, counterScale]);
 
   const handleContinue = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

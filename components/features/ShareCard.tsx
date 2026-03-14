@@ -115,7 +115,7 @@ export default function ShareCard({
     } finally {
       setIsGenerating(false);
     }
-  }, [isGenerating, trip, totalBudget, dailyBudget, dailyCost, tagline, dayThemes, dayCount, heroPhoto]);
+  }, [isGenerating, trip, totalBudget, dailyCost, tagline, dayThemes, dayCount, heroPhoto]);
 
   return (
     <View style={styles.wrapper}>
