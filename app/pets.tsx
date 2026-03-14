@@ -29,6 +29,7 @@ import {
   ROVER_AFFILIATE_URL,
   WAG_AFFILIATE_URL,
 } from '../lib/constants';
+import { useTranslation } from 'react-i18next';
 import { withComingSoon } from '../lib/with-coming-soon';
 import { useAppStore, type Pet } from '../lib/store';
 import {
@@ -69,6 +70,7 @@ function PetAvatar({ pet, onLongPress }: { pet: Pet; onLongPress: () => void }) 
 }
 
 function AddPetCard({ onPress }: { onPress: () => void }) {
+  const { t } = useTranslation();
   return (
     <Pressable
       onPress={onPress}
@@ -79,7 +81,7 @@ function AddPetCard({ onPress }: { onPress: () => void }) {
       ]}
     >
       <Text style={styles.addPetPlus}>+</Text>
-      <Text style={styles.addPetLabel}>Add Pet</Text>
+      <Text style={styles.addPetLabel}>{t('pets.addPet')}</Text>
     </Pressable>
   );
 }
@@ -103,6 +105,7 @@ function AddPetModal({
   visible: boolean;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const addPet = useAppStore((s) => s.addPet);
   const [name, setName] = useState('');
   const [type, setType] = useState<PetType>('dog');
@@ -122,10 +125,10 @@ function AddPetModal({
       <Pressable style={styles.modalOverlay} onPress={onClose}>
         <Pressable style={styles.modalSheet} onPress={() => {}}>
           <View style={styles.modalHandle} />
-          <Text style={styles.modalTitle}>Add a Pet</Text>
+          <Text style={styles.modalTitle}>{t('pets.addPet')}</Text>
 
           {/* Name */}
-          <Text style={styles.fieldLabel}>Name</Text>
+          <Text style={styles.fieldLabel}>{t('pets.petName')}</Text>
           <TextInput
             style={styles.textInput}
             placeholder="e.g. Luna"
@@ -137,7 +140,7 @@ function AddPetModal({
           />
 
           {/* Type selector */}
-          <Text style={styles.fieldLabel}>Type</Text>
+          <Text style={styles.fieldLabel}>{t('pets.petType')}</Text>
           <View style={styles.typeRow}>
             {TYPE_OPTIONS.map((opt) => (
               <Pressable
@@ -149,7 +152,7 @@ function AddPetModal({
                 ]}
               >
                 <Text style={styles.typeChipText}>
-                  {opt.label}
+                  {opt.key === 'dog' ? t('pets.dog') : opt.key === 'cat' ? t('pets.cat') : t('pets.other')}
                 </Text>
               </Pressable>
             ))}
@@ -280,6 +283,7 @@ function PetAICard() {
 // ---------------------------------------------------------------------------
 
 function ReminderToggle() {
+  const { t } = useTranslation();
   const pets = useAppStore((s) => s.pets);
   const trips = useAppStore((s) => s.trips);
   const enabled = useAppStore((s) => s.petRemindersEnabled);
@@ -310,7 +314,7 @@ function ReminderToggle() {
   return (
     <View style={styles.reminderRow}>
       <View style={{ flex: 1 }}>
-        <Text style={styles.reminderTitle}>Pet Check-In Reminders</Text>
+        <Text style={styles.reminderTitle}>{t('pets.reminders')}</Text>
         <Text style={styles.reminderSub}>
           Daily 8 PM reminder to check on your sitter during trips
         </Text>
@@ -330,6 +334,7 @@ function ReminderToggle() {
 // ---------------------------------------------------------------------------
 
 function PetDestinations() {
+  const { t } = useTranslation();
   const router = useRouter();
   const setPlanWizard = useAppStore((s) => s.setPlanWizard);
 
@@ -345,7 +350,7 @@ function PetDestinations() {
 
   return (
     <View>
-      <Text style={styles.sectionHeader}>Pet-Friendly Destinations</Text>
+      <Text style={styles.sectionHeader}>{t('pets.petFriendly')}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.destScroll}>
         {PET_DESTINATIONS.map((d) => (
           <Pressable
@@ -359,7 +364,7 @@ function PetDestinations() {
             {null}
             <Text style={styles.destCity} numberOfLines={1}>{d.city}</Text>
             <Text style={styles.destScore}>
-              Pet Score {d.petScore}/5
+              {t('pets.petScore')} {d.petScore}/5
             </Text>
             <Text style={styles.destHighlight} numberOfLines={1}>{d.highlight}</Text>
           </Pressable>
@@ -374,6 +379,7 @@ function PetDestinations() {
 // ---------------------------------------------------------------------------
 
 function PetsScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [modalVisible, setModalVisible] = useState(false);
   const pets = useAppStore((s) => s.pets);
@@ -394,7 +400,7 @@ function PetsScreen() {
         contentContainerStyle={styles.scroll}
       >
         {/* Header */}
-        <Text style={styles.screenTitle}>Pet Travel Hub</Text>
+        <Text style={styles.screenTitle}>{t('pets.title')}</Text>
         <Text style={styles.screenSub}>
           Everything your furry co-pilot needs
         </Text>

@@ -39,6 +39,7 @@ import {
   ALL_CONTINENTS,
   WORLD_GRID,
 } from '../lib/visited-store';
+import { useTranslation } from 'react-i18next';
 import { withComingSoon } from '../lib/with-coming-soon';
 
 // ---------------------------------------------------------------------------
@@ -57,6 +58,7 @@ function getNextMilestone(count: number): number {
 // Main Screen
 // ---------------------------------------------------------------------------
 function VisitedMapScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -246,7 +248,7 @@ function VisitedMapScreen() {
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
-        <Text style={styles.headerTitle}>Visited Map</Text>
+        <Text style={styles.headerTitle}>{t('visitedMap.title')}</Text>
         <View style={styles.backBtn} />
       </View>
 
@@ -261,11 +263,11 @@ function VisitedMapScreen() {
           {/* WORLD STATS */}
           {/* ============================================================= */}
           <View style={styles.statsRow}>
-            <StatBig label="Places" value={stats.totalPlaces} />
+            <StatBig label={t('visitedMap.places')} value={stats.totalPlaces} />
             <View style={styles.statDivider} />
-            <StatBig label="Countries" value={stats.totalCountries} />
+            <StatBig label={t('visitedMap.countries')} value={stats.totalCountries} />
             <View style={styles.statDivider} />
-            <StatBig label="Continents" value={stats.totalContinents} />
+            <StatBig label={t('visitedMap.continents')} value={stats.totalContinents} />
           </View>
 
           {/* Total miles traveled */}
@@ -274,7 +276,7 @@ function VisitedMapScreen() {
               <Text style={styles.milesValue}>
                 {stats.totalMilesTraveled.toLocaleString()} mi
               </Text>
-              <Text style={styles.milesLabel}>Total miles traveled</Text>
+              <Text style={styles.milesLabel}>{t('visitedMap.totalMiles')}</Text>
               <Text style={styles.milesSub}>
                 Estimated from your trip sequence
               </Text>
@@ -283,7 +285,7 @@ function VisitedMapScreen() {
 
           {/* Continent progress bars */}
           <View style={styles.card}>
-            <Text style={styles.sectionLabel}>· Continent progress</Text>
+            <Text style={styles.sectionLabel}>· {t('visitedMap.continentProgress')}</Text>
             {ALL_CONTINENTS.filter((c) => c !== 'Antarctica').map((continent) => {
               const total = COUNTRIES_PER_CONTINENT[continent] ?? 1;
               const visitedInContinent = new Set(
@@ -314,7 +316,7 @@ function VisitedMapScreen() {
           {/* VISUAL WORLD GRID */}
           {/* ============================================================= */}
           <View style={styles.card}>
-            <Text style={styles.sectionLabel}>· World grid</Text>
+            <Text style={styles.sectionLabel}>· {t('visitedMap.worldGrid')}</Text>
             {Object.entries(WORLD_GRID).map(([continent, countries]) => (
               <View key={continent} style={styles.gridSection}>
                 <Text style={styles.continentHeader}>{continent}</Text>
@@ -373,11 +375,11 @@ function VisitedMapScreen() {
           {/* ADD PLACE */}
           {/* ============================================================= */}
           <View style={styles.card}>
-            <Text style={styles.sectionLabel}>· Add a place</Text>
+            <Text style={styles.sectionLabel}>· {t('visitedMap.addPlace')}</Text>
             <View style={styles.inputRow}>
               <TextInput
                 style={styles.textInput}
-                placeholder="Search destination..."
+                placeholder={t('visitedMap.searchPlaceholder')}
                 placeholderTextColor={COLORS.creamMuted}
                 value={addInput}
                 onChangeText={handleInputChange}
@@ -406,7 +408,7 @@ function VisitedMapScreen() {
             )}
 
             <Pressable style={styles.syncBtn} onPress={handleSyncTrips}>
-              <Text style={styles.syncBtnText}>Sync from trips</Text>
+              <Text style={styles.syncBtnText}>{t('visitedMap.syncFromTrips')}</Text>
             </Pressable>
           </View>
 
@@ -414,7 +416,7 @@ function VisitedMapScreen() {
           {/* TRAVEL STATS CARDS */}
           {/* ============================================================= */}
           <View style={styles.card}>
-            <Text style={styles.sectionLabel}>· Travel stats</Text>
+            <Text style={styles.sectionLabel}>· {t('visitedMap.travelStats')}</Text>
 
             <View style={styles.statCardGrid}>
               <View style={styles.statCard}>
@@ -467,7 +469,7 @@ function VisitedMapScreen() {
           {/* BUCKET LIST */}
           {/* ============================================================= */}
           <View style={styles.card}>
-            <Text style={styles.sectionLabel}>· Bucket list</Text>
+            <Text style={styles.sectionLabel}>· {t('visitedMap.bucketList')}</Text>
             <Text style={styles.sectionSubtext}>
               Dream destinations you haven't visited yet
             </Text>
@@ -526,7 +528,7 @@ function VisitedMapScreen() {
                     style={styles.bucketActionBtn}
                     onPress={() => handleMoveBucketToVisited(item)}
                   >
-                    <Text style={styles.bucketActionVisited}>Visited</Text>
+                    <Text style={styles.bucketActionVisited}>{t('visitedMap.visited')}</Text>
                   </Pressable>
                   <Pressable
                     style={styles.bucketActionBtnRemove}
@@ -544,7 +546,7 @@ function VisitedMapScreen() {
           {/* ============================================================= */}
           {places.length > 0 && (
             <View style={styles.card}>
-              <Text style={styles.sectionLabel}>· All visited places</Text>
+              <Text style={styles.sectionLabel}>· {t('visitedMap.allVisitedPlaces')}</Text>
               {places.map((place) => (
                 <View key={place.id} style={styles.placeRow}>
                   <View style={{ flex: 1 }}>

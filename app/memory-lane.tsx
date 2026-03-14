@@ -34,6 +34,7 @@ import {
   UtensilsCrossed,
 } from 'lucide-react-native';
 
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS, BUDGETS } from '../lib/constants';
 import { useAppStore, type Trip } from '../lib/store';
 import { useProGate } from '../lib/pro-gate';
@@ -162,6 +163,7 @@ function useStaggerAnim(count: number, delay = 80) {
 // Component
 // =============================================================================
 function MemoryLaneScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { canAccess } = useProGate('memory-lane');
@@ -211,9 +213,9 @@ function MemoryLaneScreen() {
 
         <View style={styles.emptyContainer}>
           <BookOpen size={64} color={COLORS.sage} strokeWidth={1.5} style={{ marginBottom: SPACING.lg }} />
-          <Text style={styles.emptyTitle}>Memory Lane</Text>
+          <Text style={styles.emptyTitle}>{t('memoryLane.title')}</Text>
           <Text style={styles.emptySubtitle}>
-            Your story starts with one trip.{'\n'}Every journey becomes a memory.
+            {t('memoryLane.emptySubtitle')}
           </Text>
           <Pressable
             style={({ pressed }) => [styles.ctaButton, { opacity: pressed ? 0.85 : 1 }]}
@@ -222,7 +224,7 @@ function MemoryLaneScreen() {
               router.push('/(tabs)/generate');
             }}
           >
-            <Text style={styles.ctaText}>Plan Your First Trip</Text>
+            <Text style={styles.ctaText}>{t('memoryLane.planFirstTrip')}</Text>
             <ArrowRight size={18} color={COLORS.bg} strokeWidth={2} />
           </Pressable>
         </View>
@@ -262,8 +264,8 @@ function MemoryLaneScreen() {
             },
           ]}
         >
-          <Text style={styles.screenTitle}>Memory Lane</Text>
-          <Text style={styles.screenSubtitle}>Every trip tells a story</Text>
+          <Text style={styles.screenTitle}>{t('memoryLane.title')}</Text>
+          <Text style={styles.screenSubtitle}>{t('memoryLane.screenSubtitle')}</Text>
         </Animated.View>
 
         {/* ================================================================= */}
@@ -285,10 +287,10 @@ function MemoryLaneScreen() {
             },
           ]}
         >
-          <StatBox label="Trips" value={trips.length} />
-          <StatBox label="Days" value={totalDays} />
-          <StatBox label="Places" value={uniqueDestinations.length} />
-          <StatBox label="Countries" value={countries} />
+          <StatBox label={t('memoryLane.statTrips')} value={trips.length} />
+          <StatBox label={t('memoryLane.statDays')} value={totalDays} />
+          <StatBox label={t('memoryLane.statPlaces')} value={uniqueDestinations.length} />
+          <StatBox label={t('memoryLane.statCountries')} value={countries} />
         </Animated.View>
 
         {/* ================================================================= */}
@@ -311,8 +313,8 @@ function MemoryLaneScreen() {
               },
             ]}
           >
-            {onThisDayTrips.map((t) => (
-              <View key={t.id} style={styles.nostalgiaCard}>
+            {onThisDayTrips.map((trip) => (
+              <View key={trip.id} style={styles.nostalgiaCard}>
                 <LinearGradient
                   colors={[COLORS.coralLight, COLORS.dangerSubtle]}
                   start={{ x: 0, y: 0 }}
@@ -322,10 +324,10 @@ function MemoryLaneScreen() {
                 <View style={styles.nostalgiaInner}>
                   <Clock size={20} color={COLORS.coral} strokeWidth={2} />
                   <View style={{ flex: 1, marginLeft: SPACING.sm }}>
-                    <Text style={styles.nostalgiaTitle}>On This Day</Text>
+                    <Text style={styles.nostalgiaTitle}>{t('memoryLane.onThisDay')}</Text>
                     <Text style={styles.nostalgiaBody}>
-                      You were in {t.destination} this time in{' '}
-                      {new Date(t.createdAt).getFullYear()}!
+                      You were in {trip.destination} this time in{' '}
+                      {new Date(trip.createdAt).getFullYear()}!
                     </Text>
                   </View>
                 </View>
@@ -353,7 +355,7 @@ function MemoryLaneScreen() {
             },
           ]}
         >
-          <Text style={styles.sectionLabel}>· Passport stamps</Text>
+          <Text style={styles.sectionLabel}>· {t('memoryLane.passportStamps')}</Text>
           <View style={styles.stampsGrid}>
             {uniqueDestinations.map((dest, i) => (
               <View
@@ -397,7 +399,7 @@ function MemoryLaneScreen() {
             },
           ]}
         >
-          <Text style={styles.sectionLabel}>· Milestones</Text>
+          <Text style={styles.sectionLabel}>· {t('memoryLane.milestones')}</Text>
           <View style={styles.milestonesGrid}>
             {MILESTONES.map((m) => {
               const earned = m.check(trips);
@@ -432,7 +434,7 @@ function MemoryLaneScreen() {
         {/* Timeline */}
         {/* ================================================================= */}
         <Text style={[styles.sectionLabel, { marginTop: SPACING.xl, marginBottom: SPACING.md }]}>
-          · Your journey
+          · {t('memoryLane.yourJourney')}
         </Text>
 
         <View style={styles.timelineContainer}>
@@ -515,7 +517,7 @@ function MemoryLaneScreen() {
                       });
                     }}
                   >
-                    <Text style={styles.reliveBtnText}>Relive this trip</Text>
+                    <Text style={styles.reliveBtnText}>{t('memoryLane.reliveTrip')}</Text>
                     <ArrowRight size={14} color={COLORS.sage} strokeWidth={2} />
                   </Pressable>
                 </View>

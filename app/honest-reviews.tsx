@@ -22,6 +22,7 @@ import { ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useDestinationTheme } from '../lib/useDestinationTheme';
 import { withComingSoon } from '../lib/with-coming-soon';
+import { useTranslation } from 'react-i18next';
 import { validateDestination } from '../lib/params-validator';
 
 // =============================================================================
@@ -811,6 +812,7 @@ const VERDICT_SORT_VALUE: Record<Verdict, number> = {
 // Component
 // =============================================================================
 function HonestReviews() {
+  const { t } = useTranslation();
   const params = useLocalSearchParams<{ destination: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -863,7 +865,7 @@ function HonestReviews() {
       idx <= 1 ? COLORS.sage : idx === 2 ? COLORS.gold : COLORS.coral;
     return (
       <View style={styles.crowdRow}>
-        <Text style={styles.crowdLabel}>Crowds</Text>
+        <Text style={styles.crowdLabel}>{t('honestReviews.crowds')}</Text>
         <View style={styles.crowdDots}>
           {CROWD_LEVELS.map((_, i) => (
             <View
@@ -917,9 +919,9 @@ function HonestReviews() {
           <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
         <View style={styles.headerText}>
-          <Text style={styles.headerTitle}>Honest Reviews</Text>
+          <Text style={styles.headerTitle}>{t('honestReviews.title')}</Text>
           <Text style={styles.headerSubtitle}>
-            {hasData ? cityName : 'No reviews available'}
+            {hasData ? cityName : t('honestReviews.noReviewsAvailable')}
           </Text>
         </View>
       </View>
@@ -927,7 +929,7 @@ function HonestReviews() {
       {/* Tag line */}
       <View style={styles.taglineWrap}>
         <Text style={styles.tagline}>
-          No sponsorships. No BS. Just what's actually worth your time.
+          {t('honestReviews.tagline')}
         </Text>
       </View>
 
@@ -989,7 +991,7 @@ function HonestReviews() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.sortRow}
           >
-            <Text style={styles.sortLabel}>Sort:</Text>
+            <Text style={styles.sortLabel}>{t('honestReviews.sort')}</Text>
             {SORTS.map((s) => {
               const isActive = activeSort === s;
               return (
@@ -1066,7 +1068,7 @@ function HonestReviews() {
                   {/* Cost + Time badges */}
                   <View style={styles.badgeRow}>
                     <View style={styles.infoBadge}>
-                      <Text style={styles.infoBadgeLabel}>Cost</Text>
+                      <Text style={styles.infoBadgeLabel}>{t('honestReviews.cost')}</Text>
                       <Text style={styles.infoBadgeValue}>{attraction.cost}</Text>
                     </View>
                     <View style={styles.infoBadge}>
@@ -1078,7 +1080,7 @@ function HonestReviews() {
                   {/* Best time (only for non-SKIP) */}
                   {!isSkip && attraction.bestTime !== '' && (
                     <View style={styles.bestTimeRow}>
-                      <Text style={styles.bestTimeLabel}>Best time</Text>
+                      <Text style={styles.bestTimeLabel}>{t('honestReviews.bestTime')}</Text>
                       <Text style={styles.bestTimeValue}>{attraction.bestTime}</Text>
                     </View>
                   )}
@@ -1086,7 +1088,7 @@ function HonestReviews() {
                   {/* DO THIS INSTEAD (only for SKIP IT) */}
                   {isSkip && attraction.bestAlternative !== '' && (
                     <View style={styles.alternativeCard}>
-                      <Text style={styles.alternativeLabel}>DO THIS INSTEAD</Text>
+                      <Text style={styles.alternativeLabel}>{t('honestReviews.doThisInstead')}</Text>
                       <Text style={styles.alternativeText}>
                         {attraction.bestAlternative}
                       </Text>
@@ -1097,7 +1099,7 @@ function HonestReviews() {
                   {attraction.rating === 'MIXED' && attraction.bestAlternative !== '' && (
                     <View style={[styles.alternativeCard, styles.alternativeCardMixed]}>
                       <Text style={[styles.alternativeLabel, { color: COLORS.gold }]}>
-                        ALTERNATIVE
+                        {t('honestReviews.alternative')}
                       </Text>
                       <Text style={styles.alternativeText}>
                         {attraction.bestAlternative}
@@ -1107,7 +1109,7 @@ function HonestReviews() {
 
                   {/* Insider tip callout */}
                   <View style={styles.tipCallout}>
-                    <Text style={styles.tipLabel}>INSIDER TIP</Text>
+                    <Text style={styles.tipLabel}>{t('honestReviews.insiderTip')}</Text>
                     <Text style={styles.tipText}>{attraction.insiderTip}</Text>
                   </View>
                 </Animated.View>

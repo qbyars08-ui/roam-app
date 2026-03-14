@@ -33,11 +33,13 @@ import {
   getPeopleInCity,
   type PersonMet,
 } from '../lib/people-met';
+import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../lib/store';
 
 const DEFAULT_CITY = '';
 
 function PeopleMetScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [people, setPeople] = useState<PersonMet[]>([]);
@@ -139,8 +141,8 @@ function PeopleMetScreen() {
 
   const handleDelete = useCallback(
     (p: PersonMet) => {
-      Alert.alert('Remove contact', `Remove ${p.name}?`, [
-        { text: 'Cancel', style: 'cancel' },
+      Alert.alert(t('peopleMet.removeContact'), `Remove ${p.name}?`, [
+        { text: t('common.cancel'), style: 'cancel' },
         {
           text: 'Remove',
           style: 'destructive',
@@ -183,7 +185,7 @@ function PeopleMetScreen() {
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Text style={styles.back}>{'\u2190'}</Text>
         </Pressable>
-        <Text style={styles.title}>People You&apos;ve Met</Text>
+        <Text style={styles.title}>{t('peopleMet.title')}</Text>
         <Text style={styles.subtitle}>
           {people.length} contact{people.length !== 1 ? 's' : ''} from your travels
         </Text>
@@ -192,7 +194,7 @@ function PeopleMetScreen() {
       {/* Proximity: people in your city */}
       {peopleInCity.length > 0 && (
         <View style={styles.proximityCard}>
-          <Text style={styles.proximityTitle}>Near you</Text>
+          <Text style={styles.proximityTitle}>{t('peopleMet.nearYou')}</Text>
           <Text style={styles.proximitySub}>
             {peopleInCity.length} {peopleInCity.length === 1 ? 'person' : 'people'} in {currentCity}
           </Text>
@@ -232,7 +234,7 @@ function PeopleMetScreen() {
               <View style={styles.info}>
                 <Text style={styles.name}>{item.name}</Text>
                 <Text style={styles.meta}>
-                  Met in {item.whereMet}
+                  {t('peopleMet.metIn')} {item.whereMet}
                   {item.destination ? `, ${item.destination}` : ''} – {item.tripDates}
                 </Text>
                 <View style={styles.socialRow}>
@@ -276,7 +278,7 @@ function PeopleMetScreen() {
               onPress={() => handleDelete(item)}
               style={styles.deleteBtn}
             >
-              <Text style={styles.deleteText}>Remove</Text>
+              <Text style={styles.deleteText}>{t('peopleMet.removeContact')}</Text>
             </Pressable>
           </View>
         )}
@@ -290,58 +292,58 @@ function PeopleMetScreen() {
         <View style={modalStyles.overlay}>
           <View style={[modalStyles.sheet, { paddingBottom: insets.bottom + SPACING.lg }]}>
             <View style={modalStyles.handle} />
-            <Text style={modalStyles.title}>{editing ? 'Edit contact' : 'Add contact'}</Text>
+            <Text style={modalStyles.title}>{editing ? t('peopleMet.editContact') : t('peopleMet.addContact')}</Text>
             <ScrollView showsVerticalScrollIndicator={false}>
               <Input
-                label="Name"
+                label={t('peopleMet.name')}
                 value={form.name}
                 onChange={(v) => setForm((f) => ({ ...f, name: v }))}
                 placeholder="Full name"
               />
               <Input
-                label="Where you met"
+                label={t('peopleMet.whereYouMet')}
                 value={form.whereMet}
                 onChange={(v) => setForm((f) => ({ ...f, whereMet: v }))}
                 placeholder="e.g. Hostel common room, walking tour"
               />
               <Input
-                label="Destination"
+                label={t('peopleMet.destination')}
                 value={form.destination}
                 onChange={(v) => setForm((f) => ({ ...f, destination: v }))}
                 placeholder="e.g. Lisbon, Portugal"
               />
               <Input
-                label="Trip dates"
+                label={t('peopleMet.tripDates')}
                 value={form.tripDates}
                 onChange={(v) => setForm((f) => ({ ...f, tripDates: v }))}
                 placeholder="e.g. March 2025"
               />
               <Input
-                label="Photo URL"
+                label={t('peopleMet.photoUrl')}
                 value={form.photoUrl}
                 onChange={(v) => setForm((f) => ({ ...f, photoUrl: v }))}
                 placeholder="Optional image URL"
               />
               <Input
-                label="Instagram"
+                label={t('peopleMet.instagram')}
                 value={form.instagram}
                 onChange={(v) => setForm((f) => ({ ...f, instagram: v.replace('@', '') }))}
                 placeholder="@username"
               />
               <Input
-                label="LinkedIn"
+                label={t('peopleMet.linkedin')}
                 value={form.linkedin}
                 onChange={(v) => setForm((f) => ({ ...f, linkedin: v }))}
                 placeholder="Username or profile URL"
               />
               <Input
-                label="Twitter"
+                label={t('peopleMet.twitter')}
                 value={form.twitter}
                 onChange={(v) => setForm((f) => ({ ...f, twitter: v.replace('@', '') }))}
                 placeholder="@username"
               />
               <Input
-                label="Their city (proximity)"
+                label={t('peopleMet.theirCityProximity')}
                 value={form.city}
                 onChange={(v) => setForm((f) => ({ ...f, city: v }))}
                 placeholder="For alerts when you're in the same city"

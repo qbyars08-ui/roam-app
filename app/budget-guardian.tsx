@@ -24,6 +24,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
 import { ChevronLeft } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useDestinationTheme } from '../lib/useDestinationTheme';
 import { withComingSoon } from '../lib/with-coming-soon';
@@ -110,6 +111,7 @@ const CHEAPER_ALTERNATIVES: Record<CategoryId, string> = {
 };
 
 function BudgetGuardianScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
@@ -439,7 +441,7 @@ function BudgetGuardianScreen() {
             <ChevronLeft size={24} color={COLORS.cream} />
           </Pressable>
           <View style={{ flex: 1 }}>
-            <Text style={styles.headerTitle}>Budget Guardian</Text>
+            <Text style={styles.headerTitle}>{t('budgetGuardian.title')}</Text>
             <Text style={styles.headerSubtitle}>
               {destination} {'\u00B7'} {totalDays} days
             </Text>
@@ -469,7 +471,7 @@ function BudgetGuardianScreen() {
               ================================================================ */}
           {renderGlassCard(
             <>
-              <Text style={styles.sectionLabel}>· Total budget</Text>
+              <Text style={styles.sectionLabel}>· {t('budgetGuardian.totalBudget')}</Text>
               <Text style={[styles.bigAmount, { color: budgetStatusColor }]}>
                 {formatCurrency(totalBudget)}
               </Text>
@@ -498,13 +500,13 @@ function BudgetGuardianScreen() {
 
               <View style={styles.budgetRow}>
                 <View>
-                  <Text style={styles.budgetLabel}>Spent</Text>
+                  <Text style={styles.budgetLabel}>{t('budgetGuardian.spent')}</Text>
                   <Text style={[styles.budgetValue, { color: budgetStatusColor }]}>
                     {formatCurrency(totalSpent)}
                   </Text>
                 </View>
                 <View>
-                  <Text style={styles.budgetLabel}>Remaining</Text>
+                  <Text style={styles.budgetLabel}>{t('budgetGuardian.remaining')}</Text>
                   <Text
                     style={[
                       styles.budgetValue,
@@ -515,7 +517,7 @@ function BudgetGuardianScreen() {
                   </Text>
                 </View>
                 <View>
-                  <Text style={styles.budgetLabel}>Daily Target</Text>
+                  <Text style={styles.budgetLabel}>{t('budgetGuardian.dailyTarget')}</Text>
                   <Text style={[styles.budgetValue, { color: COLORS.cream }]}>
                     {formatCurrency(dailyBudget)}
                   </Text>
@@ -529,7 +531,7 @@ function BudgetGuardianScreen() {
               ================================================================ */}
           {renderGlassCard(
             <>
-              <Text style={styles.sectionLabel}>· Add expense</Text>
+              <Text style={styles.sectionLabel}>· {t('budgetGuardian.addExpense')}</Text>
 
               {/* Amount input */}
               <View style={styles.amountRow}>
@@ -599,7 +601,7 @@ function BudgetGuardianScreen() {
                   end={{ x: 1, y: 0 }}
                   style={styles.addButtonGradient}
                 >
-                  <Text style={styles.addButtonText}>Add Expense</Text>
+                  <Text style={styles.addButtonText}>{t('budgetGuardian.addButton')}</Text>
                 </LinearGradient>
               </Pressable>
             </>,
@@ -611,7 +613,7 @@ function BudgetGuardianScreen() {
           {renderGlassCard(
             <>
               <View style={styles.sectionHeaderRow}>
-                <Text style={styles.sectionLabel}>· Today{'\u2019'}s spending</Text>
+                <Text style={styles.sectionLabel}>· {t('budgetGuardian.todaysSpending')}</Text>
                 <Text
                   style={[
                     styles.todayTotal,
@@ -666,7 +668,7 @@ function BudgetGuardianScreen() {
           {expenses.length > 0 &&
             renderGlassCard(
               <>
-                <Text style={styles.sectionLabel}>· Category breakdown</Text>
+                <Text style={styles.sectionLabel}>· {t('budgetGuardian.categoryBreakdown')}</Text>
                 {getCategoryBreakdown().map((cat, i) => {
                   const pct = totalSpent > 0 ? (cat.amount / totalSpent) * 100 : 0;
                   return (
@@ -709,7 +711,7 @@ function BudgetGuardianScreen() {
           {expenses.length > 0 &&
             renderGlassCard(
               <>
-                <Text style={styles.sectionLabel}>· Daily trend</Text>
+                <Text style={styles.sectionLabel}>· {t('budgetGuardian.dailyTrend')}</Text>
                 <View style={styles.chartContainer}>
                   {/* Budget target line */}
                   {(() => {
@@ -784,7 +786,7 @@ function BudgetGuardianScreen() {
               ================================================================ */}
           {renderGlassCard(
             <>
-              <Text style={styles.sectionLabel}>· Smart alerts</Text>
+              <Text style={styles.sectionLabel}>· {t('budgetGuardian.smartAlerts')}</Text>
               {getSmartAlerts().map((alert, i) => {
                 const isWarning =
                   alert.includes('eating') ||
@@ -818,7 +820,7 @@ function BudgetGuardianScreen() {
           {currencyInfo &&
             renderGlassCard(
               <>
-                <Text style={styles.sectionLabel}>· Currency converter</Text>
+                <Text style={styles.sectionLabel}>· {t('budgetGuardian.currencyConverter')}</Text>
                 <Text style={styles.exchangeRate}>
                   1 USD = {currencyInfo.rate.toLocaleString()} {currencyInfo.code}
                 </Text>

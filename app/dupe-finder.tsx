@@ -25,6 +25,7 @@ import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../lib/constants';
 import { getDestinationPhoto } from '../lib/photos';
 import ShimmerOverlay from '../components/ui/ShimmerOverlay';
 import { callClaude } from '../lib/claude';
+import { useTranslation } from 'react-i18next';
 import { withComingSoon } from '../lib/with-coming-soon';
 
 // =============================================================================
@@ -108,6 +109,7 @@ const SUGGESTED_SEARCHES = [
 // Main Screen
 // =============================================================================
 function DupeFinderScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [dreamDest, setDreamDest] = useState('');
@@ -213,8 +215,8 @@ function DupeFinderScreen() {
           <Text style={styles.backBtn}>{'\u2190'}</Text>
         </Pressable>
         <View>
-          <Text style={styles.headerEyebrow}>DESTINATION DUPES</Text>
-          <Text style={styles.headerTitle}>Dupe Finder</Text>
+          <Text style={styles.headerEyebrow}>{t('dupeFinder.eyebrow')}</Text>
+          <Text style={styles.headerTitle}>{t('dupeFinder.title')}</Text>
         </View>
         <View style={{ width: 24 }} />
       </View>
@@ -228,7 +230,7 @@ function DupeFinderScreen() {
         {/* Search */}
         <View style={styles.searchCard}>
           <Text style={styles.searchLabel}>
-            Where do you dream of going?
+            {t('dupeFinder.searchLabel')}
           </Text>
           <View style={styles.inputRow}>
             <TextInput
@@ -251,7 +253,7 @@ function DupeFinderScreen() {
               disabled={loading}
             >
               <Text style={styles.searchBtnText}>
-                {loading ? 'Finding...' : 'Find Dupes'}
+                {loading ? 'Finding...' : t('dupeFinder.findDupes')}
               </Text>
             </Pressable>
           </View>
@@ -286,7 +288,7 @@ function DupeFinderScreen() {
         {loading && (
           <View style={styles.loadingCenter}>
             <Text style={styles.loadingText}>
-              Scanning the globe for cheaper vibes...
+              {t('dupeFinder.loadingText')}
             </Text>
             <Text style={styles.loadingSubtext}>
               Comparing costs, crowds, and experiences
@@ -306,7 +308,7 @@ function DupeFinderScreen() {
           <>
             {/* Original Destination */}
             <Animated.View style={[styles.originalCard, { opacity: fadeIn }]}>
-              <Text style={styles.originalEyebrow}>YOUR DREAM</Text>
+              <Text style={styles.originalEyebrow}>{t('dupeFinder.yourDream')}</Text>
               <Text style={styles.originalDest}>
                 {result.original.destination}
               </Text>
@@ -316,7 +318,7 @@ function DupeFinderScreen() {
               <Text style={styles.originalVibe}>{result.original.vibe}</Text>
             </Animated.View>
 
-            <Text style={styles.vsText}>VS</Text>
+            <Text style={styles.vsText}>{t('dupeFinder.vs')}</Text>
 
             {/* Dupe Cards — Shareable */}
             <ViewShot ref={cardRef} options={{ format: 'png', quality: 1 }}>
@@ -370,7 +372,7 @@ function DupeFinderScreen() {
                 style={styles.shareBtnGradient}
               >
                 <Text style={styles.shareBtnText}>
-                  Share the Dupes
+                  {t('dupeFinder.shareButton')}
                 </Text>
               </LinearGradient>
             </Pressable>
@@ -415,6 +417,7 @@ function DupeCard({
   rank: number;
   original: DupeResult['original'];
 }) {
+  const { t } = useTranslation();
   const [loaded, setLoaded] = React.useState(false);
   const photoUrl = getDestinationPhoto(dupe.destination);
   return (
@@ -453,9 +456,9 @@ function DupeCard({
 
       {/* Comparison Row */}
       <View style={styles.compRow}>
-        <CompStat label="Daily Cost" value={`$${dupe.dailyCost}`} />
-        <CompStat label="You Save" value={`$${dupe.savings}/day`} accent />
-        <CompStat label="Vibe Match" value={`${dupe.vibeMatch}%`} />
+        <CompStat label={t('dupeFinder.dailyCost')} value={`$${dupe.dailyCost}`} />
+        <CompStat label={t('dupeFinder.youSave')} value={`$${dupe.savings}/day`} accent />
+        <CompStat label={t('dupeFinder.vibeMatch')} value={`${dupe.vibeMatch}%`} />
         <CompStat label="Crowds" value={dupe.crowdLevel} />
       </View>
 

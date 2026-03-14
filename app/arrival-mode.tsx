@@ -22,6 +22,7 @@ import { ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useDestinationTheme } from '../lib/useDestinationTheme';
 import { withComingSoon } from '../lib/with-coming-soon';
+import { useTranslation } from 'react-i18next';
 import { validateDestination } from '../lib/params-validator';
 
 // =============================================================================
@@ -245,6 +246,7 @@ function SectionIcon({ icon, color }: { icon: string; color: string }) {
 // Main component
 // =============================================================================
 function ArrivalModeScreen() {
+  const { t } = useTranslation();
   const params = useLocalSearchParams<{ destination: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -339,18 +341,18 @@ function ArrivalModeScreen() {
       <View>
         <View style={styles.transportRow}>
           <View style={styles.transportPill}>
-            <Text style={styles.transportLabel}>Best route</Text>
+            <Text style={styles.transportLabel}>{t('arrivalMode.bestRoute')}</Text>
             <Text style={styles.transportValue}>{method}</Text>
           </View>
         </View>
         <View style={styles.transportStats}>
           <View style={styles.statBlock}>
-            <Text style={styles.statLabel}>Cost</Text>
+            <Text style={styles.statLabel}>{t('arrivalMode.cost')}</Text>
             <Text style={styles.statValue}>{cost}</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statBlock}>
-            <Text style={styles.statLabel}>Time</Text>
+            <Text style={styles.statLabel}>{t('arrivalMode.time')}</Text>
             <Text style={styles.statValue}>{time}</Text>
           </View>
         </View>
@@ -472,10 +474,10 @@ function ArrivalModeScreen() {
             { opacity: headerFade, transform: [{ translateY: headerSlide }] },
           ]}
         >
-          <Text style={[styles.headerLabel, { color: destTheme.primary }]}>· Arrival mode</Text>
+          <Text style={[styles.headerLabel, { color: destTheme.primary }]}>· {t('arrivalMode.label')}</Text>
           <Text style={styles.headerCity}>{city}</Text>
           <Text style={styles.headerSub}>
-            Your first 24 hours. Everything you need, nothing you don't.
+            {t('arrivalMode.headerSub')}
           </Text>
         </Animated.View>
 

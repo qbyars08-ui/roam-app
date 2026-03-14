@@ -21,6 +21,7 @@ import { ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useDestinationTheme } from '../lib/useDestinationTheme';
 import { withComingSoon } from '../lib/with-coming-soon';
+import { useTranslation } from 'react-i18next';
 import { validateDestination } from '../lib/params-validator';
 
 // =============================================================================
@@ -1556,7 +1557,7 @@ function FadeInSection({
 // =============================================================================
 // Expandable neighborhood card
 // =============================================================================
-function NeighborhoodCard({ item }: { item: Neighborhood }) {
+function NeighborhoodCard({ item, t }: { item: Neighborhood; t: (key: string) => string }) {
   const [expanded, setExpanded] = useState(false);
   const animHeight = useRef(new Animated.Value(0)).current;
 
@@ -1595,12 +1596,12 @@ function NeighborhoodCard({ item }: { item: Neighborhood }) {
           {'\u25BE'}
         </Animated.Text>
       </View>
-      <Text style={styles.localFavoriteLabel}>LOCAL FAVORITE</Text>
+      <Text style={styles.localFavoriteLabel}>{t('localLens.localFavorite')}</Text>
       <Text style={styles.localFavoriteText}>{item.localFavorite}</Text>
       <Animated.View
         style={[styles.avoidSection, { maxHeight: expandedHeight, opacity: animHeight }]}
       >
-        <Text style={styles.avoidLabel}>SKIP INSTEAD</Text>
+        <Text style={styles.avoidLabel}>{t('localLens.skipInstead')}</Text>
         <Text style={styles.avoidText}>{item.avoidInstead}</Text>
       </Animated.View>
     </Pressable>
@@ -1611,6 +1612,7 @@ function NeighborhoodCard({ item }: { item: Neighborhood }) {
 // Main screen
 // =============================================================================
 function LocalLensScreen() {
+  const { t } = useTranslation();
   const params = useLocalSearchParams<{ destination: string }>();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -1631,7 +1633,7 @@ function LocalLensScreen() {
           <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
         <View style={styles.headerTextContainer}>
-          <Text style={[styles.headerLabel, { color: destTheme.primary }]}>· Local lens</Text>
+          <Text style={[styles.headerLabel, { color: destTheme.primary }]}>· {t('localLens.localLensLabel')}</Text>
           <Text style={styles.headerCity}>{city || 'Unknown'}</Text>
         </View>
       </View>
@@ -1654,7 +1656,7 @@ function LocalLensScreen() {
           /* Fallback for unsupported cities */
           <FadeInSection delay={100}>
             <View style={styles.fallbackCard}>
-              <Text style={styles.fallbackTitle}>Local intel coming soon</Text>
+              <Text style={styles.fallbackTitle}>{t('localLens.localIntelComingSoon')}</Text>
               <Text style={styles.fallbackText}>
                 Local intel coming soon for {city || 'this destination'}. Want it faster?
                 Let us know.
@@ -1665,9 +1667,9 @@ function LocalLensScreen() {
           <>
             {/* ---- Local Rules ---- */}
             <FadeInSection delay={100}>
-              <Text style={styles.sectionLabel}>· Local rules</Text>
+              <Text style={styles.sectionLabel}>· {t('localLens.localRules')}</Text>
               <Text style={styles.sectionSubtitle}>
-                Things locals know that tourists don't
+                {t('localLens.thingsLocalsKnow')}
               </Text>
               {data.localRules.map((r, i) => (
                 <View key={i} style={styles.glassCard}>
@@ -1683,20 +1685,20 @@ function LocalLensScreen() {
 
             {/* ---- Neighborhoods ---- */}
             <FadeInSection delay={200}>
-              <Text style={styles.sectionLabel}>· Neighborhoods to visit</Text>
+              <Text style={styles.sectionLabel}>· {t('localLens.neighborhoodsToVisit')}</Text>
               <Text style={styles.sectionSubtitle}>
-                The real spots, not the tourist traps
+                {t('localLens.realSpotsNotTraps')}
               </Text>
               {data.neighborhoods.map((n, i) => (
-                <NeighborhoodCard key={i} item={n} />
+                <NeighborhoodCard key={i} item={n} t={t} />
               ))}
             </FadeInSection>
 
             {/* ---- Real Food ---- */}
             <FadeInSection delay={300}>
-              <Text style={styles.sectionLabel}>· The real food</Text>
+              <Text style={styles.sectionLabel}>· {t('localLens.theRealFood')}</Text>
               <Text style={styles.sectionSubtitle}>
-                What locals actually eat, not what's on TripAdvisor
+                {t('localLens.whatLocalsEat')}
               </Text>
               {data.realFood.map((f, i) => (
                 <View key={i} style={styles.glassCard}>
@@ -1717,16 +1719,16 @@ function LocalLensScreen() {
 
             {/* ---- Scams & Traps ---- */}
             <FadeInSection delay={400}>
-              <Text style={styles.sectionLabel}>· Scams & traps</Text>
+              <Text style={styles.sectionLabel}>· {t('localLens.scamsAndTraps')}</Text>
               <Text style={styles.sectionSubtitle}>
-                What to watch out for
+                {t('localLens.whatToWatchOutFor')}
               </Text>
               {data.scams.map((s, i) => (
                 <View key={i} style={styles.scamCard}>
                   <Text style={styles.scamName}>{s.name}</Text>
                   <Text style={styles.scamHow}>{s.howItWorks}</Text>
                   <View style={styles.scamAvoidRow}>
-                    <Text style={styles.scamAvoidLabel}>HOW TO AVOID</Text>
+                    <Text style={styles.scamAvoidLabel}>{t('localLens.howToAvoid')}</Text>
                     <Text style={styles.scamAvoidText}>{s.howToAvoid}</Text>
                   </View>
                 </View>
@@ -1735,9 +1737,9 @@ function LocalLensScreen() {
 
             {/* ---- Time It Right ---- */}
             <FadeInSection delay={500}>
-              <Text style={styles.sectionLabel}>· Time it right</Text>
+              <Text style={styles.sectionLabel}>· {t('localLens.timeItRight')}</Text>
               <Text style={styles.sectionSubtitle}>
-                Best times locals know about
+                {t('localLens.bestTimesLocalsKnow')}
               </Text>
               {data.timeItRight.map((t, i) => (
                 <View key={i} style={styles.glassCard}>
@@ -1754,9 +1756,9 @@ function LocalLensScreen() {
 
             {/* ---- Local Phrases ---- */}
             <FadeInSection delay={600}>
-              <Text style={styles.sectionLabel}>· Local phrase book</Text>
+              <Text style={styles.sectionLabel}>· {t('localLens.localPhraseBook')}</Text>
               <Text style={styles.sectionSubtitle}>
-                Essential phrases beyond "hello" and "thank you"
+                {t('localLens.essentialPhrases')}
               </Text>
               {data.phrases.map((p, i) => (
                 <View key={i} style={styles.glassCard}>

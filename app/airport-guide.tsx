@@ -18,6 +18,7 @@ import { ChevronRight, ChevronDown } from 'lucide-react-native';
 import * as Haptics from '../lib/haptics';
 import { withComingSoon } from '../lib/with-coming-soon';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
+import { useTranslation } from 'react-i18next';
 import { AIRPORTS, type AirportData } from '../lib/airport-data';
 // ---------------------------------------------------------------------------
 // Airport list card
@@ -50,7 +51,7 @@ function AirportCard({
 // ---------------------------------------------------------------------------
 // Detail view
 // ---------------------------------------------------------------------------
-function AirportDetail({ airport }: { airport: AirportData }) {
+function AirportDetail({ airport, t }: { airport: AirportData; t: (key: string) => string }) {
   const [expanded, setExpanded] = useState<string | null>('food');
 
   const toggle = useCallback((key: string) => {
@@ -71,7 +72,7 @@ function AirportDetail({ airport }: { airport: AirportData }) {
       </View>
 
       <DetailSection
-        title="Best food"
+        title={t('airportGuide.bestFood')}
         expanded={expanded === 'food'}
         onToggle={() => toggle('food')}
       >
@@ -90,7 +91,7 @@ function AirportDetail({ airport }: { airport: AirportData }) {
       </DetailSection>
 
       <DetailSection
-        title="Hidden lounges (no membership)"
+        title={t('airportGuide.hiddenLounges')}
         expanded={expanded === 'lounges'}
         onToggle={() => toggle('lounges')}
       >
@@ -104,7 +105,7 @@ function AirportDetail({ airport }: { airport: AirportData }) {
       </DetailSection>
 
       <DetailSection
-        title="Fastest security"
+        title={t('airportGuide.fastestSecurity')}
         expanded={expanded === 'security'}
         onToggle={() => toggle('security')}
       >
@@ -112,7 +113,7 @@ function AirportDetail({ airport }: { airport: AirportData }) {
       </DetailSection>
 
       <DetailSection
-        title="Best spots to sleep / work"
+        title={t('airportGuide.sleepWork')}
         expanded={expanded === 'sleep'}
         onToggle={() => toggle('sleep')}
       >
@@ -127,7 +128,7 @@ function AirportDetail({ airport }: { airport: AirportData }) {
       </DetailSection>
 
       <DetailSection
-        title="SIM cards"
+        title={t('airportGuide.simCards')}
         expanded={expanded === 'sim'}
         onToggle={() => toggle('sim')}
       >
@@ -153,7 +154,7 @@ function AirportDetail({ airport }: { airport: AirportData }) {
       </DetailSection>
 
       <DetailSection
-        title="Terminal transfer"
+        title={t('airportGuide.terminalTransfer')}
         expanded={expanded === 'transfer'}
         onToggle={() => toggle('transfer')}
       >
@@ -193,6 +194,7 @@ function DetailSection({
 // Main screen
 // ---------------------------------------------------------------------------
 function AirportGuideScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [selected, setSelected] = useState<AirportData | null>(null);
@@ -216,7 +218,7 @@ function AirportGuideScreen() {
           </Pressable>
           <Text style={styles.headerTitle}>{selected.code}</Text>
         </View>
-        <AirportDetail airport={selected} />
+        <AirportDetail airport={selected} t={t} />
       </View>
     );
   }
@@ -227,9 +229,9 @@ function AirportGuideScreen() {
         <Pressable onPress={() => router.back()} hitSlop={12} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}>
           <Text style={styles.backBtn}>{'\u2190'}</Text>
         </Pressable>
-        <Text style={styles.title}>Airport Survival Guide</Text>
+        <Text style={styles.title}>{t('airportGuide.title')}</Text>
         <Text style={styles.subtitle}>
-          Best food, lounges, security, sleep spots, SIM cards, and currency for every major hub.
+          {t('airportGuide.subtitle')}
         </Text>
       </View>
       <ScrollView

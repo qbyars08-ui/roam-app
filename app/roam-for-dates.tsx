@@ -28,9 +28,11 @@ import { generateItinerary } from '../lib/claude';
 import { DEFAULT_TRAVEL_PROFILE } from '../lib/types/travel-profile';
 import type { TravelProfile } from '../lib/types/travel-profile';
 import type { Itinerary } from '../lib/types/itinerary';
+import { useTranslation } from 'react-i18next';
 import Button from '../components/ui/Button';
 
 function RoamForDatesScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const myProfile = useAppStore((s) => s.travelProfile);
@@ -115,7 +117,7 @@ function RoamForDatesScreen() {
           <Text style={styles.resultDestination}>{result.destination}</Text>
           <Text style={styles.resultTagline}>{result.tagline}</Text>
           <Button
-            label="View full trip"
+            label={t('roamForDates.viewFullTrip')}
             variant="sage"
             onPress={() => router.push({ pathname: '/itinerary', params: { data: JSON.stringify({ destination: result.destination, days: result.days.length, budget: result.totalBudget, vibes: [], itinerary: JSON.stringify(result) }) } })}
           />
@@ -130,13 +132,13 @@ function RoamForDatesScreen() {
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Text style={styles.back}>{'←'}</Text>
         </Pressable>
-        <Text style={styles.title}>ROAM for Dates</Text>
-        <Text style={styles.subtitle}>Merge your travel styles. Find a trip you'll both love.</Text>
+        <Text style={styles.title}>{t('roamForDates.title')}</Text>
+        <Text style={styles.subtitle}>{t('roamForDates.subtitle')}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Where to?</Text>
+          <Text style={styles.sectionTitle}>{t('roamForDates.whereTo')}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
             {DESTINATIONS.slice(0, 12).map((d) => (
               <Pressable
@@ -181,7 +183,7 @@ function RoamForDatesScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Partner's style (quick)</Text>
+          <Text style={styles.sectionTitle}>{t('roamForDates.partnerStyle')}</Text>
           <View style={styles.partnerRow}>
             <Text style={styles.partnerLabel}>Pace</Text>
             <View style={styles.partnerValues}>
@@ -230,7 +232,7 @@ function RoamForDatesScreen() {
         </View>
 
         <Button
-          label={generating ? 'Finding your perfect trip...' : "Generate our trip"}
+          label={generating ? t('roamForDates.generating') : t('roamForDates.generateButton')}
           variant="sage"
           onPress={handleGenerate}
           disabled={generating}

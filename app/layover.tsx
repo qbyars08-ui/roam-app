@@ -19,6 +19,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../lib/haptics';
 import { withComingSoon } from '../lib/with-coming-soon';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { callClaude } from '../lib/claude';
 
@@ -82,6 +83,7 @@ interface LayoverResult {
 // Main screen
 // ---------------------------------------------------------------------------
 function LayoverScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [departure, setDeparture] = useState('');
@@ -136,15 +138,15 @@ function LayoverScreen() {
           <Pressable onPress={() => router.back()} hitSlop={12} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}>
             <Text style={styles.backBtn}>{'\u2190'}</Text>
           </Pressable>
-          <Text style={styles.title}>Layover Optimizer</Text>
+          <Text style={styles.title}>{t('layover.title')}</Text>
           <Text style={styles.subtitle}>
-            Tell us where you're flying and how long you have. We'll tell you exactly what to do.
+            {t('layover.subtitle')}
           </Text>
         </View>
 
         {/* Form */}
         <View style={styles.form}>
-          <Text style={styles.label}>Departure city</Text>
+          <Text style={styles.label}>{t('layover.departureLabel')}</Text>
           <TextInput
             style={styles.input}
             placeholder="e.g. New York"
@@ -152,7 +154,7 @@ function LayoverScreen() {
             value={departure}
             onChangeText={setDeparture}
           />
-          <Text style={styles.label}>Final destination</Text>
+          <Text style={styles.label}>{t('layover.destinationLabel')}</Text>
           <TextInput
             style={styles.input}
             placeholder="e.g. Tokyo"
@@ -160,7 +162,7 @@ function LayoverScreen() {
             value={destination}
             onChangeText={setDestination}
           />
-          <Text style={styles.label}>Layover city</Text>
+          <Text style={styles.label}>{t('layover.layoverCityLabel')}</Text>
           <TextInput
             style={styles.input}
             placeholder="e.g. Singapore"
@@ -168,7 +170,7 @@ function LayoverScreen() {
             value={layoverCity}
             onChangeText={setLayoverCity}
           />
-          <Text style={styles.label}>Layover duration (hours)</Text>
+          <Text style={styles.label}>{t('layover.durationLabel')}</Text>
           <TextInput
             style={styles.input}
             placeholder="e.g. 6"
@@ -192,7 +194,7 @@ function LayoverScreen() {
           {loading ? (
             <ActivityIndicator size="small" color={COLORS.bg} />
           ) : (
-            <Text style={styles.ctaText}>Generate plan</Text>
+            <Text style={styles.ctaText}>{t('layover.generateButton')}</Text>
           )}
         </Pressable>
 
@@ -205,7 +207,7 @@ function LayoverScreen() {
 
             {result.airport && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>In the airport</Text>
+                <Text style={styles.sectionTitle}>{t('layover.inAirport')}</Text>
                 {result.airport.bestFood?.length > 0 && (
                   <>
                     <Text style={styles.sectionLabel}>Best food</Text>
@@ -241,7 +243,7 @@ function LayoverScreen() {
 
             {result.city && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>In the city</Text>
+                <Text style={styles.sectionTitle}>{t('layover.inCity')}</Text>
                 <Text style={styles.sectionLabel}>Neighborhood</Text>
                 <Text style={styles.bodyText}>{result.city.neighborhood}</Text>
                 {result.city.meal && (

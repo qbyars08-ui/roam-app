@@ -20,6 +20,7 @@ import * as Clipboard from 'expo-clipboard';
 import { X, Gift, Copy, Check, Share2 } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
+import { useTranslation } from 'react-i18next';
 import {
   getReferralCode,
   getReferralStats,
@@ -31,16 +32,13 @@ import {
 // ---------------------------------------------------------------------------
 // How-it-works steps
 // ---------------------------------------------------------------------------
-const STEPS = [
-  { num: '1', title: 'Share your link', desc: 'Send it to friends who love to travel' },
-  { num: '2', title: 'They join the waitlist', desc: 'Your friend signs up with your link' },
-  { num: '3', title: 'You earn Pro', desc: '3 friends = 1 month free. 10 friends = 1 year free.' },
-];
+const STEP_NUMS = ['1', '2', '3'] as const;
 
 const MILESTONE_1_MONTH = 3;
 const MILESTONE_1_YEAR = 10;
 
 export default function ReferralScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -111,14 +109,14 @@ export default function ReferralScreen() {
         <View style={styles.heroIconWrap}>
           <Gift size={48} color={COLORS.gold} strokeWidth={1.5} />
         </View>
-        <Text style={styles.heroTitle}>Give a trip, get a trip</Text>
+        <Text style={styles.heroTitle}>{t('referral.title')}</Text>
         <Text style={styles.heroSubtitle}>
-          Share your link. 3 friends = 1 month Pro free. 10 friends = 1 year Pro free.
+          {t('referral.subtitle')}
         </Text>
 
         {/* Referral link card */}
         <View style={styles.codeCard}>
-          <Text style={styles.codeLabel}>YOUR REFERRAL LINK</Text>
+          <Text style={styles.codeLabel}>{t('referral.yourCode').toUpperCase()}</Text>
           <Text style={[styles.codeText, { fontSize: 14, letterSpacing: 0 }]} numberOfLines={2}>{referralUrl}</Text>
           <Pressable
             onPress={handleCopy}
@@ -133,12 +131,12 @@ export default function ReferralScreen() {
               {copied ? (
                 <>
                   <Check size={18} color={COLORS.cream} strokeWidth={2} />
-                  <Text style={styles.copyBtnText}>Copied!</Text>
+                  <Text style={styles.copyBtnText}>{t('referral.copied')}</Text>
                 </>
               ) : (
                 <>
                   <Copy size={18} color={COLORS.cream} strokeWidth={2} />
-                  <Text style={styles.copyBtnText}>Copy Link</Text>
+                  <Text style={styles.copyBtnText}>{t('referral.shareCode')}</Text>
                 </>
               )}
             </View>
@@ -219,15 +217,14 @@ export default function ReferralScreen() {
 
         {/* How it works */}
         <View style={styles.howSection}>
-          <Text style={styles.howTitle}>How it works</Text>
-          {STEPS.map((step, i) => (
+          <Text style={styles.howTitle}>{t('referral.howItWorks')}</Text>
+          {STEP_NUMS.map((num, i) => (
             <View key={i} style={styles.stepRow}>
               <View style={styles.stepBadge}>
-                <Text style={styles.stepNum}>{step.num}</Text>
+                <Text style={styles.stepNum}>{num}</Text>
               </View>
               <View style={styles.stepContent}>
-                <Text style={styles.stepTitle}>{step.title}</Text>
-                <Text style={styles.stepDesc}>{step.desc}</Text>
+                <Text style={styles.stepTitle}>{t(`referral.step${i + 1}`)}</Text>
               </View>
             </View>
           ))}
