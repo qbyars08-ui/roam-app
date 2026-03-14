@@ -266,3 +266,260 @@ All sample sizes calculated using:
 - Social proof counter on paywall
 - Contextual headlines based on trigger reason
 - Purchase event tracking
+
+---
+
+## First-Time UX Audit — tryroam.netlify.app
+
+**Status:** Complete  
+**Date:** 2026-03-14  
+**Scope:** Full walkthrough of every screen a first-time web visitor sees, from landing to itinerary to exit. Code-level review of all auth, onboarding, generate, itinerary, paywall, and referral screens.
+
+---
+
+### Flow Map (screens in order)
+
+```
+1. Splash (2.4s auto-advance)
+   └─ "Browse first" → anonymous auth → (tabs)/Discover
+2. Hook
+   ├─ "Build my first trip" → Onboard
+   └─ "Browse first" → anonymous auth → (tabs)/Discover
+3. Onboard Step 1 — Destination picker (4 cards + Surprise Me)
+4. Onboard Step 2 — Generating (pulse animation, ~10-20s)
+5. Onboard Step 3 — WaitlistCaptureModal (guest) or StepSignup (authed)
+   ├─ Email → waitlist → referral link → "View my trip"
+   └─ Skip → anonymous auth → (tabs) + itinerary
+6. (tabs)/Discover — destination grid, search, categories
+7. (tabs)/Generate — mode select (quick/conversation) → form → generate → itinerary
+8. /itinerary — full day-by-day, share, booking links, weather, map
+9. /paywall — shown on trip limit or feature tap
+```
+
+---
+
+### Screen-by-Screen Findings
+
+#### 1. Splash (`app/(auth)/splash.tsx`)
+
+| Aspect | Finding | Severity |
+|--------|---------|----------|
+| Auto-advance | 2.4s timer to Hook — no user control | Low |
+| "Browse first" | Small, low-contrast text (`creamMuted` = 50% opacity) at absolute bottom | HIGH |
+| Value proposition | Tagline "Go somewhere that changes you" is aspirational but says nothing about what the app does | Medium |
+| A/B test | `assignOnboardingVariant()` runs during the 2.4s wait — good use of dead time | OK |
+| Background image | `getDestinationPhoto('tokyo')` — loads from network on first launch, may flash blank on slow connections | Medium |
+
+**Recommendations:**
+- P0: Make "Browse first" at least 60% opacity and add a subtle arrow or underline — current styling makes it invisible on dark backgrounds.
+- P1: Add a one-line value prop under the tagline: "AI trip planner — 30 seconds to a full itinerary." This is the first thing users see; it needs to explain the product.
+- P2: Preload or inline a local fallback image so the splash never shows a blank background.
+
+---
+
+#### 2. Hook (`app/(auth)/hook.tsx`)
+
+| Aspect | Finding | Severity |
+|--------|---------|----------|
+| Headline | "Travel like you know someone there" — evocative but doesn't explain what the app does | Medium |
+| Subtitle | "AI-powered itineraries that feel like they came from a well-traveled friend, not a search engine" — better, but 2nd line | Low |
+| CTA hierarchy | Gold "Build my first trip" is strong. "Browse first" below is appropriately secondary. | OK |
+| Import | Uses `expo-haptics` directly instead of `lib/haptics` web-safe shim — will crash on web | HIGH |
+| Animation timing | Staggered entrance takes ~1.7s before buttons appear. On web (target platform), users bounce in <3s. | HIGH |
+
+**Recommendations:**
+- P0: Fix `import * as Haptics from 'expo-haptics'` to `import * as Haptics from '../../lib/haptics'`. This is a web crash bug.
+- P0: Cut animation delays. Buttons should appear in <600ms. Current: 300ms (headline) + 700ms + 500ms (sub) + 200ms + 500ms (buttons) = 2.2s. Users can't act for over 2 seconds on web.
+- P1: A/B test headline (already defined in growth_dashboard A/B Tests section). Current copy doesn't communicate the product.
+
+---
+
+#### 3. Onboard Step 1 — Destination Picker (`app/(auth)/onboard.tsx`)
+
+| Aspect | Finding | Severity |
+|--------|---------|----------|
+| Choices | 4 destinations (Tokyo, Paris, Bali, New York) — only from `DESTINATIONS.slice(0, 4)` | Medium |
+| "Surprise Me" | Picks random from all 30 destinations — good | OK |
+| Profile redirect | If `!hasCompletedProfile && !isGuest`, redirects to `/travel-profile` before generation — on first run as anonymous, isGuest is false until anon sign-in completes | HIGH |
+| Copy | "Where to?" + "We'll build you a real trip in seconds" — clear and compelling | OK |
+| Grid layout | 4 cards in 2x2 grid, each with ImageBackground — clean | OK |
+
+**Recommendations:**
+- P0: The profile redirect logic is fragile. On first run, `session` is null, so `isGuest` is true, which means the redirect won't fire — but after `signInAnonymously()` runs in the useEffect, `isGuest` could flip during the same render. Add explicit guard: skip profile redirect for anonymous sessions.
+- P1: Rotate the 4 destination choices per session or by AB variant. Showing Tokyo/Paris/Bali/NYC every time means repeat visitors always see the same grid.
+- P2: Add a 5th card: "Somewhere new" that shows a random trending destination, creating novelty on repeat visits.
+
+---
+
+#### 4. Onboard Step 2 — Generating
+
+| Aspect | Finding | Severity |
+|--------|---------|----------|
+| Loading state | Pulse animation ring + dots + "Building your {destination} trip" | OK |
+| Duration | `generateItinerary()` calls the Claude proxy edge function — 10-30s on first run | HIGH |
+| No progress | User sees a static message + pulse for potentially 30 seconds with no progress indicator | HIGH |
+| Error handling | Shows error text + "Pick again" link — functional but not optimistic | Medium |
+| No cancel | No way to go back or cancel during generation | Medium |
+
+**Recommendations:**
+- P0: Add a multi-stage progress indicator. Show sequential steps: "Finding the best spots..." → "Building your day-by-day plan..." → "Adding insider tips..." with timed transitions every 5s. This creates perceived progress and dramatically reduces perceived wait time.
+- P1: Add a back/cancel button. If generation takes 30s and fails, the user is stuck staring at dots with no recourse except force-closing the app.
+- P2: While generating, show a destination fact or tip: "Did you know: Tokyo has more Michelin stars than any other city." Fills dead time with value.
+
+---
+
+#### 5. Onboard Step 3 — Signup / Waitlist
+
+| Aspect | Finding | Severity |
+|--------|---------|----------|
+| Guest flow | Anonymous/guest users see `WaitlistCaptureModal` — email → referral link → "View my trip" | OK |
+| Authed flow | Apple/Google/Email signup → "View my trip first" skip | OK |
+| Skip option | "View my trip first / You can save it later" — well-designed low-friction skip | OK |
+| Modal blocking | `WaitlistCaptureModal` is a full-screen modal — user cannot see their trip behind it | Medium |
+| No peek | User generated a trip but can't see any of it before being asked to sign up. The entire value prop is hidden behind the signup gate. | HIGH |
+
+**Recommendations:**
+- P0: Show a blurred/dimmed preview of the generated itinerary behind the waitlist modal. Even a partial glimpse of "Day 1 — Shibuya" creates desire and validates the product before asking for email.
+- P1: Reorder: show the itinerary for 5 seconds, THEN overlay the waitlist modal. "You just built a Tokyo trip. Save it?" performs better than "Save this trip" when the user hasn't actually seen it yet.
+
+---
+
+#### 6. Discover Tab (`app/(tabs)/index.tsx`)
+
+| Aspect | Finding | Severity |
+|--------|---------|----------|
+| First impression | Rotating editorial headers ("Skip the research rabbit hole", etc.) + photo grid | OK |
+| Search | Search bar at top — good | OK |
+| Categories | Horizontal chip row: All, Beaches, Mountains, Cities, Food, Adventure, Budget, Couples | OK |
+| Destination cards | Each card shows: photo, label, country, daily cost, "Trending" badge | OK |
+| No onboarding tooltip | First-time user lands here after "Browse first" with zero guidance on what to do next | HIGH |
+| No social proof | No "X people planned Tokyo this week" on cards despite `lib/social-proof.ts` existing | Medium |
+
+**Recommendations:**
+- P0: Add a first-run tooltip or coach mark when user arrives via "Browse first" path. "Tap any destination to start planning" or a pulsing highlight on the first card. Without this, browsing users have no clear next action.
+- P1: Wire `SocialProofBanner` into destination cards. The component exists in `components/features/` but is not rendered on the Discover tab. "847 people planned Tokyo this week" creates urgency.
+- P2: Add a "Generate your first trip" banner at the top of Discover for users with 0 trips. Points to the Generate tab.
+
+---
+
+#### 7. Generate Tab (`app/(tabs)/generate.tsx`)
+
+| Aspect | Finding | Severity |
+|--------|---------|----------|
+| Mode select | First visit shows Quick vs. Conversation mode selector | OK |
+| Quick mode | Destination, duration, budget, vibes, composition, dietary, transport, must-visit, avoid, special requests — comprehensive | OK |
+| Trip limit banner | `TripLimitBanner` shown when near limit — good | OK |
+| First-run friction | Mode select screen has no explanation of what each mode does | Medium |
+| Conversation mode | Chat-based trip building — good alternative for users who don't know what they want | OK |
+
+**Recommendations:**
+- P1: Add a 1-line description under each mode option. "Quick: fill a form, get a trip in 30s" vs "Conversation: chat with AI, refine as you go." First-time users don't know the difference.
+- P2: Default to "Quick" for users arriving from onboard flow (they already demonstrated intent via destination selection).
+
+---
+
+#### 8. Itinerary Screen (`app/itinerary.tsx`)
+
+| Aspect | Finding | Severity |
+|--------|---------|----------|
+| Content | Full day-by-day with time slots, activities, budget, map, weather, booking links, share card | OK |
+| Share | `handleShareLink` creates deep link + native share sheet | OK |
+| Rating prompt | Fires after 1st itinerary view (3s delay) — well-timed | OK |
+| NPS | Fires after 3rd trip (8s delay) — well-timed, score-routes to referral/feedback/support | OK |
+| Growth tracking | Records `itinerary_view` and `trip_shared` growth events | OK |
+| No referral nudge | After viewing itinerary, no prompt to share with friends or invite to group trip | Medium |
+| Mock data badge | Shows badge when itinerary is from offline/mock fallback — transparent, builds trust | OK |
+
+**Recommendations:**
+- P1: Add a contextual share prompt after 30s of itinerary scrolling. "This trip looks ready. Share it with your crew?" Appears once per itinerary, not on every visit.
+- P2: At the bottom of the itinerary, add a "Plan another trip" CTA that routes back to Generate. Currently the itinerary is a dead end — user has to manually navigate back via tabs.
+
+---
+
+#### 9. Paywall (`app/paywall.tsx`)
+
+| Aspect | Finding | Severity |
+|--------|---------|----------|
+| Trigger | Trip limit, feature tap, or milestone CTA | OK |
+| Tiers | Free / Pro ($9.99/mo) / Global Pass ($49.99/yr) | OK |
+| Social proof | "X travelers upgraded this month" + contextual headlines | OK |
+| Guest handling | Guests see WaitlistCaptureModal instead of purchase tiers | OK |
+| Pricing display | Fetches from RevenueCat; falls back to hardcoded prices | OK |
+| Urgency | No time-limited offer or scarcity signal | Medium |
+| Testimonials | None — only feature lists | Medium |
+
+**Recommendations:**
+- P1: Add 1-2 short testimonials or usage stats: "Pro users generate 4x more trips" or a quote from a real user.
+- P2: Add a trial option: "Try Pro free for 7 days" if RevenueCat supports it. Trial conversions outperform cold purchase asks by 2-3x in travel apps.
+
+---
+
+#### 10. Guest / Anonymous Flow (cross-cutting)
+
+| Aspect | Finding | Severity |
+|--------|---------|----------|
+| Entry points | "Browse first" on Splash and Hook screens | OK |
+| Session type | Prefers `signInAnonymously()`, falls back to client-side `enterGuestMode()` | OK |
+| Trip generation | Anonymous users CAN generate a trip (JWT from anon session) | OK |
+| Limit | Free: 1 trip/month. Guest: effectively 1 trip (then paywall) | OK |
+| Email capture | Waitlist modal after generation; also on paywall for guests | OK |
+| No upgrade path from guest to auth | When a guest later signs up, their trips are orphaned — no migration from anon session to real account | HIGH |
+| Streak tracking | Records streak for anon users via AsyncStorage only — lost on clear/new device | Low |
+
+**Recommendations:**
+- P0: Implement guest-to-auth trip migration. When a user signs up after using the app as a guest, their locally-stored trips should be linked to their new account. Currently, signing up means losing your generated trip.
+- P1: Show a persistent "Sign up to save your trips" banner on the Discover tab for anonymous users. Currently, there's no nudge to convert after the initial waitlist modal.
+
+---
+
+### Critical Path Summary
+
+The critical activation path for tryroam.netlify.app (web):
+
+```
+Splash (2.4s) → Hook (2.2s animation) → Onboard dest pick → Generate (10-30s) → Waitlist modal → View trip
+```
+
+**Total time to value: 15-35 seconds** (excluding generation wait)  
+**Total screens before value: 5** (splash, hook, dest pick, generating, signup/waitlist)
+
+Industry benchmark (Duolingo/Headspace model): value in <60s, 2-3 screens.
+
+---
+
+### Prioritized Fix List
+
+| # | Issue | Severity | Effort | Screen |
+|---|-------|----------|--------|--------|
+| 1 | Hook screen imports `expo-haptics` directly — crashes on web | P0 | 5 min | hook.tsx |
+| 2 | Generating step has no progress indicator for 10-30s wait | P0 | 2 hr | onboard.tsx |
+| 3 | Waitlist modal blocks itinerary — user can't see what they generated | P0 | 1 hr | onboard.tsx |
+| 4 | Guest-to-auth trip migration missing — trips orphaned on signup | P0 | 3 hr | guest.ts / _layout.tsx |
+| 5 | "Browse first" on Splash nearly invisible (50% opacity, no affordance) | P0 | 15 min | splash.tsx |
+| 6 | Hook animation delays buttons by 2.2s — web users bounce | P0 | 15 min | hook.tsx |
+| 7 | No first-run guidance on Discover for "Browse first" users | P1 | 1 hr | index.tsx |
+| 8 | Social proof component exists but not wired into Discover cards | P1 | 1 hr | index.tsx |
+| 9 | Itinerary has no "Plan another trip" CTA at bottom | P1 | 30 min | itinerary.tsx |
+| 10 | Generate mode select has no descriptions for Quick vs Conversation | P1 | 30 min | GenerateModeSelect.tsx |
+| 11 | Destination picker always shows same 4 cities | P1 | 30 min | onboard.tsx |
+| 12 | Onboard generating has no cancel/back button | P1 | 30 min | onboard.tsx |
+| 13 | No persistent signup nudge for anonymous users on Discover | P1 | 1 hr | index.tsx |
+| 14 | No urgency/trial offer on paywall | P2 | 1 hr | paywall.tsx |
+| 15 | Splash tagline doesn't explain the product | P2 | 15 min | splash.tsx |
+
+---
+
+### Metrics to Track
+
+| Metric | Current Measurement | Gap |
+|--------|-------------------|-----|
+| Splash → Hook tap-through | `assignOnboardingVariant()` fires on splash | No tap tracking |
+| Hook → Onboard conversion | Not tracked | Add `flow_step` event |
+| Onboard destination selection | Not tracked | Add `flow_step` event |
+| Generation success rate | Not tracked client-side | Add success/failure event |
+| Waitlist submit rate | Not tracked | Add `flow_step` event |
+| Itinerary view duration | Not tracked | Add timer event |
+| Share rate post-itinerary | `trip_shared` event exists | OK |
+| Browse-first drop-off | `ONBOARDING_COMPLETE` set but no funnel tracking | Add `flow_step` event |
+
+**Recommendation:** Wire `track({ type: 'flow_step', flow: 'onboarding', step: N })` at each transition point. Without per-screen funnel data, optimization is guesswork.
