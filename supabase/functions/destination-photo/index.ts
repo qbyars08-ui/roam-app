@@ -95,9 +95,10 @@ Deno.serve(async (req: Request) => {
     // ── Parse request ───────────────────────────────────────────────────
     const { query } = (await req.json()) as { query: string };
 
-    if (!query || typeof query !== "string") {
+    const MAX_QUERY_LENGTH = 200;
+    if (!query || typeof query !== "string" || query.length > MAX_QUERY_LENGTH) {
       return new Response(
-        JSON.stringify({ error: "query must be a non-empty string" }),
+        JSON.stringify({ error: `query must be a non-empty string (max ${MAX_QUERY_LENGTH} chars)` }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },

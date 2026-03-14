@@ -148,9 +148,9 @@
 ### Edge Functions (auth, CORS, error handling, rate limiting)
 - `supabase/functions/voice-proxy/index.ts` — rate limit 30/min
 - `supabase/functions/weather-intel/index.ts` — rate limit 60/min
-- `supabase/functions/enrich-venues/index.ts` — rate limit 30/min
-- `supabase/functions/destination-photo/index.ts` — rate limit 60/min
-- `supabase/functions/claude-proxy/index.ts`
+- `supabase/functions/enrich-venues/index.ts` — rate limit 30/min, venue name/city length limits
+- `supabase/functions/destination-photo/index.ts` — rate limit 60/min, query length 200 chars
+- `supabase/functions/claude-proxy/index.ts` — admin bypass via CLAUDE_PROXY_ADMIN_EMAILS
 - `supabase/functions/send-push/index.ts`
 
 ### Client (created_by for RLS)

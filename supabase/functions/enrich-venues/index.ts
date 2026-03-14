@@ -265,6 +265,25 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    const MAX_NAME_LENGTH = 200;
+    const MAX_CITY_LENGTH = 100;
+    const invalidVenue = venues.find(
+      (v) =>
+        typeof v.name !== "string" ||
+        v.name.length > MAX_NAME_LENGTH ||
+        typeof v.city !== "string" ||
+        v.city.length > MAX_CITY_LENGTH
+    );
+    if (invalidVenue) {
+      return new Response(
+        JSON.stringify({ error: `Each venue name must be <= ${MAX_NAME_LENGTH} chars, city <= ${MAX_CITY_LENGTH} chars` }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     // ── Build search keys ───────────────────────────────────────────────
     const searchKeys = venues.map((v) => buildSearchKey(v.name, v.city));
 

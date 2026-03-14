@@ -142,8 +142,16 @@ Deno.serve(async (req: Request) => {
     }
 
     // ── Rate limit only for trip generation ────────────────────────────
+    // Admin bypass: allowlisted emails (support/testing) skip trip limit
+    const adminEmailsRaw = Deno.env.get("CLAUDE_PROXY_ADMIN_EMAILS") ?? "";
+    const adminEmails = new Set(
+      adminEmailsRaw.split(",").map((e) => e.trim().toLowerCase()).filter(Boolean)
+    );
+    const isAdmin = !!user.email && adminEmails.has(user.email.toLowerCase());
+
     const isFree = profile.subscription_tier === "free" || !profile.subscription_tier;
-    if (isTripGeneration && isFree && profile.trips_generated_this_month >= FREE_TIER_LIMIT) {
+    const atLimit = isTripGeneration && isFree && profile.trips_generated_this_month >= FREE_TIER_LIMIT;
+    if (atLimit && !isAdmin) {
       return new Response(
         JSON.stringify({
           error: "Trip limit reached",

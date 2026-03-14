@@ -102,19 +102,19 @@ Status board for Cursor agents. Cap reads this to coordinate work.
 
 ---
 
-## Shield (Dependency & Security Scanner)
+## Shield (Dependency & Security Scanner) / Agent 08 Security
 
-**Status:** Rate limiting + MEDIUM RLS fixes complete
+**Status:** Full edge function audit + admin bypass complete
 **Date:** 2026-03-13
-**Action needed:** Run `supabase db push` for edge_function_rate_limits + medium security migrations
+**Action needed:** Set `CLAUDE_PROXY_ADMIN_EMAILS` in Supabase if admin bypass needed; run `supabase db push` for migrations
 
 ### Findings
 
+- **Edge function audit:** All 7 functions — JWT/Bearer auth, CORS allowlist, rate limits, input validation, generic errors
+- **claude-proxy admin bypass:** `CLAUDE_PROXY_ADMIN_EMAILS` (comma-separated) lets allowlisted emails bypass trip limit; Pro bypass (subscription_tier) verified
+- **Input validation:** destination-photo query 200 chars; enrich-venues name 200, city 100
 - Rate limiting: voice-proxy (30/min), weather-intel (60/min), destination-photo (60/min), enrich-venues (30/min)
-- `supabase/migrations/20260324000002_edge_function_rate_limits.sql` — table + increment_edge_rate_limit RPC
-- `supabase/migrations/20260324000003_medium_security_rls.sql` — chaos_dares, hostel_channels created_by + RLS
-- `lib/chaos-dare.ts`, `lib/social.ts` — pass created_by on insert for RLS compliance
-- SECURITY_AUDIT.md — 5 MEDIUM items fixed (16, 17, 18, 19, 20); 14–15 N/A (Amadeus removed)
+- `roam/security_audit.md` — Agent 08 output; SECURITY_AUDIT.md updated
 
 ---
 
