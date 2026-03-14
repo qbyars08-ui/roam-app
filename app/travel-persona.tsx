@@ -13,6 +13,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -33,6 +34,7 @@ import { withComingSoon } from '../lib/with-coming-soon';
 // Main Screen
 // =============================================================================
 function TravelPersonaScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [persona, setPersona] = useState<TravelPersona | null>(null);
@@ -141,7 +143,7 @@ function TravelPersonaScreen() {
       <View style={[styles.screen, { paddingTop: insets.top }]}>
         <View style={styles.loadingCenter}>
           <View style={styles.loadingDot} />
-          <Text style={styles.loadingText}>Analyzing your Travel DNA...</Text>
+          <Text style={styles.loadingText}>{t('travelPersona.loadingText')}</Text>
         </View>
       </View>
     );
@@ -155,8 +157,8 @@ function TravelPersonaScreen() {
           <Text style={styles.backBtn}>{'\u2190'}</Text>
         </Pressable>
         <View>
-          <Text style={styles.eyebrow}>YOUR TRAVEL DNA</Text>
-          <Text style={styles.title}>Travel Persona</Text>
+          <Text style={styles.eyebrow}>{t('travelPersona.eyebrow')}</Text>
+          <Text style={styles.title}>{t('travelPersona.title')}</Text>
         </View>
         <Pressable onPress={handleRefresh} hitSlop={12}>
           <Text style={styles.refreshBtn}>{'\u21BB'}</Text>
@@ -205,15 +207,15 @@ function TravelPersonaScreen() {
               <View style={styles.statsRow}>
                 <StatBadge
                   value={`${persona.stats.tripsGenerated}`}
-                  label="Trips"
+                  label={t('travelPersona.statTrips')}
                 />
                 <StatBadge
                   value={`${persona.stats.uniqueCountries}`}
-                  label="Places"
+                  label={t('travelPersona.statPlaces')}
                 />
                 <StatBadge
                   value={`${persona.stats.avgTripLength}d`}
-                  label="Avg Length"
+                  label={t('travelPersona.statAvgLength')}
                 />
                 <StatBadge
                   value={persona.stats.planningStyle === 'spontaneous' ? 'Spontaneous' : persona.stats.planningStyle === 'planner' ? 'Planner' : 'Balanced'}
@@ -244,13 +246,13 @@ function TravelPersonaScreen() {
             colors={[persona.color, `${persona.color}CC`]}
             style={styles.shareBtnGradient}
           >
-            <Text style={styles.shareBtnText}>Share your Travel DNA</Text>
+            <Text style={styles.shareBtnText}>{t('travelPersona.shareButton')}</Text>
           </LinearGradient>
         </Pressable>
 
         {/* Persona Details */}
         <View style={styles.detailsCard}>
-          <Text style={styles.detailsTitle}>What this means</Text>
+          <Text style={styles.detailsTitle}>{t('travelPersona.whatThisMeans')}</Text>
           <Text style={styles.detailsBody}>
             {getPersonaDescription(persona)}
           </Text>
@@ -259,7 +261,7 @@ function TravelPersonaScreen() {
         {/* Top Vibes */}
         {persona.stats.mostUsedVibe && (
           <View style={styles.detailsCard}>
-            <Text style={styles.detailsTitle}>Your signature vibe</Text>
+            <Text style={styles.detailsTitle}>{t('travelPersona.signatureVibe')}</Text>
             <View style={styles.vibeChip}>
               <Text style={styles.vibeChipText}>
                 {persona.stats.mostUsedVibe}

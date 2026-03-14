@@ -16,6 +16,7 @@ import {
   type TextStyle,
   type ImageStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../lib/haptics';
@@ -33,6 +34,7 @@ import { getDestinationPhoto } from '../lib/photos';
 import { withComingSoon } from '../lib/with-coming-soon';
 
 function TripTradingScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const addTrip = useAppStore((s) => s.addTrip);
@@ -57,18 +59,18 @@ function TripTradingScreen() {
   }, [load]);
 
   const handleClaim = useCallback(
-    async (t: TradableTrip) => {
+    async (tradableTrip: TradableTrip) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      const trip = await claimTrip(t.id, t);
-      if (trip) {
-        addTrip(trip);
-        Alert.alert('Claimed!', `Your ${t.destination} trip is in your trips.`);
+      const claimed = await claimTrip(tradableTrip.id, tradableTrip);
+      if (claimed) {
+        addTrip(claimed);
+        Alert.alert(t('tripTrading.claimedTitle'), t('tripTrading.claimedBody'));
         router.push('/(tabs)/generate');
       } else {
         Alert.alert('Oops', 'Couldn\'t claim this trip. Sign in and try again.');
       }
     },
-    [addTrip, router]
+    [addTrip, router, t]
   );
 
   return (
@@ -77,8 +79,8 @@ function TripTradingScreen() {
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Text style={styles.back}>{'←'}</Text>
         </Pressable>
-        <Text style={styles.title}>Trip Trading</Text>
-        <Text style={styles.subtitle}>Browse trips others shared. One tap to claim.</Text>
+        <Text style={styles.title}>{t('tripTrading.title')}</Text>
+        <Text style={styles.subtitle}>{t('tripTrading.subtitle')}</Text>
       </View>
 
       {loading ? (
@@ -99,18 +101,18 @@ function TripTradingScreen() {
           {trips.length === 0 ? (
             <View style={styles.empty}>
               <Repeat size={48} color={COLORS.creamMuted} />
-              <Text style={styles.emptyTitle}>No trips for trading yet</Text>
+              <Text style={styles.emptyTitle}>{t('tripTrading.noTripsForTrading')}</Text>
               <Text style={styles.emptyText}>
                 Share one of your trips and tick "List for trading" — or check back later.
               </Text>
             </View>
           ) : (
-            trips.map((t) => {
-              const photo = getDestinationPhoto(t.destination);
+            trips.map((trip) => {
+              const photo = getDestinationPhoto(trip.destination);
               return (
                 <Pressable
-                  key={t.id}
-                  onPress={() => handleClaim(t)}
+                  key={trip.id}
+                  onPress={() => handleClaim(trip)}
                   style={({ pressed }) => [styles.card, { opacity: pressed ? 0.9 : 1 }]}
                 >
                   <ImageBackground
@@ -123,12 +125,12 @@ function TripTradingScreen() {
                       style={styles.cardGrad}
                     >
                       <View style={styles.cardContent}>
-                        <Text style={styles.cardDestination}>{t.destination}</Text>
+                        <Text style={styles.cardDestination}>{trip.destination}</Text>
                         <Text style={styles.cardMeta}>
-                          {t.days} days · {t.budget} · {t.claim_count ?? 0} claims
+                          {trip.days} days · {trip.budget} · {trip.claim_count ?? 0} claims
                         </Text>
                         <View style={styles.claimRow}>
-                          <Text style={styles.claimBtn}>Claim this trip</Text>
+                          <Text style={styles.claimBtn}>{t('tripTrading.claimThisTrip')}</Text>
                           <ChevronRight size={18} color={COLORS.gold} />
                         </View>
                       </View>

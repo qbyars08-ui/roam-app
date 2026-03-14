@@ -13,6 +13,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -117,6 +118,7 @@ function calculateBreakdown(itinerary: Itinerary) {
 // Main Screen
 // =============================================================================
 function TripReceiptScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
@@ -191,13 +193,13 @@ function TripReceiptScreen() {
           <Pressable onPress={() => router.back()} hitSlop={12}>
             <Text style={styles.backBtn}>{'\u2190'}</Text>
           </Pressable>
-          <Text style={styles.headerTitle}>The Receipt</Text>
+          <Text style={styles.headerTitle}>{t('tripReceipt.title')}</Text>
           <View style={{ width: 24 }} />
         </View>
         <View style={styles.emptyCenter}>
-          <Text style={styles.emptyTitle}>No trip to receipt-ify</Text>
+          <Text style={styles.emptyTitle}>{t('tripReceipt.noTripToReceiptify')}</Text>
           <Text style={styles.emptyBody}>
-            Open one of your trips first, then come back to see what it costs.
+            {t('tripReceipt.openTripFirst')}
           </Text>
         </View>
       </View>
@@ -223,8 +225,8 @@ function TripReceiptScreen() {
           <Text style={styles.backBtn}>{'\u2190'}</Text>
         </Pressable>
         <View>
-          <Text style={styles.headerEyebrow}>TRIP COST BREAKDOWN</Text>
-          <Text style={styles.headerTitle}>The Receipt</Text>
+          <Text style={styles.headerEyebrow}>{t('tripReceipt.tripCostBreakdown')}</Text>
+          <Text style={styles.headerTitle}>{t('tripReceipt.title')}</Text>
         </View>
         <View style={{ width: 24 }} />
       </View>
@@ -272,7 +274,7 @@ function TripReceiptScreen() {
 
               {/* Daily Breakdown */}
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>DAY-BY-DAY</Text>
+                <Text style={styles.sectionTitle}>{t('tripReceipt.dayByDay')}</Text>
                 {breakdown.days.map((d: { day: number; theme: string; cost: number }) => (
                   <ReceiptRow
                     key={d.day}
@@ -290,21 +292,21 @@ function TripReceiptScreen() {
 
               {/* Category Breakdown */}
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>BREAKDOWN</Text>
+                <Text style={styles.sectionTitle}>{t('tripReceipt.breakdown')}</Text>
                 <ReceiptRow
-                  label="Accommodation"
+                  label={t('tripReceipt.accommodation')}
                   value={formatCost(breakdown.accommodation)}
                 />
-                <ReceiptRow label="Food" value={formatCost(breakdown.food)} />
+                <ReceiptRow label={t('expenses.food')} value={formatCost(breakdown.food)} />
                 <ReceiptRow
-                  label="Activities"
+                  label={t('tripReceipt.activities')}
                   value={formatCost(breakdown.activities)}
                 />
                 <ReceiptRow
-                  label="Transportation"
+                  label={t('tripReceipt.transportation')}
                   value={formatCost(breakdown.transportation)}
                 />
-                <ReceiptRow label="Misc" value={formatCost(breakdown.misc)} />
+                <ReceiptRow label={t('tripReceipt.misc')} value={formatCost(breakdown.misc)} />
               </View>
 
               {/* Double Divider */}
@@ -314,14 +316,14 @@ function TripReceiptScreen() {
 
               {/* Total */}
               <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>TOTAL</Text>
+                <Text style={styles.totalLabel}>{t('tripReceipt.total')}</Text>
                 <Text style={styles.totalValue}>
                   {formatCost(breakdown.total)}
                 </Text>
               </View>
               <View style={styles.perDayRow}>
                 <Text style={styles.perDayText}>
-                  {formatCost(breakdown.perDay)}/day avg
+                  {formatCost(breakdown.perDay)}{t('tripReceipt.perDayAvg')}
                 </Text>
               </View>
 
@@ -332,7 +334,7 @@ function TripReceiptScreen() {
 
               {/* Fun Stats */}
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>THE FINE PRINT</Text>
+                <Text style={styles.sectionTitle}>{t('tripReceipt.theFinePrint')}</Text>
                 <Text style={styles.finePrintLine}>
                   Most expensive day: Day {breakdown.maxDayNum} ({formatCost(breakdown.maxDayCost)})
                 </Text>
@@ -352,7 +354,7 @@ function TripReceiptScreen() {
                   Go somewhere worth it
                 </Text>
                 <Text style={styles.receiptFooterText}>
-                  Go somewhere that changes you.
+                  {t('tripReceipt.goSomewhereThatChangesYou')}
                 </Text>
                 <Text style={styles.barcode}>
                   {'||||| |||| ||||| ||| |||| ||||| |||| |||'}
@@ -374,13 +376,13 @@ function TripReceiptScreen() {
             colors={[COLORS.sage, `${COLORS.sage}CC`]}
             style={styles.shareBtnGradient}
           >
-            <Text style={styles.shareBtnText}>Share the Receipt</Text>
+            <Text style={styles.shareBtnText}>{t('tripReceipt.shareTheReceipt')}</Text>
           </LinearGradient>
         </Pressable>
 
         {/* Budget Tier Toggle */}
         <View style={styles.tierCard}>
-          <Text style={styles.tierTitle}>How this stacks up</Text>
+          <Text style={styles.tierTitle}>{t('tripReceipt.howThisStacksUp')}</Text>
           <Text style={styles.tierBody}>
             {breakdown.perDay <= 75
               ? "Backpacker territory. You're spending less per day than most people spend on dinner."

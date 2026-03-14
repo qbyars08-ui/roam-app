@@ -17,6 +17,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -109,6 +110,7 @@ const DREAM_DESTINATIONS = [
 ];
 
 function TripDupeScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [phase, setPhase] = useState<Phase>('pick');
@@ -244,16 +246,16 @@ function TripDupeScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Trip Dupe</Text>
+          <Text style={styles.title}>{t('tripDupe.title')}</Text>
           <Text style={styles.subtitle}>
-            Dream big, spend small. We'll find the budget alternative.
+            {t('tripDupe.subtitle')}
           </Text>
         </View>
 
         {/* Pick phase */}
         {phase === 'pick' && (
           <View style={styles.pickSection}>
-            <Text style={styles.sectionLabel}>PICK YOUR DREAM DESTINATION</Text>
+            <Text style={styles.sectionLabel}>{t('tripDupe.pickDreamDestination')}</Text>
             <View style={styles.dreamGrid}>
               {DREAM_DESTINATIONS.map((dest) => (
                 <Pressable
@@ -294,7 +296,7 @@ function TripDupeScreen() {
               Finding your {selectedDream} dupe...
             </Text>
             <Text style={styles.searchingSubtitle}>
-              AI is scouring the world for the perfect alternative
+              {t('tripDupe.aiScouringWorld')}
             </Text>
           </View>
         )}
@@ -313,7 +315,7 @@ function TripDupeScreen() {
             {/* Comparison header */}
             <View style={styles.comparisonHeader}>
               <View style={styles.comparisonSide}>
-                <Text style={styles.comparisonLabel}>DREAM</Text>
+                <Text style={styles.comparisonLabel}>{t('tripDupe.dream')}</Text>
                 <Text style={styles.comparisonCity}>
                   {dupeResult.dream}
                 </Text>
@@ -323,12 +325,12 @@ function TripDupeScreen() {
               </View>
 
               <View style={styles.vsCircle}>
-                <Text style={styles.vsText}>VS</Text>
+                <Text style={styles.vsText}>{t('tripDupe.vs')}</Text>
               </View>
 
               <View style={styles.comparisonSide}>
                 <Text style={[styles.comparisonLabel, { color: COLORS.sage }]}>
-                  DUPE
+                  {t('tripDupe.dupe')}
                 </Text>
                 <Text style={styles.comparisonCity}>
                   {dupeResult.dupeEmoji} {dupeResult.dupe}
@@ -348,7 +350,7 @@ function TripDupeScreen() {
 
             {/* Why it works */}
             <View style={styles.whyCard}>
-              <Text style={styles.whyLabel}>WHY IT WORKS</Text>
+              <Text style={styles.whyLabel}>{t('tripDupe.whyItWorks')}</Text>
               <Text style={styles.whyText}>{dupeResult.whyItWorks}</Text>
             </View>
 
@@ -363,7 +365,7 @@ function TripDupeScreen() {
 
             {/* Top picks */}
             <View style={styles.picksSection}>
-              <Text style={styles.picksLabel}>TOP PICKS</Text>
+              <Text style={styles.picksLabel}>{t('tripDupe.topPicks')}</Text>
               {dupeResult.topPicks.map((pick, i) => (
                 <View key={i} style={styles.pickRow}>
                   <View style={styles.pickCategoryBadge}>
@@ -379,7 +381,7 @@ function TripDupeScreen() {
 
             {/* Best month */}
             <View style={styles.bestMonthCard}>
-              <Text style={styles.bestMonthLabel}>BEST TIME TO GO</Text>
+              <Text style={styles.bestMonthLabel}>{t('tripDupe.bestTimeToGo')}</Text>
               <Text style={styles.bestMonthText}>{dupeResult.bestMonth}</Text>
             </View>
 
@@ -397,7 +399,7 @@ function TripDupeScreen() {
                   style={styles.buildGradient}
                 >
                   <Text style={styles.buildButtonText}>
-                    {'\u2728'} Build this trip
+                    {'\u2728'} {t('tripDupe.buildThisTrip')}
                   </Text>
                 </LinearGradient>
               </Pressable>
@@ -409,7 +411,7 @@ function TripDupeScreen() {
                   </Text>
                 </Pressable>
                 <Pressable onPress={handleReset} style={styles.secondaryBtn}>
-                  <Text style={styles.secondaryBtnText}>Try another</Text>
+                  <Text style={styles.secondaryBtnText}>{t('tripDupe.tryAnother')}</Text>
                 </Pressable>
               </View>
             </View>

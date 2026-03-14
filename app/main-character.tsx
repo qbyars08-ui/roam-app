@@ -14,6 +14,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -108,6 +109,7 @@ const VIBE_LABELS: Record<string, string> = {
 // Main Screen
 // =============================================================================
 function MainCharacterScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
@@ -228,13 +230,13 @@ function MainCharacterScreen() {
           <Pressable onPress={() => router.back()} hitSlop={12}>
             <Text style={styles.backBtn}>{'\u2190'}</Text>
           </Pressable>
-          <Text style={styles.headerTitle}>Main Character</Text>
+          <Text style={styles.headerTitle}>{t('mainCharacter.headerTitle')}</Text>
           <View style={{ width: 24 }} />
         </View>
         <View style={styles.emptyCenter}>
-          <Text style={styles.emptyTitle}>No trip to direct</Text>
+          <Text style={styles.emptyTitle}>{t('mainCharacter.emptyTitle')}</Text>
           <Text style={styles.emptyBody}>
-            Plan a trip first, then come back to find your cinematic moments.
+            {t('mainCharacter.emptyBody')}
           </Text>
         </View>
       </View>
@@ -249,8 +251,8 @@ function MainCharacterScreen() {
           <Text style={styles.backBtn}>{'\u2190'}</Text>
         </Pressable>
         <View>
-          <Text style={styles.headerEyebrow}>CINEMATIC MOMENTS</Text>
-          <Text style={styles.headerTitle}>Main Character</Text>
+          <Text style={styles.headerEyebrow}>{t('mainCharacter.eyebrow')}</Text>
+          <Text style={styles.headerTitle}>{t('mainCharacter.headerTitle')}</Text>
         </View>
         <Pressable onPress={generateMoments} hitSlop={12} disabled={loading}>
           <Text style={[styles.refreshBtn, loading && { opacity: 0.4 }]}>
@@ -268,7 +270,7 @@ function MainCharacterScreen() {
         {loading && (
           <View style={styles.loadingCenter}>
             <Text style={styles.loadingText}>
-              Finding your cinematic moments...
+              {t('mainCharacter.loadingText')}
             </Text>
             <Text style={styles.loadingSubtext}>
               Every trip has a story. We're finding yours.
@@ -297,7 +299,7 @@ function MainCharacterScreen() {
           <>
             {/* Narrative Arc */}
             <Animated.View style={[styles.arcCard, { opacity: fadeIn }]}>
-              <Text style={styles.arcEyebrow}>THE STORY</Text>
+              <Text style={styles.arcEyebrow}>{t('mainCharacter.theStory')}</Text>
               <Text style={styles.arcTitle}>{data.shotListTitle}</Text>
               <Text style={styles.arcBody}>{data.narrativeArc}</Text>
               <Text style={styles.arcDest}>{data.destination}</Text>
@@ -343,7 +345,7 @@ function MainCharacterScreen() {
                 {/* Footer */}
                 <View style={styles.shotListFooter}>
                   <Text style={styles.shotListFooterText}>
-                    Go somewhere that changes you.
+                    {t('mainCharacter.footerText')}
                   </Text>
                 </View>
               </LinearGradient>
@@ -362,7 +364,7 @@ function MainCharacterScreen() {
                 style={styles.shareBtnGradient}
               >
                 <Text style={styles.shareBtnText}>
-                  Share your Shot List
+                  {t('mainCharacter.shareButton')}
                 </Text>
               </LinearGradient>
             </Pressable>

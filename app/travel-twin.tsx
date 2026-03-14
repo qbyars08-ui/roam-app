@@ -12,6 +12,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -295,6 +296,7 @@ function computeTravelTwin(profile: TravelProfile): Archetype {
 // ---------------------------------------------------------------------------
 
 function TravelTwinScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { canAccess } = useProGate('travel-twin');
@@ -375,10 +377,9 @@ function TravelTwinScreen() {
       >
         <View style={styles.emptyState}>
           <User size={64} color={COLORS.sage} strokeWidth={1.5} style={{ marginBottom: SPACING.lg }} />
-          <Text style={styles.emptyTitle}>Discover Your Travel Twin</Text>
+          <Text style={styles.emptyTitle}>{t('travelTwin.emptyTitle')}</Text>
           <Text style={styles.emptyBody}>
-            Complete your travel profile first and we will match you with your
-            travel personality archetype.
+            {t('travelTwin.emptyBody')}
           </Text>
           <TouchableOpacity
             style={styles.ctaButton}
@@ -391,7 +392,7 @@ function TravelTwinScreen() {
               end={{ x: 1, y: 0 }}
               style={styles.ctaGradient}
             >
-              <Text style={styles.ctaText}>Build Your Profile</Text>
+              <Text style={styles.ctaText}>{t('travelTwin.buildProfile')}</Text>
               <ArrowRight size={18} color={COLORS.bg} strokeWidth={2} />
             </LinearGradient>
           </TouchableOpacity>
@@ -455,7 +456,7 @@ function TravelTwinScreen() {
           ]}
         >
           {/* Label */}
-          <Text style={styles.labelText}>· Your travel twin</Text>
+          <Text style={styles.labelText}>· {t('travelTwin.labelYourTwin')}</Text>
 
           {/* Archetype name */}
           <Text style={styles.heroName}>{twin.name}</Text>
@@ -477,7 +478,7 @@ function TravelTwinScreen() {
             },
           ]}
         >
-          <Text style={styles.sectionLabel}>· Best destinations for you</Text>
+          <Text style={styles.sectionLabel}>· {t('travelTwin.bestDestinations')}</Text>
           <View style={styles.pillRow}>
             {twin.bestDestinations.map((dest) => (
               <TouchableOpacity
@@ -512,7 +513,7 @@ function TravelTwinScreen() {
             },
           ]}
         >
-          <Text style={styles.sectionLabel}>· Packing must-have</Text>
+          <Text style={styles.sectionLabel}>· {t('travelTwin.packingMustHave')}</Text>
           <View style={styles.glassCard}>
             <ShoppingBag size={22} color={COLORS.gold} strokeWidth={1.5} style={{ marginRight: SPACING.md }} />
             <Text style={styles.cardText}>{twin.packingMustHave}</Text>
@@ -529,7 +530,7 @@ function TravelTwinScreen() {
             },
           ]}
         >
-          <Text style={styles.sectionLabel}>· Your travel mantra</Text>
+          <Text style={styles.sectionLabel}>· {t('travelTwin.yourMantra')}</Text>
           <View style={[styles.glassCard, styles.mantraCard]}>
             <Text style={styles.mantraText}>
               {'\u201C'}
@@ -549,7 +550,7 @@ function TravelTwinScreen() {
             },
           ]}
         >
-          <Text style={styles.sectionLabel}>· You vibe with</Text>
+          <Text style={styles.sectionLabel}>· {t('travelTwin.youVibeWith')}</Text>
           <View style={styles.compatRow}>
             {twin.compatibleTypes.map((type) => {
               ARCHETYPES.find((a) => a.name === type);
@@ -573,7 +574,7 @@ function TravelTwinScreen() {
             },
           ]}
         >
-          <Text style={styles.sectionLabel}>· Your worst nightmare</Text>
+          <Text style={styles.sectionLabel}>· {t('travelTwin.worstNightmare')}</Text>
           <View style={[styles.glassCard, styles.nightmareCard]}>
             <Skull size={20} color={COLORS.coral} strokeWidth={1.5} style={{ marginRight: SPACING.md }} />
             <Text style={[styles.cardText, { color: COLORS.coral }]}>
@@ -605,7 +606,7 @@ function TravelTwinScreen() {
               style={styles.shareGradient}
             >
               <Share2 size={18} color={COLORS.bg} strokeWidth={2} style={{ marginRight: SPACING.sm }} />
-              <Text style={styles.shareText}>Share Your Twin</Text>
+              <Text style={styles.shareText}>{t('travelTwin.shareTwin')}</Text>
             </LinearGradient>
           </TouchableOpacity>
 
@@ -614,7 +615,7 @@ function TravelTwinScreen() {
             activeOpacity={0.7}
             onPress={() => router.push('/travel-profile')}
           >
-            <Text style={styles.retakeText}>Retake Profile</Text>
+            <Text style={styles.retakeText}>{t('travelTwin.retakeProfile')}</Text>
           </TouchableOpacity>
         </Animated.View>
       </ScrollView>

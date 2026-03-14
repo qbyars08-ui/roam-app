@@ -14,6 +14,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -76,6 +77,7 @@ const CARD_GRADIENTS: string[][] = [
 // Main Screen
 // =============================================================================
 function TripWrappedScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [review, setReview] = useState<YearInReview | null>(null);
@@ -158,7 +160,7 @@ function TripWrappedScreen() {
     return (
       <View style={[styles.screen, { paddingTop: insets.top }]}>
         <View style={styles.loadingCenter}>
-          <Text style={styles.loadingText}>Wrapping your year in travel...</Text>
+          <Text style={styles.loadingText}>{t('tripWrapped.wrappingYear')}</Text>
           <Text style={styles.loadingSubtext}>
             Crunching the numbers on everywhere you have been
           </Text>
@@ -174,13 +176,13 @@ function TripWrappedScreen() {
           <Pressable onPress={() => router.back()} hitSlop={12}>
             <Text style={styles.backBtn}>{'\u2190'}</Text>
           </Pressable>
-          <Text style={styles.headerTitle}>Trip Wrapped</Text>
+          <Text style={styles.headerTitle}>{t('tripWrapped.title')}</Text>
           <View style={{ width: 24 }} />
         </View>
         <View style={styles.emptyCenter}>
-          <Text style={styles.emptyTitle}>Nothing to wrap yet</Text>
+          <Text style={styles.emptyTitle}>{t('tripWrapped.nothingToWrap')}</Text>
           <Text style={styles.emptyBody}>
-            Plan some trips and come back at the end of the year. We will have your recap ready.
+            {t('tripWrapped.planAndComeBack')}
           </Text>
         </View>
       </View>
@@ -197,8 +199,8 @@ function TripWrappedScreen() {
           <Text style={styles.backBtn}>{'\u2190'}</Text>
         </Pressable>
         <View>
-          <Text style={styles.headerEyebrow}>YOUR YEAR IN TRAVEL</Text>
-          <Text style={styles.headerTitle}>Trip Wrapped</Text>
+          <Text style={styles.headerEyebrow}>{t('tripWrapped.yourYearInTravel')}</Text>
+          <Text style={styles.headerTitle}>{t('tripWrapped.title')}</Text>
         </View>
         <View style={{ width: 24 }} />
       </View>
@@ -254,8 +256,8 @@ function TripWrappedScreen() {
               <Text style={styles.cardHeadline}>{review.headline}</Text>
 
               <View style={styles.bigStatRow}>
-                <BigStat value={`${review.tripsGenerated}`} label="Trips Planned" />
-                <BigStat value={`${review.totalDaysPlanned}`} label="Days Planned" />
+                <BigStat value={`${review.tripsGenerated}`} label={t('tripWrapped.tripsPlanned')} />
+                <BigStat value={`${review.totalDaysPlanned}`} label={t('tripWrapped.daysPlanned')} />
               </View>
 
               <View style={styles.destList}>
@@ -267,7 +269,7 @@ function TripWrappedScreen() {
               </View>
 
               <Text style={styles.cardFooter}>
-                Go somewhere that changes you.
+                {t('splash.tagline')}
               </Text>
             </LinearGradient>
           </ViewShot>
@@ -282,30 +284,30 @@ function TripWrappedScreen() {
               style={styles.wrappedCard}
             >
               <Text style={styles.cardBrand}>ROAM</Text>
-              <Text style={styles.cardSectionTitle}>By the Numbers</Text>
+              <Text style={styles.cardSectionTitle}>{t('tripWrapped.byTheNumbers')}</Text>
 
               <View style={styles.statsGrid}>
                 <StatBlock
                   value={`${review.uniqueDestinations.length}`}
-                  label="Unique Destinations"
+                  label={t('tripWrapped.uniqueDestinations')}
                 />
                 <StatBlock
                   value={`${review.avgTripLength}`}
-                  label="Avg Trip Length (days)"
+                  label={t('tripWrapped.avgTripLength')}
                 />
                 <StatBlock
                   value={review.favoriteDestination ?? '—'}
-                  label="Most Planned"
+                  label={t('tripWrapped.mostPlanned')}
                   isText
                 />
                 <StatBlock
                   value={`${review.totalDaysPlanned}`}
-                  label="Days Planned"
+                  label={t('tripWrapped.daysPlanned')}
                 />
               </View>
 
               <Text style={styles.cardFooter}>
-                Go somewhere that changes you.
+                {t('splash.tagline')}
               </Text>
             </LinearGradient>
           </ViewShot>
@@ -320,7 +322,7 @@ function TripWrappedScreen() {
               style={styles.wrappedCard}
             >
               <Text style={styles.cardBrand}>ROAM</Text>
-              <Text style={styles.cardSectionTitle}>Your Travel Type</Text>
+              <Text style={styles.cardSectionTitle}>{t('tripWrapped.yourTravelType')}</Text>
 
               <Text style={styles.personalityTitle}>{personality.title}</Text>
               <Text style={styles.personalityDesc}>{personality.desc}</Text>
@@ -358,7 +360,7 @@ function TripWrappedScreen() {
               </Text>
 
               <Text style={styles.cardFooter}>
-                Go somewhere that changes you.
+                {t('splash.tagline')}
               </Text>
             </LinearGradient>
           </ViewShot>
@@ -373,7 +375,7 @@ function TripWrappedScreen() {
               style={styles.wrappedCard}
             >
               <Text style={styles.cardBrand}>ROAM</Text>
-              <Text style={styles.cardSectionTitle}>Your Top Vibes</Text>
+              <Text style={styles.cardSectionTitle}>{t('tripWrapped.yourTopVibes')}</Text>
 
               {review.topVibes.length > 0 ? (
                 <View style={styles.vibesStack}>
@@ -406,12 +408,12 @@ function TripWrappedScreen() {
                 </View>
               ) : (
                 <Text style={styles.noVibesText}>
-                  No vibes recorded yet. Plan more trips!
+                  {t('tripWrapped.noVibesRecorded')}
                 </Text>
               )}
 
               <Text style={styles.cardFooter}>
-                Go somewhere that changes you.
+                {t('splash.tagline')}
               </Text>
             </LinearGradient>
           </ViewShot>
@@ -448,11 +450,11 @@ function TripWrappedScreen() {
               )}
 
               <View style={styles.ctaWrapper}>
-                <Text style={styles.ctaText}>Plan your next trip</Text>
+                <Text style={styles.ctaText}>{t('tripWrapped.planNextTrip')}</Text>
               </View>
 
               <Text style={styles.cardFooter}>
-                Go somewhere that changes you.
+                {t('splash.tagline')}
               </Text>
             </LinearGradient>
           </ViewShot>
@@ -473,7 +475,7 @@ function TripWrappedScreen() {
             style={styles.shareBtnGradient}
           >
             <Text style={styles.shareBtnText}>
-              Share this card
+              {t('tripWrapped.shareThisCard')}
             </Text>
           </LinearGradient>
         </Pressable>

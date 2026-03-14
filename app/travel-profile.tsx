@@ -14,6 +14,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../lib/haptics';
@@ -136,13 +137,14 @@ function PillMultiSelect<T extends string>({
   selected: T[];
   onToggle: (id: T) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <GlassCard>
       <View style={styles.sliderHeader}>
         <View style={styles.sliderIconWrap}>{icon}</View>
         <Text style={styles.sliderTitle}>{title}</Text>
       </View>
-      <Text style={styles.pillHint}>Select all that apply</Text>
+      <Text style={styles.pillHint}>{t('travelProfile.selectAll')}</Text>
       <View style={styles.pillGrid}>
         {options.map((opt) => {
           const isSelected = selected.includes(opt.id);
@@ -183,13 +185,14 @@ function PillSingleSelect<T extends string>({
   selected: T;
   onSelect: (id: T) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <GlassCard>
       <View style={styles.sliderHeader}>
         <View style={styles.sliderIconWrap}>{icon}</View>
         <Text style={styles.sliderTitle}>{title}</Text>
       </View>
-      <Text style={styles.pillHint}>Pick one</Text>
+      <Text style={styles.pillHint}>{t('travelProfile.pickOne')}</Text>
       <View style={styles.pillGrid}>
         {options.map((opt) => {
           const isSelected = selected === opt.id;
@@ -223,6 +226,7 @@ import { withComingSoon } from '../lib/with-coming-soon';
 // Main Screen
 // ---------------------------------------------------------------------------
 function TravelProfileScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const travelProfile = useAppStore((s) => s.travelProfile);
@@ -298,9 +302,9 @@ function TravelProfileScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>How do you travel?</Text>
+        <Text style={styles.headerTitle}>{t('travelProfile.headerTitle')}</Text>
         <Text style={styles.headerSubtitle}>
-          This makes every trip feel like it was built just for you.
+          {t('travelProfile.headerSubtitle')}
         </Text>
       </View>
 
@@ -314,7 +318,7 @@ function TravelProfileScreen() {
             <View style={styles.sliderIconWrap}>
               <Compass size={20} color={COLORS.sage} strokeWidth={2} />
             </View>
-            <Text style={styles.sliderTitle}>How often do you travel?</Text>
+            <Text style={styles.sliderTitle}>{t('travelProfile.howOften')}</Text>
           </View>
           <Text style={styles.pillHint}>This shapes how much guidance we give you</Text>
           <View style={styles.pillGrid}>
@@ -347,7 +351,7 @@ function TravelProfileScreen() {
             <View style={styles.sliderIconWrap}>
               <BookOpen size={20} color={COLORS.sage} strokeWidth={2} />
             </View>
-            <Text style={styles.sliderTitle}>Passport</Text>
+            <Text style={styles.sliderTitle}>{t('travelProfile.passportLabel')}</Text>
           </View>
           <Text style={styles.pillHint}>For visa & entry requirements</Text>
           <View style={styles.pillGrid}>
@@ -378,7 +382,7 @@ function TravelProfileScreen() {
 
         {/* PACE */}
         <ProfileSlider
-          title="Pace"
+          title={t('travelProfile.paceLabel')}
           icon={<Zap size={20} color={COLORS.sage} strokeWidth={2} />}
           value={profile.pace}
           onChange={(v) => updateLocal({ pace: v })}
@@ -388,7 +392,7 @@ function TravelProfileScreen() {
 
         {/* BUDGET STYLE */}
         <ProfileSlider
-          title="Budget Style"
+          title={t('travelProfile.budgetStyle')}
           icon={<DollarSign size={20} color={COLORS.sage} strokeWidth={2} />}
           value={profile.budgetStyle}
           onChange={(v) => updateLocal({ budgetStyle: v })}
@@ -398,7 +402,7 @@ function TravelProfileScreen() {
 
         {/* CROWD TOLERANCE */}
         <ProfileSlider
-          title="Crowd Tolerance"
+          title={t('travelProfile.crowdTolerance')}
           icon={<Users size={20} color={COLORS.sage} strokeWidth={2} />}
           value={profile.crowdTolerance}
           onChange={(v) => updateLocal({ crowdTolerance: v })}
@@ -408,7 +412,7 @@ function TravelProfileScreen() {
 
         {/* FOOD ADVENTUROUSNESS */}
         <ProfileSlider
-          title="Food Adventurousness"
+          title={t('travelProfile.foodAdventurousness')}
           icon={<UtensilsCrossed size={20} color={COLORS.sage} strokeWidth={2} />}
           value={profile.foodAdventurousness}
           onChange={(v) => updateLocal({ foodAdventurousness: v })}
@@ -418,7 +422,7 @@ function TravelProfileScreen() {
 
         {/* TRANSPORT */}
         <PillMultiSelect
-          title="Transport"
+          title={t('travelProfile.transport')}
           icon={<Rocket size={20} color={COLORS.sage} strokeWidth={2} />}
           options={TRANSPORT_OPTIONS}
           selected={profile.transport}
@@ -427,7 +431,7 @@ function TravelProfileScreen() {
 
         {/* ACCOMMODATION */}
         <PillSingleSelect
-          title="Accommodation"
+          title={t('travelProfile.accommodationLabel')}
           icon={<Building2 size={20} color={COLORS.sage} strokeWidth={2} />}
           options={ACCOMMODATION_OPTIONS}
           selected={profile.accommodation}
@@ -436,7 +440,7 @@ function TravelProfileScreen() {
 
         {/* TRIP PURPOSE */}
         <PillMultiSelect
-          title="What do you travel for?"
+          title={t('travelProfile.whatDoYouTravelFor')}
           icon={<Compass size={20} color={COLORS.sage} strokeWidth={2} />}
           options={TRIP_PURPOSE_OPTIONS}
           selected={profile.tripPurposes}
@@ -450,12 +454,12 @@ function TravelProfileScreen() {
           disabled={!canSave}
         >
           <Text style={styles.saveButtonText}>
-            {canSave ? 'Save My Travel DNA' : 'Select transport & trip purposes to continue'}
+            {canSave ? t('travelProfile.saveButton') : 'Select transport & trip purposes to continue'}
           </Text>
         </Pressable>
 
         <Text style={styles.editLaterHint}>
-          You can always update this in your profile settings.
+          {t('travelProfile.editLaterHint')}
         </Text>
       </ScrollView>
     </View>

@@ -11,6 +11,7 @@ import {
   Pressable,
   ActivityIndicator,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, Clock } from 'lucide-react-native';
@@ -19,6 +20,7 @@ import { compareDestinationOverTime } from '../lib/travel-time-machine';
 import { withComingSoon } from '../lib/with-coming-soon';
 
 function TravelTimeMachineScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const params = useLocalSearchParams<{ destination?: string; year?: string }>();
@@ -43,7 +45,7 @@ function TravelTimeMachineScreen() {
           <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
         <View style={styles.headerCenter}>
-          <Text style={styles.title}>Travel Time Machine</Text>
+          <Text style={styles.title}>{t('travelTimeMachine.title')}</Text>
           <Text style={styles.subtitle}>{destination} — {pastYear} vs now</Text>
         </View>
         <View style={styles.headerRight} />
@@ -74,7 +76,7 @@ function TravelTimeMachineScreen() {
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Clock size={18} color={COLORS.sage} />
-              <Text style={[styles.cardLabel, { color: COLORS.sage }]}>Now</Text>
+              <Text style={[styles.cardLabel, { color: COLORS.sage }]}>{t('travelTimeMachine.labelNow')}</Text>
             </View>
             <Text style={styles.cardBody}>{result.now}</Text>
           </View>

@@ -12,6 +12,7 @@ import {
   TextInput,
   Share,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -61,7 +62,7 @@ type DimensionResult = {
 type ChemistryResult = {
   overallScore: number;
   dimensions: DimensionResult[];
-  chemistryLabel: string;
+  chemistryLabelKey: string;
   conflicts: string[];
   proTips: string[];
   destinationType: string;
@@ -92,12 +93,12 @@ function dimensionScore(values: number[]): number {
   return Math.max(0, Math.min(100, Math.round((1 - sd / maxStdDev) * 100)));
 }
 
-function getChemistryLabel(score: number): { label: string } {
-  if (score >= 90) return { label: 'Travel Soulmates' };
-  if (score >= 75) return { label: 'Great Match' };
-  if (score >= 60) return { label: 'Solid with Compromises' };
-  if (score >= 40) return { label: 'Proceed with Caution' };
-  return { label: 'Danger Zone' };
+function getChemistryLabel(score: number): { labelKey: string } {
+  if (score >= 90) return { labelKey: 'travelSoulmates' };
+  if (score >= 75) return { labelKey: 'greatMatch' };
+  if (score >= 60) return { labelKey: 'solidWithCompromises' };
+  if (score >= 40) return { labelKey: 'proceedWithCaution' };
+  return { labelKey: 'dangerZone' };
 }
 
 function generateConflicts(travelers: Traveler[], dimensions: DimensionResult[]): string[] {
@@ -216,7 +217,7 @@ function calculateChemistry(travelers: Traveler[]): ChemistryResult {
     dimensions.reduce((sum, d, i) => sum + d.score * weights[i], 0)
   );
 
-  const { label } = getChemistryLabel(overallScore);
+  const { labelKey } = getChemistryLabel(overallScore);
   const conflicts = generateConflicts(travelers, dimensions);
   const proTips = generateProTips(dimensions, travelers);
   const destinationType = suggestDestinationType(travelers);
@@ -224,7 +225,7 @@ function calculateChemistry(travelers: Traveler[]): ChemistryResult {
   return {
     overallScore,
     dimensions,
-    chemistryLabel: label,
+    chemistryLabelKey: labelKey,
     conflicts,
     proTips,
     destinationType,
@@ -241,6 +242,7 @@ function makeId(): string {
 }
 
 function TripChemistryScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { canAccess } = useProGate('trip-chemistry');
@@ -374,7 +376,7 @@ function TripChemistryScreen() {
     if (!result) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const names = travelers.map((t) => t.name || 'You').join(', ');
-    const message = `Trip Chemistry: ${result.overallScore}/100 — ${result.chemistryLabel}\n\nTravelers: ${names}\n\n${result.dimensions.map((d) => `${d.label}: ${d.score}%`).join('\n')}\n\nBest destination type: ${result.destinationType}\n\nAnalyzed with ROAM`;
+    const message = `Trip Chemistry: ${result.overallScore}/100 — ${t(`tripChemistry.${result.chemistryLabelKey}`)}\n\nTravelers: ${names}\n\n${result.dimensions.map((d) => `${d.label}: ${d.score}%`).join('\n')}\n\nBest destination type: ${result.destinationType}\n\nAnalyzed with ROAM`;
     try {
       await Share.share({ message });
     } catch {
@@ -411,10 +413,10 @@ function TripChemistryScreen() {
 
   // Slider labels
   const sliderMeta = [
-    { key: 'pace' as const, label: 'Pace', low: 'Slow & steady', high: 'Speed runner' },
-    { key: 'budgetStyle' as const, label: 'Budget', low: 'Backpacker', high: 'Luxury' },
-    { key: 'crowdTolerance' as const, label: 'Crowds', low: 'Avoid', high: 'Embrace' },
-    { key: 'foodAdventurousness' as const, label: 'Food', low: 'Familiar', high: 'Adventurous' },
+    { key: 'pace' as const, label: t('tripChemistry.pace'), low: t('tripChemistry.slowAndSteady'), high: t('tripChemistry.speedRunner') },
+    { key: 'budgetStyle' as const, label: t('travelProfile.budgetStyle'), low: t('tripChemistry.backpacker'), high: t('tripChemistry.luxury') },
+    { key: 'crowdTolerance' as const, label: t('travelProfile.crowdTolerance'), low: t('tripChemistry.avoid'), high: t('tripChemistry.embrace') },
+    { key: 'foodAdventurousness' as const, label: t('travelProfile.foodAdventurousness'), low: t('tripChemistry.familiar'), high: t('tripChemistry.adventurous') },
   ];
 
   const canCalculate = travelers.length >= 2 && travelers.every((t) => t.isYou || t.name.trim());
@@ -430,9 +432,9 @@ function TripChemistryScreen() {
           <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Trip Chemistry</Text>
+          <Text style={styles.headerTitle}>{t('tripChemistry.title')}</Text>
           <Text style={styles.headerSubtitle}>
-            How well will you travel together?
+            {t('tripChemistry.subtitle')}
           </Text>
         </View>
         <View style={{ width: 40 }} />
@@ -465,7 +467,7 @@ function TripChemistryScreen() {
                   ) : (
                     <TextInput
                       style={styles.nameInput}
-                      placeholder="Name"
+                      placeholder={t('tripChemistry.namePlaceholder')}
                       placeholderTextColor={COLORS.creamMuted}
                       value={traveler.name}
                       onChangeText={(text) => updateTraveler(traveler.id, { name: text })}
@@ -531,7 +533,7 @@ function TripChemistryScreen() {
         {travelers.length < 4 && !result && (
           <TouchableOpacity style={styles.addButton} onPress={addCompanion} activeOpacity={0.7}>
             <UserPlus size={20} color={COLORS.sage} strokeWidth={2} />
-            <Text style={styles.addButtonText}>Add companion</Text>
+            <Text style={styles.addButtonText}>{t('tripChemistry.addCompanion')}</Text>
           </TouchableOpacity>
         )}
 
@@ -550,7 +552,7 @@ function TripChemistryScreen() {
               end={{ x: 1, y: 1 }}
             >
               <FlaskConical size={20} color={COLORS.white} strokeWidth={2} />
-              <Text style={styles.calculateText}>Calculate Chemistry</Text>
+              <Text style={styles.calculateText}>{t('tripChemistry.calculateChemistry')}</Text>
             </LinearGradient>
           </TouchableOpacity>
         )}
@@ -595,12 +597,12 @@ function TripChemistryScreen() {
                   <Text style={styles.scoreOutOf}>/100</Text>
                 </View>
               </View>
-              <Text style={styles.chemistryLabel}>{result.chemistryLabel}</Text>
+              <Text style={styles.chemistryLabel}>{t(`tripChemistry.${result.chemistryLabelKey}`)}</Text>
             </View>
 
             {/* Dimension Bars */}
             <View style={styles.dimensionsCard}>
-              <Text style={styles.sectionTitle}>Compatibility Breakdown</Text>
+              <Text style={styles.sectionTitle}>{t('tripChemistry.compatibilityBreakdown')}</Text>
               {result.dimensions.map((dim, i) => (
                 <View key={dim.key} style={styles.dimensionRow}>
                   <View style={styles.dimensionLabelRow}>
@@ -630,7 +632,7 @@ function TripChemistryScreen() {
             {/* Conflicts */}
             {result.conflicts.length > 0 && (
               <View style={styles.conflictsCard}>
-                <Text style={styles.sectionTitle}>Potential Conflicts</Text>
+                <Text style={styles.sectionTitle}>{t('tripChemistry.potentialConflicts')}</Text>
                 {result.conflicts.map((conflict, i) => (
                   <View key={i} style={styles.conflictItem}>
                     <View style={styles.conflictIcon}>
@@ -644,7 +646,7 @@ function TripChemistryScreen() {
 
             {/* Pro Tips */}
             <View style={styles.tipsCard}>
-              <Text style={styles.sectionTitle}>Pro Tips</Text>
+              <Text style={styles.sectionTitle}>{t('tripChemistry.proTips')}</Text>
               {result.proTips.map((tip, i) => (
                 <View key={i} style={styles.tipItem}>
                   <View style={styles.tipNumber}>
@@ -657,7 +659,7 @@ function TripChemistryScreen() {
 
             {/* Best Destination Type */}
             <View style={styles.destinationCard}>
-              <Text style={styles.sectionTitle}>Best Destination Type</Text>
+              <Text style={styles.sectionTitle}>{t('tripChemistry.bestDestinationType')}</Text>
               <View style={styles.destinationContent}>
                 <Compass size={24} color={COLORS.sage} strokeWidth={2} />
                 <Text style={styles.destinationText}>{result.destinationType}</Text>
@@ -668,13 +670,13 @@ function TripChemistryScreen() {
             <View style={styles.actionRow}>
               <TouchableOpacity style={styles.shareButton} onPress={handleShare} activeOpacity={0.7}>
                 <Share2 size={20} color={COLORS.cream} strokeWidth={2} />
-                <Text style={styles.shareButtonText}>Share results</Text>
+                <Text style={styles.shareButtonText}>{t('tripChemistry.shareResults')}</Text>
               </TouchableOpacity>
             </View>
 
             <TouchableOpacity style={styles.resetButton} onPress={handleReset} activeOpacity={0.7}>
               <RotateCcw size={18} color={COLORS.creamMuted} strokeWidth={2} />
-              <Text style={styles.resetButtonText}>Try different group</Text>
+              <Text style={styles.resetButtonText}>{t('tripChemistry.tryDifferentGroup')}</Text>
             </TouchableOpacity>
           </Animated.View>
         )}
