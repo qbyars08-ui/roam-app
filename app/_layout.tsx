@@ -37,6 +37,8 @@ import ErrorBoundary from '../components/ui/ErrorBoundary';
 import OfflineBanner from '../components/ui/OfflineBanner';
 import PhoneFrame from '../components/ui/PhoneFrame';
 import MilestoneModal from '../components/features/MilestoneModal';
+import { PostHogProvider } from 'posthog-react-native';
+import { initPostHog, identifyUser, resetIdentity, getPostHogClient } from '../lib/posthog';
 
 // ---------------------------------------------------------------------------
 // Auth guard — redirects based on session state
@@ -101,8 +103,9 @@ export default function RootLayout() {
 
   // Bootstrap auth session + restore persisted data
   useEffect(() => {
-    // Initialize RevenueCat on app start (anonymous); links to user when session loads
+    // Initialize RevenueCat + PostHog on app start
     initRevenueCat().catch(() => {});
+    initPostHog().catch(() => {});
     checkStorageVersion().catch(() => {});
     captureRefOnLoad().catch(() => {}); // Web: track ?ref= for referral attribution
     // Restore persisted data (trips, pets, travel profile, currency) before session check
@@ -155,6 +158,7 @@ export default function RootLayout() {
           const current = useAppStore.getState().session;
           if (current?.user?.id?.startsWith?.('guest-')) return;
           logoutRevenueCat().catch(() => {});
+          resetIdentity();
           setSession(null);
         }
       });
@@ -194,6 +198,7 @@ export default function RootLayout() {
         setTripsThisMonth(profile.trips_generated_this_month ?? 0);
       }
 
+      identifyUser(session.user.id, { isPro: proFromPurchases });
       ensureReferralCode(session.user.id).catch(() => {});
 
       try {
@@ -309,8 +314,11 @@ export default function RootLayout() {
     );
   }
 
+  const posthogClient = getPostHogClient();
+
   return (
     <ErrorBoundary>
+      <PostHogProvider client={posthogClient} autocapture={false}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <PhoneFrame>
           <OfflineBanner />
@@ -554,6 +562,7 @@ export default function RootLayout() {
         />
         <StatusBar style="light" />
       </GestureHandlerRootView>
+      </PostHogProvider>
     </ErrorBoundary>
   );
 }

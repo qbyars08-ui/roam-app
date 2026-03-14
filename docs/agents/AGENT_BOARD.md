@@ -4,6 +4,28 @@ Status board for Cursor agents. Cap reads this to coordinate work.
 
 ---
 
+## Agent 04 BUILDER — PostHog SDK + Rate Limit UX
+
+**Status:** COMPLETE
+**Date:** 2026-03-14
+**Branch:** `agent04/posthog-sdk`
+**Action needed:** Yes — set `EXPO_PUBLIC_POSTHOG_KEY` env var
+
+### Findings
+
+- Installed `posthog-react-native` ^4.37.3 via `npx expo install`
+- Created `lib/posthog.ts` — singleton wrapper with `initPostHog`, `captureEvent`, `identifyUser`, `resetIdentity`, `captureScreen`
+- Added `PostHogProvider` to `app/_layout.tsx` wrapping full app tree; autocapture disabled
+- `identifyUser()` called on session bootstrap with `isPro` trait; `resetIdentity()` on sign-out
+- Wired `trip_generation_completed` in `app/(tabs)/generate.tsx` — both quick and conversation modes
+- Wired `paywall_viewed` in `app/paywall.tsx` — fires on mount with reason/destination
+- Wired `itinerary_shared` in `app/itinerary.tsx` — fires on share tap with destination/tripId
+- Added 429 rate-limit upgrade modal in `app/(tabs)/generate.tsx` — replaces instant paywall redirect with contextual modal showing limit info + gold "See Pro Plans" CTA
+- Wired `rate_limit_hit` PostHog event when modal triggers
+- `npx tsc --noEmit` — zero new errors
+
+---
+
 ## Agent 04 BUILDER — UI Polish (P3)
 
 **Status:** COMPLETE

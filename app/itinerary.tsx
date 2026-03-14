@@ -108,6 +108,7 @@ import { getHeroPhotoUrl } from '../lib/heroPhotos';
 import { trackItineraryView, maybePromptForReview } from '../lib/rating';
 import { maybePromptNPS } from '../lib/nps';
 import { trackEvent } from '../lib/analytics';
+import { captureEvent } from '../lib/posthog';
 import MockDataBadge from '../components/ui/MockDataBadge';
 import ActivityEditModal from '../components/features/ActivityEditModal';
 
@@ -506,6 +507,7 @@ export default function ItineraryScreen() {
   const handleShareLink = useCallback(async () => {
     if (!trip) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    captureEvent('itinerary_shared', { destination: trip.destination, tripId: trip.id });
     recordGrowthEvent('trip_shared').catch(() => {});
     evaluateTrigger('post_share').catch(() => {});
     const shared = await shareTrip(trip);

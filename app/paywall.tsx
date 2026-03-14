@@ -35,6 +35,7 @@ import {
 import { syncProStatusToSupabase } from '../lib/sync-pro-status';
 import { getPaywallSocialProof, getUpgradeMessage, recordGrowthEvent } from '../lib/growth-hooks';
 import { track } from '../lib/analytics';
+import { captureEvent } from '../lib/posthog';
 
 // =============================================================================
 // Tier definitions
@@ -130,6 +131,7 @@ export default function PaywallScreen() {
   // Load offerings for live prices
   useEffect(() => {
     getOfferings().then(setPackages).catch(() => {});
+    captureEvent('paywall_viewed', { reason: params.reason ?? null, destination: params.destination ?? null });
   }, []);
 
   useEffect(() => {
