@@ -1,66 +1,81 @@
-## ROAM STATUS — 2026-03-14T00:05Z
+## ROAM STATUS — 2026-03-14T00:30Z
 
 ### System: YELLOW
 
-- **TypeScript:** CLEAN (0 errors)
-- **Tests:** 151 passed / 0 failed / 7 suites
-- **Main branch:** No merges since last run (HEAD: 89d65bf)
-- **Web deploy (tryroam.netlify.app):** DOWN — Netlify billing limit hit
-- **Security:** 3 CRITICAL fixed, 2 HIGH still open (shareId validation, claude-proxy input limits)
-- **Supabase secrets not deployed:** AMADEUS_KEY, AMADEUS_SECRET, SEND_PUSH_INTERNAL_SECRET
+- **TypeScript:** CLEAN (0 errors on main — required local `npm install` for i18n types)
+- **Tests:** 151 passed / 0 failed / 7 suites (main); 262 tests on Agent 01 branch
+- **ESLint:** 0 errors, 289 warnings (Agent 05 branch fixes — not yet merged)
+- **Main branch:** 9 PRs merged since last briefing (#14-#22). HEAD: 059898e
+- **Web deploy (tryroam.netlify.app):** UNKNOWN — Netlify billing issue may still be active
+- **Security:** 5 CRITICAL fixed, 10 HIGH fixed, 7 MEDIUM remaining, 4 LOW remaining
+- **Open PRs:** 0 (all agents working on branches, no PRs opened yet)
 
 ---
 
-### Open PRs: 9 drafts — merge priority
+### Active Branches — 8 agents running, 0 PRs open
 
-| Order | PR | Agent | Unique files | Conflict risk | Notes |
-|-------|----|-------|-------------|---------------|-------|
-| 1 | #15 | Agent 05 Debugger | 1 | None | `lib/claude.ts` readonly fix only |
-| 2 | #14 | Captain | 2 | None | `roam/captain_status.md`, `docs/agents/AGENT_BOARD.md` |
-| 3 | #16 | Agent 02 API Research | 8 | None | 6 new lib modules + docs, all additive |
-| 4 | #17 | Agent 11 Rules & Content | 2 | Low | Cursor rules file + AGENT_BOARD.md |
-| 5 | #18 | Investor Agent | 1 | None | New `app/investor.tsx` screen only |
-| 6 | #20 | Agent 10 Analytics | 15 | **HIGH** | Touches analytics, store, 8 screens — conflicts with #19, #21, Agent 04 |
-| 7 | #21 | Agent 07 Monetization | 14 | **HIGH** | New components + touches paywall, generate, itinerary — conflicts with #19, #20 |
-| 8 | #19 | Growth Hacker | 12 | **HIGH** | Touches generate, paywall, itinerary, _layout — conflicts with #20, #21 |
-| 9 | #22 | Agent 09 Localization | 33 | **VERY HIGH** | i18n across 20+ screens, new package dep — merge LAST, will conflict with everything |
+| Priority | Branch | Agent | Files changed | Status | Conflict risk |
+|----------|--------|-------|--------------|--------|---------------|
+| 1 | `agent-08-security-audit-post-merge` | 08 Security | 9 | DONE | Low — input validation + investor access control |
+| 2 | `test/new-module-coverage` | 01 Tester | 8 | DONE | None — 4 new test files + test_results.md |
+| 3 | `cursor/agent-05-debugger-7503` | 05 Debugger | 25 | DONE | Medium — eslint fixes across 15+ files |
+| 4 | `cursor/agent-03-design-enforcer` | 03 Design | 12 | DONE | Low — design token fixes in 10 components |
+| 5 | `agent04/ui-polish-p3` | 04 Builder | 2 | DONE | None — constants.ts header copy only |
+| 6 | `cursor/growth-hacker-curs-data-7a6d` | 06 Growth | 42 | DONE | **HIGH** — waitlist referral, touches i18n + 15 screens |
+| 7 | `cursor/agent-11-rules-content-6875` | 11 Content | 62 | DONE | **VERY HIGH** — copy rewrite across entire codebase |
+| 8 | `cursor/assistant-role-and-name-bb9a` | (Design/QA) | 28 | DONE | **HIGH** — glassmorphic UI + empty states across 20 files |
 
-**Branches without PRs (need PR creation):**
-- `cursor/agent-03-design-enforcer` — 12 unique files, design system fixes across 5 screens + components
-- `agent04/posthog-analytics` — 16 unique files, PostHog screen tracking + event instrumentation
+**Note:** Growth (#6), Content (#7), and Design/QA (#8) are massive and overlap heavily. Each must rebase after prior merges.
+
+---
+
+### Recommended Merge Order
+
+```
+1. Security (#08)     — 9 files, input validation, investor access control
+2. Tester (#01)       — 4 new test suites (111 new tests), no app code conflicts
+3. Debugger (#05)     — ESLint fixes, missing deps, hooks-above-returns bugs
+4. Design (#03)       — 35 design token fixes across 10 files
+5. Builder (#04)      — 2 files only (constants.ts header strings)
+6. Growth (#06)       — Waitlist referral system, large but self-contained
+7. Content (#11)      — Full copy rewrite, merge last among code PRs
+8. Design/QA (asst.)  — 20+ file UI polish, needs heavy rebase
+```
+
+Agents need to open PRs before merge. Branches 1-5 should merge cleanly. Branches 6-8 will need sequential rebase.
 
 ---
 
 ### Blocked (waiting on Quinn)
 
-1. **Netlify billing** — tryroam.netlify.app paused. Credit purchase or plan upgrade needed.
-2. **Supabase secrets** — AMADEUS_KEY, AMADEUS_SECRET, SEND_PUSH_INTERNAL_SECRET must be set in Supabase dashboard.
-3. **RevenueCat products** — roam_pro_monthly ($9.99/mo), roam_global_yearly ($49.99/yr) need creation in App Store Connect, Google Play Console, and RevenueCat dashboard.
-4. **PR reviews** — 9 draft PRs + 2 branches waiting. #19/#20/#21 have HIGH conflict risk and need ordered merge.
-5. **2 HIGH security items** — shareId UUID validation (#4) and claude-proxy input length limits (#5) from security audit still open.
+1. **No PRs open** — All 8 agents completed work on branches but none opened PRs yet. Quinn or agents need to create draft PRs.
+2. **Netlify billing** — tryroam.netlify.app was paused last check. May still need credit purchase.
+3. **Booking.com AID** — Placeholder `'roam'` in `lib/affiliates.ts`. Quinn needs to sign up at partners.booking.com.
+4. **Amadeus env cleanup** — Remove AMADEUS_KEY + AMADEUS_SECRET from Supabase Dashboard (function deleted, keys are dead).
+5. **7 MEDIUM + 4 LOW security items** — See `SECURITY_AUDIT.md` for details. Rate limiting on 4 edge functions is top priority.
 
 ---
 
-### What each agent did last run (1 line each)
+### What each agent did this run (1 line each)
 
-- **Captain (#14):** Fixed 60 TS errors (readonly arrays + stale route types), wrote first status briefing.
-- **Shield (#3, merged):** Dead code purge, params-validator, centralized storage-keys, security audit (3 CRITICAL fixed).
-- **Security Scan (#12, merged):** RLS hardening, affiliate-clicks RLS, waitlist hash overflow, migration dedup.
-- **Agent 02 — API Research (#16):** Added 6 free API modules (country-info, emergency-numbers, exchange-rates, geocoding, travel-safety, weather-forecast).
-- **Agent 03 — Design Enforcer (no PR):** Fixed top 10 design system violations across flights, food, prep, stays, profile, generate screens.
-- **Agent 04 — PostHog Analytics (no PR):** Added PostHog SDK, screen tracking on all tabs, instrumented 6 key events.
-- **Agent 05 — Debugger (#15):** Fixed readonly array type in buildTripPrompt.
-- **Agent 07 — Monetization (#21):** Added trip-limit banner, upgrade nudge, subscription card, Pro badges, contextual paywall triggers.
-- **Agent 09 — Localization (#22):** Full i18n framework with en/es/fr/ja locales across 20+ screens and components.
-- **Agent 10 — Analytics (#20):** Wired analytics tracking across 8 screens + admin + store.
-- **Agent 11 — Rules & Content (#17):** Added Cursor rules file for content stewardship.
-- **Growth Hacker (#19):** Growth hooks engine, smart triggers, streak badges, milestone celebrations, enhanced paywall.
-- **Investor Agent (#18):** Investor dashboard with live metrics, unit economics, growth projections.
+- **01 Tester:** Wrote 111 new tests (analytics, growth-hooks, smart-triggers, waitlist-guest) — total 262 tests, 11 suites, all green.
+- **02 Researcher:** No new branch activity this run.
+- **03 Design Enforcer:** Fixed 35 design system violations across 10 files (hardcoded hex, raw rgba, numeric borderRadius). Full audit in `roam/design_audit.md`.
+- **04 Builder:** Sharpened 4 generic discover headers in `lib/constants.ts` to editorial copy. Confirmed tasks 1-3 already done by other agents.
+- **05 Debugger:** Installed missing i18n + ESLint deps, fixed 22 TS errors, fixed 9 real hooks-above-returns bugs, configured ESLint for RN + React 19. Updated `system_health.md`.
+- **06 Growth:** Built waitlist referral tracking (lib/referral.ts, waitlist.html, welcome.html, migration). Wrote `roam/growth_dashboard.md`.
+- **07 Monetization:** No new branch activity this run (PR #21 was merged last session).
+- **08 Security:** Post-merge audit — added input validation to waitlist-guest, affiliates, growth-hooks. Added investor.tsx access control. Fixed 2 previously-open HIGH items.
+- **09 Localization:** No new branch activity this run (PR #22 was merged last session).
+- **10 Analytics:** No new branch activity this run (PR #20 was merged last session).
+- **11 Content:** Full copy library rewrite — waitlist funnel, 5-email sequence, feature cards, meta tags, social proof. Brand voice audit. Wrote `roam/copy_library.md`.
+- **12 Investor:** No new branch activity this run.
+- **Design/QA (assistant):** Glassmorphic chip design, COLORS alpha anti-pattern purge, empty states + loading pass across 20+ screens.
 
 ---
 
 ### Top 3 things Quinn should look at right now
 
-1. **Merge PRs #15 → #14 → #16 → #17 → #18 now.** These 5 are clean, additive, zero conflict risk. Gets main up to date before tackling the big ones.
-2. **Decide merge order for the 4 conflicting PRs (#19, #20, #21, #22).** Analytics (#20), Monetization (#21), and Growth (#19) all touch generate/paywall/itinerary — pick one to merge first, then rebase the others. Localization (#22) should go dead last.
-3. **Fix Netlify billing + set Supabase secrets.** Web demo is down and edge functions are deployed but non-functional. These are 10-minute dashboard tasks that unblock production.
+1. **Get PRs open for the 8 active branches** — All agents finished work but no PRs exist. Create draft PRs (or ask agents to) so merging can begin. Priority: Security > Tester > Debugger > Design > Builder first.
+2. **Review Agent 11 copy library (`roam/copy_library.md`)** — Complete waitlist funnel rewrite + 5-email sequence. This is marketing-critical content that needs Quinn's voice approval before it ships.
+3. **Decide on the 3 large conflicting branches** — Growth (#06, 42 files), Content (#11, 62 files), and Design/QA (28 files) all touch overlapping screens. Merge one at a time with rebase between each. Content is the riskiest — full copy rewrite across the entire UI.
