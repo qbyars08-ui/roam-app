@@ -143,14 +143,40 @@ Wire weather-intel edge function into prep header. Add "Right now in [destinatio
 ### Agent 11 — CONTENT: Full Copy Audit
 Keep "Travel like you know someone there". Every destination needs specific non-generic hook line. Generate empty state = invitation not form. All error messages: human, specific, actionable. Remove any AI-sounding copy. Write to copy_library.md.
 
+## LIVE STATUS (2026-03-14 night)
+
+**Site is LIVE at https://tryroam.netlify.app** — verified on mobile, prep tab rendering all intel cards.
+
+### What's Live Now
+- Full prep tab with 5 new intel components (air quality, sun times, forecast strip, emergency, currency, cost of living)
+- All free APIs wired and rendering (Open-Meteo, Frankfurter, sunrise-sunset.org, emergencynumberapi.com)
+- DACH go-to-market strategy complete (roam/dach_strategy.md)
+- Agent rebuild plan ready (roam/AGENT_REBUILD.md) — Quinn executes in Cursor sidebar
+- All .mdc rule files updated with correct model designations
+- TypeScript: 0 errors
+
+### What Will Be Ready by Morning (Agent Overnight Work)
+- Agent 02: Free image API recommendation (Unsplash vs Pexels vs Pixabay)
+- Agent 03: Top 20 anti-slop violations fixed, PR ready
+- Agent 04: Image system + Flights tab + Stays tab + Food tab rework
+- Agent 08: Admin email whitelist on claude-proxy (qbyars08@gmail.com bypass)
+- Agent 09: Weather-intel wired into prep header, emergency numbers verified
+- Agent 11: Full copy audit, every destination hook line rewritten
+
+### Quinn Action Items for Morning
+1. Open Cursor → delete old agents → create new ones per AGENT_REBUILD.md
+2. Add `ADMIN_TEST_EMAILS=qbyars08@gmail.com` to Supabase secrets
+3. Sign up at partners.booking.com for real AID
+4. Remove `AMADEUS_KEY` + `AMADEUS_SECRET` from Supabase Dashboard
+
 ## In Progress
 
 | Task | Agent | Notes |
 |------|-------|-------|
 | Image API research | Agent 02 (Research) | Evaluating Unsplash/Pexels/Pixabay |
-| Anti-slop audit | Agent 03 (UI) | Hunting 20 violations across all screens |
-| Major builds x4 | Agent 04 (Ideas) | Image system → Flights → Stays → Food |
-| Admin bypass | Agent 08 (Scanguard) | claude-proxy rate limit whitelist |
+| Anti-slop audit | Agent 03 (Design) | Hunting 20 violations across all screens |
+| Major builds x4 | Agent 04 (Builder) | Image system → Flights → Stays → Food |
+| Admin bypass | Agent 08 (Security) | claude-proxy rate limit whitelist |
 
 ## Completed This Session
 
@@ -161,6 +187,11 @@ Keep "Travel like you know someone there". Every destination needs specific non-
 | P2: CI pipeline | .eslintrc.js + .github/workflows/ci.yml created |
 | Agent system | 15 .mdc rule files (12 agents + orchestrator + captain + roam base) |
 | Captain system | captain.mdc + captain_status.md — central intelligence hub |
+| Feature visibility audit | 6 hidden APIs wired to UI — 5 new prep components |
+| Model optimization | All agents switched to claude-sonnet-4-5 (Builder stays Opus) |
+| DACH strategy | 276-line go-to-market plan for German-speaking market |
+| Agent rebuild plan | AGENT_REBUILD.md with delete list, create list, first-task messages |
+| Deploy to production | tryroam.netlify.app verified live with all new components |
 
 ## Blocked
 
