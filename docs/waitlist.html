@@ -168,6 +168,33 @@ h1 em{font-style:italic;color:var(--coral)}
 }
 .btn-try-app:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(201,168,76,0.35)}
 
+/* ── referral progress ── */
+.referral-progress{margin:20px 0 16px;text-align:left}
+.progress-label{
+  font-family:'DM Mono',monospace;font-size:.75rem;color:var(--muted);
+  display:flex;justify-content:space-between;margin-bottom:8px;
+}
+.progress-label span{color:var(--sage)}
+.progress-bar-track{
+  width:100%;height:8px;border-radius:4px;
+  background:rgba(124,175,138,0.1);overflow:hidden;
+}
+.progress-bar-fill{
+  height:100%;border-radius:4px;
+  background:linear-gradient(90deg,var(--sage),var(--gold));
+  transition:width .6s cubic-bezier(0.22,1,0.36,1);
+}
+.referral-link-box{
+  display:flex;gap:8px;margin:16px 0 12px;
+}
+.referral-link-box input{
+  flex:1;font-family:'DM Mono',monospace;font-size:.8rem;
+  background:rgba(245,237,216,0.06);border:1px solid var(--glass-border);
+  color:var(--cream);padding:12px 14px;border-radius:10px;outline:none;
+  text-overflow:ellipsis;
+}
+.referral-link-box button{flex-shrink:0;min-width:72px}
+
 /* ── features ── */
 .features{padding:40px 0 60px}
 .features-label{
@@ -375,12 +402,29 @@ footer{
         <div class="check">&#10003;</div>
         <h3>You're in.</h3>
         <div class="queue-number" id="queue-pos">#528</div>
-        <p>Share with friends to move up the list.<br>Top 100 get ROAM Pro free for 3 months.</p>
+        <p>Share your link to earn free Pro months.<br>3 referrals = 1 month free. 10 = 1 year.</p>
+
+        <!-- referral progress -->
+        <div class="referral-progress" id="referral-progress">
+          <div class="progress-label">
+            <span id="ref-count">0</span> referrals &mdash; <span id="ref-reward">3 more for 1 month free</span>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="ref-bar" style="width:0%"></div>
+          </div>
+        </div>
+
+        <!-- referral link -->
+        <div class="referral-link-box" id="referral-link-box">
+          <input type="text" id="referral-link" readonly aria-label="Your referral link">
+          <button class="share-btn primary" onclick="copyRefLink()">Copy</button>
+        </div>
+
         <a href="https://tryroam.netlify.app" id="try-app-btn" class="btn-try-app">
           Try the app now &rarr;
         </a>
         <div class="share-row">
-          <button class="share-btn primary" onclick="copyLink()">Copy Link</button>
+          <button class="share-btn primary" onclick="copyRefLink()">Copy Link</button>
           <button class="share-btn" onclick="shareTwitter()">Twitter / X</button>
         </div>
       </div>
@@ -511,94 +555,195 @@ const form = document.getElementById('waitlist-form');
 const successState = document.getElementById('success-state');
 const counterEl = document.getElementById('counter');
 let currentCount = 527;
+let userRefCode = '';
 
 // ── Supabase config (anon key — safe to expose, RLS protects data) ──
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';       // ← Replace with your EXPO_PUBLIC_SUPABASE_URL
-const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY'; // ← Replace with your EXPO_PUBLIC_SUPABASE_ANON_KEY
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';       // Replace with EXPO_PUBLIC_SUPABASE_URL
+const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY'; // Replace with EXPO_PUBLIC_SUPABASE_ANON_KEY
+
+const REFS_FOR_1_MONTH = 3;
+const REFS_FOR_1_YEAR = 10;
+
+function getRefParam() {
+  try { return new URLSearchParams(window.location.search).get('ref') || ''; }
+  catch { return ''; }
+}
 
 function getRefSource() {
-  try { return new URLSearchParams(window.location.search).get('ref') || 'direct'; }
-  catch { return 'direct'; }
+  var ref = getRefParam();
+  return ref || 'direct';
+}
+
+// ── deterministic 6-char code from email (mirrors Supabase waitlist_referral_code) ──
+function generateReferralCode(email) {
+  var str = email.trim().toLowerCase();
+  var h = 0;
+  for (var i = 0; i < str.length; i++) {
+    h = ((h << 5) - h + str.charCodeAt(i)) | 0;
+  }
+  var chars = 'abcdefghjkmnpqrstuvwxyz23456789';
+  var result = '';
+  h = Math.abs(h);
+  for (var j = 0; j < 6; j++) {
+    result += chars[h % chars.length];
+    h = Math.floor(h / chars.length);
+  }
+  return result;
+}
+
+// ── show referral UI ──
+function showReferralState(code, position, refCount) {
+  userRefCode = code;
+  var refUrl = window.location.origin + window.location.pathname + '?ref=' + code;
+
+  form.style.display = 'none';
+  document.querySelector('.form-proof').style.display = 'none';
+  successState.classList.add('show');
+
+  document.getElementById('queue-pos').textContent = '#' + position;
+  counterEl.textContent = Math.max(currentCount, position);
+
+  // Referral link
+  document.getElementById('referral-link').value = refUrl;
+
+  // Referral progress
+  var count = refCount || 0;
+  document.getElementById('ref-count').textContent = count;
+
+  var toNext;
+  var rewardMsg;
+  if (count >= REFS_FOR_1_YEAR) {
+    rewardMsg = '1 year of Pro earned';
+    toNext = 0;
+  } else if (count >= REFS_FOR_1_MONTH) {
+    var extra = count % REFS_FOR_1_MONTH;
+    toNext = REFS_FOR_1_MONTH - extra;
+    rewardMsg = toNext + ' more for another month free';
+  } else {
+    toNext = REFS_FOR_1_MONTH - count;
+    rewardMsg = toNext + ' more for 1 month free';
+  }
+  document.getElementById('ref-reward').textContent = rewardMsg;
+
+  // Progress bar: 0-3 = first month, 3-10 = toward year
+  var pct;
+  if (count >= REFS_FOR_1_YEAR) {
+    pct = 100;
+  } else if (count >= REFS_FOR_1_MONTH) {
+    pct = 30 + ((count - REFS_FOR_1_MONTH) / (REFS_FOR_1_YEAR - REFS_FOR_1_MONTH)) * 70;
+  } else {
+    pct = (count / REFS_FOR_1_MONTH) * 30;
+  }
+  document.getElementById('ref-bar').style.width = Math.min(100, Math.round(pct)) + '%';
 }
 
 form.addEventListener('submit', async function(e) {
   e.preventDefault();
-  const email = document.getElementById('email-input').value;
+  var email = document.getElementById('email-input').value;
   if (!email) return;
 
-  const btn = form.querySelector('.btn-submit');
-  const origText = btn.innerHTML;
+  var btn = form.querySelector('.btn-submit');
   btn.innerHTML = '<span class="shimmer"></span>Joining...';
   btn.disabled = true;
 
+  var trimmedEmail = email.trim().toLowerCase();
+  var refSource = getRefSource();
+  var refParam = getRefParam();
+
   try {
-    const res = await fetch(SUPABASE_URL + '/rest/v1/waitlist_emails', {
+    // Insert with referred_by (the referral code from URL) and referral_source
+    var body = { email: trimmedEmail, referral_source: refSource };
+    if (refParam && refParam !== 'direct' && refParam !== 'share' && refParam !== 'twitter') {
+      body.referred_by = refParam;
+    }
+
+    var res = await fetch(SUPABASE_URL + '/rest/v1/waitlist_emails', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'apikey': SUPABASE_ANON,
         'Authorization': 'Bearer ' + SUPABASE_ANON,
-        'Prefer': 'return=minimal'
+        'Prefer': 'return=representation'
       },
-      body: JSON.stringify({ email: email.trim().toLowerCase(), referral_source: getRefSource() })
+      body: JSON.stringify(body)
     });
 
-    if (res.ok || res.status === 409) {
-      // 409 = duplicate email, still show success
-      currentCount++;
-      form.style.display = 'none';
-      document.querySelector('.form-proof').style.display = 'none';
-      successState.classList.add('show');
-      document.getElementById('queue-pos').textContent = '#' + currentCount;
-      counterEl.textContent = currentCount;
-      var tryBtn = document.getElementById('try-app-btn');
-      if (tryBtn) {
-        var u = 'https://tryroam.netlify.app?email=' + encodeURIComponent(email.trim().toLowerCase());
-        var ref = getRefSource();
-        if (ref && ref !== 'direct') u += '&ref=' + encodeURIComponent(ref);
-        tryBtn.href = u;
-      }
+    var code, position, refCount = 0;
+
+    if (res.ok) {
+      var rows = await res.json();
+      var row = Array.isArray(rows) ? rows[0] : rows;
+      code = row.referral_code || generateReferralCode(trimmedEmail);
+      refCount = row.referral_count || 0;
+
+      // Get position
+      var posRes = await fetch(
+        SUPABASE_URL + '/rest/v1/waitlist_emails?select=id&created_at=lte.' + encodeURIComponent(row.created_at),
+        { headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON, 'Prefer': 'count=exact' } }
+      );
+      position = parseInt(posRes.headers.get('content-range')?.split('/')[1] || '0') || currentCount + 1;
+    } else if (res.status === 409 || res.status === 409) {
+      // Duplicate email — fetch existing row
+      var existRes = await fetch(
+        SUPABASE_URL + '/rest/v1/waitlist_emails?email=eq.' + encodeURIComponent(trimmedEmail) + '&select=referral_code,referral_count,created_at',
+        { headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON } }
+      );
+      var existRows = await existRes.json();
+      var existRow = Array.isArray(existRows) ? existRows[0] : existRows;
+      code = existRow?.referral_code || generateReferralCode(trimmedEmail);
+      refCount = existRow?.referral_count || 0;
+
+      var posRes2 = await fetch(
+        SUPABASE_URL + '/rest/v1/waitlist_emails?select=id&created_at=lte.' + encodeURIComponent(existRow?.created_at || new Date().toISOString()),
+        { headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON, 'Prefer': 'count=exact' } }
+      );
+      position = parseInt(posRes2.headers.get('content-range')?.split('/')[1] || '0') || currentCount + 1;
     } else {
-      throw new Error('Server error');
+      throw new Error('Server error: ' + res.status);
     }
-  } catch (err) {
-    // Graceful fallback — still show success UX, log error
-    console.error('Waitlist submit error:', err);
-    currentCount++;
-    form.style.display = 'none';
-    document.querySelector('.form-proof').style.display = 'none';
-    successState.classList.add('show');
-    document.getElementById('queue-pos').textContent = '#' + currentCount;
-    counterEl.textContent = currentCount;
+
+    // Set try-app link
     var tryBtn = document.getElementById('try-app-btn');
     if (tryBtn) {
-      var u = 'https://tryroam.netlify.app?email=' + encodeURIComponent(email.trim().toLowerCase());
-      var ref = getRefSource();
-      if (ref && ref !== 'direct') u += '&ref=' + encodeURIComponent(ref);
-      tryBtn.href = u;
+      tryBtn.href = 'https://tryroam.netlify.app?email=' + encodeURIComponent(trimmedEmail);
     }
+
+    showReferralState(code, position, refCount);
+
+  } catch (err) {
+    console.error('Waitlist submit error:', err);
+    // Fallback: generate code client-side, show success
+    var fallbackCode = generateReferralCode(trimmedEmail);
+    currentCount++;
+    var tryBtn2 = document.getElementById('try-app-btn');
+    if (tryBtn2) {
+      tryBtn2.href = 'https://tryroam.netlify.app?email=' + encodeURIComponent(trimmedEmail);
+    }
+    showReferralState(fallbackCode, currentCount, 0);
   }
 });
 
 // ── share actions ──
-function copyLink() {
-  const link = window.location.href + '?ref=share';
-  navigator.clipboard.writeText(link).then(() => {
-    const btn = document.querySelector('.share-btn.primary');
-    btn.textContent = 'Copied!';
-    setTimeout(() => btn.textContent = 'Copy Link', 2000);
+function copyRefLink() {
+  var input = document.getElementById('referral-link');
+  var link = input ? input.value : (window.location.origin + window.location.pathname + '?ref=' + userRefCode);
+  navigator.clipboard.writeText(link).then(function() {
+    var btns = document.querySelectorAll('.share-btn.primary');
+    btns.forEach(function(b) { b.textContent = 'Copied!'; });
+    setTimeout(function() { btns.forEach(function(b) { b.textContent = 'Copy Link'; }); }, 2000);
   });
 }
 function shareTwitter() {
-  const text = encodeURIComponent("Just joined the waitlist for ROAM \u2014 an AI travel planner that builds your entire trip in 30 seconds. This is going to change everything.\n\n");
-  const url = encodeURIComponent(window.location.href + '?ref=twitter');
-  window.open('https://twitter.com/intent/tweet?text=' + text + '&url=' + url, '_blank');
+  var refLink = document.getElementById('referral-link');
+  var shareUrl = refLink ? refLink.value : (window.location.origin + window.location.pathname + '?ref=' + userRefCode);
+  var text = encodeURIComponent("Just joined the waitlist for ROAM \u2014 an AI travel planner that builds your entire trip in 30 seconds. This is going to change everything.\n\n");
+  window.open('https://twitter.com/intent/tweet?text=' + text + '&url=' + encodeURIComponent(shareUrl), '_blank');
 }
 
 // ── counter animation on load ──
 function animateCounter(el, target) {
-  let current = target - 47;
-  const step = () => {
+  var current = target - 47;
+  var step = function() {
     current += Math.ceil((target - current) / 8);
     el.textContent = current;
     if (current < target) requestAnimationFrame(step);
@@ -609,10 +754,10 @@ function animateCounter(el, target) {
 animateCounter(counterEl, currentCount);
 
 // ── hide sticky CTA when hero form is visible ──
-const heroObserver = new IntersectionObserver(([entry]) => {
-  const sticky = document.querySelector('.sticky-cta');
-  if (sticky) sticky.style.opacity = entry.isIntersecting ? '0' : '1';
-  if (sticky) sticky.style.pointerEvents = entry.isIntersecting ? 'none' : 'auto';
+var heroObserver = new IntersectionObserver(function(entries) {
+  var sticky = document.querySelector('.sticky-cta');
+  if (sticky) { sticky.style.opacity = entries[0].isIntersecting ? '0' : '1'; }
+  if (sticky) { sticky.style.pointerEvents = entries[0].isIntersecting ? 'none' : 'auto'; }
 }, { threshold: 0.3 });
 heroObserver.observe(document.getElementById('form-card'));
 </script>
