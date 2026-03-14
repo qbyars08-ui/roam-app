@@ -15,6 +15,11 @@
   status = 200
 
 [[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
   for = "/_expo/static/js/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
