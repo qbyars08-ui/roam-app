@@ -13,6 +13,9 @@ import { ONBOARDING_COMPLETE } from '../lib/storage-keys';
 // Self-hosted fonts — only the 7 weights we actually use (1.5MB vs 6.5MB)
 import { useFonts } from 'expo-font';
 
+// i18n — must be imported before any component that uses useTranslation
+import '../lib/i18n';
+
 import { supabase } from '../lib/supabase';
 import { useAppStore, checkActiveTripOnLoad, loadPersistedTrips, loadPersistedPets, loadPersistedTravelProfile, loadPersistedBookmarks, loadGenerateMode } from '../lib/store';
 import { initRevenueCat, loginRevenueCat, logoutRevenueCat, isProActive, addCustomerInfoListener } from '../lib/revenue-cat';

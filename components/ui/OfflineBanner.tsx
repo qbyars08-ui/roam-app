@@ -6,11 +6,13 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Animated, StyleSheet, Platform, type ViewStyle, type TextStyle } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { WifiOff } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 
 export default function OfflineBanner() {
   const [isOffline, setIsOffline] = useState(false);
   const [translateY] = useState(() => new Animated.Value(-50));
+  const { t } = useTranslation();
 
   // Skip on web — banner not relevant for browser
   if (Platform.OS === 'web') return null;
@@ -39,7 +41,7 @@ export default function OfflineBanner() {
     >
       <View style={styles.pill}>
         <WifiOff size={14} color={COLORS.white} strokeWidth={2.5} />
-        <Text style={styles.text}>You're offline — saved trips still work</Text>
+        <Text style={styles.text}>{t('common.offline')}</Text>
       </View>
     </Animated.View>
   );
