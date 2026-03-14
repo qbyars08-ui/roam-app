@@ -254,7 +254,7 @@ export function buildTripPrompt(params: {
   destination: string;
   days: number;
   budget: string;
-  vibes: string[];
+  vibes: readonly string[];
   travelProfile?: TravelProfile | null;
   weather?: WeatherContext | null;
   groupSize?: number;
@@ -262,8 +262,8 @@ export function buildTripPrompt(params: {
   accommodationStyle?: string;
   morningType?: string;
   tripComposition?: string;
-  dietary?: string[];
-  transport?: string[];
+  dietary?: readonly string[];
+  transport?: readonly string[];
   mustVisit?: string;
   avoidList?: string;
   specialRequests?: string;
