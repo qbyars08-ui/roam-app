@@ -469,7 +469,7 @@ function TripWrappedScreen() {
           onPress={handleShareAll}
         >
           <LinearGradient
-            colors={[COLORS.sage, `${COLORS.sage}CC`]}
+            colors={[COLORS.sage, COLORS.sageAlpha80]}
             style={styles.shareBtnGradient}
           >
             <Text style={styles.shareBtnText}>

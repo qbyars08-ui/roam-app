@@ -127,7 +127,7 @@ export default function SignInScreen() {
             value={email}
             onChangeText={setEmail}
             placeholder={t('auth.emailPlaceholder')}
-            placeholderTextColor={`${COLORS.cream}33`}
+            placeholderTextColor={COLORS.creamVeryFaint}
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
@@ -142,7 +142,7 @@ export default function SignInScreen() {
             value={password}
             onChangeText={setPassword}
             placeholder={t('auth.passwordPlaceholder')}
-            placeholderTextColor={`${COLORS.cream}33`}
+            placeholderTextColor={COLORS.creamVeryFaint}
             secureTextEntry
             autoCapitalize="none"
             autoComplete={isSignUp ? 'new-password' : 'current-password'}

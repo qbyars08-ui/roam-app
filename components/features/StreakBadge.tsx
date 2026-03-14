@@ -54,7 +54,7 @@ function getStreakTier(count: number): {
     return {
       color: '#F59E0B',
       bg: COLORS.warningSubtle,
-      border: 'rgba(245,158,11,0.3)',
+      border: COLORS.warningBorder,
       label: 'Hot streak',
     };
   }

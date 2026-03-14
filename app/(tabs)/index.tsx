@@ -146,7 +146,7 @@ const DestinationPhotoCard = React.memo(function DestinationPhotoCard({
 
         {/* Dark gradient overlay */}
         <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.35)', 'rgba(0,0,0,0.75)']}
+          colors={['transparent', COLORS.overlaySoft, COLORS.overlayDark]}
           locations={gradientLocations}
           style={styles.cardGradient}
         />

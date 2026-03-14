@@ -2390,7 +2390,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderTopColor: 'rgba(255,255,255,0.06)',
+    borderTopColor: COLORS.border,
     borderTopWidth: 1,
     padding: SPACING.md,
     shadowColor: '#000',
