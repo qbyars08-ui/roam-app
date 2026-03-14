@@ -49,7 +49,7 @@ export async function recordStreakOpen(userId?: string): Promise<void> {
           updated_at: new Date().toISOString(),
         })
         .eq('id', userId);
-    } catch {}
+    } catch { /* silent */ }
   }
 }
 
@@ -76,7 +76,7 @@ export async function recordTripPlanned(userId?: string): Promise<void> {
         updated_at: new Date().toISOString(),
       })
       .eq('id', userId);
-  } catch {}
+  } catch { /* silent */ }
 }
 
 /** Record country visited (call when marking a trip complete or destination visited) */
@@ -96,7 +96,7 @@ export async function recordCountryVisited(userId?: string): Promise<void> {
         updated_at: new Date().toISOString(),
       })
       .eq('id', userId);
-  } catch {}
+  } catch { /* silent */ }
 }
 
 const STREAK_REMINDER_KEY = '@roam/streak_reminder_scheduled';
@@ -134,7 +134,7 @@ export async function scheduleStreakReminder(): Promise<void> {
       },
     });
     await AsyncStorage.setItem(STREAK_REMINDER_KEY, today);
-  } catch {}
+  } catch { /* silent */ }
 }
 
 /** Cancel streak reminder when user opens app */

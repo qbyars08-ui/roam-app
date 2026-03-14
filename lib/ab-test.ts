@@ -72,7 +72,7 @@ export async function trackOnboardingComplete(userId?: string): Promise<void> {
         .update({ completed_at: new Date().toISOString() })
         .eq('session_id', sessionId);
     }
-  } catch {}
+  } catch { /* silent */ }
 }
 
 export function hashCode(str: string): number {

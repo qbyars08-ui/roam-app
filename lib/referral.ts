@@ -81,7 +81,7 @@ export async function ensureReferralCode(userId: string): Promise<string> {
       { user_id: userId, code, referral_count: 0, free_trips_earned: 0 },
       { onConflict: 'user_id', ignoreDuplicates: true }
     );
-  } catch {}
+  } catch { /* silent */ }
   return code;
 }
 
@@ -111,7 +111,7 @@ export async function getReferralStats(userId: string): Promise<ReferralStats> {
         nextMilestoneMessage: nextMilestoneMessage(count),
       };
     }
-  } catch {}
+  } catch { /* silent */ }
 
   try {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
@@ -126,7 +126,7 @@ export async function getReferralStats(userId: string): Promise<ReferralStats> {
         nextMilestoneMessage: nextMilestoneMessage(count),
       };
     }
-  } catch {}
+  } catch { /* silent */ }
 
   return {
     code,
@@ -144,14 +144,14 @@ export async function recordReferral(referrerUserId?: string): Promise<void> {
     const data = raw ? (JSON.parse(raw) as { referralsCount?: number }) : {};
     const count = (data.referralsCount ?? 0) + 1;
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ referralsCount: count }));
-  } catch {}
+  } catch { /* silent */ }
   if (referrerUserId) {
     try {
       const code = getReferralCode(referrerUserId);
       const { data: existing } = await supabase.from('referral_codes').select('referral_count').eq('code', code).single();
       const next = ((existing as { referral_count?: number })?.referral_count ?? 0) + 1;
       await supabase.from('referral_codes').upsert({ user_id: referrerUserId, code, referral_count: next }, { onConflict: 'user_id' });
-    } catch {}
+    } catch { /* silent */ }
   }
 }
 
