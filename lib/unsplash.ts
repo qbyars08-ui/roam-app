@@ -12,9 +12,9 @@ export type UnsplashPhotoRef = {
   /** Unsplash photo ID (not a slug). */
   id: string;
   /**
-   * A guaranteed-working fallback image URL. Prefer using:
-   * - https://source.unsplash.com/<id>/<w>x<h>
-   * so it works without an API key.
+   * A guaranteed-working fallback image URL. Use images.unsplash.com CDN links:
+   * - https://images.unsplash.com/photo-{slug}?w={w}&q=80&fm=webp
+   * NOTE: source.unsplash.com was shut down June 2024 — never use it.
    */
   fallbackUrl: string;
 };

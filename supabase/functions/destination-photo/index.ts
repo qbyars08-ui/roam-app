@@ -1,6 +1,7 @@
 // =============================================================================
 // ROAM — Destination Photo Edge Function
-// Returns a Google Places photo URL for a destination search query
+// Returns a photo URL for a destination search query.
+// Strategy: Cache → Google Places → Pexels fallback
 // =============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
@@ -26,6 +27,69 @@ function getCorsHeaders(req: Request) {
 
 // Cache for 30 days — destination photos rarely change
 const CACHE_DAYS = 30;
+
+// ── Google Places photo resolver (3 API calls) ─────────────────────────────
+async function tryGooglePlaces(
+  encodedQuery: string,
+  apiKey: string,
+): Promise<{ photoUrl: string; placeId: string } | null> {
+  try {
+    const searchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodedQuery}&key=${apiKey}`;
+    const searchRes = await fetch(searchUrl);
+    const searchData = await searchRes.json();
+
+    if (
+      searchData.status !== "OK" ||
+      !searchData.results?.length
+    ) {
+      return null;
+    }
+
+    const placeId = searchData.results[0].place_id;
+    const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=photos&key=${apiKey}`;
+    const detailsRes = await fetch(detailsUrl);
+    const detailsData = await detailsRes.json();
+
+    if (
+      detailsData.status !== "OK" ||
+      !detailsData.result?.photos?.length
+    ) {
+      return null;
+    }
+
+    const photoRef = detailsData.result.photos[0].photo_reference;
+    const photoApiUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=600&photo_reference=${photoRef}&key=${apiKey}`;
+    const photoRes = await fetch(photoApiUrl, { redirect: "manual" });
+    const photoUrl = photoRes.headers.get("location");
+    if (!photoUrl) return null;
+
+    return { photoUrl, placeId };
+  } catch {
+    return null;
+  }
+}
+
+// ── Pexels photo search (1 API call, free 200 req/hr) ──────────────────────
+async function tryPexels(
+  encodedQuery: string,
+  apiKey: string,
+): Promise<string | null> {
+  try {
+    const url = `https://api.pexels.com/v1/search?query=${encodedQuery}+travel+destination&per_page=1&orientation=landscape`;
+    const res = await fetch(url, {
+      headers: { Authorization: apiKey },
+    });
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const photo = data.photos?.[0];
+    if (!photo) return null;
+
+    return photo.src?.large ?? photo.src?.medium ?? photo.src?.original ?? null;
+  } catch {
+    return null;
+  }
+}
 
 // ── Main handler ────────────────────────────────────────────────────────────
 Deno.serve(async (req: Request) => {
@@ -54,7 +118,8 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const googleApiKey = Deno.env.get("GOOGLE_PLACES_KEY")!;
+    const googleApiKey = Deno.env.get("GOOGLE_PLACES_KEY") ?? "";
+    const pexelsApiKey = Deno.env.get("PEXELS_API_KEY") ?? "";
 
     // Verify JWT
     const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
@@ -115,53 +180,32 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // ── Text Search ─────────────────────────────────────────────────────
     const encodedQuery = encodeURIComponent(query);
-    const searchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodedQuery}&key=${googleApiKey}`;
-    const searchRes = await fetch(searchUrl);
-    const searchData = await searchRes.json();
+    let photoUrl: string | null = null;
+    let cacheId: string | null = null;
 
-    if (
-      searchData.status !== "OK" ||
-      !searchData.results ||
-      searchData.results.length === 0
-    ) {
-      return new Response(JSON.stringify({ photo_url: null }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // ── Try Google Places first (if key is configured) ───────────────
+    if (googleApiKey) {
+      const google = await tryGooglePlaces(encodedQuery, googleApiKey);
+      if (google) {
+        photoUrl = google.photoUrl;
+        cacheId = `destphoto_${google.placeId}`;
+      }
     }
 
-    const placeId = searchData.results[0].place_id;
-
-    // ── Place Details (just photos) ─────────────────────────────────────
-    const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=photos&key=${googleApiKey}`;
-    const detailsRes = await fetch(detailsUrl);
-    const detailsData = await detailsRes.json();
-
-    if (
-      detailsData.status !== "OK" ||
-      !detailsData.result?.photos ||
-      detailsData.result.photos.length === 0
-    ) {
-      return new Response(JSON.stringify({ photo_url: null }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // ── Pexels fallback (if Google missed or no key) ─────────────────
+    if (!photoUrl && pexelsApiKey) {
+      photoUrl = await tryPexels(encodedQuery, pexelsApiKey);
+      if (photoUrl) {
+        cacheId = `destphoto_pexels_${searchKey}`;
+      }
     }
-
-    const photoRef = detailsData.result.photos[0].photo_reference;
-
-    // ── Resolve photo URL (follow redirect to get CDN URL) ──────────────
-    const photoApiUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=600&photo_reference=${photoRef}&key=${googleApiKey}`;
-    const photoRes = await fetch(photoApiUrl, { redirect: "manual" });
-    const photoUrl = photoRes.headers.get("location") ?? null;
 
     // ── Cache result ────────────────────────────────────────────────────
-    if (photoUrl) {
+    if (photoUrl && cacheId) {
       await supabaseAdmin.from("venues").upsert(
         {
-          place_id: `destphoto_${placeId}`,
+          place_id: cacheId,
           search_key: searchKey,
           data: { photo_url: photoUrl },
           updated_at: new Date().toISOString(),

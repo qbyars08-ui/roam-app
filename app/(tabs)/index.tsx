@@ -35,6 +35,7 @@ import {
   type DestinationCategory,
 } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
+import { getDestinationPhoto as getPhotoUrl } from '../../lib/photos';
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -47,10 +48,10 @@ const CARD_HEIGHT_TALL = 240;
 const CARD_HEIGHT_SHORT = 200;
 
 // ---------------------------------------------------------------------------
-// Unsplash fallback — zero API key needed
+// Photo fallback — uses curated images.unsplash.com CDN URLs from photos.ts
 // ---------------------------------------------------------------------------
-function getUnsplashUrl(query: string, w = 800, h = 600): string {
-  return `https://source.unsplash.com/${w}x${h}/?${encodeURIComponent(query)},travel`;
+function getPhotoFallbackUrl(query: string): string {
+  return getPhotoUrl(query, 800);
 }
 
 // ---------------------------------------------------------------------------
@@ -71,7 +72,7 @@ const DestinationPhotoCard = React.memo(function DestinationPhotoCard({
   const [imageLoaded, setImageLoaded] = useState(false);
 
   const imageUrl = destination.unsplashUrl
-    ?? getUnsplashUrl(destination.photoQuery);
+    ?? getPhotoFallbackUrl(destination.photoQuery);
 
   useEffect(() => {
     const delay = Math.min(index * 80, 400);
