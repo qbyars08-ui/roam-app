@@ -276,9 +276,7 @@ function TripChemistryScreen() {
     if (!canAccess) router.replace('/paywall');
   }, [canAccess, router]);
 
-  if (!canAccess) return null;
-
-  // Handlers
+  // Handlers — must be declared before any early return (Rules of Hooks)
   const addCompanion = useCallback(() => {
     if (travelers.length >= 4) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -383,6 +381,8 @@ function TripChemistryScreen() {
       // User cancelled
     }
   }, [result, travelers]);
+
+  if (!canAccess) return null;
 
   // Dimension bar color
   const barColor = (score: number) => {
