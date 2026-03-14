@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   } as ViewStyle,
   cardProGated: {
-    borderColor: COLORS.gold + '30',
+    borderColor: COLORS.goldBorder,
   } as ViewStyle,
   proBadge: {
     position: 'absolute',
@@ -306,12 +306,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: COLORS.gold + '20',
+    backgroundColor: COLORS.goldMutedLight,
     paddingHorizontal: SPACING.xs + 2,
     paddingVertical: 2,
     borderRadius: RADIUS.full,
     borderWidth: 1,
-    borderColor: COLORS.gold + '40',
+    borderColor: COLORS.goldBorderStrong,
     zIndex: 1,
   } as ViewStyle,
   proBadgeText: {

@@ -494,12 +494,12 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   } as TextStyle,
   referralBadge: {
-    backgroundColor: COLORS.gold + '20',
+    backgroundColor: COLORS.goldMutedLight,
     paddingHorizontal: SPACING.sm,
     paddingVertical: 2,
     borderRadius: RADIUS.full,
     borderWidth: 1,
-    borderColor: COLORS.gold + '40',
+    borderColor: COLORS.goldBorderStrong,
   } as ViewStyle,
   referralBadgeText: {
     fontFamily: FONTS.mono,

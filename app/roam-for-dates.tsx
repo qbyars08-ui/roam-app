@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
   } as ViewStyle,
-  chipActive: { backgroundColor: COLORS.sage + '25', borderColor: COLORS.sage } as ViewStyle,
+  chipActive: { backgroundColor: COLORS.sageHighlight, borderColor: COLORS.sage } as ViewStyle,
   chipText: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.creamMuted } as TextStyle,
   chipActiveText: { color: COLORS.cream } as TextStyle,
   partnerRow: { marginBottom: SPACING.sm } as ViewStyle,

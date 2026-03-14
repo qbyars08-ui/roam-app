@@ -93,7 +93,7 @@ function ChaosDareScreen() {
             style={({ pressed }) => [styles.ctaBtn, { opacity: pressed ? 0.9 : 1 }]}
           >
             <LinearGradient
-              colors={[COLORS.gold, COLORS.gold + 'cc']}
+              colors={[COLORS.gold, COLORS.goldAlpha80]}
               style={styles.ctaGrad}
             >
               <Text style={styles.ctaBtnText}>Open ROAM to claim it</Text>

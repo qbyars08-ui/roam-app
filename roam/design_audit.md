@@ -1,7 +1,6 @@
 # ROAM Design System Audit
 **Agent:** 03 — Design Enforcer  
-**Date:** 2026-03-13  
-**Branch:** `cursor/agent-03-design-enforcer` (from `main`)  
+**Date:** 2026-03-13 (PR1) / 2026-03-13 (PR2 — alpha sweep)  
 **Scope:** `app/` and `components/` — all `.tsx` files  
 **Design system tokens:** `lib/constants.ts` → `COLORS`, `FONTS`, `SPACING`, `RADIUS`
 
@@ -9,17 +8,18 @@
 
 ## Executive Summary
 
-| Category | Violations Found | Fixed in PR | Remaining |
-|---|---|---|---|
-| Hardcoded hex colors (`'#xxxxxx'`) | 3 | 3 | 0 |
-| Raw `rgba()` in style objects | 3 | 2 | 1 (gradient array — minor) |
-| `COLORS.x + 'hex'` alpha modifiers | 26 | 4 | 22 (spread across legacy screens) |
-| Non-RADIUS `borderRadius` values | 62 | 26 | 36 (tiny dots/progress bars — cosmetically intentional) |
-| Non-lucide icon libraries | 0 | — | 0 |
-| Hardcoded font family strings | 0 | — | 0 |
-| Emoji in UI | 0 | — | 0 |
+| Category | Found | PR1 Fixed | PR2 Fixed | Remaining |
+|---|---|---|---|---|
+| Hardcoded hex colors (`'#xxxxxx'`) | 3 | 3 | — | **0** |
+| Raw `rgba()` in style objects | 4 | 1 | 3 | **0** |
+| `COLORS.x + 'hex'` alpha modifiers | 31 | 9 | 22 | **0** |
+| Non-RADIUS `borderRadius` values | 62 | 26 | — | 36 (geometric circles — intentional) |
+| Non-lucide icon libraries | 0 | — | — | 0 |
+| Hardcoded font family strings | 0 | — | — | 0 |
+| Emoji in UI | 0 | — | — | 0 |
 
-**Total violations fixed in this PR: 35 across 10 files.**
+**PR1 total: 35 fixes across 10 files.**  
+**PR2 total: 35 substitutions across 19 files + 3 new tokens added to `lib/constants.ts`.**
 
 ---
 
@@ -146,44 +146,76 @@ Also fixed incidental hardcoded `paddingHorizontal: 16`, `paddingVertical: 12`, 
 
 ---
 
-## Remaining Violations (Not Fixed — Documented for Next PR)
+## PR2 — Alpha Sweep (2026-03-13)
 
-### A. Alpha Modifier Anti-Patterns (22 remaining)
+All remaining alpha modifier anti-patterns and raw `rgba()` values were eliminated.
 
-These are spread across legacy/secondary screens. None are in the new main tabs (generate, stays, food, group, flights, index — all fixed). Recommended for a follow-up sweep.
+### New Tokens Added to `lib/constants.ts`
 
-| File | Count | Patterns |
+Three tokens were missing from the design system and required addition:
+
+| Token | Value | Purpose |
 |---|---|---|
-| `app/arrival-mode.tsx` | 7 | `COLORS.coral + '30'`, `COLORS.sage + '20'/'12'/'50'/'30'/'60'` |
-| `app/language-survival.tsx` | 4 | `COLORS.sage + '25'/'20'`, `COLORS.gold + '20'/'15'` |
-| `app/(auth)/signin.tsx` | 2 | `` `${COLORS.cream}33` `` (placeholder text colors) |
-| `app/dupe-finder.tsx` | 1 | `` `${COLORS.sage}CC` `` (LinearGradient) |
-| `app/trip-receipt.tsx` | 1 | `` `${COLORS.sage}CC` `` |
-| `app/trip-wrapped.tsx` | 1 | `` `${COLORS.sage}CC` `` |
-| `app/chaos-mode.tsx` | 1 | `` `${COLORS.gold}cc` `` |
-| `app/chaos-dare.tsx` | 1 | `` `${COLORS.gold}cc` `` |
-| `app/visited-map.tsx` | 1 | `COLORS.sage + '40'` |
-| `app/people-met.tsx` | 1 | `COLORS.sage + '40'` |
-| `app/roam-for-dates.tsx` | 1 | `COLORS.sage + '25'` |
-| `components/features/LiveCompanionFAB.tsx` | 1 | `` `${COLORS.cream}44` `` |
+| `COLORS.sageAlpha80` | `rgba(124,175,138,0.8)` | Sage at 80% opacity — LinearGradient fade endpoints |
+| `COLORS.goldAlpha80` | `rgba(201,168,76,0.8)` | Gold at 80% opacity — LinearGradient fade endpoints |
+| `COLORS.warningBorder` | `rgba(245,158,11,0.3)` | Amber warning border — fills gap above `warningHighlight` (0.2) |
 
-**Recommended token mappings for follow-up sweep:**
-- `sage + '12'/'20'/'25'` → `COLORS.sageSoft` / `COLORS.sageHighlight`
-- `sage + '30'` → `COLORS.sageBorder`
-- `sage + '40'/'50'` → `COLORS.sageStrong`
-- `sage + '60'` → `COLORS.sageMedium`
-- `cream + '33'/'44'` → `COLORS.creamVeryFaint` / `COLORS.creamFaint`
-- `sage + 'CC'` / `gold + 'cc'` → use `COLORS.sageMedium` / `COLORS.goldMutedDim`
+### Alpha Modifier Fixes (22 from audit + 9 newly found = 31 total)
 
-### B. Raw `rgba()` in Non-Token Contexts (1 remaining)
+9 additional violations were discovered in files that landed on `main` after PR1 (`app/profile.tsx`, `components/monetization/`, `components/features/ExploreHub.tsx`).
 
-| File | Line | Value | Context |
+| File | Before | After |
+|---|---|---|
+| `app/arrival-mode.tsx` (×7) | `coral+'30'`, `sage+'20'×2`, `sage+'12'`, `sage+'50'`, `sage+'30'`, `sage+'60'` | `coralLight`, `sageMuted`, `sageSubtle`, `sageStrong`, `sageLight`, `sageMedium` |
+| `app/language-survival.tsx` (×4) | `sage+'25'`, `gold+'20'`, `sage+'20'`, `gold+'15'` | `sageHighlight`, `goldMutedLight`, `sageMuted`, `goldSoft` |
+| `app/(auth)/signin.tsx` (×2) | `` `${COLORS.cream}33` `` | `COLORS.creamVeryFaint` |
+| `app/dupe-finder.tsx` | `` `${COLORS.sage}CC` `` | `COLORS.sageAlpha80` |
+| `app/trip-receipt.tsx` | `` `${COLORS.sage}CC` `` | `COLORS.sageAlpha80` |
+| `app/trip-wrapped.tsx` | `` `${COLORS.sage}CC` `` | `COLORS.sageAlpha80` |
+| `app/chaos-mode.tsx` | `` `${COLORS.gold}cc` `` | `COLORS.goldAlpha80` |
+| `app/chaos-dare.tsx` | `` `${COLORS.gold}cc` `` | `COLORS.goldAlpha80` |
+| `app/visited-map.tsx` | `sage+'40'` | `COLORS.sageBorder` |
+| `app/people-met.tsx` | `sage+'40'` | `COLORS.sageBorder` |
+| `app/roam-for-dates.tsx` | `sage+'25'` | `COLORS.sageHighlight` |
+| `components/features/LiveCompanionFAB.tsx` | `` `${COLORS.cream}44` `` | `COLORS.creamFaint` |
+| `app/profile.tsx` (×2) | `gold+'20'`, `gold+'40'` | `goldMutedLight`, `goldBorderStrong` |
+| `components/monetization/PostTripUpgradeNudge.tsx` | `gold+'30'` | `COLORS.goldBorder` |
+| `components/monetization/SubscriptionCard.tsx` (×3) | `gold+'18'`, `gold+'08'`, `gold+'30'` | `goldSubtle`, `goldVeryFaint`, `goldBorder` |
+| `components/features/ExploreHub.tsx` (×3) | `gold+'30'`, `gold+'20'`, `gold+'40'` | `goldBorder`, `goldMutedLight`, `goldBorderStrong` |
+
+### Raw rgba() Fixes
+
+| File | Before | After | Token used |
 |---|---|---|---|
-| `app/(tabs)/index.tsx` | 145 | `rgba(0,0,0,0.35)`, `rgba(0,0,0,0.75)` | LinearGradient `colors` array on destination card | 
-| `app/itinerary.tsx` | 2363 | `rgba(255,255,255,0.06)` | `borderTopColor` — matches `COLORS.border` exactly |
+| `app/itinerary.tsx:2393` | `'rgba(255,255,255,0.06)'` | `COLORS.border` | Exact match |
+| `app/(tabs)/index.tsx:149` | `'rgba(0,0,0,0.35)'` | `COLORS.overlaySoft` | Closest (30%) |
+| `app/(tabs)/index.tsx:149` | `'rgba(0,0,0,0.75)'` | `COLORS.overlayDark` | Closest (70%) |
+| `components/features/StreakBadge.tsx:57` | `'rgba(245,158,11,0.3)'` | `COLORS.warningBorder` | New token |
 
-**Fix for itinerary.tsx:** `borderTopColor: 'rgba(255,255,255,0.06)'` → `borderTopColor: COLORS.border`  
-**Fix for index.tsx:** `'rgba(0,0,0,0.35)'` → `COLORS.overlayMedium`; `'rgba(0,0,0,0.75)'` → `COLORS.overlayDarkDim`
+### Alpha Modifier Token Mapping Reference
+
+| Hex suffix | Opacity | Use this token |
+|---|---|---|
+| `sage + '05'/'06'` | 2–4% | `COLORS.sageVeryFaint` / `COLORS.sageFaint` |
+| `sage + '12'/'14'` | ~7% | `COLORS.sageSubtle` |
+| `sage + '20'` | 12.5% | `COLORS.sageMuted` |
+| `sage + '25'` | 14.5% | `COLORS.sageHighlight` |
+| `sage + '30'` | 18.8% | `COLORS.sageLight` |
+| `sage + '40'` | 25.1% | `COLORS.sageBorder` |
+| `sage + '50'` | 31.4% | `COLORS.sageStrong` |
+| `sage + '60'` | 37.6% | `COLORS.sageMedium` |
+| `sage + 'CC'` | 80% | `COLORS.sageAlpha80` *(new)* |
+| `gold + '03'/'04'` | ~1.5% | `COLORS.goldVeryFaint` |
+| `gold + '08'` | 3.1% | `COLORS.goldVeryFaint` |
+| `gold + '15'` | 8.2% | `COLORS.goldSoft` |
+| `gold + '18'` | 9.4% | `COLORS.goldSubtle` |
+| `gold + '20'` | 12.5% | `COLORS.goldMutedLight` |
+| `gold + '30'` | 18.8% | `COLORS.goldBorder` |
+| `gold + '40'` | 25.1% | `COLORS.goldBorderStrong` |
+| `gold + 'cc'` | 80% | `COLORS.goldAlpha80` *(new)* |
+| `coral + '30'` | 18.8% | `COLORS.coralLight` |
+| `cream + '33'` | 20% | `COLORS.creamVeryFaint` |
+| `cream + '44'` | 26.7% | `COLORS.creamFaint` |
 
 ### C. Cosmetically-Intentional Numeric Radius (Not tokenizable — documented)
 

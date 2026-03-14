@@ -26,6 +26,7 @@ export const COLORS = {
   sageSoft: 'rgba(124,175,138,0.1)',
   sageVeryFaint: 'rgba(124,175,138,0.05)',
   sageMedium: 'rgba(124,175,138,0.4)',
+  sageAlpha80: 'rgba(124,175,138,0.8)',
   creamDim: 'rgba(245,237,216,0.4)',
   creamFaint: 'rgba(245,237,216,0.25)',
   creamSoft: 'rgba(245,237,216,0.6)',
@@ -96,6 +97,7 @@ export const COLORS = {
   goldBorderStrong: 'rgba(201,168,76,0.3)',
   goldDim: 'rgba(201,168,76,0.4)',
   goldMutedDim: 'rgba(201,168,76,0.5)',
+  goldAlpha80: 'rgba(201,168,76,0.8)',
   goldDark: '#B8943F',
   goldBright: '#E8B84A',
   // Danger / red / chaos
@@ -122,6 +124,7 @@ export const COLORS = {
   // Warning / amber
   warningHighlight: 'rgba(245,158,11,0.2)',
   warningSubtle: 'rgba(245,158,11,0.15)',
+  warningBorder: 'rgba(245,158,11,0.3)',
   // Brand accents (alter-ego, airline, etc.)
   sageDark: '#5a9a6a',
   sageDarkMuted: '#6A9A78',

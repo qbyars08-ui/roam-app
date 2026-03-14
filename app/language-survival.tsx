@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   } as ViewStyle,
   cityChipActive: {
-    backgroundColor: COLORS.sage + '25',
+    backgroundColor: COLORS.sageHighlight,
     borderColor: COLORS.sage,
   } as ViewStyle,
   cityChipFlag: {
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
     gap: 4,
   } as ViewStyle,
   catChipActive: {
-    backgroundColor: COLORS.gold + '20',
+    backgroundColor: COLORS.goldMutedLight,
     borderColor: COLORS.gold,
   } as ViewStyle,
   catEmoji: {
@@ -398,7 +398,7 @@ const styles = StyleSheet.create({
   atStopBadge: {
     marginTop: 8,
     alignSelf: 'flex-start',
-    backgroundColor: COLORS.sage + '20',
+    backgroundColor: COLORS.sageMuted,
     paddingHorizontal: SPACING.sm,
     paddingVertical: 2,
     borderRadius: RADIUS.sm,
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.gold + '15',
+    backgroundColor: COLORS.goldSoft,
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
