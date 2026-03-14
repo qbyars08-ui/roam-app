@@ -319,9 +319,7 @@ export default function RootLayout() {
 
   const posthogClient = getPostHogClient();
 
-  return (
-    <ErrorBoundary>
-      <PostHogProvider client={posthogClient} autocapture={false}>
+  const appContent = (
       <GestureHandlerRootView style={{ flex: 1 }}>
         <PhoneFrame>
           <OfflineBanner />
@@ -565,7 +563,17 @@ export default function RootLayout() {
         />
         <StatusBar style="light" />
       </GestureHandlerRootView>
-      </PostHogProvider>
+  );
+
+  return (
+    <ErrorBoundary>
+      {posthogClient ? (
+        <PostHogProvider client={posthogClient} autocapture={false}>
+          {appContent}
+        </PostHogProvider>
+      ) : (
+        appContent
+      )}
     </ErrorBoundary>
   );
 }
