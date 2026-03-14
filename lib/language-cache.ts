@@ -17,7 +17,7 @@ export async function cacheLanguagePack(pack: LanguagePack): Promise<void> {
   try {
     const cached: CachedPack = { pack, cachedAt: Date.now() };
     await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(cached));
-  } catch {}
+  } catch { /* silent */ }
 }
 
 export async function getCachedLanguagePack(): Promise<LanguagePack | null> {

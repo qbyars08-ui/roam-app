@@ -39,7 +39,7 @@ function getDeviceLanguage(): SupportedLanguage {
         return deviceLang as SupportedLanguage;
       }
     }
-  } catch {}
+  } catch { /* silent */ }
   return 'en';
 }
 
@@ -52,14 +52,14 @@ export async function getPersistedLocale(): Promise<SupportedLanguage | null> {
     if (stored && SUPPORTED_LANGUAGES.some((l) => l.code === stored)) {
       return stored as SupportedLanguage;
     }
-  } catch {}
+  } catch { /* silent */ }
   return null;
 }
 
 export async function persistLocale(locale: SupportedLanguage): Promise<void> {
   try {
     await AsyncStorage.setItem(LOCALE_STORAGE_KEY, locale);
-  } catch {}
+  } catch { /* silent */ }
 }
 
 // ---------------------------------------------------------------------------

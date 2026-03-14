@@ -83,7 +83,7 @@ export async function recordBannerDismiss(variant: BannerVariant): Promise<void>
     const dismissed: Record<string, number> = raw ? JSON.parse(raw) : {};
     dismissed[variant] = Date.now();
     await AsyncStorage.setItem(BANNER_DISMISSED_KEY, JSON.stringify(dismissed));
-  } catch {}
+  } catch { /* silent */ }
 }
 
 // ---------------------------------------------------------------------------

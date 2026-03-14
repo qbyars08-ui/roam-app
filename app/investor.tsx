@@ -312,7 +312,7 @@ function computeUnitEconomics(metrics: LiveMetrics): UnitEconomics {
   const ltvCacRatio = ESTIMATED_CAC > 0 ? ltvProjection / ESTIMATED_CAC : 0;
   const arpu = metrics.totalUsers > 0 ? mrr / metrics.totalUsers : 0;
 
-  let churnRiskCount = 0;
+  const churnRiskCount = 0;
   // computed async below; placeholder
   return {
     mrr,

@@ -14,9 +14,6 @@ export default function OfflineBanner() {
   const [translateY] = useState(() => new Animated.Value(-50));
   const { t } = useTranslation();
 
-  // Skip on web — banner not relevant for browser
-  if (Platform.OS === 'web') return null;
-
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
       const offline = !(state.isConnected && state.isInternetReachable !== false);
@@ -33,6 +30,9 @@ export default function OfflineBanner() {
       friction: 12,
     }).start();
   }, [isOffline, translateY]);
+
+  // Skip on web — banner not relevant for browser
+  if (Platform.OS === 'web') return null;
 
   return (
     <Animated.View

@@ -159,7 +159,7 @@ export default function RootLayout() {
         }
       });
       subscription = result.data.subscription;
-    } catch {}
+    } catch { /* silent */ }
 
     return () => {
       subscription?.unsubscribe();
@@ -200,7 +200,7 @@ export default function RootLayout() {
         await requestNotificationPermission();
         await scheduleDailyDiscovery();
         await registerPushToken(session.user.id);
-      } catch {}
+      } catch { /* silent */ }
 
       checkActiveTripOnLoad();
       recordAppOpen();

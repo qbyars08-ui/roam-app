@@ -133,7 +133,7 @@ function generateExperiences(destination: string, purposes: string[]): Experienc
     ],
   };
 
-  let exps = destData[destination] ?? [];
+  const exps = destData[destination] ?? [];
 
   // Filter by trip purposes
   if (purposes.length > 0) {
