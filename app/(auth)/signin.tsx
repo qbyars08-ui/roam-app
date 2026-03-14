@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 import { useAppStore } from '../../lib/store';
 import { enterGuestMode } from '../../lib/guest';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { ONBOARDING_COMPLETE } from '../../lib/storage-keys';
 import Button from '../../components/ui/Button';
@@ -28,6 +29,7 @@ import Button from '../../components/ui/Button';
 const isWeb = Platform.OS === 'web';
 
 export default function SignInScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const setSession = useAppStore((s) => s.setSession);
@@ -103,12 +105,12 @@ export default function SignInScreen() {
         accessibilityRole="button"
         accessibilityLabel="Go back"
       >
-        <Text style={styles.backText}>Back</Text>
+        <Text style={styles.backText}>{t('common.back')}</Text>
       </Pressable>
 
       {/* Header */}
       <View style={styles.headerContainer}>
-        <Text style={styles.title}>{isSignUp ? 'Join ROAM' : 'Welcome back'}</Text>
+        <Text style={styles.title}>{isSignUp ? 'Join ROAM' : t('auth.welcomeBack')}</Text>
         <Text style={styles.subtitle}>
           {isSignUp
             ? 'Takes 30 seconds. Then we build your first trip.'
@@ -119,12 +121,12 @@ export default function SignInScreen() {
       {/* Form */}
       <View style={styles.form}>
         <View style={styles.inputWrapper}>
-          <Text style={styles.inputLabel}>EMAIL</Text>
+          <Text style={styles.inputLabel}>{t('auth.email').toUpperCase()}</Text>
           <TextInput
             style={styles.input}
             value={email}
             onChangeText={setEmail}
-            placeholder="you@example.com"
+            placeholder={t('auth.emailPlaceholder')}
             placeholderTextColor={`${COLORS.cream}33`}
             keyboardType="email-address"
             autoCapitalize="none"
@@ -134,12 +136,12 @@ export default function SignInScreen() {
         </View>
 
         <View style={styles.inputWrapper}>
-          <Text style={styles.inputLabel}>PASSWORD</Text>
+          <Text style={styles.inputLabel}>{t('auth.password').toUpperCase()}</Text>
           <TextInput
             style={styles.input}
             value={password}
             onChangeText={setPassword}
-            placeholder="Enter your password"
+            placeholder={t('auth.passwordPlaceholder')}
             placeholderTextColor={`${COLORS.cream}33`}
             secureTextEntry
             autoCapitalize="none"
@@ -148,7 +150,7 @@ export default function SignInScreen() {
         </View>
 
         <Button
-          label={isSignUp ? 'Get started' : 'Sign in'}
+          label={isSignUp ? t('common.getStarted') : t('auth.signInButton')}
           variant="sage"
           onPress={handleAuth}
           loading={loading}
@@ -161,7 +163,7 @@ export default function SignInScreen() {
             {isSignUp ? 'Already here? ' : "New here? "}
           </Text>
           <Text style={styles.toggleLink}>
-            {isSignUp ? 'Sign in' : 'Create account'}
+            {isSignUp ? t('auth.signIn') : t('auth.createAccount')}
           </Text>
         </Pressable>
 
@@ -170,7 +172,7 @@ export default function SignInScreen() {
             onPress={handleContinueAsGuest}
             style={({ pressed }) => [styles.guestBtn, { opacity: pressed ? 0.85 : 1 }]}
           >
-            <Text style={styles.guestBtnText}>Continue as guest</Text>
+            <Text style={styles.guestBtnText}>{t('auth.continueAsGuest')}</Text>
           </Pressable>
         )}
       </View>

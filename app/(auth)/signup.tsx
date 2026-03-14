@@ -22,6 +22,7 @@ import * as Haptics from '../../lib/haptics';
 import { supabase } from '../../lib/supabase';
 import { useAppStore } from '../../lib/store';
 import { enterGuestMode } from '../../lib/guest';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { ONBOARDING_COMPLETE } from '../../lib/storage-keys';
 
@@ -29,6 +30,7 @@ const DEV = __DEV__;
 const isWeb = Platform.OS === 'web';
 
 export default function SignUpScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const setSession = useAppStore((s) => s.setSession);
@@ -174,7 +176,7 @@ export default function SignUpScreen() {
             alignItems: 'center',
           }}
         >
-          <Text style={styles.brand}>ROAM</Text>
+          <Text style={styles.brand}>{t('common.appName')}</Text>
           <Text style={styles.title}>Your trips are about{'\n'}to get way better</Text>
         </Animated.View>
 
@@ -191,28 +193,28 @@ export default function SignUpScreen() {
           <Pressable
             onPress={handleGoogleSignIn}
             accessibilityRole="button"
-            accessibilityLabel="Continue with Google"
+            accessibilityLabel={t('auth.continueWith', { provider: 'Google' })}
             style={({ pressed }) => [
               styles.socialBtn,
               styles.googleBtn,
               { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
             ]}
           >
-            <Text style={styles.socialBtnText}>Continue with Google</Text>
+            <Text style={styles.socialBtnText}>{t('auth.continueWith', { provider: 'Google' })}</Text>
           </Pressable>
 
           {/* Email */}
           <Pressable
             onPress={() => router.push('/(auth)/signin')}
             accessibilityRole="button"
-            accessibilityLabel="Continue with Email"
+            accessibilityLabel={t('auth.continueWith', { provider: 'Email' })}
             style={({ pressed }) => [
               styles.socialBtn,
               styles.emailBtn,
               { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
             ]}
           >
-            <Text style={styles.emailBtnText}>Continue with Email</Text>
+            <Text style={styles.emailBtnText}>{t('auth.continueWith', { provider: 'Email' })}</Text>
           </Pressable>
         </Animated.View>
 
@@ -224,14 +226,14 @@ export default function SignUpScreen() {
               style={styles.termsLink}
               onPress={() => router.push('/terms')}
             >
-              Terms of Service
+              {t('paywall.terms')}
             </Text>
             {'\n'}and{' '}
             <Text
               style={styles.termsLink}
               onPress={() => router.push('/privacy')}
             >
-              Privacy Policy
+              {t('paywall.privacy')}
             </Text>
             .
           </Text>
@@ -241,13 +243,13 @@ export default function SignUpScreen() {
           <Pressable
             onPress={handleContinueAsGuest}
             accessibilityRole="button"
-            accessibilityLabel="Continue as guest"
+            accessibilityLabel={t('auth.continueAsGuest')}
             style={({ pressed }) => [
               styles.guestBtn,
               { opacity: pressed ? 0.85 : 1 },
             ]}
           >
-            <Text style={styles.guestBtnText}>Continue as guest</Text>
+            <Text style={styles.guestBtnText}>{t('auth.continueAsGuest')}</Text>
           </Pressable>
         )}
       </View>
