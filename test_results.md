@@ -2,7 +2,7 @@
 
 **Status: GREEN**
 **Date: 2026-03-14**
-**Total: 423 tests, 14 suites — all passing**
+**Total: 558 tests, 18 suites — all passing**
 
 ---
 
@@ -24,6 +24,10 @@
 | `__tests__/referral.test.ts` | 57 | PASS | `lib/referral.ts` |
 | `__tests__/affiliates.test.ts` | 47 | PASS | `lib/affiliates.ts` |
 | `__tests__/sharing.test.ts` | 38 | PASS | `lib/sharing.ts` |
+| `__tests__/destination-image-fallback.test.tsx` | 24 | PASS | `components/ui/DestinationImageFallback.tsx` |
+| `__tests__/destination-theme-overlay.test.tsx` | 45 | PASS | `components/ui/DestinationThemeOverlay.tsx` |
+| `__tests__/destination-intel.test.ts` | 54 | PASS | DestinationIntelCard deps (timezone, geocoding, weather, exchange-rates, public-holidays) |
+| `__tests__/claude-proxy-admin.test.ts` | 34 | PASS | `supabase/functions/claude-proxy` admin bypass logic |
 
 ---
 
@@ -83,6 +87,41 @@
 - `setTrips()` bulk replace and clear
 
 ---
+
+## New Coverage (2026-03-14, Agent 01 — Component + Admin Bypass)
+
+### `DestinationImageFallback` (24 tests — `destination-image-fallback.test.tsx`)
+- Renders without crashing for known/unknown/empty destinations
+- Correct destination name and optional country text rendered in tree
+- Known destination gradient colors (8 cities): Tokyo cherry blossom, Paris lavender, Bali green, NY blue, Barcelona coral, Rome gold, London slate, Bangkok amber
+- Unknown destination falls back to default sage `rgba(124,175,138,0.4)`
+- Gradient has exactly 2 stops; first is `rgba(r,g,b,0.4)`, second is `COLORS.bg`
+- Height prop: defaults to 200, custom height applied correctly
+
+### `DestinationThemeOverlay` (45 tests — `destination-theme-overlay.test.tsx`)
+- Pure `getThemeColor()` logic tested across all 19 known destination entries
+- All known city → rgba mappings verified individually
+- Kyoto has softer alpha (0.04) vs Tokyo (0.05) — regression guard
+- Unknown destinations fall back to `rgba(124,175,138,0.03)` (default sage)
+- Case normalisation: `TOKYO`, `tokyo`, `  Tokyo  ` all resolve identically
+- Multi-word normalisation: `NEW YORK`, `CAPE TOWN`, `BUENOS AIRES`
+- Structural: all 19 keys are lowercase; all values are valid rgba strings; all alphas ≤ 0.05
+
+### `DestinationIntelCard` dependency pipeline (54 tests — `destination-intel.test.ts`)
+- `getTimezoneByDestination()` — 11 cities, null for unknown, case-insensitive, trims whitespace
+- `getCountryCode()` — 9 cities, null for unknown, case-insensitive, trims
+- `getPublicHolidays()` — API fetch, cache hit, cache expiry, HTTP error, network throw
+- `getHolidaysDuringTrip()` — in-range, out-of-range, empty result
+- `geocodeCity()` — cache hit, API fetch, null on error, null on empty results, network throw, name normalisation
+- `getWeatherForecast()` — API fetch (2 days), cache hit, null on error, null on missing daily data, WMO code 0 → 'Clear sky', WMO code 95 → 'Thunderstorm'
+- `getExchangeRates()` — API fetch, cache hit, null on failure, null on missing rates, network throw
+- `convertCurrency()` — USD→JPY, USD→EUR, same currency, unknown currency, cross-rate (JPY→EUR)
+
+### Admin bypass in `supabase/functions/claude-proxy` (34 tests — `claude-proxy-admin.test.ts`)
+- `parseAdminEmails()` — undefined, empty string, whitespace-only, single email, comma-separated list, uppercase normalised, whitespace trimmed, double commas filtered, documented admin email `qbyars08@gmail.com`
+- `isAdminUser()` — known admin matches, non-admin rejects, case-insensitive, empty email, empty list, partial match rejected
+- `shouldRateLimit()` — admin bypass with free tier + over limit, admin bypass over limit by 100×, non-admin at limit is limited, empty subscription treated as free, below limit not limited, Pro bypasses, chat (isTripGeneration=false) never limited
+- End-to-end: `qbyars08@gmail.com` in env bypasses; same trip count limits a regular user; multiple admins all bypass; FREE_TIER_LIMIT = 1 boundary
 
 ## Infrastructure Fix
 - `jest.setup.js` — fixed Share/Alert/Linking mocks: react-native 0.83 accesses these modules via `.default` on the subpath require; added `.default` export to all three so mocked modules are correctly resolved.
