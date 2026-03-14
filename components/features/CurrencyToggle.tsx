@@ -15,7 +15,6 @@ import {
 } from 'react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import {
-  setHomeCurrency as persistHomeCurrency,
   getCurrencySymbol,
   getCurrencyName,
   fetchExchangeRates,

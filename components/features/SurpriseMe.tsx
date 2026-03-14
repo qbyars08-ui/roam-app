@@ -3,7 +3,7 @@
 // Full-width 100px card, rotating destination photos, Cormorant Garamond
 // Never black. Real photos only.
 // =============================================================================
-import React, { memo, useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,

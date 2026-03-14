@@ -201,7 +201,7 @@ export default function GroupVoteCard({
       {suggestions.length > 0 && (
         <View style={styles.suggestionsBlock}>
           {suggestions.map((s, i) => {
-            const voter = votes.find(
+            const _voter = votes.find(
               (v) => v.voteType === 'suggest' && v.suggestion === s
             );
             return (

@@ -13,7 +13,6 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
-import { Calendar } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { getLocalEvents, type LocalEvent, type EventCategory } from '../../lib/local-events';
 

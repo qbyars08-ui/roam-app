@@ -22,11 +22,6 @@ interface GenerateModeSelectProps {
   onSelect: (mode: GenerateMode) => void;
 }
 
-const CARD_ACENTS: Record<GenerateMode, string> = {
-  quick: COLORS.sage,
-  conversation: COLORS.gold,
-};
-
 export default function GenerateModeSelect({ onSelect }: GenerateModeSelectProps) {
   const { t } = useTranslation();
   const fade = useRef(new Animated.Value(0)).current;

@@ -4,7 +4,6 @@
 // =============================================================================
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  Dimensions,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -36,7 +35,6 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { callClaude, ITINERARY_SYSTEM_PROMPT } from '../../lib/claude';
 import type { TimeSlotActivity } from '../../lib/types/itinerary';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // ---------------------------------------------------------------------------
 // AI Refine actions — each sends a targeted prompt to Claude
@@ -211,7 +209,7 @@ export default function ActivityEditModal({
       if (parsed.address) setAddress(parsed.address);
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch (err) {
+    } catch {
       setRefineError('AI suggestion failed. Try again or edit manually.');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {

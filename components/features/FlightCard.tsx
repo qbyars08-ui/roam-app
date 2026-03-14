@@ -4,7 +4,6 @@
 // =============================================================================
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  Linking,
   Pressable,
   StyleSheet,
   Text,

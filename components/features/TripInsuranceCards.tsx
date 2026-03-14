@@ -22,7 +22,7 @@ function InsuranceCard({
   tagline,
   gradientColors,
   url,
-  onPress,
+  onPress: _onPress,
 }: {
   name: string;
   tagline: string;

@@ -50,7 +50,7 @@ const SPLIT_TYPES: Array<{ id: TripExpense['splitType']; label: string; desc: st
 
 export default function GroupExpenseCard({
   members,
-  currentUserId,
+  currentUserId: _currentUserId,
   onSubmit,
   onDismiss,
 }: GroupExpenseCardProps) {

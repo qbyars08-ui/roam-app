@@ -3,7 +3,7 @@
 // Shows visa requirements before trip generation (US + Austrian passports)
 // =============================================================================
 import React from 'react';
-import { Pressable, StyleSheet, Text, View, type ViewStyle, type TextStyle } from 'react-native';
+import { StyleSheet, Text, View, type ViewStyle, type TextStyle } from 'react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { getVisaInfo, getVisaStatusMessage, PASSPORT_FLAGS, type PassportNationality } from '../../lib/visa-intel';
 import { FileCheck } from 'lucide-react-native';

@@ -3,10 +3,8 @@
 // Shown when user has been to destination before
 // =============================================================================
 import React, { useMemo } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
-import * as Haptics from '../../lib/haptics';
-import { RotateCcw, Clock } from 'lucide-react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { RotateCcw } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import type { Trip } from '../../lib/store';
 
@@ -24,7 +22,6 @@ export default function ReturnTripSection({
   currentTripId,
   whatsNew,
 }: ReturnTripSectionProps) {
-  const router = useRouter();
   const priorVisit = useMemo(() => {
     const dest = destination.toLowerCase();
     const prior = trips

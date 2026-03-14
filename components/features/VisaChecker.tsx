@@ -15,7 +15,6 @@ import {
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import {
   getVisaInfo,
-  getVisaStatusMessage,
   type PassportNationality,
 } from '../../lib/visa-intel';
 import { useAppStore } from '../../lib/store';
@@ -47,7 +46,7 @@ export default function VisaChecker({ destination, variant = 'full' }: VisaCheck
 
   if (!result) return null;
 
-  const { info, label, color, countryCode, statusMessage } = result;
+  const { info, label, color, statusMessage } = result;
 
   if (variant === 'compact') {
     return (

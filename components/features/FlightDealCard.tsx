@@ -21,7 +21,7 @@ interface FlightDealCardProps {
   onDealAlert?: (message: string) => void;
 }
 
-export default function FlightDealCard({ destination, onDealAlert }: FlightDealCardProps) {
+export default function FlightDealCard({ destination, onDealAlert: _onDealAlert }: FlightDealCardProps) {
   const [watched, setWatched] = useState<SavedDestination | null>(null);
   const [loading, setLoading] = useState(false);
 

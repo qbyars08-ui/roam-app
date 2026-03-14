@@ -13,17 +13,6 @@ interface LanguageSurvivalSectionProps {
   destination: string;
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  greetings: 'Greetings',
-  ordering: 'Ordering food',
-  food: 'Food & drink',
-  directions: 'Getting around',
-  transport: 'Transport',
-  emergency: 'Emergency',
-  shopping: 'Shopping',
-  social: 'Social',
-};
-
 export default function LanguageSurvivalSection({ destination }: LanguageSurvivalSectionProps) {
   const [expanded, setExpanded] = useState(false);
   const phrases = getPhrasesForDestination(destination);

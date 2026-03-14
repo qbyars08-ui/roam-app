@@ -2,7 +2,7 @@
 // ROAM — Generate Conversation Mode (chat-based trip planning)
 // Context-aware chips, live trip brief, premium conversational UX
 // =============================================================================
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -13,8 +13,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  type ViewStyle,
-  type TextStyle,
 } from 'react-native';
 import * as Haptics from '../../lib/haptics';
 import {
