@@ -47,6 +47,7 @@ import {
   type LucideIcon,
 } from 'lucide-react-native';
 
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore, type Trip } from '../../lib/store';
 import {
@@ -210,18 +211,21 @@ function SafetyScoreHero({
 }
 
 // ---------------------------------------------------------------------------
-// Section Pills
+// Section Pills (labelKey = i18n key when present)
 // ---------------------------------------------------------------------------
-const SECTIONS = [
-  { id: 'schedule' as const, label: 'Schedule' },
-  { id: 'overview' as const, label: 'Overview' },
-  { id: 'emergency' as const, label: 'Emergency' },
-  { id: 'health' as const, label: 'Health' },
-  { id: 'language' as const, label: 'Language' },
-  { id: 'visa' as const, label: 'Visa' },
-  { id: 'currency' as const, label: 'Currency' },
-  { id: 'connectivity' as const, label: 'SIM & WiFi' },
-  { id: 'culture' as const, label: 'Culture' },
+const SECTIONS: Array<
+  | { id: 'schedule' | 'overview' | 'currency' | 'connectivity' | 'culture'; label: string }
+  | { id: 'emergency' | 'health' | 'language' | 'visa'; labelKey: string }
+> = [
+  { id: 'schedule', label: 'Schedule' },
+  { id: 'overview', label: 'Overview' },
+  { id: 'emergency', labelKey: 'prep.emergency' },
+  { id: 'health', labelKey: 'prep.health' },
+  { id: 'language', labelKey: 'prep.language' },
+  { id: 'visa', labelKey: 'prep.visa' },
+  { id: 'currency', label: 'Currency' },
+  { id: 'connectivity', label: 'SIM & WiFi' },
+  { id: 'culture', label: 'Culture' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -1022,6 +1026,7 @@ function NoDataState({ destination }: { destination: string }) {
 // Main Screen
 // ---------------------------------------------------------------------------
 function PrepScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const netInfo = useNetInfo();
   const isConnected = netInfo.isConnected ?? true;
@@ -1136,7 +1141,7 @@ function PrepScreen() {
                         isActive && styles.pillTextActive,
                       ]}
                     >
-                      {s.label}
+                      {'labelKey' in s ? t(s.labelKey) : s.label}
                     </Text>
                   </Pressable>
                 );
