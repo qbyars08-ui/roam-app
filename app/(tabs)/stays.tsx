@@ -13,6 +13,7 @@ import {
   Platform,
   Animated,
   Dimensions,
+  ImageBackground,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
@@ -38,6 +39,7 @@ import {
   ExternalLink,
 } from 'lucide-react-native';
 import { getCoordsForDestination } from '../../lib/destination-coords';
+import { getDestinationPhoto, BACKUP_FALLBACK } from '../../lib/photos';
 import { SkeletonCard } from '../../components/premium/LoadingStates';
 import * as Linking from 'expo-linking';
 import { getHotelLink, openBookingLink } from '../../lib/booking-links';
@@ -209,7 +211,7 @@ function MapPlaceholder() {
         ))}
       </View>
       <MapPin size={32} color={COLORS.sage} strokeWidth={2} />
-      <Text style={styles.mapPlaceholderLabel}>Map view</Text>
+      <Text style={styles.mapPlaceholderLabel}>Interactive map on mobile</Text>
     </View>
   );
 }
@@ -339,8 +341,6 @@ function StayCard({
     onPress();
   }, [onPress, scaleAnim]);
 
-  const gradient = getGradientForStay(destination, index);
-
   return (
     <Animated.View
       style={[
@@ -358,11 +358,18 @@ function StayCard({
         accessibilityLabel={`${stay.name}, ${stay.neighborhood}`}
       >
         <View style={styles.cardPhotoWrap}>
-          <LinearGradient
-            colors={[gradient[0], gradient[1], COLORS.bg]}
-            locations={[0, 0.6, 1]}
+          <ImageBackground
+            source={{ uri: getDestinationPhoto(destination) }}
             style={styles.cardPhoto}
-          />
+            imageStyle={{ resizeMode: 'cover' }}
+            defaultSource={{ uri: BACKUP_FALLBACK }}
+          >
+            <LinearGradient
+              colors={[COLORS.transparent, COLORS.overlayMedium, COLORS.overlayStrong]}
+              locations={[0.2, 0.65, 1]}
+              style={StyleSheet.absoluteFill}
+            />
+          </ImageBackground>
           <View style={styles.cardBadge}>
             <Text style={styles.cardBadgeText}>{stay.type}</Text>
           </View>
@@ -604,9 +611,20 @@ export default function StaysScreen() {
 
           {filteredStays.length === 0 ? (
             <View style={styles.emptyState}>
-              <Building2 size={48} color={COLORS.creamVeryFaint} strokeWidth={1.5} />
-            <Text style={styles.emptyTitle}>{t('stays.noResults')}</Text>
-            <Text style={styles.emptySub}>Try adjusting your filters</Text>
+              <Building2 size={48} color={COLORS.creamMuted} strokeWidth={1.5} />
+              <Text style={styles.emptyTitle}>{t('stays.noResults')}</Text>
+              <Text style={styles.emptySub}>
+                Nothing matches. Try Boutique or Hotel — or clear filters to see everything.
+              </Text>
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSelectedType('all');
+                }}
+                style={({ pressed }) => [styles.clearFiltersBtn, { opacity: pressed ? 0.8 : 1 }]}
+              >
+                <Text style={styles.clearFiltersBtnText}>Clear Filters</Text>
+              </Pressable>
             </View>
           ) : (
             filteredStays.map((stay, i) => (
@@ -862,24 +880,42 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: SPACING.xxl,
+    gap: SPACING.sm,
+    paddingHorizontal: SPACING.xl,
   } as ViewStyle,
   emptyCenter: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: SPACING.xl,
+    gap: SPACING.sm,
   } as ViewStyle,
   emptyTitle: {
-    fontFamily: FONTS.body,
-    fontSize: 16,
-    color: COLORS.creamMuted,
-    marginTop: SPACING.md,
+    fontFamily: FONTS.header,
+    fontSize: 22,
+    color: COLORS.cream,
+    textAlign: 'center',
   } as TextStyle,
   emptySub: {
     fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.creamDimLight,
-    marginTop: SPACING.xs,
+    fontSize: 14,
+    color: COLORS.creamMuted,
+    textAlign: 'center',
+    lineHeight: 21,
+  } as TextStyle,
+  clearFiltersBtn: {
+    marginTop: SPACING.sm,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.sm + 2,
+    backgroundColor: COLORS.bgElevated,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.whiteSoft,
+  } as ViewStyle,
+  clearFiltersBtnText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
+    color: COLORS.creamSoft,
   } as TextStyle,
   ctaBtn: {
     marginTop: SPACING.lg,

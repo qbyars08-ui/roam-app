@@ -11,7 +11,6 @@ import {
   ScrollView,
   StyleSheet,
   Modal,
-  ActivityIndicator,
   Animated,
   type ViewStyle,
   type TextStyle,
@@ -27,7 +26,9 @@ import {
   Plane,
   Minus,
   Plus,
+  Sparkles,
 } from 'lucide-react-native';
+import BreathingLine from '../../components/ui/BreathingLine';
 import { addDays, format, isSameDay, startOfDay } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
@@ -572,11 +573,14 @@ export default function FlightsScreen() {
         >
           {searching ? (
             <>
-              <ActivityIndicator size="small" color={COLORS.bg} />
-              <Text style={styles.searchBtnText}>{t('common.loading')}</Text>
+              <BreathingLine width={32} height={3} color={COLORS.bg} />
+              <Text style={styles.searchBtnText}>Scanning fares...</Text>
             </>
           ) : (
-            <Text style={styles.searchBtnText}>{t('flights.searchFlights')}</Text>
+            <>
+              <Sparkles size={18} color={COLORS.bg} strokeWidth={2} />
+              <Text style={styles.searchBtnText}>{t('flights.searchFlights')}</Text>
+            </>
           )}
         </Pressable>
       </View>
@@ -605,16 +609,25 @@ export default function FlightsScreen() {
           </View>
         ) : !searchPerformed ? (
           <View style={styles.emptyState}>
-            <PlaneTakeoff size={48} color={CREAM_10} strokeWidth={1.5} />
-            <Text style={styles.emptyText}>Search above to find flights</Text>
+            <PlaneTakeoff size={48} color={COLORS.creamMuted} strokeWidth={1.5} />
+            <Text style={styles.emptyTitle}>Find your next flight</Text>
+            <Text style={styles.emptySubtitle}>
+              Pick an origin, destination, and dates — live prices load in seconds.
+            </Text>
           </View>
         ) : results.length === 0 ? (
           <View style={styles.emptyState}>
-            <Plane size={48} color={CREAM_40} strokeWidth={1.5} />
+            <Plane size={48} color={COLORS.creamMuted} strokeWidth={1.5} />
             <Text style={styles.emptyTitle}>{t('flights.noResults')}</Text>
             <Text style={styles.emptySubtitle}>
-              Try different dates or airports
+              No flights found for those dates. Try shifting by a day or two — prices change fast.
             </Text>
+            <Pressable
+              onPress={() => setSearchPerformed(false)}
+              style={({ pressed }) => [styles.retryBtn, { opacity: pressed ? 0.8 : 1 }]}
+            >
+              <Text style={styles.retryBtnText}>Adjust Search</Text>
+            </Pressable>
           </View>
         ) : (
           <>
@@ -647,8 +660,12 @@ export default function FlightsScreen() {
               >
                 <View style={styles.cardTop}>
                   <Text style={styles.airlineName}>{flight.airlineName}</Text>
-                  <View style={[styles.airlineLogo, { backgroundColor: COLORS.sageLight }]}>
-                    <Text style={styles.airlineCode}>{flight.airlineCode}</Text>
+                  <View style={[styles.airlineLogo, {
+                    backgroundColor: flight.isBestDeal ? COLORS.sageSubtle : flight.isFastest ? COLORS.goldFaint : COLORS.bgCard,
+                    borderWidth: 1,
+                    borderColor: flight.isBestDeal ? COLORS.sageBorder : flight.isFastest ? COLORS.goldBorder : COLORS.border,
+                  }]}>
+                    <Plane size={16} color={flight.isBestDeal ? COLORS.sage : flight.isFastest ? COLORS.gold : COLORS.creamMuted} strokeWidth={2} />
                   </View>
                 </View>
                 <View style={styles.timeRow}>
@@ -1027,11 +1044,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
-  airlineCode: {
-    fontFamily: FONTS.mono,
-    fontSize: 12,
-    color: COLORS.sage,
-  } as TextStyle,
   timeRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1135,22 +1147,20 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingTop: 8,
   } as ViewStyle,
-  skeletonFlightCard: {
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.lg,
+
+  // ── Retry / adjust search button ──
+  retryBtn: {
+    marginTop: SPACING.md,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.sm + 2,
+    backgroundColor: COLORS.bgElevated,
+    borderRadius: RADIUS.full,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: 16,
+    borderColor: COLORS.whiteSoft,
   } as ViewStyle,
-  skeletonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  } as ViewStyle,
-  skeletonBlock: {
-    backgroundColor: COLORS.bgGlass,
-    borderRadius: RADIUS.sm,
-    height: 14,
-    width: 80,
-  } as ViewStyle,
+  retryBtnText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
+    color: COLORS.creamSoft,
+  } as TextStyle,
 });

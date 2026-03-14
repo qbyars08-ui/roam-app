@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Bookmark, ExternalLink, UtensilsCrossed } from 'lucide-react-native';
 import * as Linking from 'expo-linking';
+import { useRouter } from 'expo-router';
 
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore, getActiveTrip } from '../../lib/store';
@@ -234,6 +235,7 @@ const FOOD_CATEGORIES: FoodCategory[] = [
 export default function FoodScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const activeTrip = getActiveTrip();
   const planWizard = useAppStore((s) => s.planWizard);
   const bookmarkedIds = useAppStore((s) => s.bookmarkedRestaurantIds);
@@ -322,8 +324,17 @@ export default function FoodScreen() {
     return (
       <View style={[styles.screen, { paddingTop: insets.top }]}>
         <View style={styles.emptyState}>
-          <UtensilsCrossed size={48} color={COLORS.creamVeryFaint} strokeWidth={1.5} />
-          <Text style={styles.emptyTitle}>Add a destination to discover local food</Text>
+          <UtensilsCrossed size={48} color={COLORS.creamMuted} strokeWidth={1.5} />
+          <Text style={styles.emptyTitle}>Discover where the locals eat</Text>
+          <Text style={styles.emptyBody}>
+            Plan a trip first — we'll pull AI-curated food picks for your destination.
+          </Text>
+          <Pressable
+            onPress={() => router.push('/(tabs)/generate')}
+            style={({ pressed }) => [styles.emptyCtaBtn, { opacity: pressed ? 0.85 : 1 }]}
+          >
+            <Text style={styles.emptyCtaText}>Plan a Trip</Text>
+          </Pressable>
         </View>
       </View>
     );
@@ -469,7 +480,7 @@ export default function FoodScreen() {
             </View>
           ) : morePicks.length > 0 ? (
             <>
-              <Text style={styles.sectionTitle}>More picks</Text>
+              <Text style={styles.sectionTitle}>Local insider picks</Text>
               {morePicks.map((r) => {
                 const isBookmarked = bookmarkedIds.includes(r.id);
                 return (
@@ -549,7 +560,7 @@ export default function FoodScreen() {
       {/* Saved toast */}
       {savedToast && (
           <View style={styles.toastWrap}>
-          <Text style={styles.toastText}>Saved</Text>
+          <Text style={styles.toastText}>Saved to your list</Text>
         </View>
       )}
     </View>
@@ -822,6 +833,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: SPACING.xl,
+    gap: SPACING.sm,
   } as ViewStyle,
   emptyList: {
     alignItems: 'center',
@@ -840,11 +852,29 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
   } as TextStyle,
   emptyTitle: {
-    fontFamily: FONTS.body,
-    fontSize: 15,
-    color: COLORS.creamDim,
-    marginTop: SPACING.lg,
+    fontFamily: FONTS.header,
+    fontSize: 22,
+    color: COLORS.cream,
     textAlign: 'center',
+  } as TextStyle,
+  emptyBody: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.creamMuted,
+    textAlign: 'center',
+    lineHeight: 21,
+  } as TextStyle,
+  emptyCtaBtn: {
+    marginTop: SPACING.sm,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.md,
+    backgroundColor: COLORS.sage,
+    borderRadius: RADIUS.lg,
+  } as ViewStyle,
+  emptyCtaText: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 15,
+    color: COLORS.bg,
   } as TextStyle,
   toastWrap: {
     position: 'absolute',

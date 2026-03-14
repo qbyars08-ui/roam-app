@@ -12,10 +12,10 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { PulseLoader } from '../premium/LoadingStates';
 import * as Haptics from '../../lib/haptics';
 import {
   ArrowUp,
@@ -234,8 +234,7 @@ export default function GenerateConversationMode({
 
         {isLoading && (
           <View style={styles.loadingWrap}>
-            <ActivityIndicator size="small" color={COLORS.sage} />
-            <Text style={styles.loadingText}>thinking...</Text>
+            <PulseLoader color={COLORS.sage} size={7} />
           </View>
         )}
       </View>
@@ -252,7 +251,10 @@ export default function GenerateConversationMode({
           ]}
         >
           {isGenerating ? (
-            <ActivityIndicator size="small" color={COLORS.bg} />
+            <>
+              <Sparkles size={20} color={COLORS.bg} strokeWidth={2} />
+              <Text style={styles.generateBtnText}>Building your trip...</Text>
+            </>
           ) : (
             <>
               <Sparkles size={20} color={COLORS.bg} strokeWidth={2} />
@@ -489,13 +491,6 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: SPACING.lg,
   },
-  loadingText: {
-    fontFamily: FONTS.mono,
-    fontSize: 12,
-    color: COLORS.creamDim,
-    fontStyle: 'italic',
-  },
-
   // ── Generate button ──
   generateBtn: {
     flexDirection: 'row',

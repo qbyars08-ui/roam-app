@@ -26,6 +26,26 @@ Status board for Cursor agents. Cap reads this to coordinate work.
 
 ---
 
+## Agent 03 — Design Enforcer (Anti-Slop Audit)
+
+**Status:** COMPLETE  
+**Date:** 2026-03-14  
+**Branch:** `cursor/agent03-anti-slop-audit`  
+**Action needed:** No
+
+### Top 20 Violations Fixed
+
+- `app/(tabs)/flights.tsx`: `ActivityIndicator` in search btn → `BreathingLine` + "Scanning fares..."; `Sparkles` icon added to idle state; pre-search empty state: `CREAM_10` icon (invisible) → `creamMuted` + warm copy + title; no-results state: boilerplate copy → warm copy + "Adjust Search" pill CTA; airline logo `sageLight` circle-with-IATA-text → `Plane` icon on deal-aware colored bg; removed 3 dead `skeletonFlightCard/Row/Block` styles + dead `airlineCode` style
+- `app/(tabs)/stays.tsx`: **Card photo gradient replaced with real destination photo** (`ImageBackground` + `getDestinationPhoto` + `LinearGradient` vignette overlay); `emptyTitle` `FONTS.body/16` → `FONTS.header/22`; empty states now have `gap`; filter empty copy + "Clear Filters" pill CTA added; map placeholder → "Interactive map on mobile"
+- `app/(tabs)/food.tsx`: No-destination state now has title, body, "Plan a Trip" CTA with `router.push`; "More picks" → "Local insider picks"; "Saved" toast → "Saved to your list"
+- `app/(tabs)/group.tsx`: "Full map view coming soon" stub → "Tap a pin to see where your crew is"; "No trip yet" → "Gather your crew" with richer body copy
+- `components/generate/GenerateConversationMode.tsx`: `ActivityIndicator` "thinking..." → `PulseLoader` (brand dots); generate button `ActivityIndicator` alone → `Sparkles` icon + "Building your trip..."; dead `loadingText` style removed
+- `components/generate/GenerateQuickMode.tsx`: `ActivityIndicator` in primary CTA → `Sparkles` icon + "Building your perfect trip..."
+- `components/features/StreakBadge.tsx`: `'#F59E0B'` hardcoded hex → `COLORS.accentGold`
+- `npx tsc --noEmit` — zero new errors; all pre-existing (route type mismatch, posthog, react-i18next)
+
+---
+
 ## Agent 04 BUILDER — UI Polish (P3)
 
 **Status:** COMPLETE

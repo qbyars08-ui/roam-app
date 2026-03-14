@@ -13,7 +13,6 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
   Animated,
   Modal,
   type ViewStyle,
@@ -769,7 +768,7 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
         >
           {isGenerating ? (
             <>
-              <ActivityIndicator size="small" color={COLORS.bg} />
+              <Sparkles size={20} color={COLORS.bg} strokeWidth={2} />
               <Text style={styles.ctaLoading}>Building your perfect trip...</Text>
             </>
           ) : (

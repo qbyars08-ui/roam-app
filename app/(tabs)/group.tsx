@@ -581,7 +581,7 @@ function LocationMapPlaceholder({
         })}
       </View>
       <Text style={locationStyles.mapNote}>
-        Full map view coming soon
+        Tap a pin to see where your crew is
       </Text>
     </View>
   );
@@ -1203,9 +1203,9 @@ export default function GroupScreen() {
             ) : (
               <View style={styles.emptyState}>
                 <Users size={56} color={COLORS.sage} strokeWidth={1.5} />
-                <Text style={styles.emptyTitle}>No trip yet</Text>
+                <Text style={styles.emptyTitle}>Gather your crew</Text>
                 <Text style={styles.emptyBody}>
-                  Generate a trip first, then invite your crew.
+                  Generate a trip, then invite everyone — split expenses, vote on plans, share the itinerary.
                 </Text>
                 <Pressable
                   onPress={() => router.push('/(tabs)/generate')}
