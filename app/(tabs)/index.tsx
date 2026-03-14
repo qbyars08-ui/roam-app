@@ -372,8 +372,22 @@ export default function DiscoverScreen() {
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>
             {activeCategory === 'all'
-              ? 'Popular Destinations'
-              : DESTINATION_CATEGORIES.find((c) => c.id === activeCategory)?.label ?? 'Destinations'}
+              ? 'Where everyone is going right now'
+              : activeCategory === 'beaches'
+                ? 'Sand, salt, and zero agenda'
+                : activeCategory === 'mountains'
+                  ? 'High altitude, higher expectations'
+                  : activeCategory === 'cities'
+                    ? 'Concrete jungles worth the chaos'
+                    : activeCategory === 'food'
+                      ? 'Book the flight for the food alone'
+                      : activeCategory === 'adventure'
+                        ? 'Skip the tourist loop entirely'
+                        : activeCategory === 'budget'
+                          ? 'Big trips, small spend'
+                          : activeCategory === 'couples'
+                            ? 'Trips worth fighting over the window seat'
+                            : 'Destinations'}
           </Text>
           <Text style={styles.sectionCount}>
             {filteredDestinations.length} {filteredDestinations.length === 1 ? 'place' : 'places'}
@@ -480,7 +494,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     height: 48,
     gap: SPACING.sm,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
