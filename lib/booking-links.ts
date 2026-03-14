@@ -3,7 +3,7 @@
 // One-tap connections to every major travel service. ROAM as the middle layer.
 // =============================================================================
 import { Linking } from 'react-native';
-import { buildAffiliateUrl, trackAffiliateClick, isSafeUrl } from './affiliate-tracking';
+import { trackAffiliateClick, isSafeUrl } from './affiliate-tracking';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -24,37 +24,46 @@ interface FlightLinkParams {
 }
 
 // ---------------------------------------------------------------------------
-// Hotel Booking — Booking.com deep link
+// Hotel Booking — Booking.com affiliate deep link
+// Format: https://www.booking.com/search.html?ss=[destination]&aid=[YOUR_AID]
 // ---------------------------------------------------------------------------
 export function getHotelLink(params: BookingLinkParams): string {
-  const base = `https://www.booking.com/searchresults.html`;
-  const url = new URL(base);
+  const url = new URL('https://www.booking.com/search.html');
   url.searchParams.set('ss', params.destination);
+  url.searchParams.set('aid', 'roam');
   if (params.checkin) url.searchParams.set('checkin', params.checkin);
   if (params.checkout) url.searchParams.set('checkout', params.checkout);
   url.searchParams.set('group_adults', String(params.adults ?? 2));
-  return buildAffiliateUrl({ partner: 'booking', baseUrl: url.toString(), destination: params.destination, placement: 'itinerary' });
+  url.searchParams.set('utm_source', 'roam');
+  url.searchParams.set('utm_medium', 'app');
+  url.searchParams.set('utm_campaign', params.destination.toLowerCase().replace(/\s+/g, '-'));
+  return url.toString();
 }
 
 // ---------------------------------------------------------------------------
-// Flight Search — Skyscanner deep link
+// Flight Search — Skyscanner affiliate deep link
 // ---------------------------------------------------------------------------
 export function getFlightLink(params: FlightLinkParams): string {
   const dest = encodeURIComponent(params.destination.toLowerCase().replace(/\s+/g, '-'));
   const origin = params.origin ?? 'anywhere';
   const depart = params.departDate ?? 'anytime';
   const ret = params.returnDate ?? 'anytime';
-  const base = `https://www.skyscanner.com/transport/flights/${origin}/${dest}/${depart}/${ret}/`;
-  return buildAffiliateUrl({ partner: 'skyscanner', baseUrl: base, destination: params.destination, placement: 'itinerary' });
+  const url = `https://www.skyscanner.com/transport/flights/${origin}/${dest}/${depart}/${ret}/?associateId=roam&utm_source=roam&utm_medium=app&utm_campaign=${encodeURIComponent(params.destination.toLowerCase())}`;
+  return url;
 }
 
 // ---------------------------------------------------------------------------
-// Experiences — GetYourGuide deep link
+// Experiences — GetYourGuide affiliate deep link
 // ---------------------------------------------------------------------------
 export function getExperienceLink(destination: string, query?: string): string {
   const q = query ?? destination;
-  const base = `https://www.getyourguide.com/s/?q=${encodeURIComponent(q)}`;
-  return buildAffiliateUrl({ partner: 'gyg', baseUrl: base, destination, placement: 'itinerary' });
+  const url = new URL('https://www.getyourguide.com/s/');
+  url.searchParams.set('q', q);
+  url.searchParams.set('partner_id', 'roam');
+  url.searchParams.set('utm_source', 'roam');
+  url.searchParams.set('utm_medium', 'app');
+  url.searchParams.set('utm_campaign', destination.toLowerCase().replace(/\s+/g, '-'));
+  return url.toString();
 }
 
 // ---------------------------------------------------------------------------

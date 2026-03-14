@@ -1,5 +1,6 @@
 // =============================================================================
-// ROAM — Flight Card: Shows real flight prices from Amadeus
+// ROAM — Flight Card: Opens Skyscanner affiliate search
+// No API needed — links directly to Skyscanner with affiliate tracking.
 // =============================================================================
 import React, { useEffect, useState, useCallback } from 'react';
 import {
@@ -11,15 +12,14 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { Plane, ExternalLink } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import {
-  quickFlightSearch,
   getHomeAirport,
-  type FlightSearchResult,
-  type FlightOffer,
-} from '../../lib/flights-amadeus';
-import { useCurrency } from './CurrencyToggle';
-import { formatUSD, type ExchangeRates } from '../../lib/currency';
+  getDestinationAirport,
+  getSkyscannerFlightUrl,
+} from '../../lib/flights';
+import { openBookingLink } from '../../lib/booking-links';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -27,136 +27,75 @@ import { formatUSD, type ExchangeRates } from '../../lib/currency';
 interface FlightCardProps {
   destination: string;
   tripDays: number;
+  departureDate?: string;
+  returnDate?: string;
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-export default function FlightCard({ destination, tripDays }: FlightCardProps) {
-  const { currency, rates } = useCurrency();
-  const [result, setResult] = useState<FlightSearchResult | null>(null);
-  const [loading, setLoading] = useState(true);
+export default function FlightCard({ destination, tripDays, departureDate, returnDate }: FlightCardProps) {
   const [homeAirport, setHomeAirportState] = useState('JFK');
+  const destCode = getDestinationAirport(destination);
 
   useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-
-    Promise.all([
-      quickFlightSearch(destination, tripDays),
-      getHomeAirport(),
-    ]).then(([flights, airport]) => {
-      if (cancelled) return;
-      setResult(flights);
-      setHomeAirportState(airport);
-      setLoading(false);
-    }).catch(() => {
-      if (!cancelled) setLoading(false);
-    });
-
-    return () => { cancelled = true; };
-  }, [destination, tripDays]);
-
-  const handleBook = useCallback((url: string) => {
-    Linking.openURL(url).catch(() => {});
+    getHomeAirport().then(setHomeAirportState).catch(() => {});
   }, []);
 
-  // No results or API not configured
-  if (!loading && !result) return null;
+  // Build dates: default to 2 weeks from now
+  const fmt = (d: Date) => d.toISOString().split('T')[0];
+  const depDate = departureDate ?? (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 14);
+    return fmt(d);
+  })();
+  const retDate = returnDate ?? (() => {
+    const d = new Date(depDate);
+    d.setDate(d.getDate() + tripDays);
+    return fmt(d);
+  })();
 
-  // Loading
-  if (loading) {
-    return (
-      <View style={styles.card}>
-        <Text style={styles.eyebrow}>FLIGHTS</Text>
-        <Text style={styles.loadingText}>Searching for flights...</Text>
-      </View>
-    );
-  }
+  const skyscannerUrl = getSkyscannerFlightUrl({
+    origin: homeAirport,
+    destination,
+    departureDate: depDate,
+    returnDate: retDate,
+  });
 
-  if (!result || result.offers.length === 0) {
-    return (
-      <View style={styles.card}>
-        <Text style={styles.eyebrow}>FLIGHTS</Text>
-        <Text style={styles.noFlightsText}>
-          No flights found from {homeAirport}. Try changing your home airport in settings.
-        </Text>
-      </View>
-    );
-  }
+  const handleSearch = useCallback(() => {
+    openBookingLink(skyscannerUrl, 'skyscanner', destination, 'flight-card');
+  }, [skyscannerUrl, destination]);
 
   return (
     <View style={styles.card}>
-      <Text style={styles.eyebrow}>FLIGHTS FROM {homeAirport}</Text>
+      <View style={styles.header}>
+        <Plane size={18} color={COLORS.sage} strokeWidth={2} />
+        <Text style={styles.eyebrow}>FLIGHTS FROM {homeAirport}</Text>
+      </View>
+
       <Text style={styles.title}>
-        {homeAirport} {'\u2192'} {result.destination}
+        {homeAirport} {'\u2192'} {destCode ?? destination}
       </Text>
 
-      {/* Flight Offers */}
-      {result.offers.slice(0, 3).map((offer, i) => (
-        <FlightOfferRow
-          key={`${offer.airline}-${i}`}
-          offer={offer}
-          isCheapest={i === 0}
-          onBook={handleBook}
-          currency={currency}
-          rates={rates}
-        />
-      ))}
+      <Text style={styles.subtitle}>
+        Search real-time prices on Skyscanner
+      </Text>
+
+      <Pressable
+        style={({ pressed }) => [
+          styles.searchButton,
+          { opacity: pressed ? 0.85 : 1 },
+        ]}
+        onPress={handleSearch}
+      >
+        <Text style={styles.searchButtonText}>Search flights</Text>
+        <ExternalLink size={14} color={COLORS.sage} strokeWidth={2} />
+      </Pressable>
 
       <Text style={styles.disclaimer}>
-        Prices are estimates. Tap to check real-time availability.
+        Opens Skyscanner to compare prices across all airlines.
       </Text>
     </View>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Flight Offer Row
-// ---------------------------------------------------------------------------
-function FlightOfferRow({
-  offer,
-  isCheapest,
-  onBook,
-  currency = 'USD',
-  rates,
-}: {
-  offer: FlightOffer;
-  isCheapest: boolean;
-  onBook: (url: string) => void;
-  currency?: string;
-  rates?: { base: string; rates: Record<string, number> } | null;
-}) {
-  return (
-    <Pressable
-      style={({ pressed }) => [
-        styles.offerRow,
-        isCheapest && styles.offerRowCheapest,
-        { opacity: pressed ? 0.85 : 1 },
-      ]}
-      onPress={() => onBook(offer.bookingUrl)}
-    >
-      <View style={styles.offerLeft}>
-        <View style={styles.airlineRow}>
-          <Text style={styles.airlineName}>{offer.airlineName}</Text>
-          {isCheapest && (
-            <View style={styles.cheapestBadge}>
-              <Text style={styles.cheapestText}>Best price</Text>
-            </View>
-          )}
-        </View>
-        <Text style={styles.flightMeta}>
-          {offer.outboundDuration}
-          {offer.stops === 0 ? ' \u00B7 Nonstop' : ` \u00B7 ${offer.stops} stop${offer.stops > 1 ? 's' : ''}`}
-        </Text>
-      </View>
-      <View style={styles.offerRight}>
-        <Text style={styles.price}>
-          {rates && currency !== 'USD' ? formatUSD(offer.price, currency, rates) : `$${Math.round(offer.price)}`}
-        </Text>
-        <Text style={styles.priceLabel}>round trip</Text>
-      </View>
-    </Pressable>
   );
 }
 
@@ -172,6 +111,11 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
     gap: SPACING.sm,
   } as ViewStyle,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  } as ViewStyle,
   eyebrow: {
     fontFamily: FONTS.mono,
     fontSize: 10,
@@ -182,82 +126,31 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.header,
     fontSize: 20,
     color: COLORS.cream,
-    marginBottom: SPACING.xs,
   } as TextStyle,
-  loadingText: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.creamMuted,
-  } as TextStyle,
-  noFlightsText: {
+  subtitle: {
     fontFamily: FONTS.body,
     fontSize: 13,
     color: COLORS.creamMuted,
     lineHeight: 20,
   } as TextStyle,
-
-  // Offer Row
-  offerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: COLORS.whiteVeryFaint,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  } as ViewStyle,
-  offerRowCheapest: {
-    borderColor: COLORS.sageStrong,
-    backgroundColor: COLORS.sageFaint,
-  } as ViewStyle,
-  offerLeft: {
-    flex: 1,
-    gap: 4,
-  } as ViewStyle,
-  airlineRow: {
+  searchButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: SPACING.sm,
-  } as ViewStyle,
-  airlineName: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 14,
-    color: COLORS.cream,
-  } as TextStyle,
-  cheapestBadge: {
     backgroundColor: COLORS.sageLight,
-    borderRadius: RADIUS.full,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: COLORS.sage,
+    borderRadius: RADIUS.md,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    marginTop: SPACING.xs,
   } as ViewStyle,
-  cheapestText: {
-    fontFamily: FONTS.mono,
-    fontSize: 9,
+  searchButtonText: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 15,
     color: COLORS.sage,
-    letterSpacing: 1,
   } as TextStyle,
-  flightMeta: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.creamMuted,
-  } as TextStyle,
-  offerRight: {
-    alignItems: 'flex-end',
-  } as ViewStyle,
-  price: {
-    fontFamily: FONTS.header,
-    fontSize: 24,
-    color: COLORS.cream,
-  } as TextStyle,
-  priceLabel: {
-    fontFamily: FONTS.mono,
-    fontSize: 9,
-    color: COLORS.creamMuted,
-    letterSpacing: 1,
-  } as TextStyle,
-
-  // Disclaimer
   disclaimer: {
     fontFamily: FONTS.body,
     fontSize: 11,
