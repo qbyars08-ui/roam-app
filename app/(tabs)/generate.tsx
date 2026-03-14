@@ -3,7 +3,8 @@
 // Mode selection (first visit) | Quick form | Conversation
 // =============================================================================
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { Modal, View, Text, Pressable, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../../lib/haptics';
@@ -22,6 +23,7 @@ import { recordGrowthEvent } from '../../lib/growth-hooks';
 import { evaluateTrigger } from '../../lib/smart-triggers';
 import TripLimitBanner from '../../components/monetization/TripLimitBanner';
 import { track, trackEvent } from '../../lib/analytics';
+import { captureEvent } from '../../lib/posthog';
 
 const RANDOM_CITIES = [
   'Tokyo', 'Bali', 'Lisbon', 'Mexico City', 'Bangkok', 'Barcelona', 'Cape Town',
@@ -41,6 +43,7 @@ export default function GenerateScreen() {
   const insets = useSafeAreaInsets();
 
   const [networkError, setNetworkError] = useState<string | null>(null);
+  const [rateLimitVisible, setRateLimitVisible] = useState(false);
   const generatingDestRef = useRef<string>('');
   const isMountedRef = useRef(true);
 
@@ -111,6 +114,7 @@ export default function GenerateScreen() {
 
       addTrip(trip);
       setTripsThisMonth(tripsUsed);
+      captureEvent('trip_generation_completed', { destination: state.destination, days: state.duration, budget: BUDGET_TO_BACKEND[state.budget], mode: 'quick' });
       recordGrowthEvent('trip_generated').catch(() => {});
       evaluateTrigger('post_generation').catch(() => {});
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -120,7 +124,8 @@ export default function GenerateScreen() {
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       if (err instanceof TripLimitReachedError) {
-        router.push({ pathname: '/paywall', params: { reason: 'limit', destination: generatingDestRef.current } });
+        captureEvent('rate_limit_hit', { destination: generatingDestRef.current, source: 'quick' });
+        setRateLimitVisible(true);
       } else {
         setNetworkError(err instanceof Error ? err.message : 'Something went wrong. Try again.');
       }
@@ -176,6 +181,7 @@ export default function GenerateScreen() {
 
       addTrip(trip);
       setTripsThisMonth(tripsUsed);
+      captureEvent('trip_generation_completed', { destination: dest, days, budget, mode: 'conversation' });
       recordGrowthEvent('trip_generated').catch(() => {});
       evaluateTrigger('post_generation').catch(() => {});
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -185,7 +191,8 @@ export default function GenerateScreen() {
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       if (err instanceof TripLimitReachedError) {
-        router.push({ pathname: '/paywall', params: { reason: 'limit', destination: generatingDestRef.current } });
+        captureEvent('rate_limit_hit', { destination: generatingDestRef.current, source: 'conversation' });
+        setRateLimitVisible(true);
       } else {
         setNetworkError(err instanceof Error ? err.message : 'Something went wrong. Try again.');
       }
@@ -249,6 +256,11 @@ export default function GenerateScreen() {
     );
   };
 
+  const handleUpgrade = useCallback(() => {
+    setRateLimitVisible(false);
+    router.push({ pathname: '/paywall', params: { reason: 'limit', destination: generatingDestRef.current } });
+  }, [router]);
+
   return (
     <View style={styles.container}>
       {renderContent()}
@@ -257,6 +269,40 @@ export default function GenerateScreen() {
           <TripGeneratingLoader destination={generatingDestRef.current} />
         </View>
       )}
+
+      {/* Rate-limit upgrade modal */}
+      <Modal
+        visible={rateLimitVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setRateLimitVisible(false)}
+      >
+        <View style={styles.rateLimitOverlay}>
+          <View style={styles.rateLimitCard}>
+            <View style={styles.rateLimitDot} />
+            <Text style={styles.rateLimitTitle}>You hit your free limit</Text>
+            <Text style={styles.rateLimitBody}>
+              Free accounts get {FREE_TRIPS_PER_MONTH} trip per month. Upgrade to Pro for
+              unlimited trips and the full ROAM experience.
+            </Text>
+            <Pressable onPress={handleUpgrade} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
+              <LinearGradient
+                colors={[COLORS.gold, COLORS.goldDark]}
+                style={styles.rateLimitUpgradeBtn}
+              >
+                <Text style={styles.rateLimitUpgradeText}>See Pro Plans</Text>
+              </LinearGradient>
+            </Pressable>
+            <Pressable
+              onPress={() => setRateLimitVisible(false)}
+              style={styles.rateLimitDismiss}
+              hitSlop={12}
+            >
+              <Text style={styles.rateLimitDismissText}>Maybe later</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -298,5 +344,64 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     zIndex: 100,
     backgroundColor: COLORS.bg,
+  },
+  rateLimitOverlay: {
+    flex: 1,
+    backgroundColor: COLORS.overlay,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: SPACING.lg,
+  },
+  rateLimitCard: {
+    backgroundColor: COLORS.bg,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.goldBorder,
+    padding: SPACING.xl,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 360,
+  },
+  rateLimitDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: COLORS.gold,
+    marginBottom: SPACING.md,
+  },
+  rateLimitTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 24,
+    color: COLORS.cream,
+    textAlign: 'center',
+    marginBottom: SPACING.sm,
+  },
+  rateLimitBody: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.creamMuted,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: SPACING.lg,
+  },
+  rateLimitUpgradeBtn: {
+    borderRadius: RADIUS.lg,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xxl,
+    alignItems: 'center',
+  },
+  rateLimitUpgradeText: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 16,
+    color: COLORS.bg,
+  },
+  rateLimitDismiss: {
+    marginTop: SPACING.md,
+    paddingVertical: SPACING.sm,
+  },
+  rateLimitDismissText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
+    color: COLORS.creamMuted,
   },
 });
