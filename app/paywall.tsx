@@ -109,7 +109,7 @@ function buildTiers(monthlyPrice: string, annualPrice: string): Tier[] {
 export default function PaywallScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const params = useLocalSearchParams<{ reason?: string; destination?: string }>();
+  const params = useLocalSearchParams<{ reason?: string; destination?: string; feature?: string }>();
   const setIsPro = useAppStore((s) => s.setIsPro);
   const session = useAppStore((s) => s.session);
   const isGuest = isGuestUser();
@@ -153,14 +153,33 @@ export default function PaywallScreen() {
     ]).start();
   }, []);
 
-  // Dynamic headline based on trigger reason
+  // Dynamic headline based on trigger reason (growth hooks with destination-aware fallback)
   const upgradeContext = params.reason === 'limit' ? 'trip_limit' as const
     : params.reason === 'milestone' ? 'post_trip' as const
     : params.reason === 'feature' ? 'feature_locked' as const
     : 'default' as const;
   const upgradeMsg = getUpgradeMessage(upgradeContext);
-  const headline = upgradeMsg.headline;
   const socialProof = getPaywallSocialProof();
+
+  const headline = (() => {
+    // Use destination-aware messaging when available
+    switch (params.reason) {
+      case 'limit':
+        return params.destination
+          ? `You just planned ${params.destination}.\nUnlock unlimited trips and keep the momentum.`
+          : upgradeMsg.headline;
+      case 'feature':
+        return params.feature
+          ? `${params.feature} is a Pro feature.\nUpgrade to unlock your full travel toolkit.`
+          : upgradeMsg.headline;
+      case 'chaos':
+        return 'Chaos Mode needs fuel.\nGo Pro for unlimited random trips.';
+      case 'group':
+        return 'Group planning unlocked with Pro.\nPlan trips together, split the fun.';
+      default:
+        return upgradeMsg.headline;
+    }
+  })();
 
   useEffect(() => {
     track({ type: 'screen_view', screen: 'paywall', payload: { reason: params.reason ?? 'default' } }).catch(() => {});

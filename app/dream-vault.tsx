@@ -34,7 +34,7 @@ import {
 import { useAppStore } from '../lib/store';
 import { withComingSoon } from '../lib/with-coming-soon';
 import { validateDestination } from '../lib/params-validator';
-import { getHomeAirport } from '../lib/flights-amadeus';
+import { getHomeAirport } from '../lib/flights';
 
 function DreamVaultScreen() {
   const insets = useSafeAreaInsets();

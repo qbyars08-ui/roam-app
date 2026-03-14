@@ -6,8 +6,8 @@ Status board for Cursor agents. Cap reads this to coordinate work.
 
 ## Growth Hacker (Agent 06)
 
-**Status:** Growth hooks engine, smart triggers, and retention mechanics deployed  
-**Date:** 2026-03-13  
+**Status:** Growth hooks engine, smart triggers, and retention mechanics deployed
+**Date:** 2026-03-13
 **Action needed:** No
 
 ### Deliverables
@@ -37,10 +37,25 @@ Status board for Cursor agents. Cap reads this to coordinate work.
 
 ---
 
+## Captain (Situational Awareness)
+
+**Status:** First briefing complete
+**Date:** 2026-03-13
+**Action needed:** Quinn — merge 3 draft PRs, fix Netlify billing, set Supabase secrets
+
+### Summary
+
+- System YELLOW: TS clean, 151 tests green, Netlify paused, 2 HIGH security items open
+- 3 draft PRs: #15 (debugger), #14 (captain), #16 (API research) — merge in that order
+- Blocked: Netlify billing, Supabase secrets, RevenueCat dashboard, App Store products
+- Full briefing: `roam/captain_status.md`
+
+---
+
 ## Shield (Dependency & Security Scanner)
 
-**Status:** Dead code purge + deep link validation complete  
-**Date:** 2025-03-13  
+**Status:** Dead code purge + deep link validation complete
+**Date:** 2026-03-13
 **Action needed:** No
 
 ### Findings
@@ -50,3 +65,48 @@ Status board for Cursor agents. Cap reads this to coordinate work.
 - dream-vault, local-lens, honest-reviews, arrival-mode — destination param validation
 - `lib/storage-keys.ts` — Centralized AsyncStorage keys; store, guest, offline, auth screens updated
 - `docs/SECURITY_AUDIT_2025-03-13.md` — Full audit report
+
+---
+
+## Agent 02 (API Research)
+
+**Status:** 6 free API modules added
+**Date:** 2026-03-13
+**Action needed:** Quinn — review + merge PR #16
+
+### Deliverables
+
+- New modules: `lib/country-info.ts`, `lib/emergency-numbers.ts`, `lib/exchange-rates.ts`, `lib/geocoding.ts`, `lib/travel-safety.ts`, `lib/weather-forecast.ts`
+- Research doc: `docs/api-research.md`
+
+---
+
+## Agent 05 (Debugger)
+
+**Status:** TS readonly fix
+**Date:** 2026-03-13
+**Action needed:** Quinn — review + merge PR #15
+
+### Deliverables
+
+- Fixed `buildTripPrompt()` array params to accept `readonly string[]`
+
+---
+
+## Agent 11 — Rules & Content
+
+**Status:** Agent rules file created
+**Date:** 2026-03-13
+**Action needed:** No
+
+### Scope
+
+- `.cursor/rules/` governance — keep all agent `.mdc` files accurate and consistent
+- `CLAUDE.md` + `.cursorrules` maintenance — prune stale learnings, add new gotchas
+- In-app editorial content audits — destination hooks, system prompts, brand voice compliance
+- Cross-file consistency — colors, fonts, spacing, file paths, destination names match across all rule and doc surfaces
+
+### Deliverables
+
+- `.cursor/rules/agent-11-rules-content.mdc` — Role definition and audit checklist
+- Audit output goes to `docs/agents/agent-11-rules-content-audit.md`

@@ -159,7 +159,7 @@ function TripDupeScreen() {
         ]).start();
       } catch (err) {
         if (err instanceof TripLimitReachedError) {
-          router.push('/paywall');
+          router.push({ pathname: '/paywall', params: { reason: 'limit' } });
         } else {
           // Fallback: use mock dupe when API unavailable
           const parsed = getMockDupeResult(dream);

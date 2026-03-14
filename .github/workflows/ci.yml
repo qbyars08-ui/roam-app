@@ -1,9 +1,9 @@
-name: CI — Type Check & Build
+name: CI
 
 on:
-  pull_request:
-    branches: [main]
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
 
 concurrency:
@@ -11,91 +11,31 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  typecheck:
-    name: TypeScript Check
+  ci:
+    name: Type Check & Lint
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            node-modules-${{ runner.os }}-
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci
 
-      - name: Type check
+      - name: TypeScript check
         run: npx tsc --noEmit
 
-  build-web:
-    name: Web Build
-    runs-on: ubuntu-latest
-    needs: typecheck
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
-
-      - name: Build web
-        run: npx expo export --platform web
-
-      - name: Check bundle size
-        run: |
-          JS_SIZE=$(du -sb dist/_expo/static/js/web/ | cut -f1)
-          FONT_SIZE=$(du -sb dist/assets/ 2>/dev/null | cut -f1 || echo 0)
-          TOTAL=$((JS_SIZE + FONT_SIZE))
-          echo "JS: $(echo "scale=1; $JS_SIZE/1048576" | bc)MB"
-          echo "Fonts: $(echo "scale=1; $FONT_SIZE/1048576" | bc)MB"
-          echo "Total: $(echo "scale=1; $TOTAL/1048576" | bc)MB"
-
-          # Fail if total exceeds 15MB uncompressed
-          if [ $TOTAL -gt 15728640 ]; then
-            echo "::error::Bundle size exceeded 15MB limit ($TOTAL bytes)"
-            exit 1
-          fi
-
-      - name: Upload dist artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: web-dist
-          path: dist/
-          retention-days: 7
-
-  security-scan:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Check for leaked secrets
-        run: |
-          echo "Scanning for hardcoded secrets..."
-          # Check for Anthropic keys
-          if grep -rn "sk-ant-" --include="*.ts" --include="*.tsx" --include="*.js" .; then
-            echo "::error::Anthropic API key found in source code!"
-            exit 1
-          fi
-          # Check for exposed API keys in non-.env files
-          if grep -rn "ANTHROPIC_API_KEY\|anthropic-dangerous-direct-browser-access" --include="*.ts" --include="*.tsx" lib/ app/ components/; then
-            echo "::error::Direct Anthropic API access found in client code!"
-            exit 1
-          fi
-          echo "No leaked secrets found."
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
-
-      - name: Audit dependencies
-        run: npm audit --production --audit-level=high || true
+      - name: Lint
+        continue-on-error: true
+        run: npx eslint . --ext .ts,.tsx

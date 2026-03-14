@@ -29,6 +29,7 @@ import { checkStorageVersion } from '../lib/storage-version';
 import { checkMilestones, recordGrowthEvent } from '../lib/growth-hooks';
 import { resetSessionTracking } from '../lib/smart-triggers';
 import type { Milestone } from '../lib/growth-hooks';
+import { track } from '../lib/analytics';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
 import OfflineBanner from '../components/ui/OfflineBanner';
 import PhoneFrame from '../components/ui/PhoneFrame';
@@ -135,6 +136,7 @@ export default function RootLayout() {
       })
       .finally(() => {
         setIsReady(true);
+        track({ type: 'session_start' }).catch(() => {});
       });
 
     // Listen for auth state changes (don't overwrite guest sessions)

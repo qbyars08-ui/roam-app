@@ -20,6 +20,8 @@ import GenerateConversationMode from '../../components/generate/GenerateConversa
 import { TripGeneratingLoader } from '../../components/premium/LoadingStates';
 import { recordGrowthEvent } from '../../lib/growth-hooks';
 import { evaluateTrigger } from '../../lib/smart-triggers';
+import TripLimitBanner from '../../components/monetization/TripLimitBanner';
+import { track, trackEvent } from '../../lib/analytics';
 
 const RANDOM_CITIES = [
   'Tokyo', 'Bali', 'Lisbon', 'Mexico City', 'Bangkok', 'Barcelona', 'Cape Town',
@@ -43,6 +45,7 @@ export default function GenerateScreen() {
   const isMountedRef = useRef(true);
 
   useEffect(() => {
+    track({ type: 'screen_view', screen: 'generate' });
     return () => { isMountedRef.current = false; };
   }, []);
   const generateMode = useAppStore((s) => s.generateMode);
@@ -57,15 +60,16 @@ export default function GenerateScreen() {
 
   const handleModeSelect = useCallback((mode: 'quick' | 'conversation') => {
     setGenerateMode(mode);
+    trackEvent('generate_mode_selected', { mode }).catch(() => {});
   }, [setGenerateMode]);
 
   const handleQuickSubmit = useCallback(async (state: QuickModeState) => {
     if (!isPro && !isGuestUser() && tripsThisMonth >= FREE_TRIPS_PER_MONTH) {
-      router.push('/paywall');
+      router.push({ pathname: '/paywall', params: { reason: 'limit', destination: state.destination } });
       return;
     }
     if (isGuestUser() && trips.length >= 1) {
-      router.push('/paywall');
+      router.push({ pathname: '/paywall', params: { reason: 'limit', destination: state.destination } });
       return;
     }
 
@@ -90,6 +94,11 @@ export default function GenerateScreen() {
         specialRequests: state.specialRequests,
       });
 
+      // Validate itinerary has required structure before storing
+      if (!itinerary?.destination || !itinerary?.days?.length) {
+        throw new Error('Generated itinerary is incomplete. Please try again.');
+      }
+
       const trip = {
         id: `gen-${Date.now()}`,
         destination: state.destination,
@@ -111,7 +120,7 @@ export default function GenerateScreen() {
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       if (err instanceof TripLimitReachedError) {
-        router.push({ pathname: '/paywall', params: { reason: 'limit' } });
+        router.push({ pathname: '/paywall', params: { reason: 'limit', destination: generatingDestRef.current } });
       } else {
         setNetworkError(err instanceof Error ? err.message : 'Something went wrong. Try again.');
       }
@@ -130,11 +139,11 @@ export default function GenerateScreen() {
 
   const handleConversationGenerate = useCallback(async (brief: ConversationBrief) => {
     if (!isPro && !isGuestUser() && tripsThisMonth >= FREE_TRIPS_PER_MONTH) {
-      router.push('/paywall');
+      router.push({ pathname: '/paywall', params: { reason: 'limit', destination: brief.destination } });
       return;
     }
     if (isGuestUser() && trips.length >= 1) {
-      router.push('/paywall');
+      router.push({ pathname: '/paywall', params: { reason: 'limit', destination: brief.destination } });
       return;
     }
 
@@ -176,7 +185,7 @@ export default function GenerateScreen() {
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       if (err instanceof TripLimitReachedError) {
-        router.push({ pathname: '/paywall', params: { reason: 'limit' } });
+        router.push({ pathname: '/paywall', params: { reason: 'limit', destination: generatingDestRef.current } });
       } else {
         setNetworkError(err instanceof Error ? err.message : 'Something went wrong. Try again.');
       }
@@ -210,6 +219,7 @@ export default function GenerateScreen() {
     if (generateMode === 'quick') {
       return (
         <View style={[styles.fill, { paddingTop: insets.top }]}>
+          <TripLimitBanner />
           {networkError ? (
             <View style={styles.errorBanner}>
               <Text style={styles.errorBannerText}>{networkError}</Text>
@@ -225,6 +235,7 @@ export default function GenerateScreen() {
 
     return (
       <View style={[styles.fill, { paddingTop: insets.top }]}>
+        <TripLimitBanner />
         {networkError ? (
           <View style={styles.errorBanner}>
             <Text style={styles.errorBannerText}>{networkError}</Text>

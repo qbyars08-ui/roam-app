@@ -29,6 +29,7 @@ import { useAppStore, type Trip } from '../lib/store';
 import { isGuestUser } from '../lib/guest';
 import { getMyGroups, type TripGroup } from '../lib/group-trips';
 import { trackItineraryOutcome } from '../lib/ai-improvement';
+import { track } from '../lib/analytics';
 import Button from '../components/ui/Button';
 import { EmptySuitcase } from '../components/ui/EmptyStateIllustrations';
 
@@ -175,6 +176,10 @@ export default function SavedScreen() {
   const trips = useAppStore((s) => s.trips);
   const removeTrip = useAppStore((s) => s.removeTrip);
   const [groups, setGroups] = useState<TripGroup[]>([]);
+
+  useEffect(() => {
+    track({ type: 'screen_view', screen: 'saved' });
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
