@@ -93,7 +93,7 @@ import {
 import { formatDualPrice, formatLocalPrice, type ExchangeRates } from '../lib/currency';
 import { AlertTriangle, X, Pencil, Calendar, Link2, Share2, MapPin, Receipt, Film, Wallet, Train, ArrowDown, CreditCard, Plane, Heart, ShieldCheck, Droplets, Globe, Sun, Wind, PartyPopper } from 'lucide-react-native';
 import { getTransitGuide, type TransitGuide } from '../lib/transit-data';
-import { getHomeAirport } from '../lib/flights-amadeus';
+import { getHomeAirport } from '../lib/flights';
 import { getMedicalGuideByDestination, type MedicalGuide } from '../lib/medical-abroad';
 import { getTimezoneByDestination, getTimezoneInfo, getTimeDifference, type TimezoneInfo } from '../lib/timezone';
 import { getAirQuality, getDestinationCoords, type AirQuality } from '../lib/air-quality';
@@ -1191,7 +1191,7 @@ export default function ItineraryScreen() {
             })()}
           />
 
-          {/* Real flight prices from Amadeus */}
+          {/* Flight search — Skyscanner affiliate */}
           <View style={styles.section}>
             <FlightCard destination={trip.destination} tripDays={trip.days} />
           </View>

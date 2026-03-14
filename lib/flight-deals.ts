@@ -141,29 +141,12 @@ export async function updateDestinationPrice(
 }
 
 /**
- * Check prices for all saved destinations. Returns any price-drop alerts (≥20%).
+ * Check for deals is no longer available without a flight API.
+ * Users should search on Skyscanner directly via getSkyscannerUrl().
  */
 export async function checkForDeals(): Promise<PriceDropAlert[]> {
-  const { quickFlightSearch } = await import('./flights-amadeus');
-  const { getHomeAirport } = await import('./flights-amadeus');
-  const list = await getSavedDestinations();
-  const homeAirport = await getHomeAirport();
-  const alerts: PriceDropAlert[] = [];
-
-  for (const dest of list) {
-    try {
-      const result = await quickFlightSearch(dest.destination, 7);
-      if (!result?.cheapest?.price) continue;
-
-      const price = result.cheapest.price;
-      const alert = await updateDestinationPrice(dest.id, price);
-      if (alert) alerts.push(alert);
-    } catch {
-      // Skip failed lookups
-    }
-  }
-
-  return alerts;
+  // No flight API — return empty. Users search Skyscanner directly.
+  return [];
 }
 
 /** Returns true if baseline price is below $500 (consider "low") */
