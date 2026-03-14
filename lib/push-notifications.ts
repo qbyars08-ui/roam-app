@@ -166,7 +166,7 @@ export async function scheduleSeasonalAlert(
 // ---------------------------------------------------------------------------
 export async function sendSafetyCircleAlert(
   memberName: string,
-  checkInType: string
+  _checkInType: string
 ): Promise<string> {
   if (Platform.OS === 'web') return '';
   return Notifications.scheduleNotificationAsync({

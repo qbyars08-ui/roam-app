@@ -135,7 +135,6 @@ export function buildStaticMapUrl(params: {
   // Build path overlay (route connecting the pins)
   let pathOverlay = '';
   if (locations.length >= 2) {
-    const coords = locations.map((l) => `[${l.lng},${l.lat}]`).join(',');
     // GeoJSON line with sage green color, 3px width
     const geojson = JSON.stringify({
       type: 'Feature',

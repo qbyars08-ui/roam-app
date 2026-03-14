@@ -40,7 +40,7 @@ export function buildSafetyZones(
   overrides?: Partial<Record<TimeOfDay, SafetyLevel>>
 ): SafetyZone[] {
   const bySlot = { ...DEFAULT_SAFETY_BY_SLOT, ...overrides };
-  return pins.map((p, i) => ({
+  return pins.map((p, _i) => ({
     lat: p.lat,
     lng: p.lng,
     radiusMeters: 400,

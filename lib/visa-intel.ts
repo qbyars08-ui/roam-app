@@ -142,7 +142,7 @@ const statusLabels: Record<VisaStatus, string> = {
 export function getVisaStatusMessage(
   info: VisaInfo,
   passport: PassportNationality,
-  countryCode: string
+  _countryCode: string
 ): string {
   const p = passport === 'US' ? 'US passport' : 'Austrian passport';
   const days = info.stayDays != null && info.stayDays < 999 ? ` ${info.stayDays} days` : '';

@@ -3,7 +3,6 @@
 // Privacy-first: auto-expires, group-only, user-controlled
 // =============================================================================
 import * as Location from 'expo-location';
-import { Platform } from 'react-native';
 import { supabase } from './supabase';
 import { useAppStore } from './store';
 

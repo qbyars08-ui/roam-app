@@ -16,8 +16,6 @@ export interface LocalEvent {
 }
 
 const TM_KEY = process.env.EXPO_PUBLIC_TICKETMASTER_KEY ?? '';
-const EB_TOKEN = process.env.EXPO_PUBLIC_EVENTBRITE_TOKEN ?? '';
-
 const CITY_TO_COORDS: Record<string, { lat: string; lon: string }> = {
   tokyo: { lat: '35.6762', lon: '139.6503' },
   paris: { lat: '48.8566', lon: '2.3522' },

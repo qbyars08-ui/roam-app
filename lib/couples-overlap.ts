@@ -9,7 +9,6 @@ import type {
   AccommodationStyle,
   TravelFrequency,
 } from './types/travel-profile';
-import { DEFAULT_TRAVEL_PROFILE } from './types/travel-profile';
 
 export function mergeProfiles(a: TravelProfile, b: TravelProfile): TravelProfile {
   const avg = (x: number, y: number) => Math.round((x + y) / 2);

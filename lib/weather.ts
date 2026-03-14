@@ -192,7 +192,7 @@ export async function getWeatherForecast(
 
   // Align to startDate when provided (OpenWeatherMap returns next 5 days from today)
   if (options?.startDate && days.length > 0) {
-    const today = new Date().toISOString().split('T')[0];
+    const _today = new Date().toISOString().split('T')[0];
     const startIdx = days.findIndex((d) => d.date >= options.startDate!);
     if (startIdx >= 0) {
       days = days.slice(startIdx);
