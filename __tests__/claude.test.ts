@@ -416,3 +416,113 @@ describe('buildTripPrompt — combined optional params', () => {
     expect(a).toBe(b);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Edge cases — added for extended coverage
+// ---------------------------------------------------------------------------
+
+describe('buildTripPrompt — edge cases: days boundary', () => {
+  it('handles days=1 (single day trip)', () => {
+    const result = buildTripPrompt({ ...BASE_PARAMS, days: 1 });
+    expect(result).toContain('1-day trip');
+  });
+
+  it('handles days=30 (max trip)', () => {
+    const result = buildTripPrompt({ ...BASE_PARAMS, days: 30 });
+    expect(result).toContain('30-day trip');
+  });
+});
+
+describe('buildTripPrompt — edge cases: groupSize', () => {
+  it('groupSize=0 is not shown', () => {
+    const result = buildTripPrompt({ ...BASE_PARAMS, groupSize: 0 });
+    expect(result).not.toContain('Group size');
+  });
+
+  it('groupSize=10 is shown', () => {
+    const result = buildTripPrompt({ ...BASE_PARAMS, groupSize: 10 });
+    expect(result).toContain('Group size: 10 travelers');
+  });
+});
+
+describe('buildTripPrompt — edge cases: vibes', () => {
+  it('handles 10 vibes joined correctly', () => {
+    const vibes = ['adventure', 'culture', 'food', 'nightlife', 'nature',
+      'photography', 'relaxation', 'history', 'art', 'wellness'];
+    const result = buildTripPrompt({ ...BASE_PARAMS, vibes });
+    expect(result).toContain('adventure, culture, food');
+    expect(result).toContain('wellness');
+  });
+
+  it('single vibe produces no comma', () => {
+    const result = buildTripPrompt({ ...BASE_PARAMS, vibes: ['adventure'] });
+    expect(result).toContain('adventure');
+    expect(result).not.toContain('adventure,');
+  });
+});
+
+describe('buildTripPrompt — edge cases: weather rain boundary', () => {
+  it('pop=0.31 (31%) shows rain chance', () => {
+    const weather = { days: [{ date: '2026-05-01', tempMin: 10, tempMax: 18, description: 'Cloudy', pop: 0.31 }] };
+    expect(buildTripPrompt({ ...BASE_PARAMS, weather })).toContain('31% chance of rain');
+  });
+
+  it('pop=0.30 (30%) does NOT show rain chance', () => {
+    const weather = { days: [{ date: '2026-05-01', tempMin: 10, tempMax: 18, description: 'Overcast', pop: 0.30 }] };
+    expect(buildTripPrompt({ ...BASE_PARAMS, weather })).not.toContain('chance of rain');
+  });
+
+  it('pop=0.00 never shows rain', () => {
+    const weather = { days: [{ date: '2026-05-01', tempMin: 15, tempMax: 25, description: 'Clear', pop: 0 }] };
+    expect(buildTripPrompt({ ...BASE_PARAMS, weather })).not.toContain('chance of rain');
+  });
+});
+
+describe('buildTripPrompt — edge cases: special chars in free-text fields', () => {
+  it('mustVisit with special characters is included verbatim', () => {
+    const result = buildTripPrompt({ ...BASE_PARAMS, mustVisit: 'Café de Flore & Shakespeare\'s' });
+    expect(result).toContain('Café de Flore');
+  });
+
+  it('avoidList with commas and quotes is included verbatim', () => {
+    const result = buildTripPrompt({ ...BASE_PARAMS, avoidList: '"Hard Rock Cafe", "TGI Fridays"' });
+    expect(result).toContain('Hard Rock Cafe');
+  });
+
+  it('specialRequests with newlines is included', () => {
+    const result = buildTripPrompt({ ...BASE_PARAMS, specialRequests: 'Anniversary\nBirthday cake' });
+    expect(result).toContain('Anniversary');
+  });
+});
+
+describe('buildTripPrompt — edge cases: profile passport nationalities', () => {
+  it('AT passport shows "Austrian passport"', () => {
+    const atProfile: TravelProfile = { ...MOCK_PROFILE, passportNationality: 'AT' };
+    const result = buildTripPrompt({ ...BASE_PARAMS, travelProfile: atProfile });
+    expect(result).toContain('Austrian passport');
+    expect(result).not.toContain('US passport');
+  });
+
+  it('US passport shows "US passport"', () => {
+    const usProfile: TravelProfile = { ...MOCK_PROFILE, passportNationality: 'US' };
+    expect(buildTripPrompt({ ...BASE_PARAMS, travelProfile: usProfile })).toContain('US passport');
+  });
+});
+
+describe('buildTripPrompt — edge cases: empty optional arrays vs undefined', () => {
+  it('empty transport produces no "Preferred transport" line', () => {
+    expect(buildTripPrompt({ ...BASE_PARAMS, transport: [] })).not.toContain('Preferred transport');
+  });
+
+  it('empty dietary produces no "Dietary requirements" line', () => {
+    expect(buildTripPrompt({ ...BASE_PARAMS, dietary: [] })).not.toContain('Dietary requirements');
+  });
+
+  it('single transport item works correctly', () => {
+    expect(buildTripPrompt({ ...BASE_PARAMS, transport: ['metro'] })).toContain('metro');
+  });
+
+  it('single dietary restriction works correctly', () => {
+    expect(buildTripPrompt({ ...BASE_PARAMS, dietary: ['halal'] })).toContain('halal');
+  });
+});
