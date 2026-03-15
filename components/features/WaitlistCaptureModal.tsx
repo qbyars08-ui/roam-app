@@ -59,7 +59,7 @@ export default function WaitlistCaptureModal({
       const r = await joinWaitlist(trimmed);
       setResult(r);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Something went wrong. Try again.');
+      setError(e instanceof Error ? e.message : 'Couldn\u2019t join the waitlist. Check your connection and try again.');
     } finally {
       setLoading(false);
     }

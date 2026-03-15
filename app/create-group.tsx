@@ -81,7 +81,7 @@ function CreateGroupScreen() {
       setInviteCode(group.inviteCode);
       trackEvent('group_trip_created', { destination: selectedTrip.destination, groupId: group.id }).catch(() => {});
     } catch {
-      setError('Something went wrong');
+      setError('Couldn\u2019t create the group. Check your connection and try again.');
     } finally {
       setCreating(false);
     }

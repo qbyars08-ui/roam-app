@@ -223,7 +223,7 @@ export default function PaywallScreen() {
         handleClose();
       }
     } catch {
-      Alert.alert('Something went wrong', 'Try again \u2014 we\u2019ll be here.');
+      Alert.alert('Purchase didn\u2019t go through', 'Check your connection and try again. We\u2019ll be here.');
     } finally {
       setLoading(false);
     }
