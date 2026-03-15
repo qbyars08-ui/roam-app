@@ -4,6 +4,7 @@
 // =============================================================================
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import {
+  Animated,
   Image,
   Modal,
   Pressable,
@@ -21,7 +22,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ChevronRight,
   Clock,
+  Lock,
+  MapPin,
   Plus,
+  RefreshCw,
   Sparkles,
   Wallet,
   Utensils,
@@ -46,6 +50,7 @@ import { evaluateTrigger } from '../../lib/smart-triggers';
 import TripLimitBanner from '../../components/monetization/TripLimitBanner';
 import { track, trackEvent } from '../../lib/analytics';
 import { captureEvent } from '../../lib/posthog';
+import { EVENTS } from '../../lib/posthog-events';
 import { parseItinerary } from '../../lib/types/itinerary';
 
 // ---------------------------------------------------------------------------
@@ -127,7 +132,7 @@ const TripCard = React.memo(function TripCard({
     >
       <Image source={{ uri: imageUrl }} style={styles.tripCardImage} />
       <LinearGradient
-        colors={['transparent', COLORS.overlayDark]}
+        colors={['transparent', 'rgba(0,0,0,0.7)']}
         style={styles.tripCardGradient}
       />
       {isLatest && (
@@ -188,6 +193,43 @@ const QUICK_ACTIONS = [
 ];
 
 // ---------------------------------------------------------------------------
+// Pro Features Teaser — shown in trip list view for free users
+// ---------------------------------------------------------------------------
+function PlanProTeaser({ onUpgrade }: { onUpgrade: (feature: string) => void }) {
+  return (
+    <View style={planProStyles.row}>
+      <Pressable
+        style={({ pressed }) => [planProStyles.card, { opacity: pressed ? 0.85 : 1 }]}
+        onPress={() => onUpgrade('plan-regenerate')}
+      >
+        <RefreshCw size={16} color={COLORS.gold} strokeWidth={2} />
+        <Text style={planProStyles.label}>Re-generate</Text>
+        <Lock size={12} color={COLORS.gold} strokeWidth={2} />
+      </Pressable>
+      <Pressable
+        style={({ pressed }) => [planProStyles.card, { opacity: pressed ? 0.85 : 1 }]}
+        onPress={() => onUpgrade('plan-hotel-alternatives')}
+      >
+        <Bed size={16} color={COLORS.gold} strokeWidth={2} />
+        <Text style={planProStyles.label}>Hotel alternatives</Text>
+        <Lock size={12} color={COLORS.gold} strokeWidth={2} />
+      </Pressable>
+    </View>
+  );
+}
+
+const planProStyles = StyleSheet.create({
+  row: { flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.xl } as ViewStyle,
+  card: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg,
+    borderWidth: 1, borderColor: COLORS.goldBorder,
+    paddingVertical: SPACING.sm, paddingHorizontal: SPACING.md,
+  } as ViewStyle,
+  label: { flex: 1, fontFamily: FONTS.bodyMedium, fontSize: 12, color: COLORS.gold } as TextStyle,
+});
+
+// ---------------------------------------------------------------------------
 // Main Component
 // ---------------------------------------------------------------------------
 export default function PlanScreen() {
@@ -230,8 +272,9 @@ export default function PlanScreen() {
   const handleNewTrip = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setShowGenerator(true);
-    setGenerateMode(null);
-  }, [setGenerateMode]);
+    // Reset to mode select screen — setState supports null
+    useAppStore.setState({ generateMode: null });
+  }, []);
 
   const handleQuickAction = useCallback((id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -305,7 +348,7 @@ export default function PlanScreen() {
         captureEvent('rate_limit_hit', { destination: generatingDestRef.current, source: 'quick' });
         setRateLimitVisible(true);
       } else {
-        setNetworkError(err instanceof Error ? err.message : 'We couldn\u2019t build your trip. Check your connection and try again.');
+        setNetworkError(err instanceof Error ? err.message : 'Something went wrong. Try again.');
       }
     } finally {
       setIsGenerating(false);
@@ -365,7 +408,7 @@ export default function PlanScreen() {
         captureEvent('rate_limit_hit', { destination: generatingDestRef.current, source: 'conversation' });
         setRateLimitVisible(true);
       } else {
-        setNetworkError(err instanceof Error ? err.message : 'We couldn\u2019t build your trip. Check your connection and try again.');
+        setNetworkError(err instanceof Error ? err.message : 'Something went wrong. Try again.');
       }
     } finally {
       setIsGenerating(false);
@@ -384,6 +427,12 @@ export default function PlanScreen() {
 
   const handleTripPress = useCallback((trip: Trip) => {
     router.push({ pathname: '/itinerary', params: { tripId: trip.id } });
+  }, [router]);
+
+  const handlePlanProUpgrade = useCallback((feature: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    captureEvent(EVENTS.PRO_GATE_SHOWN.name, { feature });
+    router.push({ pathname: '/paywall', params: { reason: 'feature', feature } } as never);
   }, [router]);
 
   // ── Render: Generator mode ──
@@ -504,6 +553,9 @@ export default function PlanScreen() {
             </Pressable>
           ))}
         </View>
+
+        {/* Pro features teaser (free users only) */}
+        {!isPro && <PlanProTeaser onUpgrade={handlePlanProUpgrade} />}
 
         {/* Trip Cards */}
         <Text style={styles.sectionLabel}>YOUR TRIPS</Text>
@@ -700,7 +752,7 @@ const styles = StyleSheet.create({
   tripCardDest: {
     fontFamily: FONTS.header,
     fontSize: 28,
-    color: COLORS.white,
+    color: '#FFFFFF',
     marginBottom: 6,
   } as TextStyle,
   tripCardMeta: {
@@ -711,7 +763,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: COLORS.whiteMuted,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: RADIUS.sm,
@@ -726,7 +778,7 @@ const styles = StyleSheet.create({
     right: SPACING.md,
     top: '50%',
     marginTop: -10,
-    backgroundColor: COLORS.whiteMuted,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     borderRadius: RADIUS.full,
     width: 32,
     height: 32,
