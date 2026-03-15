@@ -76,6 +76,7 @@ import {
 import { DESTINATIONS } from '../../lib/constants';
 import { parseItinerary, type Itinerary, type ItineraryDay } from '../../lib/types/itinerary';
 import { withComingSoon } from '../../lib/with-coming-soon';
+import { captureEvent } from '../../lib/posthog';
 import { getMedicalGuideByDestination, type MedicalGuide } from '../../lib/medical-abroad';
 import { getTimezoneByDestination } from '../../lib/timezone';
 import { getWeatherForecast, type DailyForecast } from '../../lib/weather-forecast';
@@ -1224,6 +1225,11 @@ function PrepScreen() {
 
   const activeTrip: Trip | null =
     trips.find((t) => t.id === activeTripId) ?? trips[0] ?? null;
+
+  useEffect(() => {
+    captureEvent('screen_view', { screen: 'prep' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fire once on mount
+  }, []);
 
   const [selectedDest, setSelectedDest] = useState(
     activeTrip?.destination ?? DESTINATIONS[0]?.label ?? 'Tokyo'

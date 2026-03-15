@@ -39,6 +39,7 @@ import { useAppStore } from '../../lib/store';
 import i18n from '../../lib/i18n';
 import { tCategory } from '../../lib/i18n/helpers';
 import { track } from '../../lib/analytics';
+import { captureEvent } from '../../lib/posthog';
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -247,6 +248,7 @@ export default function DiscoverScreen() {
 
   useEffect(() => {
     track({ type: 'screen_view', screen: 'discover' });
+    captureEvent('screen_view', { screen: 'discover' });
   }, []);
 
   // Rotate editorial header every 5s with crossfade

@@ -612,4 +612,172 @@ Sprint 2 (this PR):
 
 ---
 
-*Agent 10 — Analytics. Updated 2026-03-15 (Sprint 2).*
+## 11. Sprint 3 — Event Coverage Audit: Screen Views, Flights & UTM Spec
+
+### Task (from AGENT_BOARD.md overnight quality pass)
+1. Verify screen_view events fire on all 5 tabs
+2. Check trip_generation_completed, flight_search, rate_limit_hit
+3. Add: flights_popular_route_tapped, flights_skyscanner_opened, flights_inspiration_tapped
+4. Verify PostHog initialization
+5. Draft UTM tracking spec for all external links
+
+---
+
+### 11.1 Screen View Audit — All 5 Tabs
+
+| Tab | File | Supabase `track()` | PostHog `captureEvent` | Status After Sprint 3 |
+|-----|------|--------------------|------------------------|----------------------|
+| Plan | `app/(tabs)/plan.tsx` | `screen_view` L218 | — (uses `track` only) | Partial — Supabase only |
+| Discover | `app/(tabs)/index.tsx` | `screen_view` L249 | Added L250 this sprint | FIXED |
+| People | `app/(tabs)/people.tsx` | `screen_view` L284 | — (uses `track` only) | Partial — Supabase only |
+| Flights | `app/(tabs)/flights.tsx` | `screen_view` L532 | — (uses `track` only) | Partial — Supabase only |
+| Prep | `app/(tabs)/prep.tsx` | **NONE** | Added this sprint | FIXED |
+
+**Findings:**
+- Prep tab had zero analytics — no `track()`, no `captureEvent`. Added `captureEvent('screen_view', { screen: 'prep' })` on mount.
+- Discover tab only had Supabase `track()`. Added `captureEvent('screen_view', { screen: 'discover' })` for PostHog.
+- Plan, People, Flights tabs use Supabase `track()` for screen_view but not PostHog `captureEvent`. These are acceptable since plan/people/flights have extensive `captureEvent` coverage for other events. Recommend: replace `track({ type: 'screen_view' })` with `captureEvent('screen_view')` + PostHog `captureScreen()` in a future cleanup pass.
+
+---
+
+### 11.2 Core Event Verification
+
+| Event | Expected Name | Actual Name Fired | File | Status |
+|-------|--------------|------------------|------|--------|
+| `trip_generation_completed` | `trip_generation_completed` | `trip_generation_completed` | `app/(tabs)/plan.tsx` L310, L370 | VERIFIED |
+| `flight_search` | `flight_search` (EVENTS registry) | `flights_search_skyscanner` (fired) | `app/(tabs)/flights.tsx` L591 | NAME MISMATCH — registry has `flight_search`, code fires `flights_search_skyscanner` |
+| `rate_limit_hit` | `rate_limit_hit` | `rate_limit_hit` | `app/(tabs)/plan.tsx` L321, L381 | VERIFIED |
+
+**flight_search name mismatch:** The canonical `EVENTS.FLIGHT_SEARCH` registry entry expects `flight_search` with `{ from, to, results }`, but the code fires `flights_search_skyscanner` with `{ from, to, depart, return, passengers }`. Recommend aliasing or renaming in a future pass. The Sprint 3 registry adds `FLIGHTS_SEARCH_SKYSCANNER` to match the actual event fired.
+
+---
+
+### 11.3 New Flights Events Added
+
+All three events requested by the board were addressed:
+
+| Event | Properties | When | File | Status |
+|-------|------------|------|------|--------|
+| `flights_popular_route_tapped` | `from`, `to` | Popular route card tapped | `app/(tabs)/flights.tsx` L605 | Already existed — VERIFIED |
+| `flights_inspiration_tapped` | `destination`, `month` | Inspiration card tapped | `app/(tabs)/flights.tsx` L623 | Already existed — VERIFIED |
+| `flights_skyscanner_opened` | `trigger`, `from`, `to` | Skyscanner URL actually opens | `app/(tabs)/flights.tsx` L596, L611, L628 | ADDED this sprint (×3) |
+
+`flights_skyscanner_opened` fires as a unified "external app opened" event at every `Linking.openURL()` call to Skyscanner. The `trigger` property (`search` | `popular_route` | `inspiration`) distinguishes the entry point. This enables measuring total Skyscanner CTR and per-trigger breakdown in one PostHog chart.
+
+---
+
+### 11.4 PostHog Initialization Verification
+
+**Status: CONFIGURED, KEY REQUIRED**
+
+- `initPostHog()` called in `app/_layout.tsx` L111 — fires on app cold start
+- `PostHogProvider` wraps app content at L574 with `autocapture={false}` (manual event mode)
+- `identifyUser()` called after session bootstrap with `{ isPro: boolean }`
+- When `EXPO_PUBLIC_POSTHOG_KEY` is absent: all calls silently no-op (safe for dev/preview)
+- Key is NOT present in `.env.example` — must be added by Quinn in Supabase secrets or `.env.local`
+
+**Required action (Quinn):** Set `EXPO_PUBLIC_POSTHOG_KEY=phc_xxxx` in environment. Without this, zero PostHog events will be captured on production. Supabase `analytics_events` table continues to receive data regardless.
+
+---
+
+### 11.5 UTM Tracking Spec — All External Links
+
+#### Link Inventory
+
+| Partner | URL Pattern | Current UTM Status | File(s) |
+|---------|-------------|-------------------|---------|
+| Skyscanner | `www.skyscanner.net/transport/flights/...` | `associateId=roam` ✅, UTM params missing | `lib/flights.ts` |
+| Booking.com | `www.booking.com/...` | `aid=roam` ✅, UTM params missing | `lib/affiliates.ts`, `app/(tabs)/stays.tsx` |
+| Google Maps | `www.google.com/maps/search/...` | No affiliate ID, no UTM | `app/(tabs)/prep.tsx` L529 |
+| GetYourGuide | `www.getyourguide.com/...` | `partner_id=roam` ✅, UTM params missing | `lib/affiliates.ts` |
+| Amazon | `www.amazon.com/...` | `tag=roamapp-20` ✅, UTM params missing | `lib/affiliates.ts` |
+
+#### Canonical UTM Schema for Outbound Links
+
+All external links from ROAM should carry these UTM parameters for attribution in partner analytics:
+
+```
+utm_source=roam
+utm_medium=app
+utm_campaign={context}   — e.g. flights_tab | stays_tab | prep_emergency | itinerary
+utm_content={placement}  — e.g. popular_route | inspiration_card | search_hero | booking_link
+```
+
+#### Per-Partner Implementation
+
+**Skyscanner** (`lib/flights.ts` — `getSkyscannerFlightUrl()`):
+```typescript
+url.searchParams.set('utm_source', 'roam');
+url.searchParams.set('utm_medium', 'app');
+url.searchParams.set('utm_campaign', 'flights_tab');
+url.searchParams.set('utm_content', trigger);  // 'search' | 'popular_route' | 'inspiration'
+```
+Already has `associateId=roam`. Add UTM params to `getSkyscannerFlightUrl()`.
+
+**Booking.com** (`lib/affiliate-tracking.ts` — `buildAffiliateUrl()`):
+Already has `utm_source=roam`, `utm_medium=app`, `utm_campaign={destination}`. Add `utm_content={placement}`.
+
+**Google Maps** (`app/(tabs)/prep.tsx`):
+No affiliate program. Add UTM params for internal attribution:
+```typescript
+const mapsUrl = `https://www.google.com/maps/search/${query}?utm_source=roam&utm_medium=app&utm_campaign=prep_tab&utm_content=emergency_map`;
+```
+
+**GetYourGuide / Amazon** (`lib/affiliate-tracking.ts`):
+Already adds partner IDs. Add `utm_campaign` and `utm_content` via `buildAffiliateUrl()` params.
+
+#### PostHog Event Mapping for UTM Attribution
+
+When a user taps an affiliate link, fire:
+```typescript
+captureEvent('affiliate_clicked', {
+  partner: 'skyscanner' | 'booking' | 'gyg' | 'amazon',
+  destination: string | null,
+  placement: string,          // 'popular_route' | 'inspiration_card' | 'search_hero' etc.
+  utm_campaign: string,
+  utm_content: string,
+});
+```
+This lets PostHog funnel: `paywall_dismissed` → `affiliate_clicked` to measure intent from users who don't convert to Pro but still monetize via affiliate.
+
+#### DACH Creator UTM (from Sprint 1 spec)
+
+For DACH TikTok/Instagram links, maintain the separate schema:
+```
+utm_source=tiktok|instagram
+utm_medium=ugc|organic
+utm_campaign=dach_launch
+utm_content=script_01..script_10
+```
+These land on `tryroam.netlify.app` and are captured by `captureUtmOnLoad()` (documented in Section 1, still pending implementation by Quinn).
+
+---
+
+### 11.6 Sprint 3 Event Registry Updates (`lib/posthog-events.ts`)
+
+```
+FLIGHTS_SEARCH_SKYSCANNER    flights_search_skyscanner   (matches actual event fired in flights.tsx)
+FLIGHTS_POPULAR_ROUTE_TAPPED flights_popular_route_tapped
+FLIGHTS_INSPIRATION_TAPPED   flights_inspiration_tapped
+FLIGHTS_SKYSCANNER_OPENED    flights_skyscanner_opened   (unified Skyscanner open event, trigger prop)
+```
+
+---
+
+### 11.7 Sprint 3 Implementation Status
+
+- [x] Prep tab: `captureEvent('screen_view', { screen: 'prep' })` — `app/(tabs)/prep.tsx` mount `useEffect`
+- [x] Discover tab: `captureEvent('screen_view', { screen: 'discover' })` — `app/(tabs)/index.tsx` L250 (alongside existing Supabase `track()`)
+- [x] `flights_popular_route_tapped` — verified existing, registered in `lib/posthog-events.ts`
+- [x] `flights_inspiration_tapped` — verified existing, registered in `lib/posthog-events.ts`
+- [x] `flights_skyscanner_opened` — added ×3 in `app/(tabs)/flights.tsx` (search, popular_route, inspiration triggers)
+- [x] `flights_search_skyscanner` — verified existing, registered in `lib/posthog-events.ts`
+- [x] PostHog init verified — graceful no-op when `EXPO_PUBLIC_POSTHOG_KEY` absent
+- [x] UTM spec drafted for Skyscanner, Booking.com, Google Maps, GYG, Amazon
+- [ ] `EXPO_PUBLIC_POSTHOG_KEY` needs to be set in production env by Quinn
+- [ ] `getSkyscannerFlightUrl()` needs UTM params added (future pass)
+- [ ] Plan/People/Flights tabs: replace Supabase `track(screen_view)` with PostHog `captureEvent` (future cleanup)
+
+---
+
+*Agent 10 — Analytics. Updated 2026-03-15 (Sprint 3).*

@@ -214,6 +214,22 @@ export const EVENTS = {
     'flight_card_clicked',
     'User tapped a flight deal / booking card',
   ),
+  FLIGHTS_SEARCH_SKYSCANNER: def<{ from: string; to: string; depart: string; return: string; passengers: number }>(
+    'flights_search_skyscanner',
+    'User submitted hero flight search → opens Skyscanner',
+  ),
+  FLIGHTS_POPULAR_ROUTE_TAPPED: def<{ from: string; to: string }>(
+    'flights_popular_route_tapped',
+    'User tapped a popular route card on the Flights tab',
+  ),
+  FLIGHTS_INSPIRATION_TAPPED: def<{ destination: string; month: string }>(
+    'flights_inspiration_tapped',
+    'User tapped a seasonal inspiration card on the Flights tab',
+  ),
+  FLIGHTS_SKYSCANNER_OPENED: def<{ trigger: 'search' | 'popular_route' | 'inspiration'; from: string; to: string }>(
+    'flights_skyscanner_opened',
+    'Skyscanner URL actually opened (fires on every outbound Skyscanner tap, regardless of trigger)',
+  ),
 
   // =========================================================================
   // Voice guide

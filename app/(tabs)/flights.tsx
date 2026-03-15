@@ -595,6 +595,11 @@ export default function FlightsScreen() {
       return: returnStr,
       passengers,
     });
+    captureEvent('flights_skyscanner_opened', {
+      trigger: 'search',
+      from: origin,
+      to: dest,
+    });
 
     Linking.openURL(url).catch(() => {});
   }, [fromCode, fromText, toCode, toText, departDate, returnDate, passengers]);
@@ -603,6 +608,11 @@ export default function FlightsScreen() {
   const handleRoutePress = useCallback(
     (route: PopularRoute) => {
       captureEvent('flights_popular_route_tapped', {
+        from: route.fromCode,
+        to: route.toCode,
+      });
+      captureEvent('flights_skyscanner_opened', {
+        trigger: 'popular_route',
         from: route.fromCode,
         to: route.toCode,
       });
@@ -623,6 +633,11 @@ export default function FlightsScreen() {
     captureEvent('flights_inspiration_tapped', {
       destination: card.destination,
       month: card.month,
+    });
+    captureEvent('flights_skyscanner_opened', {
+      trigger: 'inspiration',
+      from: 'anywhere',
+      to: card.destination,
     });
 
     const url = getSkyscannerFlightUrl({
