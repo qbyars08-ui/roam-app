@@ -1,309 +1,249 @@
-# Security Audit — ROAM
-## Last Updated: 2026-03-15
-## Audits Contained: (1) GDPR/DACH Compliance · (2) People Tab Security Review
-
----
-
-# AUDIT 1 — GDPR/DACH Compliance
+# Security Audit — GDPR/DACH Compliance
 ## Date: 2026-03-15
+## Scope: GDPR compliance readiness for Germany, Austria, Switzerland (DACH) launch
 ## Summary: 14 issues (3 critical, 5 high, 4 medium, 2 low)
-## DACH Launch Readiness: NOT READY — 5 blockers
-
-| # | Severity | Category | Description | File(s) | Status |
-|---|----------|----------|-------------|---------|--------|
-| 1 | CRITICAL | Data Deletion | No "Delete Account" UI exists. Support FAQ references "Profile > Settings > Delete Account" but route does not exist in `app/profile.tsx`. GDPR Article 17. | `app/profile.tsx`, `app/support.tsx` | OPEN |
-| 2 | CRITICAL | Analytics PII Leak | `WAITLIST_JOINED` PostHog event sends `email` as a property. Email is PII and must never be sent to third-party analytics. | `lib/posthog-events.ts:417-420` | OPEN |
-| 3 | CRITICAL | No Tracking Consent | PostHog initializes unconditionally on app start before any user consent. Violates TTDSG § 25 (Germany), DSG (Austria), nDSG (Switzerland). Web (`tryroam.netlify.app`) has no cookie banner or CMP. | `app/_layout.tsx:111`, `lib/posthog.ts` | OPEN |
-| 4 | HIGH | PostHog US Data Residency | Default host `https://us.i.posthog.com`. EU users' behavioral data routes to US servers. Should be `https://eu.i.posthog.com`. | `lib/posthog.ts:14-15` | OPEN |
-| 5 | HIGH | Supabase US Region | Privacy policy states "Data stored on Supabase (US)". No SCCs referenced. Must use Supabase EU (Frankfurt) or document SCCs. | `app/privacy.tsx:104` | OPEN |
-| 6 | HIGH | Anthropic Data Transfer | Trip preferences + dietary data sent to `api.anthropic.com` (US). Dietary restrictions may constitute Art. 9 special category data. No DPA documented. | `supabase/functions/claude-proxy/index.ts:167-179` | OPEN |
-| 7 | HIGH | Missing Legal Basis | Privacy policy does not specify Art. 6 legal basis per processing activity. DACH authorities require explicit documentation. | `app/privacy.tsx` | OPEN |
-| 8 | HIGH | No DPAs Executed | No DPAs with Anthropic, PostHog, ElevenLabs, RevenueCat, Supabase. GDPR Art. 28 requires written DPAs with all processors. | All edge functions | OPEN |
-| 9 | MEDIUM | analytics_events ON DELETE SET NULL | User analytics rows persist after account deletion. session_id + payload may allow re-identification. | `supabase/migrations/20260312000002_create_analytics_events.sql:11` | OPEN |
-| 10 | MEDIUM | affiliate_clicks ON DELETE SET NULL | Affiliate click records survive account deletion (partner + destination + timestamp linkable). | `supabase/migrations/20260311000001_affiliate_clicks.sql:8` | OPEN |
-| 11 | MEDIUM | waitlist_emails No Deletion Path | Plain-text emails with no account linkage and no self-service deletion endpoint. | `supabase/migrations/20260314000002_create_waitlist_emails.sql` | OPEN |
-| 12 | MEDIUM | Privacy Policy DACH Gaps | Missing: EU representative, DPO contact, supervisory authority names (BfDI/DSB/EDÖB), per-category retention periods, company address. | `app/privacy.tsx` | OPEN |
-| 13 | LOW | ElevenLabs Undisclosed | Itinerary text sent to `api.elevenlabs.io` (US) not mentioned in privacy policy. | `supabase/functions/voice-proxy/index.ts` | OPEN |
-| 14 | LOW | error_logs PII Risk | Free-form payload/message fields may contain user input without retention/deletion policy. | `supabase/migrations/20260312000004_create_error_logs.sql` | OPEN |
-
-### DACH Launch Blockers
-1. No account deletion UI (GDPR Art. 17 hard requirement)
-2. No consent mechanism before analytics tracking (TTDSG/DSG/nDSG)
-3. Email PII leaking to PostHog
-4. PostHog routing EU data to US without documented SCCs
-5. No DPAs executed with any data processors
 
 ---
-
-# AUDIT 2 — People Tab Security Review
-## Date: 2026-03-15
-## Summary: 8 issues (1 critical, 3 high, 3 medium, 1 low)
 
 ## Findings
 
 | # | Severity | Category | Description | File(s) | Status |
 |---|----------|----------|-------------|---------|--------|
-| P-1 | CRITICAL | Broken RLS Policy | `squad_matches` INSERT policy references non-existent columns `user_a, user_b`. Actual columns are `initiator_id, target_id`. Policy fails at creation or runtime, leaving match insertion unguarded. Any authenticated user can insert arbitrary matches for any pair of users. | `supabase/migrations/20260312000008_security_fix_rls.sql:11-14` | OPEN |
-| P-2 | HIGH | Trip Presence Enumeration | `trip_presence` SELECT policy `USING (status = 'active')` allows any authenticated user to query ALL active presences — bypassing the matching flow entirely. Exposes: who is going where, exact arrival/departure dates, and stated intentions (`looking_for[]`) for all active users. | `supabase/migrations/20260311000005_social_layer.sql:373-374` | OPEN |
-| P-3 | HIGH | Privacy Flags Not Enforced at DB Level | `social_profiles` has `show_age` and `show_real_name` boolean flags, but the `"Visible profiles readable"` policy returns ALL columns including `age_range` and `display_name` regardless of these flags. Enforcement is entirely at application layer. `findSquadCandidates()` returns the full profile object with no filtering. If any client bypasses the app to query directly, privacy settings are ignored. | `supabase/migrations/20260311000005_social_layer.sql:365-367`, `lib/social.ts:121-125` | OPEN |
-| P-4 | HIGH | No Input Validation on Social Profile Fields | `upsertSocialProfile()` sends user-provided `bio`, `display_name`, `vibe_tags`, `languages` to DB with no length limits or sanitization. DB schema has no `CHECK` constraints on these TEXT fields. Risks: oversized payloads causing rendering issues; XSS payloads in `bio`/`display_name` (critical on web platform). | `lib/social.ts:43-53`, `supabase/migrations/20260311000005_social_layer.sql:10-29` | OPEN |
-| P-5 | MEDIUM | No Rate Limiting on Social Profile Operations | `social_profiles` upsert, `trip_presence` insert, `squad_swipes` insert, and `breakfast_listings` insert have no per-user rate limits. Only edge functions (voice-proxy, weather-intel etc.) use `increment_edge_rate_limit`. A malicious user can: spam presence records across hundreds of destinations, create automated swipe bots, or flood listing tables. | `lib/social.ts`, `supabase/migrations/20260324000002_edge_function_rate_limits.sql` | OPEN |
-| P-6 | MEDIUM | Group Preview Exposes Itinerary to Unauthenticated Users | `get_group_preview_by_invite` RPC is granted to `anon` role. Returns full `itinerary_json` (accommodation, restaurant, activity details) to unauthenticated callers. No rate limiting on the RPC. Invite codes are 8 chars (charset ~32 chars = ~2^40 space) — brute-forceable with sustained effort and no lockout. | `supabase/migrations/20260320000001_group_trip_preview_rpc.sql:40` | OPEN |
-| P-7 | MEDIUM | shared_trips No DELETE Policy | Once a trip is shared, it cannot be deleted by the creator. `shared_trips` has SELECT and INSERT policies but no DELETE policy. Users cannot retract shared links. This also conflicts with GDPR Art. 17 (right to erasure applies to shared content). | `supabase/migrations/20260311000004_create_shared_trips_table.sql` | OPEN |
-| P-8 | LOW | Avatar URL Allowlist Missing for Future Live Data | Current People tab uses hardcoded Unsplash URLs (safe). The `social_profiles` schema uses `avatar_emoji` (safe). But `local_profiles` has no avatar field defined — if one is added later, and avatar image URLs are stored in DB without an allowlist, they could be used for SSRF or tracking pixel injection. No validation guard exists preemptively. | `app/(tabs)/people.tsx:58-113` | OPEN |
+| 1 | CRITICAL | Data Deletion | No "Delete Account" UI exists. Support FAQ references "Profile > Settings > Delete Account" but this route does not exist in `app/profile.tsx`. GDPR Article 17 (right to erasure) requires a user-facing deletion mechanism. | `app/profile.tsx`, `app/support.tsx` | OPEN |
+| 2 | CRITICAL | Analytics PII Leak | `WAITLIST_JOINED` PostHog event sends `email` as a property. Email is PII and must never be sent to third-party analytics. | `lib/posthog-events.ts:417-420` | OPEN |
+| 3 | CRITICAL | No Cookie/Tracking Consent | PostHog analytics initializes unconditionally on app start (`initPostHog()` in `_layout.tsx:111`) with no prior user consent. Under GDPR Article 7 and ePrivacy Directive (§ 25 TTDSG in Germany), consent is required before analytics tracking. Web platform is affected. | `app/_layout.tsx:111`, `lib/posthog.ts` | OPEN |
+| 4 | HIGH | PostHog US Data Residency | Default PostHog host hardcoded to `https://us.i.posthog.com`. EU users' behavioral data (user ID, screen views, events) is routed to US servers. No SCC/adequacy decision covers this transfer for DACH users without explicit consent and DPA. Should use `https://eu.i.posthog.com`. | `lib/posthog.ts:14-15` | OPEN |
+| 5 | HIGH | Supabase US Data Residency | Primary database stores EU user personal data in US region (privacy policy states "Data stored on Supabase (US)"). No Standard Contractual Clauses (SCC) reference in privacy policy. For DACH launch, Supabase EU region (Frankfurt) must be enabled or SCCs must be documented. | `app/privacy.tsx:104`, `lib/supabase.ts` | OPEN |
+| 6 | HIGH | Anthropic Data Transfer | Trip preferences, travel style profiles (pace, budget, dietary requirements, accommodation style), and chat messages are sent to `api.anthropic.com` (US). Travel profile data can constitute special category-adjacent data (dietary restrictions may reveal religious/health info). Privacy policy lacks SCC/DPA reference for Anthropic. | `supabase/functions/claude-proxy/index.ts:167-179`, `app/privacy.tsx:91-96` | OPEN |
+| 7 | HIGH | Missing Legal Basis Documentation | Privacy policy does not specify the legal basis (Art. 6 GDPR) for each processing activity: analytics (legitimate interest vs. consent?), AI processing (contract performance?), push notifications (consent?). DACH data protection authorities require explicit legal basis per processing purpose. | `app/privacy.tsx` | OPEN |
+| 8 | HIGH | No Data Processing Agreement (DPA) References | No DPAs documented with: Anthropic (claude-proxy processes user content), PostHog (analytics), ElevenLabs (TTS processes itinerary text), RevenueCat (subscription/payment data). GDPR Art. 28 requires written DPAs with all data processors. | `supabase/functions/claude-proxy/`, `supabase/functions/voice-proxy/` | OPEN |
+| 9 | MEDIUM | analytics_events ON DELETE SET NULL | `analytics_events.user_id` uses `ON DELETE SET NULL` instead of `CASCADE`. When a user deletes their account, their analytics rows persist with a null user_id. Depending on session_id or payload content, this data may still be re-identifiable, partially violating Art. 17 erasure rights. | `supabase/migrations/20260312000002_create_analytics_events.sql:11` | OPEN |
+| 10 | MEDIUM | affiliate_clicks ON DELETE SET NULL | Same issue: `affiliate_clicks.user_id` uses `ON DELETE SET NULL`. Affiliate click records (partner, destination, platform, timestamp) remain after account deletion and could be linkable via correlated timestamps. | `supabase/migrations/20260311000001_affiliate_clicks.sql:8` | OPEN |
+| 11 | MEDIUM | waitlist_emails No Deletion Mechanism | `waitlist_emails` stores plain-text email addresses with no user account linkage and no deletion endpoint. Users cannot exercise Art. 17 rights for waitlist data. No retention period defined for this table. | `supabase/migrations/20260314000002_create_waitlist_emails.sql`, `lib/waitlist-guest.ts` | OPEN |
+| 12 | MEDIUM | Privacy Policy Missing DACH-Specific Requirements | Privacy policy (`app/privacy.tsx`) lacks: (a) EU data controller address / company registration, (b) Data Protection Officer (DPO) contact if required, (c) EU representative contact (required if no EU establishment), (d) right to lodge complaint with specific supervisory authority (BfDI for Germany, DSB for Austria, EDÖB for Switzerland), (e) data retention periods for all processing categories (analytics, push tokens, error logs, social profiles). | `app/privacy.tsx` | OPEN |
+| 13 | LOW | ElevenLabs TTS Data Flow Undisclosed | Itinerary narration text (containing destination names, activity descriptions derived from user preferences) is sent to `api.elevenlabs.io` via `voice-proxy`. ElevenLabs is a US company. This third-party processor is not disclosed in the privacy policy. | `supabase/functions/voice-proxy/index.ts:105-121`, `app/privacy.tsx:100` | OPEN |
+| 14 | LOW | Error Logs May Contain PII | `error_logs.payload` and `error_logs.message` fields are free-form JSONB/TEXT. If error context includes user inputs (e.g., destination names, travel preferences passed during a failing API call), PII could be stored without a defined retention period or deletion mechanism. No user_id linkage means Art. 17 requests cannot be applied. | `supabase/migrations/20260312000004_create_error_logs.sql`, `lib/error-tracking.ts:43-52` | OPEN |
 
 ---
 
-## Detailed Findings — People Tab
+## Detailed Findings
 
-### P-1 — CRITICAL: Broken squad_matches RLS INSERT Policy
+### Finding 1 — CRITICAL: No Account Deletion UI
+**GDPR Article:** 17 (Right to Erasure)
+**Risk:** A user cannot exercise their right to erasure. German data subjects routinely invoke this right. Absence of a self-service deletion mechanism creates legal liability under DSGVO (German GDPR implementation) with fines up to €20M or 4% global turnover.
+
 **Evidence:**
-```sql
--- 20260312000008_security_fix_rls.sql:11-14
-DROP POLICY IF EXISTS "Authenticated insert squad_matches" ON squad_matches;
-CREATE POLICY "Users insert own matches" ON squad_matches
-  FOR INSERT TO authenticated
-  WITH CHECK (auth.uid() IN (user_a, user_b));  -- ❌ columns don't exist
-```
-
-The actual `squad_matches` schema uses `initiator_id` and `target_id`, not `user_a`/`user_b`. This policy either fails to create (throwing a PostgreSQL error, leaving no INSERT policy at all after the DROP) or creates silently but fails at enforcement time.
-
-**Impact:** Any authenticated user can insert a row into `squad_matches` with arbitrary `initiator_id` and `target_id`, creating fake mutual matches between users who never swiped. This enables:
-- Fake match notifications to any user
-- Unauthorized access to match-gated chat channels
-- Impersonation of match events
+- `app/support.tsx:42`: FAQ answer says "Open ROAM > Profile > Settings > Delete Account"
+- `app/profile.tsx`: No "Settings" section and no "Delete Account" button exist in the rendered UI
+- Database has `ON DELETE CASCADE` on most tables, so the deletion *mechanism* exists at DB level — it's only the UI entry point that's missing
 
 **Fix Required:**
-```sql
--- In new migration:
-DROP POLICY IF EXISTS "Users insert own matches" ON squad_matches;
-CREATE POLICY "Users insert own matches" ON squad_matches
-  FOR INSERT TO authenticated
-  WITH CHECK (
-    auth.uid() = initiator_id
-    AND initiator_id <> target_id  -- prevent self-matching
-  );
-```
+Add a "Delete Account" destructive action to `app/profile.tsx` that calls `supabase.auth.admin.deleteUser()` (via a secure edge function) or uses Supabase's account deletion API. Confirm with a two-step dialog. Display estimated data deletion timeline (≤30 days per privacy policy).
 
 ---
 
-### P-2 — HIGH: Trip Presence Direct Enumeration
+### Finding 2 — CRITICAL: Email PII in PostHog Analytics
+**GDPR Article:** 5(1)(c) data minimisation, 9 (special categories adjacent), Art. 25 privacy by design
+
 **Evidence:**
-```sql
--- social_layer.sql:373-374
-CREATE POLICY "Active presence readable" ON trip_presence
-  FOR SELECT TO authenticated USING (status = 'active');
-```
-
-Any authenticated user can execute:
-```sql
-SELECT * FROM trip_presence WHERE status = 'active';
-```
-This returns every active traveler's `user_id`, `destination`, `arrival_date`, `departure_date`, and `looking_for[]` — the full dataset backing the People tab's matching feature. No filtering by mutual interest or destination overlap is enforced at DB level.
-
-**Fix Required:**
-Restrict direct table reads to own rows only. Expose matching data exclusively through a `SECURITY DEFINER` RPC that enforces overlap/destination criteria before returning results:
-```sql
-DROP POLICY IF EXISTS "Active presence readable" ON trip_presence;
-CREATE POLICY "Users read own presence" ON trip_presence
-  FOR SELECT TO authenticated USING (user_id = auth.uid());
--- Matching queries go through a SECURITY DEFINER RPC instead
-```
-
----
-
-### P-3 — HIGH: Privacy Flags Not Enforced at DB Level
-**Evidence:**
-```sql
--- social_layer.sql:365-367
-CREATE POLICY "Visible profiles readable" ON social_profiles
-  FOR SELECT TO authenticated USING (visibility != 'invisible');
--- Returns ALL columns including age_range, display_name, bio
-```
-
-The table has:
-- `show_real_name boolean DEFAULT false` — display_name should be anonymized when false
-- `show_age boolean DEFAULT true` — age_range should be hidden when false
-
-But the SELECT policy returns all columns regardless. Any PostgreSQL client that directly queries `social_profiles` (bypassing the app's filtering logic) receives full profile data.
-
-**Fix Required:**
-Create a view or RPC that respects privacy flags:
-```sql
-CREATE OR REPLACE FUNCTION get_public_social_profile(p_user_id uuid)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER AS $$
-DECLARE r record;
-BEGIN
-  SELECT * INTO r FROM social_profiles WHERE user_id = p_user_id AND visibility != 'invisible';
-  IF NOT FOUND THEN RETURN NULL; END IF;
-  RETURN jsonb_build_object(
-    'id', r.id,
-    'display_name', CASE WHEN r.show_real_name THEN r.display_name ELSE 'Traveler' END,
-    'age_range', CASE WHEN r.show_age THEN r.age_range ELSE NULL END,
-    'travel_style', r.travel_style,
-    'vibe_tags', r.vibe_tags,
-    'bio', r.bio,
-    'avatar_emoji', r.avatar_emoji,
-    'languages', r.languages,
-    'visibility', r.visibility,
-    'open_to_meetups', r.open_to_meetups
-    -- Omit: show_real_name, show_age, auto_delete_chats, created_at
-  );
-END;
-$$;
-```
-
----
-
-### P-4 — HIGH: No Input Validation on Social Profile Fields
-**Evidence (`lib/social.ts:43-53`):**
 ```typescript
-export async function upsertSocialProfile(
-  profile: Partial<SocialProfile>
-): Promise<SocialProfile | null> {
-  const userId = getUserId();
-  const { data } = await supabase
-    .from('social_profiles')
-    .upsert({ user_id: userId, ...profile }, { onConflict: 'user_id' })
-    // No validation on bio, display_name, vibe_tags, languages
+// lib/posthog-events.ts:417-420
+WAITLIST_JOINED: def<{ email: string; destination?: string }>(
+  'waitlist_joined',
+  'User joined the waitlist',
+),
 ```
-
-DB schema has no length constraints (`bio TEXT`, `display_name TEXT NOT NULL DEFAULT 'Traveler'`). A user can:
-1. Submit a `bio` of 10MB — stored and rendered to every matched user, crashing their UI
-2. Submit XSS payload in `display_name` or `bio` — **critical** on web platform since React Native Web renders to DOM
-3. Submit invalid/oversized arrays in `vibe_tags` or `languages`
+Email is defined as a required PostHog event property for `waitlist_joined`. If fired, this sends raw email addresses to PostHog (US servers). Under GDPR, email is PII and its transfer to analytics processors requires lawful basis and DPA.
 
 **Fix Required:**
-Add validation before upsert in `lib/social.ts` and DB-level constraints:
+Remove `email` from the `WAITLIST_JOINED` event payload. Use a hashed or pseudonymous identifier instead (e.g., `email_domain` or a server-side generated opaque ID). Audit all call sites that fire `WAITLIST_JOINED` to confirm email is not currently being sent.
+
+---
+
+### Finding 3 — CRITICAL: Unconditional Analytics Tracking (No Consent)
+**GDPR Article:** 7 (Conditions for consent), ePrivacy Directive, TTDSG § 25 (Germany)
+
+**Evidence:**
 ```typescript
-const LIMITS = {
-  display_name: 50,
-  bio: 300,
-  vibe_tags: 10,    // max array length
-  languages: 10,
-};
-
-// In upsertSocialProfile:
-if (profile.bio && profile.bio.length > LIMITS.bio) throw new Error('Bio too long (max 300 chars)');
-if (profile.display_name && profile.display_name.length > LIMITS.display_name) throw new Error('Name too long');
-if (profile.vibe_tags && profile.vibe_tags.length > LIMITS.vibe_tags) throw new Error('Too many vibes');
+// app/_layout.tsx:111
+initPostHog().catch(() => {});  // Called unconditionally at app start
 ```
+PostHog is initialized before any user consent is collected. Under TTDSG (Germany's Telecommunications Digital Services Data Protection Act), tracking tools require prior informed consent — even for analytics classified as "legitimate interest" in other jurisdictions. Austria (DSG) and Switzerland (nDSG) have similar requirements.
 
-```sql
-ALTER TABLE social_profiles
-  ADD CONSTRAINT bio_length CHECK (char_length(bio) <= 300),
-  ADD CONSTRAINT display_name_length CHECK (char_length(display_name) <= 50);
-```
-
----
-
-### P-5 — MEDIUM: No Rate Limiting on Social Operations
-No rate limit on `trip_presence` inserts, `squad_swipes` inserts, or `social_profiles` upserts. Edge function rate limiting (`increment_edge_rate_limit`) only covers: `voice-proxy`, `weather-intel`, `destination-photo`, `enrich-venues`.
-
-**Attack scenarios:**
-- **Presence spam**: Submit 1000 `trip_presence` records across all destinations → appear in every destination's candidate pool → denial-of-service for matching UX
-- **Swipe bot**: Auto-swipe right on every candidate → force matches with all users in a destination
-- **Profile churn**: Rapidly update profile to test what content passes filters
+The web version (`tryroam.netlify.app`) is particularly exposed: no cookie banner, no consent management platform (CMP), no opt-out mechanism.
 
 **Fix Required:**
-Add DB-level insert limits via triggers or extend `increment_edge_rate_limit` to cover direct Supabase client table operations:
-```sql
--- Limit presence inserts: max 10 active per user
-CREATE OR REPLACE FUNCTION check_presence_limit()
-RETURNS TRIGGER LANGUAGE plpgsql AS $$
-BEGIN
-  IF (SELECT COUNT(*) FROM trip_presence WHERE user_id = NEW.user_id AND status = 'active') >= 10 THEN
-    RAISE EXCEPTION 'Maximum 10 active trip presences allowed';
-  END IF;
-  RETURN NEW;
-END;
-$$;
-CREATE TRIGGER enforce_presence_limit BEFORE INSERT ON trip_presence FOR EACH ROW EXECUTE FUNCTION check_presence_limit();
-```
+1. Implement a GDPR-compliant consent banner for web (before `initPostHog()` fires)
+2. For native app: add analytics opt-in/opt-out in Profile settings
+3. Gate `initPostHog()` and `captureEvent()` behind `hasAnalyticsConsent()` check
+4. Store consent in AsyncStorage and sync to PostHog via `posthog.optIn()` / `posthog.optOut()`
+5. Consider a Consent Management Platform (CMP) like Didomi, Usercentrics, or Cookiebot for web
 
 ---
 
-### P-6 — MEDIUM: Group Preview Unauthenticated Access + No Rate Limit
+### Finding 4 — HIGH: PostHog US Endpoint for EU Users
+**GDPR Article:** 44-49 (International transfers)
+
+**Evidence:**
+```typescript
+// lib/posthog.ts:14-15
+const POSTHOG_HOST =
+  process.env.EXPO_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com';
+```
+The fallback (and likely production value unless `EXPO_PUBLIC_POSTHOG_HOST` is explicitly set) routes all analytics to US infrastructure. PostHog EU endpoint (`https://eu.i.posthog.com`) stores data in Frankfurt, Germany, eliminating the international transfer issue.
+
+**Fix Required:**
+Set `EXPO_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com` in production environment. Update `.env.example` to document this. Add a comment explaining the EU hosting requirement.
+
+---
+
+### Finding 5 — HIGH: Supabase US Region
+**GDPR Article:** 44-49 (International transfers), Art. 13 (transparency)
+
+Privacy policy states data is stored in US. Supabase now offers EU region (Frankfurt). For DACH launch, either:
+- Migrate to Supabase EU region, OR
+- Implement and document Standard Contractual Clauses (SCCs) in the privacy policy
+
+No mention of SCCs, Binding Corporate Rules, or adequacy decisions for any US data transfers in current privacy policy.
+
+---
+
+### Finding 6 — HIGH: Anthropic (Claude) Data Transfer
+**GDPR Article:** 44-49, Art. 9 (special categories)
+
+**Evidence:** `supabase/functions/claude-proxy/index.ts:167-179` — User's `system` prompt (containing travel profile with dietary restrictions, pace, budget) and `messages` (chat content, trip requests) are sent to `api.anthropic.com`.
+
+Dietary restrictions (e.g., halal, kosher, gluten-free) can reveal religious beliefs or health conditions, which are special category data under Art. 9 GDPR, requiring explicit consent for processing.
+
+Privacy policy (`app/privacy.tsx:91-96`) mentions Anthropic but states only "not retained beyond the API request" — this is Anthropic's policy, not a legally binding DPA commitment documented for regulators.
+
+**Fix Required:**
+1. Execute a formal DPA with Anthropic (check their DPA availability at anthropic.com/legal)
+2. Reference the DPA and applicable SCCs in the privacy policy
+3. Evaluate whether dietary/religious data flowing to Anthropic requires explicit Art. 9 consent
+4. Consider stripping dietary flags from the prompt or replacing with neutral categories
+
+---
+
+### Finding 7 — HIGH: Missing Legal Basis Per Processing Activity
+**GDPR Article:** 13(1)(c), 6
+
+Current privacy policy does not specify the legal basis for each processing activity. DACH data protection authorities (BfDI, DSB, EDÖB) require explicit documentation. Required additions:
+
+| Processing Activity | Required Legal Basis |
+|--------------------|---------------------|
+| Account data (email, auth) | Art. 6(1)(b) — contract performance |
+| Trip generation / AI chat | Art. 6(1)(b) — contract performance |
+| PostHog analytics | Art. 6(1)(a) — consent (preferred for DACH) or Art. 6(1)(f) — legitimate interest with balancing test |
+| Push notifications | Art. 6(1)(a) — consent (already requires OS permission) |
+| Marketing/referrals | Art. 6(1)(a) — consent |
+| Error logs | Art. 6(1)(f) — legitimate interest (security/debugging) |
+| Affiliate click tracking | Art. 6(1)(f) — legitimate interest (with opt-out) |
+
+---
+
+### Finding 9 — MEDIUM: analytics_events Survive Account Deletion
 **Evidence:**
 ```sql
--- 20260320000001_group_trip_preview_rpc.sql:40-41
-GRANT EXECUTE ON FUNCTION get_group_preview_by_invite(text) TO anon;
-GRANT EXECUTE ON FUNCTION get_group_preview_by_invite(text) TO authenticated;
+-- 20260312000002_create_analytics_events.sql:11
+user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
 ```
-
-The function returns `itinerary_json` (full trip plan with accommodations, restaurants, activities) to unauthenticated callers. The only secret is the 8-character invite code (charset ~32 = ~1 trillion combinations — guessable via sustained automated requests with no lockout).
+After account deletion, `analytics_events` rows persist with `user_id = NULL`. The `session_id` field (format: `sess_{timestamp}_{random}`) combined with timestamps, screen names, and payloads may allow re-identification, particularly if cross-referenced with logs.
 
 **Fix Required:**
-1. Revoke `anon` grant: `REVOKE EXECUTE ON FUNCTION get_group_preview_by_invite(text) FROM anon;`
-2. Require authentication for group previews (deferred signup flow can show destination/dates without full itinerary)
-3. Add rate limiting: max 20 preview lookups/minute per IP via edge function wrapper
+Change `ON DELETE SET NULL` to `ON DELETE CASCADE` on `analytics_events.user_id`, OR implement a scheduled cleanup job that purges rows for deleted users within the 30-day window stated in the privacy policy.
 
 ---
 
-### P-7 — MEDIUM: shared_trips Cannot Be Deleted by Creator
-**Evidence (`supabase/migrations/20260311000004_create_shared_trips_table.sql`):**
+### Finding 10 — MEDIUM: affiliate_clicks Survive Account Deletion
+**Evidence:**
 ```sql
-CREATE POLICY "Anyone can view shared trips" ON shared_trips FOR SELECT USING (true);
-CREATE POLICY "Authenticated users can insert shared trips" ON shared_trips
-  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
--- No DELETE policy
+-- 20260311000001_affiliate_clicks.sql:8
+user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
 ```
+Same pattern as analytics_events. Affiliate click records (partner, destination, platform, `clicked_at`) remain after deletion. These records show travel intentions and platform usage patterns.
 
-Once shared, a trip link is permanent. The creator cannot retract it. Also: `user_id` is stored and publicly readable in the table (any SELECT returns the creator's UUID).
+---
+
+### Finding 11 — MEDIUM: Waitlist Emails — No Deletion Path
+`waitlist_emails` stores raw email addresses (`email TEXT NOT NULL`). These are pre-signup records with no user account linkage. Users who submitted their email to the waitlist have no way to delete this data. No retention period is defined. For DACH users who submitted emails before launch, GDPR Art. 17 rights cannot be exercised.
 
 **Fix Required:**
-```sql
-CREATE POLICY "Users can delete own shared trips" ON shared_trips
-  FOR DELETE TO authenticated USING (auth.uid() = user_id);
-```
-And remove `user_id` from the public SELECT by replacing the table policy with a view that omits it, or using a SECURITY DEFINER function.
+1. Add a `/waitlist/unsubscribe` endpoint (via Supabase edge function or email link) 
+2. Define and document a retention policy (e.g., delete 1 year after launch or upon user request)
+3. Confirm a deletion link was included in the waitlist confirmation email
 
 ---
 
-## People Tab: What's Safe
+### Finding 12 — MEDIUM: Privacy Policy Gaps for DACH
+Missing required elements under Art. 13 GDPR:
 
-- `social_profiles` RLS correctly gates all writes to own user (`user_id = auth.uid()`)
-- Default `visibility = 'invisible'` — users are opt-in for visibility (correct)
-- `avatar_emoji` field (not URLs) used in social profiles — no XSS via avatar in current schema
-- `trip_presence` INSERT correctly enforces `user_id = auth.uid()`
-- `squad_swipes` INSERT enforces `swiper_id = auth.uid()` (correct)
-- `social_chat_messages` INSERT enforces `sender_id = auth.uid()` AND channel membership (correct)
-- `location_checkins` properly restricted to own user + circle members
-- People tab currently serves mock data only — no live user data is exposed yet
+1. **Data Controller Identity**: No company registration number, country of incorporation, or physical address listed. Only email contacts. German DPA requires full controller identity.
+2. **Data Protection Officer**: Whether a DPO is required depends on scale. If processing >250 employees worth of data or systematic monitoring, appoint and list DPO contact.
+3. **EU Representative**: If ROAM Travel Inc. has no EU establishment, Art. 27 requires appointing an EU representative. No representative listed.
+4. **Supervisory Authority**: Only "lodge complaint" mentioned. Must name the specific supervisory authority (BfDI for Germany: `https://www.bfdi.bund.de`; DSB for Austria: `https://www.dsb.gv.at`; EDÖB for Switzerland: `https://www.edoeb.admin.ch`).
+5. **Retention Periods**: Push tokens, affiliate clicks, error logs, social profiles, analytics events — no individual retention periods defined.
+6. **Switzerland (nDSG)**: Swiss Data Protection Act (nDSG, in force Sept 2023) has additional requirements including registration of data processing activities (Bearbeitungsreglement) and information duties.
 
 ---
 
-## Combined Recommendations (Both Audits)
+## Third-Party Data Flow Map
 
-### Immediate (blocks People tab going live)
-- [ ] Fix `squad_matches` INSERT policy: replace `user_a, user_b` with `initiator_id, target_id`
-- [ ] Add DELETE policy to `shared_trips`
-- [ ] Revoke `anon` grant on `get_group_preview_by_invite`
-- [ ] Add input validation + DB constraints on `social_profiles` text fields
+| Third Party | Data Sent | Region | DPA Exists | SCC Required | Risk |
+|-------------|-----------|--------|------------|--------------|------|
+| Supabase | All user data (auth, trips, social, location) | US (unless migrated) | Supabase offers DPA | Yes | HIGH |
+| Anthropic | Trip prompts, chat, travel profile (incl. dietary) | US | Anthropic offers DPA | Yes | HIGH |
+| PostHog | User ID, events, screen views, (potentially email) | US (default) | PostHog offers DPA | Yes | HIGH |
+| RevenueCat | User ID, subscription status, purchase events | US | RevenueCat offers DPA | Yes | MEDIUM |
+| ElevenLabs | Itinerary narration text | US | ElevenLabs offers DPA | Yes | MEDIUM |
+| Unsplash | Photo ID queries (no user PII) | US | Not required | No | LOW |
+| Open-Meteo | City names for weather/geocoding | Switzerland/EU | Not required | No | LOW |
+| Frankfurter API | Currency codes (no PII) | EU | Not required | No | LOW |
 
-### Pre-Launch DACH
-- [ ] Implement Delete Account UI in `app/profile.tsx`
-- [ ] Add GDPR consent banner to web before PostHog fires
-- [ ] Remove `email` from `WAITLIST_JOINED` PostHog event
-- [ ] Switch PostHog host to `https://eu.i.posthog.com`
-- [ ] Execute DPAs with Anthropic, PostHog, ElevenLabs, RevenueCat, Supabase
-- [ ] Rewrite privacy policy with legal basis, EU representative, supervisory authority contacts
+---
 
-### Sprint
-- [ ] Restrict `trip_presence` direct SELECT to own rows; expose matches via SECURITY DEFINER RPC
-- [ ] Enforce `show_age` and `show_real_name` flags via DB view or RPC (not app layer)
-- [ ] Add per-user rate limits on `trip_presence` inserts and `squad_swipes`
-- [ ] Change `analytics_events.user_id` and `affiliate_clicks.user_id` to `ON DELETE CASCADE`
-- [ ] Add waitlist unsubscribe endpoint
+## What Open-Meteo Sends (Confirmation: LOW Risk)
+Open-Meteo (`geocoding-api.open-meteo.com`, `api.open-meteo.com`) is operated from Switzerland, which has EU adequacy status. Requests contain only destination city names (not user identifiers). No personal data transferred. **Compliant as-is.**
 
-### Backlog
-- [ ] Add avatar URL allowlist for when live user-supplied avatar URLs are introduced
-- [ ] Add date validation to `postTripPresence()` (arrival < departure, max 1 year out)
-- [ ] Add `trip_presence` insert limit trigger (max 10 active per user)
-- [ ] Define per-table data retention periods and implement automated purge
+## What Unsplash Sends (Confirmation: LOW Risk)
+Unsplash API calls include only photo IDs and the API key. No user identifiers are sent. **Compliant as-is.**
 
 ---
 
 ## Resolved This Session
-- [x] Identified broken `squad_matches` INSERT policy referencing wrong columns
-- [x] Documented all 5 DACH launch blockers for prioritization
+
+None — all findings are newly identified.
+
+---
+
+## Recommendations (Priority Order)
+
+- [ ] **[IMMEDIATE — blocks DACH launch]** Implement Delete Account UI in `app/profile.tsx` with confirmation dialog and backend deletion edge function
+- [ ] **[IMMEDIATE — blocks DACH launch]** Add GDPR consent banner to web (`tryroam.netlify.app`) before any PostHog tracking fires
+- [ ] **[IMMEDIATE — blocks DACH launch]** Remove `email` field from `WAITLIST_JOINED` PostHog event; replace with opaque identifier
+- [ ] **[IMMEDIATE — blocks DACH launch]** Switch PostHog host to `https://eu.i.posthog.com` via env var
+- [ ] **[PRE-LAUNCH]** Execute DPAs with: Anthropic, PostHog, ElevenLabs, RevenueCat, Supabase
+- [ ] **[PRE-LAUNCH]** Migrate Supabase project to EU region (Frankfurt) OR document SCCs in privacy policy
+- [ ] **[PRE-LAUNCH]** Rewrite privacy policy to include: legal basis per activity, EU representative, supervisory authority contacts (BfDI/DSB/EDÖB), DPO contact, per-category retention periods
+- [ ] **[PRE-LAUNCH]** Add in-app analytics opt-out toggle in Profile screen
+- [ ] **[PRE-LAUNCH]** Add waitlist unsubscribe endpoint (email link or web form)
+- [ ] **[SPRINT]** Change `analytics_events.user_id` and `affiliate_clicks.user_id` to `ON DELETE CASCADE`
+- [ ] **[SPRINT]** Audit `error_logs.payload` for PII leakage; add message sanitization before insert
+- [ ] **[SPRINT]** Add legal basis documentation to privacy policy for each processing category
+- [ ] **[SPRINT]** Add ElevenLabs to "Third-Party Services" section of privacy policy
+- [ ] **[BACKLOG]** Define and implement data retention schedule (automated purge jobs for analytics, error logs, push tokens with defined TTLs)
+- [ ] **[BACKLOG]** Evaluate whether dietary restriction data in AI prompts constitutes Art. 9 special category data requiring explicit consent
+- [ ] **[BACKLOG]** Assess DPO requirement threshold; appoint DPO or document exemption
+- [ ] **[BACKLOG]** Swiss nDSG: create Bearbeitungsreglement (data processing record) for Swiss users
+
+---
+
+## DACH Launch Blockers (Must Fix Before Going Live in DE/AT/CH)
+
+1. No account deletion UI (GDPR Art. 17 hard requirement)
+2. No consent mechanism for analytics tracking (TTDSG Germany, DSG Austria, nDSG Switzerland)
+3. Email PII leaking to PostHog
+4. PostHog routing EU user data to US without SCCs documented
+5. No DPAs executed with any data processors
+
+**Current DACH readiness: NOT READY. 5 launch blockers must be resolved.**
