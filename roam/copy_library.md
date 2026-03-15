@@ -700,4 +700,119 @@ ROAM. Reisen, als würdest du jemanden vor Ort kennen.
 
 ---
 
+---
+
+## People Tab Copy — March 2026 Sprint
+
+### Hero Section — Tested Variants
+
+Three variants tested. Best one applied to code.
+
+| Variant | Headline | Sub | Verdict |
+|---------|----------|-----|---------|
+| A (original) | Travel is better together | We match you with travelers heading to the same place, at the same time, with the same energy. | REPLACED — generic, sounds like every social app |
+| B | Your travel crew is already out there | — | Good sub-header; kept as the page sub-header |
+| C (applied) | Meet the people going where you're going | Tell us where. We show you who else is heading there, when they leave, and what they care about. | BEST — specific, functional, ROAM voice |
+
+**Why C wins:** It describes the exact feature ("meet people going where you're going"), uses second-person, and makes the value immediate. "Travel is better together" could be a Contiki tagline. "Meet the people going where you're going" is something only ROAM can say.
+
+---
+
+### Header Copy — Applied
+
+| Element | Old | New | Reason |
+|---------|-----|-----|--------|
+| Tab subtitle | Find travelers going where you are going | Your travel crew is already out there | Punchy, creates curiosity/FOMO |
+| Open groups sub | Join a trip that is forming | Trips forming now — one spot could be yours | Urgency, specific, personal |
+| Matched travelers sub | People heading to your destinations | Same destination. Same window. Similar energy. | Three specifics, rhythm, no filler |
+| Bottom CTA body | Complete your travel profile to get better matches | Add your destinations to see who else is going. | Actionable, specific, clear outcome |
+| Profile button | Set up profile | Set up your travel profile | Specific context, not generic |
+
+---
+
+### Traveler Bios — All 15 (Approved)
+
+| # | Name | Age | Destination | Dates | Vibes | Bio | Countries | Match |
+|---|------|-----|-------------|-------|-------|-----|-----------|-------|
+| 1 | Maya | 24 | Tokyo | Apr 12–19 | local-eats, culture, night-owl | Street food hunter. 2AM ramen is non-negotiable. | 23 | 94% |
+| 2 | Kai | 22 | Bali | May 1–10 | adventure, beach-vibes, photo-worthy | Chasing surf breaks and sunrise shots. Down to share a villa. | 15 | 87% |
+| 3 | Sofia | 26 | Barcelona | Jun 5–12 | art-design, night-owl, local-eats | Museum mornings. Tapas at 2pm. Rooftop at midnight. | 31 | 91% |
+| 4 | Liam | 23 | Mexico City | Apr 20–27 | local-eats, deep-history, slow-morning | Mezcal, mole, and mercados. Learning Spanish one taco at a time. | 12 | 82% |
+| 5 | Rina | 25 | Lisbon | May 15–22 | solo-friendly, culture, slow-morning | Solo, always. A good cafe and a window seat is home anywhere. | 18 | 89% |
+| 6 | Priya | 28 | Medellín | May 3–Jun 2 | digital-nomad, local-eats, slow-morning | Month-long stays only. Currently scheming a co-working collab house in El Poblado. | 34 | 88% |
+| 7 | Tomás | 31 | Queenstown | Jul 10–17 | adrenaline, nature-escape, adventure | Bungee, skydive, paraglide — all in one week. Looking for people who run at the same speed. | 19 | 85% |
+| 8 | Chloe | 21 | Paris | Mar 28–Apr 4 | art-design, slow-morning, hidden-gems | First solo trip. Skipping the Eiffel Tower line and going straight to the Marais. | 3 | 79% |
+| 9 | Jae-won | 27 | Oaxaca | Oct 12–19 | local-eats, market-hopper, deep-history | Every trip planned around one thing: the best mole I have not eaten yet. | 21 | 92% |
+| 10 | Anya | 33 | Kyoto | Apr 5–18 | slow-morning, wellness, deep-history | Two weeks minimum or I do not bother. Kyoto in cherry blossom season, finally. | 27 | 86% |
+| 11 | Marco | 25 | Tbilisi | Jun 1–14 | off-grid, local-eats, hidden-gems | $35/day and no agenda. Georgia is the last good-cheap destination in Europe and I am not telling many people. | 16 | 83% |
+| 12 | Nadia | 29 | Istanbul | May 8–15 | photo-worthy, art-design, market-hopper | Blue hour over the Bosphorus. That is the shot and I will be there. | 22 | 90% |
+| 13 | Eli | 23 | Budapest | Apr 25–30 | night-owl, hidden-gems, local-eats | Organizing a 6-person ruin bar crawl. Need people who can keep up and still want breakfast the next day. | 8 | 77% |
+| 14 | Sun-yeon | 26 | Santorini | Sep 5–12 | sunset-chaser, slow-morning, photo-worthy | Going in September, not July. Oia with 30 people, not 300. | 11 | 81% |
+| 15 | Kevin | 35 | Rome | Apr 10–17 | deep-history, culture, local-eats | Studied archaeology for four years. Finally seeing the Forum properly, not from a tour bus window. | 29 | 88% |
+
+**Bio writing rules applied:**
+- Max 2 sentences. One is better.
+- Always one specific detail (dish, place, time, price)
+- Reads like a bio someone would actually write, not like marketing copy
+- Personality in every bio — never "I love travel and meeting new people"
+
+---
+
+### Group Descriptions — All 5 (Approved)
+
+| Group | Destination | Description |
+|-------|-------------|-------------|
+| g1 | Bali | 4 remote workers renting two villas in Canggu. Split is around $600/person. Surf mornings, work afternoons. |
+| g2 | Tokyo | 3 first-time Japan visitors. Ramen every day, day trip to Nikko on day 5. One spot still open. |
+| g3 | Barcelona | Art route through the city — Picasso, Fundació Miró, dinners no earlier than 10pm. Looking for one more. |
+| g4 | Lisbon | 5 travelers, €60/day budget, Airbnb in Alfama. Fado nights, day trip to Sintra, pastéis de nata for breakfast. |
+| g5 | Medellín | Month-long stay in El Poblado. Three people, one co-working space, shared meals. Open to a 4th. |
+
+**Description writing rules:**
+- Lead with the concrete details (cost, logistics, vibe)
+- End with a human hook ("One spot still open", "Open to a 4th")
+- No "unforgettable" or "incredible" or "amazing"
+
+---
+
+## Plan Tab Copy — No Trips State
+
+### Headline Variants Tested
+
+| Variant | Headline | Sub | Verdict |
+|---------|----------|-----|---------|
+| A (original) | Plan a trip | Fill out a form, get a full itinerary | REPLACED — instruction, not invitation; "fill out a form" sounds like DMV |
+| B (applied) | No trips yet. | Pick somewhere. 30 seconds. You'll have a full plan before anyone talks you out of it. | BEST — direct acknowledgment + invitation + wit |
+| C | Where are you thinking? | 30 seconds from right now, you'll have a full plan. | Good but less ROAM voice |
+| D | Pick somewhere. | We'll have a plan ready before your next tab switch. | Fun but unclear |
+
+**Why B wins:** "No trips yet." is honest and direct — it names the state without shame. "Before anyone talks you out of it" is ROAM voice — it's the friend who knows you overthink trips. It creates gentle urgency without pressure.
+
+**Implementation:** `firstTime` prop added to `GenerateModeSelect`. When `!hasTrips` in `plan.tsx`, passes `firstTime={true}` which swaps in the invitation copy.
+
+---
+
+### Mode Select Copy — When Returning (hasTrips = true)
+
+| Element | Copy |
+|---------|------|
+| Headline | How do you want to plan? |
+| Subtitle | (none — mode cards are self-explanatory) |
+
+**Change from original:** Original subtitle was `generate.quickModeDesc` ("Fill out a form, get a full itinerary") — used as a general subtitle for all modes, which was wrong. New subtitle is "How do you want to plan?" which frames the choice correctly.
+
+---
+
+### Quick Action Cards — Approved
+
+| Action | Label | Sub-label |
+|--------|-------|-----------|
+| Stays | Find stays | Hotels, hostels, villas |
+| Food | Find food | Restaurants, street food |
+| Flights | Book flights | Compare prices |
+
+These are correct and approved as-is. Short, functional, zero buzzwords.
+
+---
+
 *Last updated: March 2026 — Agent 11*
