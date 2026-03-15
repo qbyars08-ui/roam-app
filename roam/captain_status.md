@@ -1,52 +1,72 @@
 # Captain Status Board
 
-Last updated: 2026-03-15 (overnight session)
+Last updated: 2026-03-15 (morning session)
 
 ## Quick Pulse
 - **System:** GREEN
 - **TypeScript:** 0 errors
 - **Site:** LIVE at https://tryroam.netlify.app
-- **Agents:** 15 defined, pending Cursor Cloud rebuild
-- **Blockers:** 4 (all Quinn-only)
-- **PRs pending:** 0
+- **Agents:** 15 defined + first messages ready (roam/NEW_AGENT_MESSAGES.md)
+- **Blockers:** 5 (all Quinn-only)
+- **PRs pending:** 14 from overnight Cursor agents
 
 ## Agent Status
 
 | # | Agent | Status | Last Output | Key Finding |
 |---|-------|--------|------------|-------------|
-| 01 | Tester | PENDING REBUILD | -- | 423 tests passing from last sprint |
-| 02 | Researcher | PENDING REBUILD | -- | Was evaluating image APIs |
-| 03 | Design | ACTIVE | design_audit.md (Mar 14) | 22 violations fixed, flights/stays still need rework |
-| 04 | Builder | KEEP (Opus) | PRs merged (Mar 14) | Generate flow hardened, TripGeneratingLoader wired |
-| 05 | Debugger | PENDING REBUILD | system_health.md (Mar 15) | CI pipeline created, system green |
-| 06 | Growth | ACTIVE | growth_dashboard.md (Mar 14) | ASO keywords, TikTok concepts, A/B tests designed |
-| 07 | Monetization | PENDING REBUILD | -- | Skyscanner + Booking.com links wired |
-| 08 | Security | ACTIVE | -- | Admin bypass implemented in claude-proxy |
-| 09 | Localization | PENDING REBUILD | -- | i18n system live, 4 languages, German needed |
-| 10 | Analytics | PENDING REBUILD | -- | PostHog instrumented |
-| 11 | Content | ACTIVE | copy_library.md (Mar 14) | Full waitlist copy + email sequence done |
-| 12 | Investor | PENDING REBUILD | investor_narrative.md (Mar 15) | Pitch doc + weekly memo created |
-| 13 | DACH Growth | NEW | dach_scripts.md (Mar 15) | 10 TikTok scripts + strategy done |
-| 14 | UGC Engine | NEW | ugc_research.md (Mar 15) | 4 platforms evaluated |
-| CP | Captain | PENDING REBUILD | captain_status.md (Mar 15) | This file |
+| 01 | Tester | ASSIGNED | test_results.md (PR #34) | Test matrix ready, awaiting Cursor rebuild |
+| 02 | Researcher | ASSIGNED | research_report.md (PR #23) | Image API comparison done |
+| 03 | Design | ASSIGNED | design_audit.md (PR #36) | 12 files changed, +648 lines |
+| 04 | Builder | ASSIGNED (Opus) | PRs merged (Mar 14) | Generate flow hardened, images fixed |
+| 05 | Debugger | ASSIGNED | system_health.md (PR #27) | Health check update ready |
+| 06 | Growth | ASSIGNED | growth_dashboard.md (PR #25) | Gen Z growth audit complete |
+| 07 | Monetization | ASSIGNED | monetization_model.md (PR #26) | Creator payment model drafted |
+| 08 | Security | ASSIGNED | security_audit.md (PR #30) | GDPR DACH compliance audit done |
+| 09 | Localization | ASSIGNED | de.ts (PR #33) | German localization ready |
+| 10 | Analytics | ASSIGNED | analytics_spec.md (PR #28) | DACH analytics spec drafted |
+| 11 | Content | ASSIGNED | copy_library.md (PR #32) | App copy + store text updated |
+| 12 | Investor | ASSIGNED | investor_narrative.md (PR #29) | Narrative enhanced |
+| 13 | DACH Growth | ASSIGNED | dach_influencers.md (PR #35) | 20 influencers researched |
+| 14 | UGC Engine | ASSIGNED | creator_outreach.md (PR #31) | Creator programs designed |
+| CP | Captain | ACTIVE | captain_status.md | This file |
 
 ## Needs Quinn's Attention (priority order)
 
-1. **Agent Rebuild** — Follow roam/AGENT_REBUILD.md to delete old agents and create new Sonnet ones (15 min)
-2. **Supabase Secret** — Add ADMIN_TEST_EMAILS=qbyars08@gmail.com for testing bypass
-3. **Booking.com** — Sign up at partners.booking.com for real AID
-4. **Amadeus Cleanup** — Remove AMADEUS_KEY + AMADEUS_SECRET from Supabase
+1. **Merge PRs** — 14 open PRs need review. Start with #36 (Design) and #33 (German). See roam/AGENT_BOARD.md for full priority table.
+2. **Cursor Agent Rebuild** — Paste first messages from roam/NEW_AGENT_MESSAGES.md into each new Cursor Cloud agent (15 min)
+3. **Supabase Secret** — Add ADMIN_TEST_EMAILS=qbyars08@gmail.com
+4. **Booking.com AID** — Sign up at partners.booking.com, replace placeholder in lib/affiliates.ts
+5. **RevenueCat Products** — Create Pro subscription in RC dashboard
 
-## Conflicts Detected
-None currently. All agents have clear file ownership per AGENT_BOARD.md.
+## Live Site Verification (today)
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Discover tab | PASS | All 37 images loading, hooks showing |
+| Generate wizard | PASS | Quick + Chat modes, trip form complete |
+| Flights tab | PASS | Search UI, price calendar, cabin selector |
+| Stays tab | PASS | Empty state correct |
+| Food tab | PASS | Empty state correct |
+| Prep tab | PASS | Live weather, safety, currency, holidays, air quality |
+| Auth flow | PASS | Google, Email, Guest all working |
+| Paywall/waitlist | PASS | Email form, referral copy, "Join waitlist" CTA |
+| Tab navigation | PASS | All 6 tabs switch correctly |
+| Booking affiliate links | PASS | Skyscanner + Booking.com wired (placeholder AID) |
+
+## Demo Ready? YES
+
+30-second elevator pitch:
+"ROAM is an AI travel planner for Gen Z. You pick a destination, set your budget and vibe, and it builds a full day-by-day itinerary in 30 seconds — with real-time weather, safety data, and booking links. We're launching in the German market first with a TikTok creator strategy. The app is live right now with 15 AI agents building it around the clock."
 
 ## This Week's Wins
-- 6 hidden APIs wired to visible UI (air quality, sun times, forecast, emergency, currency, cost of living)
-- All 37 destinations now have direct Unsplash photo URLs
-- DACH go-to-market strategy complete (277 lines)
-- 10 German TikTok scripts written and production-ready
-- UGC platform research done (Insense recommended)
-- Investor pitch narrative + weekly memo created
-- All agent .mdc files updated with model recommendations
-- Agent system rebuild plan written (step-by-step, 15 min)
-- Site deployed and verified live
+- App live and verified at tryroam.netlify.app
+- 7 broken Unsplash URLs fixed, all 37 destinations loading
+- 14 PRs from overnight agents ready for review
+- DACH strategy + 10 German TikTok scripts complete
+- German localization (de.ts) drafted
+- GDPR compliance audit done
+- Creator payment model + ambassador program designed
+- 20 DACH influencers researched
+- Investor narrative + weekly memo updated
+- Agent onboarding messages written (NEW_AGENT_MESSAGES.md)
+- Full agent task board written (AGENT_BOARD.md)
