@@ -8,16 +8,15 @@ import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
-import { IconDiscover, IconGenerate, IconFlights, IconStays, IconFood, IconPrep } from './TabIcons';
+import { IconPlan, IconDiscover, IconPeople, IconFlights, IconPrep } from './TabIcons';
 
-const TAB_ORDER = ['index', 'generate', 'flights', 'stays', 'food', 'prep'] as const;
+const TAB_ORDER = ['plan', 'index', 'people', 'flights', 'prep'] as const;
 type TabIconComponent = React.ComponentType<{ size?: number; color?: string; focused?: boolean }>;
 const TAB_ICONS: Record<string, { i18nKey: string; Icon: TabIconComponent }> = {
+  plan: { i18nKey: 'tabs.plan', Icon: IconPlan },
   index: { i18nKey: 'tabs.discover', Icon: IconDiscover },
-  generate: { i18nKey: 'tabs.generate', Icon: IconGenerate },
+  people: { i18nKey: 'tabs.people', Icon: IconPeople },
   flights: { i18nKey: 'tabs.flights', Icon: IconFlights },
-  stays: { i18nKey: 'tabs.stays', Icon: IconStays },
-  food: { i18nKey: 'tabs.food', Icon: IconFood },
   prep: { i18nKey: 'tabs.prep', Icon: IconPrep },
 };
 
