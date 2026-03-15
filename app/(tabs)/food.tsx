@@ -5,6 +5,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -17,12 +18,13 @@ import { useTranslation } from 'react-i18next';
 import { impactAsync as hapticImpact } from '../../lib/haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Bookmark, ExternalLink, UtensilsCrossed } from 'lucide-react-native';
+import { Bookmark, ExternalLink, Star, UtensilsCrossed } from 'lucide-react-native';
 import * as Linking from 'expo-linking';
 
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore, getActiveTrip } from '../../lib/store';
 import { SkeletonCard } from '../../components/premium/LoadingStates';
+import { enrichVenues, type EnrichedVenue } from '../../lib/venues';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -242,6 +244,7 @@ export default function FoodScreen() {
   const [selectedCategory, setSelectedCategory] = useState<FoodCategory>('all');
   const [savedToast, setSavedToast] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [enrichedMap, setEnrichedMap] = useState<Map<string, EnrichedVenue>>(new Map());
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const destination =
@@ -253,6 +256,19 @@ export default function FoodScreen() {
     setIsLoading(true);
     const timer = setTimeout(() => setIsLoading(false), 500);
     return () => clearTimeout(timer);
+  }, [destination]);
+
+  // Enrich top restaurants with live Google Places data
+  useEffect(() => {
+    if (!destination) return;
+    const restaurants = getRestaurantsForCity(destination).slice(0, 6);
+    if (restaurants.length === 0) return;
+    const queries = restaurants.map((r) => ({ name: r.name, city: destination }));
+    enrichVenues(queries).then((results) => {
+      const next = new Map<string, EnrichedVenue>();
+      results.forEach((v) => { if (v) next.set(v.name.toLowerCase(), v); });
+      setEnrichedMap(next);
+    }).catch(() => {});
   }, [destination]);
 
   const cityRestaurants = useMemo(
@@ -472,6 +488,7 @@ export default function FoodScreen() {
               <Text style={styles.sectionTitle}>More picks</Text>
               {morePicks.map((r) => {
                 const isBookmarked = bookmarkedIds.includes(r.id);
+                const enriched = enrichedMap.get(r.name.toLowerCase());
                 return (
                   <Pressable
                     key={r.id}
@@ -487,7 +504,18 @@ export default function FoodScreen() {
                         { backgroundColor: getAccentColor(r.category) },
                       ]}
                     />
-                    <Text style={styles.cardName}>{r.name}</Text>
+                    {enriched?.photo_url && (
+                      <Image source={{ uri: enriched.photo_url }} style={styles.cardPhoto} resizeMode="cover" />
+                    )}
+                    <View style={styles.cardNameRow}>
+                      <Text style={[styles.cardName, { flex: 1 }]}>{r.name}</Text>
+                      {enriched?.rating && (
+                        <View style={styles.liveRating}>
+                          <Star size={10} color={COLORS.gold} strokeWidth={2} fill={COLORS.gold} />
+                          <Text style={styles.liveRatingText}>{enriched.rating}</Text>
+                        </View>
+                      )}
+                    </View>
                     <Text style={styles.cardCategory}>{r.category}</Text>
                     {(r.tryDish || r.mustTry) && (
                       <View style={styles.tryRow}>
@@ -757,11 +785,36 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 14,
     borderBottomLeftRadius: 14,
   } as ViewStyle,
+  cardPhoto: {
+    width: '100%',
+    height: 100,
+    borderRadius: RADIUS.sm,
+    marginBottom: SPACING.sm,
+  },
+  cardNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: 2,
+  } as ViewStyle,
+  liveRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: COLORS.goldFaint,
+    borderRadius: RADIUS.full,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+  } as ViewStyle,
+  liveRatingText: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.gold,
+  } as TextStyle,
   cardName: {
     fontFamily: FONTS.header,
     fontSize: 18,
     color: COLORS.cream,
-    width: '100%',
     marginBottom: 2,
   } as TextStyle,
   cardCategory: {
