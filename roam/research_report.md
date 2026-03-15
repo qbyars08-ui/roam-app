@@ -7,6 +7,16 @@
 
 ---
 
+## Phase 1 Implementation Status: SHIPPED
+
+**What was implemented (2026-03-15):**
+- `lib/people-tab.ts` — data layer: `fetchMatchedTravelers`, `fetchOpenGroups`, `fetchPresenceCount`, `postTripPresenceForTrip`
+- `app/(tabs)/people.tsx` — wired to Supabase: real matches from `findSquadCandidates()`, real groups from `public_trips`, live traveler count via Presence, "Connect" button wired to `swipeCandidate()`
+- `lib/store.ts` — `addTrip` now auto-posts `trip_presence` for authenticated users
+- Mock data retained as graceful fallback (shown with "Generate a trip to see real matches" banner)
+
+---
+
 ## Executive Summary
 
 The People tab backend is **90% already built**. ROAM has a complete social layer schema (`social_profiles`, `trip_presence`, `squad_swipes`, `squad_matches`), a working matching algorithm in `lib/social.ts`, Supabase Realtime already enabled on all key tables, and a full type system in `lib/types/social.ts`. The `app/(tabs)/people.tsx` screen is running on mock data when it could connect to live Supabase data **today**. This report documents the architecture, identifies the wiring gap, and provides the exact implementation path.

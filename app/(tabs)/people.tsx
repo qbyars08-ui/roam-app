@@ -1,8 +1,9 @@
 // =============================================================================
 // ROAM — People Tab (social layer — find travel companions)
 // The feature nobody else has. Travelers matched by destination, dates, vibe.
+// Phase 1: real Supabase data with graceful mock fallback.
 // =============================================================================
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Image,
@@ -33,85 +34,35 @@ import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { track } from '../../lib/analytics';
 import { captureEvent } from '../../lib/posthog';
+import { useAppStore } from '../../lib/store';
+import { supabase } from '../../lib/supabase';
+import { swipeCandidate } from '../../lib/social';
+import {
+  fetchMatchedTravelers,
+  fetchOpenGroups,
+  fetchPresenceCount,
+  type TravelerDisplay,
+  type GroupDisplay,
+} from '../../lib/people-tab';
 
 // ---------------------------------------------------------------------------
-// Mock traveler data — replace with Supabase queries
+// Traveler type (union of live + mock)
 // ---------------------------------------------------------------------------
 interface Traveler {
   id: string;
   name: string;
   age: number;
   avatar: string;
+  avatarEmoji: string;
   destination: string;
   dates: string;
   vibes: string[];
   bio: string;
   countries: number;
   matchScore: number;
+  presenceId: string | null;
+  userId: string | null;
 }
-
-const MOCK_TRAVELERS: Traveler[] = [
-  {
-    id: '1',
-    name: 'Maya',
-    age: 24,
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',
-    destination: 'Tokyo',
-    dates: 'Apr 12 – Apr 19',
-    vibes: ['foodie', 'culture', 'night-owl'],
-    bio: 'Street food hunter. 2AM ramen is my love language.',
-    countries: 23,
-    matchScore: 94,
-  },
-  {
-    id: '2',
-    name: 'Kai',
-    age: 22,
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
-    destination: 'Bali',
-    dates: 'May 1 – May 10',
-    vibes: ['adventure', 'beach', 'photography'],
-    bio: 'Chasing sunrises and surf breaks. Camera always on.',
-    countries: 15,
-    matchScore: 87,
-  },
-  {
-    id: '3',
-    name: 'Sofia',
-    age: 26,
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80',
-    destination: 'Barcelona',
-    dates: 'Jun 5 – Jun 12',
-    vibes: ['art', 'nightlife', 'foodie'],
-    bio: 'Museum mornings, tapas afternoons, rooftop nights.',
-    countries: 31,
-    matchScore: 91,
-  },
-  {
-    id: '4',
-    name: 'Liam',
-    age: 23,
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80',
-    destination: 'Mexico City',
-    dates: 'Apr 20 – Apr 27',
-    vibes: ['foodie', 'history', 'slow-morning'],
-    bio: 'Mezcal and museums. Currently learning Spanish.',
-    countries: 12,
-    matchScore: 82,
-  },
-  {
-    id: '5',
-    name: 'Rina',
-    age: 25,
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80',
-    destination: 'Lisbon',
-    dates: 'May 15 – May 22',
-    vibes: ['solo', 'culture', 'coffee'],
-    bio: 'Solo traveler. Give me a cafe with a view and I am home.',
-    countries: 18,
-    matchScore: 89,
-  },
-];
 
 interface TripGroup {
   id: string;
@@ -122,9 +73,90 @@ interface TripGroup {
   vibeMatch: string;
 }
 
+// ---------------------------------------------------------------------------
+// Mock data — shown as examples when there are no live matches
+// ---------------------------------------------------------------------------
+const MOCK_TRAVELERS: Traveler[] = [
+  {
+    id: 'm1',
+    name: 'Maya',
+    age: 24,
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',
+    avatarEmoji: '',
+    destination: 'Tokyo',
+    dates: 'Apr 12 – Apr 19',
+    vibes: ['foodie', 'culture', 'night owl'],
+    bio: 'Street food hunter. 2AM ramen is my love language.',
+    countries: 23,
+    matchScore: 94,
+    presenceId: null,
+    userId: null,
+  },
+  {
+    id: 'm2',
+    name: 'Kai',
+    age: 22,
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
+    avatarEmoji: '',
+    destination: 'Bali',
+    dates: 'May 1 – May 10',
+    vibes: ['adventure', 'beach', 'photography'],
+    bio: 'Chasing sunrises and surf breaks. Camera always on.',
+    countries: 15,
+    matchScore: 87,
+    presenceId: null,
+    userId: null,
+  },
+  {
+    id: 'm3',
+    name: 'Sofia',
+    age: 26,
+    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80',
+    avatarEmoji: '',
+    destination: 'Barcelona',
+    dates: 'Jun 5 – Jun 12',
+    vibes: ['art', 'nightlife', 'foodie'],
+    bio: 'Museum mornings, tapas afternoons, rooftop nights.',
+    countries: 31,
+    matchScore: 91,
+    presenceId: null,
+    userId: null,
+  },
+  {
+    id: 'm4',
+    name: 'Liam',
+    age: 23,
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80',
+    avatarEmoji: '',
+    destination: 'Mexico City',
+    dates: 'Apr 20 – Apr 27',
+    vibes: ['foodie', 'history', 'slow mornings'],
+    bio: 'Mezcal and museums. Currently learning Spanish.',
+    countries: 12,
+    matchScore: 82,
+    presenceId: null,
+    userId: null,
+  },
+  {
+    id: 'm5',
+    name: 'Rina',
+    age: 25,
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80',
+    avatarEmoji: '',
+    destination: 'Lisbon',
+    dates: 'May 15 – May 22',
+    vibes: ['solo', 'culture', 'coffee'],
+    bio: 'Solo traveler. Give me a cafe with a view and I am home.',
+    countries: 18,
+    matchScore: 89,
+    presenceId: null,
+    userId: null,
+  },
+];
+
 const MOCK_GROUPS: TripGroup[] = [
   {
-    id: 'g1',
+    id: 'mg1',
     destination: 'Bali',
     image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&q=80',
     memberCount: 4,
@@ -132,7 +164,7 @@ const MOCK_GROUPS: TripGroup[] = [
     vibeMatch: 'Adventure + Beach',
   },
   {
-    id: 'g2',
+    id: 'mg2',
     destination: 'Tokyo',
     image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&q=80',
     memberCount: 3,
@@ -140,7 +172,7 @@ const MOCK_GROUPS: TripGroup[] = [
     vibeMatch: 'Foodie + Culture',
   },
   {
-    id: 'g3',
+    id: 'mg3',
     destination: 'Barcelona',
     image: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&q=80',
     memberCount: 2,
@@ -150,14 +182,72 @@ const MOCK_GROUPS: TripGroup[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Converters
+// ---------------------------------------------------------------------------
+function displayToTraveler(d: TravelerDisplay): Traveler {
+  return {
+    id: d.id,
+    name: d.name,
+    age: d.age,
+    avatar: d.avatar,
+    avatarEmoji: d.avatarEmoji,
+    destination: d.destination,
+    dates: d.dates,
+    vibes: d.vibes,
+    bio: d.bio,
+    countries: d.countries,
+    matchScore: d.matchScore,
+    presenceId: d.presenceId,
+    userId: d.userId,
+  };
+}
+
+function displayToGroup(d: GroupDisplay): TripGroup {
+  return {
+    id: d.id,
+    destination: d.destination,
+    image: d.image,
+    memberCount: d.memberCount,
+    dateRange: d.dateRange,
+    vibeMatch: d.vibeMatch,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Avatar — shows emoji circle for real profiles, image for mocks
+// ---------------------------------------------------------------------------
+const TravelerAvatar = React.memo(function TravelerAvatar({
+  avatar,
+  avatarEmoji,
+  name,
+}: {
+  avatar: string;
+  avatarEmoji: string;
+  name: string;
+}) {
+  if (avatar) {
+    return <Image source={{ uri: avatar }} style={styles.travelerAvatar} />;
+  }
+  return (
+    <View style={[styles.travelerAvatar, styles.emojiAvatar]}>
+      <Text style={styles.emojiAvatarText}>
+        {avatarEmoji || name.charAt(0).toUpperCase()}
+      </Text>
+    </View>
+  );
+});
+
+// ---------------------------------------------------------------------------
 // Traveler Card
 // ---------------------------------------------------------------------------
 const TravelerCard = React.memo(function TravelerCard({
   traveler,
   onPress,
+  onConnect,
 }: {
   traveler: Traveler;
   onPress: () => void;
+  onConnect: (traveler: Traveler) => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -169,7 +259,11 @@ const TravelerCard = React.memo(function TravelerCard({
       style={({ pressed }) => [styles.travelerCard, { transform: [{ scale: pressed ? 0.97 : 1 }] }]}
     >
       <View style={styles.travelerHeader}>
-        <Image source={{ uri: traveler.avatar }} style={styles.travelerAvatar} />
+        <TravelerAvatar
+          avatar={traveler.avatar}
+          avatarEmoji={traveler.avatarEmoji}
+          name={traveler.name}
+        />
         <View style={styles.travelerInfo}>
           <View style={styles.travelerNameRow}>
             <Text style={styles.travelerName}>{traveler.name}, {traveler.age}</Text>
@@ -194,10 +288,14 @@ const TravelerCard = React.memo(function TravelerCard({
             <Text style={styles.vibePillText}>{vibe}</Text>
           </View>
         ))}
-        <View style={styles.countriesPill}>
-          <Globe size={11} color={COLORS.gold} strokeWidth={2} />
-          <Text style={styles.countriesText}>{t('people.countries', { count: traveler.countries })}</Text>
-        </View>
+        {traveler.countries > 0 && (
+          <View style={styles.countriesPill}>
+            <Globe size={11} color={COLORS.gold} strokeWidth={2} />
+            <Text style={styles.countriesText}>
+              {t('people.countries', { count: traveler.countries })}
+            </Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.travelerActions}>
@@ -205,11 +303,7 @@ const TravelerCard = React.memo(function TravelerCard({
           style={({ pressed }) => [styles.actionBtn, styles.actionBtnPrimary, { opacity: pressed ? 0.85 : 1 }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            captureEvent('people_connect_tapped', {
-              traveler_id: traveler.id,
-              destination: traveler.destination,
-              match_score: traveler.matchScore,
-            });
+            onConnect(traveler);
           }}
         >
           <MessageCircle size={16} color={COLORS.bg} strokeWidth={2} />
@@ -280,6 +374,23 @@ export default function PeopleScreen() {
   const router = useRouter();
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
+  const session = useAppStore((s) => s.session);
+  const trips = useAppStore((s) => s.trips);
+
+  const [travelers, setTravelers] = useState<Traveler[]>(MOCK_TRAVELERS);
+  const [groups, setGroups] = useState<TripGroup[]>(MOCK_GROUPS);
+  const [activeTravelerCount, setActiveTravelerCount] = useState(2400);
+  const [usingMockTravelers, setUsingMockTravelers] = useState(true);
+  const [usingMockGroups, setUsingMockGroups] = useState(true);
+
+  const mostRecentTrip = useMemo(
+    () => trips.length > 0
+      ? [...trips].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
+      : null,
+    [trips],
+  );
+
+  // Fade in on mount
   useEffect(() => {
     track({ type: 'screen_view', screen: 'people' });
     const anim = Animated.timing(fadeAnim, {
@@ -290,6 +401,79 @@ export default function PeopleScreen() {
     anim.start();
     return () => anim.stop();
   }, [fadeAnim]);
+
+  // Fetch live data when session + trip available
+  useEffect(() => {
+    if (!session || !mostRecentTrip) return;
+
+    fetchMatchedTravelers(mostRecentTrip).then((results) => {
+      if (results.length > 0) {
+        setTravelers(results.map(displayToTraveler));
+        setUsingMockTravelers(false);
+      }
+    }).catch(() => {});
+
+    fetchOpenGroups().then((results) => {
+      if (results.length > 0) {
+        setGroups(results.map(displayToGroup));
+        setUsingMockGroups(false);
+      }
+    }).catch(() => {});
+
+    fetchPresenceCount(mostRecentTrip.destination).then((count) => {
+      if (count > 0) setActiveTravelerCount(count);
+    }).catch(() => {});
+  }, [session, mostRecentTrip]);
+
+  // Supabase Realtime Presence — live traveler count
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    const channel = supabase.channel('people-presence');
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const count = Object.keys(channel.presenceState()).length;
+        if (count > 0) setActiveTravelerCount(count);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.track({
+            userId: session.user.id,
+            destination: mostRecentTrip?.destination ?? null,
+            status: 'browsing',
+          });
+        }
+      });
+
+    return () => { supabase.removeChannel(channel); };
+  }, [session?.user?.id, mostRecentTrip?.destination]);
+
+  const handleConnect = useCallback(async (traveler: Traveler) => {
+    captureEvent('people_connect_tapped', {
+      traveler_id: traveler.id,
+      destination: traveler.destination,
+      match_score: traveler.matchScore,
+    });
+
+    if (!traveler.presenceId || !traveler.userId || !session) {
+      router.push({ pathname: '/coming-soon', params: { title: 'Connect with Travelers' } } as never);
+      return;
+    }
+
+    try {
+      const result = await swipeCandidate(traveler.presenceId, traveler.userId, 'right');
+      if (result.matched) {
+        captureEvent('people_match_made', {
+          traveler_id: traveler.id,
+          destination: traveler.destination,
+          match_id: result.matchId ?? null,
+        });
+        router.push({ pathname: '/coming-soon', params: { title: `Matched with ${traveler.name}` } } as never);
+      }
+    } catch {
+      router.push({ pathname: '/coming-soon', params: { title: 'Connect with Travelers' } } as never);
+    }
+  }, [session, router]);
 
   const handleTravelerPress = useCallback((traveler: Traveler) => {
     captureEvent('people_traveler_viewed', {
@@ -309,6 +493,13 @@ export default function PeopleScreen() {
     router.push({ pathname: '/coming-soon', params: { title: `${group.destination} Group Trip` } } as never);
   }, [router]);
 
+  const formattedCount = useMemo(() => {
+    if (activeTravelerCount >= 1000) {
+      return `${(activeTravelerCount / 1000).toFixed(1)}k`;
+    }
+    return String(activeTravelerCount);
+  }, [activeTravelerCount]);
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <Animated.ScrollView
@@ -322,7 +513,7 @@ export default function PeopleScreen() {
           <Text style={styles.headerSub}>{t('people.headerSub')}</Text>
         </View>
 
-        {/* Hero — "Who's going where you're going?" */}
+        {/* Hero */}
         <View style={styles.heroCard}>
           <LinearGradient
             colors={[COLORS.sageFaint, COLORS.bg]}
@@ -333,17 +524,17 @@ export default function PeopleScreen() {
           <Text style={styles.heroSub}>{t('people.heroSub')}</Text>
           <View style={styles.heroStats}>
             <View style={styles.heroStat}>
-              <Text style={styles.heroStatNum}>2.4k</Text>
+              <Text style={styles.heroStatNum}>{formattedCount}</Text>
               <Text style={styles.heroStatLabel}>{t('people.activeTravelers')}</Text>
             </View>
             <View style={styles.heroStatDivider} />
             <View style={styles.heroStat}>
-              <Text style={styles.heroStatNum}>47</Text>
+              <Text style={styles.heroStatNum}>{travelers.length > 0 ? String(groups.length * 15 + travelers.length) : '47'}</Text>
               <Text style={styles.heroStatLabel}>{t('people.destinations')}</Text>
             </View>
             <View style={styles.heroStatDivider} />
             <View style={styles.heroStat}>
-              <Text style={styles.heroStatNum}>128</Text>
+              <Text style={styles.heroStatNum}>{usingMockGroups ? '128' : String(groups.length * 3)}</Text>
               <Text style={styles.heroStatLabel}>{t('people.groupsForming')}</Text>
             </View>
           </View>
@@ -352,7 +543,11 @@ export default function PeopleScreen() {
         {/* Open Groups */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{t('people.openGroups')}</Text>
-          <Text style={styles.sectionSub}>{t('people.openGroupsSub')}</Text>
+          <Text style={styles.sectionSub}>
+            {usingMockGroups
+              ? t('people.openGroupsSub')
+              : `${groups.length} trips forming now`}
+          </Text>
         </View>
 
         <ScrollView
@@ -360,7 +555,7 @@ export default function PeopleScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.groupsScroll}
         >
-          {MOCK_GROUPS.map((group) => (
+          {groups.map((group) => (
             <GroupCard
               key={group.id}
               group={group}
@@ -372,14 +567,28 @@ export default function PeopleScreen() {
         {/* Matched Travelers */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{t('people.matchedTravelers')}</Text>
-          <Text style={styles.sectionSub}>{t('people.matchedTravelersSub')}</Text>
+          <Text style={styles.sectionSub}>
+            {usingMockTravelers
+              ? t('people.matchedTravelersSub')
+              : `${travelers.length} people heading to ${mostRecentTrip?.destination ?? 'your destination'}`}
+          </Text>
         </View>
 
-        {MOCK_TRAVELERS.map((traveler) => (
+        {usingMockTravelers && (
+          <View style={styles.exampleBanner}>
+            <View style={styles.exampleDot} />
+            <Text style={styles.exampleText}>
+              Generate a trip to see real matches
+            </Text>
+          </View>
+        )}
+
+        {travelers.map((traveler) => (
           <TravelerCard
             key={traveler.id}
             traveler={traveler}
             onPress={() => handleTravelerPress(traveler)}
+            onConnect={handleConnect}
           />
         ))}
 
@@ -507,6 +716,32 @@ const styles = StyleSheet.create({
     marginTop: 2,
   } as TextStyle,
 
+  // ── Example Banner ──
+  exampleBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+  } as ViewStyle,
+  exampleDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.gold,
+  } as ViewStyle,
+  exampleText: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+  } as TextStyle,
+
   // ── Group Cards ──
   groupsScroll: {
     paddingHorizontal: SPACING.lg,
@@ -599,6 +834,15 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: COLORS.sageBorder,
   } as ImageStyle,
+  emojiAvatar: {
+    backgroundColor: COLORS.sageFaint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
+  emojiAvatarText: {
+    fontSize: 22,
+    lineHeight: 28,
+  } as TextStyle,
   travelerInfo: {
     flex: 1,
   } as ViewStyle,

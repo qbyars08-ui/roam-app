@@ -175,6 +175,7 @@ export const useAppStore = create<AppState>((set) => ({
       const userId = s.session?.user?.id;
       if (userId) {
         import('./streaks').then((m) => m.recordTripPlanned(userId)).catch(() => {});
+        import('./people-tab').then((m) => m.postTripPresenceForTrip(trip, userId)).catch(() => {});
       }
       import('./analytics').then((m) =>
         m.trackEvent('trip_created', {
