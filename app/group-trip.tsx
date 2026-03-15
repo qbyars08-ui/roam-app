@@ -998,7 +998,7 @@ const styles = StyleSheet.create({
   checkbox: {
     width: 22,
     height: 22,
-    borderRadius: 6,
+    borderRadius: RADIUS.sm,
     borderWidth: 2,
     borderColor: COLORS.border,
   } as ViewStyle,
