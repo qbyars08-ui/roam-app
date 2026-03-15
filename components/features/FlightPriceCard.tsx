@@ -38,12 +38,20 @@ export default function FlightPriceCard({
       placement,
       url: skyscannerUrl,
     });
-    captureEvent(EVENTS.AFFILIATE_CLICK.name, {
-      partner: 'skyscanner',
-      destination,
-      placement,
-      url: skyscannerUrl,
-    });
+    // Send cleaned URL (origin+path only) to PostHog — no affiliate query params
+    let cleanUrl = '';
+    try {
+      const parsed = new URL(skyscannerUrl);
+      cleanUrl = `${parsed.origin}${parsed.pathname}`;
+    } catch { /* skip */ }
+    if (cleanUrl) {
+      captureEvent(EVENTS.AFFILIATE_CLICK.name, {
+        partner: 'skyscanner',
+        destination,
+        placement,
+        url: cleanUrl,
+      });
+    }
     Linking.openURL(skyscannerUrl).catch(() => {});
   };
 

@@ -304,6 +304,47 @@ And remove `user_id` from the public SELECT by replacing the table policy with a
 
 ---
 
+---
+
+# AUDIT 3 — Post-Merge Scan (New Agent Code)
+## Date: 2026-03-15
+## Scope: Code merged from agents 06 (Growth), 07 (Monetization), 10 (Analytics) + full Module 2/5/6 scan
+## Summary: 4 issues (1 critical resolved, 1 medium resolved, 2 low remaining)
+
+| # | Severity | Category | Description | File(s) | Status |
+|---|----------|----------|-------------|---------|--------|
+| A3-1 | CRITICAL | API Key Exposure | `.env.example` contained `EXPO_PUBLIC_ANTHROPIC_API_KEY=` — a template that could lead developers to bundle the Anthropic key into the client app. The `EXPO_PUBLIC_` prefix causes Expo to embed the value into the JS bundle. | `.env.example:7` | FIXED |
+| A3-2 | MEDIUM | Affiliate URL Leak to Analytics | `lib/affiliates.ts` and `components/features/FlightPriceCard.tsx` sent full affiliate URLs (including `associateId=`, `aid=`, `partner_id=`, UTM params) to PostHog. Module 6 rule: cleaned URLs only (origin+path). | `lib/affiliates.ts:150-155`, `components/features/FlightPriceCard.tsx:41-46` | FIXED |
+| A3-3 | MEDIUM | WAITLIST_JOINED email PII | (Carry-forward from Audit 1, now fixed) `WAITLIST_JOINED` PostHog event type definition included `email: string` as required property. Removed from type — callers cannot accidentally pass email to PostHog. | `lib/posthog-events.ts:417` | FIXED |
+| A3-4 | LOW | PostHog EU host not in .env.example | `.env.example` had no `EXPO_PUBLIC_POSTHOG_HOST` variable. Without it, production will silently route EU user data to `https://us.i.posthog.com` (US servers). Added to .env.example with correct EU value and GDPR comment. | `.env.example` | FIXED |
+| A3-5 | LOW | CVE Scan | `npm audit` shows 0 critical, 0 high vulnerabilities. 5 low-severity issues in `@tootallnate/once` (transitive dep of `jest-expo`). Fix requires `npm audit fix --force` which would downgrade `jest-expo` to v47 (breaking change). Not a runtime risk. | `package.json` | ACCEPTED |
+| A3-6 | LOW | `EXPO_PUBLIC_OPENWEATHER_KEY` and `EXPO_PUBLIC_AVIATIONSTACK_KEY` in client | Both `lib/weather.ts` and `lib/aviationstack.ts` read API keys from `EXPO_PUBLIC_` env vars — bundled into client JS. Per project rules, only Supabase anon key and Google Places key are permitted as `EXPO_PUBLIC_`. Medium-risk for key abuse (weather/flight search rate limits). Recommend proxying through edge functions long-term. | `lib/weather.ts:38`, `lib/aviationstack.ts:54` | OPEN |
+
+## Fixes Applied This Session
+
+### A3-1: Removed `EXPO_PUBLIC_ANTHROPIC_API_KEY` from `.env.example`
+Removed the dangerous template variable. Anthropic key is server-side only (`Deno.env.get("ANTHROPIC_API_KEY")` in `claude-proxy`). Added comment clarifying this constraint.
+
+### A3-2: Strip query params from affiliate URLs before PostHog
+Both `lib/affiliates.ts` and `components/features/FlightPriceCard.tsx` now send only `origin+pathname` to PostHog, stripping all affiliate IDs, UTM parameters, and tracking tokens.
+
+### A3-3: Removed `email` from `WAITLIST_JOINED` PostHog event type
+The TypeScript type for `WAITLIST_JOINED` now only allows `{ destination?: string }`. No call site currently fires this event with an email — the type fix ensures no future caller can accidentally introduce the PII leak.
+
+### A3-4: Added `EXPO_PUBLIC_POSTHOG_HOST` to `.env.example`
+Added `EXPO_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com` with a clear GDPR comment. This ensures any new environment setup defaults to EU data residency.
+
+---
+
 ## Resolved This Session
-- [x] Identified broken `squad_matches` INSERT policy referencing wrong columns
+- [x] Identified broken `squad_matches` INSERT policy referencing wrong columns — FIXED in migration 20260315000001
+- [x] Added DELETE policy to `shared_trips` — FIXED in migration 20260315000002
+- [x] Revoked `anon` grant on `get_group_preview_by_invite` — FIXED in migration 20260315000002
+- [x] Added DB-level length constraints to `social_profiles` — FIXED in migration 20260315000002
+- [x] Added `trip_presence` insert limit trigger — FIXED in migration 20260315000002
+- [x] Added `validateSocialProfileInput()` to `lib/social.ts` — FIXED
+- [x] Removed `EXPO_PUBLIC_ANTHROPIC_API_KEY` from `.env.example` — FIXED
+- [x] Stripped query params from affiliate URLs before PostHog — FIXED in `lib/affiliates.ts`, `FlightPriceCard.tsx`
+- [x] Removed `email` from `WAITLIST_JOINED` PostHog event type — FIXED in `lib/posthog-events.ts`
+- [x] Added `EXPO_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com` to `.env.example` — FIXED
 - [x] Documented all 5 DACH launch blockers for prioritization

@@ -414,9 +414,9 @@ export const EVENTS = {
   // =========================================================================
   // Waitlist
   // =========================================================================
-  WAITLIST_JOINED: def<{ email: string; destination?: string }>(
+  WAITLIST_JOINED: def<{ destination?: string }>(
     'waitlist_joined',
-    'User joined the waitlist',
+    'User joined the waitlist — email intentionally omitted (PII)',
   ),
 
   // =========================================================================
