@@ -30,7 +30,6 @@ import {
   Sun,
 } from 'lucide-react-native';
 import { addDays, format, isSameDay, startOfDay } from 'date-fns';
-import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
@@ -512,7 +511,6 @@ const InspirationCardComponent = React.memo(function InspirationCardComponent({
 // Main Screen
 // ---------------------------------------------------------------------------
 export default function FlightsScreen() {
-  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const planDestination = useAppStore((s) => s.planWizard.destination);
 
