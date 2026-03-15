@@ -498,6 +498,7 @@ const es: TranslationKeys = {
     language: 'Idioma',
     selectLanguage: 'Seleccionar idioma',
     english: 'English',
+    german: 'Deutsch',
     spanish: 'Espa\u00f1ol',
     french: 'Fran\u00e7ais',
     japanese: '\u65E5\u672C\u8A9E',
