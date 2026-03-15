@@ -253,7 +253,7 @@ function ScheduleTab({ itinerary }: { itinerary: Itinerary | null }) {
       <View style={styles.tabContent}>
         <Text style={styles.scheduleEmptyTitle}>No schedule yet</Text>
         <Text style={styles.noDataText}>
-          Generate a trip in Plan to see your day-by-day schedule here.
+          Plan a trip first. Your day-by-day itinerary loads here automatically.
         </Text>
       </View>
     );

@@ -411,8 +411,8 @@ export default function DiscoverScreen() {
     () => (
       <View style={styles.emptyContainer}>
         <MapPin size={40} color={COLORS.creamMuted} strokeWidth={1.5} />
-        <Text style={styles.emptyTitle}>No destinations match</Text>
-        <Text style={styles.emptySubtitle}>Try a different category or search term</Text>
+        <Text style={styles.emptyTitle}>Nothing matches that.</Text>
+        <Text style={styles.emptySubtitle}>Try a city name, or clear the filter and browse everything.</Text>
         <Pressable
           onPress={() => {
             setActiveCategory('all');

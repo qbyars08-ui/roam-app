@@ -118,28 +118,28 @@ const INSPIRATION: InspirationCard[] = [
   {
     destination: 'Tokyo',
     month: 'March',
-    reason: 'Cherry blossom season at its peak',
+    reason: 'Every park goes pink for two weeks. Book before the crowds do.',
     image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400&q=80',
     code: 'NRT',
   },
   {
     destination: 'Bali',
     month: 'July',
-    reason: 'Dry season, perfect surf and sunsets',
+    reason: 'Dry season. Waves are consistent and the sky is clear at 6am.',
     image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&q=80',
     code: 'DPS',
   },
   {
     destination: 'Paris',
     month: 'May',
-    reason: 'Warm but not crowded, long golden evenings',
+    reason: 'Locals eat outside, the Louvre queue is half the size. Light until 9pm.',
     image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&q=80',
     code: 'CDG',
   },
   {
     destination: 'Barcelona',
     month: 'September',
-    reason: 'Beach weather, locals are back, La Merce festival',
+    reason: 'Beach weather, locals are back, La Merc\u00e8 festival takes over the streets.',
     image: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&q=80',
     code: 'BCN',
   },
@@ -656,7 +656,7 @@ export default function FlightsScreen() {
         <View style={styles.hero}>
           <Text style={styles.heroTitle}>Find your flight.</Text>
           <Text style={styles.heroSub}>
-            We search Skyscanner so you get the best price, every time.
+            Search Skyscanner and go straight to the cheapest result.
           </Text>
         </View>
 
@@ -802,7 +802,7 @@ export default function FlightsScreen() {
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Popular routes</Text>
           <Text style={styles.sectionSub}>
-            The flights everyone is booking right now
+            The routes people keep searching this week
           </Text>
         </View>
 
@@ -820,7 +820,7 @@ export default function FlightsScreen() {
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Best time to fly</Text>
           <Text style={styles.sectionSub}>
-            Peak season, lowest crowds, perfect weather
+            Right month. Fewer crowds. Best weather.
           </Text>
         </View>
 
