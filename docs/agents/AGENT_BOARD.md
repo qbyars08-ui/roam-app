@@ -4,6 +4,24 @@ Status board for Cursor agents. Cap reads this to coordinate work.
 
 ---
 
+## Agent 04 BUILDER — Image + Tabs Rebuild
+
+**Status:** COMPLETE
+**Date:** 2026-03-15
+**Branch:** `agent04/image-tabs-rebuild`
+**Action needed:** No
+
+### Findings
+
+- `app/(tabs)/index.tsx` — Replaced broken `source.unsplash.com` with `getDestinationPhoto()` from `lib/photos.ts`; added `DestinationImageFallback` gradient on error; added `Image.prefetch` for first 8 destinations; `cache: 'force-cache'` on all images
+- `app/(tabs)/flights.tsx` — Full rewrite from 1156 to 271 lines; hero search with `US_AIRPORTS` autocomplete; 8 popular routes with Skyscanner deep links; best time to fly intel; Google Flights fallback
+- `app/(tabs)/stays.tsx` — Full rewrite from 902 to 243 lines; hero Booking.com search; 3 curated sections (Budget/Couples/Design) with real hotels across 8 cities; all cards link via `getHotelLink` + `openBookingLink`
+- `app/(tabs)/food.tsx` — Wired `enrichVenues()` for live Google Places photos + ratings on restaurant cards; added photo thumbnails and star rating badges
+- All files use `COLORS`/`FONTS`/`SPACING`/`RADIUS` only; Lucide icons only; zero emojis
+- `npx tsc --noEmit` — zero new errors
+
+---
+
 ## Agent 04 BUILDER — PostHog SDK + Rate Limit UX
 
 **Status:** COMPLETE
