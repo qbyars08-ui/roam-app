@@ -40,9 +40,40 @@ export async function getSocialProfile(): Promise<SocialProfile | null> {
   return data as SocialProfile | null;
 }
 
+const PROFILE_LIMITS = {
+  display_name: 50,
+  bio: 300,
+  vibe_tags: 10,
+  languages: 10,
+} as const;
+
+function validateSocialProfileInput(profile: Partial<SocialProfile>): void {
+  if (profile.displayName !== undefined) {
+    if (typeof profile.displayName !== 'string' || profile.displayName.trim().length === 0) {
+      throw new Error('Display name cannot be empty');
+    }
+    if (profile.displayName.length > PROFILE_LIMITS.display_name) {
+      throw new Error(`Display name too long (max ${PROFILE_LIMITS.display_name} chars)`);
+    }
+  }
+  if (profile.bio !== undefined && profile.bio !== null) {
+    if (typeof profile.bio !== 'string') throw new Error('Invalid bio');
+    if (profile.bio.length > PROFILE_LIMITS.bio) {
+      throw new Error(`Bio too long (max ${PROFILE_LIMITS.bio} chars)`);
+    }
+  }
+  if (Array.isArray(profile.vibeTags) && profile.vibeTags.length > PROFILE_LIMITS.vibe_tags) {
+    throw new Error(`Too many vibe tags (max ${PROFILE_LIMITS.vibe_tags})`);
+  }
+  if (Array.isArray(profile.languages) && profile.languages.length > PROFILE_LIMITS.languages) {
+    throw new Error(`Too many languages (max ${PROFILE_LIMITS.languages})`);
+  }
+}
+
 export async function upsertSocialProfile(
   profile: Partial<SocialProfile>
 ): Promise<SocialProfile | null> {
+  validateSocialProfileInput(profile);
   const userId = getUserId();
   const { data } = await supabase
     .from('social_profiles')
