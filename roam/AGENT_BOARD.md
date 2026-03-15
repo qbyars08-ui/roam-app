@@ -1,6 +1,6 @@
 # ROAM Agent Board
 
-Updated: 2026-03-15 (evening session)
+Updated: 2026-03-15 (post-restructure)
 
 ---
 
@@ -8,187 +8,223 @@ Updated: 2026-03-15 (evening session)
 
 - TypeScript: 0 errors
 - Live URL: https://tryroam.netlify.app
-- Open PRs: 14 (from overnight Cursor agents)
-- All 6 tabs rendering with rich visual content
+- **NEW 5-TAB STRUCTURE SHIPPED:** Plan → Discover → People → Flights → Prep
+- PR #37 merged: `feat: 5-tab navigation`
+- Old tabs (stays, food, generate) hidden via `href: null`, not deleted
 - All 37 destination images loading (200 OK)
 - 10/11 APIs working (emergencynumberapi CORS fail on web only — fallback data covers it)
-- Stays/Food/Flights empty states overhauled with Unsplash imagery
-- TripGeneratingLoader wired into generate flow
-- Trending + timing badges live on Discover cards
-- DestinationIntel (timezone, AQI, holidays, cost) live on itinerary
+
+---
+
+## CRITICAL CONTEXT FOR ALL AGENTS
+
+**The app just went through a major product pivot.** Read this before doing anything.
+
+### New Tab Structure (5 tabs)
+| Tab | File | What it does |
+|-----|------|-------------|
+| **Plan** | `app/(tabs)/plan.tsx` | Unified trip planning. Generate flow + trip cards + quick actions (stays/food/flights). This is the core product. |
+| **Discover** | `app/(tabs)/index.tsx` | Destination grid with trending badges, photo cards, category filters |
+| **People** | `app/(tabs)/people.tsx` | NEW. Social layer — traveler matching, group trips, companion profiles |
+| **Flights** | `app/(tabs)/flights.tsx` | Flight search with popular routes, price calendar, Skyscanner links |
+| **Prep** | `app/(tabs)/prep.tsx` | Safety, visa, weather, emergency numbers, currency, language guide |
+
+### Hidden tabs (still routable, NOT in tab bar)
+- `app/(tabs)/generate.tsx` — old generate tab, superseded by Plan
+- `app/(tabs)/stays.tsx` — old stays tab, content migrated to Plan
+- `app/(tabs)/food.tsx` — old food tab, content migrated to Plan
+- `app/(tabs)/group.tsx` — group/currency screen
+
+### Key Files Changed
+- `app/(tabs)/_layout.tsx` — 5 visible tabs
+- `components/ui/ROAMTabBar.tsx` — new TAB_ORDER, new icons
+- `components/ui/TabIcons.tsx` — added `IconPeople`
+- `lib/i18n/locales/{en,es,fr,ja}.ts` — added `plan` + `people` keys
 
 ---
 
 ## PR Merge Priority
 
-| Priority | PR | Title | Files | +/- | Action |
-|----------|-----|-------|-------|-----|--------|
-| P0 | #36 | Design audit violations | 12 | +648/-199 | REVIEW — code changes, high impact |
-| P0 | #33 | German localization | 7 | +722/-0 | REVIEW — needed for DACH launch |
-| P1 | #32 | App copy and store text | 1 | +423/-1 | REVIEW — copy improvements |
-| P1 | #27 | Application health check | 1 | +55/-32 | MERGE — system health update |
-| P1 | #24 | CAPTAIN | 1 | +33/-38 | MERGE — captain status update |
-| P2 | #31 | Agent 14 UGC | 2 | +629/-0 | REVIEW — creator programs (docs only) |
-| P2 | #29 | Investor narrative enhancement | 2 | +102/-39 | MERGE — narrative update |
-| P2 | #26 | ROAM monetization model | 4 | +268/-0 | REVIEW — monetization docs |
-| P2 | #25 | Gen Z growth audit | 1 | +92/-0 | MERGE — growth insights |
-| P2 | #30 | GDPR DACH compliance | 1 | +249/-0 | REVIEW — compliance audit |
-| P2 | #28 | DACH analytics specification | 1 | +393/-0 | MERGE — analytics spec |
-| P3 | #35 | DACH travel micro-influencers | 1 | +469/-0 | MERGE — influencer list |
-| P3 | #34 | Live app test matrix | 3 | +383/-0 | MERGE — test results |
-| P3 | #23 | Destination image APIs | 1 | +126/-0 | MERGE — research doc |
+| Priority | PR | Title | Action |
+|----------|-----|-------|--------|
+| P0 | #37 | 5-tab restructure | MERGED ✅ |
+| P0 | #36 | Design audit violations | REVIEW — may conflict with restructure |
+| P0 | #33 | German localization | REVIEW — needs plan/people keys added |
+| P1 | #32 | App copy and store text | REVIEW |
+| P1 | #27 | Application health check | MERGE |
+| P1 | #24 | CAPTAIN | MERGE |
+| P2 | #31, #29, #26, #25, #30, #28 | Docs PRs | MERGE when ready |
+| P3 | #35, #34, #23 | Research/test PRs | MERGE when ready |
 
 ---
 
-## Agent Assignments (Current Sprint)
+## Agent Assignments (Current Sprint — Post-Restructure)
 
 ### 01 — ROAM Tester
-**STATUS:** ASSIGNED
-**TASK:** Full regression test after visual overhaul.
-- Stays tab: verify all 6 stay type images load, category cards render, neighborhood guide works
-- Food tab: verify 3 food category cards render with images, empty state scrollable
-- Flights tab: verify 4 popular route cards render with images, auto-fill on tap works
-- Generate flow: verify TripGeneratingLoader shows full-screen on generate, then navigates to itinerary
-- Discover tab: verify trending badges (flame icon) on destinations with trendScore >= 85
-- Discover tab: verify "Perfect timing" badges when current month matches bestMonths
-- All 6 tabs load without crash on web and native
+**STATUS:** ASSIGNED — URGENT
+**TASK:** Full regression test on new 5-tab structure.
+- Plan tab: no trips → shows generate mode select (Quick / Conversation)
+- Plan tab: generate trip → TripGeneratingLoader → navigates to /itinerary
+- Plan tab: with trips → shows trip cards with photos, metadata chips, "LATEST" badge
+- Plan tab: "Plan a new trip" button → returns to generate flow
+- Plan tab: quick actions (Find stays, Find food, Book flights) → correct navigation
+- People tab: renders hero stats, group trip cards, traveler cards with avatars
+- People tab: "Connect" and save buttons have haptic feedback
+- People tab: group cards scroll horizontally
+- Discover tab: unchanged, all 37 destinations load
+- Flights tab: popular routes show, price calendar works
+- Prep tab: all live data sections render (weather, safety, currency, holidays)
+- Tab bar: exactly 5 tabs visible (Plan, Discover, People, Flights, Prep)
+- Old routes: `/stays`, `/food`, `/generate` still accessible via deep link
 **OUTPUT:** roam/test_results.md
 **PRIORITY:** P0
 
 ### 02 — ROAM Researcher
 **STATUS:** ASSIGNED
-**TASK:** Find and evaluate real-time flight price APIs that are free or have generous free tiers.
-- Google Flights scraping alternatives (Serpapi, Skyscanner API, Kiwi Tequila)
-- Compare: rate limits, pricing, data freshness, coverage
-- Recommend best option for replacing mock flight data
-- Also research: live hotel price APIs (Booking.com Demand API, Tripadvisor, Kayak)
+**TASK:** People tab backend architecture.
+- Research: real-time traveler matching systems (how do apps like Bumble/Couchsurfing match?)
+- Evaluate: Supabase Realtime for presence ("who's online in Tokyo right now")
+- Design: traveler profile schema for Supabase (where_been, where_going, vibes, dates, avatar)
+- Research: privacy-safe location sharing for "who else is here" feature
+- Recommend: MVP implementation that works without backend (local mock data → Supabase)
 **OUTPUT:** roam/research_report.md
-**PRIORITY:** P1
+**PRIORITY:** P0
 
 ### 03 — ROAM Design
 **STATUS:** ASSIGNED
-**TASK:** Visual polish pass on remaining screens.
-- Generate mode select screen: add destination photos behind the Quick/Chat cards
-- Itinerary screen: verify DestinationIntel section renders cleanly with all 5 data sources
-- Profile screen: add user stats (trips generated, countries visited, total days planned)
-- Audit all empty states across app — every one should have imagery, not just icons
-- Verify all animations are smooth (card press scales, fade-ins, skeleton shimmers)
-- Hunt: any remaining hardcoded hex values, non-COLORS tokens, static grey blocks
+**TASK:** Design audit on new tab structure.
+- Plan tab: verify trip cards look premium (photo quality, gradient overlay, typography)
+- Plan tab: verify generate flow embedded correctly (no layout jank on mode switch)
+- Plan tab: quick action cards — do they look balanced? spacing? icon sizes?
+- People tab: verify traveler cards are scannable (name, dest, dates visible at glance)
+- People tab: verify group cards look compelling in horizontal scroll
+- People tab: hero section — does it feel welcoming or corporate?
+- Tab bar: verify 5 icons are visually balanced, correct spacing
+- Hunt: any hardcoded hex, broken images, missing loading states in new tabs
 **OUTPUT:** roam/design_audit.md + PR
 **PRIORITY:** P0
 
-### 04 — ROAM Builder (Ideas — Opus)
+### 04 — ROAM Builder (Opus)
 **STATUS:** ASSIGNED
-**TASK:** Priority stack:
-1. Replace mock flight data with real Skyscanner/Kiwi API integration (once Researcher delivers API recommendation)
-2. Stays tab: wire Booking.com search API for real hotel results (currently empty state only)
-3. Food tab: wire Google Places or Yelp Fusion for real restaurant data near trip destination
-4. Add animated gradient backgrounds to key screens (generate loading, itinerary hero)
-5. Implement pull-to-refresh on Discover tab
+**TASK:** Plan tab — make the itinerary editable inline.
+1. After generating a trip, the itinerary screen (`app/itinerary.tsx`) should allow:
+   - Tap hotel section → modal with 3-5 alternative stays (mock for now)
+   - Tap restaurant → browse alternatives, swap selection
+   - Tap activity → edit, replace, or remove
+   - Reorder days via drag
+2. Budget tracker: show running total that updates as user edits choices
+3. "Generate for me" vs "I'll customize" toggle at top of Plan
+4. Make the trip cards on Plan tab tappable → opens full itinerary with editing
 **OUTPUT:** PRs to main
 **PRIORITY:** P0
 
 ### 05 — ROAM Debugger
 **STATUS:** ASSIGNED
-**TASK:** Performance + stability audit.
-- Bundle size analysis: identify largest modules, suggest code splitting
-- Memory leak check: long-running generate flow, rapid tab switching
-- Image loading performance: are all Unsplash images loading within 2s?
-- Edge function cold start times
-- Verify offline graceful degradation for all new visual content
-**OUTPUT:** roam/system_health.md (GREEN/YELLOW/RED)
+**TASK:** Post-restructure health check.
+- `npx tsc --noEmit` = 0 errors ✅ (verified)
+- Verify no console errors on Plan tab (new component)
+- Verify no console errors on People tab (new component)
+- Verify old tab routes still work when accessed directly
+- Bundle size: did the restructure increase it? By how much?
+- Check for memory leaks: Plan tab stores trips in Zustand — verify cleanup
+- Test rapid tab switching between all 5 tabs
+**OUTPUT:** roam/system_health.md
 **PRIORITY:** P0
 
 ### 06 — ROAM Growth
 **STATUS:** ASSIGNED
-**TASK:** Launch content creation.
-1. Create 5 TikTok video scripts showing ROAM in action (screen recordings)
-2. Write Instagram carousel copy: "How to plan a trip in 30 seconds"
-3. Design referral share card — what users see when they share a trip
-4. A/B test copy for the waitlist CTA on tryroam.netlify.app
+**TASK:** People tab is the viral feature. Design the growth loop.
+1. "Invite a travel buddy" share flow — what does the invite link look like?
+2. "X people are going to [destination] this month" — social proof messaging
+3. Group trip formation → "Share this trip" → viral loop
+4. Write 3 TikTok scripts that showcase the People tab ("find your travel squad")
+5. Design the "travel profile" that users complete → what data do we collect?
 **OUTPUT:** roam/growth_dashboard.md
-**PRIORITY:** P1
+**PRIORITY:** P0
 
 ### 07 — ROAM Monetization
 **STATUS:** ASSIGNED
-**TASK:** Conversion funnel optimization.
-- Analyze: where do free users hit the paywall? Is the UX smooth?
-- Design "Pro preview" — show one locked premium feature per free trip (tease value)
-- Write paywall copy variants (3 versions) for A/B testing
-- Map affiliate revenue potential: Booking.com, Skyscanner, GetYourGuide commission rates
+**TASK:** People tab monetization + Plan tab premium features.
+- Free: see 3 matched travelers per destination, join 1 group
+- Pro: unlimited matches, create groups, see who's there now, direct messages
+- Plan tab Pro: unlimited trips, AI re-generation, custom hotel/food alternatives
+- Design the paywall moment for People tab (when does it trigger?)
+- Map affiliate revenue from Plan tab booking links
 **OUTPUT:** roam/monetization_model.md
 **PRIORITY:** P1
 
 ### 08 — ROAM Security
 **STATUS:** ASSIGNED
-**TASK:** Pre-launch security hardening.
-- Verify all edge functions validate JWT before processing
-- Check for exposed API keys in client bundle (run `npx expo export` and search dist/)
-- Rate limiting on claude-proxy edge function
-- Input sanitization on all user text fields (destination, must-visit, special requests)
-- GDPR: verify data deletion endpoint works end-to-end
+**TASK:** Security review of People tab.
+- User profiles: what data is stored? Is it RLS-protected?
+- Avatar uploads: verify no XSS via image URLs
+- Traveler matching: no PII leakage in match results
+- Group trip sharing: verify share links don't expose private trip data
+- Rate limiting on profile creation/updates
 **OUTPUT:** roam/security_audit.md
 **PRIORITY:** P1
 
 ### 09 — ROAM Localization
 **STATUS:** ASSIGNED
-**TASK:** Localization quality check.
-- Verify German (de.ts) covers all new UI strings added in visual overhaul
-- Add missing keys: popular routes labels, food category names, stay type names
-- Verify Spanish (es.ts), French (fr.ts), Japanese (ja.ts) have same coverage
-- Test: switch language in Profile → verify every screen renders correctly
+**TASK:** Localize new tabs.
+- Plan tab: "Your trips", "Plan a new trip", "Find stays", "Find food", "Book flights", "LATEST", trip metadata labels
+- People tab: "People", "Find travelers going where you are going", "Travel is better together", "Active travelers", "Destinations", "Groups forming", "Open groups", "Matched travelers", "Connect", "Set up profile"
+- Add all strings to en.ts, es.ts, fr.ts, ja.ts
+- Verify tab names render correctly in all 4 languages
 **OUTPUT:** Updated locale files + PR
 **PRIORITY:** P1
 
 ### 10 — ROAM Analytics
 **STATUS:** ASSIGNED
-**TASK:** Event tracking for new visual features.
-- Track: which popular flight routes get tapped most
-- Track: which food/stay categories get tapped
-- Track: trending badge click-through rate on Discover
-- Track: TripGeneratingLoader completion vs. abandonment
-- Verify PostHog events are firing correctly
+**TASK:** Track new tab engagement.
+- Plan tab: track which quick action gets tapped most (stays/food/flights)
+- Plan tab: track trip card tap-through rate
+- Plan tab: track "Plan a new trip" button usage
+- People tab: track traveler card views, "Connect" taps, group card taps
+- People tab: track hero CTA ("Set up profile") click rate
+- Tab switching: track which tab users spend the most time on
 **OUTPUT:** roam/analytics_spec.md
-**PRIORITY:** P2
+**PRIORITY:** P1
 
 ### 11 — ROAM Content
 **STATUS:** ASSIGNED
-**TASK:** Write copy for all new visual elements.
-- Popular flight routes: write compelling tag lines (not just "Most Popular")
-- Food categories: write sub-copy for each category card
-- Stay categories: write sub-copy for each stay type card
-- Neighborhood guide: write descriptions for sample neighborhoods
-- All copy must be ROAM voice: punchy, specific, zero filler
+**TASK:** Write copy for People tab.
+- Traveler bios: write 10 more diverse mock bios (different ages, travel styles, destinations)
+- Group descriptions: write compelling group trip descriptions
+- Hero section: test 3 headline variants for "Travel is better together"
+- Plan tab: write copy for the "no trips yet" state — invitation, not instruction
+- All copy: ROAM voice. Punchy. Specific. Never generic.
 **OUTPUT:** roam/copy_library.md + PR
 **PRIORITY:** P1
 
 ### 12 — ROAM Investor
 **STATUS:** ASSIGNED
-**TASK:** Update investor narrative with visual overhaul wins.
-- Before/after screenshots of Stays, Food, Flights tabs
-- Metrics: 37 destinations, 11 APIs, 6 tabs, 15 agents
-- Highlight: "Every screen is production-quality, not a prototype"
-- Update weekly memo with deployment timeline
+**TASK:** Update narrative with People tab as differentiator.
+- "ROAM isn't just a trip planner — it's a travel social network"
+- Competitive analysis: who else does traveler matching? (nobody does it well)
+- TAM expansion: trip planning TAM vs. travel social TAM
+- Updated metrics: 5 tabs, People tab as viral loop, group trip formation
+- Write updated 30-second elevator pitch including social layer
 **OUTPUT:** roam/investor_narrative.md
-**PRIORITY:** P2
+**PRIORITY:** P1
 
 ### 13 — ROAM DACH Growth
 **STATUS:** ASSIGNED
-**TASK:** Localized content for German market.
-- Translate all 4 popular flight route cards to German equivalents (FRA→Tokyo, MUC→Barcelona, etc.)
-- Write German App Store description (full)
-- Create German-language onboarding flow copy
-- Identify top 5 German travel hashtags on TikTok/Instagram
+**TASK:** Localize People tab for German market.
+- Translate all People tab strings to German
+- Write German mock traveler bios (German names, German destinations like München, Berlin, Hamburg)
+- German group trips: "4 Reisende nach Bali im Mai"
+- Identify German travel community platforms (alternative to Couchsurfing in DACH)
 **OUTPUT:** roam/dach_growth.md
 **PRIORITY:** P1
 
 ### 14 — ROAM UGC Engine
 **STATUS:** ASSIGNED
-**TASK:** Creator kit for launch.
-- Design "Trip Card" shareable image template (destination + dates + vibe)
-- Write 5 creator scripts showing ROAM trip planning flow
-- Create brand asset kit: logo, colors, fonts, approved screenshots
-- Design Instagram Story template for trip sharing
+**TASK:** Creator content around People tab.
+- "Find your travel squad on ROAM" — 3 TikTok scripts
+- "I matched with strangers on a travel app and we went to Bali" — story format
+- Trip Card shareable template: now includes group members + shared vibe
+- Instagram Reel concept: screen recording of People tab matching flow
 **OUTPUT:** roam/creator_kit.md
 **PRIORITY:** P1
 
@@ -203,24 +239,23 @@ Updated: 2026-03-15 (evening session)
 
 | Item | Action Required | Priority |
 |------|----------------|----------|
-| PR reviews | 14 open PRs need review/merge (see priority table above) | P0 |
-| Booking.com AID | Sign up at partners.booking.com — replace placeholder 'roam' in booking-links.ts | P1 |
-| ADMIN_TEST_EMAILS | Add qbyars08@gmail.com to Supabase edge function secrets | P1 |
+| PR reviews | 14 open PRs need review/merge | P0 |
+| Supabase: People table | Create `traveler_profiles` table with RLS | P0 |
+| Booking.com AID | Sign up at partners.booking.com | P1 |
+| ADMIN_TEST_EMAILS | Add to Supabase edge function secrets | P1 |
 | RevenueCat products | Create Pro subscription in RC dashboard | P2 |
-| Amadeus cleanup | Remove AMADEUS_KEY + AMADEUS_SECRET from Supabase Dashboard | P3 |
 | PostHog project key | Verify key is set in environment | P2 |
 
 ---
 
-## Completed This Session
+## What Just Shipped
 
-- [x] Stays tab: replaced gradient placeholders with Unsplash images, added neighborhood guide, rewrote empty state with curated category cards
-- [x] Food tab: replaced bland icon+text empty state with rich food category cards (Street Food, Local Markets, Late Night Eats)
-- [x] Flights tab: replaced bland plane icon empty state with popular routes cards featuring Unsplash destination photos
-- [x] Verified TripGeneratingLoader already wired into generate flow
-- [x] Verified trending + timing badges already live on Discover cards
-- [x] Verified DestinationIntel (timezone, AQI, sun, holidays, cost) already wired into itinerary
-- [x] Verified Discover headers already updated (no generic copy)
-- [x] Verified flights skeleton already using animated SkeletonCard
+- [x] **5-tab restructure** — Plan, Discover, People, Flights, Prep (PR #37)
+- [x] **Plan tab** — unified trip planning with trip cards, generate flow, quick actions
+- [x] **People tab** — traveler matching, group trips, companion profiles with match scores
+- [x] **IconPeople** SVG added to TabIcons
+- [x] **4 locales updated** (en, es, fr, ja) with plan/people tab names
+- [x] Flights tab: popular routes with Unsplash photos
+- [x] Stays/Food tabs: visual overhaul (now hidden, content in Plan)
 - [x] TypeScript: 0 errors
-- [x] Updated AGENT_BOARD.md with fresh tasks for all 14 agents
+- [x] Deployed to https://tryroam.netlify.app
