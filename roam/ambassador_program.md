@@ -403,3 +403,280 @@ Creators falling below minimum benchmarks for 2 consecutive months receive a wri
 3. **Disclosure is mandatory.** German Werbung labeling is a legal requirement. ROAM will not work with creators who refuse to label sponsored content correctly.
 4. **One active program per creator.** Creators cannot be in ROAM's program and a direct competitor's program simultaneously (applies to Growth and Partner tiers only).
 5. **Transparency on both sides.** Creators see their real numbers. ROAM sees their real numbers. No hidden performance tiers or secret bonus structures.
+
+---
+
+## Creator Content Brief Template
+
+*Send this to every creator after they agree to collaborate. Fill in the bracketed fields. The brief tells creators what to film — not word-for-word, but feature by feature, moment by moment. Creative execution is always theirs.*
+
+---
+
+### ROAM Creator Brief — [DESTINATION] — [CREATOR HANDLE]
+
+**Prepared for:** [Creator Name / Handle]
+**Video destination:** [Tokyo / Bali / Barcelona / etc.]
+**Platform:** [TikTok / Instagram Reels / YouTube Shorts]
+**Deliverable:** [1 × 60-second vertical video / 1 × 45-second Reel / etc.]
+**Due date:** [Date — 10 days from brief delivery]
+**Your referral link:** [UTM link — must appear in bio and/or caption]
+
+---
+
+#### App Features to Show
+
+Film these in order. Each is one "beat" in the video.
+
+**Beat 1 — Trip Generation (core, always show, 15–20 sec)**
+
+1. Open ROAM from home screen or web (tryroam.netlify.app)
+2. Tap the Plan tab
+3. Select "Quick" mode
+4. Type the destination: [DESTINATION]
+5. Set budget: [Budget / Comfort / Splurge — pick whichever fits your persona]
+6. Select vibes: pick 2–3 that match your content style (e.g. foodie + culture + night-owl)
+7. Tap "Generate"
+8. Show the compass loading animation (approximately 15–20 seconds of loading — keep it in, it builds anticipation)
+9. Scroll through the generated itinerary — zoom in on Day 1 activities, a specific restaurant name, the daily budget number
+
+*What to zoom on: specific restaurant name (e.g. "Fuunji — $12 ramen, Shinjuku"), daily cost breakdown, activities with times.*
+
+**Beat 2 — Prep Tab (optional but strong, 8–10 sec)**
+
+1. Tap the Prep tab at the bottom
+2. Show live data for [DESTINATION]: weather forecast strip, currency converter, emergency numbers, safety score
+3. Zoom on the currency card showing today's exchange rate
+
+*Why include it: "The app gives you everything you need before you land" is a high-value second message that lands after the itinerary wow.*
+
+**Beat 3 — People Tab / Social Matching (optional, strong for People-tab-focused content, 8–10 sec)**
+
+1. Tap the People tab
+2. Show hero stats: "2.4k active travelers · 47 destinations · 128 groups forming"
+3. Scroll to Matched Travelers — zoom on one traveler card showing: name, destination, match score badge (e.g. "87%"), bio text, vibe pills
+4. Optionally: show an Open Group card for [DESTINATION] — "4 going · May 1–10 · Adventure + Beach"
+
+*What to zoom on: the match score percentage badge (the "how does it know?" mystery hook).*
+
+**Beat 4 — Flights Tab (optional for flight-focused content, 8–10 sec)**
+
+1. Tap the Flights tab
+2. Show the hero search area
+3. Scroll to Popular Routes — show 2–3 route cards with city photos and price estimates
+4. Tap one route card → show it opens Skyscanner with the search pre-filled
+
+*Use this beat if your audience travels frequently and cares about flight prices.*
+
+---
+
+#### Talking Points
+
+These are the key messages. Say them in your own words — do not read them verbatim.
+
+1. **Speed:** "This generates a complete day-by-day plan in about 30 seconds." (Not "instantly" — 30 seconds is more believable and is actually accurate.)
+2. **Specificity:** "It gives you actual restaurant names and real prices — not 'try local cuisine.'" (The specificity is the differentiator from ChatGPT.)
+3. **People tab:** "There's a feature that matches you with other travelers going to the same place at the same time." (Only add this if Beat 3 is included.)
+4. **CTA:** "Link in bio — first trip is free." (Not "download" — use "try" or "check it out" for lower friction.)
+
+**Do not say:**
+- "This app is amazing" (generic, sounds paid)
+- "You have to try this" (overused CTA)
+- "Game-changer" (banned — see brand voice)
+- Any claim the app cannot currently deliver (no live flight prices, no hotel booking inside the app)
+
+---
+
+#### Brand Guidelines — Visual
+
+| Element | Guideline |
+|---------|-----------|
+| **Background** | Dark screen looks best — ROAM's dark UI is premium. Film in good natural light so your face is visible against a phone showing the dark interface. |
+| **Phone orientation** | Vertical (portrait) at all times — the app is designed for vertical. Never landscape. |
+| **Screen recording** | Use iPhone native screen record (Control Center) or any screen recorder app. Highest quality available. |
+| **App URL** | tryroam.netlify.app (web) or download from App Store search "ROAM AI Trip Planner" |
+| **Logo usage** | Do not overlay the ROAM logo on your video separately. The app logo is visible when the app opens. |
+| **Colors** | ROAM's brand colors are dark green (#080F0A background), sage green (#7CAF8A accents), cream (#F5EDD8 text). Reference these if doing any graphic overlays. |
+
+---
+
+#### Brand Guidelines — Voice & Copy
+
+**ROAM's voice:** Specific, honest, warm, direct. Not hype, not corporate.
+
+| Use | Avoid |
+|-----|-------|
+| "30 seconds" | "instantly" |
+| "real restaurant names" | "hidden gems" |
+| "first trip is free" | "unlock unlimited trips" |
+| "try it" / "check it out" | "download now" |
+| "it works for [specific destination]" | "works for any trip anywhere" |
+| Genuine reaction — surprised, curious | Forced enthusiasm — "Oh my GOD" |
+
+**English copy for caption (copy this exactly, add your UTM link):**
+> "I let AI plan my [destination] trip in 30 seconds. Full itinerary, real restaurant names, real prices. tryroam.netlify.app [your UTM link] #ROAM #TravelApp #AITravel"
+
+**German copy for caption (DACH creators):**
+> "Ich hab meinen [Destination]-Trip in 30 Sekunden geplant — KI, echte Restaurants, echter Budget-Plan. Link in Bio. #roam #reiseplanung #fernweh"
+
+---
+
+#### Disclosure Requirements
+
+**Germany / Austria / Switzerland (DACH):**
+Label the video as "Werbung" or "Anzeige" at the beginning. This is legally required in Germany for any paid/gifted content. Non-negotiable. If unsure how to add it on TikTok, use the native "Branded Content" toggle.
+
+**US / Global creators:**
+Use #ad or #sponsored in the first line of the caption. Or use TikTok/Instagram's native "Paid Partnership" label.
+
+ROAM will not proceed with a video that does not include the correct disclosure. This protects both the creator and ROAM.
+
+---
+
+#### Hashtag Sets
+
+**TikTok — DACH (German-language):**
+`#reiseplanung #reisetipps #fernweh #backpacking #urlaubsplanung #reisenistleben #travelapp #solotravel #interrail #städtetrip`
+
+**TikTok — Global (English):**
+`#TravelTok #TravelApp #AITravel #TripPlanning #SoloTravel #TravelHack #BudgetTravel #Backpacking #TravelTips #ROAM`
+
+**Instagram Reels — DACH:**
+`#reise #urlaub #reiseplanung #fernweh #backpacken #reisetipps #traveltipp #reisenistleben #digitalnomad #urlaubsziele`
+
+**Instagram Reels — Global:**
+`#TravelPlanning #TravelApp #AITravel #TripPlanner #SoloTravel #TravelInspiration #TravelHacks #Backpacker #Wanderlust #TravelTips`
+
+**YouTube Shorts:**
+`#TravelApp #AITravel #TripPlanning #TravelTips #TikTokTravel #BudgetTravel #TravelHacks #ROAM`
+
+*Add destination-specific hashtags on top of these sets: e.g. `#Tokyo #JapanTravel #JapanTrip` for a Tokyo video.*
+
+---
+
+#### Technical Specifications
+
+| Spec | Requirement |
+|------|-------------|
+| Aspect ratio | 9:16 vertical (portrait) |
+| Resolution | 1080 × 1920 minimum |
+| Frame rate | 30fps or 60fps |
+| Length | 45–75 seconds (TikTok / Reels); up to 60 seconds preferred for algorithm |
+| Screen recording quality | Highest available — no compression artifacts |
+| Audio | Creator's voice clearly audible — no background music that drowns voiceover |
+| Captions | Auto-captions encouraged (TikTok native or CapCut) — increases watch time |
+| Hook | First 2–3 seconds must have a visual or verbal hook that stops scrolling |
+| Referral link | Must be in bio on day of publishing AND in caption if platform allows |
+
+---
+
+## Performance Tracking System
+
+*Weekly review cadence. Tracks every creator's contribution to ROAM's growth. Run this review every Monday.*
+
+---
+
+### Creator Scorecard
+
+One row per active creator. Update weekly.
+
+| Creator | Tier | Followers | Videos Live | Total Views | Avg CTR | Total Signups | Paid Conversions | MRR Attributed | Rev Share Paid | Last Video | Status |
+|---------|------|-----------|-------------|-------------|---------|--------------|-----------------|----------------|---------------|------------|--------|
+| @handle | Seed/Growth/Partner | n | n | n | n% | n | n | $n | $n | date | Active/Paused/Exited |
+
+---
+
+### Weekly KPI Review
+
+Run on the first working day of each week. Pull from PostHog UTM reports.
+
+**Tier-level targets:**
+
+| KPI | Seed Target | Growth Target | Partner Target |
+|-----|-------------|---------------|----------------|
+| Videos published/month | 1 | 2–4 | 4+ |
+| Avg video views | 3,000+ | 10,000+ | 30,000+ |
+| Avg CTR to app link | 0.5%+ | 1.0%+ | 1.5%+ |
+| Signups/video | 5+ | 20+ | 50+ |
+| Paid conversions/month | 0 (first month) | 2+ | 10+ |
+| Cost per acquisition (CPA) | n/a (barter) | <$15 | <$25 |
+
+**Review questions:**
+
+1. Which creator had the highest CTR this week? — Double down: brief them with a second video this week.
+2. Which creator had zero signups despite high views? — The hook is wrong. Offer a new script.
+3. Which creator has not published in 14+ days? — Send a re-engagement DM. If no response in 7 more days, pause the partnership.
+4. Which creator is approaching a tier upgrade threshold? — Proactively send the upgrade offer before they reach it (creates goodwill).
+5. Is any video over 2% CTR? — Brief at least 2 additional creators with the same script this week.
+
+---
+
+### PostHog UTM Tracking Schema
+
+Every creator gets a unique UTM link at onboarding. Copy this schema exactly.
+
+```
+Base URL: tryroam.netlify.app
+?ref=[creator_handle]
+&utm_source=[tiktok|instagram|youtube|email]
+&utm_medium=ugc
+&utm_campaign=[dach_launch|global_launch|people_tab|flights_launch]
+&utm_content=[creator_handle]
+```
+
+**Example — @kaffeeamstrand, TikTok, DACH launch:**
+`tryroam.netlify.app?ref=kaffeeamstrand&utm_source=tiktok&utm_medium=ugc&utm_campaign=dach_launch&utm_content=kaffeeamstrand`
+
+**PostHog events to track per creator:**
+
+| Event | What it means |
+|-------|--------------|
+| `app_open` with `utm_content=[handle]` | Creator drove a visit |
+| `signup_completed` with UTM | Creator drove a signup |
+| `trip_generation_started` with UTM | User activated (high-intent signal) |
+| `paywall_seen` with UTM | Creator drove a user to the paywall |
+| `subscription_started` with UTM | Creator drove a conversion — revenue share triggers |
+
+**Revenue share calculation trigger:**
+When `subscription_started` fires with a creator's UTM, PostHog should log the attributed creator. Run a monthly PostHog query: count of `subscription_started` events grouped by `utm_content` → multiply by tier's revenue share rate × net subscription revenue ($7.00/month after store fee).
+
+---
+
+### Creator Performance Tiers — Upgrade / Downgrade Rules
+
+**Upgrade from Seed → Growth:**
+- 5 videos published
+- At least 1 `subscription_started` event attributed
+- Average CTR ≥ 0.5% across all videos
+- Action: send Growth tier offer within 48 hours of hitting threshold
+
+**Upgrade from Growth → Partner:**
+- 15 videos published
+- Average CTR ≥ 1.5% across last 5 videos
+- 20+ paid conversions attributed (lifetime)
+- Action: schedule a 20-minute call to discuss partnership terms
+
+**Downgrade / Exit:**
+- 0 signups in 60 days AND CTR < 0.5% for 3+ consecutive videos
+- Creator has not published in 45+ days with no communication
+- Action: send a warm exit note — keep the relationship open, no hard feelings. "Happy to re-activate when your content calendar has room."
+
+---
+
+### Monthly Revenue Share Payout Report
+
+Run on the last day of each calendar month.
+
+```
+Creator: [handle]
+Tier: [Seed / Growth / Partner]
+Revenue share rate: [10% / 15% / 20%]
+New paid conversions this month: [n]
+Active referred subscribers (total): [n]
+Net revenue per subscriber: $7.00
+Monthly rev share owed: [active subscribers × $7.00 × rate]
+YTD rev share paid: $[n]
+Payment method: [PayPal / SEPA / Wise]
+Payment status: [Pending / Sent / Confirmed]
+```
+
+Pay on the last working day of each month. Send the creator their PostHog dashboard link alongside the payout so they can verify the numbers themselves.
