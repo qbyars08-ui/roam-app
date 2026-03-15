@@ -1,5 +1,5 @@
 # Analytics Event Taxonomy — 2026-03-15
-## ROAM DACH Launch: UTM Schema, PostHog Audit, Funnel Design
+## ROAM Analytics: New Tab Engagement + DACH Launch UTM Schema + PostHog Audit
 
 ---
 
@@ -390,4 +390,117 @@ identifyUser(userId, {
 
 ---
 
-*Agent 10 — Analytics. Written 2026-03-15.*
+## 9. New Tab Engagement Tracking — 5-Tab Structure
+
+### Context
+
+PR #37 shipped a 5-tab restructure: **Plan → Discover → People → Flights → Prep**. The old `generate`, `stays`, and `food` tabs are hidden (`href: null`) but still routable. The Plan tab is now the core product surface. People tab is the new social/viral feature. This section documents all new engagement events instrumented for the new tabs.
+
+### Events Instrumented
+
+#### Plan Tab (`app/(tabs)/plan.tsx`)
+
+| Event | Properties | Trigger | File | Status |
+|-------|------------|---------|------|--------|
+| `plan_new_trip_tapped` | `trips_existing: number` | "Plan a new trip" CTA pressed | `app/(tabs)/plan.tsx` | LIVE |
+| `plan_quick_action_tapped` | `action: 'hotels' \| 'food' \| 'flights'` | Quick action card pressed | `app/(tabs)/plan.tsx` | LIVE |
+| `plan_trip_card_tapped` | `trip_id, destination, days` | Existing trip card pressed to open itinerary | `app/(tabs)/plan.tsx` | LIVE |
+
+Note: `trip_generation_completed` already fires from the Plan tab when generation succeeds (same handler as old generate.tsx).
+
+#### People Tab (`app/(tabs)/people.tsx`)
+
+| Event | Properties | Trigger | File | Status |
+|-------|------------|---------|------|--------|
+| `people_traveler_viewed` | `traveler_id, destination, match_score` | TravelerCard tapped to open profile | `app/(tabs)/people.tsx` | LIVE |
+| `people_connect_tapped` | `traveler_id, destination, match_score` | "Connect" button inside TravelerCard | `app/(tabs)/people.tsx` | LIVE |
+| `people_traveler_saved` | `traveler_id, destination` | Heart/save button inside TravelerCard | `app/(tabs)/people.tsx` | LIVE |
+| `people_group_tapped` | `group_id, destination, member_count` | GroupCard pressed | `app/(tabs)/people.tsx` | LIVE |
+| `people_setup_profile_tapped` | `source: 'people_bottom_cta'` | "Set up profile" CTA at bottom | `app/(tabs)/people.tsx` | LIVE |
+
+#### Tab Navigation (`components/ui/ROAMTabBar.tsx`)
+
+| Event | Properties | Trigger | File | Status |
+|-------|------------|---------|------|--------|
+| `tab_switched` | `from_tab, to_tab, time_spent_ms` | User presses a different tab | `components/ui/ROAMTabBar.tsx` | LIVE |
+
+`time_spent_ms` = milliseconds elapsed since the previous tab became active. Computed via `useRef` tracking `{ tab, enteredAt }`. Fires only on actual tab switches (not re-taps of the current tab).
+
+### Key Metrics to Answer
+
+| Question | Event + Property | PostHog Query |
+|----------|-----------------|---------------|
+| Which quick action is tapped most? | `plan_quick_action_tapped.action` | Count by `action` property breakdown |
+| Trip card tap-through rate | `plan_trip_card_tapped` ÷ `screen_view(plan)` | Funnel: `screen_view` → `plan_trip_card_tapped` |
+| "Plan a new trip" usage rate | `plan_new_trip_tapped` ÷ `screen_view(plan)` with trips_existing > 0 | Trend chart, filter `trips_existing > 0` |
+| People tab Connect rate | `people_connect_tapped` ÷ `screen_view(people)` | Funnel: `screen_view(people)` → `people_connect_tapped` |
+| "Set up profile" click rate | `people_setup_profile_tapped` ÷ `screen_view(people)` | Funnel: `screen_view(people)` → `people_setup_profile_tapped` |
+| Which tab users spend most time on | `tab_switched.time_spent_ms` grouped by `from_tab` | Avg `time_spent_ms` per `from_tab` |
+| Tab switching sequence patterns | `tab_switched.from_tab` → `tab_switched.to_tab` | Path analysis / Sankey chart |
+
+### New Funnel Definitions (added to `lib/posthog-funnels.ts`)
+
+#### `plan_tab_engagement` — Plan Tab Depth Funnel
+```
+plan_tab screen_view → plan_new_trip_tapped → trip_generation_completed → plan_trip_card_tapped
+```
+Conversion window: 1 day.
+
+#### `people_tab_engagement` — People Social Adoption Funnel
+```
+people_tab screen_view → people_traveler_viewed → people_connect_tapped
+```
+Conversion window: 7 days.
+
+#### `dach_creator_conversion` — DACH Creator → Pro Funnel
+```
+utm_attributed(dach_launch) → auth_sign_up → generate_completed → subscription_started
+```
+Conversion window: 30 days. Break down by `utm_content` (script_01–script_10).
+
+### Event Registry Updates (`lib/posthog-events.ts`)
+
+New events added to the canonical `EVENTS` registry:
+
+```
+PLAN_NEW_TRIP_TAPPED       plan_new_trip_tapped
+PLAN_QUICK_ACTION_TAPPED   plan_quick_action_tapped
+PLAN_TRIP_CARD_TAPPED      plan_trip_card_tapped
+PEOPLE_TRAVELER_VIEWED     people_traveler_viewed
+PEOPLE_CONNECT_TAPPED      people_connect_tapped
+PEOPLE_TRAVELER_SAVED      people_traveler_saved
+PEOPLE_GROUP_TAPPED        people_group_tapped
+PEOPLE_SETUP_PROFILE_TAPPED people_setup_profile_tapped
+TAB_SWITCHED               tab_switched
+```
+
+### PostHog Dashboard — New Tab Engagement
+
+Recommended panels to add to the existing DACH dashboard:
+
+| Panel | Chart Type | Event(s) |
+|-------|-----------|---------|
+| Quick Action Split | Pie chart | `plan_quick_action_tapped` by `action` |
+| Plan Tab Engagement Funnel | Funnel | `plan_tab_engagement` funnel |
+| People Tab Adoption | Trend | `people_connect_tapped` week-over-week |
+| Time Spent Per Tab | Bar chart | `tab_switched` avg `time_spent_ms` by `from_tab` |
+| Tab Flow Sankey | Path analysis | `tab_switched` from/to pairs |
+| Profile Setup Funnel | Funnel | `people_tab_engagement` funnel |
+
+### Updated Implementation Status
+
+- [x] `plan_new_trip_tapped` event instrumented (`app/(tabs)/plan.tsx`)
+- [x] `plan_quick_action_tapped` event instrumented (`app/(tabs)/plan.tsx`)
+- [x] `plan_trip_card_tapped` event instrumented (`app/(tabs)/plan.tsx`)
+- [x] `people_traveler_viewed` event instrumented (`app/(tabs)/people.tsx`)
+- [x] `people_connect_tapped` event instrumented (`app/(tabs)/people.tsx`)
+- [x] `people_traveler_saved` event instrumented (`app/(tabs)/people.tsx`)
+- [x] `people_group_tapped` event instrumented (`app/(tabs)/people.tsx`)
+- [x] `people_setup_profile_tapped` event instrumented (`app/(tabs)/people.tsx`)
+- [x] `tab_switched` event with `time_spent_ms` instrumented (`components/ui/ROAMTabBar.tsx`)
+- [x] All 9 new events registered in `lib/posthog-events.ts`
+- [x] 3 new funnels added to `lib/posthog-funnels.ts` (DACH, Plan tab, People tab)
+
+---
+
+*Agent 10 — Analytics. Updated 2026-03-15.*
