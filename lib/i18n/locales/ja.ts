@@ -112,6 +112,7 @@ const ja: TranslationKeys = {
     bestIn: '{{month}}\u304c\u30d9\u30b9\u30c8',
     dailyCost: '${{cost}}/\u65e5',
     trending: '\u30c8\u30ec\u30f3\u30c9',
+    perfectTiming: '\u4eca\u304c\u30d9\u30b9\u30c8',
   },
 
   categories: {
