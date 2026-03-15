@@ -147,13 +147,14 @@ export default function PaywallScreen() {
 
   const handleToggle = useCallback((cycle: 'annual' | 'monthly') => {
     setBillingCycle(cycle);
+    captureEvent('paywall_billing_cycle_toggled', { cycle, reason: params.reason ?? null });
     Animated.timing(toggleAnim, {
       toValue: cycle === 'annual' ? 1 : 0,
       duration: 200,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start();
-  }, [toggleAnim]);
+  }, [toggleAnim, params.reason]);
 
   // Contextual headline
   const upgradeContext = params.reason === 'limit' ? 'trip_limit' as const
@@ -188,15 +189,17 @@ export default function PaywallScreen() {
   }, []);
 
   const handleClose = useCallback(() => {
+    captureEvent('paywall_dismissed', { reason: params.reason ?? null, billing_cycle_seen: billingCycle });
     if (router.canGoBack()) {
       router.back();
     } else {
       router.replace('/(tabs)');
     }
-  }, [router]);
+  }, [router, params.reason, billingCycle]);
 
   const handlePurchase = useCallback(async () => {
     if (loading) return;
+    captureEvent('paywall_purchase_initiated', { billing_cycle: billingCycle, reason: params.reason ?? null });
     setLoading(true);
     try {
       const success = billingCycle === 'annual'
@@ -221,6 +224,7 @@ export default function PaywallScreen() {
 
   const handleRestore = useCallback(async () => {
     if (restoring) return;
+    captureEvent('paywall_restore_tapped', { reason: params.reason ?? null });
     setRestoring(true);
     try {
       const isPro = await restorePurchases();

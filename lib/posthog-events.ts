@@ -278,9 +278,9 @@ export const EVENTS = {
     'paywall_viewed',
     'User saw the paywall screen',
   ),
-  PAYWALL_DISMISSED: def<{ reason: string }>(
+  PAYWALL_DISMISSED: def<{ reason: string | null; billing_cycle_seen: 'annual' | 'monthly' }>(
     'paywall_dismissed',
-    'User closed paywall without purchasing',
+    'User closed paywall without purchasing (X button or Maybe Later)',
   ),
   PURCHASE_STARTED: def<{ tier: 'pro' | 'global'; price?: string }>(
     'purchase_started',
@@ -465,6 +465,90 @@ export const EVENTS = {
   TAB_SWITCHED: def<{ from_tab: string; to_tab: string; time_spent_ms: number }>(
     'tab_switched',
     'User switched from one tab to another; carries time spent on the previous tab',
+  ),
+
+  // =========================================================================
+  // Paywall funnel (conversion-critical missing events)
+  // =========================================================================
+  PAYWALL_BILLING_CYCLE_TOGGLED: def<{ cycle: 'annual' | 'monthly'; reason: string | null }>(
+    'paywall_billing_cycle_toggled',
+    'User toggled between annual and monthly billing on the paywall',
+  ),
+  PAYWALL_PURCHASE_INITIATED: def<{ billing_cycle: 'annual' | 'monthly'; reason: string | null }>(
+    'paywall_purchase_initiated',
+    'User tapped the primary purchase CTA on the paywall (fires before RevenueCat purchase begins)',
+  ),
+  PAYWALL_RESTORE_TAPPED: def<{ reason: string | null }>(
+    'paywall_restore_tapped',
+    'User tapped Restore Purchases on the paywall',
+  ),
+
+  // =========================================================================
+  // Plan tab — social proof nudge banner and rate limit modal
+  // =========================================================================
+  PLAN_PEOPLE_NUDGE_TAPPED: def<{ destination: string }>(
+    'plan_people_nudge_tapped',
+    'User tapped the People social proof nudge banner on the Plan tab',
+  ),
+  PLAN_PEOPLE_NUDGE_DISMISSED: def<{ destination: string }>(
+    'plan_people_nudge_dismissed',
+    'User dismissed the People social proof nudge banner on the Plan tab',
+  ),
+  PLAN_RATE_LIMIT_UPGRADE_TAPPED: def<{ destination: string }>(
+    'plan_rate_limit_upgrade_tapped',
+    'User tapped "See Pro Plans" inside the rate-limit modal on the Plan tab',
+  ),
+  PLAN_RATE_LIMIT_DISMISSED: def<{ destination: string }>(
+    'plan_rate_limit_dismissed',
+    'User dismissed the rate-limit modal on the Plan tab without upgrading',
+  ),
+
+  // =========================================================================
+  // Trip Chemistry feature
+  // =========================================================================
+  TRIP_CHEMISTRY_VIEWED: def(
+    'trip_chemistry_viewed',
+    'User opened the Trip Chemistry screen (after Pro gate passes)',
+  ),
+  TRIP_CHEMISTRY_COMPANION_ADDED: def<{ total_travelers: number }>(
+    'trip_chemistry_companion_added',
+    'User added a travel companion in Trip Chemistry',
+  ),
+  TRIP_CHEMISTRY_CALCULATED: def<{ traveler_count: number; overall_score: number; chemistry_label: string }>(
+    'trip_chemistry_calculated',
+    'User triggered the Trip Chemistry calculation and received a result',
+  ),
+  TRIP_CHEMISTRY_SHARED: def<{ overall_score: number; chemistry_label: string; traveler_count: number }>(
+    'trip_chemistry_shared',
+    'User shared Trip Chemistry results',
+  ),
+  TRIP_CHEMISTRY_RESET: def<{ had_result: boolean }>(
+    'trip_chemistry_reset',
+    'User reset the Trip Chemistry form',
+  ),
+
+  // =========================================================================
+  // Travel Twin feature
+  // =========================================================================
+  TRAVEL_TWIN_VIEWED: def<{ archetype_name: string }>(
+    'travel_twin_viewed',
+    'User viewed their Travel Twin archetype reveal screen',
+  ),
+  TRAVEL_TWIN_DESTINATION_TAPPED: def<{ destination: string; archetype_name: string }>(
+    'travel_twin_destination_tapped',
+    'User tapped a recommended destination pill on the Travel Twin screen',
+  ),
+  TRAVEL_TWIN_SHARED: def<{ archetype_name: string }>(
+    'travel_twin_shared',
+    'User shared their Travel Twin result to clipboard',
+  ),
+  TRAVEL_TWIN_RETAKE_TAPPED: def<{ archetype_name: string }>(
+    'travel_twin_retake_tapped',
+    'User tapped "Retake Profile" on the Travel Twin screen',
+  ),
+  TRAVEL_TWIN_BUILD_PROFILE_TAPPED: def(
+    'travel_twin_build_profile_tapped',
+    'User tapped "Build Your Profile" on the Travel Twin empty state',
   ),
 } as const;
 

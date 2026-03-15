@@ -503,4 +503,113 @@ Recommended panels to add to the existing DACH dashboard:
 
 ---
 
-*Agent 10 — Analytics. Updated 2026-03-15.*
+## 10. Sprint 2 — Paywall Funnel, Social Proof & Pro Feature Tracking
+
+### Context
+
+After all 14 Sprint 1 PRs merged, a gap audit identified critical missing events in the paywall conversion funnel and two Pro-gated features with zero instrumentation. This section documents the Sprint 2 event additions.
+
+### Paywall Funnel Gaps Closed (`app/paywall.tsx`)
+
+The paywall had `paywall_viewed` on mount but no events at the moment of user action. Without these events, PostHog cannot compute drop-off rate between "saw paywall" and "tapped purchase", or distinguish users who toggled to monthly before leaving.
+
+| Event | Properties | When |
+|-------|------------|------|
+| `paywall_billing_cycle_toggled` | `cycle: 'annual'\|'monthly'`, `reason` | User toggles annual ↔ monthly |
+| `paywall_purchase_initiated` | `billing_cycle`, `reason` | User taps "Start your 3-day free trial" CTA |
+| `paywall_restore_tapped` | `reason` | User taps "Restore Purchases" |
+| `paywall_dismissed` (updated) | `reason`, `billing_cycle_seen` | X button or "Maybe Later" tapped |
+
+`paywall_dismissed` already existed in the registry; its type was updated to carry `billing_cycle_seen` so we can correlate which plan option users were viewing when they bailed.
+
+**Paywall Micro-Funnel (updated):**
+```
+paywall_viewed → paywall_purchase_initiated → purchase_success
+          ↓ (drop-off)                   ↓ (cancel/error)
+  paywall_billing_cycle_toggled    purchase_cancelled / paywall_dismissed
+```
+
+### Plan Tab — Social Proof Banner & Rate Limit Modal (`app/(tabs)/plan.tsx`)
+
+| Event | Properties | When |
+|-------|------------|------|
+| `plan_people_nudge_tapped` | `destination` | User taps People nudge banner → navigates to People tab |
+| `plan_people_nudge_dismissed` | `destination` | User dismisses People nudge banner |
+| `plan_rate_limit_upgrade_tapped` | `destination` | "See Pro Plans" in rate-limit modal |
+| `plan_rate_limit_dismissed` | `destination` | "Maybe Later" in rate-limit modal |
+
+**Key metric:** `plan_people_nudge_tapped` ÷ (impressions where `sortedTrips.length > 0`) = People tab cross-sell conversion rate from Plan.
+
+### Trip Chemistry (`app/trip-chemistry.tsx`)
+
+Pro-gated screen. Zero instrumentation before this sprint.
+
+| Event | Properties | When |
+|-------|------------|------|
+| `trip_chemistry_viewed` | — | Screen mounts, after Pro gate passes |
+| `trip_chemistry_companion_added` | `total_travelers` | User adds a companion profile |
+| `trip_chemistry_calculated` | `traveler_count`, `overall_score`, `chemistry_label` | User runs the chemistry calculation |
+| `trip_chemistry_shared` | `overall_score`, `chemistry_label`, `traveler_count` | User shares result via native share sheet |
+| `trip_chemistry_reset` | `had_result` | User resets the form |
+
+`trip_chemistry_calculated` is a high-signal engagement event — it means the user spent time filling in all companion profiles. Track average `overall_score` distribution to understand what users see.
+
+### Travel Twin (`app/travel-twin.tsx`)
+
+Pro-gated screen. Zero instrumentation before this sprint.
+
+| Event | Properties | When |
+|-------|------------|------|
+| `travel_twin_viewed` | `archetype_name` | Archetype reveal screen renders (twin computed) |
+| `travel_twin_build_profile_tapped` | — | "Build Your Profile" in empty state |
+| `travel_twin_destination_tapped` | `destination`, `archetype_name` | User taps a recommended destination pill |
+| `travel_twin_shared` | `archetype_name` | User copies twin to clipboard via "Share Your Twin" |
+| `travel_twin_retake_tapped` | `archetype_name` | User taps "Retake Profile" |
+
+`travel_twin_destination_tapped` is a high-value signal: it indicates intent to generate a trip for the destination. Can be used to seed the generate flow. Most common archetypes + most-tapped destinations = content brief for UGC agent.
+
+### Sprint 2 Event Registry (`lib/posthog-events.ts`)
+
+Total new event definitions added across both sprints:
+
+```
+Sprint 1 (PR #28):
+  PLAN_NEW_TRIP_TAPPED, PLAN_QUICK_ACTION_TAPPED, PLAN_TRIP_CARD_TAPPED
+  PEOPLE_TRAVELER_VIEWED, PEOPLE_CONNECT_TAPPED, PEOPLE_TRAVELER_SAVED
+  PEOPLE_GROUP_TAPPED, PEOPLE_SETUP_PROFILE_TAPPED, TAB_SWITCHED
+
+Sprint 2 (this PR):
+  PAYWALL_BILLING_CYCLE_TOGGLED, PAYWALL_PURCHASE_INITIATED
+  PAYWALL_RESTORE_TAPPED (PAYWALL_DISMISSED type updated)
+  PLAN_PEOPLE_NUDGE_TAPPED, PLAN_PEOPLE_NUDGE_DISMISSED
+  PLAN_RATE_LIMIT_UPGRADE_TAPPED, PLAN_RATE_LIMIT_DISMISSED
+  TRIP_CHEMISTRY_VIEWED, TRIP_CHEMISTRY_COMPANION_ADDED
+  TRIP_CHEMISTRY_CALCULATED, TRIP_CHEMISTRY_SHARED, TRIP_CHEMISTRY_RESET
+  TRAVEL_TWIN_VIEWED, TRAVEL_TWIN_DESTINATION_TAPPED
+  TRAVEL_TWIN_SHARED, TRAVEL_TWIN_RETAKE_TAPPED, TRAVEL_TWIN_BUILD_PROFILE_TAPPED
+```
+
+### Sprint 2 Implementation Status
+
+- [x] `paywall_billing_cycle_toggled` — `app/paywall.tsx` `handleToggle`
+- [x] `paywall_purchase_initiated` — `app/paywall.tsx` `handlePurchase` (fires before RevenueCat)
+- [x] `paywall_restore_tapped` — `app/paywall.tsx` `handleRestore`
+- [x] `paywall_dismissed` (updated type + `billing_cycle_seen`) — `app/paywall.tsx` `handleClose`
+- [x] `plan_people_nudge_tapped` — `app/(tabs)/plan.tsx` inline onTap callback
+- [x] `plan_people_nudge_dismissed` — `app/(tabs)/plan.tsx` inline onDismiss callback
+- [x] `plan_rate_limit_upgrade_tapped` — `app/(tabs)/plan.tsx` `handleUpgrade`
+- [x] `plan_rate_limit_dismissed` — `app/(tabs)/plan.tsx` `setRateLimitVisible(false)` handlers (×2)
+- [x] `trip_chemistry_viewed` — `app/trip-chemistry.tsx` mount `useEffect`
+- [x] `trip_chemistry_companion_added` — `app/trip-chemistry.tsx` `addCompanion`
+- [x] `trip_chemistry_calculated` — `app/trip-chemistry.tsx` `handleCalculate`
+- [x] `trip_chemistry_shared` — `app/trip-chemistry.tsx` `handleShare`
+- [x] `trip_chemistry_reset` — `app/trip-chemistry.tsx` `handleReset`
+- [x] `travel_twin_viewed` — `app/travel-twin.tsx` twin-ready `useEffect`
+- [x] `travel_twin_build_profile_tapped` — `app/travel-twin.tsx` empty state CTA
+- [x] `travel_twin_destination_tapped` — `app/travel-twin.tsx` destination pills
+- [x] `travel_twin_shared` — `app/travel-twin.tsx` `handleShare`
+- [x] `travel_twin_retake_tapped` — `app/travel-twin.tsx` retake button
+
+---
+
+*Agent 10 — Analytics. Updated 2026-03-15 (Sprint 2).*

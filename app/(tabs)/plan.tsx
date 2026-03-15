@@ -394,6 +394,7 @@ export default function PlanScreen() {
   }, []);
 
   const handleUpgrade = useCallback(() => {
+    captureEvent('plan_rate_limit_upgrade_tapped', { destination: generatingDestRef.current });
     setRateLimitVisible(false);
     router.push({ pathname: '/paywall', params: { reason: 'limit', destination: generatingDestRef.current } });
   }, [router]);
@@ -469,7 +470,10 @@ export default function PlanScreen() {
         <RateLimitModal
           visible={rateLimitVisible}
           onUpgrade={handleUpgrade}
-          onDismiss={() => setRateLimitVisible(false)}
+          onDismiss={() => {
+            captureEvent('plan_rate_limit_dismissed', { destination: generatingDestRef.current });
+            setRateLimitVisible(false);
+          }}
         />
       </View>
     );
@@ -509,8 +513,14 @@ export default function PlanScreen() {
         {!peopleBannerDismissed && sortedTrips.length > 0 && (
           <PeopleNudgeBanner
             destination={sortedTrips[0].destination}
-            onTap={() => router.push('/(tabs)/people' as never)}
-            onDismiss={() => setPeopleBannerDismissed(true)}
+            onTap={() => {
+              captureEvent('plan_people_nudge_tapped', { destination: sortedTrips[0].destination });
+              router.push('/(tabs)/people' as never);
+            }}
+            onDismiss={() => {
+              captureEvent('plan_people_nudge_dismissed', { destination: sortedTrips[0].destination });
+              setPeopleBannerDismissed(true);
+            }}
           />
         )}
 
@@ -551,7 +561,10 @@ export default function PlanScreen() {
       <RateLimitModal
         visible={rateLimitVisible}
         onUpgrade={handleUpgrade}
-        onDismiss={() => setRateLimitVisible(false)}
+        onDismiss={() => {
+          captureEvent('plan_rate_limit_dismissed', { destination: generatingDestRef.current });
+          setRateLimitVisible(false);
+        }}
       />
     </View>
   );

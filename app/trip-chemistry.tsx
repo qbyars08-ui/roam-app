@@ -35,6 +35,7 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import { useProGate } from '../lib/pro-gate';
 import { withComingSoon } from '../lib/with-coming-soon';
+import { captureEvent } from '../lib/posthog';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -276,10 +277,16 @@ function TripChemistryScreen() {
     if (!canAccess) router.replace('/paywall');
   }, [canAccess, router]);
 
+  useEffect(() => {
+    if (canAccess) captureEvent('trip_chemistry_viewed', {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fire once on mount
+  }, []);
+
   // Handlers — must be declared before any early return (Rules of Hooks)
   const addCompanion = useCallback(() => {
     if (travelers.length >= 4) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    captureEvent('trip_chemistry_companion_added', { total_travelers: travelers.length + 1 });
     const newTraveler: Traveler = {
       id: makeId(),
       name: '',
@@ -313,6 +320,11 @@ function TripChemistryScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const chemistry = calculateChemistry(travelers);
     setResult(chemistry);
+    captureEvent('trip_chemistry_calculated', {
+      traveler_count: travelers.length,
+      overall_score: chemistry.overallScore,
+      chemistry_label: chemistry.chemistryLabel,
+    });
 
     // Reset animations
     scoreAnim.setValue(0);
@@ -354,6 +366,7 @@ function TripChemistryScreen() {
 
   const handleReset = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    captureEvent('trip_chemistry_reset', { had_result: result !== null });
     setResult(null);
     setTravelers([
       {
@@ -373,6 +386,11 @@ function TripChemistryScreen() {
   const handleShare = useCallback(async () => {
     if (!result) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    captureEvent('trip_chemistry_shared', {
+      overall_score: result.overallScore,
+      chemistry_label: result.chemistryLabel,
+      traveler_count: travelers.length,
+    });
     const names = travelers.map((t) => t.name || 'You').join(', ');
     const message = `Trip Chemistry: ${result.overallScore}/100 — ${result.chemistryLabel}\n\nTravelers: ${names}\n\n${result.dimensions.map((d) => `${d.label}: ${d.score}%`).join('\n')}\n\nBest destination type: ${result.destinationType}\n\nAnalyzed with ROAM`;
     try {

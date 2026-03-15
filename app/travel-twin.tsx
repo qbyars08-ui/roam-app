@@ -24,6 +24,7 @@ import { useAppStore } from '../lib/store';
 import { useProGate } from '../lib/pro-gate';
 import type { TravelProfile } from '../lib/types/travel-profile';
 import { withComingSoon } from '../lib/with-coming-soon';
+import { captureEvent } from '../lib/posthog';
 
 // ---------------------------------------------------------------------------
 // Archetype definitions
@@ -322,6 +323,7 @@ function TravelTwinScreen() {
 
   useEffect(() => {
     if (!twin) return;
+    captureEvent('travel_twin_viewed', { archetype_name: twin.name });
 
     // Hero reveal
     Animated.parallel([
@@ -383,7 +385,10 @@ function TravelTwinScreen() {
           <TouchableOpacity
             style={styles.ctaButton}
             activeOpacity={0.8}
-            onPress={() => router.push('/travel-profile')}
+            onPress={() => {
+              captureEvent('travel_twin_build_profile_tapped', {});
+              router.push('/travel-profile');
+            }}
           >
             <LinearGradient
               colors={[COLORS.sage, COLORS.sageDeep]}
@@ -402,6 +407,7 @@ function TravelTwinScreen() {
 
   // ------ Share handler ------
   const handleShare = async () => {
+    captureEvent('travel_twin_shared', { archetype_name: twin.name });
     const text = [
       `My ROAM Travel Twin: ${twin.name}`,
       `"${twin.tagline}"`,
@@ -488,6 +494,7 @@ function TravelTwinScreen() {
                   if (Platform.OS !== 'web') {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   }
+                  captureEvent('travel_twin_destination_tapped', { destination: dest, archetype_name: twin.name });
                 }}
               >
                 <LinearGradient
@@ -612,7 +619,10 @@ function TravelTwinScreen() {
           <TouchableOpacity
             style={styles.retakeButton}
             activeOpacity={0.7}
-            onPress={() => router.push('/travel-profile')}
+            onPress={() => {
+              captureEvent('travel_twin_retake_tapped', { archetype_name: twin.name });
+              router.push('/travel-profile');
+            }}
           >
             <Text style={styles.retakeText}>Retake Profile</Text>
           </TouchableOpacity>
