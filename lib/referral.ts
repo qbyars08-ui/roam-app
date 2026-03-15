@@ -258,7 +258,7 @@ export async function getWaitlistReferralStats(
             : 0,
       };
     }
-  } catch {}
+  } catch (_err) { /* getReferralStats — falls through to default values on any error */ }
 
   return {
     code: fallbackCode,
