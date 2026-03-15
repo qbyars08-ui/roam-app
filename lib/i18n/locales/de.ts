@@ -49,9 +49,7 @@ const de: TranslationKeys = {
   // Tab bar
   // ---------------------------------------------------------------------------
   tabs: {
-    plan: 'Planen',
     discover: 'Entdecken',
-    people: 'Community',
     generate: 'Planen',
     flights: 'Fl\u00fcge',
     stays: 'Unterk\u00fcnfte',
@@ -186,56 +184,6 @@ const de: TranslationKeys = {
     photoWorthy: 'Instagrammable',
     wellness: 'Wellness',
     offTheGrid: 'Offline gehen',
-  },
-
-  // ---------------------------------------------------------------------------
-  // Plan tab (unified trip planning)
-  // ---------------------------------------------------------------------------
-  plan: {
-    title: 'Planen',
-    yourTrips: 'Deine Trips',
-    tripsPlanned: '{{count}} Trip geplant',
-    tripsPlanned_other: '{{count}} Trips geplant',
-    planNewTrip: 'Neuen Trip planen',
-    backToTrips: 'Zur\u00fcck zu meinen Trips',
-    sectionYourTrips: 'DEINE TRIPS',
-    latest: 'NEU',
-    findStays: 'Unterkunft finden',
-    staysSub: 'Hotels, Hostels, Villen',
-    findFood: 'Essen finden',
-    foodSub: 'Restaurants, Streetfood',
-    bookFlights: 'Fl\u00fcge buchen',
-    flightsSub: 'Preise vergleichen',
-    today: 'Heute',
-    yesterday: 'Gestern',
-    daysAgo: 'Vor {{count}} Tagen',
-    rateLimitTitle: 'Du hast dein Gratis-Limit erreicht',
-    rateLimitBody: 'Gratis-Accounts bekommen {{count}} Trip pro Monat. Upgrade auf Pro f\u00fcr unbegrenzte Trips und das volle ROAM-Erlebnis.',
-    seeProPlans: 'Pro-Pl\u00e4ne ansehen',
-    maybeLater: 'Vielleicht sp\u00e4ter',
-    dismiss: 'Schlie\u00dfen',
-  },
-
-  // ---------------------------------------------------------------------------
-  // People tab (social / traveler matching)
-  // ---------------------------------------------------------------------------
-  people: {
-    title: 'Community',
-    headerSub: 'Finde Reisende, die dahin fahren, wo du hinwillst',
-    heroTitle: 'Reisen macht gemeinsam mehr Spa\u00df',
-    heroSub: 'Wir bringen dich mit Reisenden zusammen, die zur gleichen Zeit, am gleichen Ort und mit der gleichen Energie unterwegs sind.',
-    activeTravelers: 'Aktive Reisende',
-    destinations: 'Destinationen',
-    groupsForming: 'Gruppen in Planung',
-    openGroups: 'Offene Gruppen',
-    openGroupsSub: 'Schlie\u00df dich einem Trip an, der gerade geplant wird',
-    matchedTravelers: 'Gematchte Reisende',
-    matchedTravelersSub: 'Leute, die zu deinen Zielen reisen',
-    connect: 'Vernetzen',
-    completeProfileCta: 'Vervollst\u00e4ndige dein Reiseprofil f\u00fcr bessere Matches',
-    setUpProfile: 'Profil einrichten',
-    going: '{{count}} dabei',
-    countries: '{{count}} L\u00e4nder',
   },
 
   // ---------------------------------------------------------------------------
