@@ -20,6 +20,7 @@ export type GenerateMode = 'quick' | 'conversation';
 
 interface GenerateModeSelectProps {
   onSelect: (mode: GenerateMode) => void;
+  firstTime?: boolean;
 }
 
 const CARD_ACENTS: Record<GenerateMode, string> = {
@@ -27,7 +28,7 @@ const CARD_ACENTS: Record<GenerateMode, string> = {
   conversation: COLORS.gold,
 };
 
-export default function GenerateModeSelect({ onSelect }: GenerateModeSelectProps) {
+export default function GenerateModeSelect({ onSelect, firstTime = false }: GenerateModeSelectProps) {
   const { t } = useTranslation();
   const fade = useRef(new Animated.Value(0)).current;
   const quickBorder = useRef(new Animated.Value(0)).current;
@@ -45,10 +46,15 @@ export default function GenerateModeSelect({ onSelect }: GenerateModeSelectProps
     });
   };
 
+  const headline = firstTime ? 'No trips yet.' : t('generate.title');
+  const subtitle = firstTime
+    ? 'Pick somewhere. 30 seconds. You\u2019ll have a full plan before anyone talks you out of it.'
+    : 'How do you want to plan?';
+
   return (
     <Animated.View style={[styles.container, { opacity: fade }]}>
-      <Text style={styles.headline}>{t('generate.title')}</Text>
-      <Text style={styles.subtitle}>{t('generate.quickModeDesc')}</Text>
+      <Text style={styles.headline}>{headline}</Text>
+      <Text style={styles.subtitle}>{subtitle}</Text>
 
       <View style={styles.cards}>
         <Pressable
