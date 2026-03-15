@@ -14,7 +14,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, ChevronDown, ChevronUp, Mail } from 'lucide-react-native';
-import { COLORS, FONTS, SPACING } from '../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 
 const FAQ_ITEMS = [
   {
@@ -114,9 +114,9 @@ const viewStyles = StyleSheet.create({
   backBtn: { marginRight: SPACING.sm },
   scroll: { flex: 1 },
   scrollContent: { padding: SPACING.lg },
-  faqItem: { backgroundColor: COLORS.bgGlass, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, padding: SPACING.md, marginBottom: SPACING.sm },
+  faqItem: { backgroundColor: COLORS.bgGlass, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, padding: SPACING.md, marginBottom: SPACING.sm },
   faqHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  contactCard: { marginTop: SPACING.xl, backgroundColor: COLORS.bgGlass, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, padding: SPACING.xl, alignItems: 'center' },
+  contactCard: { marginTop: SPACING.xl, backgroundColor: COLORS.bgGlass, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, padding: SPACING.xl, alignItems: 'center' },
   emailBtn: { marginTop: SPACING.md, paddingVertical: SPACING.sm, paddingHorizontal: SPACING.lg },
 });
 
