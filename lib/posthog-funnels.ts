@@ -209,6 +209,67 @@ export const REFERRAL_FUNNEL: FunnelDefinition = {
   conversionWindow: { value: 30, unit: 'day' },
 };
 
+// =============================================================================
+// 5. DACH CREATOR FUNNEL
+//    Full-attribution from TikTok/Instagram creator video → Pro subscription.
+//    Filter by utm_campaign=dach_launch. Break down by utm_content (script_01–10).
+// =============================================================================
+
+export const DACH_CREATOR_FUNNEL: FunnelDefinition = {
+  id: 'dach_creator_conversion',
+  name: 'DACH Creator → Pro',
+  description:
+    'Full attribution funnel from DACH TikTok/Instagram creator content to Pro subscription. ' +
+    'Filter by utm_campaign=dach_launch. Break down by utm_content (script_01–script_10) ' +
+    'and utm_source (tiktok|instagram) to rank scripts and platforms by ROI.',
+  steps: [
+    { event: 'utm_attributed', label: 'App visit (UTM attributed)', filter: { utm_campaign: 'dach_launch' } },
+    { event: EVENTS.AUTH_SIGN_UP.name, label: 'Signup', filter: { utm_campaign: 'dach_launch' } },
+    { event: 'generate_completed', label: 'First trip generated' },
+    { event: 'subscription_started', label: 'Pro conversion' },
+  ],
+  conversionWindow: { value: 30, unit: 'day' },
+};
+
+// =============================================================================
+// 6. PLAN TAB ENGAGEMENT FUNNEL
+//    Measures depth of engagement in the new Plan tab.
+// =============================================================================
+
+export const PLAN_TAB_FUNNEL: FunnelDefinition = {
+  id: 'plan_tab_engagement',
+  name: 'Plan Tab: View → Generate → Itinerary',
+  description:
+    'Tracks users from viewing the Plan tab through to opening a generated itinerary. ' +
+    'Key drop-off points: mode select, form submit, generation loading.',
+  steps: [
+    { event: EVENTS.SCREEN_VIEW.name, label: 'Plan tab viewed', filter: { screen: 'plan' } },
+    { event: EVENTS.PLAN_NEW_TRIP_TAPPED.name, label: '"Plan a new trip" tapped' },
+    { event: 'trip_generation_completed', label: 'Trip generated' },
+    { event: EVENTS.PLAN_TRIP_CARD_TAPPED.name, label: 'Trip card opened' },
+  ],
+  conversionWindow: { value: 1, unit: 'day' },
+};
+
+// =============================================================================
+// 7. PEOPLE TAB ENGAGEMENT FUNNEL
+//    Measures social feature adoption on the new People tab.
+// =============================================================================
+
+export const PEOPLE_TAB_FUNNEL: FunnelDefinition = {
+  id: 'people_tab_engagement',
+  name: 'People Tab: View → Connect',
+  description:
+    'Tracks users from visiting the People tab to connecting with a traveler. ' +
+    'The "Connect" rate is the primary activation metric for the social layer.',
+  steps: [
+    { event: EVENTS.SCREEN_VIEW.name, label: 'People tab viewed', filter: { screen: 'people' } },
+    { event: EVENTS.PEOPLE_TRAVELER_VIEWED.name, label: 'Traveler card tapped' },
+    { event: EVENTS.PEOPLE_CONNECT_TAPPED.name, label: '"Connect" tapped' },
+  ],
+  conversionWindow: { value: 7, unit: 'day' },
+};
+
 // ---------------------------------------------------------------------------
 // All funnels exported as a single array for programmatic iteration
 // ---------------------------------------------------------------------------
@@ -225,4 +286,7 @@ export const ALL_FUNNELS: FunnelDefinition[] = [
   FLIGHT_BOOKING_FUNNEL,
   VOICE_GUIDE_ADOPTION_FUNNEL,
   REFERRAL_FUNNEL,
+  DACH_CREATOR_FUNNEL,
+  PLAN_TAB_FUNNEL,
+  PEOPLE_TAB_FUNNEL,
 ];
