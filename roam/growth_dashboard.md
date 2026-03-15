@@ -758,3 +758,241 @@ export function computeMatchScore(me: TravelerProfile, other: TravelerProfile): 
 - Social proof counter on paywall
 - Contextual headlines based on trigger reason
 - Purchase event tracking
+
+---
+
+## Conversion Funnel Audit — Live Site
+
+**Date:** 2026-03-15  
+**Auditor:** Agent 06 (computerUse live session)  
+**URL:** https://tryroam.netlify.app  
+**Mode:** Incognito, first-time user, Gen Z perspective (18-24)
+
+---
+
+### Session Summary
+
+| Metric | Result |
+|--------|--------|
+| Time to value prop clarity | ~3 seconds ✅ |
+| Time to form ready to submit | ~90 seconds ✅ |
+| Trip generation success | **FAIL — 0/2 attempts** ❌ |
+| Time to itinerary (target: <60s) | **IMPOSSIBLE** — core blocked ❌ |
+| Overall conversion probability | **0%** — P0 blocker active |
+
+---
+
+### Screen-by-Screen Audit
+
+#### Screen 1 — Splash / Hook (`/hook`)
+
+**What it shows:** Full-bleed travel photography (maps, camera, field notes). Headline: "Travel like you know someone there." Subtitle: "AI-powered itineraries that feel like they came from a well-traveled friend, not a search engine." Two CTAs: "Build my first trip" (gold, full-width) + "Browse first" (text link).
+
+**Value prop in 3 seconds?** YES. "AI-powered itineraries that feel like a well-traveled friend" is immediately differentiated from Google/TripAdvisor. The photography is aspirational without being unattainable — exactly the aesthetic Gen Z responds to.
+
+**What works:**
+- Photography is genuinely beautiful — maps + camera gear signals "real traveler, not Instagram filter"
+- Two-option CTA respects user intent (commit vs. browse first)
+- Gold button colour pops against the dark background
+
+**What doesn't:**
+- "Travel like you know someone there" is aspirational but vague — no verb, no outcome
+- No social proof number ("2,400 trips planned this week")
+- No example output shown — user doesn't know what they're getting before clicking
+
+**Gen Z thought process:** "Aesthetic. AI travel thing. Alright I'll tap."
+
+---
+
+#### Screen 2 — Discover Tab (default landing)
+
+**What it shows:** 2-column photo grid of 31 destinations. Rotating editorial headline (crossfades between 7 variants every 5s). Search bar. Category filter pills (All / Beaches / Mountains / Cities / Food / Adventure / Budget / Couples). Section label "Where everyone is going right now". Trending badges showing weekly trip counts.
+
+**Do the cards make you want to tap?** YES — the photography is strong. Tokyo streets at night, Eiffel Tower at golden hour, Barcelona aerial, Rome Colosseum. Price tier badges ($/$$/$$$$) are visible. Trending badges now show "47 trips this week" (social proof wired in this sprint).
+
+**What works:**
+- Cards are large enough to see the photo clearly
+- Destination + country shown + hook line
+- Price badges reduce sticker shock
+- "Where everyone is going right now" creates mild FOMO
+- Category chips let users filter by travel style
+
+**What doesn't:**
+- Hook text (11px, below destination name) is unreadable in the grid view — too small
+- Tab bar labels are tiny and require squinting on mobile
+- No "tap to plan this trip" affordance on cards — action isn't obvious
+- The search bar navigates to generate form but doesn't actually search — confusing
+
+**Gen Z thought process:** "Okay this looks like a real app. Tokyo card slaps. Tapping it."
+
+---
+
+#### Screen 3 — Trip Generation Form (`/generate`)
+
+**What it shows:** Full quick-mode form auto-populated with destination from card tap. Fields: Where to (pre-filled "Tokyo"), When (date range picker), How long (3/5/7/10/14/21 day chips), Budget (Backpacker / Comfort / No Limits), Who's going (Solo/Couple/Friends/Family/Business+Leisure), What's the vibe (12 pill options). "Generate My Trip" CTA at bottom. Guest banner at top: "GUEST · Sign up to keep planning | Upgrade".
+
+**Is friction appropriate?** MOSTLY YES — the form is comprehensive but not overwhelming. Tapping a destination pre-fills the destination, which removes the first friction point entirely.
+
+**What works:**
+- Destination pre-fill from card tap is great UX
+- "What's the vibe" labels are Gen Z-native ("Skip the Tourists", "Food Obsessed")
+- Budget tiers are labelled clearly with price per day
+- "Generate My Trip" CTA is prominent and clear
+
+**What doesn't:**
+- "GUEST" banner is confusing — unclear what happens if they generate without signing up (will it work? will it be saved?)
+- No progress indication ("Step 1 of 1" or equivalent)
+- Vibe pills require scrolling — no indication of how many are below the fold
+- No preview of what the output looks like — user is generating blind
+
+**Gen Z thought process:** "Cool, Tokyo is already there. Comfort budget, Solo, Food Obsessed. Let me hit generate."
+
+---
+
+#### Screen 4 — Generation Error (P0 BLOCKER)
+
+**What it shows:** Red error banner: "Claude proxy error: Failed to send a request to the Edge Function." The form resets to its initial state. No loading state was ever shown — the error fires instantly without any loading animation.
+
+**CRITICAL FINDING: THE CORE PRODUCT IS COMPLETELY BROKEN.**
+
+Error observed: `Claude proxy error: Failed to send a request to the Edge Function`
+
+Root cause analysis:
+- `supabase.functions.invoke('claude-proxy', ...)` fails at the network level
+- This means either: (a) the Edge Function is not deployed to Supabase, (b) the Supabase URL is wrong in the production build, (c) anonymous auth fails so no valid JWT is sent, or (d) CORS is blocking the request
+- The error fires **instantly** — no network round-trip occurs — which strongly suggests the Supabase client URL is pointing to an unreachable endpoint
+
+**Impact on conversion:** 100% bounce at the highest-intent moment. A user who has spent 90 seconds exploring the app and building excitement hits a wall they can never get past.
+
+**Gen Z reaction (verbatim simulation):** "WTF? 'Edge Function'? What is that? Is this app even real? *Back button. Never returning.*"
+
+**What must happen to fix:**
+1. Quinn: Verify `EXPO_PUBLIC_SUPABASE_URL` is set in Netlify environment variables (not `placeholder.supabase.co`)
+2. Quinn: Confirm `claude-proxy` edge function is deployed to the Supabase project (`supabase functions deploy claude-proxy`)
+3. Quinn: Confirm `ANTHROPIC_API_KEY` is set in Supabase project secrets
+4. Quinn: Confirm Anonymous Auth is enabled in Supabase Auth settings
+
+**Code fix needed (done in this PR):** Replace technical error message with user-friendly copy + provide a demo trip fallback so users can see what ROAM produces even when the API is down.
+
+---
+
+#### Screen 5 — People Tab (`/people`)
+
+**What it shows:** "People" header with "Find travelers going where you are going" subtitle. Hero card: "Travel is better together" with 3 stats (2.4k active travelers, 47 destinations, 128 groups forming). Open groups section: Bali (4 going), Tokyo (3 going), Barcelona (2 going) — each with destination photo, dates, vibe label. Matched travelers: Maya 24 / Tokyo / 94% match — "Street food hunter. 2AM ramen is my love language." Connect + Save buttons.
+
+**Would Gen Z engage?** YES — this is the most differentiated feature. The concept of finding other travelers going to the same place at the same time is genuinely novel and solves a real solo travel anxiety.
+
+**What works:**
+- Match scores (94%) create curiosity and engagement
+- Traveler bios are specific and voice-matched ("2AM ramen is my love language")
+- Group trip cards with member count create FOMO  
+- Invite button added this sprint gives viral loop entry point
+
+**What doesn't:**
+- Stats (2.4k, 47, 128) are seeded/mock — no real-time feel
+- Hero card has no gradient background on web — looks slightly flat
+- "Connect" button navigates to "coming soon" — kills momentum if user taps
+- No way to filter by destination — shows matches regardless of user's trip
+
+**Gen Z thought process:** "Wait you can find people going to Tokyo the same week? That's actually fire. 94% match? How does it know? I'd use this."
+
+---
+
+#### Screen 6 — Flights Tab (`/flights`)
+
+**What it shows:** "Find your flight." hero with Skyscanner integration. From/to/dates/passengers form. "Search on Skyscanner" CTA. Popular routes grid: New York→London (~$420), LA→Tokyo (~$580), Chicago→Paris (~$445), Miami→Cancun (~$190). Each route has a photo card with city names, airport codes, and "Search" button.
+
+**What works:**
+- Clean integration — sets expectations correctly ("We search Skyscanner")
+- Popular routes give context for price anchoring
+- Destination carries over from trip form (Tokyo shown in "To" field)
+- Route cards are visually polished
+
+**What doesn't:**
+- No price calendar visible above the fold — hidden feature
+- "Search on Skyscanner" opens a new tab but doesn't pre-populate the search with the user's destination
+- Missing: "Best time to fly" contextual info
+- No airline logos or real-time prices — feels aspirational not functional
+
+**Gen Z thought process:** "Oh cool, flights too. But I need an itinerary first before I book a flight. Let me go back to Plan."
+
+---
+
+#### Screen 7 — Prep Tab (`/prep`)
+
+**What it shows:** Safety score circle (95/100 for Japan, green). "Right now in Tokyo: 3:44 PM". Daily budget breakdown across 3 tiers. Tab navigation: Schedule / Overview / Emergency / Health / Language / Visa / Currency / SIM & WiFi / Culture. Destination switcher at bottom (Bali / Mexico City / Tokyo / Seoul / Lisbon / Medellín / Paris / Oaxaca / Bangkok / Kyoto / New York / Tbilisi). "No schedule yet — Generate a trip in Plan to see your day-by-day schedule here."
+
+**What works:**
+- Safety score is immediately reassuring for solo Gen Z travelers
+- Real-time local time is a nice touch
+- Budget tiers with daily estimates are genuinely useful
+- Tab structure is comprehensive without being overwhelming
+- Destination switcher is fast and responsive
+
+**What doesn't:**
+- "No schedule yet" reinforces that the app is broken (they tried to generate, it failed)
+- Weather section was empty in this session — unclear if it loads data
+- Emergency tab exists but not verified to have real data for all destinations
+- This tab only unlocks its value AFTER you've generated a trip — chicken-and-egg with the P0 blocker
+
+**Gen Z thought process:** "95 safety score is actually useful. Daily budget $80-150 for Tokyo, okay. This tab is legit. But I need that itinerary first."
+
+---
+
+### Funnel Drop-off Map
+
+```
+Hook screen (100%)
+  ↓ [tap "Build my first trip"] — ~95% proceed (5% tap "Browse first")
+Discover tab (95%)
+  ↓ [tap destination card] — ~70% proceed (others browse only)
+Trip form (66%)
+  ↓ [tap "Generate My Trip"] — ~90% proceed (10% abandon the long form)
+GENERATION ERROR (60%)
+  ↓ [bounce: 100%] — NO RECOVERY PATH
+Itinerary view (0%) ← CURRENT STATE
+
+Target funnel (when generation works):
+Hook → Discover → Form → Loading → Itinerary → Share
+100% → 95% → 66% → 60% → 55% → 11% (share)
+```
+
+---
+
+### P0 Incident: Edge Function Down
+
+**Severity:** P0 — blocks 100% of core conversions  
+**Status:** Active  
+**Error:** `Claude proxy error: Failed to send a request to the Edge Function`  
+**First detected:** 2026-03-15 live audit session  
+**Required fix:** Quinn must verify:
+1. `EXPO_PUBLIC_SUPABASE_URL` set in Netlify env (not placeholder)
+2. `claude-proxy` function deployed: `supabase functions deploy claude-proxy`
+3. `ANTHROPIC_API_KEY` set in Supabase project secrets  
+4. Anonymous auth enabled in Supabase dashboard
+
+**Code mitigation shipped in this PR:** User-friendly error message + "View demo trip" CTA so users experience value even when API is down. See `lib/demo-trip.ts` and error handling updates.
+
+---
+
+### 10 Conversion Recommendations (Post-Fix)
+
+- [ ] **#1 — Demo trip fallback (SHIPPED):** When generation fails, show "Here's what ROAM creates" with a hardcoded sample Tokyo itinerary. Turns error dead-end into a value demonstration.
+- [ ] **#2 — Add example output to landing page:** Show a collapsed 1-day Tokyo itinerary on the hook screen. Answers "but what does it actually give me?" before the user commits.
+- [ ] **#3 — Social proof number on landing:** "2,431 trips planned this week" counter. Even seeded/approximate — specificity converts.
+- [ ] **#4 — Fix "GUEST" banner confusion:** Replace with "Free plan: 1 trip/month. No credit card." Makes the free tier feel like a feature, not a warning.
+- [ ] **#5 — Vibe pills before budget:** Reorder the form. Gen Z selects vibe identity before thinking about money — leads to higher emotional investment before hitting the paywall.
+- [ ] **#6 — Post-generation share moment:** After itinerary loads, full-screen interstitial: "Your Tokyo trip is ready. Share it?" with 9:16 card preview. Current placement (buried in header icons) is invisible.
+- [ ] **#7 — People tab — real filtering:** When user generates a Tokyo trip, People tab should auto-filter to Tokyo travelers. Currently shows all destinations regardless of user's trip.
+- [ ] **#8 — Destination hook text at 13px minimum:** The hook text on Discover cards (currently 11px) is unreadable in the 2-column grid. Increasing to 13px with a tighter number-of-lines would surface the differentiating copy.
+- [ ] **#9 — Flights tab Skyscanner pre-fill:** When user taps "Search" on a popular route, the Skyscanner link should open with the origin/destination pre-filled. Currently opens Skyscanner homepage.
+- [ ] **#10 — "Try a demo trip" CTA on error screen:** SHIPPED in this PR. Also add "See what others made" gallery of 3 example shared itineraries to drive FOMO even in broken state.
+
+---
+
+### What Would Make Gen Z Post This (If Generation Worked)
+
+1. **The "30 seconds" moment:** Screen-recording the compass loader + reveal is the TikTok-native format. Nobody screens the form; everyone screens the magic reveal.
+2. **Specificity of output:** "Fuunji ramen, $12, 11am before the line hits" is shareable. Generic output is not.
+3. **The People tab match:** "This app matched me with a stranger going to Tokyo the same week" — 94% match score screenshot — extremely shareable.
+4. **Pre-filled caption (DESIGNED, not yet built):** "I let AI plan my Tokyo trip in 30 seconds. tryroam.netlify.app #ROAM #AITravel #TravelTok"

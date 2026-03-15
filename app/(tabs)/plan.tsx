@@ -49,7 +49,8 @@ import { track, trackEvent } from '../../lib/analytics';
 import { captureEvent } from '../../lib/posthog';
 import { parseItinerary } from '../../lib/types/itinerary';
 import { getDestinationCount } from '../../lib/social-proof';
-import { Users } from 'lucide-react-native';
+import { buildDemoTrip } from '../../lib/demo-trip';
+import { Map, Users } from 'lucide-react-native';
 
 // ---------------------------------------------------------------------------
 // Destination images for trip cards
@@ -208,6 +209,7 @@ export default function PlanScreen() {
   const insets = useSafeAreaInsets();
 
   const [networkError, setNetworkError] = useState<string | null>(null);
+  const [showDemoOffer, setShowDemoOffer] = useState(false);
   const [rateLimitVisible, setRateLimitVisible] = useState(false);
   const [showGenerator, setShowGenerator] = useState(false);
   const [peopleBannerDismissed, setPeopleBannerDismissed] = useState(false);
@@ -319,7 +321,9 @@ export default function PlanScreen() {
         captureEvent('rate_limit_hit', { destination: generatingDestRef.current, source: 'quick' });
         setRateLimitVisible(true);
       } else {
-        setNetworkError(err instanceof Error ? err.message : 'We couldn\u2019t build your trip. Check your connection and try again.');
+        captureEvent('generation_error', { destination: generatingDestRef.current, source: 'quick' });
+        setNetworkError('Our AI is taking a moment. Try again or see a demo trip.');
+        setShowDemoOffer(true);
       }
     } finally {
       setIsGenerating(false);
@@ -379,7 +383,9 @@ export default function PlanScreen() {
         captureEvent('rate_limit_hit', { destination: generatingDestRef.current, source: 'conversation' });
         setRateLimitVisible(true);
       } else {
-        setNetworkError(err instanceof Error ? err.message : 'We couldn\u2019t build your trip. Check your connection and try again.');
+        captureEvent('generation_error', { destination: generatingDestRef.current, source: 'conversation' });
+        setNetworkError('Our AI is taking a moment. Try again or see a demo trip.');
+        setShowDemoOffer(true);
       }
     } finally {
       setIsGenerating(false);
@@ -389,7 +395,19 @@ export default function PlanScreen() {
   const clearError = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setNetworkError(null);
+    setShowDemoOffer(false);
   }, []);
+
+  const handleViewDemo = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    captureEvent('demo_trip_viewed', { trigger: 'generation_error' });
+    const demoTrip = buildDemoTrip();
+    addTrip(demoTrip);
+    setNetworkError(null);
+    setShowDemoOffer(false);
+    setShowGenerator(false);
+    router.push({ pathname: '/itinerary', params: { tripId: demoTrip.id } });
+  }, [addTrip, router]);
 
   const handleUpgrade = useCallback(() => {
     setRateLimitVisible(false);
@@ -427,12 +445,12 @@ export default function PlanScreen() {
           <View style={styles.fill}>
             <TripLimitBanner />
             {networkError ? (
-              <View style={styles.errorBanner}>
-                <Text style={styles.errorBannerText}>{networkError}</Text>
-                <Pressable onPress={clearError} hitSlop={8}>
-                  <Text style={styles.errorBannerRetry}>{t('plan.dismiss')}</Text>
-                </Pressable>
-              </View>
+              <GenerationErrorBanner
+                message={networkError}
+                showDemo={showDemoOffer}
+                onDismiss={clearError}
+                onViewDemo={handleViewDemo}
+              />
             ) : null}
             <GenerateQuickMode onSubmit={handleQuickSubmit} isGenerating={isGenerating} />
           </View>
@@ -443,14 +461,14 @@ export default function PlanScreen() {
         <View style={styles.fill}>
           <TripLimitBanner />
           {networkError ? (
-            <View style={styles.errorBanner}>
-              <Text style={styles.errorBannerText}>{networkError}</Text>
-              <Pressable onPress={clearError} hitSlop={8}>
-                  <Text style={styles.errorBannerRetry}>{t('plan.dismiss')}</Text>
-                </Pressable>
-              </View>
-            ) : null}
-            <GenerateConversationMode onGenerate={handleConversationGenerate} isGenerating={isGenerating} />
+            <GenerationErrorBanner
+              message={networkError}
+              showDemo={showDemoOffer}
+              onDismiss={clearError}
+              onViewDemo={handleViewDemo}
+            />
+          ) : null}
+          <GenerateConversationMode onGenerate={handleConversationGenerate} isGenerating={isGenerating} />
         </View>
       );
     };
@@ -550,6 +568,41 @@ export default function PlanScreen() {
         onUpgrade={handleUpgrade}
         onDismiss={() => setRateLimitVisible(false)}
       />
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Generation Error Banner — user-friendly error + demo trip offer
+// ---------------------------------------------------------------------------
+function GenerationErrorBanner({
+  message,
+  showDemo,
+  onDismiss,
+  onViewDemo,
+}: {
+  message: string;
+  showDemo: boolean;
+  onDismiss: () => void;
+  onViewDemo: () => void;
+}) {
+  return (
+    <View style={styles.genErrorBanner}>
+      <View style={styles.genErrorTop}>
+        <Text style={styles.genErrorText}>{message}</Text>
+        <Pressable onPress={onDismiss} hitSlop={12}>
+          <Text style={styles.genErrorDismiss}>✕</Text>
+        </Pressable>
+      </View>
+      {showDemo && (
+        <Pressable
+          onPress={onViewDemo}
+          style={({ pressed }) => [styles.genErrorDemoBtn, { opacity: pressed ? 0.85 : 1 }]}
+        >
+          <Map size={15} color={COLORS.bg} strokeWidth={2} />
+          <Text style={styles.genErrorDemoBtnText}>See a sample Tokyo itinerary</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -884,6 +937,54 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodySemiBold,
     fontSize: 14,
     color: COLORS.coral,
+  } as TextStyle,
+
+  // ── Generation Error Banner (with demo offer) ──
+  genErrorBanner: {
+    backgroundColor: COLORS.coralSubtle,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.coral,
+    marginHorizontal: SPACING.md,
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.sm,
+    borderRadius: RADIUS.md,
+    overflow: 'hidden',
+  } as ViewStyle,
+  genErrorTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+  } as ViewStyle,
+  genErrorText: {
+    flex: 1,
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.cream,
+  } as TextStyle,
+  genErrorDismiss: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+    paddingLeft: SPACING.sm,
+  } as TextStyle,
+  genErrorDemoBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.coral,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    marginHorizontal: SPACING.md,
+    marginBottom: SPACING.md,
+    borderRadius: RADIUS.md,
+    justifyContent: 'center',
+  } as ViewStyle,
+  genErrorDemoBtnText: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.bg,
   } as TextStyle,
 
   // ── Loader ──
