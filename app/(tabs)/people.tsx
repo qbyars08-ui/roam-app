@@ -24,14 +24,16 @@ import {
   Heart,
   MapPin,
   MessageCircle,
+  Search,
   Sparkles,
   Users,
   Zap,
 } from 'lucide-react-native';
-import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { useAppStore } from '../../lib/store';
 import { track } from '../../lib/analytics';
+import { planningLabel } from '../../lib/social-proof';
 
 // ---------------------------------------------------------------------------
 // Mock traveler data — replace with Supabase queries
@@ -158,7 +160,6 @@ const TravelerCard = React.memo(function TravelerCard({
   traveler: Traveler;
   onPress: () => void;
 }) {
-  const { t } = useTranslation();
   return (
     <Pressable
       onPress={() => {
@@ -195,7 +196,7 @@ const TravelerCard = React.memo(function TravelerCard({
         ))}
         <View style={styles.countriesPill}>
           <Globe size={11} color={COLORS.gold} strokeWidth={2} />
-          <Text style={styles.countriesText}>{t('people.countries', { count: traveler.countries })}</Text>
+          <Text style={styles.countriesText}>{traveler.countries} countries</Text>
         </View>
       </View>
 
@@ -207,7 +208,7 @@ const TravelerCard = React.memo(function TravelerCard({
           }}
         >
           <MessageCircle size={16} color={COLORS.bg} strokeWidth={2} />
-          <Text style={styles.actionBtnPrimaryText}>{t('people.connect')}</Text>
+          <Text style={styles.actionBtnPrimaryText}>Connect</Text>
         </Pressable>
         <Pressable
           style={({ pressed }) => [styles.actionBtn, styles.actionBtnSecondary, { opacity: pressed ? 0.85 : 1 }]}
@@ -232,7 +233,6 @@ const GroupCard = React.memo(function GroupCard({
   group: TripGroup;
   onPress: () => void;
 }) {
-  const { t } = useTranslation();
   return (
     <Pressable
       onPress={() => {
@@ -249,7 +249,7 @@ const GroupCard = React.memo(function GroupCard({
       <View style={styles.groupContent}>
         <View style={styles.groupMemberBadge}>
           <Users size={12} color={COLORS.bg} strokeWidth={2} />
-          <Text style={styles.groupMemberText}>{t('people.going', { count: group.memberCount })}</Text>
+          <Text style={styles.groupMemberText}>{group.memberCount} going</Text>
         </View>
         <Text style={styles.groupDest}>{group.destination}</Text>
         <Text style={styles.groupDates}>{group.dateRange}</Text>
@@ -265,20 +265,24 @@ const GroupCard = React.memo(function GroupCard({
 // Main Component
 // ---------------------------------------------------------------------------
 export default function PeopleScreen() {
-  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
+  // Use the destination from the user's most recent trip for personalised social proof
+  const trips = useAppStore((s) => s.trips);
+  const latestDest = trips.length > 0
+    ? [...trips].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0].destination
+    : null;
+  const socialProofLabel = latestDest ? planningLabel(latestDest) : null;
+
   useEffect(() => {
     track({ type: 'screen_view', screen: 'people' });
-    const anim = Animated.timing(fadeAnim, {
+    Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 400,
       useNativeDriver: true,
-    });
-    anim.start();
-    return () => anim.stop();
+    }).start();
   }, [fadeAnim]);
 
   const handleTravelerPress = useCallback((traveler: Traveler) => {
@@ -299,8 +303,8 @@ export default function PeopleScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>{t('people.title')}</Text>
-          <Text style={styles.headerSub}>{t('people.headerSub')}</Text>
+          <Text style={styles.headerTitle}>People</Text>
+          <Text style={styles.headerSub}>Find travelers going where you are going</Text>
         </View>
 
         {/* Hero — "Who's going where you're going?" */}
@@ -310,30 +314,33 @@ export default function PeopleScreen() {
             style={StyleSheet.absoluteFill}
           />
           <Sparkles size={24} color={COLORS.sage} strokeWidth={1.5} />
-          <Text style={styles.heroTitle}>{t('people.heroTitle')}</Text>
-          <Text style={styles.heroSub}>{t('people.heroSub')}</Text>
+          <Text style={styles.heroTitle}>Travel is better together</Text>
+          <Text style={styles.heroSub}>
+            We match you with travelers heading to the same place,
+            at the same time, with the same energy.
+          </Text>
           <View style={styles.heroStats}>
             <View style={styles.heroStat}>
               <Text style={styles.heroStatNum}>2.4k</Text>
-              <Text style={styles.heroStatLabel}>{t('people.activeTravelers')}</Text>
+              <Text style={styles.heroStatLabel}>Active travelers</Text>
             </View>
             <View style={styles.heroStatDivider} />
             <View style={styles.heroStat}>
               <Text style={styles.heroStatNum}>47</Text>
-              <Text style={styles.heroStatLabel}>{t('people.destinations')}</Text>
+              <Text style={styles.heroStatLabel}>Destinations</Text>
             </View>
             <View style={styles.heroStatDivider} />
             <View style={styles.heroStat}>
               <Text style={styles.heroStatNum}>128</Text>
-              <Text style={styles.heroStatLabel}>{t('people.groupsForming')}</Text>
+              <Text style={styles.heroStatLabel}>Groups forming</Text>
             </View>
           </View>
         </View>
 
         {/* Open Groups */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('people.openGroups')}</Text>
-          <Text style={styles.sectionSub}>{t('people.openGroupsSub')}</Text>
+          <Text style={styles.sectionTitle}>Open groups</Text>
+          <Text style={styles.sectionSub}>Join a trip that is forming</Text>
         </View>
 
         <ScrollView
@@ -352,8 +359,10 @@ export default function PeopleScreen() {
 
         {/* Matched Travelers */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('people.matchedTravelers')}</Text>
-          <Text style={styles.sectionSub}>{t('people.matchedTravelersSub')}</Text>
+          <Text style={styles.sectionTitle}>Matched travelers</Text>
+          <Text style={styles.sectionSub}>
+            {socialProofLabel ?? 'People heading to your destinations'}
+          </Text>
         </View>
 
         {MOCK_TRAVELERS.map((traveler) => (
@@ -366,7 +375,9 @@ export default function PeopleScreen() {
 
         {/* Bottom CTA */}
         <View style={styles.bottomCta}>
-          <Text style={styles.bottomCtaText}>{t('people.completeProfileCta')}</Text>
+          <Text style={styles.bottomCtaText}>
+            Complete your travel profile to get better matches
+          </Text>
           <Pressable
             style={({ pressed }) => [styles.profileBtn, { opacity: pressed ? 0.85 : 1 }]}
             onPress={() => {
@@ -374,7 +385,7 @@ export default function PeopleScreen() {
               router.push('/profile' as never);
             }}
           >
-            <Text style={styles.profileBtnText}>{t('people.setUpProfile')}</Text>
+            <Text style={styles.profileBtnText}>Set up profile</Text>
             <ChevronRight size={16} color={COLORS.sage} strokeWidth={2} />
           </Pressable>
         </View>
