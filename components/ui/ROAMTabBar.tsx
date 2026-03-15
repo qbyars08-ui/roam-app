@@ -1,7 +1,7 @@
 // =============================================================================
 // ROAM — Custom tab bar: frosted glass (dark), gold active, label only when focused
 // =============================================================================
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING } from '../../lib/constants';
 import { IconPlan, IconDiscover, IconPeople, IconFlights, IconPrep } from './TabIcons';
+import { captureEvent } from '../../lib/posthog';
 
 const TAB_ORDER = ['plan', 'index', 'people', 'flights', 'prep'] as const;
 type TabIconComponent = React.ComponentType<{ size?: number; color?: string; focused?: boolean }>;
@@ -24,6 +25,14 @@ export default function ROAMTabBar({ state, descriptors, navigation }: BottomTab
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const visibleRoutes = TAB_ORDER.map((name) => state.routes.find((r) => r.name === name)).filter(Boolean) as typeof state.routes;
+
+  // Track time spent per tab
+  const tabEntryRef = useRef<{ tab: string; enteredAt: number } | null>(null);
+  const currentTabName = state.routes[state.index]?.name ?? '';
+
+  useEffect(() => {
+    tabEntryRef.current = { tab: currentTabName, enteredAt: Date.now() };
+  }, [currentTabName]);
 
   const barContent = (
     <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 12), paddingTop: SPACING.sm }]}>
@@ -42,6 +51,15 @@ export default function ROAMTabBar({ state, descriptors, navigation }: BottomTab
             canPreventDefault: true,
           });
           if (!isFocused && !event.defaultPrevented) {
+            const now = Date.now();
+            const prev = tabEntryRef.current;
+            if (prev) {
+              captureEvent('tab_switched', {
+                from_tab: prev.tab,
+                to_tab: route.name,
+                time_spent_ms: now - prev.enteredAt,
+              });
+            }
             navigation.navigate(route.name, route.params);
           }
         };
