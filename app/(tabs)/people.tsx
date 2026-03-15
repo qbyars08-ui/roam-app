@@ -2,7 +2,7 @@
 // ROAM — People Tab (social layer — find travel companions)
 // The feature nobody else has. Travelers matched by destination, dates, vibe.
 // =============================================================================
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Image,
@@ -24,15 +24,15 @@ import {
   Heart,
   MapPin,
   MessageCircle,
+  Search,
   Sparkles,
   Users,
   Zap,
 } from 'lucide-react-native';
-import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { useAppStore } from '../../lib/store';
 import { track } from '../../lib/analytics';
-import { captureEvent } from '../../lib/posthog';
 
 // ---------------------------------------------------------------------------
 // Mock traveler data — replace with Supabase queries
@@ -58,8 +58,8 @@ const MOCK_TRAVELERS: Traveler[] = [
     avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',
     destination: 'Tokyo',
     dates: 'Apr 12 – Apr 19',
-    vibes: ['foodie', 'culture', 'night-owl'],
-    bio: 'Street food hunter. 2AM ramen is my love language.',
+    vibes: ['local-eats', 'culture', 'night-owl'],
+    bio: 'Street food hunter. 2AM ramen is non-negotiable.',
     countries: 23,
     matchScore: 94,
   },
@@ -70,8 +70,8 @@ const MOCK_TRAVELERS: Traveler[] = [
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
     destination: 'Bali',
     dates: 'May 1 – May 10',
-    vibes: ['adventure', 'beach', 'photography'],
-    bio: 'Chasing sunrises and surf breaks. Camera always on.',
+    vibes: ['adventure', 'beach-vibes', 'photo-worthy'],
+    bio: 'Chasing surf breaks and sunrise shots. Down to share a villa.',
     countries: 15,
     matchScore: 87,
   },
@@ -82,8 +82,8 @@ const MOCK_TRAVELERS: Traveler[] = [
     avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80',
     destination: 'Barcelona',
     dates: 'Jun 5 – Jun 12',
-    vibes: ['art', 'nightlife', 'foodie'],
-    bio: 'Museum mornings, tapas afternoons, rooftop nights.',
+    vibes: ['art-design', 'night-owl', 'local-eats'],
+    bio: 'Museum mornings. Tapas at 2pm. Rooftop at midnight.',
     countries: 31,
     matchScore: 91,
   },
@@ -94,8 +94,8 @@ const MOCK_TRAVELERS: Traveler[] = [
     avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80',
     destination: 'Mexico City',
     dates: 'Apr 20 – Apr 27',
-    vibes: ['foodie', 'history', 'slow-morning'],
-    bio: 'Mezcal and museums. Currently learning Spanish.',
+    vibes: ['local-eats', 'deep-history', 'slow-morning'],
+    bio: 'Mezcal, mole, and mercados. Learning Spanish one taco at a time.',
     countries: 12,
     matchScore: 82,
   },
@@ -106,10 +106,130 @@ const MOCK_TRAVELERS: Traveler[] = [
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80',
     destination: 'Lisbon',
     dates: 'May 15 – May 22',
-    vibes: ['solo', 'culture', 'coffee'],
-    bio: 'Solo traveler. Give me a cafe with a view and I am home.',
+    vibes: ['solo-friendly', 'culture', 'slow-morning'],
+    bio: 'Solo, always. A good cafe and a window seat is home anywhere.',
     countries: 18,
     matchScore: 89,
+  },
+  {
+    id: '6',
+    name: 'Priya',
+    age: 28,
+    avatar: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=200&q=80',
+    destination: 'Medellín',
+    dates: 'May 3 – Jun 2',
+    vibes: ['digital-nomad', 'local-eats', 'slow-morning'],
+    bio: 'Month-long stays only. Currently scheming a co-working collab house in El Poblado.',
+    countries: 34,
+    matchScore: 88,
+  },
+  {
+    id: '7',
+    name: 'Tomás',
+    age: 31,
+    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&q=80',
+    destination: 'Queenstown',
+    dates: 'Jul 10 – Jul 17',
+    vibes: ['adrenaline', 'nature-escape', 'adventure'],
+    bio: 'Bungee, skydive, paraglide — all in one week. Looking for people who run at the same speed.',
+    countries: 19,
+    matchScore: 85,
+  },
+  {
+    id: '8',
+    name: 'Chloe',
+    age: 21,
+    avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=200&q=80',
+    destination: 'Paris',
+    dates: 'Mar 28 – Apr 4',
+    vibes: ['art-design', 'slow-morning', 'hidden-gems'],
+    bio: 'First solo trip. Skipping the Eiffel Tower line and going straight to the Marais.',
+    countries: 3,
+    matchScore: 79,
+  },
+  {
+    id: '9',
+    name: 'Jae-won',
+    age: 27,
+    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80',
+    destination: 'Oaxaca',
+    dates: 'Oct 12 – Oct 19',
+    vibes: ['local-eats', 'market-hopper', 'deep-history'],
+    bio: 'Every trip planned around one thing: the best mole I have not eaten yet.',
+    countries: 21,
+    matchScore: 92,
+  },
+  {
+    id: '10',
+    name: 'Anya',
+    age: 33,
+    avatar: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=200&q=80',
+    destination: 'Kyoto',
+    dates: 'Apr 5 – Apr 18',
+    vibes: ['slow-morning', 'wellness', 'deep-history'],
+    bio: 'Two weeks minimum or I do not bother. Kyoto in cherry blossom season, finally.',
+    countries: 27,
+    matchScore: 86,
+  },
+  {
+    id: '11',
+    name: 'Marco',
+    age: 25,
+    avatar: 'https://images.unsplash.com/photo-1463453091185-61582044d556?w=200&q=80',
+    destination: 'Tbilisi',
+    dates: 'Jun 1 – Jun 14',
+    vibes: ['off-grid', 'local-eats', 'hidden-gems'],
+    bio: '$35/day and no agenda. Georgia is the last good-cheap destination in Europe and I am not telling many people.',
+    countries: 16,
+    matchScore: 83,
+  },
+  {
+    id: '12',
+    name: 'Nadia',
+    age: 29,
+    avatar: 'https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?w=200&q=80',
+    destination: 'Istanbul',
+    dates: 'May 8 – May 15',
+    vibes: ['photo-worthy', 'art-design', 'market-hopper'],
+    bio: 'Blue hour over the Bosphorus. That is the shot and I will be there.',
+    countries: 22,
+    matchScore: 90,
+  },
+  {
+    id: '13',
+    name: 'Eli',
+    age: 23,
+    avatar: 'https://images.unsplash.com/photo-1521119989659-a83eee488004?w=200&q=80',
+    destination: 'Budapest',
+    dates: 'Apr 25 – Apr 30',
+    vibes: ['night-owl', 'hidden-gems', 'local-eats'],
+    bio: 'Organizing a 6-person ruin bar crawl. Need people who can keep up and still want breakfast the next day.',
+    countries: 8,
+    matchScore: 77,
+  },
+  {
+    id: '14',
+    name: 'Sun-yeon',
+    age: 26,
+    avatar: 'https://images.unsplash.com/photo-1498551172505-8137406b75f1?w=200&q=80',
+    destination: 'Santorini',
+    dates: 'Sep 5 – Sep 12',
+    vibes: ['sunset-chaser', 'slow-morning', 'photo-worthy'],
+    bio: 'Going in September, not July. Oia with 30 people, not 300.',
+    countries: 11,
+    matchScore: 81,
+  },
+  {
+    id: '15',
+    name: 'Kevin',
+    age: 35,
+    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&q=80',
+    destination: 'Rome',
+    dates: 'Apr 10 – Apr 17',
+    vibes: ['deep-history', 'culture', 'local-eats'],
+    bio: 'Studied archaeology for four years. Finally seeing the Forum properly, not from a tour bus window.',
+    countries: 29,
+    matchScore: 88,
   },
 ];
 
@@ -120,6 +240,7 @@ interface TripGroup {
   memberCount: number;
   dateRange: string;
   vibeMatch: string;
+  description: string;
 }
 
 const MOCK_GROUPS: TripGroup[] = [
@@ -130,6 +251,7 @@ const MOCK_GROUPS: TripGroup[] = [
     memberCount: 4,
     dateRange: 'May 1–10',
     vibeMatch: 'Adventure + Beach',
+    description: '4 remote workers renting two villas in Canggu. Split is around $600/person. Surf mornings, work afternoons.',
   },
   {
     id: 'g2',
@@ -138,6 +260,7 @@ const MOCK_GROUPS: TripGroup[] = [
     memberCount: 3,
     dateRange: 'Apr 12–19',
     vibeMatch: 'Foodie + Culture',
+    description: '3 first-time Japan visitors. Ramen every day, day trip to Nikko on day 5. One spot still open.',
   },
   {
     id: 'g3',
@@ -146,6 +269,25 @@ const MOCK_GROUPS: TripGroup[] = [
     memberCount: 2,
     dateRange: 'Jun 5–12',
     vibeMatch: 'Art + Nightlife',
+    description: 'Art route through the city — Picasso, Fundació Miró, dinners no earlier than 10pm. Looking for one more.',
+  },
+  {
+    id: 'g4',
+    destination: 'Lisbon',
+    image: 'https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=400&q=80',
+    memberCount: 5,
+    dateRange: 'May 18–25',
+    vibeMatch: 'Culture + Budget',
+    description: '5 travelers, €60/day budget, Airbnb in Alfama. Fado nights, day trip to Sintra, pastéis de nata for breakfast.',
+  },
+  {
+    id: 'g5',
+    destination: 'Medellín',
+    image: 'https://images.unsplash.com/photo-1568632234157-ce7aecd03d0d?w=400&q=80',
+    memberCount: 3,
+    dateRange: 'May 5 – Jun 4',
+    vibeMatch: 'Digital Nomad',
+    description: 'Month-long stay in El Poblado. Three people, one co-working space, shared meals. Open to a 4th.',
   },
 ];
 
@@ -159,7 +301,6 @@ const TravelerCard = React.memo(function TravelerCard({
   traveler: Traveler;
   onPress: () => void;
 }) {
-  const { t } = useTranslation();
   return (
     <Pressable
       onPress={() => {
@@ -196,7 +337,7 @@ const TravelerCard = React.memo(function TravelerCard({
         ))}
         <View style={styles.countriesPill}>
           <Globe size={11} color={COLORS.gold} strokeWidth={2} />
-          <Text style={styles.countriesText}>{t('people.countries', { count: traveler.countries })}</Text>
+          <Text style={styles.countriesText}>{traveler.countries} countries</Text>
         </View>
       </View>
 
@@ -205,24 +346,15 @@ const TravelerCard = React.memo(function TravelerCard({
           style={({ pressed }) => [styles.actionBtn, styles.actionBtnPrimary, { opacity: pressed ? 0.85 : 1 }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            captureEvent('people_connect_tapped', {
-              traveler_id: traveler.id,
-              destination: traveler.destination,
-              match_score: traveler.matchScore,
-            });
           }}
         >
           <MessageCircle size={16} color={COLORS.bg} strokeWidth={2} />
-          <Text style={styles.actionBtnPrimaryText}>{t('people.connect')}</Text>
+          <Text style={styles.actionBtnPrimaryText}>Connect</Text>
         </Pressable>
         <Pressable
           style={({ pressed }) => [styles.actionBtn, styles.actionBtnSecondary, { opacity: pressed ? 0.85 : 1 }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            captureEvent('people_traveler_saved', {
-              traveler_id: traveler.id,
-              destination: traveler.destination,
-            });
           }}
         >
           <Heart size={16} color={COLORS.cream} strokeWidth={2} />
@@ -242,7 +374,6 @@ const GroupCard = React.memo(function GroupCard({
   group: TripGroup;
   onPress: () => void;
 }) {
-  const { t } = useTranslation();
   return (
     <Pressable
       onPress={() => {
@@ -253,19 +384,22 @@ const GroupCard = React.memo(function GroupCard({
     >
       <Image source={{ uri: group.image }} style={styles.groupImage} />
       <LinearGradient
-        colors={['transparent', COLORS.overlayDark]}
+        colors={['transparent', 'rgba(0,0,0,0.7)']}
         style={styles.groupGradient}
       />
       <View style={styles.groupContent}>
         <View style={styles.groupMemberBadge}>
           <Users size={12} color={COLORS.bg} strokeWidth={2} />
-          <Text style={styles.groupMemberText}>{t('people.going', { count: group.memberCount })}</Text>
+          <Text style={styles.groupMemberText}>{group.memberCount} going</Text>
         </View>
         <Text style={styles.groupDest}>{group.destination}</Text>
         <Text style={styles.groupDates}>{group.dateRange}</Text>
         <View style={styles.groupVibePill}>
           <Text style={styles.groupVibeText}>{group.vibeMatch}</Text>
         </View>
+        {group.description ? (
+          <Text style={styles.groupDescription} numberOfLines={2}>{group.description}</Text>
+        ) : null}
       </View>
     </Pressable>
   );
@@ -275,37 +409,25 @@ const GroupCard = React.memo(function GroupCard({
 // Main Component
 // ---------------------------------------------------------------------------
 export default function PeopleScreen() {
-  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     track({ type: 'screen_view', screen: 'people' });
-    const anim = Animated.timing(fadeAnim, {
+    Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 400,
       useNativeDriver: true,
-    });
-    anim.start();
-    return () => anim.stop();
+    }).start();
   }, [fadeAnim]);
 
   const handleTravelerPress = useCallback((traveler: Traveler) => {
-    captureEvent('people_traveler_viewed', {
-      traveler_id: traveler.id,
-      destination: traveler.destination,
-      match_score: traveler.matchScore,
-    });
+    // Future: navigate to traveler profile
     router.push({ pathname: '/coming-soon', params: { title: `${traveler.name}'s Profile` } } as never);
   }, [router]);
 
   const handleGroupPress = useCallback((group: TripGroup) => {
-    captureEvent('people_group_tapped', {
-      group_id: group.id,
-      destination: group.destination,
-      member_count: group.memberCount,
-    });
     router.push({ pathname: '/coming-soon', params: { title: `${group.destination} Group Trip` } } as never);
   }, [router]);
 
@@ -318,41 +440,44 @@ export default function PeopleScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>{t('people.title')}</Text>
-          <Text style={styles.headerSub}>{t('people.headerSub')}</Text>
+          <Text style={styles.headerTitle}>People</Text>
+          <Text style={styles.headerSub}>Your travel crew is already out there</Text>
         </View>
 
-        {/* Hero — "Who's going where you're going?" */}
+        {/* Hero */}
         <View style={styles.heroCard}>
           <LinearGradient
             colors={[COLORS.sageFaint, COLORS.bg]}
             style={StyleSheet.absoluteFill}
           />
           <Sparkles size={24} color={COLORS.sage} strokeWidth={1.5} />
-          <Text style={styles.heroTitle}>{t('people.heroTitle')}</Text>
-          <Text style={styles.heroSub}>{t('people.heroSub')}</Text>
+          <Text style={styles.heroTitle}>Meet the people going where you&apos;re going</Text>
+          <Text style={styles.heroSub}>
+            Tell us where. We show you who else is heading there,
+            when they leave, and what they care about.
+          </Text>
           <View style={styles.heroStats}>
             <View style={styles.heroStat}>
               <Text style={styles.heroStatNum}>2.4k</Text>
-              <Text style={styles.heroStatLabel}>{t('people.activeTravelers')}</Text>
+              <Text style={styles.heroStatLabel}>Active travelers</Text>
             </View>
             <View style={styles.heroStatDivider} />
             <View style={styles.heroStat}>
               <Text style={styles.heroStatNum}>47</Text>
-              <Text style={styles.heroStatLabel}>{t('people.destinations')}</Text>
+              <Text style={styles.heroStatLabel}>Destinations</Text>
             </View>
             <View style={styles.heroStatDivider} />
             <View style={styles.heroStat}>
               <Text style={styles.heroStatNum}>128</Text>
-              <Text style={styles.heroStatLabel}>{t('people.groupsForming')}</Text>
+              <Text style={styles.heroStatLabel}>Groups forming</Text>
             </View>
           </View>
         </View>
 
         {/* Open Groups */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('people.openGroups')}</Text>
-          <Text style={styles.sectionSub}>{t('people.openGroupsSub')}</Text>
+          <Text style={styles.sectionTitle}>Open groups</Text>
+          <Text style={styles.sectionSub}>Trips forming now — one spot could be yours</Text>
         </View>
 
         <ScrollView
@@ -371,8 +496,8 @@ export default function PeopleScreen() {
 
         {/* Matched Travelers */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('people.matchedTravelers')}</Text>
-          <Text style={styles.sectionSub}>{t('people.matchedTravelersSub')}</Text>
+          <Text style={styles.sectionTitle}>Matched travelers</Text>
+          <Text style={styles.sectionSub}>Same destination. Same window. Similar energy.</Text>
         </View>
 
         {MOCK_TRAVELERS.map((traveler) => (
@@ -385,16 +510,17 @@ export default function PeopleScreen() {
 
         {/* Bottom CTA */}
         <View style={styles.bottomCta}>
-          <Text style={styles.bottomCtaText}>{t('people.completeProfileCta')}</Text>
+          <Text style={styles.bottomCtaText}>
+            Add your destinations to see who else is going.
+          </Text>
           <Pressable
             style={({ pressed }) => [styles.profileBtn, { opacity: pressed ? 0.85 : 1 }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              captureEvent('people_setup_profile_tapped', { source: 'people_bottom_cta' });
               router.push('/profile' as never);
             }}
           >
-            <Text style={styles.profileBtnText}>{t('people.setUpProfile')}</Text>
+            <Text style={styles.profileBtnText}>Set up your travel profile</Text>
             <ChevronRight size={16} color={COLORS.sage} strokeWidth={2} />
           </Pressable>
         </View>
@@ -555,7 +681,7 @@ const styles = StyleSheet.create({
   groupDest: {
     fontFamily: FONTS.header,
     fontSize: 22,
-    color: COLORS.white,
+    color: '#FFFFFF',
   } as TextStyle,
   groupDates: {
     fontFamily: FONTS.mono,
@@ -565,7 +691,7 @@ const styles = StyleSheet.create({
   } as TextStyle,
   groupVibePill: {
     marginTop: SPACING.sm,
-    backgroundColor: COLORS.whiteMuted,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -575,6 +701,13 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 11,
     color: COLORS.creamSoft,
+  } as TextStyle,
+  groupDescription: {
+    fontFamily: FONTS.body,
+    fontSize: 11,
+    color: COLORS.creamDim,
+    marginTop: SPACING.xs,
+    lineHeight: 15,
   } as TextStyle,
 
   // ── Traveler Cards ──
