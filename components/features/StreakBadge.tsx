@@ -51,7 +51,7 @@ function getStreakTier(count: number): {
   }
   if (count >= 7) {
     return {
-      color: '#F59E0B',
+      color: COLORS.amber,
       bg: COLORS.warningSubtle,
       border: COLORS.warningBorder,
       label: 'Hot streak',

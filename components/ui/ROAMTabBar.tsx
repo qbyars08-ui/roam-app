@@ -7,7 +7,7 @@ import { BlurView } from 'expo-blur';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { COLORS, FONTS, SPACING } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { IconPlan, IconDiscover, IconPeople, IconFlights, IconPrep } from './TabIcons';
 
 const TAB_ORDER = ['plan', 'index', 'people', 'flights', 'prep'] as const;
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
   wrapper: {
     marginHorizontal: 12,
     marginBottom: 8,
-    borderRadius: 16,
+    borderRadius: RADIUS.xl,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: COLORS.border,
