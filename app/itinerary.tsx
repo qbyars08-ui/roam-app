@@ -111,6 +111,7 @@ import { trackEvent } from '../lib/analytics';
 import { captureEvent } from '../lib/posthog';
 import MockDataBadge from '../components/ui/MockDataBadge';
 import ActivityEditModal from '../components/features/ActivityEditModal';
+import AccommodationModal from '../components/features/AccommodationModal';
 
 // =============================================================================
 // Component
@@ -151,6 +152,7 @@ export default function ItineraryScreen() {
     slot: 'morning' | 'afternoon' | 'evening';
     data: TimeSlotActivity;
   } | null>(null);
+  const [accomModalVisible, setAccomModalVisible] = useState(false);
   const mapRef = useRef<typeof MapView>(null);
   const dayPagerRef = useRef<ScrollView>(null);
   const updateTrip = useAppStore((s) => s.updateTrip);
@@ -560,6 +562,42 @@ export default function ItineraryScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     },
     [parsed, trip, activeDay, editingActivity, updateTrip]
+  );
+
+  // ---------------------------------------------------------------------------
+  // Accommodation swap handler
+  // ---------------------------------------------------------------------------
+  const handleAccommodationSwap = useCallback(
+    (selected: { name: string; type: string; pricePerNight: string; neighborhood?: string }) => {
+      if (!parsed || !trip) return;
+
+      const updatedDay: ItineraryDay = {
+        ...parsed.days[activeDay],
+        accommodation: { ...parsed.days[activeDay].accommodation, ...selected },
+      };
+
+      const updatedDays = [...parsed.days];
+      updatedDays[activeDay] = updatedDay;
+
+      const newTotal = updatedDays.reduce((sum, d) => {
+        const dayCost = parseInt(d.dailyCost.replace(/[^0-9]/g, ''), 10) || 0;
+        const accomCost = parseInt(d.accommodation.pricePerNight.replace(/[^0-9]/g, ''), 10) || 0;
+        return sum + dayCost + accomCost;
+      }, 0);
+
+      const updatedItinerary: Itinerary = {
+        ...parsed,
+        days: updatedDays,
+        totalBudget: `$${newTotal.toLocaleString()}`,
+      };
+
+      setParsed(updatedItinerary);
+      updateTrip(trip.id, { itinerary: JSON.stringify(updatedItinerary) });
+      saveItineraryOffline(trip.id, updatedItinerary).catch(() => {});
+      setAccomModalVisible(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    },
+    [parsed, trip, activeDay, updateTrip],
   );
 
   // ---------------------------------------------------------------------------
@@ -1336,9 +1374,22 @@ export default function ItineraryScreen() {
                 </>
               )}
 
-              {/* Accommodation card */}
-              <View style={[styles.glassCard, styles.section]}>
-                <Text style={styles.sectionLabel}>ACCOMMODATION</Text>
+              {/* Accommodation card — tappable to swap */}
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setAccomModalVisible(true);
+                }}
+                style={({ pressed }) => [
+                  styles.glassCard,
+                  styles.section,
+                  pressed && { opacity: 0.85 },
+                ]}
+              >
+                <View style={styles.accommodationHeader}>
+                  <Text style={styles.sectionLabel}>ACCOMMODATION</Text>
+                  <Text style={styles.tapHint}>Tap to switch</Text>
+                </View>
                 <Text style={styles.accommodationName}>
                   {currentDay.accommodation.name}
                 </Text>
@@ -1350,7 +1401,7 @@ export default function ItineraryScreen() {
                     {currency !== 'USD' && rates ? formatLocalPrice(currentDay.accommodation.pricePerNight, currency, rates) : currentDay.accommodation.pricePerNight}/night
                   </Text>
                 </View>
-              </View>
+              </Pressable>
               {renderVenueCard(`accom::${currentDay.accommodation.name}`)}
 
               {/* Daily total */}
@@ -1554,6 +1605,18 @@ export default function ItineraryScreen() {
           destination={trip.destination}
           onSave={handleActivitySave}
           onClose={() => setEditingActivity(null)}
+        />
+      )}
+
+      {/* ── Accommodation Alternatives Modal ─────────────────────────── */}
+      {currentDay && trip && (
+        <AccommodationModal
+          visible={accomModalVisible}
+          current={currentDay.accommodation}
+          destination={trip.destination}
+          dayNumber={currentDay.day}
+          onSelect={handleAccommodationSwap}
+          onClose={() => setAccomModalVisible(false)}
         />
       )}
     </View>
@@ -2624,6 +2687,17 @@ const styles = StyleSheet.create({
   } as TextStyle,
 
   // ── Accommodation ───────────────────────────────────────────────────────
+  accommodationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  } as ViewStyle,
+  tapHint: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.sage,
+    letterSpacing: 0.5,
+  } as TextStyle,
   accommodationName: {
     fontFamily: FONTS.headerMedium,
     fontSize: 18,
