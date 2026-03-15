@@ -6,6 +6,8 @@ import { Linking, Platform } from 'react-native';
 import { COLORS } from './constants';
 import { supabase } from './supabase';
 import { useAppStore } from './store';
+import { captureEvent } from './posthog';
+import { EVENTS } from './posthog-events';
 
 // ---------------------------------------------------------------------------
 // Partner configurations
@@ -143,6 +145,14 @@ export async function openAffiliateLink(
 
   // Track click (fire-and-forget)
   trackAffiliateClick(partner.id, params.destination, tripId);
+
+  // PostHog event for funnel analytics
+  captureEvent(EVENTS.AFFILIATE_CLICK.name, {
+    partner: partner.id,
+    destination: params.destination,
+    placement: tripId ? `trip-${tripId}` : 'browse',
+    url,
+  });
 
   // Open link
   try {
