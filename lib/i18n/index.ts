@@ -19,6 +19,7 @@ import de from './locales/de';
 // ---------------------------------------------------------------------------
 export const SUPPORTED_LANGUAGES = [
   { code: 'en', label: 'English', nativeLabel: 'English' },
+  { code: 'de', label: 'German', nativeLabel: 'Deutsch' },
   { code: 'es', label: 'Spanish', nativeLabel: 'Espa\u00f1ol' },
   { code: 'fr', label: 'French', nativeLabel: 'Fran\u00e7ais' },
   { code: 'ja', label: 'Japanese', nativeLabel: '\u65E5\u672C\u8A9E' },
@@ -82,6 +83,7 @@ async function initI18n() {
   await i18n.use(initReactI18next).init({
     resources: {
       en: { translation: en },
+      de: { translation: de },
       es: { translation: es },
       fr: { translation: fr },
       ja: { translation: ja },
