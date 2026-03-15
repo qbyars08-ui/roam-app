@@ -177,14 +177,33 @@ export async function callClaude(
   /** If true, this counts as a trip generation (rate-limited) */
   isTripGeneration = false
 ): Promise<ClaudeResponse> {
-  // All calls go through the secure edge function proxy
-  const { data, error } = await supabase.functions.invoke('claude-proxy', {
-    body: {
-      system: systemPrompt,
-      message: userMessage,
-      isTripGeneration,
-    },
-  });
+  // Client-side timeout: 90s for trip generation, 30s for chat
+  const timeoutMs = isTripGeneration ? 90_000 : 30_000;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  let data: Record<string, unknown> | null = null;
+  let error: unknown = null;
+
+  try {
+    const result = await supabase.functions.invoke('claude-proxy', {
+      body: {
+        system: systemPrompt,
+        message: userMessage,
+        isTripGeneration,
+      },
+    });
+    data = result.data;
+    error = result.error;
+  } catch (err: unknown) {
+    clearTimeout(timer);
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('Request timed out. Check your connection and try again.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 
   if (error) {
     const message =
@@ -195,10 +214,12 @@ export async function callClaude(
   }
 
   if (data?.code === 'LIMIT_REACHED') {
-    throw new TripLimitReachedError(data.tripsUsed ?? 0, data.limit ?? 1);
+    throw new TripLimitReachedError((data.tripsUsed as number) ?? 0, (data.limit as number) ?? 1);
   }
 
-  if (data?.error) throw new Error(data.error);
+  if (data?.error) throw new Error(String(data.error));
+
+  if (!data) throw new Error('No response from Claude proxy');
 
   return {
     content: data.content as string,
@@ -212,22 +233,41 @@ export async function callClaudeWithMessages(
   messages: Array<{ role: 'user' | 'assistant'; content: string }>,
   isTripGeneration = false
 ): Promise<ClaudeResponse> {
-  const { data, error } = await supabase.functions.invoke('claude-proxy', {
-    body: {
-      system: systemPrompt,
-      messages: messages.map((m) => ({ role: m.role, content: m.content })),
-      isTripGeneration,
-    },
-  });
+  const timeoutMs = isTripGeneration ? 90_000 : 30_000;
+  const timeoutId = setTimeout(() => {}, timeoutMs); // placeholder for abort
+
+  let data: Record<string, unknown> | null = null;
+  let error: unknown = null;
+
+  try {
+    const result = await Promise.race([
+      supabase.functions.invoke('claude-proxy', {
+        body: {
+          system: systemPrompt,
+          messages: messages.map((m) => ({ role: m.role, content: m.content })),
+          isTripGeneration,
+        },
+      }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Request timed out. Check your connection and try again.')), timeoutMs)
+      ),
+    ]);
+    data = result.data;
+    error = result.error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (error) {
     const msg = typeof error === 'object' && 'message' in error ? (error as { message: string }).message : String(error);
     throw new Error(`Claude proxy error: ${msg}`);
   }
   if (data?.code === 'LIMIT_REACHED') {
-    throw new TripLimitReachedError(data.tripsUsed ?? 0, data.limit ?? 1);
+    throw new TripLimitReachedError((data.tripsUsed as number) ?? 0, (data.limit as number) ?? 1);
   }
-  if (data?.error) throw new Error(data.error);
+  if (data?.error) throw new Error(String(data.error));
+
+  if (!data) throw new Error('No response from Claude proxy');
 
   return {
     content: data.content as string,

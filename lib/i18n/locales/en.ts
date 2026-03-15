@@ -128,6 +128,7 @@ const en = {
     bestIn: 'Best in {{month}}',
     dailyCost: '${{cost}}/day',
     trending: 'trending',
+    perfectTiming: 'Perfect timing',
   },
 
   // ---------------------------------------------------------------------------
