@@ -41,7 +41,9 @@ const fr: TranslationKeys = {
   },
 
   tabs: {
+    plan: 'Planifier',
     discover: 'D\u00e9couvrir',
+    people: 'Voyageurs',
     generate: 'G\u00e9n\u00e9rer',
     flights: 'Vols',
     stays: 'H\u00e9bergements',

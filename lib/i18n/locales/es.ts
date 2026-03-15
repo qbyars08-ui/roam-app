@@ -41,7 +41,9 @@ const es: TranslationKeys = {
   },
 
   tabs: {
+    plan: 'Planear',
     discover: 'Descubrir',
+    people: 'Gente',
     generate: 'Generar',
     flights: 'Vuelos',
     stays: 'Alojamiento',

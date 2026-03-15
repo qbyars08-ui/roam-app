@@ -113,6 +113,19 @@ export function IconPlan({ size = SIZE, color, focused }: IconProps) {
   );
 }
 
+// People — two overlapping person silhouettes
+export function IconPeople({ size = SIZE, color, focused }: IconProps) {
+  const c = color ?? (focused ? activeColor : inactiveColor);
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round">
+      <Circle cx={9} cy={7} r={3} />
+      <Path d="M2 20c0-3.5 2.5-6 7-6s7 2.5 7 6" />
+      <Circle cx={17} cy={7} r={2.5} />
+      <Path d="M22 20c0-2.5-1.5-4.5-4.5-5.2" />
+    </Svg>
+  );
+}
+
 // Ask — minimal waveform
 export function IconAsk({ size = SIZE, color, focused }: IconProps) {
   const c = color ?? (focused ? activeColor : inactiveColor);
