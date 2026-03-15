@@ -2,7 +2,7 @@
 // ROAM — People Tab (social layer — find travel companions)
 // The feature nobody else has. Travelers matched by destination, dates, vibe.
 // =============================================================================
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import {
   Animated,
   Image,
@@ -240,7 +240,7 @@ const GroupCard = React.memo(function GroupCard({
     >
       <Image source={{ uri: group.image }} style={styles.groupImage} />
       <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.7)']}
+        colors={['transparent', COLORS.overlayDark]}
         style={styles.groupGradient}
       />
       <View style={styles.groupContent}>
@@ -536,7 +536,7 @@ const styles = StyleSheet.create({
   groupDest: {
     fontFamily: FONTS.header,
     fontSize: 22,
-    color: '#FFFFFF',
+    color: COLORS.white,
   } as TextStyle,
   groupDates: {
     fontFamily: FONTS.mono,
@@ -546,7 +546,7 @@ const styles = StyleSheet.create({
   } as TextStyle,
   groupVibePill: {
     marginTop: SPACING.sm,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: COLORS.whiteMuted,
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 3,
