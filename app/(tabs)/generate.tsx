@@ -169,6 +169,11 @@ export default function GenerateScreen() {
         groupSize,
       });
 
+      // Validate itinerary has required structure before storing
+      if (!itinerary?.destination || !itinerary?.days?.length) {
+        throw new Error('Generated itinerary is incomplete. Please try again.');
+      }
+
       const trip = {
         id: `gen-${Date.now()}`,
         destination: dest,
