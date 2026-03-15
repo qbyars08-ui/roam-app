@@ -138,9 +138,9 @@ const styles = StyleSheet.create({
   },
   badge: {
     backgroundColor: COLORS.whiteMuted,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.sm,
   },
   badgeText: {
     fontFamily: FONTS.mono,

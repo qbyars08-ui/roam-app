@@ -7,16 +7,17 @@ import { BlurView } from 'expo-blur';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { COLORS, FONTS, SPACING } from '../../lib/constants';
-import { IconPlan, IconDiscover, IconPeople, IconFlights, IconPrep } from './TabIcons';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { IconDiscover, IconGenerate, IconFlights, IconStays, IconFood, IconPrep } from './TabIcons';
 
-const TAB_ORDER = ['plan', 'index', 'people', 'flights', 'prep'] as const;
+const TAB_ORDER = ['index', 'generate', 'flights', 'stays', 'food', 'prep'] as const;
 type TabIconComponent = React.ComponentType<{ size?: number; color?: string; focused?: boolean }>;
 const TAB_ICONS: Record<string, { i18nKey: string; Icon: TabIconComponent }> = {
-  plan: { i18nKey: 'tabs.plan', Icon: IconPlan },
   index: { i18nKey: 'tabs.discover', Icon: IconDiscover },
-  people: { i18nKey: 'tabs.people', Icon: IconPeople },
+  generate: { i18nKey: 'tabs.generate', Icon: IconGenerate },
   flights: { i18nKey: 'tabs.flights', Icon: IconFlights },
+  stays: { i18nKey: 'tabs.stays', Icon: IconStays },
+  food: { i18nKey: 'tabs.food', Icon: IconFood },
   prep: { i18nKey: 'tabs.prep', Icon: IconPrep },
 };
 
@@ -92,7 +93,7 @@ const styles = StyleSheet.create({
   wrapper: {
     marginHorizontal: 12,
     marginBottom: 8,
-    borderRadius: 16,
+    borderRadius: RADIUS.xl,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: COLORS.border,
