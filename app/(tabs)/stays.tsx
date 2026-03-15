@@ -638,34 +638,87 @@ export default function StaysScreen() {
           {isLoading ? (
             <View style={styles.skeletonWrap}>
               {[1, 2, 3].map((i) => (
-                <SkeletonCard key={i} height={240} borderRadius={16} style={{ marginHorizontal: SPACING.lg, marginBottom: 12 }} />
+                <SkeletonCard key={i} height={240} borderRadius={RADIUS.xl} style={{ marginHorizontal: SPACING.lg, marginBottom: SPACING.sm }} />
               ))}
             </View>
-          ) : (
-          <>
-          <Text style={styles.sectionHeader}>
-            {filteredStays.length} places found
-          </Text>
-
-          {filteredStays.length === 0 ? (
+          ) : filteredStays.length === 0 ? (
             <View style={styles.emptyState}>
               <Building2 size={48} color={COLORS.creamVeryFaint} strokeWidth={1.5} />
-            <Text style={styles.emptyTitle}>{t('stays.noResults')}</Text>
-            <Text style={styles.emptySub}>Try adjusting your filters</Text>
+              <Text style={styles.emptyTitle}>{t('stays.noResults')}</Text>
+              <Text style={styles.emptySub}>Try adjusting your filters</Text>
             </View>
           ) : (
-            filteredStays.map((stay, i) => (
-              <StayCard
-                key={stay.id}
-                stay={stay}
-                destination={destination}
-                index={i}
-                onPress={() => handleCardPress(stay)}
-                onBook={() => handleBook(stay)}
-              />
-            ))
-          )}
-          </>
+            <>
+              {/* Curated: Editor's Picks */}
+              {selectedType === 'all' && (() => {
+                const editorPicks = [...filteredStays].sort((a, b) => b.rating - a.rating).slice(0, 2);
+                return (
+                  <View style={styles.curatedSection}>
+                    <View style={styles.curatedHeader}>
+                      <View style={styles.curatedDot} />
+                      <Text style={styles.curatedLabel}>Editor's Picks</Text>
+                    </View>
+                    <Text style={styles.curatedSubtitle}>Highest rated in {destination}</Text>
+                    {editorPicks.map((stay, i) => (
+                      <StayCard
+                        key={`pick-${stay.id}`}
+                        stay={stay}
+                        destination={destination}
+                        index={i}
+                        onPress={() => handleCardPress(stay)}
+                        onBook={() => handleBook(stay)}
+                      />
+                    ))}
+                  </View>
+                );
+              })()}
+
+              {/* Curated: Best Value */}
+              {selectedType === 'all' && (() => {
+                const bestValue = [...filteredStays]
+                  .sort((a, b) => a.pricePerNight - b.pricePerNight)
+                  .filter((s) => s.rating >= 4.4)
+                  .slice(0, 2);
+                return bestValue.length > 0 ? (
+                  <View style={styles.curatedSection}>
+                    <View style={styles.curatedHeader}>
+                      <View style={[styles.curatedDot, styles.curatedDotGold]} />
+                      <Text style={[styles.curatedLabel, styles.curatedLabelGold]}>Best Value</Text>
+                    </View>
+                    <Text style={styles.curatedSubtitle}>Great stays, honest prices</Text>
+                    {bestValue.map((stay, i) => (
+                      <StayCard
+                        key={`value-${stay.id}`}
+                        stay={stay}
+                        destination={destination}
+                        index={i}
+                        onPress={() => handleCardPress(stay)}
+                        onBook={() => handleBook(stay)}
+                      />
+                    ))}
+                  </View>
+                ) : null;
+              })()}
+
+              {/* All stays section */}
+              <View style={styles.curatedSection}>
+                <View style={styles.curatedHeader}>
+                  <Text style={styles.sectionHeader}>
+                    {filteredStays.length} {selectedType === 'all' ? 'places' : selectedType + 's'} in {destination}
+                  </Text>
+                </View>
+                {filteredStays.map((stay, i) => (
+                  <StayCard
+                    key={stay.id}
+                    stay={stay}
+                    destination={destination}
+                    index={i}
+                    onPress={() => handleCardPress(stay)}
+                    onBook={() => handleBook(stay)}
+                  />
+                ))}
+              </View>
+            </>
           )}
         </Animated.View>
       </ScrollView>
@@ -712,7 +765,7 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   pill: {
     paddingHorizontal: SPACING.md,
-    paddingVertical: 9,
+    paddingVertical: SPACING.sm,
     borderRadius: RADIUS.full,
   } as ViewStyle,
   pillSelected: {
@@ -838,15 +891,14 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   sectionHeader: {
     fontFamily: FONTS.mono,
-    fontSize: 13,
+    fontSize: 11,
     color: COLORS.creamMuted,
-    marginTop: SPACING.md,
-    marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
   } as TextStyle,
   card: {
     marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.sm + 4,
+    marginBottom: SPACING.md,
     backgroundColor: COLORS.bgCard,
     borderRadius: RADIUS.xl,
     overflow: 'hidden',
@@ -868,8 +920,8 @@ const styles = StyleSheet.create({
     top: SPACING.sm,
     left: SPACING.sm,
     backgroundColor: COLORS.bgDarkGreen80,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
     borderRadius: RADIUS.sm,
   } as ViewStyle,
   cardBadgeText: {
@@ -885,25 +937,25 @@ const styles = StyleSheet.create({
     padding: SPACING.xs,
   } as ViewStyle,
   cardContent: {
-    padding: 14,
+    padding: SPACING.md,
   } as ViewStyle,
   cardName: {
     fontFamily: FONTS.header,
     fontSize: 20,
     color: COLORS.cream,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   } as TextStyle,
   cardNeighborhood: {
     fontFamily: FONTS.body,
     fontSize: 12,
     color: COLORS.creamMuted,
-    marginBottom: 8,
+    marginBottom: SPACING.sm,
   } as TextStyle,
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginBottom: 4,
+    gap: SPACING.xs,
+    marginBottom: SPACING.xs,
   } as ViewStyle,
   ratingText: {
     fontFamily: FONTS.mono,
@@ -918,8 +970,8 @@ const styles = StyleSheet.create({
   distanceRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginBottom: 12,
+    gap: SPACING.xs,
+    marginBottom: SPACING.sm,
   } as ViewStyle,
   distanceText: {
     fontFamily: FONTS.body,
@@ -950,10 +1002,10 @@ const styles = StyleSheet.create({
   bookBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: SPACING.sm,
     backgroundColor: COLORS.sage,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
     borderRadius: RADIUS.md,
   } as ViewStyle,
   bookBtnText: {
@@ -999,7 +1051,45 @@ const styles = StyleSheet.create({
 
   // ── Skeleton loaders ──
   skeletonWrap: {
-    gap: 16,
-    paddingTop: 8,
+    gap: SPACING.md,
+    paddingTop: SPACING.sm,
   } as ViewStyle,
+
+  // ── Curated sections ──
+  curatedSection: {
+    marginTop: SPACING.lg,
+  } as ViewStyle,
+  curatedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.xs,
+  } as ViewStyle,
+  curatedDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.sage,
+  } as ViewStyle,
+  curatedDotGold: {
+    backgroundColor: COLORS.gold,
+  } as ViewStyle,
+  curatedLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  } as TextStyle,
+  curatedLabelGold: {
+    color: COLORS.gold,
+  } as TextStyle,
+  curatedSubtitle: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamDimLight,
+    paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.sm,
+  } as TextStyle,
 });
