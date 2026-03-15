@@ -1,52 +1,47 @@
 # Captain Status Board
-
-Last updated: 2026-03-15 (overnight session)
+Last updated: 2026-03-15 (Sun — fresh compile)
 
 ## Quick Pulse
-- **System:** GREEN
-- **TypeScript:** 0 errors
-- **Site:** LIVE at https://tryroam.netlify.app
-- **Agents:** 15 defined, pending Cursor Cloud rebuild
-- **Blockers:** 4 (all Quinn-only)
+- **System:** GREEN — TypeScript 0 errors, 423 tests passing, live at https://tryroam.netlify.app
+- **Agents active:** 5 active/new, 9 pending Cursor Cloud rebuild
+- **Blockers:** 6 (all Quinn-only actions)
 - **PRs pending:** 0
 
 ## Agent Status
-
 | # | Agent | Status | Last Output | Key Finding |
 |---|-------|--------|------------|-------------|
-| 01 | Tester | PENDING REBUILD | -- | 423 tests passing from last sprint |
-| 02 | Researcher | PENDING REBUILD | -- | Was evaluating image APIs |
-| 03 | Design | ACTIVE | design_audit.md (Mar 14) | 22 violations fixed, flights/stays still need rework |
-| 04 | Builder | KEEP (Opus) | PRs merged (Mar 14) | Generate flow hardened, TripGeneratingLoader wired |
-| 05 | Debugger | PENDING REBUILD | system_health.md (Mar 15) | CI pipeline created, system green |
-| 06 | Growth | ACTIVE | growth_dashboard.md (Mar 14) | ASO keywords, TikTok concepts, A/B tests designed |
-| 07 | Monetization | PENDING REBUILD | -- | Skyscanner + Booking.com links wired |
-| 08 | Security | ACTIVE | -- | Admin bypass implemented in claude-proxy |
-| 09 | Localization | PENDING REBUILD | -- | i18n system live, 4 languages, German needed |
-| 10 | Analytics | PENDING REBUILD | -- | PostHog instrumented |
-| 11 | Content | ACTIVE | copy_library.md (Mar 14) | Full waitlist copy + email sequence done |
-| 12 | Investor | PENDING REBUILD | investor_narrative.md (Mar 15) | Pitch doc + weekly memo created |
-| 13 | DACH Growth | NEW | dach_scripts.md (Mar 15) | 10 TikTok scripts + strategy done |
-| 14 | UGC Engine | NEW | ugc_research.md (Mar 15) | 4 platforms evaluated |
-| CP | Captain | PENDING REBUILD | captain_status.md (Mar 15) | This file |
+| 01 | Tester | PENDING REBUILD | — | 423 tests passing last sprint; no new test_results.md yet |
+| 02 | Researcher | PENDING REBUILD | — | Image API eval in progress; research_report.md not created |
+| 03 | Design | DONE | design_audit.md (Mar 13) | 70 violations fixed; 36 intentional circle radii remain |
+| 04 | Builder | KEEP (Opus) | PRs merged (Mar 14) | Generate flow hardened; TripGeneratingLoader wired |
+| 05 | Debugger | PENDING REBUILD | system_health.md (Mar 15) | CI pipeline live; system GREEN |
+| 06 | Growth | DONE | growth_dashboard.md (Mar 14) | ASO + 5 TikTok scripts + 3 A/B tests designed |
+| 07 | Monetization | PENDING REBUILD | — | Affiliate links wired; monetization_model.md not created |
+| 08 | Security | DONE | — | Admin bypass in claude-proxy; security_audit.md not created |
+| 09 | Localization | PENDING REBUILD | — | i18n live (en/es/fr/ja); German de.ts missing; localization_audit.md not created |
+| 10 | Analytics | PENDING REBUILD | — | PostHog instrumented; analytics_spec.md not created |
+| 11 | Content | DONE | copy_library.md (Mar 14) | Full waitlist copy + 5-email sequence approved |
+| 12 | Investor | DONE | investor_narrative.md + weekly_memo.md (Mar 15) | Pitch doc + memo ready |
+| 13 | DACH Growth | NEW | dach_strategy.md + dach_scripts.md (Mar 15) | 10 TikTok scripts done; influencer research not yet started |
+| 14 | UGC Engine | NEW | ugc_research.md (Mar 15) | Insense recommended; creator_outreach.md not yet created |
 
 ## Needs Quinn's Attention (priority order)
-
-1. **Agent Rebuild** — Follow roam/AGENT_REBUILD.md to delete old agents and create new Sonnet ones (15 min)
-2. **Supabase Secret** — Add ADMIN_TEST_EMAILS=qbyars08@gmail.com for testing bypass
-3. **Booking.com** — Sign up at partners.booking.com for real AID
-4. **Amadeus Cleanup** — Remove AMADEUS_KEY + AMADEUS_SECRET from Supabase
+1. **Agent Rebuild** — Delete old Cursor agents, recreate per roam/AGENT_REBUILD.md (~15 min). Unblocks all 9 PENDING agents.
+2. **Supabase Secret** — Add `ADMIN_TEST_EMAILS=qbyars08@gmail.com` to edge function secrets (testing bypass)
+3. **Amadeus Cleanup** — Remove `AMADEUS_KEY` + `AMADEUS_SECRET` from Supabase Dashboard (security)
+4. **Booking.com AID** — Sign up at partners.booking.com for real affiliate ID
+5. **RevenueCat Products** — Create Pro subscription products in RC dashboard
+6. **PostHog Key** — Verify PostHog project key is set in environment
 
 ## Conflicts Detected
-None currently. All agents have clear file ownership per AGENT_BOARD.md.
+None. File ownership is clean per MASTER_HANDOFF.md.
 
 ## This Week's Wins
-- 6 hidden APIs wired to visible UI (air quality, sun times, forecast, emergency, currency, cost of living)
-- All 37 destinations now have direct Unsplash photo URLs
-- DACH go-to-market strategy complete (277 lines)
-- 10 German TikTok scripts written and production-ready
-- UGC platform research done (Insense recommended)
-- Investor pitch narrative + weekly memo created
-- All agent .mdc files updated with model recommendations
-- Agent system rebuild plan written (step-by-step, 15 min)
-- Site deployed and verified live
+- All 37 destinations have direct Unsplash photo URLs (image system unblocked)
+- DACH go-to-market strategy complete — 10 German TikTok scripts production-ready
+- UGC platform research done (Insense = best for DACH, direct outreach first)
+- Investor pitch + weekly memo written with real numbers
+- Prep tab: 5 live intel components (AQI, forecast, sun times, emergency, currency)
+- Design: 70 violations fixed across 2 PRs, design system fully tokenized
+- CI pipeline live (.eslintrc.js + GitHub Actions)
+- Agent .mdc files updated with model headers (cost optimization done)
