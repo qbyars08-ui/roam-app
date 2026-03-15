@@ -13,10 +13,8 @@ import {
   Modal,
   ActivityIndicator,
   Animated,
-  Image,
   type ViewStyle,
   type TextStyle,
-  type ImageStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -29,6 +27,7 @@ import {
   Plane,
   Minus,
   Plus,
+  TrendingUp,
 } from 'lucide-react-native';
 import { addDays, format, isSameDay, startOfDay } from 'date-fns';
 import { useTranslation } from 'react-i18next';
@@ -43,6 +42,15 @@ const CREAM_40 = COLORS.creamDim;
 const CREAM_50 = COLORS.creamMuted;
 const CREAM_60 = COLORS.creamSoft;
 const CREAM_10 = COLORS.creamSubtle;
+
+const TRENDING_ROUTES = [
+  { label: 'JFK → LIS', from: 'New York', to: 'Lisbon', price: 'from $389' },
+  { label: 'LAX → NRT', from: 'Los Angeles', to: 'Tokyo', price: 'from $612' },
+  { label: 'SFO → MEX', from: 'San Francisco', to: 'Mexico City', price: 'from $228' },
+  { label: 'ORD → CDG', from: 'Chicago', to: 'Paris', price: 'from $445' },
+  { label: 'MIA → BOG', from: 'Miami', to: 'Bogotá', price: 'from $187' },
+  { label: 'BOS → BCN', from: 'Boston', to: 'Barcelona', price: 'from $512' },
+];
 
 // ---------------------------------------------------------------------------
 // Types
@@ -69,16 +77,6 @@ interface FlightResult {
 type TripType = 'one-way' | 'round-trip';
 type CabinClass = 'economy' | 'premium' | 'business' | 'first';
 type SortOption = 'cheapest' | 'fastest' | 'best';
-
-// ---------------------------------------------------------------------------
-// Popular routes — visual empty state with real photos
-// ---------------------------------------------------------------------------
-const POPULAR_ROUTES = [
-  { from: 'NYC', to: 'London', price: '$349', image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=600&q=80', tag: 'Most Popular' },
-  { from: 'LAX', to: 'Tokyo', price: '$489', image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&q=80', tag: 'Trending' },
-  { from: 'MIA', to: 'Barcelona', price: '$412', image: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=600&q=80', tag: 'Best Deal' },
-  { from: 'SFO', to: 'Bali', price: '$527', image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&q=80', tag: 'Dream Route' },
-];
 
 // ---------------------------------------------------------------------------
 // Mock data
@@ -606,41 +604,44 @@ export default function FlightsScreen() {
       {/* Section 4 — Results or empty state */}
       <ScrollView
         style={styles.resultsScroll}
-        contentContainerStyle={[styles.resultsContent, !searchPerformed && !searching && styles.resultsContentCentered]}
+        contentContainerStyle={styles.resultsContent}
         showsVerticalScrollIndicator={false}
       >
         {searching ? (
           <View style={styles.skeletonContainer}>
             {[1, 2, 3].map((i) => (
-              <SkeletonCard key={i} height={110} borderRadius={12} style={{ marginBottom: 12 }} />
+              <SkeletonCard key={i} height={110} borderRadius={RADIUS.xl} style={{ marginBottom: SPACING.sm }} />
             ))}
           </View>
         ) : !searchPerformed ? (
-          <View style={styles.popularSection}>
-            <Text style={styles.popularHeader}>Popular routes right now</Text>
-            <Text style={styles.popularSub}>Tap any route to auto-fill your search</Text>
-            {POPULAR_ROUTES.map((route) => (
-              <Pressable
-                key={`${route.from}-${route.to}`}
-                style={({ pressed }) => [styles.routeCard, { transform: [{ scale: pressed ? 0.97 : 1 }] }]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setFrom(route.from);
-                  setTo(route.to);
-                }}
-              >
-                <Image source={{ uri: route.image }} style={styles.routeImage} />
-                <View style={styles.routeOverlay}>
-                  <View style={styles.routeTagWrap}>
-                    <Text style={styles.routeTag}>{route.tag}</Text>
-                  </View>
-                  <View style={styles.routeInfo}>
-                    <Text style={styles.routeCities}>{route.from} → {route.to}</Text>
-                    <Text style={styles.routePrice}>from {route.price}</Text>
-                  </View>
-                </View>
-              </Pressable>
-            ))}
+          <View style={styles.emptyState}>
+            <PlaneTakeoff size={40} color={COLORS.sageLight} strokeWidth={1.5} />
+            <Text style={styles.emptyTitle}>Find your next flight</Text>
+            <Text style={styles.emptyText}>Enter an origin and destination above, then hit search.</Text>
+            <View style={styles.trendingSection}>
+              <View style={styles.trendingHeader}>
+                <TrendingUp size={14} color={COLORS.gold} strokeWidth={2} />
+                <Text style={styles.trendingLabel}>Popular right now</Text>
+              </View>
+              <View style={styles.trendingChips}>
+                {TRENDING_ROUTES.map((route) => (
+                  <Pressable
+                    key={route.label}
+                    style={({ pressed }) => [styles.trendingChip, { opacity: pressed ? 0.75 : 1 }]}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setFrom(route.from);
+                      setTo(route.to);
+                    }}
+                  >
+                    <Text style={styles.trendingChipFrom}>{route.from}</Text>
+                    <Plane size={10} color={COLORS.creamDimLight} strokeWidth={2} />
+                    <Text style={styles.trendingChipTo}>{route.to}</Text>
+                    <Text style={styles.trendingChipPrice}>{route.price}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
           </View>
         ) : results.length === 0 ? (
           <View style={styles.emptyState}>
@@ -918,7 +919,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -20,
     backgroundColor: COLORS.sage,
-    paddingHorizontal: 6,
+    paddingHorizontal: SPACING.sm,
     paddingVertical: 2,
     borderRadius: RADIUS.sm,
   } as ViewStyle,
@@ -977,91 +978,78 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   resultsContent: {
     paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.xxxl,
+    paddingBottom: SPACING.xxl,
   } as ViewStyle,
-  resultsContentCentered: {
-    flexGrow: 1,
-    justifyContent: 'center',
-  } as ViewStyle,
-  popularSection: {
-    paddingTop: SPACING.sm,
+  emptyState: {
+    alignItems: 'center',
+    paddingTop: SPACING.xl,
     gap: SPACING.md,
   } as ViewStyle,
-  popularHeader: {
+  emptyTitle: {
     fontFamily: FONTS.header,
-    fontSize: 22,
+    fontSize: 28,
     color: COLORS.cream,
+    textAlign: 'center',
   } as TextStyle,
-  popularSub: {
+  emptyText: {
     fontFamily: FONTS.body,
     fontSize: 14,
     color: CREAM_50,
-    marginTop: -8,
-  } as TextStyle,
-  routeCard: {
-    height: 140,
-    borderRadius: RADIUS.lg,
-    overflow: 'hidden',
-  } as ViewStyle,
-  routeImage: {
-    ...StyleSheet.absoluteFillObject,
-    width: '100%',
-    height: '100%',
-  } as ImageStyle,
-  routeOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    justifyContent: 'space-between',
-    padding: SPACING.md,
-  } as ViewStyle,
-  routeTagWrap: {
-    alignSelf: 'flex-start',
-    backgroundColor: COLORS.sage,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 3,
-    borderRadius: RADIUS.sm,
-  } as ViewStyle,
-  routeTag: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.bg,
-    textTransform: 'uppercase',
-  } as TextStyle,
-  routeInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  } as ViewStyle,
-  routeCities: {
-    fontFamily: FONTS.header,
-    fontSize: 24,
-    color: '#FFFFFF',
-  } as TextStyle,
-  routePrice: {
-    fontFamily: FONTS.mono,
-    fontSize: 16,
-    color: COLORS.gold,
-  } as TextStyle,
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: SPACING.xxl,
-    gap: SPACING.md,
-  } as ViewStyle,
-  emptyText: {
-    fontFamily: FONTS.body,
-    fontSize: 15,
-    color: CREAM_40,
-  } as TextStyle,
-  emptyTitle: {
-    fontFamily: FONTS.header,
-    fontSize: 20,
-    color: COLORS.cream,
+    textAlign: 'center',
+    lineHeight: 20,
   } as TextStyle,
   emptySubtitle: {
     fontFamily: FONTS.body,
     fontSize: 14,
     color: CREAM_50,
+  } as TextStyle,
+  trendingSection: {
+    width: '100%',
+    marginTop: SPACING.lg,
+    gap: SPACING.sm,
+  } as ViewStyle,
+  trendingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  } as ViewStyle,
+  trendingLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.gold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  } as TextStyle,
+  trendingChips: {
+    gap: SPACING.sm,
+  } as ViewStyle,
+  trendingChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    gap: SPACING.sm,
+  } as ViewStyle,
+  trendingChipFrom: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 13,
+    color: COLORS.cream,
+    flex: 1,
+  } as TextStyle,
+  trendingChipTo: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 13,
+    color: COLORS.cream,
+    flex: 1,
+  } as TextStyle,
+  trendingChipPrice: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.gold,
   } as TextStyle,
 
   resultsHeader: {
@@ -1146,7 +1134,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 2,
     backgroundColor: COLORS.border,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
     justifyContent: 'center',
   } as ViewStyle,
   stopsText: {
@@ -1170,7 +1158,7 @@ const styles = StyleSheet.create({
   badgeDeal: {
     backgroundColor: COLORS.sage,
     paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
+    paddingVertical: SPACING.xs / 2,
     borderRadius: RADIUS.sm,
   } as ViewStyle,
   badgeDealText: {
@@ -1181,7 +1169,7 @@ const styles = StyleSheet.create({
   badgeFastest: {
     backgroundColor: CREAM_10,
     paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
+    paddingVertical: SPACING.xs / 2,
     borderRadius: RADIUS.sm,
   } as ViewStyle,
   badgeFastestText: {
@@ -1190,10 +1178,9 @@ const styles = StyleSheet.create({
     color: COLORS.cream,
   } as TextStyle,
   price: {
-    fontFamily: FONTS.mono,
+    fontFamily: FONTS.monoMedium,
     fontSize: 24,
     color: COLORS.gold,
-    fontWeight: '700',
   } as TextStyle,
 
   // ── Error banner ──
@@ -1205,7 +1192,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: COLORS.coral,
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm + 4,
+    paddingVertical: SPACING.sm,
     marginHorizontal: SPACING.md,
     marginBottom: SPACING.sm,
     borderRadius: RADIUS.sm,
@@ -1220,20 +1207,20 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodySemiBold,
     fontSize: 14,
     color: COLORS.coral,
-    marginLeft: 12,
+    marginLeft: SPACING.sm,
   } as TextStyle,
 
   // ── Skeleton loaders ──
   skeletonContainer: {
-    gap: 12,
-    paddingTop: 8,
+    gap: SPACING.sm,
+    paddingTop: SPACING.sm,
   } as ViewStyle,
   skeletonFlightCard: {
     backgroundColor: COLORS.bgCard,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.border,
-    padding: 16,
+    padding: SPACING.md,
   } as ViewStyle,
   skeletonRow: {
     flexDirection: 'row',
