@@ -13,8 +13,10 @@ import {
   Modal,
   ActivityIndicator,
   Animated,
+  Image,
   type ViewStyle,
   type TextStyle,
+  type ImageStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -67,6 +69,16 @@ interface FlightResult {
 type TripType = 'one-way' | 'round-trip';
 type CabinClass = 'economy' | 'premium' | 'business' | 'first';
 type SortOption = 'cheapest' | 'fastest' | 'best';
+
+// ---------------------------------------------------------------------------
+// Popular routes — visual empty state with real photos
+// ---------------------------------------------------------------------------
+const POPULAR_ROUTES = [
+  { from: 'NYC', to: 'London', price: '$349', image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=600&q=80', tag: 'Most Popular' },
+  { from: 'LAX', to: 'Tokyo', price: '$489', image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&q=80', tag: 'Trending' },
+  { from: 'MIA', to: 'Barcelona', price: '$412', image: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=600&q=80', tag: 'Best Deal' },
+  { from: 'SFO', to: 'Bali', price: '$527', image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&q=80', tag: 'Dream Route' },
+];
 
 // ---------------------------------------------------------------------------
 // Mock data
@@ -604,9 +616,31 @@ export default function FlightsScreen() {
             ))}
           </View>
         ) : !searchPerformed ? (
-          <View style={styles.emptyState}>
-            <PlaneTakeoff size={48} color={CREAM_10} strokeWidth={1.5} />
-            <Text style={styles.emptyText}>Search above to find flights</Text>
+          <View style={styles.popularSection}>
+            <Text style={styles.popularHeader}>Popular routes right now</Text>
+            <Text style={styles.popularSub}>Tap any route to auto-fill your search</Text>
+            {POPULAR_ROUTES.map((route) => (
+              <Pressable
+                key={`${route.from}-${route.to}`}
+                style={({ pressed }) => [styles.routeCard, { transform: [{ scale: pressed ? 0.97 : 1 }] }]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setFrom(route.from);
+                  setTo(route.to);
+                }}
+              >
+                <Image source={{ uri: route.image }} style={styles.routeImage} />
+                <View style={styles.routeOverlay}>
+                  <View style={styles.routeTagWrap}>
+                    <Text style={styles.routeTag}>{route.tag}</Text>
+                  </View>
+                  <View style={styles.routeInfo}>
+                    <Text style={styles.routeCities}>{route.from} → {route.to}</Text>
+                    <Text style={styles.routePrice}>from {route.price}</Text>
+                  </View>
+                </View>
+              </Pressable>
+            ))}
           </View>
         ) : results.length === 0 ? (
           <View style={styles.emptyState}>
@@ -949,6 +983,65 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
   } as ViewStyle,
+  popularSection: {
+    paddingTop: SPACING.sm,
+    gap: SPACING.md,
+  } as ViewStyle,
+  popularHeader: {
+    fontFamily: FONTS.header,
+    fontSize: 22,
+    color: COLORS.cream,
+  } as TextStyle,
+  popularSub: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: CREAM_50,
+    marginTop: -8,
+  } as TextStyle,
+  routeCard: {
+    height: 140,
+    borderRadius: RADIUS.lg,
+    overflow: 'hidden',
+  } as ViewStyle,
+  routeImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  } as ImageStyle,
+  routeOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'space-between',
+    padding: SPACING.md,
+  } as ViewStyle,
+  routeTagWrap: {
+    alignSelf: 'flex-start',
+    backgroundColor: COLORS.sage,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 3,
+    borderRadius: RADIUS.sm,
+  } as ViewStyle,
+  routeTag: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.bg,
+    textTransform: 'uppercase',
+  } as TextStyle,
+  routeInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  } as ViewStyle,
+  routeCities: {
+    fontFamily: FONTS.header,
+    fontSize: 24,
+    color: '#FFFFFF',
+  } as TextStyle,
+  routePrice: {
+    fontFamily: FONTS.mono,
+    fontSize: 16,
+    color: COLORS.gold,
+  } as TextStyle,
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
