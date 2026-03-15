@@ -45,7 +45,9 @@ const en = {
   // Tab bar
   // ---------------------------------------------------------------------------
   tabs: {
+    plan: 'Plan',
     discover: 'Discover',
+    people: 'People',
     generate: 'Generate',
     flights: 'Flights',
     stays: 'Stays',
