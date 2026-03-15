@@ -418,6 +418,54 @@ export const EVENTS = {
     'waitlist_joined',
     'User joined the waitlist',
   ),
+
+  // =========================================================================
+  // Plan tab engagement
+  // =========================================================================
+  PLAN_NEW_TRIP_TAPPED: def<{ trips_existing: number }>(
+    'plan_new_trip_tapped',
+    'User tapped "Plan a new trip" button on the Plan tab',
+  ),
+  PLAN_QUICK_ACTION_TAPPED: def<{ action: 'hotels' | 'food' | 'flights' }>(
+    'plan_quick_action_tapped',
+    'User tapped a quick action card on the Plan tab (Find stays / Find food / Book flights)',
+  ),
+  PLAN_TRIP_CARD_TAPPED: def<{ trip_id: string; destination: string; days: number }>(
+    'plan_trip_card_tapped',
+    'User tapped a trip card to open the itinerary from the Plan tab',
+  ),
+
+  // =========================================================================
+  // People tab engagement
+  // =========================================================================
+  PEOPLE_TRAVELER_VIEWED: def<{ traveler_id: string; destination: string; match_score: number }>(
+    'people_traveler_viewed',
+    'User tapped a traveler card to view their profile',
+  ),
+  PEOPLE_CONNECT_TAPPED: def<{ traveler_id: string; destination: string; match_score: number }>(
+    'people_connect_tapped',
+    'User tapped "Connect" on a traveler card',
+  ),
+  PEOPLE_TRAVELER_SAVED: def<{ traveler_id: string; destination: string }>(
+    'people_traveler_saved',
+    'User tapped the heart/save button on a traveler card',
+  ),
+  PEOPLE_GROUP_TAPPED: def<{ group_id: string; destination: string; member_count: number }>(
+    'people_group_tapped',
+    'User tapped a group trip card',
+  ),
+  PEOPLE_SETUP_PROFILE_TAPPED: def<{ source: string }>(
+    'people_setup_profile_tapped',
+    'User tapped "Set up profile" CTA on the People tab',
+  ),
+
+  // =========================================================================
+  // Tab navigation
+  // =========================================================================
+  TAB_SWITCHED: def<{ from_tab: string; to_tab: string; time_spent_ms: number }>(
+    'tab_switched',
+    'User switched from one tab to another; carries time spent on the previous tab',
+  ),
 } as const;
 
 // ---------------------------------------------------------------------------
