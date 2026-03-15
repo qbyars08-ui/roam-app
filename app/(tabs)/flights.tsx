@@ -1,9 +1,8 @@
 // =============================================================================
-// ROAM — Flights Tab
-// Clean hero search + popular routes + inspiration. Skyscanner affiliate links.
-// Zero broken APIs. Zero loading states that never resolve.
+// ROAM — Flight Search
+// Hopper meets Google Flights — fast, visual, zero clutter
 // =============================================================================
-import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,546 +10,296 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Image,
-  Linking,
+  Modal,
+  ActivityIndicator,
   Animated,
   type ViewStyle,
   type TextStyle,
-  type ImageStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { SkeletonCard } from '../../components/premium/LoadingStates';
 import {
   MapPin,
   ArrowLeftRight,
   Calendar,
+  PlaneTakeoff,
   Plane,
   Minus,
   Plus,
-  ExternalLink,
-  Sun,
+  TrendingUp,
 } from 'lucide-react-native';
 import { addDays, format, isSameDay, startOfDay } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
-import { track } from '../../lib/analytics';
-import { captureEvent } from '../../lib/posthog';
-import {
-  US_AIRPORTS,
-  getDestinationAirport,
-  getSkyscannerFlightUrl,
-} from '../../lib/flights';
+import { track, trackEvent } from '../../lib/analytics';
 
-// ---------------------------------------------------------------------------
-// Data
-// ---------------------------------------------------------------------------
-interface PopularRoute {
-  from: string;
-  fromCode: string;
-  to: string;
-  toCode: string;
-  price: string;
-  image: string;
-}
+// Use COLORS design tokens — no hardcoded hex/rgba
+const CREAM_08 = COLORS.creamMinimal;
+const CREAM_40 = COLORS.creamDim;
+const CREAM_50 = COLORS.creamMuted;
+const CREAM_60 = COLORS.creamSoft;
+const CREAM_10 = COLORS.creamSubtle;
 
-const POPULAR_ROUTES: PopularRoute[] = [
-  {
-    from: 'New York',
-    fromCode: 'JFK',
-    to: 'London',
-    toCode: 'LHR',
-    price: 'from ~$420',
-    image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400&q=80',
-  },
-  {
-    from: 'Los Angeles',
-    fromCode: 'LAX',
-    to: 'Tokyo',
-    toCode: 'NRT',
-    price: 'from ~$580',
-    image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&q=80',
-  },
-  {
-    from: 'Chicago',
-    fromCode: 'ORD',
-    to: 'Paris',
-    toCode: 'CDG',
-    price: 'from ~$445',
-    image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&q=80',
-  },
-  {
-    from: 'Miami',
-    fromCode: 'MIA',
-    to: 'Cancun',
-    toCode: 'CUN',
-    price: 'from ~$190',
-    image: 'https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=400&q=80',
-  },
-  {
-    from: 'San Francisco',
-    fromCode: 'SFO',
-    to: 'Bali',
-    toCode: 'DPS',
-    price: 'from ~$650',
-    image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&q=80',
-  },
-  {
-    from: 'New York',
-    fromCode: 'JFK',
-    to: 'Barcelona',
-    toCode: 'BCN',
-    price: 'from ~$380',
-    image: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&q=80',
-  },
-];
-
-interface InspirationCard {
-  destination: string;
-  month: string;
-  reason: string;
-  image: string;
-  code: string;
-}
-
-const INSPIRATION: InspirationCard[] = [
-  {
-    destination: 'Tokyo',
-    month: 'March',
-    reason: 'Cherry blossom season at its peak',
-    image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400&q=80',
-    code: 'NRT',
-  },
-  {
-    destination: 'Bali',
-    month: 'July',
-    reason: 'Dry season, perfect surf and sunsets',
-    image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&q=80',
-    code: 'DPS',
-  },
-  {
-    destination: 'Paris',
-    month: 'May',
-    reason: 'Warm but not crowded, long golden evenings',
-    image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&q=80',
-    code: 'CDG',
-  },
-  {
-    destination: 'Barcelona',
-    month: 'September',
-    reason: 'Beach weather, locals are back, La Merce festival',
-    image: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&q=80',
-    code: 'BCN',
-  },
+const TRENDING_ROUTES = [
+  { label: 'JFK → LIS', from: 'New York', to: 'Lisbon', price: 'from $389' },
+  { label: 'LAX → NRT', from: 'Los Angeles', to: 'Tokyo', price: 'from $612' },
+  { label: 'SFO → MEX', from: 'San Francisco', to: 'Mexico City', price: 'from $228' },
+  { label: 'ORD → CDG', from: 'Chicago', to: 'Paris', price: 'from $445' },
+  { label: 'MIA → BOG', from: 'Miami', to: 'Bogotá', price: 'from $187' },
+  { label: 'BOS → BCN', from: 'Boston', to: 'Barcelona', price: 'from $512' },
 ];
 
 // ---------------------------------------------------------------------------
-// Airport Autocomplete Dropdown
+// Types
 // ---------------------------------------------------------------------------
-interface AirportSuggestion {
-  code: string;
-  city: string;
+interface DayPrice {
+  date: Date;
+  price: number;
+  currency: string;
 }
 
-function AirportDropdown({
-  query,
+interface FlightResult {
+  id: string;
+  airlineName: string;
+  airlineCode: string;
+  departureTime: string;
+  arrivalTime: string;
+  duration: string;
+  stops: number;
+  price: number;
+  isBestDeal: boolean;
+  isFastest: boolean;
+}
+
+type TripType = 'one-way' | 'round-trip';
+type CabinClass = 'economy' | 'premium' | 'business' | 'first';
+type SortOption = 'cheapest' | 'fastest' | 'best';
+
+// ---------------------------------------------------------------------------
+// Mock data
+// ---------------------------------------------------------------------------
+function generateDayPrices(): DayPrice[] {
+  const prices: DayPrice[] = [];
+  const today = startOfDay(new Date());
+  const minPrice = 180;
+  const maxPrice = 650;
+  let cheapest = Infinity;
+  let mostExpensive = 0;
+
+  for (let i = 0; i < 14; i++) {
+    const d = addDays(today, i);
+    const base = minPrice + Math.random() * (maxPrice - minPrice);
+    const price = Math.round(base);
+    prices.push({ date: d, price, currency: 'USD' });
+    cheapest = Math.min(cheapest, price);
+    mostExpensive = Math.max(mostExpensive, price);
+  }
+
+  return prices;
+}
+
+function generateMockFlights(): FlightResult[] {
+  const airlines = [
+    { name: 'American Airlines', code: 'AA' },
+    { name: 'Delta', code: 'DL' },
+    { name: 'United', code: 'UA' },
+    { name: 'JetBlue', code: 'B6' },
+  ];
+  const raw: Omit<FlightResult, 'isBestDeal' | 'isFastest'>[] = [
+    { id: '1', airlineName: airlines[0].name, airlineCode: 'AA', departureTime: '08:15', arrivalTime: '11:42', duration: '5h 27m', stops: 0, price: 287 },
+    { id: '2', airlineName: airlines[1].name, airlineCode: 'DL', departureTime: '14:30', arrivalTime: '18:15', duration: '5h 45m', stops: 0, price: 312 },
+    { id: '3', airlineName: airlines[2].name, airlineCode: 'UA', departureTime: '06:00', arrivalTime: '12:20', duration: '8h 20m', stops: 1, price: 234 },
+    { id: '4', airlineName: airlines[3].name, airlineCode: 'B6', departureTime: '11:00', arrivalTime: '14:35', duration: '5h 35m', stops: 0, price: 298 },
+    { id: '5', airlineName: airlines[0].name, airlineCode: 'AA', departureTime: '19:20', arrivalTime: '23:00', duration: '5h 40m', stops: 0, price: 325 },
+  ];
+  const directMins = raw
+    .filter((r) => r.stops === 0)
+    .map((r) => parseDurationMins(r.duration));
+  const minMins = directMins.length ? Math.min(...directMins) : Math.min(...raw.map((r) => parseDurationMins(r.duration)));
+  const withValue = raw.map((r) => {
+    const mins = parseDurationMins(r.duration) || 1;
+    const stopPenalty = r.stops > 0 ? 1.3 : 1;
+    const _effectivePrice = (r.price * stopPenalty) / (mins / 60);
+    return { ...r, effectivePrice: _effectivePrice, mins };
+  });
+  const bestValueId = [...withValue].sort((a, b) => a.effectivePrice - b.effectivePrice)[0]?.id;
+  return withValue.map(({ effectivePrice: _effectivePrice, mins, ...r }) => ({
+    ...r,
+    isBestDeal: r.id === bestValueId,
+    isFastest: r.stops === 0 && mins === minMins,
+  }));
+}
+
+function parseDurationMins(s: string): number {
+  const m = s.match(/(\d+)h\s*(\d+)m/);
+  if (m) return Number(m[1]) * 60 + Number(m[2]);
+  const h = s.match(/(\d+)h/);
+  if (h) return Number(h[1]) * 60;
+  return 0;
+}
+
+// ---------------------------------------------------------------------------
+// Date Picker Modal — cross-platform (DateTimePicker has no web support)
+// ---------------------------------------------------------------------------
+function DatePickerModal({
   visible,
-  onSelect,
-}: {
-  query: string;
-  visible: boolean;
-  onSelect: (airport: AirportSuggestion) => void;
-}) {
-  const filtered = useMemo(() => {
-    if (!query.trim() || !visible) return [];
-    const q = query.toLowerCase();
-    return US_AIRPORTS.filter(
-      (a) =>
-        a.city.toLowerCase().includes(q) ||
-        a.code.toLowerCase().includes(q),
-    ).slice(0, 5);
-  }, [query, visible]);
-
-  if (filtered.length === 0) return null;
-
-  return (
-    <View style={dropdownStyles.container}>
-      {filtered.map((airport) => (
-        <Pressable
-          key={airport.code}
-          style={({ pressed }) => [
-            dropdownStyles.item,
-            { opacity: pressed ? 0.7 : 1 },
-          ]}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            onSelect(airport);
-          }}
-        >
-          <Text style={dropdownStyles.code}>{airport.code}</Text>
-          <Text style={dropdownStyles.city}>{airport.city}</Text>
-        </Pressable>
-      ))}
-    </View>
-  );
-}
-
-const dropdownStyles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    top: 52,
-    left: 0,
-    right: 0,
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    zIndex: 100,
-    overflow: 'hidden',
-  } as ViewStyle,
-  item: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm + 2,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    gap: SPACING.sm,
-  } as ViewStyle,
-  code: {
-    fontFamily: FONTS.mono,
-    fontSize: 13,
-    color: COLORS.sage,
-    width: 40,
-  } as TextStyle,
-  city: {
-    fontFamily: FONTS.body,
-    fontSize: 14,
-    color: COLORS.cream,
-    flex: 1,
-  } as TextStyle,
-});
-
-// ---------------------------------------------------------------------------
-// Date Picker Modal (inline cross-platform)
-// ---------------------------------------------------------------------------
-function DatePickerInline({
-  label,
   value,
   onSelect,
+  onClose,
   minimumDate,
 }: {
-  label: string;
+  visible: boolean;
   value: Date;
   onSelect: (d: Date) => void;
+  onClose: () => void;
   minimumDate?: Date;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const { t } = useTranslation();
   const minDate = minimumDate ?? startOfDay(new Date());
-  const dates = useMemo(() => {
-    const result: Date[] = [];
-    for (let i = 0; i < 90; i++) {
-      result.push(addDays(minDate, i));
-    }
-    return result;
-  }, [minDate]);
+  const dates: Date[] = [];
+  for (let i = 0; i < 90; i++) {
+    dates.push(addDays(minDate, i));
+  }
 
   return (
-    <View style={dateStyles.wrapper}>
-      <Pressable
-        style={({ pressed }) => [
-          dateStyles.trigger,
-          { opacity: pressed ? 0.8 : 1 },
-        ]}
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          setExpanded(!expanded);
-        }}
-      >
-        <Calendar size={18} color={COLORS.creamMuted} strokeWidth={2} />
-        <View>
-          <Text style={dateStyles.label}>{label}</Text>
-          <Text style={dateStyles.value}>{format(value, 'EEE, MMM d')}</Text>
-        </View>
-      </Pressable>
-      {expanded && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={dateStyles.scroll}
-          contentContainerStyle={dateStyles.scrollContent}
-        >
-          {dates.map((d) => {
-            const isSelected = isSameDay(d, value);
-            return (
+    <Modal visible={visible} transparent animationType="fade">
+      <Pressable style={modalStyles.backdrop} onPress={onClose}>
+        <Pressable style={modalStyles.content} onPress={(e) => e.stopPropagation()}>
+          <Text style={modalStyles.title}>Select date</Text>
+          <ScrollView style={modalStyles.scroll} showsVerticalScrollIndicator={false}>
+            {dates.map((d) => (
               <Pressable
                 key={d.toISOString()}
-                style={[
-                  dateStyles.dateChip,
-                  isSelected && dateStyles.dateChipSelected,
-                ]}
+                style={[modalStyles.option, isSameDay(d, value) && modalStyles.optionSelected]}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   onSelect(d);
-                  setExpanded(false);
+                  onClose();
                 }}
               >
-                <Text
-                  style={[
-                    dateStyles.dateChipDay,
-                    isSelected && dateStyles.dateChipDaySelected,
-                  ]}
-                >
-                  {format(d, 'EEE')}
-                </Text>
-                <Text
-                  style={[
-                    dateStyles.dateChipNum,
-                    isSelected && dateStyles.dateChipNumSelected,
-                  ]}
-                >
-                  {format(d, 'd')}
-                </Text>
-                <Text
-                  style={[
-                    dateStyles.dateChipMonth,
-                    isSelected && dateStyles.dateChipMonthSelected,
-                  ]}
-                >
-                  {format(d, 'MMM')}
+                <Text style={[modalStyles.optionText, isSameDay(d, value) && modalStyles.optionTextSelected]}>
+                  {format(d, 'EEE, MMM d')}
                 </Text>
               </Pressable>
-            );
-          })}
-        </ScrollView>
-      )}
-    </View>
+            ))}
+          </ScrollView>
+          <Pressable style={modalStyles.cancelBtn} onPress={onClose}>
+            <Text style={modalStyles.cancelText}>{t('common.cancel')}</Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 }
 
-const dateStyles = StyleSheet.create({
-  wrapper: {
+const modalStyles = StyleSheet.create({
+  backdrop: {
     flex: 1,
-  } as ViewStyle,
-  trigger: {
-    flexDirection: 'row',
+    backgroundColor: COLORS.overlay,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: SPACING.sm,
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.md,
+    padding: SPACING.lg,
+  } as ViewStyle,
+  content: {
+    width: '100%',
+    maxWidth: 360,
+    maxHeight: '70%',
+    backgroundColor: COLORS.bg,
+    borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.border,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm + 2,
+    padding: SPACING.lg,
   } as ViewStyle,
-  label: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.creamMuted,
-    letterSpacing: 0.5,
-  } as TextStyle,
-  value: {
-    fontFamily: FONTS.bodyMedium,
-    fontSize: 14,
+  title: {
+    fontFamily: FONTS.header,
+    fontSize: 20,
     color: COLORS.cream,
-    marginTop: 1,
+    marginBottom: SPACING.md,
   } as TextStyle,
   scroll: {
-    marginTop: SPACING.sm,
-    maxHeight: 72,
+    maxHeight: 300,
   } as ViewStyle,
-  scrollContent: {
-    gap: SPACING.xs,
+  option: {
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.sm,
+    borderRadius: RADIUS.sm,
   } as ViewStyle,
-  dateChip: {
-    width: 56,
-    alignItems: 'center',
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.bgCard,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+  optionSelected: {
+    backgroundColor: COLORS.sageHighlight,
   } as ViewStyle,
-  dateChipSelected: {
-    backgroundColor: COLORS.sage,
-    borderColor: COLORS.sage,
-  } as ViewStyle,
-  dateChipDay: {
+  optionText: {
     fontFamily: FONTS.body,
-    fontSize: 10,
-    color: COLORS.creamMuted,
-  } as TextStyle,
-  dateChipDaySelected: {
-    color: COLORS.bg,
-  } as TextStyle,
-  dateChipNum: {
-    fontFamily: FONTS.mono,
-    fontSize: 16,
+    fontSize: 15,
     color: COLORS.cream,
-    marginVertical: 1,
   } as TextStyle,
-  dateChipNumSelected: {
-    color: COLORS.bg,
+  optionTextSelected: {
+    fontFamily: FONTS.bodyMedium,
+    color: COLORS.sage,
   } as TextStyle,
-  dateChipMonth: {
-    fontFamily: FONTS.body,
-    fontSize: 10,
+  cancelBtn: {
+    marginTop: SPACING.md,
+    paddingVertical: SPACING.sm,
+    alignItems: 'center',
+  } as ViewStyle,
+  cancelText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
     color: COLORS.creamMuted,
   } as TextStyle,
-  dateChipMonthSelected: {
-    color: COLORS.bg,
-  } as TextStyle,
 });
 
 // ---------------------------------------------------------------------------
-// Popular Route Card
-// ---------------------------------------------------------------------------
-const RouteCard = React.memo(function RouteCard({
-  route,
-  onPress,
-}: {
-  route: PopularRoute;
-  onPress: () => void;
-}) {
-  const [imageLoaded, setImageLoaded] = useState(false);
-
-  return (
-    <Pressable
-      onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        onPress();
-      }}
-      style={({ pressed }) => [
-        styles.routeCard,
-        { transform: [{ scale: pressed ? 0.97 : 1 }] },
-      ]}
-    >
-      {!imageLoaded && (
-        <LinearGradient
-          colors={[COLORS.bgCard, COLORS.bg]}
-          style={StyleSheet.absoluteFill}
-        />
-      )}
-      <Image
-        source={{ uri: route.image }}
-        style={styles.routeImage}
-        onLoad={() => setImageLoaded(true)}
-        resizeMode="cover"
-      />
-      <LinearGradient
-        colors={['transparent', COLORS.overlayDark]}
-        locations={[0.3, 1]}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={styles.routeContent}>
-        <View style={styles.routeCodeRow}>
-          <Text style={styles.routeCode}>{route.fromCode}</Text>
-          <Plane size={12} color={COLORS.creamMuted} strokeWidth={2} />
-          <Text style={styles.routeCode}>{route.toCode}</Text>
-        </View>
-        <Text style={styles.routeLabel}>
-          {route.from} to {route.to}
-        </Text>
-        <View style={styles.routeBottom}>
-          <Text style={styles.routePrice}>{route.price}</Text>
-          <View style={styles.routeSearchBadge}>
-            <Text style={styles.routeSearchText}>Search</Text>
-          </View>
-        </View>
-      </View>
-    </Pressable>
-  );
-});
-
-// ---------------------------------------------------------------------------
-// Inspiration Card
-// ---------------------------------------------------------------------------
-const InspirationCardComponent = React.memo(function InspirationCardComponent({
-  card,
-  onPress,
-}: {
-  card: InspirationCard;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        onPress();
-      }}
-      style={({ pressed }) => [
-        styles.inspirationCard,
-        { transform: [{ scale: pressed ? 0.97 : 1 }] },
-      ]}
-    >
-      <Image
-        source={{ uri: card.image }}
-        style={styles.inspirationImage}
-        resizeMode="cover"
-      />
-      <LinearGradient
-        colors={['transparent', COLORS.overlayDark]}
-        locations={[0.2, 1]}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={styles.inspirationContent}>
-        <View style={styles.inspirationMonthBadge}>
-          <Sun size={12} color={COLORS.gold} strokeWidth={2} />
-          <Text style={styles.inspirationMonthText}>{card.month}</Text>
-        </View>
-        <Text style={styles.inspirationDest}>{card.destination}</Text>
-        <Text style={styles.inspirationReason} numberOfLines={2}>
-          {card.reason}
-        </Text>
-      </View>
-    </Pressable>
-  );
-});
-
-// ---------------------------------------------------------------------------
-// Main Screen
+// Main screen
 // ---------------------------------------------------------------------------
 export default function FlightsScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const planDestination = useAppStore((s) => s.planWizard.destination);
 
-  // ── State ──
-  const [fromText, setFromText] = useState('');
-  const [toText, setToText] = useState(planDestination);
-  const [fromCode, setFromCode] = useState('');
-  const [toCode, setToCode] = useState('');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState(planDestination);
   const [departDate, setDepartDate] = useState(startOfDay(addDays(new Date(), 7)));
   const [returnDate, setReturnDate] = useState(startOfDay(addDays(new Date(), 14)));
-  const [passengers, setPassengers] = useState(1);
+  const [tripType, setTripType] = useState<TripType>('round-trip');
+  const [cabinClass, setCabinClass] = useState<CabinClass>('economy');
+  const [adults, setAdults] = useState(1);
+  const [children, setChildren] = useState(0);
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(null);
+
+  const [dayPrices, setDayPrices] = useState<DayPrice[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [searchPerformed, setSearchPerformed] = useState(false);
+  const [results, setResults] = useState<FlightResult[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<SortOption>('cheapest');
+
   const [fromFocused, setFromFocused] = useState(false);
   const [toFocused, setToFocused] = useState(false);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [departPickerVisible, setDepartPickerVisible] = useState(false);
+  const [returnPickerVisible, setReturnPickerVisible] = useState(false);
 
   useEffect(() => {
     track({ type: 'screen_view', screen: 'flights' });
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 400,
-      useNativeDriver: true,
-    }).start();
-  }, [fadeAnim]);
+  }, []);
+
+  const calendarRef = useRef<ScrollView>(null);
 
   useEffect(() => {
-    if (planDestination) {
-      setToText(planDestination);
-      const code = getDestinationAirport(planDestination);
-      if (code) setToCode(code);
-    }
+    setTo(planDestination);
   }, [planDestination]);
 
-  // ── Swap animation ──
-  const swapRotation = useRef(new Animated.Value(0)).current;
-  const swapInterpolate = swapRotation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '180deg'],
-  });
+  useEffect(() => {
+    setDayPrices(generateDayPrices());
+  }, []);
+
+  const minPrice = dayPrices.length ? Math.min(...dayPrices.map((d) => d.price)) : 0;
+  const maxPrice = dayPrices.length ? Math.max(...dayPrices.map((d) => d.price)) : 1;
+
+  const swapRotation = React.useRef(new Animated.Value(0)).current;
 
   const swapFromTo = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -566,284 +315,424 @@ export default function FlightsScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-    setFromText(toText);
-    setToText(fromText);
-    setFromCode(toCode);
-    setToCode(fromCode);
-  }, [fromText, toText, fromCode, toCode, swapRotation]);
+    setFrom(to);
+    setTo(from);
+  }, [from, to, swapRotation]);
 
-  // ── Skyscanner search ──
-  const handleSearch = useCallback(() => {
+  const swapInterpolate = swapRotation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '180deg'],
+  });
+
+  const handleSearch = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setSearching(true);
+    setError(null);
+    setSearchPerformed(false);
 
-    const origin = fromCode || fromText.trim();
-    const dest = toCode || toText.trim();
-    const departStr = format(departDate, 'yyMMdd');
-    const returnStr = format(returnDate, 'yyMMdd');
+    await new Promise((r) => setTimeout(r, 1500));
 
-    const url = getSkyscannerFlightUrl({
-      origin: origin || 'anywhere',
-      destination: dest || 'anywhere',
-      departureDate: departStr,
-      returnDate: returnStr,
-    });
+    setSearching(false);
+    setSearchPerformed(true);
+    const flights = generateMockFlights();
+    setResults(flights);
+    trackEvent('flight_search', { from, to, results: flights.length }).catch(() => {});
+  }, [from, to]);
 
-    captureEvent('flights_search_skyscanner', {
-      from: origin,
-      to: dest,
-      depart: departStr,
-      return: returnStr,
-      passengers,
-    });
+  const flightMinPrice = results.length ? Math.min(...results.map((f) => f.price)) : 0;
+  const flightMaxPrice = results.length ? Math.max(...results.map((f) => f.price)) : 1;
 
-    Linking.openURL(url).catch(() => {});
-  }, [fromCode, fromText, toCode, toText, departDate, returnDate, passengers]);
+  const sortedResults = React.useMemo(() => {
+    const copy = [...results];
+    if (sortBy === 'cheapest') copy.sort((a, b) => a.price - b.price);
+    if (sortBy === 'fastest') {
+      const mins = (f: FlightResult) => parseDurationMins(f.duration);
+      copy.sort((a, b) => (a.stops !== b.stops ? a.stops - b.stops : mins(a) - mins(b)));
+    }
+    if (sortBy === 'best') {
+      const score = (f: FlightResult) => {
+        const priceNorm = flightMaxPrice > flightMinPrice
+          ? 1 - (f.price - flightMinPrice) / (flightMaxPrice - flightMinPrice)
+          : 1;
+        const speedNorm = f.stops === 0 ? 1 : 0.5;
+        return (priceNorm * 0.6 + speedNorm * 0.4) * (f.isBestDeal ? 1.2 : 1);
+      };
+      copy.sort((a, b) => score(b) - score(a));
+    }
+    return copy;
+  }, [results, sortBy, flightMinPrice, flightMaxPrice]);
 
-  // ── Popular route press ──
-  const handleRoutePress = useCallback(
-    (route: PopularRoute) => {
-      captureEvent('flights_popular_route_tapped', {
-        from: route.fromCode,
-        to: route.toCode,
-      });
+  const handleCalendarDayPress = useCallback((d: DayPrice) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedCalendarDate(d.date);
+    setDepartDate(d.date);
+    if (tripType === 'round-trip') {
+      setReturnDate(addDays(d.date, 7));
+    }
+  }, [tripType]);
 
-      const url = getSkyscannerFlightUrl({
-        origin: route.fromCode,
-        destination: route.to,
-        departureDate: format(departDate, 'yyMMdd'),
-        returnDate: format(returnDate, 'yyMMdd'),
-      });
-      Linking.openURL(url).catch(() => {});
-    },
-    [departDate, returnDate],
-  );
+  const handleFlightCardPress = useCallback((flight: FlightResult) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push({ pathname: '/coming-soon', params: { title: `${flight.airlineName} Flight` } } as never);
+  }, [router]);
 
-  // ── Inspiration press ──
-  const handleInspirationPress = useCallback((card: InspirationCard) => {
-    captureEvent('flights_inspiration_tapped', {
-      destination: card.destination,
-      month: card.month,
-    });
-
-    const url = getSkyscannerFlightUrl({
-      origin: 'anywhere',
-      destination: card.destination,
-    });
-    Linking.openURL(url).catch(() => {});
-  }, []);
-
-  // ── Airport selection ──
-  const handleFromSelect = useCallback((airport: AirportSuggestion) => {
-    setFromText(airport.city);
-    setFromCode(airport.code);
-    setFromFocused(false);
-  }, []);
-
-  const handleToSelect = useCallback((airport: AirportSuggestion) => {
-    setToText(airport.city);
-    setToCode(airport.code);
-    setToFocused(false);
-  }, []);
+  const today = startOfDay(new Date());
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <Animated.ScrollView
-        style={[styles.fill, { opacity: fadeAnim }]}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* ── Hero ── */}
-        <View style={styles.hero}>
-          <Text style={styles.heroTitle}>Find your flight.</Text>
-          <Text style={styles.heroSub}>
-            We search Skyscanner so you get the best price, every time.
-          </Text>
+      {/* Section 1 — Sticky search header */}
+      <View style={styles.header}>
+        <View style={styles.fromToRow}>
+          <View style={[styles.inputWrap, fromFocused && styles.inputFocused]}>
+            <MapPin size={20} color={CREAM_40} strokeWidth={2} />
+            <TextInput
+              style={styles.input}
+              value={from}
+              onChangeText={setFrom}
+              placeholder={t('flights.from')}
+              placeholderTextColor={CREAM_40}
+              onFocus={() => { setFromFocused(true); setToFocused(false); }}
+              onBlur={() => setFromFocused(false)}
+            />
+          </View>
+          <Pressable
+            style={({ pressed }) => [styles.swapBtn, { opacity: pressed ? 0.7 : 1 }]}
+            onPress={swapFromTo}
+          >
+            <Animated.View style={{ transform: [{ rotate: swapInterpolate }] }}>
+              <ArrowLeftRight size={20} color={COLORS.sage} strokeWidth={2} />
+            </Animated.View>
+          </Pressable>
+          <View style={[styles.inputWrap, toFocused && styles.inputFocused]}>
+            <MapPin size={20} color={COLORS.sage} strokeWidth={2} />
+            <TextInput
+              style={styles.input}
+              value={to}
+              onChangeText={setTo}
+              placeholder={t('flights.to')}
+              placeholderTextColor={CREAM_40}
+              onFocus={() => { setToFocused(true); setFromFocused(false); }}
+              onBlur={() => setToFocused(false)}
+            />
+          </View>
         </View>
 
-        {/* ── Search Form ── */}
-        <View style={styles.searchCard}>
-          {/* From / To */}
-          <View style={styles.fromToRow}>
-            <View style={[styles.inputWrap, fromFocused && styles.inputFocused]}>
-              <MapPin size={18} color={COLORS.creamMuted} strokeWidth={2} />
-              <TextInput
-                style={styles.input}
-                value={fromText}
-                onChangeText={(t) => {
-                  setFromText(t);
-                  setFromCode('');
-                }}
-                placeholder="From (city or airport)"
-                placeholderTextColor={COLORS.creamDim}
-                onFocus={() => {
-                  setFromFocused(true);
-                  setToFocused(false);
-                }}
-                onBlur={() => setTimeout(() => setFromFocused(false), 200)}
-              />
-              <AirportDropdown
-                query={fromText}
-                visible={fromFocused}
-                onSelect={handleFromSelect}
-              />
-            </View>
-
-            <Pressable
-              style={({ pressed }) => [
-                styles.swapBtn,
-                { opacity: pressed ? 0.7 : 1 },
-              ]}
-              onPress={swapFromTo}
-            >
-              <Animated.View
-                style={{ transform: [{ rotate: swapInterpolate }] }}
-              >
-                <ArrowLeftRight
-                  size={18}
-                  color={COLORS.sage}
-                  strokeWidth={2}
-                />
-              </Animated.View>
-            </Pressable>
-
-            <View style={[styles.inputWrap, toFocused && styles.inputFocused]}>
-              <MapPin size={18} color={COLORS.sage} strokeWidth={2} />
-              <TextInput
-                style={styles.input}
-                value={toText}
-                onChangeText={(t) => {
-                  setToText(t);
-                  setToCode('');
-                }}
-                placeholder="To (city or airport)"
-                placeholderTextColor={COLORS.creamDim}
-                onFocus={() => {
-                  setToFocused(true);
-                  setFromFocused(false);
-                }}
-                onBlur={() => setTimeout(() => setToFocused(false), 200)}
-              />
-              <AirportDropdown
-                query={toText}
-                visible={toFocused}
-                onSelect={handleToSelect}
-              />
-            </View>
-          </View>
-
-          {/* Dates */}
-          <View style={styles.dateRow}>
-            <DatePickerInline
-              label="DEPART"
-              value={departDate}
-              onSelect={setDepartDate}
-            />
-            <DatePickerInline
-              label="RETURN"
-              value={returnDate}
-              onSelect={setReturnDate}
-              minimumDate={departDate}
-            />
-          </View>
-
-          {/* Passengers */}
-          <View style={styles.passengersRow}>
-            <Text style={styles.passengersLabel}>Passengers</Text>
-            <View style={styles.counter}>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.counterBtn,
-                  { opacity: pressed ? 0.7 : 1 },
-                ]}
-                onPress={() => {
-                  if (passengers > 1) {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setPassengers(passengers - 1);
-                  }
-                }}
-                disabled={passengers <= 1}
-              >
-                <Minus
-                  size={16}
-                  color={passengers <= 1 ? COLORS.creamDim : COLORS.cream}
-                  strokeWidth={2}
-                />
-              </Pressable>
-              <Text style={styles.counterValue}>{passengers}</Text>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.counterBtn,
-                  { opacity: pressed ? 0.7 : 1 },
-                ]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setPassengers(passengers + 1);
-                }}
-              >
-                <Plus size={16} color={COLORS.cream} strokeWidth={2} />
-              </Pressable>
-            </View>
-          </View>
-
-          {/* Search CTA */}
+        <View style={styles.dateRow}>
           <Pressable
-            style={({ pressed }) => [
-              styles.searchBtn,
-              { transform: [{ scale: pressed ? 0.98 : 1 }] },
-            ]}
-            onPress={handleSearch}
+            style={({ pressed }) => [styles.datePicker, { opacity: pressed ? 0.8 : 1 }]}
+            onPress={() => setDepartPickerVisible(true)}
           >
-            <ExternalLink size={18} color={COLORS.bg} strokeWidth={2} />
-            <Text style={styles.searchBtnText}>Search on Skyscanner</Text>
+            <Calendar size={20} color={CREAM_40} strokeWidth={2} />
+            <Text style={styles.dateText}>{format(departDate, 'MMM d')}</Text>
+          </Pressable>
+          <Pressable
+            style={[
+              styles.datePicker,
+              tripType === 'one-way' && styles.datePickerDisabled,
+              { opacity: tripType === 'one-way' ? 0.5 : 1 },
+            ]}
+            onPress={() => tripType === 'round-trip' && setReturnPickerVisible(true)}
+            disabled={tripType === 'one-way'}
+          >
+            <Calendar size={20} color={tripType === 'one-way' ? CREAM_40 : CREAM_40} strokeWidth={2} />
+            <Text style={[styles.dateText, tripType === 'one-way' && { color: CREAM_40 }]}>
+              {format(returnDate, 'MMM d')}
+            </Text>
           </Pressable>
         </View>
 
-        {/* ── Popular Routes ── */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Popular routes</Text>
-          <Text style={styles.sectionSub}>
-            The flights everyone is booking right now
-          </Text>
-        </View>
-
-        <View style={styles.routeGrid}>
-          {POPULAR_ROUTES.map((route) => (
-            <RouteCard
-              key={`${route.fromCode}-${route.toCode}`}
-              route={route}
-              onPress={() => handleRoutePress(route)}
-            />
+        <View style={styles.tripTypeRow}>
+          {(['round-trip', 'one-way'] as const).map((tripOpt) => (
+            <Pressable
+              key={tripOpt}
+              style={[
+                styles.tripPill,
+                tripType === tripOpt ? styles.tripPillSelected : styles.tripPillUnselected,
+                { opacity: 1 },
+              ]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setTripType(tripOpt);
+              }}
+            >
+              <Text style={[styles.tripPillText, tripType === tripOpt ? styles.tripPillTextSelected : styles.tripPillTextUnselected]}>
+                {tripOpt === 'one-way' ? t('flights.oneWay') : t('flights.roundTrip')}
+              </Text>
+            </Pressable>
           ))}
         </View>
 
-        {/* ── Best Time to Fly ── */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Best time to fly</Text>
-          <Text style={styles.sectionSub}>
-            Peak season, lowest crowds, perfect weather
-          </Text>
-        </View>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.inspirationScroll}
-        >
-          {INSPIRATION.map((card) => (
-            <InspirationCardComponent
-              key={card.destination}
-              card={card}
-              onPress={() => handleInspirationPress(card)}
-            />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cabinRow}>
+          {(['economy', 'premium', 'business', 'first'] as const).map((c) => (
+            <Pressable
+              key={c}
+              style={[styles.cabinPill, cabinClass === c ? styles.cabinPillSelected : styles.cabinPillUnselected]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setCabinClass(c);
+              }}
+            >
+              <Text style={[styles.cabinPillText, cabinClass === c ? styles.cabinPillTextSelected : styles.cabinPillTextUnselected]}>
+                {c.charAt(0).toUpperCase() + c.slice(1)}
+              </Text>
+            </Pressable>
           ))}
         </ScrollView>
 
-        {/* ── Affiliate disclaimer ── */}
-        <Text style={styles.disclaimer}>
-          ROAM earns a small commission when you book through Skyscanner. This
-          keeps the app free.
-        </Text>
-      </Animated.ScrollView>
+        <View style={styles.passengerRow}>
+          <View style={styles.counterWrap}>
+            <Text style={styles.counterLabel}>Adults</Text>
+            <View style={styles.counter}>
+              <Pressable
+                style={({ pressed }) => [styles.counterBtn, { opacity: pressed ? 0.7 : 1 }]}
+                onPress={() => adults > 1 && (Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light), setAdults(adults - 1))}
+                disabled={adults <= 1}
+              >
+                <Minus size={18} color={adults <= 1 ? CREAM_40 : COLORS.cream} strokeWidth={2} />
+              </Pressable>
+              <Text style={styles.counterValue}>{adults}</Text>
+              <Pressable
+                style={({ pressed }) => [styles.counterBtn, { opacity: pressed ? 0.7 : 1 }]}
+                onPress={() => (Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light), setAdults(adults + 1))}
+              >
+                <Plus size={18} color={COLORS.cream} strokeWidth={2} />
+              </Pressable>
+            </View>
+          </View>
+          <View style={styles.counterWrap}>
+            <Text style={styles.counterLabel}>Children</Text>
+            <View style={styles.counter}>
+              <Pressable
+                style={({ pressed }) => [styles.counterBtn, { opacity: pressed ? 0.7 : 1 }]}
+                onPress={() => children > 0 && (Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light), setChildren(children - 1))}
+                disabled={children <= 0}
+              >
+                <Minus size={18} color={children <= 0 ? CREAM_40 : COLORS.cream} strokeWidth={2} />
+              </Pressable>
+              <Text style={styles.counterValue}>{children}</Text>
+              <Pressable
+                style={({ pressed }) => [styles.counterBtn, { opacity: pressed ? 0.7 : 1 }]}
+                onPress={() => (Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light), setChildren(children + 1))}
+              >
+                <Plus size={18} color={COLORS.cream} strokeWidth={2} />
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* Section 2 — 14-day price calendar */}
+      <View style={styles.calendarSection}>
+        <ScrollView
+          ref={calendarRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.calendarRow}
+          onLayout={() => {
+            setTimeout(() => calendarRef.current?.scrollTo({ x: 0, animated: true }), 100);
+          }}
+        >
+          {dayPrices.map((d) => {
+            const isCheapest = d.price === minPrice;
+            const isMostExpensive = d.price === maxPrice;
+            const isSelected = selectedCalendarDate && isSameDay(d.date, selectedCalendarDate);
+            const barHeight = maxPrice > minPrice
+              ? 40 + (60 * (1 - (d.price - minPrice) / (maxPrice - minPrice)))
+              : 100;
+
+            return (
+              <Pressable
+                key={d.date.toISOString()}
+                style={[styles.calendarCol, isSelected && styles.calendarColSelected]}
+                onPress={() => handleCalendarDayPress(d)}
+              >
+                {isCheapest && (
+                  <View style={styles.bestDayBadge}>
+                    <Text style={styles.bestDayText}>Best day</Text>
+                  </View>
+                )}
+                <Text style={styles.calendarDayName}>{format(d.date, 'EEE')}</Text>
+                <Text style={styles.calendarDayNum}>{format(d.date, 'd')}</Text>
+                <View
+                  style={[
+                    styles.priceBar,
+                    {
+                      height: barHeight,
+                      backgroundColor: isCheapest
+                        ? COLORS.sage
+                        : isMostExpensive
+                          ? COLORS.coral
+                          : COLORS.bgCard,
+                    },
+                  ]}
+                />
+                <Text style={styles.calendarPrice}>${d.price}</Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      {/* Section 3 — Search button */}
+      <View style={styles.searchSection}>
+        <Pressable
+          style={[styles.searchBtn, searching && styles.searchBtnDisabled]}
+          onPress={handleSearch}
+          disabled={searching}
+        >
+          {searching ? (
+            <>
+              <ActivityIndicator size="small" color={COLORS.bg} />
+              <Text style={styles.searchBtnText}>{t('common.loading')}</Text>
+            </>
+          ) : (
+            <Text style={styles.searchBtnText}>{t('flights.searchFlights')}</Text>
+          )}
+        </Pressable>
+      </View>
+
+      {/* Error banner */}
+      {error ? (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorBannerText}>{error}</Text>
+          <Pressable onPress={() => { setError(null); handleSearch(); }} hitSlop={8}>
+            <Text style={styles.errorRetryText}>Retry</Text>
+          </Pressable>
+        </View>
+      ) : null}
+
+      {/* Section 4 — Results or empty state */}
+      <ScrollView
+        style={styles.resultsScroll}
+        contentContainerStyle={styles.resultsContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {searching ? (
+          <View style={styles.skeletonContainer}>
+            {[1, 2, 3].map((i) => (
+              <SkeletonCard key={i} height={110} borderRadius={RADIUS.xl} style={{ marginBottom: SPACING.sm }} />
+            ))}
+          </View>
+        ) : !searchPerformed ? (
+          <View style={styles.emptyState}>
+            <PlaneTakeoff size={40} color={COLORS.sageLight} strokeWidth={1.5} />
+            <Text style={styles.emptyTitle}>Find your next flight</Text>
+            <Text style={styles.emptyText}>Enter an origin and destination above, then hit search.</Text>
+            <View style={styles.trendingSection}>
+              <View style={styles.trendingHeader}>
+                <TrendingUp size={14} color={COLORS.gold} strokeWidth={2} />
+                <Text style={styles.trendingLabel}>Popular right now</Text>
+              </View>
+              <View style={styles.trendingChips}>
+                {TRENDING_ROUTES.map((route) => (
+                  <Pressable
+                    key={route.label}
+                    style={({ pressed }) => [styles.trendingChip, { opacity: pressed ? 0.75 : 1 }]}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setFrom(route.from);
+                      setTo(route.to);
+                    }}
+                  >
+                    <Text style={styles.trendingChipFrom}>{route.from}</Text>
+                    <Plane size={10} color={COLORS.creamDimLight} strokeWidth={2} />
+                    <Text style={styles.trendingChipTo}>{route.to}</Text>
+                    <Text style={styles.trendingChipPrice}>{route.price}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          </View>
+        ) : results.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Plane size={48} color={CREAM_40} strokeWidth={1.5} />
+            <Text style={styles.emptyTitle}>{t('flights.noResults')}</Text>
+            <Text style={styles.emptySubtitle}>
+              Try different dates or airports
+            </Text>
+          </View>
+        ) : (
+          <>
+            <Text style={styles.resultsHeader}>{sortedResults.length} flights found</Text>
+            <View style={styles.sortRow}>
+              {(['cheapest', 'fastest', 'best'] as const).map((s) => (
+                <Pressable
+                  key={s}
+                  style={[styles.sortPill, sortBy === s && styles.sortPillSelected]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setSortBy(s);
+                  }}
+                >
+                  <Text style={[styles.sortPillText, sortBy === s && styles.sortPillTextSelected]}>
+                    {s === 'cheapest' ? t('flights.cheapest') : s === 'fastest' ? t('flights.fastest') : t('flights.bestValue')}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            {sortedResults.map((flight) => (
+              <Pressable
+                key={flight.id}
+                style={({ pressed }) => [
+                  styles.flightCard,
+                  { transform: [{ scale: pressed ? 0.98 : 1 }] },
+                ]}
+                onPress={() => handleFlightCardPress(flight)}
+              >
+                <View style={styles.cardTop}>
+                  <Text style={styles.airlineName}>{flight.airlineName}</Text>
+                  <View style={[styles.airlineLogo, { backgroundColor: COLORS.sageLight }]}>
+                    <Text style={styles.airlineCode}>{flight.airlineCode}</Text>
+                  </View>
+                </View>
+                <View style={styles.timeRow}>
+                  <Text style={styles.time}>{flight.departureTime}</Text>
+                  <View style={styles.durationBlock}>
+                    <View style={styles.durationLine}>
+                      <Plane size={14} color={COLORS.creamMuted} strokeWidth={2} />
+                    </View>
+                    <Text style={styles.stopsText}>
+                      {flight.duration} · {flight.stops === 0 ? 'Nonstop' : `${flight.stops} stop${flight.stops > 1 ? 's' : ''}`}
+                    </Text>
+                  </View>
+                  <Text style={styles.time}>{flight.arrivalTime}</Text>
+                </View>
+                <View style={styles.cardBottom}>
+                  <View style={styles.badges}>
+                    {flight.isBestDeal && (
+                      <View style={styles.badgeDeal}>
+                        <Text style={styles.badgeDealText}>Best Deal</Text>
+                      </View>
+                    )}
+                    {flight.isFastest && (
+                      <View style={styles.badgeFastest}>
+                        <Text style={styles.badgeFastestText}>Fastest</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text style={styles.price}>${flight.price}</Text>
+                </View>
+              </Pressable>
+            ))}
+          </>
+        )}
+      </ScrollView>
+
+      <DatePickerModal
+        visible={departPickerVisible}
+        value={departDate}
+        minimumDate={today}
+        onSelect={setDepartDate}
+        onClose={() => setDepartPickerVisible(false)}
+      />
+      <DatePickerModal
+        visible={returnPickerVisible}
+        value={returnDate}
+        minimumDate={departDate}
+        onSelect={setReturnDate}
+        onClose={() => setReturnPickerVisible(false)}
+      />
     </View>
   );
 }
@@ -856,42 +745,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.bg,
   } as ViewStyle,
-  fill: {
-    flex: 1,
-  } as ViewStyle,
-  scrollContent: {
-    paddingBottom: 120,
-  } as ViewStyle,
-
-  // ── Hero ──
-  hero: {
+  header: {
+    backgroundColor: COLORS.bg,
+    borderBottomWidth: 1,
+    borderBottomColor: CREAM_08,
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.lg,
-    paddingBottom: SPACING.md,
-  } as ViewStyle,
-  heroTitle: {
-    fontFamily: FONTS.header,
-    fontSize: 40,
-    color: COLORS.cream,
-    lineHeight: 46,
-  } as TextStyle,
-  heroSub: {
-    fontFamily: FONTS.body,
-    fontSize: 15,
-    color: COLORS.creamMuted,
-    marginTop: SPACING.xs,
-    lineHeight: 22,
-  } as TextStyle,
-
-  // ── Search Card ──
-  searchCard: {
-    marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.xl,
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.xl,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: SPACING.md,
+    paddingVertical: SPACING.md,
     gap: SPACING.md,
   } as ViewStyle,
   fromToRow: {
@@ -904,14 +763,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    backgroundColor: COLORS.bg,
+    backgroundColor: COLORS.bgCard,
     borderRadius: RADIUS.md,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: CREAM_08,
     paddingHorizontal: SPACING.md,
     height: 48,
-    position: 'relative',
-    zIndex: 10,
   } as ViewStyle,
   inputFocused: {
     borderColor: COLORS.sage,
@@ -924,28 +781,100 @@ const styles = StyleSheet.create({
     padding: 0,
   } as TextStyle,
   swapBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.bg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.bgCard,
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
   dateRow: {
     flexDirection: 'row',
-    gap: SPACING.sm,
+    gap: SPACING.md,
   } as ViewStyle,
-  passengersRow: {
+  datePicker: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: CREAM_08,
+    paddingHorizontal: SPACING.md,
+    height: 44,
   } as ViewStyle,
-  passengersLabel: {
+  datePickerDisabled: {
+    opacity: 0.5,
+  } as ViewStyle,
+  dateText: {
+    fontFamily: FONTS.mono,
+    fontSize: 13,
+    color: COLORS.cream,
+  } as TextStyle,
+  tripTypeRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  } as ViewStyle,
+  tripPill: {
+    flex: 1,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.md,
+    alignItems: 'center',
+  } as ViewStyle,
+  tripPillSelected: {
+    backgroundColor: COLORS.sage,
+  } as ViewStyle,
+  tripPillUnselected: {
+    backgroundColor: COLORS.bgCard,
+  } as ViewStyle,
+  tripPillText: {
     fontFamily: FONTS.body,
     fontSize: 14,
+  } as TextStyle,
+  tripPillTextSelected: {
+    color: COLORS.bg,
+  } as TextStyle,
+  tripPillTextUnselected: {
     color: COLORS.cream,
+  } as TextStyle,
+  cabinRow: {
+    gap: SPACING.sm,
+    paddingVertical: SPACING.xs,
+  } as ViewStyle,
+  cabinPill: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.md,
+  } as ViewStyle,
+  cabinPillSelected: {
+    backgroundColor: COLORS.gold,
+  } as ViewStyle,
+  cabinPillUnselected: {
+    backgroundColor: COLORS.bgCard,
+  } as ViewStyle,
+  cabinPillText: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+  } as TextStyle,
+  cabinPillTextSelected: {
+    color: COLORS.bg,
+  } as TextStyle,
+  cabinPillTextUnselected: {
+    color: COLORS.cream,
+  } as TextStyle,
+  passengerRow: {
+    flexDirection: 'row',
+    gap: SPACING.xl,
+  } as ViewStyle,
+  counterWrap: {
+    flex: 1,
+    gap: SPACING.xs,
+  } as ViewStyle,
+  counterLabel: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: CREAM_60,
   } as TextStyle,
   counter: {
     flexDirection: 'row',
@@ -953,30 +882,90 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   } as ViewStyle,
   counterBtn: {
-    width: 32,
-    height: 32,
+    width: 36,
+    height: 36,
     borderRadius: RADIUS.sm,
-    backgroundColor: COLORS.bg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    backgroundColor: COLORS.bgCard,
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
   counterValue: {
     fontFamily: FONTS.mono,
-    fontSize: 16,
+    fontSize: 18,
     color: COLORS.cream,
-    width: 24,
-    textAlign: 'center',
   } as TextStyle,
-  searchBtn: {
+
+  calendarSection: {
+    paddingVertical: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: CREAM_08,
+  } as ViewStyle,
+  calendarRow: {
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.sm,
     flexDirection: 'row',
+  } as ViewStyle,
+  calendarCol: {
+    width: 56,
+    alignItems: 'center',
+    position: 'relative',
+  } as ViewStyle,
+  calendarColSelected: {
+    backgroundColor: COLORS.sageFaint,
+    borderRadius: RADIUS.sm,
+    paddingHorizontal: SPACING.xs,
+  } as ViewStyle,
+  bestDayBadge: {
+    position: 'absolute',
+    top: -20,
+    backgroundColor: COLORS.sage,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: RADIUS.sm,
+  } as ViewStyle,
+  bestDayText: {
+    fontFamily: FONTS.mono,
+    fontSize: 9,
+    color: COLORS.bg,
+  } as TextStyle,
+  calendarDayName: {
+    fontFamily: FONTS.body,
+    fontSize: 11,
+    color: CREAM_50,
+  } as TextStyle,
+  calendarDayNum: {
+    fontFamily: FONTS.mono,
+    fontSize: 14,
+    color: COLORS.cream,
+    marginTop: 2,
+  } as TextStyle,
+  priceBar: {
+    width: 24,
+    borderRadius: RADIUS.sm,
+    marginTop: SPACING.sm,
+    alignSelf: 'center',
+  } as ViewStyle,
+  calendarPrice: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.cream,
+    marginTop: SPACING.xs,
+  } as TextStyle,
+
+  searchSection: {
+    padding: SPACING.lg,
+  } as ViewStyle,
+  searchBtn: {
+    height: 52,
+    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.sage,
     alignItems: 'center',
     justifyContent: 'center',
+    flexDirection: 'row',
     gap: SPACING.sm,
-    height: 52,
-    borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.sage,
+  } as ViewStyle,
+  searchBtnDisabled: {
+    opacity: 0.9,
   } as ViewStyle,
   searchBtnText: {
     fontFamily: FONTS.header,
@@ -984,156 +973,246 @@ const styles = StyleSheet.create({
     color: COLORS.bg,
   } as TextStyle,
 
-  // ── Section Headers ──
-  sectionHeader: {
-    paddingHorizontal: SPACING.lg,
-    marginBottom: SPACING.md,
+  resultsScroll: {
+    flex: 1,
   } as ViewStyle,
-  sectionTitle: {
+  resultsContent: {
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.xxl,
+  } as ViewStyle,
+  emptyState: {
+    alignItems: 'center',
+    paddingTop: SPACING.xl,
+    gap: SPACING.md,
+  } as ViewStyle,
+  emptyTitle: {
     fontFamily: FONTS.header,
-    fontSize: 24,
+    fontSize: 28,
     color: COLORS.cream,
+    textAlign: 'center',
   } as TextStyle,
-  sectionSub: {
+  emptyText: {
     fontFamily: FONTS.body,
+    fontSize: 14,
+    color: CREAM_50,
+    textAlign: 'center',
+    lineHeight: 20,
+  } as TextStyle,
+  emptySubtitle: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: CREAM_50,
+  } as TextStyle,
+  trendingSection: {
+    width: '100%',
+    marginTop: SPACING.lg,
+    gap: SPACING.sm,
+  } as ViewStyle,
+  trendingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  } as ViewStyle,
+  trendingLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.gold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  } as TextStyle,
+  trendingChips: {
+    gap: SPACING.sm,
+  } as ViewStyle,
+  trendingChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    gap: SPACING.sm,
+  } as ViewStyle,
+  trendingChipFrom: {
+    fontFamily: FONTS.bodyMedium,
     fontSize: 13,
-    color: COLORS.creamMuted,
-    marginTop: 2,
+    color: COLORS.cream,
+    flex: 1,
+  } as TextStyle,
+  trendingChipTo: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 13,
+    color: COLORS.cream,
+    flex: 1,
+  } as TextStyle,
+  trendingChipPrice: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.gold,
   } as TextStyle,
 
-  // ── Popular Routes Grid ──
-  routeGrid: {
+  resultsHeader: {
+    fontFamily: FONTS.mono,
+    fontSize: 13,
+    color: CREAM_50,
+    marginBottom: SPACING.sm,
+  } as TextStyle,
+  sortRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: SPACING.lg,
     gap: SPACING.sm,
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.md,
   } as ViewStyle,
-  routeCard: {
-    width: '48.5%' as unknown as number,
-    height: 180,
-    borderRadius: RADIUS.lg,
-    overflow: 'hidden',
+  sortPill: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.bgCard,
+  } as ViewStyle,
+  sortPillSelected: {
+    backgroundColor: COLORS.sageHighlight,
+  } as ViewStyle,
+  sortPillText: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.cream,
+  } as TextStyle,
+  sortPillTextSelected: {
+    color: COLORS.sage,
+    fontFamily: FONTS.bodyMedium,
+  } as TextStyle,
+
+  flightCard: {
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.xl,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
     borderWidth: 1,
     borderColor: COLORS.border,
   } as ViewStyle,
-  routeImage: {
-    ...StyleSheet.absoluteFillObject,
-    width: '100%',
-    height: '100%',
-  } as ImageStyle,
-  routeContent: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: SPACING.sm,
-  } as ViewStyle,
-  routeCodeRow: {
+  cardTop: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 4,
-    marginBottom: 2,
+    marginBottom: SPACING.sm,
   } as ViewStyle,
-  routeCode: {
+  airlineName: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.cream,
+  } as TextStyle,
+  airlineLogo: {
+    width: 36,
+    height: 36,
+    borderRadius: RADIUS.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
+  airlineCode: {
     fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.creamSoft,
-    letterSpacing: 1,
+    fontSize: 12,
+    color: COLORS.sage,
   } as TextStyle,
-  routeLabel: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 14,
-    color: COLORS.white,
-    marginBottom: 4,
-  } as TextStyle,
-  routeBottom: {
+  timeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   } as ViewStyle,
-  routePrice: {
+  time: {
     fontFamily: FONTS.mono,
-    fontSize: 12,
-    color: COLORS.gold,
+    fontSize: 20,
+    color: COLORS.cream,
   } as TextStyle,
-  routeSearchBadge: {
-    backgroundColor: COLORS.sage,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 3,
-    borderRadius: RADIUS.sm,
+  durationBlock: {
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: SPACING.md,
   } as ViewStyle,
-  routeSearchText: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.bg,
-    letterSpacing: 0.5,
-  } as TextStyle,
-
-  // ── Inspiration ──
-  inspirationScroll: {
-    paddingHorizontal: SPACING.lg,
-    gap: SPACING.md,
-    paddingBottom: SPACING.xl,
-  } as ViewStyle,
-  inspirationCard: {
-    width: 200,
-    height: 260,
-    borderRadius: RADIUS.xl,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  } as ViewStyle,
-  inspirationImage: {
-    ...StyleSheet.absoluteFillObject,
-    width: '100%',
-    height: '100%',
-  } as ImageStyle,
-  inspirationContent: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: SPACING.md,
-  } as ViewStyle,
-  inspirationMonthBadge: {
+  durationLine: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: COLORS.overlayDim,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: RADIUS.sm,
-    marginBottom: SPACING.sm,
+    width: '100%',
+    height: 2,
+    backgroundColor: COLORS.border,
+    marginBottom: SPACING.xs,
+    justifyContent: 'center',
   } as ViewStyle,
-  inspirationMonthText: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.gold,
-    letterSpacing: 0.5,
-  } as TextStyle,
-  inspirationDest: {
-    fontFamily: FONTS.header,
-    fontSize: 22,
-    color: COLORS.white,
-  } as TextStyle,
-  inspirationReason: {
+  stopsText: {
     fontFamily: FONTS.body,
     fontSize: 12,
-    color: COLORS.creamSoft,
-    marginTop: 2,
-    lineHeight: 18,
+    color: CREAM_50,
   } as TextStyle,
-
-  // ── Disclaimer ──
-  disclaimer: {
+  cardBottom: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: SPACING.sm,
+    paddingTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  } as ViewStyle,
+  badges: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  } as ViewStyle,
+  badgeDeal: {
+    backgroundColor: COLORS.sage,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs / 2,
+    borderRadius: RADIUS.sm,
+  } as ViewStyle,
+  badgeDealText: {
     fontFamily: FONTS.body,
     fontSize: 11,
-    color: COLORS.creamDim,
-    textAlign: 'center',
-    paddingHorizontal: SPACING.xl,
-    marginTop: SPACING.md,
-    lineHeight: 16,
+    color: COLORS.bg,
   } as TextStyle,
+  badgeFastest: {
+    backgroundColor: CREAM_10,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs / 2,
+    borderRadius: RADIUS.sm,
+  } as ViewStyle,
+  badgeFastestText: {
+    fontFamily: FONTS.body,
+    fontSize: 11,
+    color: COLORS.cream,
+  } as TextStyle,
+  price: {
+    fontFamily: FONTS.monoMedium,
+    fontSize: 24,
+    color: COLORS.gold,
+  } as TextStyle,
+
+  // ── Error banner ──
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.coralSubtle,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.coral,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    marginHorizontal: SPACING.md,
+    marginBottom: SPACING.sm,
+    borderRadius: RADIUS.sm,
+  } as ViewStyle,
+  errorBannerText: {
+    flex: 1,
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.cream,
+  } as TextStyle,
+  errorRetryText: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.coral,
+    marginLeft: SPACING.sm,
+  } as TextStyle,
+
+  // ── Skeleton loaders ──
+  skeletonContainer: {
+    gap: SPACING.sm,
+    paddingTop: SPACING.sm,
+  } as ViewStyle,
 });

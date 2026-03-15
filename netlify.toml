@@ -1,10 +1,12 @@
 [build]
-  command = "npx expo export --platform web"
+  command = "npx expo export --platform web && cp docs/waitlist.html dist/waitlist.html && echo '/waitlist.html  /waitlist.html  200\n/*  /index.html  200' > dist/_redirects"
   publish = "dist"
-  ignore = "git diff --quiet HEAD~1 HEAD -- app/ components/ lib/ supabase/functions/ package.json"
 
 [build.environment]
   NODE_VERSION = "18"
+  EXPO_NO_TELEMETRY = "1"
+  # EXPO_PUBLIC_* env vars are set in Netlify Dashboard → Environment Variables
+  # (Netlify's secret scanner blocks API keys in netlify.toml)
 
 # Serve waitlist.html directly (not caught by SPA fallback)
 [[redirects]]
