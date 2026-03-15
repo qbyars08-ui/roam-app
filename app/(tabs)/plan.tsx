@@ -199,6 +199,7 @@ export default function PlanScreen() {
   const [networkError, setNetworkError] = useState<string | null>(null);
   const [rateLimitVisible, setRateLimitVisible] = useState(false);
   const [showGenerator, setShowGenerator] = useState(false);
+  const [customizeAfterGenerate, setCustomizeAfterGenerate] = useState(false);
   const generatingDestRef = useRef<string>('');
   const isMountedRef = useRef(true);
 
@@ -301,7 +302,7 @@ export default function PlanScreen() {
       await new Promise((r) => setTimeout(r, 800));
       if (!isMountedRef.current) return;
       setShowGenerator(false);
-      router.push({ pathname: '/itinerary', params: { tripId: trip.id } });
+      router.push({ pathname: '/itinerary', params: { tripId: trip.id, edit: customizeAfterGenerate ? '1' : '0' } });
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       if (err instanceof TripLimitReachedError) {
@@ -361,7 +362,7 @@ export default function PlanScreen() {
       await new Promise((r) => setTimeout(r, 800));
       if (!isMountedRef.current) return;
       setShowGenerator(false);
-      router.push({ pathname: '/itinerary', params: { tripId: trip.id } });
+      router.push({ pathname: '/itinerary', params: { tripId: trip.id, edit: customizeAfterGenerate ? '1' : '0' } });
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       if (err instanceof TripLimitReachedError) {
@@ -406,6 +407,35 @@ export default function PlanScreen() {
                 <Text style={styles.backToTripsText}>Back to my trips</Text>
               </Pressable>
             )}
+
+            {/* Generate vs Customize toggle */}
+            <View style={styles.modeToggle}>
+              <Pressable
+                style={[styles.modeOption, !customizeAfterGenerate && styles.modeOptionActive]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setCustomizeAfterGenerate(false);
+                }}
+              >
+                <Sparkles size={16} color={!customizeAfterGenerate ? COLORS.bg : COLORS.creamMuted} strokeWidth={2} />
+                <Text style={[styles.modeOptionText, !customizeAfterGenerate && styles.modeOptionTextActive]}>
+                  Generate for me
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[styles.modeOption, customizeAfterGenerate && styles.modeOptionActive]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setCustomizeAfterGenerate(true);
+                }}
+              >
+                <Wallet size={16} color={customizeAfterGenerate ? COLORS.bg : COLORS.creamMuted} strokeWidth={2} />
+                <Text style={[styles.modeOptionText, customizeAfterGenerate && styles.modeOptionTextActive]}>
+                  I'll customize
+                </Text>
+              </Pressable>
+            </View>
+
             <GenerateModeSelect onSelect={handleModeSelect} />
           </View>
         );
@@ -764,6 +794,34 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodyMedium,
     fontSize: 14,
     color: COLORS.sage,
+  } as TextStyle,
+  modeToggle: {
+    flexDirection: 'row',
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: 'hidden',
+  } as ViewStyle,
+  modeOption: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.sm + 2,
+  } as ViewStyle,
+  modeOptionActive: {
+    backgroundColor: COLORS.sage,
+  } as ViewStyle,
+  modeOptionText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 13,
+    color: COLORS.creamMuted,
+  } as TextStyle,
+  modeOptionTextActive: {
+    color: COLORS.bg,
   } as TextStyle,
 
   // ── Error banner ──

@@ -120,7 +120,7 @@ export default function ItineraryScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { t } = useTranslation();
-  const params = useLocalSearchParams<{ data?: string; tripId?: string; map?: string }>();
+  const params = useLocalSearchParams<{ data?: string; tripId?: string; map?: string; edit?: string }>();
   const trips = useAppStore((s) => s.trips);
 
   // ---------------------------------------------------------------------------
@@ -145,7 +145,7 @@ export default function ItineraryScreen() {
   const [viewMode, setViewMode] = useState<'list' | 'map'>(params.map === '1' ? 'map' : 'list');
   const [selectedPin, setSelectedPin] = useState<string | null>(null);
   const [safetyOverlay, setSafetyOverlay] = useState(false);
-  const [editMode, setEditMode] = useState(false);
+  const [editMode, setEditMode] = useState(params.edit === '1');
   const [shareVisible, setShareVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editingActivity, setEditingActivity] = useState<{
