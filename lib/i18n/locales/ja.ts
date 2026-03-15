@@ -498,6 +498,7 @@ const ja: TranslationKeys = {
     language: '\u8a00\u8a9e',
     selectLanguage: '\u8a00\u8a9e\u3092\u9078\u629e',
     english: 'English',
+    german: 'Deutsch',
     spanish: 'Espa\u00f1ol',
     french: 'Fran\u00e7ais',
     japanese: '\u65E5\u672C\u8A9E',
