@@ -182,8 +182,6 @@ const ja: TranslationKeys = {
     seeProPlans: 'Pro\u30d7\u30e9\u30f3\u3092\u898b\u308b',
     maybeLater: '\u307e\u305f\u4eca\u5ea6',
     dismiss: '\u9589\u3058\u308b',
-    peoplePlanningCount: '{{count}}\u4eba\u304c',
-    peoplePlanningMonth: '{{destination}}\u3092\u4eca\u6708\u8a08\u753b\u4e2d',
   },
 
   people: {
@@ -500,12 +498,12 @@ const ja: TranslationKeys = {
     language: '\u8a00\u8a9e',
     selectLanguage: '\u8a00\u8a9e\u3092\u9078\u629e',
     english: 'English',
-    german: 'Deutsch',
     spanish: 'Espa\u00f1ol',
     french: 'Fran\u00e7ais',
     japanese: '\u65E5\u672C\u8A9E',
     korean: '\uD55C\uAD6D\uC5B4',
     portuguese: 'Portugu\u00EAs',
+    german: 'Deutsch',
     languageChanged: '\u8a00\u8a9e\u304c\u5909\u66f4\u3055\u308c\u307e\u3057\u305f',
     restartRequired: '\u4e00\u90e8\u306e\u5909\u66f4\u306f\u30a2\u30d7\u30ea\u306e\u518d\u8d77\u52d5\u304c\u5fc5\u8981\u3067\u3059\u3002',
   },

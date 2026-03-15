@@ -23,6 +23,7 @@ export const SUPPORTED_LANGUAGES = [
   { code: 'es', label: 'Spanish', nativeLabel: 'Espa\u00f1ol' },
   { code: 'fr', label: 'French', nativeLabel: 'Fran\u00e7ais' },
   { code: 'ja', label: 'Japanese', nativeLabel: '\u65E5\u672C\u8A9E' },
+  { code: 'de', label: 'German', nativeLabel: 'Deutsch' },
 ] as const;
 
 export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number]['code'];
@@ -86,6 +87,7 @@ async function initI18n() {
       es: { translation: es },
       fr: { translation: fr },
       ja: { translation: ja },
+      de: { translation: de },
     },
     lng,
     fallbackLng: 'en',
