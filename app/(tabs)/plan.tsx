@@ -22,8 +22,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ChevronRight,
   Clock,
+  Lock,
   MapPin,
   Plus,
+  RefreshCw,
   Sparkles,
   Wallet,
   Utensils,
@@ -48,6 +50,7 @@ import { evaluateTrigger } from '../../lib/smart-triggers';
 import TripLimitBanner from '../../components/monetization/TripLimitBanner';
 import { track, trackEvent } from '../../lib/analytics';
 import { captureEvent } from '../../lib/posthog';
+import { EVENTS } from '../../lib/posthog-events';
 import { parseItinerary } from '../../lib/types/itinerary';
 
 // ---------------------------------------------------------------------------
@@ -188,6 +191,43 @@ const QUICK_ACTIONS = [
     color: COLORS.gold,
   },
 ];
+
+// ---------------------------------------------------------------------------
+// Pro Features Teaser — shown in trip list view for free users
+// ---------------------------------------------------------------------------
+function PlanProTeaser({ onUpgrade }: { onUpgrade: (feature: string) => void }) {
+  return (
+    <View style={planProStyles.row}>
+      <Pressable
+        style={({ pressed }) => [planProStyles.card, { opacity: pressed ? 0.85 : 1 }]}
+        onPress={() => onUpgrade('plan-regenerate')}
+      >
+        <RefreshCw size={16} color={COLORS.gold} strokeWidth={2} />
+        <Text style={planProStyles.label}>Re-generate</Text>
+        <Lock size={12} color={COLORS.gold} strokeWidth={2} />
+      </Pressable>
+      <Pressable
+        style={({ pressed }) => [planProStyles.card, { opacity: pressed ? 0.85 : 1 }]}
+        onPress={() => onUpgrade('plan-hotel-alternatives')}
+      >
+        <Bed size={16} color={COLORS.gold} strokeWidth={2} />
+        <Text style={planProStyles.label}>Hotel alternatives</Text>
+        <Lock size={12} color={COLORS.gold} strokeWidth={2} />
+      </Pressable>
+    </View>
+  );
+}
+
+const planProStyles = StyleSheet.create({
+  row: { flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.xl } as ViewStyle,
+  card: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg,
+    borderWidth: 1, borderColor: COLORS.goldBorder,
+    paddingVertical: SPACING.sm, paddingHorizontal: SPACING.md,
+  } as ViewStyle,
+  label: { flex: 1, fontFamily: FONTS.bodyMedium, fontSize: 12, color: COLORS.gold } as TextStyle,
+});
 
 // ---------------------------------------------------------------------------
 // Main Component
@@ -389,6 +429,12 @@ export default function PlanScreen() {
     router.push({ pathname: '/itinerary', params: { tripId: trip.id } });
   }, [router]);
 
+  const handlePlanProUpgrade = useCallback((feature: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    captureEvent(EVENTS.PRO_GATE_SHOWN.name, { feature });
+    router.push({ pathname: '/paywall', params: { reason: 'feature', feature } } as never);
+  }, [router]);
+
   // ── Render: Generator mode ──
   if (showGenerator || !hasTrips) {
     const renderGeneratorContent = () => {
@@ -507,6 +553,9 @@ export default function PlanScreen() {
             </Pressable>
           ))}
         </View>
+
+        {/* Pro features teaser (free users only) */}
+        {!isPro && <PlanProTeaser onUpgrade={handlePlanProUpgrade} />}
 
         {/* Trip Cards */}
         <Text style={styles.sectionLabel}>YOUR TRIPS</Text>

@@ -22,9 +22,9 @@ import {
   ChevronRight,
   Globe,
   Heart,
+  Lock,
   MapPin,
   MessageCircle,
-  Search,
   Sparkles,
   Users,
   Zap,
@@ -33,6 +33,14 @@ import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
 import { track } from '../../lib/analytics';
+import { captureEvent } from '../../lib/posthog';
+import { EVENTS } from '../../lib/posthog-events';
+
+// ---------------------------------------------------------------------------
+// Gate limits
+// ---------------------------------------------------------------------------
+const FREE_MATCH_LIMIT = 3; // free users see this many traveler cards
+const FREE_GROUP_LIMIT = 1; // free users can join this many groups
 
 // ---------------------------------------------------------------------------
 // Mock traveler data — replace with Supabase queries
@@ -155,17 +163,22 @@ const MOCK_GROUPS: TripGroup[] = [
 const TravelerCard = React.memo(function TravelerCard({
   traveler,
   onPress,
+  onConnect,
+  isLocked = false,
 }: {
   traveler: Traveler;
   onPress: () => void;
+  onConnect: () => void;
+  isLocked?: boolean;
 }) {
   return (
     <Pressable
       onPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        if (isLocked) { onConnect(); return; }
         onPress();
       }}
-      style={({ pressed }) => [styles.travelerCard, { transform: [{ scale: pressed ? 0.97 : 1 }] }]}
+      style={({ pressed }) => [styles.travelerCard, isLocked && styles.travelerCardLocked, { transform: [{ scale: pressed ? 0.97 : 1 }] }]}
     >
       <View style={styles.travelerHeader}>
         <Image source={{ uri: traveler.avatar }} style={styles.travelerAvatar} />
@@ -204,16 +217,15 @@ const TravelerCard = React.memo(function TravelerCard({
           style={({ pressed }) => [styles.actionBtn, styles.actionBtnPrimary, { opacity: pressed ? 0.85 : 1 }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            onConnect();
           }}
         >
-          <MessageCircle size={16} color={COLORS.bg} strokeWidth={2} />
-          <Text style={styles.actionBtnPrimaryText}>Connect</Text>
+          {isLocked ? <Lock size={14} color={COLORS.bg} strokeWidth={2} /> : <MessageCircle size={16} color={COLORS.bg} strokeWidth={2} />}
+          <Text style={styles.actionBtnPrimaryText}>{isLocked ? 'Pro' : 'Connect'}</Text>
         </Pressable>
         <Pressable
           style={({ pressed }) => [styles.actionBtn, styles.actionBtnSecondary, { opacity: pressed ? 0.85 : 1 }]}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          }}
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
         >
           <Heart size={16} color={COLORS.cream} strokeWidth={2} />
         </Pressable>
@@ -228,9 +240,11 @@ const TravelerCard = React.memo(function TravelerCard({
 const GroupCard = React.memo(function GroupCard({
   group,
   onPress,
+  isLocked = false,
 }: {
   group: TripGroup;
   onPress: () => void;
+  isLocked?: boolean;
 }) {
   return (
     <Pressable
@@ -241,10 +255,13 @@ const GroupCard = React.memo(function GroupCard({
       style={({ pressed }) => [styles.groupCard, { transform: [{ scale: pressed ? 0.96 : 1 }] }]}
     >
       <Image source={{ uri: group.image }} style={styles.groupImage} />
-      <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.7)']}
-        style={styles.groupGradient}
-      />
+      <LinearGradient colors={['transparent', 'rgba(0,0,0,0.7)']} style={styles.groupGradient} />
+      {isLocked && (
+        <View style={styles.groupLockBadge}>
+          <Lock size={12} color={COLORS.gold} strokeWidth={2} />
+          <Text style={styles.groupLockText}>Pro</Text>
+        </View>
+      )}
       <View style={styles.groupContent}>
         <View style={styles.groupMemberBadge}>
           <Users size={12} color={COLORS.bg} strokeWidth={2} />
@@ -261,30 +278,66 @@ const GroupCard = React.memo(function GroupCard({
 });
 
 // ---------------------------------------------------------------------------
+// Pro Gate Banner — shown between card 3 and card 4
+// ---------------------------------------------------------------------------
+function PeopleProGateBanner({ onUpgrade }: { onUpgrade: () => void }) {
+  return (
+    <Pressable onPress={onUpgrade} style={({ pressed }) => [styles.gateCard, { opacity: pressed ? 0.9 : 1 }]}>
+      <LinearGradient colors={[COLORS.goldFaint, COLORS.bg]} style={StyleSheet.absoluteFill} />
+      <View style={styles.gateRow}>
+        <Lock size={18} color={COLORS.gold} strokeWidth={2} />
+        <View style={styles.gateText}>
+          <Text style={styles.gateTitle}>Unlock all travelers</Text>
+          <Text style={styles.gateSub}>Pro: unlimited matches, direct messages, group creation</Text>
+        </View>
+        <ChevronRight size={18} color={COLORS.gold} strokeWidth={2} />
+      </View>
+    </Pressable>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main Component
 // ---------------------------------------------------------------------------
 export default function PeopleScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const isPro = useAppStore((s) => s.isPro);
 
   useEffect(() => {
     track({ type: 'screen_view', screen: 'people' });
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 400,
-      useNativeDriver: true,
-    }).start();
+    Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
   }, [fadeAnim]);
 
-  const handleTravelerPress = useCallback((traveler: Traveler) => {
-    // Future: navigate to traveler profile
-    router.push({ pathname: '/coming-soon', params: { title: `${traveler.name}'s Profile` } } as never);
+  const handleUpgrade = useCallback((feature: string, reason: string) => {
+    captureEvent(EVENTS.PRO_GATE_SHOWN.name, { feature });
+    router.push({ pathname: '/paywall', params: { reason, feature } } as never);
   }, [router]);
 
-  const handleGroupPress = useCallback((group: TripGroup) => {
+  const handleTravelerPress = useCallback((traveler: Traveler, index: number) => {
+    if (!isPro && index >= FREE_MATCH_LIMIT) {
+      handleUpgrade('people-unlimited-matches', 'feature');
+      return;
+    }
+    router.push({ pathname: '/coming-soon', params: { title: `${traveler.name}'s Profile` } } as never);
+  }, [isPro, router, handleUpgrade]);
+
+  const handleConnect = useCallback((traveler: Traveler) => {
+    if (!isPro) {
+      handleUpgrade('people-dm', 'feature');
+      return;
+    }
+    router.push({ pathname: '/coming-soon', params: { title: `Message ${traveler.name}` } } as never);
+  }, [isPro, router, handleUpgrade]);
+
+  const handleGroupPress = useCallback((group: TripGroup, index: number) => {
+    if (!isPro && index >= FREE_GROUP_LIMIT) {
+      handleUpgrade('people-groups', 'feature');
+      return;
+    }
     router.push({ pathname: '/coming-soon', params: { title: `${group.destination} Group Trip` } } as never);
-  }, [router]);
+  }, [isPro, router, handleUpgrade]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -340,11 +393,12 @@ export default function PeopleScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.groupsScroll}
         >
-          {MOCK_GROUPS.map((group) => (
+          {MOCK_GROUPS.map((group, index) => (
             <GroupCard
               key={group.id}
               group={group}
-              onPress={() => handleGroupPress(group)}
+              isLocked={!isPro && index >= FREE_GROUP_LIMIT}
+              onPress={() => handleGroupPress(group, index)}
             />
           ))}
         </ScrollView>
@@ -355,12 +409,18 @@ export default function PeopleScreen() {
           <Text style={styles.sectionSub}>People heading to your destinations</Text>
         </View>
 
-        {MOCK_TRAVELERS.map((traveler) => (
-          <TravelerCard
-            key={traveler.id}
-            traveler={traveler}
-            onPress={() => handleTravelerPress(traveler)}
-          />
+        {MOCK_TRAVELERS.map((traveler, index) => (
+          <React.Fragment key={traveler.id}>
+            {!isPro && index === FREE_MATCH_LIMIT && (
+              <PeopleProGateBanner onUpgrade={() => handleUpgrade('people-unlimited-matches', 'feature')} />
+            )}
+            <TravelerCard
+              traveler={traveler}
+              isLocked={!isPro && index >= FREE_MATCH_LIMIT}
+              onPress={() => handleTravelerPress(traveler, index)}
+              onConnect={() => handleConnect(traveler)}
+            />
+          </React.Fragment>
         ))}
 
         {/* Bottom CTA */}
@@ -451,9 +511,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.lg,
     gap: SPACING.md,
   } as ViewStyle,
-  heroStat: {
-    alignItems: 'center',
-  } as ViewStyle,
+  heroStat: { alignItems: 'center' } as ViewStyle,
   heroStatNum: {
     fontFamily: FONTS.mono,
     fontSize: 20,
@@ -465,17 +523,10 @@ const styles = StyleSheet.create({
     color: COLORS.creamMuted,
     marginTop: 2,
   } as TextStyle,
-  heroStatDivider: {
-    width: 1,
-    height: 30,
-    backgroundColor: COLORS.border,
-  } as ViewStyle,
+  heroStatDivider: { width: 1, height: 30, backgroundColor: COLORS.border } as ViewStyle,
 
   // ── Section Headers ──
-  sectionHeader: {
-    paddingHorizontal: SPACING.lg,
-    marginBottom: SPACING.md,
-  } as ViewStyle,
+  sectionHeader: { paddingHorizontal: SPACING.lg, marginBottom: SPACING.md } as ViewStyle,
   sectionTitle: {
     fontFamily: FONTS.header,
     fontSize: 22,
@@ -507,9 +558,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   } as ImageStyle,
-  groupGradient: {
-    ...StyleSheet.absoluteFillObject,
-  } as ViewStyle,
+  groupGradient: { ...StyleSheet.absoluteFillObject } as ViewStyle,
   groupContent: {
     position: 'absolute',
     bottom: 0,
@@ -528,11 +577,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.sm,
     marginBottom: SPACING.sm,
   } as ViewStyle,
-  groupMemberText: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.bg,
-  } as TextStyle,
+  groupMemberText: { fontFamily: FONTS.mono, fontSize: 11, color: COLORS.bg } as TextStyle,
   groupDest: {
     fontFamily: FONTS.header,
     fontSize: 22,
@@ -580,9 +625,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: COLORS.sageBorder,
   } as ImageStyle,
-  travelerInfo: {
-    flex: 1,
-  } as ViewStyle,
+  travelerInfo: { flex: 1 } as ViewStyle,
   travelerNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -643,11 +686,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: RADIUS.sm,
   } as ViewStyle,
-  vibePillText: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.creamMuted,
-  } as TextStyle,
+  vibePillText: { fontFamily: FONTS.mono, fontSize: 11, color: COLORS.creamMuted } as TextStyle,
   countriesPill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -657,11 +696,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: RADIUS.sm,
   } as ViewStyle,
-  countriesText: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.gold,
-  } as TextStyle,
+  countriesText: { fontFamily: FONTS.mono, fontSize: 11, color: COLORS.gold } as TextStyle,
   travelerActions: {
     flexDirection: 'row',
     gap: SPACING.sm,
@@ -675,19 +710,9 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
     borderRadius: RADIUS.md,
   } as ViewStyle,
-  actionBtnPrimary: {
-    flex: 1,
-    backgroundColor: COLORS.sage,
-  } as ViewStyle,
-  actionBtnPrimaryText: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 14,
-    color: COLORS.bg,
-  } as TextStyle,
-  actionBtnSecondary: {
-    width: 44,
-    backgroundColor: COLORS.bgGlass,
-  } as ViewStyle,
+  actionBtnPrimary: { flex: 1, backgroundColor: COLORS.sage } as ViewStyle,
+  actionBtnPrimaryText: { fontFamily: FONTS.bodySemiBold, fontSize: 14, color: COLORS.bg } as TextStyle,
+  actionBtnSecondary: { width: 44, backgroundColor: COLORS.bgGlass } as ViewStyle,
 
   // ── Bottom CTA ──
   bottomCta: {
@@ -716,5 +741,57 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodySemiBold,
     fontSize: 14,
     color: COLORS.sage,
+  } as TextStyle,
+
+  // ── Pro Gate ──
+  travelerCardLocked: {
+    opacity: 0.55,
+  } as ViewStyle,
+  gateCard: {
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.goldBorder,
+    padding: SPACING.md,
+    overflow: 'hidden',
+  } as ViewStyle,
+  gateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+  } as ViewStyle,
+  gateText: {
+    flex: 1,
+  } as ViewStyle,
+  gateTitle: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.gold,
+  } as TextStyle,
+  gateSub: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+    marginTop: 2,
+  } as TextStyle,
+  groupLockBadge: {
+    position: 'absolute',
+    top: SPACING.sm,
+    right: SPACING.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: COLORS.overlayDark,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.goldBorder,
+  } as ViewStyle,
+  groupLockText: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.gold,
   } as TextStyle,
 });
