@@ -1,14 +1,10 @@
 [build]
   command = "npx expo export --platform web"
   publish = "dist"
+  ignore = "git diff --quiet HEAD~1 HEAD -- app/ components/ lib/ supabase/functions/ package.json"
 
 [build.environment]
   NODE_VERSION = "18"
-
-# Only rebuild when actual app code changes
-# Not when roam/*.md files change
-[build.ignore]
-  command = "git diff --quiet HEAD~1 HEAD -- app/ components/ lib/ supabase/functions/ package.json"
 
 # Serve waitlist.html directly (not caught by SPA fallback)
 [[redirects]]

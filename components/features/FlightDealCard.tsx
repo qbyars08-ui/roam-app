@@ -48,7 +48,7 @@ export default function FlightDealCard({ destination, onDealAlert }: FlightDealC
     } catch {
       Alert.alert(
         'Couldn\'t add',
-        'Something went wrong. Try again.',
+        'Couldn\u2019t save this route. Try again in a moment.',
         [{ text: 'OK' }]
       );
     } finally {
