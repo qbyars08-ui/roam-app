@@ -168,10 +168,20 @@ export default function PaywallScreen() {
         return params.destination
           ? `You just planned ${params.destination}.\nUnlock unlimited trips.`
           : upgradeMsg.headline;
-      case 'feature':
-        return params.feature
-          ? `${params.feature} is a Pro feature.\nUpgrade to unlock everything.`
-          : upgradeMsg.headline;
+      case 'feature': {
+        const f = params.feature ?? '';
+        if (f === 'people-dm' || f === 'people-unlimited-matches')
+          return 'Your travel squad is out there.\nPro unlocks real connections.';
+        if (f === 'people-create-group')
+          return 'Start your own group trip.\nPro lets you build the crew.';
+        if (f === 'people-groups')
+          return 'Join every group going your way.\nPro removes the limit.';
+        if (f === 'people-live-presence')
+          return 'See who\'s in [destination] right now.\nPro shows live travelers.';
+        if (f.startsWith('plan-'))
+          return 'Your itinerary, your way.\nPro unlocks AI re-generation and custom alternatives.';
+        return f ? `${f} is a Pro feature.\nUpgrade to unlock everything.` : upgradeMsg.headline;
+      }
       case 'chaos':
         return 'Chaos Mode needs fuel.\nGo Pro for unlimited random trips.';
       case 'group':

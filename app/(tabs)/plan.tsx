@@ -5,34 +5,18 @@
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import {
   Animated,
-  Image,
-  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
-  type ImageStyle,
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  ChevronRight,
-  Clock,
-  Lock,
-  MapPin,
-  Plus,
-  RefreshCw,
-  Sparkles,
-  Wallet,
-  Utensils,
-  Bed,
-  Calendar,
-  Plane,
-} from 'lucide-react-native';
+import { Plus, Utensils, Bed, Plane } from 'lucide-react-native';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore, type Trip } from '../../lib/store';
@@ -51,26 +35,9 @@ import TripLimitBanner from '../../components/monetization/TripLimitBanner';
 import { track, trackEvent } from '../../lib/analytics';
 import { captureEvent } from '../../lib/posthog';
 import { EVENTS } from '../../lib/posthog-events';
-import { parseItinerary } from '../../lib/types/itinerary';
-
-// ---------------------------------------------------------------------------
-// Destination images for trip cards
-// ---------------------------------------------------------------------------
-const DEST_IMAGES: Record<string, string> = {
-  Tokyo: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&q=80',
-  Bali: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&q=80',
-  Lisbon: 'https://images.unsplash.com/photo-1585208798174-6cedd86e019a?w=600&q=80',
-  Barcelona: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=600&q=80',
-  Paris: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&q=80',
-  London: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=600&q=80',
-  Bangkok: 'https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=600&q=80',
-  'Mexico City': 'https://images.unsplash.com/photo-1585464231875-d9ef1f5ad396?w=600&q=80',
-  Kyoto: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=600&q=80',
-  Marrakech: 'https://images.unsplash.com/photo-1597212618440-806262de4f6b?w=600&q=80',
-  Budapest: 'https://images.unsplash.com/photo-1549285509-8fe27c27302b?w=600&q=80',
-};
-
-const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&q=80';
+import PlanTripCard from '../../components/features/PlanTripCard';
+import PlanRateLimitModal from '../../components/features/PlanRateLimitModal';
+import PlanProTeaser from '../../components/features/PlanProTeaser';
 
 const RANDOM_CITIES = [
   'Tokyo', 'Bali', 'Lisbon', 'Mexico City', 'Bangkok', 'Barcelona', 'Cape Town',
@@ -85,85 +52,6 @@ interface ConversationBrief {
   vibes: string[];
 }
 
-// ---------------------------------------------------------------------------
-// Trip Card Component
-// ---------------------------------------------------------------------------
-const TripCard = React.memo(function TripCard({
-  trip,
-  onPress,
-  isLatest,
-}: {
-  trip: Trip;
-  onPress: () => void;
-  isLatest: boolean;
-}) {
-  const imageUrl = DEST_IMAGES[trip.destination] ?? FALLBACK_IMAGE;
-  const parsed = useMemo(() => {
-    try {
-      return parseItinerary(JSON.parse(trip.itinerary));
-    } catch {
-      return null;
-    }
-  }, [trip.itinerary]);
-
-  const dayCount = parsed?.days?.length ?? trip.days;
-  const dateLabel = useMemo(() => {
-    const d = new Date(trip.createdAt);
-    const now = new Date();
-    const diffMs = now.getTime() - d.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  }, [trip.createdAt]);
-
-  return (
-    <Pressable
-      onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        onPress();
-      }}
-      style={({ pressed }) => [
-        styles.tripCard,
-        isLatest && styles.tripCardLatest,
-        { transform: [{ scale: pressed ? 0.97 : 1 }] },
-      ]}
-    >
-      <Image source={{ uri: imageUrl }} style={styles.tripCardImage} />
-      <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.7)']}
-        style={styles.tripCardGradient}
-      />
-      {isLatest && (
-        <View style={styles.latestBadge}>
-          <Sparkles size={10} color={COLORS.bg} />
-          <Text style={styles.latestBadgeText}>LATEST</Text>
-        </View>
-      )}
-      <View style={styles.tripCardContent}>
-        <Text style={styles.tripCardDest}>{trip.destination}</Text>
-        <View style={styles.tripCardMeta}>
-          <View style={styles.tripCardChip}>
-            <Calendar size={12} color={COLORS.creamSoft} strokeWidth={2} />
-            <Text style={styles.tripCardChipText}>{dayCount} days</Text>
-          </View>
-          <View style={styles.tripCardChip}>
-            <Wallet size={12} color={COLORS.creamSoft} strokeWidth={2} />
-            <Text style={styles.tripCardChipText}>{trip.budget}</Text>
-          </View>
-          <View style={styles.tripCardChip}>
-            <Clock size={12} color={COLORS.creamSoft} strokeWidth={2} />
-            <Text style={styles.tripCardChipText}>{dateLabel}</Text>
-          </View>
-        </View>
-      </View>
-      <View style={styles.tripCardArrow}>
-        <ChevronRight size={20} color={COLORS.cream} strokeWidth={2} />
-      </View>
-    </Pressable>
-  );
-});
 
 // ---------------------------------------------------------------------------
 // Quick Action Cards
@@ -191,43 +79,6 @@ const QUICK_ACTIONS = [
     color: COLORS.gold,
   },
 ];
-
-// ---------------------------------------------------------------------------
-// Pro Features Teaser — shown in trip list view for free users
-// ---------------------------------------------------------------------------
-function PlanProTeaser({ onUpgrade }: { onUpgrade: (feature: string) => void }) {
-  return (
-    <View style={planProStyles.row}>
-      <Pressable
-        style={({ pressed }) => [planProStyles.card, { opacity: pressed ? 0.85 : 1 }]}
-        onPress={() => onUpgrade('plan-regenerate')}
-      >
-        <RefreshCw size={16} color={COLORS.gold} strokeWidth={2} />
-        <Text style={planProStyles.label}>Re-generate</Text>
-        <Lock size={12} color={COLORS.gold} strokeWidth={2} />
-      </Pressable>
-      <Pressable
-        style={({ pressed }) => [planProStyles.card, { opacity: pressed ? 0.85 : 1 }]}
-        onPress={() => onUpgrade('plan-hotel-alternatives')}
-      >
-        <Bed size={16} color={COLORS.gold} strokeWidth={2} />
-        <Text style={planProStyles.label}>Hotel alternatives</Text>
-        <Lock size={12} color={COLORS.gold} strokeWidth={2} />
-      </Pressable>
-    </View>
-  );
-}
-
-const planProStyles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.xl } as ViewStyle,
-  card: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg,
-    borderWidth: 1, borderColor: COLORS.goldBorder,
-    paddingVertical: SPACING.sm, paddingHorizontal: SPACING.md,
-  } as ViewStyle,
-  label: { flex: 1, fontFamily: FONTS.bodyMedium, fontSize: 12, color: COLORS.gold } as TextStyle,
-});
 
 // ---------------------------------------------------------------------------
 // Main Component
@@ -498,7 +349,7 @@ export default function PlanScreen() {
             <TripGeneratingLoader destination={generatingDestRef.current} />
           </View>
         )}
-        <RateLimitModal
+        <PlanRateLimitModal
           visible={rateLimitVisible}
           onUpgrade={handleUpgrade}
           onDismiss={() => setRateLimitVisible(false)}
@@ -560,7 +411,7 @@ export default function PlanScreen() {
         {/* Trip Cards */}
         <Text style={styles.sectionLabel}>YOUR TRIPS</Text>
         {sortedTrips.map((trip, index) => (
-          <TripCard
+          <PlanTripCard
             key={trip.id}
             trip={trip}
             onPress={() => handleTripPress(trip)}
@@ -574,7 +425,7 @@ export default function PlanScreen() {
           <TripGeneratingLoader destination={generatingDestRef.current} />
         </View>
       )}
-      <RateLimitModal
+      <PlanRateLimitModal
         visible={rateLimitVisible}
         onUpgrade={handleUpgrade}
         onDismiss={() => setRateLimitVisible(false)}
@@ -583,44 +434,6 @@ export default function PlanScreen() {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Rate Limit Modal (extracted)
-// ---------------------------------------------------------------------------
-function RateLimitModal({
-  visible,
-  onUpgrade,
-  onDismiss,
-}: {
-  visible: boolean;
-  onUpgrade: () => void;
-  onDismiss: () => void;
-}) {
-  return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onDismiss}>
-      <View style={styles.rateLimitOverlay}>
-        <View style={styles.rateLimitCard}>
-          <View style={styles.rateLimitDot} />
-          <Text style={styles.rateLimitTitle}>You hit your free limit</Text>
-          <Text style={styles.rateLimitBody}>
-            Free accounts get {FREE_TRIPS_PER_MONTH} trip per month. Upgrade to Pro for
-            unlimited trips and the full ROAM experience.
-          </Text>
-          <Pressable onPress={onUpgrade} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
-            <LinearGradient
-              colors={[COLORS.gold, COLORS.goldDark]}
-              style={styles.rateLimitUpgradeBtn}
-            >
-              <Text style={styles.rateLimitUpgradeText}>See Pro Plans</Text>
-            </LinearGradient>
-          </Pressable>
-          <Pressable onPress={onDismiss} style={styles.rateLimitDismiss} hitSlop={12}>
-            <Text style={styles.rateLimitDismissText}>Maybe later</Text>
-          </Pressable>
-        </View>
-      </View>
-    </Modal>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Styles
@@ -721,88 +534,6 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   } as TextStyle,
 
-  // ── Trip Cards ──
-  tripCard: {
-    height: 160,
-    borderRadius: RADIUS.xl,
-    overflow: 'hidden',
-    marginBottom: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  } as ViewStyle,
-  tripCardLatest: {
-    height: 200,
-    borderColor: COLORS.sageBorder,
-  } as ViewStyle,
-  tripCardImage: {
-    ...StyleSheet.absoluteFillObject,
-    width: '100%',
-    height: '100%',
-  } as ImageStyle,
-  tripCardGradient: {
-    ...StyleSheet.absoluteFillObject,
-  } as ViewStyle,
-  tripCardContent: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: SPACING.md,
-  } as ViewStyle,
-  tripCardDest: {
-    fontFamily: FONTS.header,
-    fontSize: 28,
-    color: '#FFFFFF',
-    marginBottom: 6,
-  } as TextStyle,
-  tripCardMeta: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-  } as ViewStyle,
-  tripCardChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: RADIUS.sm,
-  } as ViewStyle,
-  tripCardChipText: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.creamSoft,
-  } as TextStyle,
-  tripCardArrow: {
-    position: 'absolute',
-    right: SPACING.md,
-    top: '50%',
-    marginTop: -10,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: RADIUS.full,
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  } as ViewStyle,
-  latestBadge: {
-    position: 'absolute',
-    top: SPACING.md,
-    left: SPACING.md,
-    backgroundColor: COLORS.sage,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: RADIUS.sm,
-  } as ViewStyle,
-  latestBadgeText: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.bg,
-    letterSpacing: 0.5,
-  } as TextStyle,
 
   // ── Back to trips ──
   backToTrips: {
@@ -849,64 +580,4 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.bg,
   } as ViewStyle,
 
-  // ── Rate Limit Modal ──
-  rateLimitOverlay: {
-    flex: 1,
-    backgroundColor: COLORS.overlay,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: SPACING.lg,
-  } as ViewStyle,
-  rateLimitCard: {
-    backgroundColor: COLORS.bg,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.goldBorder,
-    padding: SPACING.xl,
-    alignItems: 'center',
-    width: '100%',
-    maxWidth: 360,
-  } as ViewStyle,
-  rateLimitDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: COLORS.gold,
-    marginBottom: SPACING.md,
-  } as ViewStyle,
-  rateLimitTitle: {
-    fontFamily: FONTS.header,
-    fontSize: 24,
-    color: COLORS.cream,
-    textAlign: 'center',
-    marginBottom: SPACING.sm,
-  } as TextStyle,
-  rateLimitBody: {
-    fontFamily: FONTS.body,
-    fontSize: 14,
-    color: COLORS.creamMuted,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: SPACING.lg,
-  } as TextStyle,
-  rateLimitUpgradeBtn: {
-    borderRadius: RADIUS.lg,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.xxl,
-    alignItems: 'center',
-  } as ViewStyle,
-  rateLimitUpgradeText: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 16,
-    color: COLORS.bg,
-  } as TextStyle,
-  rateLimitDismiss: {
-    marginTop: SPACING.md,
-    paddingVertical: SPACING.sm,
-  } as ViewStyle,
-  rateLimitDismissText: {
-    fontFamily: FONTS.bodyMedium,
-    fontSize: 14,
-    color: COLORS.creamMuted,
-  } as TextStyle,
 });
