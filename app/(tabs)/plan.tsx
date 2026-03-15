@@ -19,17 +19,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  Bed,
-  Calendar,
   ChevronRight,
   Clock,
-  Plane,
   Plus,
   Sparkles,
-  Users,
-  Utensils,
   Wallet,
-  X,
+  Utensils,
+  Bed,
+  Calendar,
+  Plane,
 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
@@ -50,6 +48,7 @@ import { track, trackEvent } from '../../lib/analytics';
 import { captureEvent } from '../../lib/posthog';
 import { parseItinerary } from '../../lib/types/itinerary';
 import { getDestinationCount } from '../../lib/social-proof';
+import { Users } from 'lucide-react-native';
 
 // ---------------------------------------------------------------------------
 // Destination images for trip cards
@@ -583,7 +582,7 @@ function PeopleNudgeBanner({
         </Text>
       </View>
       <Pressable onPress={onDismiss} hitSlop={12} style={styles.peopleBannerDismiss}>
-        <X size={14} color={COLORS.creamMuted} strokeWidth={2} />
+        <Text style={styles.peopleBannerDismissText}>✕</Text>
       </Pressable>
     </Pressable>
   );
@@ -713,6 +712,11 @@ const styles = StyleSheet.create({
   peopleBannerDismiss: {
     paddingLeft: SPACING.sm,
   } as ViewStyle,
+  peopleBannerDismissText: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+  } as TextStyle,
 
   // ── Quick Actions ──
   quickActions: {
