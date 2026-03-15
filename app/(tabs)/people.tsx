@@ -2,7 +2,7 @@
 // ROAM — People Tab (social layer — find travel companions)
 // The feature nobody else has. Travelers matched by destination, dates, vibe.
 // =============================================================================
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Image,
@@ -24,15 +24,15 @@ import {
   Heart,
   MapPin,
   MessageCircle,
+  Search,
   Sparkles,
   Users,
   Zap,
 } from 'lucide-react-native';
-import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { useAppStore } from '../../lib/store';
 import { track } from '../../lib/analytics';
-import { captureEvent } from '../../lib/posthog';
 
 // ---------------------------------------------------------------------------
 // Mock traveler data — replace with Supabase queries
@@ -159,7 +159,6 @@ const TravelerCard = React.memo(function TravelerCard({
   traveler: Traveler;
   onPress: () => void;
 }) {
-  const { t } = useTranslation();
   return (
     <Pressable
       onPress={() => {
@@ -196,7 +195,7 @@ const TravelerCard = React.memo(function TravelerCard({
         ))}
         <View style={styles.countriesPill}>
           <Globe size={11} color={COLORS.gold} strokeWidth={2} />
-          <Text style={styles.countriesText}>{t('people.countries', { count: traveler.countries })}</Text>
+          <Text style={styles.countriesText}>{traveler.countries} countries</Text>
         </View>
       </View>
 
@@ -205,24 +204,15 @@ const TravelerCard = React.memo(function TravelerCard({
           style={({ pressed }) => [styles.actionBtn, styles.actionBtnPrimary, { opacity: pressed ? 0.85 : 1 }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            captureEvent('people_connect_tapped', {
-              traveler_id: traveler.id,
-              destination: traveler.destination,
-              match_score: traveler.matchScore,
-            });
           }}
         >
           <MessageCircle size={16} color={COLORS.bg} strokeWidth={2} />
-          <Text style={styles.actionBtnPrimaryText}>{t('people.connect')}</Text>
+          <Text style={styles.actionBtnPrimaryText}>Connect</Text>
         </Pressable>
         <Pressable
           style={({ pressed }) => [styles.actionBtn, styles.actionBtnSecondary, { opacity: pressed ? 0.85 : 1 }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            captureEvent('people_traveler_saved', {
-              traveler_id: traveler.id,
-              destination: traveler.destination,
-            });
           }}
         >
           <Heart size={16} color={COLORS.cream} strokeWidth={2} />
@@ -242,7 +232,6 @@ const GroupCard = React.memo(function GroupCard({
   group: TripGroup;
   onPress: () => void;
 }) {
-  const { t } = useTranslation();
   return (
     <Pressable
       onPress={() => {
@@ -259,7 +248,7 @@ const GroupCard = React.memo(function GroupCard({
       <View style={styles.groupContent}>
         <View style={styles.groupMemberBadge}>
           <Users size={12} color={COLORS.bg} strokeWidth={2} />
-          <Text style={styles.groupMemberText}>{t('people.going', { count: group.memberCount })}</Text>
+          <Text style={styles.groupMemberText}>{group.memberCount} going</Text>
         </View>
         <Text style={styles.groupDest}>{group.destination}</Text>
         <Text style={styles.groupDates}>{group.dateRange}</Text>
@@ -275,37 +264,25 @@ const GroupCard = React.memo(function GroupCard({
 // Main Component
 // ---------------------------------------------------------------------------
 export default function PeopleScreen() {
-  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     track({ type: 'screen_view', screen: 'people' });
-    const anim = Animated.timing(fadeAnim, {
+    Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 400,
       useNativeDriver: true,
-    });
-    anim.start();
-    return () => anim.stop();
+    }).start();
   }, [fadeAnim]);
 
   const handleTravelerPress = useCallback((traveler: Traveler) => {
-    captureEvent('people_traveler_viewed', {
-      traveler_id: traveler.id,
-      destination: traveler.destination,
-      match_score: traveler.matchScore,
-    });
+    // Future: navigate to traveler profile
     router.push({ pathname: '/coming-soon', params: { title: `${traveler.name}'s Profile` } } as never);
   }, [router]);
 
   const handleGroupPress = useCallback((group: TripGroup) => {
-    captureEvent('people_group_tapped', {
-      group_id: group.id,
-      destination: group.destination,
-      member_count: group.memberCount,
-    });
     router.push({ pathname: '/coming-soon', params: { title: `${group.destination} Group Trip` } } as never);
   }, [router]);
 
@@ -318,41 +295,48 @@ export default function PeopleScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>{t('people.title')}</Text>
-          <Text style={styles.headerSub}>{t('people.headerSub')}</Text>
+          <Text style={styles.headerTitle}>People</Text>
+          <Text style={styles.headerSub}>Find travelers going where you are going</Text>
         </View>
 
-        {/* Hero — "Who's going where you're going?" */}
+        {/* Hero — conversational, not corporate */}
         <View style={styles.heroCard}>
           <LinearGradient
             colors={[COLORS.sageFaint, COLORS.bg]}
             style={StyleSheet.absoluteFill}
           />
-          <Sparkles size={24} color={COLORS.sage} strokeWidth={1.5} />
-          <Text style={styles.heroTitle}>{t('people.heroTitle')}</Text>
-          <Text style={styles.heroSub}>{t('people.heroSub')}</Text>
+          <View style={styles.heroTop}>
+            <View style={styles.heroEyebrow}>
+              <View style={styles.heroLiveDot} />
+              <Text style={styles.heroEyebrowText}>2.4k active right now</Text>
+            </View>
+            <Text style={styles.heroTitle}>Find someone going{'\n'}where you are going</Text>
+            <Text style={styles.heroSub}>
+              Same destination. Same dates. Same energy. That is how the best trips start.
+            </Text>
+          </View>
           <View style={styles.heroStats}>
             <View style={styles.heroStat}>
-              <Text style={styles.heroStatNum}>2.4k</Text>
-              <Text style={styles.heroStatLabel}>{t('people.activeTravelers')}</Text>
-            </View>
-            <View style={styles.heroStatDivider} />
-            <View style={styles.heroStat}>
               <Text style={styles.heroStatNum}>47</Text>
-              <Text style={styles.heroStatLabel}>{t('people.destinations')}</Text>
+              <Text style={styles.heroStatLabel}>Destinations</Text>
             </View>
             <View style={styles.heroStatDivider} />
             <View style={styles.heroStat}>
               <Text style={styles.heroStatNum}>128</Text>
-              <Text style={styles.heroStatLabel}>{t('people.groupsForming')}</Text>
+              <Text style={styles.heroStatLabel}>Groups forming</Text>
+            </View>
+            <View style={styles.heroStatDivider} />
+            <View style={styles.heroStat}>
+              <Text style={styles.heroStatNum}>94%</Text>
+              <Text style={styles.heroStatLabel}>Match accuracy</Text>
             </View>
           </View>
         </View>
 
         {/* Open Groups */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('people.openGroups')}</Text>
-          <Text style={styles.sectionSub}>{t('people.openGroupsSub')}</Text>
+          <Text style={styles.sectionTitle}>Open groups</Text>
+          <Text style={styles.sectionSub}>Join a trip that is forming</Text>
         </View>
 
         <ScrollView
@@ -371,8 +355,8 @@ export default function PeopleScreen() {
 
         {/* Matched Travelers */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('people.matchedTravelers')}</Text>
-          <Text style={styles.sectionSub}>{t('people.matchedTravelersSub')}</Text>
+          <Text style={styles.sectionTitle}>Matched travelers</Text>
+          <Text style={styles.sectionSub}>People heading to your destinations</Text>
         </View>
 
         {MOCK_TRAVELERS.map((traveler) => (
@@ -385,16 +369,17 @@ export default function PeopleScreen() {
 
         {/* Bottom CTA */}
         <View style={styles.bottomCta}>
-          <Text style={styles.bottomCtaText}>{t('people.completeProfileCta')}</Text>
+          <Text style={styles.bottomCtaText}>
+            Complete your travel profile to get better matches
+          </Text>
           <Pressable
             style={({ pressed }) => [styles.profileBtn, { opacity: pressed ? 0.85 : 1 }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              captureEvent('people_setup_profile_tapped', { source: 'people_bottom_cta' });
               router.push('/profile' as never);
             }}
           >
-            <Text style={styles.profileBtnText}>{t('people.setUpProfile')}</Text>
+            <Text style={styles.profileBtnText}>Set up profile</Text>
             <ChevronRight size={16} color={COLORS.sage} strokeWidth={2} />
           </Pressable>
         </View>
@@ -433,7 +418,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 15,
     color: COLORS.creamMuted,
-    marginTop: 4,
+    marginTop: SPACING.xs,
   } as TextStyle,
 
   // ── Hero Card ──
@@ -444,33 +429,52 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.sageBorder,
     padding: SPACING.lg,
-    alignItems: 'center',
     overflow: 'hidden',
   } as ViewStyle,
+  heroTop: {
+    gap: SPACING.sm,
+    marginBottom: SPACING.lg,
+  } as ViewStyle,
+  heroEyebrow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  } as ViewStyle,
+  heroLiveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.sage,
+  } as ViewStyle,
+  heroEyebrowText: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  } as TextStyle,
   heroTitle: {
     fontFamily: FONTS.header,
-    fontSize: 22,
+    fontSize: 28,
     color: COLORS.cream,
-    textAlign: 'center',
-    marginTop: SPACING.sm,
+    lineHeight: 34,
   } as TextStyle,
   heroSub: {
     fontFamily: FONTS.body,
     fontSize: 14,
     color: COLORS.creamMuted,
-    textAlign: 'center',
     lineHeight: 22,
-    marginTop: SPACING.sm,
-    paddingHorizontal: SPACING.sm,
   } as TextStyle,
   heroStats: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: SPACING.lg,
     gap: SPACING.md,
+    paddingTop: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
   } as ViewStyle,
   heroStat: {
+    flex: 1,
     alignItems: 'center',
   } as ViewStyle,
   heroStatNum: {
@@ -482,7 +486,8 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 11,
     color: COLORS.creamMuted,
-    marginTop: 2,
+    marginTop: SPACING.xs / 2,
+    textAlign: 'center',
   } as TextStyle,
   heroStatDivider: {
     width: 1,
@@ -504,7 +509,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 13,
     color: COLORS.creamMuted,
-    marginTop: 2,
+    marginTop: SPACING.xs / 2,
   } as TextStyle,
 
   // ── Group Cards ──
@@ -539,10 +544,10 @@ const styles = StyleSheet.create({
   groupMemberBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: SPACING.xs,
     backgroundColor: COLORS.sage,
     alignSelf: 'flex-start',
-    paddingHorizontal: 8,
+    paddingHorizontal: SPACING.sm,
     paddingVertical: 3,
     borderRadius: RADIUS.sm,
     marginBottom: SPACING.sm,
@@ -555,19 +560,19 @@ const styles = StyleSheet.create({
   groupDest: {
     fontFamily: FONTS.header,
     fontSize: 22,
-    color: COLORS.white,
+    color: COLORS.cream,
   } as TextStyle,
   groupDates: {
     fontFamily: FONTS.mono,
     fontSize: 12,
     color: COLORS.creamSoft,
-    marginTop: 2,
+    marginTop: SPACING.xs / 2,
   } as TextStyle,
   groupVibePill: {
     marginTop: SPACING.sm,
-    backgroundColor: COLORS.whiteMuted,
+    backgroundColor: COLORS.whiteDim,
     alignSelf: 'flex-start',
-    paddingHorizontal: 8,
+    paddingHorizontal: SPACING.sm,
     paddingVertical: 3,
     borderRadius: RADIUS.sm,
   } as ViewStyle,
@@ -595,7 +600,7 @@ const styles = StyleSheet.create({
   travelerAvatar: {
     width: 52,
     height: 52,
-    borderRadius: 26,
+    borderRadius: RADIUS.full,
     borderWidth: 2,
     borderColor: COLORS.sageBorder,
   } as ImageStyle,
@@ -615,10 +620,10 @@ const styles = StyleSheet.create({
   matchBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
+    gap: SPACING.xs,
     backgroundColor: COLORS.sage,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs / 2,
     borderRadius: RADIUS.sm,
   } as ViewStyle,
   matchText: {
@@ -629,8 +634,8 @@ const styles = StyleSheet.create({
   travelerDestRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginTop: 4,
+    gap: SPACING.xs,
+    marginTop: SPACING.xs,
   } as ViewStyle,
   travelerDest: {
     fontFamily: FONTS.bodyMedium,
@@ -641,7 +646,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.mono,
     fontSize: 12,
     color: COLORS.creamMuted,
-    marginLeft: 4,
+    marginLeft: SPACING.xs,
   } as TextStyle,
   travelerBio: {
     fontFamily: FONTS.body,
@@ -653,13 +658,13 @@ const styles = StyleSheet.create({
   travelerVibes: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: SPACING.sm,
     marginTop: SPACING.sm,
   } as ViewStyle,
   vibePill: {
     backgroundColor: COLORS.bgGlass,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
     borderRadius: RADIUS.sm,
   } as ViewStyle,
   vibePillText: {
@@ -670,10 +675,10 @@ const styles = StyleSheet.create({
   countriesPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: SPACING.xs,
     backgroundColor: COLORS.goldFaint,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
     borderRadius: RADIUS.sm,
   } as ViewStyle,
   countriesText: {
@@ -690,7 +695,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: SPACING.sm,
     paddingVertical: SPACING.sm,
     borderRadius: RADIUS.md,
   } as ViewStyle,
@@ -729,7 +734,7 @@ const styles = StyleSheet.create({
   profileBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: SPACING.xs,
   } as ViewStyle,
   profileBtnText: {
     fontFamily: FONTS.bodySemiBold,
