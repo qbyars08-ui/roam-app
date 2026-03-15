@@ -1,185 +1,127 @@
 # Monetization Model — 2026-03-15
 
 > Agent 07 — MONETIZATION ARCHITECT output
-> Aligned with: `roam/dach_strategy.md`, `roam/growth_dashboard.md`
+> Post-restructure update: 5-tab navigation (Plan, Discover, People, Flights, Prep)
+> Aligned with: `roam/dach_strategy.md`, `roam/growth_dashboard.md`, `roam/AGENT_BOARD.md`
 
 ---
 
 ## Revenue Streams
 
-| Stream | Status | Monthly Estimate (Month 1) | Notes |
-|--------|--------|---------------------------|-------|
-| RevenueCat Pro (monthly) | Live | $125–$300 | 5% free-to-paid on DACH cohort |
+| Stream | Status | Monthly Estimate | Notes |
+|--------|--------|-----------------|-------|
+| RevenueCat Pro (monthly) | Live | $125–$300 | 5% free-to-paid conversion |
 | RevenueCat Pro (yearly) | Live | $80–$200 | Lower volume, higher LTV |
-| Skyscanner affiliate | Live (PostHog fixed) | $30–$80 | ~2% click-to-book rate |
+| Skyscanner affiliate | Live + PostHog fixed | $30–$80 | ~2% click-to-book rate |
 | Booking.com affiliate | Live | $20–$60 | AID placeholder — needs real AID |
 | GetYourGuide affiliate | Live | $15–$40 | Experiences are high-margin |
-| Creator revenue share (Micro tier) | Planned — Month 1 | $0 | 10% of attributed Pro revenue |
-| Creator revenue share (Partner tier) | Planned — Month 2+ | $0 | 15% of attributed Pro revenue |
-| **Total** | | **$270–$680** | Early stage; DACH traction dependent |
+| Creator revenue share (Micro tier) | Planned Month 1 | $0 | 10% of attributed Pro MRR |
+| Creator revenue share (Partner tier) | Planned Month 2+ | $0 | 15% of attributed Pro MRR |
+| **Total** | | **$270–$680** | Pre-DACH scale |
 
 ---
 
-## 3-Tier Creator Payment Model
+## People Tab Monetization
 
-ROAM pays creators to drive installs and Pro subscriptions. Attribution is via PostHog UTM parameters tied to each creator's unique link. Payments are made monthly via Wise or direct transfer.
+### The Paywall Structure
 
----
+The People tab is ROAM's viral differentiator and the highest-leverage monetization surface.
+Every interaction that creates real value is Pro-gated; the free tier is designed to create
+FOMO and urgency, not to satisfy.
 
-### Tier 1 — Barter
+#### Free Tier — People Tab
+- See first **3 matched travelers** per session (cards 4+ are dimmed with a Pro gate overlay)
+- Browse all open group trips (visible, but join is limited)
+- **Join 1 group trip** (groups 2+ show a Pro lock badge; tapping → paywall)
+- "Connect" button on any traveler → paywall (DM is Pro-only)
+- View traveler profiles (destination, dates, vibes, bio, match score)
+- See hero stats (active travelers, destinations, groups forming)
 
-**For:** Nano creators (under 10K followers), university ambassadors, travel club members
+#### Pro Tier — People Tab
+- **Unlimited matched travelers** — see all matches for every destination
+- **Direct messages** — Connect button opens messaging thread
+- **Join unlimited groups** — no cap on group membership
+- **Create groups** — start a new group trip (Pro-only creation flow)
+- **Live presence** — "Who's in [destination] right now" feature (future release)
+- First-mover positioning: "ROAM is the only travel app with real traveler matching"
 
-**Compensation:**
-- Free ROAM Pro (lifetime, not time-limited)
-- Featured on ROAM website: `roamapp.co/creators` — name, handle, photo, and their best ROAM video embedded
-- Optional: "ROAM Ambassador" badge in-app on their profile (table: `profiles.ambassador_badge = true`)
+### Paywall Trigger Design
 
-**Obligations:**
-- 2 posts per month minimum (TikTok or Instagram Reels)
-- Must use creator's personal referral code as bio link
-- Content must include a screen recording of ROAM generating a real trip
-- German-language captions preferred for DACH audience
+The paywall fires at the moment of highest intent — not on tab load, but on action:
 
-**Tracking:**
-- Unique referral code generated via `lib/referral.ts`'s `generateReferralCode(email)`
-- Referral count tracked in `waitlist_emails.referral_count`
-- Pro granted via `profiles.pro_referral_expires_at = NULL` (lifetime) on manual approval
+| Trigger | Condition | Paywall Reason | Headline |
+|---------|-----------|----------------|----------|
+| "Connect" button tapped | Any traveler, any tier | `feature` / `people-dm` | "Direct messages are a Pro feature. Connect for real." |
+| Traveler card 4+ tapped | Free user | `feature` / `people-unlimited-matches` | "See every traveler going where you're going." |
+| Pro gate banner tapped | Free user, between card 3 and 4 | `feature` / `people-unlimited-matches` | "Unlock all travelers" |
+| Group join tapped (group 2+) | Free user | `feature` / `people-groups` | "Join every group. Pro unlocks unlimited groups." |
 
-**Target volume:** 20–40 ambassadors active in Month 1–2
+**Why Connect always requires Pro:** Direct messaging is the action that creates real social value.
+Letting free users browse travelers without connecting creates curiosity and FOMO — then the moment they
+find someone they want to meet, the paywall converts at maximum intent.
 
----
+### PostHog Events for People Tab
 
-### Tier 2 — Micro
-
-**For:** Micro creators (10K–100K followers) with DACH audience, proven travel/lifestyle content, and engagement rate above 3%
-
-**Compensation:**
-- **$20–50 per video** (paid within 7 days of posting, verified via TikTok/Instagram Analytics screenshot)
-  - $20 base for 10K–30K audience
-  - $35 base for 30K–60K audience
-  - $50 base for 60K–100K audience
-- **10% revenue share** on Pro subscriptions attributed to their creator link for 90 days post-posting
-  - Attribution: `utm_source=creator&utm_medium=ugc&utm_campaign={creator_slug}` in bio link
-  - Tracked in PostHog creator dashboards; exported monthly for payment calculation
-
-**Per-video requirements:**
-- 30–60 second screen recording of ROAM generating a real trip
-- German captions (or mixed German/English) for DACH posts
-- Hook formula: controversial opener + ROAM demo + German CTA ("Kostenlos testen — Link in Bio")
-- Creator receives a filming brief via the UGC automation system (Claude-generated from destination + traveler type)
-- Minimum 10K views to qualify for full payment; 5K–10K views earns 50% of flat rate
-
-**Upgrade path:**
-- Creators who drive 15+ Pro subscriptions in a month are automatically offered Partner tier
-- Creators who go viral (500K+ views) are escalated to Partner regardless of conversion count
-
-**Payment logistics:**
-- Wise transfer to creator's account (EUR for DACH, USD otherwise)
-- Monthly payment batch, first business day of the following month
-- Creators submit payment details via a Typeform after first post goes live
-
-**Target volume:** 5–10 active creators in Month 1, scaling to 20–30 by Month 3
+| Event | Properties | Purpose |
+|-------|-----------|---------|
+| `pro_gate_shown` | `feature: people-dm` | Track Connect block |
+| `pro_gate_shown` | `feature: people-unlimited-matches` | Track match limit hits |
+| `pro_gate_shown` | `feature: people-groups` | Track group join blocks |
+| `paywall_viewed` | `reason: feature, feature: people-*` | Funnel entry |
+| `purchase_success` | — | Conversion |
 
 ---
 
-### Tier 3 — Partner
+## Plan Tab Monetization
 
-**For:** Mid-to-macro creators (100K–500K+ followers) with proven conversion track record, OR top-performing Micro creators who have been upgraded
+### Free vs. Pro on Plan Tab
 
-**Compensation:**
-- **$200–500 per video** (negotiated per creator based on audience size and past performance)
-  - $200 base for 100K–200K audience
-  - $350 base for 200K–350K audience
-  - $500+ for 350K+ audience (negotiated)
-- **15% revenue share** on Pro subscriptions attributed to their creator link for 180 days post-posting
-  - Same UTM attribution as Micro tier
-  - Monthly reconciliation and payout
+| Feature | Free | Pro |
+|---------|------|-----|
+| Generate trips | 1/month | Unlimited |
+| Trip cards view | All trips visible | All trips visible |
+| AI re-generation | Locked (Pro gate) | Re-generate with new options |
+| Hotel alternatives | Locked (Pro gate) | Swap stays inline |
+| Food alternatives | Locked (Pro gate) | Swap restaurants inline |
+| Conversation mode | Available | Priority AI (faster) |
+| Quick mode | Available | Available |
 
-**Per-video requirements:**
-- Same content quality bar as Micro tier
-- Minimum 2 posts per campaign (usually 1 organic + 1 paid boost)
-- Creator approves itinerary content used in video — ROAM provides a custom trip generated for that creator's audience and travel style
-- Exclusivity clause: creator cannot post for direct competitor AI travel apps for 30 days before and after posting
+### Plan Tab Pro Features (Implemented as Gates)
 
-**Custom onboarding:**
-- Quinn sends a cold outreach package: a custom ROAM-generated itinerary for the creator's dream destination, formatted as a beautiful printed PDF (mailed or sent as a high-res digital file)
-- 30-minute video call to walk through the app, content expectations, and payment terms
-- Custom creator UTM link provisioned and tested before posting
+Two Pro feature teaser cards appear in the trip list view (below Quick Actions) for free users:
+- **Re-generate** (`plan-regenerate`) — regenerate the itinerary with fresh AI suggestions
+- **Hotel alternatives** (`plan-hotel-alternatives`) — swap stays from 3–5 curated options
 
-**Performance bonus:**
-- Video hitting 1M+ views: +$100 bonus
-- Video driving 50+ Pro subscriptions: +$150 bonus (on top of 15% share)
-- These are one-time bonuses per video, not recurring
+Both show a lock icon and `COLORS.gold` styling (premium signal). Tapping → paywall with
+`reason: feature, feature: plan-regenerate` or `plan-hotel-alternatives`.
 
-**Target volume:** 2–3 Partner creators active per quarter in Month 1–3; scale as ROI is proven
+### Plan Tab Affiliate Revenue Map
 
----
+The three Quick Action cards in the Plan tab's trip list view each drive affiliate revenue:
 
-## Creator Attribution & Tracking Infrastructure
+| Quick Action | Destination | Partner | Revenue Model |
+|-------------|-------------|---------|---------------|
+| Find stays (hotel icon) | Opens quick generate mode | Booking.com via itinerary | CPA per booking |
+| Find food (fork icon) | Opens quick generate mode | GetYourGuide via itinerary | CPA per booking |
+| Book flights (plane icon) | Navigates to Flights tab | Skyscanner via FlightCard | CPC/CPA per click |
 
-### UTM Link Structure
+**Revenue chain for Plan → Stays/Food:**
+1. User taps "Find stays" → generate mode with hotel/food focus
+2. AI generates itinerary with hotel recommendations
+3. Itinerary screen shows Booking.com affiliate card
+4. User taps → `openBookingLink()` fires `AFFILIATE_CLICK` PostHog event + Supabase insert
+5. User books on Booking.com → affiliate commission to ROAM
 
-All creator links follow this format:
-```
-https://apps.apple.com/app/roam/[id]?utm_source=creator&utm_medium=ugc&utm_campaign={creator_slug}&utm_content={platform}
-```
+**Revenue chain for Plan → Flights:**
+1. User taps "Book flights" → Flights tab
+2. Flights tab shows `FlightCard` with Skyscanner affiliate URL
+3. User taps "Search flights" → `openBookingLink()` fires `AFFILIATE_CLICK`
+4. User books on Skyscanner → affiliate commission to ROAM
 
-Example: `utm_campaign=hannalena_tiktok&utm_content=tiktok`
-
-### PostHog Attribution Chain
-
-1. User clicks creator's bio link → PostHog records UTM on app open via `captureEvent(EVENTS.APP_OPENED.name, { utm_campaign, utm_medium, utm_source })`
-2. User generates a trip → `EVENTS.TRIP_GENERATED` records session attribution
-3. User hits paywall → `EVENTS.PAYWALL_VIEWED` with attribution context
-4. User purchases → `EVENTS.PURCHASE_SUCCESS` with attribution, tied back to creator slug
-5. Monthly export: PostHog funnel query filtered by `utm_source=creator`, grouped by `utm_campaign`, to calculate attributed Pro conversions per creator
-
-### Revenue Share Calculation
-
-```
-creator_attributed_mrr = COUNT(PURCHASE_SUCCESS WHERE utm_campaign = creator_slug AND within_attribution_window)
-                         × avg_monthly_price ($4.99/month or $29.99/year prorated)
-creator_payment = creator_attributed_mrr × tier_share_rate (10% or 15%)
-```
-
----
-
-## Affiliate Performance
-
-| Partner | Integration Status | PostHog Tracking | Estimated CTR | Monthly Revenue Est. |
-|---------|-------------------|-----------------|---------------|---------------------|
-| Skyscanner | Live — `FlightCard`, `FlightPriceCard`, `itinerary.tsx` | Fixed (PostHog now fires) | 8–12% of flight card views | $30–80 |
-| Booking.com | Live — `BookingCards`, `itinerary.tsx` | Fixed (via openAffiliateLink) | 6–10% of hotel card views | $20–60 |
-| GetYourGuide | Live — `BookingCards`, `itinerary.tsx` | Fixed (via openAffiliateLink) | 5–9% of experience card views | $15–40 |
-| SafetyWing | Live — `booking-links.ts` | Via openBookingLink | 2–4% | $5–15 |
-| Airalo | Live — `booking-links.ts` | Via openBookingLink | 3–6% | $8–20 |
-
-### PostHog Affiliate Funnel (now tracking)
-
-Events now fire on every affiliate click path:
-- `FlightCard` → `openBookingLink()` → fires `affiliate_click` with `partner=skyscanner`
-- `FlightPriceCard` → direct `captureEvent` → fires `affiliate_click` with `partner=skyscanner`
-- `BookingCards` → `openAffiliateLink()` → fires `affiliate_click` with correct partner ID
-- `itinerary.tsx` `openAffiliate()` → raw `Linking.openURL` (no tracking — fix in v2)
-
-The `FLIGHT_BOOKING_FUNNEL` in `lib/posthog-funnels.ts` will now have data:
-```
-Flights tab view → FLIGHT_SEARCH → AFFILIATE_CLICK (partner=skyscanner)
-```
-
----
-
-## Optimization Opportunities
-
-- [ ] **Fix Booking.com AID** — Current `aid=roam` is a placeholder. Register at `partners.booking.com` to get a real AID. This is a zero-cost revenue unlock.
-- [ ] **Plug itinerary.tsx openAffiliate() tracking gap** — Raw `Linking.openURL` calls bypass all tracking. Replace with `openBookingLink()` calls. Estimated 30–40% of affiliate clicks are currently invisible.
-- [ ] **Creator dashboard in-app or Notion** — Build a simple creator performance tracker: views, installs attributed, Pro conversions, payment due. Reduces creator churn from payment confusion.
-- [ ] **Add affiliate clicks to Pro gate nudge** — When a free user taps a Skyscanner flight card, show a subtle upgrade message: "Pro users see better flight insights and save trips to plan around." Estimated +0.3pp conversion.
-- [ ] **German landing page for creator links** — Instead of sending DACH creators to the English App Store, build a `roamapp.co/de` landing page that auto-detects German and shows German screenshots. Estimated +15% install conversion from DACH traffic.
-- [ ] **Skyscanner partner API** — Apply for Skyscanner Affiliate Partner Program to access live price data. Currently showing "Search flights" without prices. Live prices → 3–5x higher CTR. Requires formal affiliate application.
-- [ ] **Revenue share automation** — Manual monthly Wise transfers don't scale. By Month 3, build a simple payout dashboard: query PostHog for attributed conversions, calculate payment, trigger Wise API transfer. Keeps creators paid on time without manual spreadsheet work.
-- [ ] **A/B test affiliate placement** — FlightCard currently appears at bottom of itinerary. Test: above Day 1 header vs. between Day 2 and Day 3. Hypothesis: mid-itinerary placement when user is most engaged will increase CTR by 20%.
+**Estimated Plan tab affiliate revenue:**
+- $25–60/month from hotel referrals (Booking.com needs real AID first)
+- $30–80/month from flight referrals (Skyscanner `associateId=roam`)
+- $15–40/month from experience referrals (GetYourGuide)
 
 ---
 
@@ -190,12 +132,95 @@ Flights tab view → FLIGHT_SEARCH → AFFILIATE_CLICK (partner=skyscanner)
 | `roam_pro_monthly` | Pro Monthly | $4.99/month | `pro` |
 | `roam_global_yearly` | Pro Yearly | $29.99/year | `pro` |
 
-**Free tier limit:** 1 trip/month (reset monthly via Supabase edge function)  
-**Guest tier limit:** 1 trip total, then paywall  
-**Pro tier:** Unlimited trips + all gated features
+**Free tier:** 1 trip/month + 3 People matches + 1 group join  
+**Guest tier:** 1 trip total, then paywall  
+**Pro tier:** Unlimited trips, all gated features
 
-### Gated Pro Features
-`dream-vault`, `budget-guardian`, `memory-lane`, `trip-wrapped`, `hype`, `arrival-mode`, `local-lens`, `travel-twin`, `trip-chemistry`
+### Full Pro Feature Gate Registry (`lib/pro-gate.ts`)
+
+| Feature Key | Description |
+|-------------|-------------|
+| `unlimited-trips` | Unlimited AI trip generations |
+| `offline-prep` | Offline PREP mode (safety, visa, currency) |
+| `priority-ai` | Priority Claude responses |
+| `travel-twin` | Travel personality matching |
+| `trip-chemistry` | Group compatibility analysis |
+| `memory-lane` | Travel memory journal |
+| `people-dm` | Direct messages on People tab |
+| `people-unlimited-matches` | See all matched travelers (>3) |
+| `people-groups` | Join multiple groups |
+| `people-create-group` | Create a new group trip |
+| `people-live-presence` | Who's in a destination right now |
+| `plan-regenerate` | Re-generate itinerary with AI |
+| `plan-hotel-alternatives` | Swap hotels inline |
+| `plan-food-alternatives` | Swap restaurants inline |
+
+---
+
+## 3-Tier Creator Payment Model
+
+### Tier 1 — Barter
+**For:** Nano creators (<10K), university ambassadors, travel club members  
+**Cash:** $0  
+**Perks:** Free ROAM Pro (lifetime) + featured on `roamapp.co/creators`  
+**Obligations:** 2 posts/month, must use personal referral code as bio link  
+**Tracking:** Referral code → `waitlist_emails.referral_count`
+
+### Tier 2 — Micro
+**For:** Micro creators (10K–100K followers), DACH audience, >3% engagement  
+**Cash:** $20–50 per video (based on audience size)  
+**Revenue share:** 10% of attributed Pro MRR for 90 days  
+**Attribution:** `utm_source=creator&utm_medium=ugc&utm_campaign={creator_slug}`  
+**Minimum views:** 10K for full payment; 5K–10K earns 50%  
+**Upgrade trigger:** 15+ Pro conversions/month → auto-offered Partner tier
+
+### Tier 3 — Partner
+**For:** Mid-macro creators (100K–500K+) or upgraded Micro performers  
+**Cash:** $200–500 per video (negotiated per creator)  
+**Revenue share:** 15% of attributed Pro MRR for 180 days  
+**Extras:** Custom itinerary package sent cold, 30-min onboarding call, exclusivity clause  
+**Bonus:** $100 at 1M+ views; $150 at 50+ conversions per video
+
+---
+
+## Affiliate Performance
+
+| Partner | Integration | PostHog | Est. CTR | Monthly Rev Est. |
+|---------|-------------|---------|----------|-----------------|
+| Skyscanner | FlightCard, FlightPriceCard, itinerary | Fixed | 8–12% | $30–80 |
+| Booking.com | BookingCards, itinerary | Fixed | 6–10% | $20–60 |
+| GetYourGuide | BookingCards, itinerary | Fixed | 5–9% | $15–40 |
+| SafetyWing | booking-links.ts | Via openBookingLink | 2–4% | $5–15 |
+| Airalo | booking-links.ts | Via openBookingLink | 3–6% | $8–20 |
+
+---
+
+## Optimization Opportunities
+
+- [ ] **Fix Booking.com AID** — Current `aid=roam` is a placeholder. Sign up at `partners.booking.com`. Zero-cost revenue unlock — est. +$20–60/month immediately.
+- [ ] **Plug itinerary.tsx `openAffiliate()` gap** — Raw `Linking.openURL()` bypasses tracking. Estimated 30–40% of affiliate clicks invisible.
+- [ ] **People tab: Create Group flow** — Lock "Create Group" button behind Pro. Currently `pro-create-group` is gated in `lib/pro-gate.ts` but no UI exists yet. Add a "+" button to the groups section header.
+- [ ] **People tab: Live presence** — "Who's in Tokyo right now" — Pro feature. Requires Supabase Realtime + `traveler_profiles` table (blocked on Quinn: schema creation needed).
+- [ ] **Plan tab: AI re-generation** — Actually implement the re-generate flow (call Claude with same params + `regenerate: true`). Currently just a Pro gate teaser.
+- [ ] **German landing page** — Dedicated `roamapp.co/de` for DACH creator links. Est. +15% DACH install conversion.
+- [ ] **Paywall: People-specific headline** — Add `reason: 'people'` to paywall headlines. "Your travel squad is waiting. Go Pro to connect." 
+- [ ] **Skyscanner Affiliate Partner Program** — Apply for live price data API. Live prices → 3–5x CTR on FlightCard.
+- [ ] **A/B test People paywall trigger** — Test: gate fires on 3rd traveler vs. fires only when "Connect" is tapped. Hypothesis: action-based trigger converts 20% better than passive limit.
+- [ ] **Revenue share automation** — By Month 3, build PostHog → Wise API payout script. Manual payments don't scale past 10 creators.
+
+---
+
+## Key Metrics
+
+| Metric | Target | Tracking |
+|--------|--------|----------|
+| Free → Pro conversion (People trigger) | 8% (higher-intent gate) | PostHog funnel |
+| Free → Pro conversion (Plan limit) | 3–5% | PostHog funnel |
+| People tab paywall view → purchase | 5% | RevenueCat + PostHog |
+| Affiliate CTR (Skyscanner) | 10% of flight card views | PostHog `affiliate_click` |
+| Creator CAC (flat + share ÷ installs) | Under $2 | Monthly spreadsheet |
+| DACH paid users | 25 by Month 2, 100 by Month 4 | RevenueCat + PostHog geo |
+| Churn (monthly) | Under 8% | RevenueCat |
 
 ---
 
@@ -208,35 +233,17 @@ Flights tab view → FLIGHT_SEARCH → AFFILIATE_CLICK (partner=skyscanner)
 | 9 | 3 months Pro free |
 | 10 | 1 year Pro free |
 
-Referral codes tracked in `referral_codes` table. `pro_referral_expires_at` on profiles.  
-Waitlist referrals tracked in `waitlist_emails.referral_count` via Supabase trigger `trg_credit_referrer_on_waitlist`.
-
----
-
-## Key Metrics to Track
-
-| Metric | Target | Tracking |
-|--------|--------|----------|
-| Free → Pro conversion rate | 5% | RevenueCat + PostHog |
-| Affiliate CTR (Skyscanner) | 10% of flight card views | PostHog `affiliate_click` |
-| Creator attributed installs per video | 50–200 | PostHog UTM |
-| Creator CAC (flat rate ÷ installs) | Under $2 | Spreadsheet |
-| Creator revenue share payable | Under 30% of attributed MRR | PostHog export |
-| Paywall view → purchase rate | 3–5% | PostHog funnel |
-| Churn rate (monthly) | Under 8% | RevenueCat |
-| DACH paid users | 25 by Month 2, 100 by Month 4 | RevenueCat + PostHog geo |
+Tracked in `referral_codes` table; `pro_referral_expires_at` on profiles.
 
 ---
 
 ## DACH Creator Budget (Month 1)
 
-| Line Item | Unit Cost | Volume | Total |
-|-----------|-----------|--------|-------|
-| Barter creators (Pro lifetime) | $0 cash | 20 | $0 |
-| Micro creators (flat rate) | $20–35/video | 20 posts | $500 |
-| Micro creators (revenue share) | 10% of attributable MRR | — | ~$13 (estimated) |
-| Partner creator test (1 creator) | $200/video | 1 | $200 |
-| UGC platform fee (Billo/Insense) | $100–200 flat | 1 platform | $150 |
-| **Total cash out** | | | **$850–1,050** |
-| **Expected attributed MRR** | | | **$125–300** |
-| **Payback period** | | | **3–8 months** |
+| Line Item | Cost |
+|-----------|------|
+| Barter creators (20 × Pro lifetime) | $0 |
+| Micro flat rate (20 posts × $25 avg) | $500 |
+| Partner test (1 creator × $200) | $200 |
+| UGC platform fee (Billo/Insense) | $150 |
+| **Total cash** | **$850** |
+| **Expected attributed MRR** | **$125–300** |

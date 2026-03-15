@@ -16,6 +16,16 @@ export const PRO_FEATURES = [
   'memory-lane',
   'unlimited-trips',
   'priority-ai',
+  // People tab
+  'people-dm',
+  'people-unlimited-matches',
+  'people-groups',
+  'people-create-group',
+  'people-live-presence',
+  // Plan tab
+  'plan-regenerate',
+  'plan-hotel-alternatives',
+  'plan-food-alternatives',
 ] as const;
 
 export type ProFeature = (typeof PRO_FEATURES)[number];
