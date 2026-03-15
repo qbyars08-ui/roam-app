@@ -100,7 +100,7 @@ type AppState = {
   setExchangeRates: (rates: ExchangeRates | null) => void;
   setExchangeRatesLoadAttempted: (attempted: boolean) => void;
   initCurrency: () => Promise<void>;
-  setGenerateMode: (mode: 'quick' | 'conversation') => void;
+  setGenerateMode: (mode: 'quick' | 'conversation' | null) => void;
   toggleBookmarkedRestaurant: (id: string) => void;
   setLocationSharing: (state: Partial<LocationSharingState>) => void;
   updateMemberLocation: (location: MemberLocation) => void;
@@ -274,7 +274,9 @@ export const useAppStore = create<AppState>((set) => ({
     }
   },
   setGenerateMode: (mode) => {
-    AsyncStorage.setItem(GENERATE_MODE_KEY, mode).catch(() => {});
+    if (mode !== null) {
+      AsyncStorage.setItem(GENERATE_MODE_KEY, mode).catch(() => {});
+    }
     set({ generateMode: mode });
   },
   toggleBookmarkedRestaurant: (id) =>
