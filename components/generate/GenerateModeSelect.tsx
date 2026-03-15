@@ -46,10 +46,8 @@ export default function GenerateModeSelect({ onSelect, firstTime = false }: Gene
     });
   };
 
-  const headline = firstTime ? 'No trips yet.' : t('generate.title');
-  const subtitle = firstTime
-    ? 'Pick somewhere. 30 seconds. You\u2019ll have a full plan before anyone talks you out of it.'
-    : 'How do you want to plan?';
+  const headline = firstTime ? t('generate.noTripsTitle') : t('generate.title');
+  const subtitle = firstTime ? t('generate.noTripsSub') : t('generate.howDoYouWant');
 
   return (
     <Animated.View style={[styles.container, { opacity: fade }]}>

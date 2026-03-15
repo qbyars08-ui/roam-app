@@ -24,11 +24,12 @@ import {
   Heart,
   MapPin,
   MessageCircle,
-  Search,
   Sparkles,
   Users,
   Zap,
 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
+import i18n from '../../lib/i18n';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
@@ -337,7 +338,7 @@ const TravelerCard = React.memo(function TravelerCard({
         ))}
         <View style={styles.countriesPill}>
           <Globe size={11} color={COLORS.gold} strokeWidth={2} />
-          <Text style={styles.countriesText}>{traveler.countries} countries</Text>
+          <Text style={styles.countriesText}>{i18n.t('people.countries', { count: traveler.countries })}</Text>
         </View>
       </View>
 
@@ -349,7 +350,7 @@ const TravelerCard = React.memo(function TravelerCard({
           }}
         >
           <MessageCircle size={16} color={COLORS.bg} strokeWidth={2} />
-          <Text style={styles.actionBtnPrimaryText}>Connect</Text>
+          <Text style={styles.actionBtnPrimaryText}>{i18n.t('people.connect')}</Text>
         </Pressable>
         <Pressable
           style={({ pressed }) => [styles.actionBtn, styles.actionBtnSecondary, { opacity: pressed ? 0.85 : 1 }]}
@@ -390,7 +391,7 @@ const GroupCard = React.memo(function GroupCard({
       <View style={styles.groupContent}>
         <View style={styles.groupMemberBadge}>
           <Users size={12} color={COLORS.bg} strokeWidth={2} />
-          <Text style={styles.groupMemberText}>{group.memberCount} going</Text>
+          <Text style={styles.groupMemberText}>{i18n.t('people.going', { count: group.memberCount })}</Text>
         </View>
         <Text style={styles.groupDest}>{group.destination}</Text>
         <Text style={styles.groupDates}>{group.dateRange}</Text>
@@ -409,6 +410,7 @@ const GroupCard = React.memo(function GroupCard({
 // Main Component
 // ---------------------------------------------------------------------------
 export default function PeopleScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -440,8 +442,8 @@ export default function PeopleScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>People</Text>
-          <Text style={styles.headerSub}>Your travel crew is already out there</Text>
+          <Text style={styles.headerTitle}>{t('people.title')}</Text>
+          <Text style={styles.headerSub}>{t('people.headerSub')}</Text>
         </View>
 
         {/* Hero */}
@@ -451,33 +453,30 @@ export default function PeopleScreen() {
             style={StyleSheet.absoluteFill}
           />
           <Sparkles size={24} color={COLORS.sage} strokeWidth={1.5} />
-          <Text style={styles.heroTitle}>Meet the people going where you&apos;re going</Text>
-          <Text style={styles.heroSub}>
-            Tell us where. We show you who else is heading there,
-            when they leave, and what they care about.
-          </Text>
+          <Text style={styles.heroTitle}>{t('people.heroTitle')}</Text>
+          <Text style={styles.heroSub}>{t('people.heroSub')}</Text>
           <View style={styles.heroStats}>
             <View style={styles.heroStat}>
               <Text style={styles.heroStatNum}>2.4k</Text>
-              <Text style={styles.heroStatLabel}>Active travelers</Text>
+              <Text style={styles.heroStatLabel}>{t('people.activeTravelers')}</Text>
             </View>
             <View style={styles.heroStatDivider} />
             <View style={styles.heroStat}>
               <Text style={styles.heroStatNum}>47</Text>
-              <Text style={styles.heroStatLabel}>Destinations</Text>
+              <Text style={styles.heroStatLabel}>{t('people.destinations')}</Text>
             </View>
             <View style={styles.heroStatDivider} />
             <View style={styles.heroStat}>
               <Text style={styles.heroStatNum}>128</Text>
-              <Text style={styles.heroStatLabel}>Groups forming</Text>
+              <Text style={styles.heroStatLabel}>{t('people.groupsForming')}</Text>
             </View>
           </View>
         </View>
 
         {/* Open Groups */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Open groups</Text>
-          <Text style={styles.sectionSub}>Trips forming now — one spot could be yours</Text>
+          <Text style={styles.sectionTitle}>{t('people.openGroups')}</Text>
+          <Text style={styles.sectionSub}>{t('people.openGroupsSub')}</Text>
         </View>
 
         <ScrollView
@@ -496,8 +495,8 @@ export default function PeopleScreen() {
 
         {/* Matched Travelers */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Matched travelers</Text>
-          <Text style={styles.sectionSub}>Same destination. Same window. Similar energy.</Text>
+          <Text style={styles.sectionTitle}>{t('people.matchedTravelers')}</Text>
+          <Text style={styles.sectionSub}>{t('people.matchedTravelersSub')}</Text>
         </View>
 
         {MOCK_TRAVELERS.map((traveler) => (
@@ -510,9 +509,7 @@ export default function PeopleScreen() {
 
         {/* Bottom CTA */}
         <View style={styles.bottomCta}>
-          <Text style={styles.bottomCtaText}>
-            Add your destinations to see who else is going.
-          </Text>
+          <Text style={styles.bottomCtaText}>{t('people.completeProfileCta')}</Text>
           <Pressable
             style={({ pressed }) => [styles.profileBtn, { opacity: pressed ? 0.85 : 1 }]}
             onPress={() => {
@@ -520,7 +517,7 @@ export default function PeopleScreen() {
               router.push('/profile' as never);
             }}
           >
-            <Text style={styles.profileBtnText}>Set up your travel profile</Text>
+            <Text style={styles.profileBtnText}>{t('people.setUpProfile')}</Text>
             <ChevronRight size={16} color={COLORS.sage} strokeWidth={2} />
           </Pressable>
         </View>
