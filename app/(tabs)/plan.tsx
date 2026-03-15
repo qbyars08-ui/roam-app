@@ -4,6 +4,7 @@
 // =============================================================================
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import {
+  Animated,
   Image,
   Modal,
   Pressable,
@@ -21,7 +22,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ChevronRight,
   Clock,
+  Lock,
+  MapPin,
   Plus,
+  RefreshCw,
   Sparkles,
   Wallet,
   Utensils,
@@ -29,7 +33,6 @@ import {
   Calendar,
   Plane,
 } from 'lucide-react-native';
-import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore, type Trip } from '../../lib/store';
@@ -47,9 +50,8 @@ import { evaluateTrigger } from '../../lib/smart-triggers';
 import TripLimitBanner from '../../components/monetization/TripLimitBanner';
 import { track, trackEvent } from '../../lib/analytics';
 import { captureEvent } from '../../lib/posthog';
+import { EVENTS } from '../../lib/posthog-events';
 import { parseItinerary } from '../../lib/types/itinerary';
-import { getDestinationCount } from '../../lib/social-proof';
-import { Users } from 'lucide-react-native';
 
 // ---------------------------------------------------------------------------
 // Destination images for trip cards
@@ -95,7 +97,6 @@ const TripCard = React.memo(function TripCard({
   onPress: () => void;
   isLatest: boolean;
 }) {
-  const { t } = useTranslation();
   const imageUrl = DEST_IMAGES[trip.destination] ?? FALLBACK_IMAGE;
   const parsed = useMemo(() => {
     try {
@@ -111,11 +112,11 @@ const TripCard = React.memo(function TripCard({
     const now = new Date();
     const diffMs = now.getTime() - d.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    if (diffDays === 0) return t('plan.today');
-    if (diffDays === 1) return t('plan.yesterday');
-    if (diffDays < 7) return t('plan.daysAgo', { count: diffDays });
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  }, [trip.createdAt, t]);
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }, [trip.createdAt]);
 
   return (
     <Pressable
@@ -131,13 +132,13 @@ const TripCard = React.memo(function TripCard({
     >
       <Image source={{ uri: imageUrl }} style={styles.tripCardImage} />
       <LinearGradient
-        colors={['transparent', COLORS.overlayDark]}
+        colors={['transparent', 'rgba(0,0,0,0.7)']}
         style={styles.tripCardGradient}
       />
       {isLatest && (
         <View style={styles.latestBadge}>
           <Sparkles size={10} color={COLORS.bg} />
-          <Text style={styles.latestBadgeText}>{t('plan.latest')}</Text>
+          <Text style={styles.latestBadgeText}>LATEST</Text>
         </View>
       )}
       <View style={styles.tripCardContent}>
@@ -145,7 +146,7 @@ const TripCard = React.memo(function TripCard({
         <View style={styles.tripCardMeta}>
           <View style={styles.tripCardChip}>
             <Calendar size={12} color={COLORS.creamSoft} strokeWidth={2} />
-            <Text style={styles.tripCardChipText}>{t('common.days', { count: dayCount })}</Text>
+            <Text style={styles.tripCardChipText}>{dayCount} days</Text>
           </View>
           <View style={styles.tripCardChip}>
             <Wallet size={12} color={COLORS.creamSoft} strokeWidth={2} />
@@ -165,52 +166,79 @@ const TripCard = React.memo(function TripCard({
 });
 
 // ---------------------------------------------------------------------------
-// Quick Action Cards — labels resolved at render time via t()
+// Quick Action Cards
 // ---------------------------------------------------------------------------
-interface QuickAction {
-  id: string;
-  icon: React.ElementType;
-  labelKey: string;
-  subKey: string;
-  color: string;
-}
-
-const QUICK_ACTIONS: QuickAction[] = [
+const QUICK_ACTIONS = [
   {
     id: 'hotels',
     icon: Bed,
-    labelKey: 'plan.findStays',
-    subKey: 'plan.staysSub',
+    label: 'Find stays',
+    sub: 'Hotels, hostels, villas',
     color: COLORS.sage,
   },
   {
     id: 'food',
     icon: Utensils,
-    labelKey: 'plan.findFood',
-    subKey: 'plan.foodSub',
+    label: 'Find food',
+    sub: 'Restaurants, street food',
     color: COLORS.coral,
   },
   {
     id: 'flights',
     icon: Plane,
-    labelKey: 'plan.bookFlights',
-    subKey: 'plan.flightsSub',
+    label: 'Book flights',
+    sub: 'Compare prices',
     color: COLORS.gold,
   },
 ];
 
 // ---------------------------------------------------------------------------
+// Pro Features Teaser — shown in trip list view for free users
+// ---------------------------------------------------------------------------
+function PlanProTeaser({ onUpgrade }: { onUpgrade: (feature: string) => void }) {
+  return (
+    <View style={planProStyles.row}>
+      <Pressable
+        style={({ pressed }) => [planProStyles.card, { opacity: pressed ? 0.85 : 1 }]}
+        onPress={() => onUpgrade('plan-regenerate')}
+      >
+        <RefreshCw size={16} color={COLORS.gold} strokeWidth={2} />
+        <Text style={planProStyles.label}>Re-generate</Text>
+        <Lock size={12} color={COLORS.gold} strokeWidth={2} />
+      </Pressable>
+      <Pressable
+        style={({ pressed }) => [planProStyles.card, { opacity: pressed ? 0.85 : 1 }]}
+        onPress={() => onUpgrade('plan-hotel-alternatives')}
+      >
+        <Bed size={16} color={COLORS.gold} strokeWidth={2} />
+        <Text style={planProStyles.label}>Hotel alternatives</Text>
+        <Lock size={12} color={COLORS.gold} strokeWidth={2} />
+      </Pressable>
+    </View>
+  );
+}
+
+const planProStyles = StyleSheet.create({
+  row: { flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.xl } as ViewStyle,
+  card: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg,
+    borderWidth: 1, borderColor: COLORS.goldBorder,
+    paddingVertical: SPACING.sm, paddingHorizontal: SPACING.md,
+  } as ViewStyle,
+  label: { flex: 1, fontFamily: FONTS.bodyMedium, fontSize: 12, color: COLORS.gold } as TextStyle,
+});
+
+// ---------------------------------------------------------------------------
 // Main Component
 // ---------------------------------------------------------------------------
 export default function PlanScreen() {
-  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
   const [networkError, setNetworkError] = useState<string | null>(null);
   const [rateLimitVisible, setRateLimitVisible] = useState(false);
   const [showGenerator, setShowGenerator] = useState(false);
-  const [peopleBannerDismissed, setPeopleBannerDismissed] = useState(false);
   const generatingDestRef = useRef<string>('');
   const isMountedRef = useRef(true);
 
@@ -244,8 +272,9 @@ export default function PlanScreen() {
   const handleNewTrip = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setShowGenerator(true);
-    setGenerateMode(null);
-  }, [setGenerateMode]);
+    // Reset to mode select screen — setState supports null
+    useAppStore.setState({ generateMode: null });
+  }, []);
 
   const handleQuickAction = useCallback((id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -400,6 +429,12 @@ export default function PlanScreen() {
     router.push({ pathname: '/itinerary', params: { tripId: trip.id } });
   }, [router]);
 
+  const handlePlanProUpgrade = useCallback((feature: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    captureEvent(EVENTS.PRO_GATE_SHOWN.name, { feature });
+    router.push({ pathname: '/paywall', params: { reason: 'feature', feature } } as never);
+  }, [router]);
+
   // ── Render: Generator mode ──
   if (showGenerator || !hasTrips) {
     const renderGeneratorContent = () => {
@@ -414,10 +449,10 @@ export default function PlanScreen() {
                   setShowGenerator(false);
                 }}
               >
-                <Text style={styles.backToTripsText}>{t('plan.backToTrips')}</Text>
+                <Text style={styles.backToTripsText}>Back to my trips</Text>
               </Pressable>
             )}
-            <GenerateModeSelect onSelect={handleModeSelect} firstTime={!hasTrips} />
+            <GenerateModeSelect onSelect={handleModeSelect} />
           </View>
         );
       }
@@ -430,7 +465,7 @@ export default function PlanScreen() {
               <View style={styles.errorBanner}>
                 <Text style={styles.errorBannerText}>{networkError}</Text>
                 <Pressable onPress={clearError} hitSlop={8}>
-                  <Text style={styles.errorBannerRetry}>{t('plan.dismiss')}</Text>
+                  <Text style={styles.errorBannerRetry}>Dismiss</Text>
                 </Pressable>
               </View>
             ) : null}
@@ -446,11 +481,11 @@ export default function PlanScreen() {
             <View style={styles.errorBanner}>
               <Text style={styles.errorBannerText}>{networkError}</Text>
               <Pressable onPress={clearError} hitSlop={8}>
-                  <Text style={styles.errorBannerRetry}>{t('plan.dismiss')}</Text>
-                </Pressable>
-              </View>
-            ) : null}
-            <GenerateConversationMode onGenerate={handleConversationGenerate} isGenerating={isGenerating} />
+                <Text style={styles.errorBannerRetry}>Dismiss</Text>
+              </Pressable>
+            </View>
+          ) : null}
+          <GenerateConversationMode onGenerate={handleConversationGenerate} isGenerating={isGenerating} />
         </View>
       );
     };
@@ -482,9 +517,9 @@ export default function PlanScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>{t('plan.yourTrips')}</Text>
+          <Text style={styles.headerTitle}>Your trips</Text>
           <Text style={styles.headerSub}>
-            {t('plan.tripsPlanned', { count: sortedTrips.length })}
+            {sortedTrips.length} {sortedTrips.length === 1 ? 'trip' : 'trips'} planned
           </Text>
         </View>
 
@@ -498,18 +533,9 @@ export default function PlanScreen() {
             style={styles.newTripGradient}
           >
             <Plus size={22} color={COLORS.bg} strokeWidth={2.5} />
-            <Text style={styles.newTripText}>{t('plan.planNewTrip')}</Text>
+            <Text style={styles.newTripText}>Plan a new trip</Text>
           </LinearGradient>
         </Pressable>
-
-        {/* People nudge — social proof for latest destination */}
-        {!peopleBannerDismissed && sortedTrips.length > 0 && (
-          <PeopleNudgeBanner
-            destination={sortedTrips[0].destination}
-            onTap={() => router.push('/(tabs)/people' as never)}
-            onDismiss={() => setPeopleBannerDismissed(true)}
-          />
-        )}
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
@@ -522,14 +548,17 @@ export default function PlanScreen() {
               <View style={[styles.quickActionIcon, { backgroundColor: `${action.color}20` }]}>
                 <action.icon size={18} color={action.color} strokeWidth={2} />
               </View>
-              <Text style={styles.quickActionLabel}>{t(action.labelKey)}</Text>
-              <Text style={styles.quickActionSub}>{t(action.subKey)}</Text>
+              <Text style={styles.quickActionLabel}>{action.label}</Text>
+              <Text style={styles.quickActionSub}>{action.sub}</Text>
             </Pressable>
           ))}
         </View>
 
+        {/* Pro features teaser (free users only) */}
+        {!isPro && <PlanProTeaser onUpgrade={handlePlanProUpgrade} />}
+
         {/* Trip Cards */}
-        <Text style={styles.sectionLabel}>{t('plan.sectionYourTrips')}</Text>
+        <Text style={styles.sectionLabel}>YOUR TRIPS</Text>
         {sortedTrips.map((trip, index) => (
           <TripCard
             key={trip.id}
@@ -555,41 +584,6 @@ export default function PlanScreen() {
 }
 
 // ---------------------------------------------------------------------------
-// People Nudge Banner — social proof for the latest destination
-// ---------------------------------------------------------------------------
-function PeopleNudgeBanner({
-  destination,
-  onTap,
-  onDismiss,
-}: {
-  destination: string;
-  onTap: () => void;
-  onDismiss: () => void;
-}) {
-  const count = getDestinationCount(destination, new Date().getMonth() + 1);
-  return (
-    <Pressable
-      onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        onTap();
-      }}
-      style={({ pressed }) => [styles.peopleBanner, { opacity: pressed ? 0.85 : 1 }]}
-    >
-      <View style={styles.peopleBannerLeft}>
-        <Users size={16} color={COLORS.sage} strokeWidth={2} />
-        <Text style={styles.peopleBannerText}>
-          <Text style={styles.peopleBannerBold}>{count} people</Text>
-          {' '}are planning {destination} this month
-        </Text>
-      </View>
-      <Pressable onPress={onDismiss} hitSlop={12} style={styles.peopleBannerDismiss}>
-        <Text style={styles.peopleBannerDismissText}>✕</Text>
-      </Pressable>
-    </Pressable>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Rate Limit Modal (extracted)
 // ---------------------------------------------------------------------------
 function RateLimitModal({
@@ -601,26 +595,26 @@ function RateLimitModal({
   onUpgrade: () => void;
   onDismiss: () => void;
 }) {
-  const { t } = useTranslation();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onDismiss}>
       <View style={styles.rateLimitOverlay}>
         <View style={styles.rateLimitCard}>
           <View style={styles.rateLimitDot} />
-          <Text style={styles.rateLimitTitle}>{t('plan.rateLimitTitle')}</Text>
+          <Text style={styles.rateLimitTitle}>You hit your free limit</Text>
           <Text style={styles.rateLimitBody}>
-            {t('plan.rateLimitBody', { count: FREE_TRIPS_PER_MONTH })}
+            Free accounts get {FREE_TRIPS_PER_MONTH} trip per month. Upgrade to Pro for
+            unlimited trips and the full ROAM experience.
           </Text>
           <Pressable onPress={onUpgrade} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
             <LinearGradient
               colors={[COLORS.gold, COLORS.goldDark]}
               style={styles.rateLimitUpgradeBtn}
             >
-              <Text style={styles.rateLimitUpgradeText}>{t('plan.seeProPlans')}</Text>
+              <Text style={styles.rateLimitUpgradeText}>See Pro Plans</Text>
             </LinearGradient>
           </Pressable>
           <Pressable onPress={onDismiss} style={styles.rateLimitDismiss} hitSlop={12}>
-            <Text style={styles.rateLimitDismissText}>{t('plan.maybeLater')}</Text>
+            <Text style={styles.rateLimitDismissText}>Maybe later</Text>
           </Pressable>
         </View>
       </View>
@@ -679,44 +673,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.header,
     fontSize: 20,
     color: COLORS.bg,
-  } as TextStyle,
-
-  // ── People Nudge Banner ──
-  peopleBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.sageBorder,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm + 2,
-    marginBottom: SPACING.md,
-  } as ViewStyle,
-  peopleBannerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    flex: 1,
-  } as ViewStyle,
-  peopleBannerText: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.creamMuted,
-    flex: 1,
-  } as TextStyle,
-  peopleBannerBold: {
-    fontFamily: FONTS.bodySemiBold,
-    color: COLORS.sage,
-  } as TextStyle,
-  peopleBannerDismiss: {
-    paddingLeft: SPACING.sm,
-  } as ViewStyle,
-  peopleBannerDismissText: {
-    fontFamily: FONTS.mono,
-    fontSize: 12,
-    color: COLORS.creamMuted,
   } as TextStyle,
 
   // ── Quick Actions ──
@@ -796,7 +752,7 @@ const styles = StyleSheet.create({
   tripCardDest: {
     fontFamily: FONTS.header,
     fontSize: 28,
-    color: COLORS.white,
+    color: '#FFFFFF',
     marginBottom: 6,
   } as TextStyle,
   tripCardMeta: {
@@ -807,7 +763,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: COLORS.whiteMuted,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: RADIUS.sm,
@@ -822,7 +778,7 @@ const styles = StyleSheet.create({
     right: SPACING.md,
     top: '50%',
     marginTop: -10,
-    backgroundColor: COLORS.whiteMuted,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     borderRadius: RADIUS.full,
     width: 32,
     height: 32,
