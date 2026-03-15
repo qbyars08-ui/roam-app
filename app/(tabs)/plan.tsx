@@ -417,7 +417,7 @@ export default function PlanScreen() {
                 <Text style={styles.backToTripsText}>{t('plan.backToTrips')}</Text>
               </Pressable>
             )}
-            <GenerateModeSelect onSelect={handleModeSelect} />
+            <GenerateModeSelect onSelect={handleModeSelect} firstTime={!hasTrips} />
           </View>
         );
       }
