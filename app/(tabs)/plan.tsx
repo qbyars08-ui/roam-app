@@ -4,7 +4,6 @@
 // =============================================================================
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import {
-  Animated,
   Image,
   Modal,
   Pressable,
@@ -22,7 +21,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ChevronRight,
   Clock,
-  MapPin,
   Plus,
   Sparkles,
   Wallet,
@@ -131,7 +129,7 @@ const TripCard = React.memo(function TripCard({
     >
       <Image source={{ uri: imageUrl }} style={styles.tripCardImage} />
       <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.7)']}
+        colors={['transparent', COLORS.overlayDark]}
         style={styles.tripCardGradient}
       />
       {isLatest && (
@@ -787,7 +785,7 @@ const styles = StyleSheet.create({
   tripCardDest: {
     fontFamily: FONTS.header,
     fontSize: 28,
-    color: '#FFFFFF',
+    color: COLORS.white,
     marginBottom: 6,
   } as TextStyle,
   tripCardMeta: {
@@ -798,7 +796,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: COLORS.whiteMuted,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: RADIUS.sm,
@@ -813,7 +811,7 @@ const styles = StyleSheet.create({
     right: SPACING.md,
     top: '50%',
     marginTop: -10,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: COLORS.whiteMuted,
     borderRadius: RADIUS.full,
     width: 32,
     height: 32,
