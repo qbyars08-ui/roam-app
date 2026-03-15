@@ -33,7 +33,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
-import { useAppStore } from '../../lib/store';
 import { track } from '../../lib/analytics';
 import { captureEvent } from '../../lib/posthog';
 import { planningLabel } from '../../lib/social-proof';
@@ -284,11 +283,13 @@ export default function PeopleScreen() {
 
   useEffect(() => {
     track({ type: 'screen_view', screen: 'people' });
-    Animated.timing(fadeAnim, {
+    const anim = Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 400,
       useNativeDriver: true,
-    }).start();
+    });
+    anim.start();
+    return () => anim.stop();
   }, [fadeAnim]);
 
   const handleInvite = useCallback(async () => {
