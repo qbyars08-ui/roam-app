@@ -24,6 +24,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Search, MapPin, Flame, Clock } from 'lucide-react-native';
 import * as Haptics from '../../lib/haptics';
+import { getDestinationPhoto } from '../../lib/photos';
+import DestinationImageFallback from '../../components/ui/DestinationImageFallback';
 import {
   COLORS,
   FONTS,
@@ -51,13 +53,6 @@ const CARD_HEIGHT_TALL = 240;
 const CARD_HEIGHT_SHORT = 200;
 
 // ---------------------------------------------------------------------------
-// Unsplash fallback — zero API key needed
-// ---------------------------------------------------------------------------
-function getUnsplashUrl(query: string, w = 800, h = 600): string {
-  return `https://source.unsplash.com/${w}x${h}/?${encodeURIComponent(query)},travel`;
-}
-
-// ---------------------------------------------------------------------------
 // DestinationPhotoCard
 // ---------------------------------------------------------------------------
 interface DestinationPhotoCardProps {
@@ -73,9 +68,10 @@ const DestinationPhotoCard = React.memo(function DestinationPhotoCard({
 }: DestinationPhotoCardProps) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
 
   const imageUrl = destination.unsplashUrl
-    ?? getUnsplashUrl(destination.photoQuery);
+    ?? getDestinationPhoto(destination.label);
 
   useEffect(() => {
     const delay = Math.min(index * 80, 400);
@@ -128,21 +124,27 @@ const DestinationPhotoCard = React.memo(function DestinationPhotoCard({
         accessibilityRole="button"
         accessibilityLabel={`${destination.label}, ${destination.country}`}
       >
-        {/* Placeholder gradient while image loads */}
-        {!imageLoaded && (
-          <LinearGradient
-            colors={[COLORS.bgElevated, COLORS.bgCard, COLORS.bg]}
-            style={StyleSheet.absoluteFill}
-          />
+        {/* Gradient fallback: while loading or on error */}
+        {(!imageLoaded || imageFailed) && (
+          <View style={StyleSheet.absoluteFill}>
+            <DestinationImageFallback
+              destination={destination.label}
+              country={destination.country}
+              height={cardHeight}
+            />
+          </View>
         )}
 
-        {/* Photo */}
-        <Image
-          source={{ uri: imageUrl }}
-          style={styles.cardImage}
-          onLoad={() => setImageLoaded(true)}
-          resizeMode="cover"
-        />
+        {/* Photo — cached via RN Image cache + Unsplash CDN headers */}
+        {!imageFailed && (
+          <Image
+            source={{ uri: imageUrl, cache: 'force-cache' }}
+            style={styles.cardImage}
+            onLoad={() => setImageLoaded(true)}
+            onError={() => setImageFailed(true)}
+            resizeMode="cover"
+          />
+        )}
 
         {/* Dark gradient overlay */}
         <LinearGradient
@@ -247,6 +249,14 @@ export default function DiscoverScreen() {
 
   useEffect(() => {
     track({ type: 'screen_view', screen: 'discover' });
+  }, []);
+
+  // Prefetch first 8 destination images for instant rendering
+  useEffect(() => {
+    DESTINATIONS.slice(0, 8).forEach((d) => {
+      const url = d.unsplashUrl ?? getDestinationPhoto(d.label);
+      Image.prefetch(url).catch(() => {});
+    });
   }, []);
 
   // Rotate editorial header every 5s with crossfade
