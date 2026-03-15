@@ -149,6 +149,23 @@ Deno.serve(async (req: Request) => {
       console.log(`Admin bypass: ${userEmail} — skipping rate limit`);
     }
 
+    // ── Per-minute rate limit for chat (isTripGeneration=false) ────────
+    // Trip generation uses monthly quota above; chat has no monthly limit
+    // but needs a per-minute cap to prevent Anthropic API cost abuse.
+    const CHAT_RATE_LIMIT_PER_MINUTE = 20;
+    if (!isTripGeneration && !isAdmin) {
+      const { data: chatCount } = await supabaseAdmin.rpc("increment_edge_rate_limit", {
+        p_user_id: user.id,
+        p_endpoint: "claude-proxy-chat",
+      });
+      if ((chatCount as number) > CHAT_RATE_LIMIT_PER_MINUTE) {
+        return new Response(
+          JSON.stringify({ error: "Chat rate limit exceeded. Please wait a minute." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
+
     // ── Rate limit only for trip generation ────────────────────────────
     const isFree = profile.subscription_tier === "free" || !profile.subscription_tier;
     if (isTripGeneration && isFree && !isAdmin && profile.trips_generated_this_month >= FREE_TIER_LIMIT) {

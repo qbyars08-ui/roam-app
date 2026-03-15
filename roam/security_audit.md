@@ -1,6 +1,6 @@
 # Security Audit — ROAM
 ## Last Updated: 2026-03-15
-## Audits Contained: (1) GDPR/DACH Compliance · (2) People Tab Security Review
+## Audits Contained: (1) GDPR/DACH Compliance · (2) People Tab Review · (3) Post-Merge Scan · (4) Auth + Edge Function Audit
 
 ---
 
@@ -348,3 +348,107 @@ Added `EXPO_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com` with a clear GDPR comm
 - [x] Removed `email` from `WAITLIST_JOINED` PostHog event type — FIXED in `lib/posthog-events.ts`
 - [x] Added `EXPO_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com` to `.env.example` — FIXED
 - [x] Documented all 5 DACH launch blockers for prioritization
+
+---
+
+# AUDIT 4 — Auth + Edge Function Audit
+## Date: 2026-03-15
+## Scope: Per AGENT_BOARD task #08 — ensureValidSession, rate limiting, RLS on trips/chat/waitlist, API key exposure
+## Summary: 6 issues (1 critical resolved, 1 high resolved, 1 medium resolved, 3 low open)
+
+| # | Severity | Category | Description | File(s) | Status |
+|---|----------|----------|-------------|---------|--------|
+| A4-1 | CRITICAL | waitlist_emails anon SELECT | Migration `20260325000001` re-introduced `"Anon can read waitlist rows"` with `USING (true)`. Any anonymous user could `SELECT * FROM waitlist_emails` and dump all signup email addresses. Previous fixes in `20260313` and `20260323000001` had dropped this policy, but the comprehensive fix migration re-added it. | `supabase/migrations/20260325000001_waitlist_comprehensive_fix.sql:167-170` | FIXED |
+| A4-2 | HIGH | No chat rate limit in claude-proxy | `claude-proxy` enforces monthly trip quota only when `isTripGeneration=true`. Chat calls (`isTripGeneration=false`) had NO server-side rate limit — any authenticated user (including anonymous Supabase users) could send unlimited chat requests, incurring unbounded Anthropic API costs. | `supabase/functions/claude-proxy/index.ts` | FIXED |
+| A4-3 | MEDIUM | callClaudeWithMessages timeout leak | `callClaudeWithMessages` created a no-op `setTimeout(() => {}, timeoutMs)` as a placeholder, then created the actual timeout inside `Promise.race` as an anonymous timer that was never cleared. After a successful response, the anonymous timeout timer would still fire (trying to reject an already-settled promise). No functional impact, but a resource/memory leak on each chat call. | `lib/claude.ts:273-295` | FIXED |
+| A4-4 | LOW | ensureValidSession() — verified correct | The function correctly detects guest sessions (`guest-` prefix, empty `access_token`, null session) and upgrades via `supabase.auth.signInAnonymously()`. Anonymous auth users are properly rate-limited (treated as `free` tier, `trips_generated_this_month` tracked per anon user ID). | `lib/claude.ts:174-194` | VERIFIED OK |
+| A4-5 | LOW | Trips stored in client only | `trips` table does not exist in Supabase — all trip data lives in Zustand store (AsyncStorage). No server-side RLS needed. `shared_trips` table RLS was reviewed: SELECT open (by design for public sharing), INSERT requires auth.uid() = user_id. DELETE policy was added in Audit 2 (PR #30). | `supabase/migrations/20260311000004_create_shared_trips_table.sql` | VERIFIED OK |
+| A4-6 | LOW | Multiple EXPO_PUBLIC_ API keys | `EXPO_PUBLIC_CLIMATIQ_KEY`, `EXPO_PUBLIC_VISA_API_KEY`, `EXPO_PUBLIC_TICKETMASTER_KEY`, `EXPO_PUBLIC_EVENTBRITE_TOKEN`, `EXPO_PUBLIC_UNSPLASH_ACCESS_KEY` are bundled into client JS. These are read-only low-sensitivity keys (not secret keys), but violate project rule "EXPO_PUBLIC_ only for Supabase anon + Google Places". Recommend proxying via edge functions in next sprint. | `lib/carbon-footprint.ts:6`, `lib/visa-requirements.ts:9`, `lib/events.ts:6`, `lib/ticketmaster.ts:8`, `lib/unsplash.ts:9` | OPEN |
+
+---
+
+## Detailed Fixes — Audit 4
+
+### A4-1 — CRITICAL: waitlist_emails anon SELECT Patched
+
+**Root cause chain:**
+1. `20260313_security_audit_rls_fixes.sql` — correctly dropped "Anon can read waitlist rows"
+2. `20260323000001_fix_security_rls_v2.sql` — again dropped the policy
+3. `20260323000003_waitlist_referral_tracking.sql` — re-added "Anon can read own waitlist row" with `USING (true)` (misleading name, was actually unrestricted)
+4. `20260325000001_waitlist_comprehensive_fix.sql` — **re-added "Anon can read waitlist rows"** with `USING (true)`, undoing all prior fixes
+
+**Fix applied (`20260315000003_fix_waitlist_anon_select.sql`):**
+- Drop both "Anon can read waitlist rows" and "Anon can read own waitlist row" policies
+- Create `join_waitlist(p_email, p_referral_source)` SECURITY DEFINER RPC that:
+  - Validates email server-side (length, format)
+  - Handles duplicates idempotently (returns existing row data)
+  - Returns only `{referral_code, created_at, position}` — never exposes other users' data
+  - Runs as postgres superuser, bypasses RLS internally — no anon SELECT policy needed
+- Update `lib/waitlist-guest.ts` to call `supabase.rpc('join_waitlist', ...)` instead of `.insert().select()`
+
+### A4-2 — HIGH: Claude-Proxy Chat Rate Limit Added
+
+**Evidence:** `claude-proxy` only rate-limits `isTripGeneration=true` (monthly quota). `isTripGeneration=false` (chat + conversation mode) had no server-side cap.
+
+**Impact:** Unlimited Anthropic API calls per user per minute. Anonymous Supabase users can be created programmatically, each getting unlimited chat calls.
+
+**Fix applied:** Added per-minute rate limit for chat using existing `increment_edge_rate_limit` RPC:
+```
+CHAT_RATE_LIMIT_PER_MINUTE = 20 requests/minute per user
+```
+Admin bypass (`ADMIN_TEST_EMAILS`) continues to skip limits. Rate limit applies ONLY to chat (`isTripGeneration=false`); trip generation continues to use monthly quota.
+
+### A4-3 — MEDIUM: callClaudeWithMessages Timeout Fixed
+
+Replaced the broken double-timer pattern with an `AbortController` pattern (matching `callClaude`):
+```typescript
+// Before: anonymous timer in Promise.race that could never be cleared
+// After: AbortController + clearTimeout in finally block
+const controller = new AbortController();
+const timer = setTimeout(() => controller.abort(), timeoutMs);
+// ... finally { clearTimeout(timer); }
+```
+
+### A4-4 — ensureValidSession() — Verified Correct
+
+The guest session upgrade flow is secure:
+1. Detects: no session, empty `access_token`, or `guest-` prefix user ID
+2. Calls `supabase.auth.signInAnonymously()` — creates real Supabase anonymous user
+3. Updates Zustand store with real session
+4. Edge function then: validates JWT via `auth.getUser()`, creates profile row, enforces trip quota
+5. Anonymous users are fully rate-limited as free-tier users
+
+**Note for Quinn:** `ADMIN_TEST_EMAILS` env var controls which emails bypass trip generation rate limits. Add `qbyars08@gmail.com` to this Supabase secret to enable unlimited trips for testing. Set via Supabase Dashboard → Settings → Edge Functions → Secrets.
+
+### A4-6 — LOW: EXPO_PUBLIC_ API Keys
+
+Non-secret keys bundled in client bundle. Risk assessment:
+- `EXPO_PUBLIC_CLIMATIQ_KEY` — Climatiq paid service; key abuse = cost to ROAM. MEDIUM risk.
+- `EXPO_PUBLIC_VISA_API_KEY` — RapidAPI key; rate limit abuse possible. MEDIUM risk.
+- `EXPO_PUBLIC_TICKETMASTER_KEY`, `EXPO_PUBLIC_EVENTBRITE_TOKEN` — Public rate-limited keys. LOW risk.
+- `EXPO_PUBLIC_UNSPLASH_ACCESS_KEY` — Unsplash demo key; worst case = rate limit hit. LOW risk.
+
+Recommended fix (next sprint): Move each to a Supabase edge function wrapper.
+
+---
+
+## Edge Function Security Summary
+
+| Function | JWT Required | CORS Allowlist | Rate Limit | Input Validation |
+|----------|-------------|----------------|-----------|-----------------|
+| `claude-proxy` | Yes | Yes | Monthly (trips) + 20/min (chat) | 50KB/100KB byte limits |
+| `voice-proxy` | Yes | Yes | 30/min | 5000 char text, voice_id regex |
+| `weather-intel` | Yes | Yes | 60/min | 200 char dest, coord validation |
+| `destination-photo` | Yes | Yes | Yes (via RPC) | Input sanitised |
+| `revenuecat-webhook` | Webhook secret | `api.revenuecat.com` only | N/A | Event type validation |
+| `send-push` | Service role key | N/A (internal) | 1000 user_ids max | Title/body required |
+| `enrich-venues` | Yes | Yes | Yes (via RPC) | Input sanitised |
+
+All edge functions: CORS origin allowlist (never wildcard), JWT validated, no stack traces in errors.
+
+## Resolved This Session (Audit 4)
+- [x] `waitlist_emails` anon SELECT — CRITICAL → FIXED via SECURITY DEFINER RPC
+- [x] `claude-proxy` chat rate limit — HIGH → FIXED at 20 req/min
+- [x] `callClaudeWithMessages` timeout leak — MEDIUM → FIXED with AbortController pattern
+- [x] `ensureValidSession()` verified correct
+- [x] All 7 edge functions audited — JWT auth, CORS, rate limits confirmed

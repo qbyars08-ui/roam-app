@@ -81,43 +81,27 @@ export async function joinWaitlist(email: string): Promise<WaitlistResult> {
   const safeRef = referralSource && referralSource.length <= 50 ? referralSource : 'direct';
 
   try {
-    const { data, error } = await supabase
-      .from('waitlist_emails')
-      .insert({ email: trimmed, referral_source: safeRef })
-      .select('referral_code, created_at')
-      .single();
+    // Use SECURITY DEFINER RPC — avoids anon SELECT policy on waitlist_emails.
+    // The old .insert().select() pattern required USING (true) for anon,
+    // which exposed ALL emails to any anonymous user.
+    const { data, error } = await supabase.rpc('join_waitlist', {
+      p_email: trimmed,
+      p_referral_source: safeRef,
+    });
 
     if (error) {
-      // 23505 = duplicate email — fetch existing row
-      if (error.code === '23505') {
-        const { data: existing } = await supabase
-          .from('waitlist_emails')
-          .select('referral_code')
-          .eq('email', trimmed)
-          .single();
-        const code = (existing?.referral_code as string) ?? generateCodeFromEmail(trimmed);
-        const { count } = await supabase
-          .from('waitlist_emails')
-          .select('*', { count: 'exact', head: true })
-          .lte('created_at', new Date().toISOString());
-        return { referralCode: code, position: (count ?? 0) + 1, email: trimmed };
-      }
-      // RLS or schema error — fall through to fallback below
-      console.error('Waitlist insert error:', error.code, error.message);
+      console.error('Waitlist RPC error:', error.code, error.message);
       throw error;
     }
 
-    const code = (data?.referral_code as string) ?? generateCodeFromEmail(trimmed);
-    const { count } = await supabase
-      .from('waitlist_emails')
-      .select('*', { count: 'exact', head: true })
-      .lte('created_at', data?.created_at ?? new Date().toISOString());
+    const result = data as { referral_code: string; created_at: string; position: number } | null;
+    const code = result?.referral_code ?? generateCodeFromEmail(trimmed);
+    const position = result?.position ?? 1;
 
     await clearStoredRef();
-    return { referralCode: code, position: (count ?? 0) + 1, email: trimmed };
+    return { referralCode: code, position, email: trimmed };
   } catch (err: unknown) {
-    // Fallback: if Supabase RLS/migration not applied, still show success
-    // The user's email wasn't saved but the UX isn't broken
+    // Fallback: if RPC not yet deployed, still show success to the user
     console.error('Waitlist fallback — Supabase call failed:', err);
     const fallbackCode = generateCodeFromEmail(trimmed);
     return { referralCode: fallbackCode, position: 528, email: trimmed };

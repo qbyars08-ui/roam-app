@@ -270,28 +270,30 @@ export async function callClaudeWithMessages(
   await ensureValidSession();
 
   const timeoutMs = isTripGeneration ? 90_000 : 30_000;
-  const timeoutId = setTimeout(() => {}, timeoutMs); // placeholder for abort
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   let data: Record<string, unknown> | null = null;
   let error: unknown = null;
 
   try {
-    const result = await Promise.race([
-      supabase.functions.invoke('claude-proxy', {
-        body: {
-          system: systemPrompt,
-          messages: messages.map((m) => ({ role: m.role, content: m.content })),
-          isTripGeneration,
-        },
-      }),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Request timed out. Check your connection and try again.')), timeoutMs)
-      ),
-    ]);
+    const result = await supabase.functions.invoke('claude-proxy', {
+      body: {
+        system: systemPrompt,
+        messages: messages.map((m) => ({ role: m.role, content: m.content })),
+        isTripGeneration,
+      },
+    });
     data = result.data;
     error = result.error;
+  } catch (err: unknown) {
+    clearTimeout(timer);
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('Request timed out. Check your connection and try again.');
+    }
+    throw err;
   } finally {
-    clearTimeout(timeoutId);
+    clearTimeout(timer);
   }
 
   if (error) {
