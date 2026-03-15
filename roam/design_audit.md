@@ -1,6 +1,6 @@
 # ROAM Design System Audit
 **Agent:** 03 — Design Enforcer  
-**Date:** 2026-03-13 (PR1) / 2026-03-13 (PR2 — alpha sweep) / 2026-03-15 (PR3 — anti-slop sweep)  
+**Date:** 2026-03-13 (PR1) / 2026-03-13 (PR2 — alpha sweep) / 2026-03-15 (PR3 — anti-slop sweep) / 2026-03-15 (PR4 — 5-tab structure audit)  
 **Scope:** `app/` and `components/` — all `.tsx` files  
 **Design system tokens:** `lib/constants.ts` → `COLORS`, `FONTS`, `SPACING`, `RADIUS`
 
@@ -8,21 +8,24 @@
 
 ## Executive Summary
 
-| Category | Found | PR1 Fixed | PR2 Fixed | PR3 Fixed | Remaining |
-|---|---|---|---|---|---|
-| Hardcoded hex colors (`'#xxxxxx'`) | 4 | 3 | — | 1 | **0** |
-| Raw `rgba()` in style objects | 4 | 1 | 3 | — | **0** |
-| `COLORS.x + 'hex'` alpha modifiers | 31 | 9 | 22 | — | **0** |
-| Non-RADIUS `borderRadius` values | 62 | 26 | — | 14 | ~22 (geometric circles — intentional) |
-| Non-lucide icon libraries | 0 | — | — | — | 0 |
-| Hardcoded font family strings | 0 | — | — | — | 0 |
-| Emoji in UI | 0 | — | — | — | 0 |
-| `fontWeight` on custom fonts | 1 | — | — | 1 | **0** |
-| Visual anti-slop (form-like UI, missing editorial sections) | 3 screens | — | — | 3 | **0** |
+| Category | Found | PR1 Fixed | PR2 Fixed | PR3 Fixed | PR4 Fixed | Remaining |
+|---|---|---|---|---|---|---|
+| Hardcoded hex colors (`'#xxxxxx'`) | 7 | 3 | — | 1 | 3 | **0** |
+| Raw `rgba()` in style objects | 7 | 1 | 3 | — | 3 | **0** |
+| `COLORS.x + 'hex'` alpha modifiers | 32 | 9 | 22 | — | 1 | **0** |
+| Non-RADIUS `borderRadius` values | 63 | 26 | — | 14 | 1 | ~22 (geometric circles — intentional) |
+| Non-lucide icon libraries | 0 | — | — | — | — | 0 |
+| Hardcoded font family strings | 0 | — | — | — | — | 0 |
+| Emoji in UI | 0 | — | — | — | — | 0 |
+| `fontWeight` on custom fonts | 1 | — | — | 1 | — | **0** |
+| Visual anti-slop (form-like UI, missing editorial sections) | 3 screens | — | — | 3 | — | **0** |
+| Hardcoded spacing/gap values (not SPACING.*) | ~12 new | — | — | — | 12 | **0** |
+| Tab bar config regression (wrong TAB_ORDER after rebase) | 1 | — | — | — | 1 | **0** |
 
 **PR1 total: 35 fixes across 10 files.**  
 **PR2 total: 35 substitutions across 19 files + 3 new tokens added to `lib/constants.ts`.**  
-**PR3 total: 24+ fixes across 11 files — flights visual rework, stays curated sections, generate conversational redesign.**
+**PR3 total: 24+ fixes across 11 files — flights visual rework, stays curated sections, generate conversational redesign.**  
+**PR4 total: 22 fixes across 4 files — Plan tab, People tab, ROAMTabBar (critical regression fix), stays.tsx.**
 
 ---
 
@@ -486,6 +489,116 @@ The following uses `borderRadius: N` where N = element `width/2` — geometric c
 ### Remaining `SPACING + N` Arithmetic (P2 — Documented)
 
 ~55 instances of `SPACING.x + N` arithmetic across the codebase remain (e.g. `SPACING.sm + 2`, `SPACING.md + 2`). These are P2 violations — they produce values between SPACING tokens (10, 18, etc.) where no exact token exists. Recommended approach: add intermediate tokens `SPACING.xs2 = 6` and `SPACING.md2 = 18` in a future PR, or standardize to nearest token.
+
+---
+
+---
+
+## PR4 — 5-Tab Structure Design Audit (2026-03-15)
+
+**Scope:** New tabs from `feat(tabs): restructure to 5-tab navigation` — `plan.tsx`, `people.tsx`, `components/ui/ROAMTabBar.tsx`.
+
+---
+
+### CRITICAL: Tab Bar Regression Fix
+
+During rebase of the PR3 design branch onto the 5-tab restructure commit, a merge conflict in `ROAMTabBar.tsx` was resolved incorrectly — the old 6-tab `TAB_ORDER` and icon imports were restored, breaking the tab bar entirely (Plan and People tabs would not render).
+
+**Fixed:** `ROAMTabBar.tsx` restored to correct 5-tab structure while retaining the `RADIUS.xl` token fix from PR3.
+
+| Before (broken after rebase) | After |
+|---|---|
+| `TAB_ORDER = ['index', 'generate', 'flights', 'stays', 'food', 'prep']` | `TAB_ORDER = ['plan', 'index', 'people', 'flights', 'prep']` |
+| `IconDiscover, IconGenerate, IconFlights, IconStays, IconFood, IconPrep` | `IconPlan, IconDiscover, IconPeople, IconFlights, IconPrep` |
+
+---
+
+### FIX — `app/(tabs)/plan.tsx` [Plan Tab]
+
+**Audit findings:**
+| Line | Type | Severity | Before | After |
+|---|---|---|---|---|
+| 132 | Raw `rgba()` in LinearGradient | P0 | `'rgba(0,0,0,0.7)'` | `COLORS.overlayDark` |
+| 502 | `COLORS.x + 'hex'` anti-pattern | P0 | `` `${action.color}20` `` | `COLORS.sageLight / coralSubtle / goldFaint` |
+| 706 | Hardcoded hex | P0 | `color: '#FFFFFF'` | `color: COLORS.cream` |
+| 717 | Raw `rgba()` | P0 | `'rgba(255,255,255,0.15)'` | `COLORS.whiteDim` |
+| 732 | Raw `rgba()` | P0 | `'rgba(255,255,255,0.15)'` | `COLORS.whiteDim` |
+| 607 | Hardcoded spacing | P2 | `marginTop: 4` | `SPACING.xs` |
+| 620 | Arithmetic spacing | P2 | `SPACING.md + 2` | `SPACING.md` |
+| 651 | Hardcoded spacing | P2 | `marginBottom: 4` | `SPACING.xs` |
+| 707 | Hardcoded spacing | P2 | `marginBottom: 6` | `SPACING.sm` |
+| 716 | Hardcoded gap | P2 | `gap: 4` | `SPACING.xs` |
+| 718 | Hardcoded padding | P2 | `paddingHorizontal: 8` | `SPACING.sm` |
+| 746 | Hardcoded gap | P2 | `gap: 4` | `SPACING.xs` |
+| 747 | Hardcoded padding | P2 | `paddingHorizontal: 8` | `SPACING.sm` |
+
+**Design notes (Plan tab):**
+- Trip cards: `height: 160` standard / `height: 200` latest — correct hierarchy
+- LATEST badge: sage background, Sparkles icon (lucide), mono font — compliant
+- Quick action cards: 3-column flex, icon + label + sub — balanced, correct spacing after fix
+- Generate flow embedded: mode select → quick/conversation — no layout jank
+- `rateLimitDot` borderRadius: 5 (10×10 element) — EXEMPT (geometric circle)
+
+---
+
+### FIX — `app/(tabs)/people.tsx` [People Tab]
+
+**Audit findings:**
+| Line | Type | Severity | Before | After |
+|---|---|---|---|---|
+| 245 | Raw `rgba()` in LinearGradient | P0 | `'rgba(0,0,0,0.7)'` | `COLORS.overlayDark` |
+| 539 | Hardcoded hex | P0 | `color: '#FFFFFF'` | `color: COLORS.cream` |
+| 549 | Raw `rgba()` | P0 | `'rgba(255,255,255,0.15)'` | `COLORS.whiteDim` |
+| 579 | Numeric borderRadius | P1 | `borderRadius: 26` (52×52 element) | `RADIUS.full` |
+| 417 | Hardcoded spacing | P2 | `marginTop: 4` | `SPACING.xs` |
+| 466 | Hardcoded spacing | P2 | `marginTop: 2` | `SPACING.xs / 2` |
+| 488 | Hardcoded spacing | P2 | `marginTop: 2` | `SPACING.xs / 2` |
+| 523 | Hardcoded gap/padding | P2 | `gap: 4, paddingHorizontal: 8, paddingVertical: 2` | `SPACING.xs, SPACING.sm, SPACING.xs/2` |
+| 526 | Hardcoded padding | P2 | `paddingHorizontal: 8` | `SPACING.sm` |
+| 545 | Hardcoded spacing | P2 | `marginTop: 2` | `SPACING.xs / 2` |
+| 613 | Hardcoded gap | P2 | `gap: 4, marginTop: 4` | `SPACING.xs` |
+| 625 | Hardcoded margin | P2 | `marginLeft: 4` | `SPACING.xs` |
+| 637 | Hardcoded gap | P2 | `gap: 6` | `SPACING.sm` |
+| 642 | Hardcoded padding | P2 | `paddingHorizontal: 10, paddingVertical: 4` | `SPACING.sm, SPACING.xs` |
+| 654 | Hardcoded gap/padding | P2 | `gap: 4, paddingHorizontal: 10, paddingVertical: 4` | `SPACING.xs, SPACING.sm, SPACING.xs` |
+| 674 | Hardcoded gap | P2 | `gap: 6` | `SPACING.sm` |
+| 713 | Hardcoded gap | P2 | `gap: 4` | `SPACING.xs` |
+
+**Hero section rework:** Original hero was centered/corporate (icon + centered text + stats). Redesigned to be left-aligned and conversational:
+- Added eyebrow "2.4k active right now" with live green dot — real-time signal
+- Headline left-aligned: "Find someone going where you are going" (28px Cormorant)
+- Stats moved below a divider line — contextual, not hero
+- Removed centered `<Sparkles>` icon — design system says no emojis; icon-only decoration removed in favor of live dot
+
+**Design notes (People tab):**
+- Traveler cards: avatar + name/age/destination/dates at a glance — scannable after fixes
+- Group cards: horizontal scroll, 200px width, destination image + gradient overlay + member badge — compelling
+- Match badge: `Zap` icon + percentage — correct use of lucide, semantic
+- Vibe pills: correctly using `COLORS.bgGlass`, `COLORS.goldFaint` — token-compliant after fix
+- Countries pill: gold token — compliant
+- Connect/Heart actions: sage CTA + glass secondary — balanced
+
+---
+
+### FIX — `app/(tabs)/stays.tsx` [Stays — empty state section from 5-tab overhaul]
+
+| Line | Type | Before | After |
+|---|---|---|---|
+| 565 | Raw `rgba()` in LinearGradient | `'rgba(8,15,10,0.85)'` | `COLORS.bgDarkGreenOverlay` |
+
+---
+
+### Tab Bar Visual Assessment
+
+The 5-icon tab bar (`IconPlan`, `IconDiscover`, `IconPeople`, `IconFlights`, `IconPrep`) is visually balanced:
+- All SVGs use consistent `strokeWidth={1.5}`, 24×24 viewBox
+- `IconPlan`: minimal calendar with fill dot — communicates "plan/create"
+- `IconDiscover`: compass rose — directional, discovery metaphor
+- `IconPeople`: two person silhouettes — immediately recognizable
+- `IconFlights`: airplane — universal
+- `IconPrep`: shield outline — safety/security metaphor
+- Active state: gold (`COLORS.gold`) — consistent across all icons
+- Inactive state: `COLORS.creamDim` — readable but recessive
 
 ---
 
