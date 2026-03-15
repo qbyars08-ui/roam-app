@@ -35,9 +35,11 @@ import {
   type Destination,
   type DestinationCategory,
 } from '../../lib/constants';
+import { useAppStore } from '../../lib/store';
 import i18n from '../../lib/i18n';
 import { tCategory } from '../../lib/i18n/helpers';
 import { track } from '../../lib/analytics';
+import { weeklyBadgeLabel } from '../../lib/social-proof';
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -155,18 +157,18 @@ const DestinationPhotoCard = React.memo(function DestinationPhotoCard({
           <Text style={styles.priceBadgeText}>{costLabel}</Text>
         </View>
 
-        {/* Trending + timing badges (top-right) */}
+        {/* Trending + timing badges (top-left) */}
         <View style={styles.badgeStack}>
           {isTrending && (
             <View style={styles.trendingBadge}>
-              <Flame size={14} color={COLORS.coral} strokeWidth={2} />
-              <Text style={styles.trendingText}>{destination.trendScore}</Text>
+              <Flame size={10} color={COLORS.coral} />
+              <Text style={styles.trendingText}>{weeklyBadgeLabel(destination.label)}</Text>
             </View>
           )}
           {isPerfectTiming && (
             <View style={styles.timingBadge}>
-              <Clock size={14} color={COLORS.sage} strokeWidth={2} />
-              <Text style={styles.timingText}>{i18n.t('discover.perfectTiming')}</Text>
+              <Clock size={10} color={COLORS.sage} />
+              <Text style={styles.timingText}>Perfect timing</Text>
             </View>
           )}
         </View>
@@ -236,6 +238,8 @@ export default function DiscoverScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
+  const setPlanWizard = useAppStore((s) => s.setPlanWizard);
+  const setGenerateMode = useAppStore((s) => s.setGenerateMode);
 
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -286,10 +290,11 @@ export default function DiscoverScreen() {
   // Handlers
   const handleDestinationPress = useCallback(
     (dest: Destination) => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      router.push(`/destination/${encodeURIComponent(dest.label)}`);
+      setPlanWizard({ destination: dest.label });
+      setGenerateMode('quick');
+      router.push('/(tabs)/plan');
     },
-    [router]
+    [setPlanWizard, setGenerateMode, router]
   );
 
   const handleCategoryPress = useCallback((id: string) => {
@@ -335,7 +340,7 @@ export default function DiscoverScreen() {
             <View style={styles.searchInputWrap}>
               {/* Using a simple text input to avoid PlacesInput complexity */}
               <Pressable
-                onPress={() => router.push('/(tabs)/generate')}
+                onPress={() => router.push('/(tabs)/plan')}
                 style={styles.searchTapArea}
                 accessibilityRole="button"
                 accessibilityLabel={t('discover.searchPlaceholder')}
@@ -580,9 +585,8 @@ const styles = StyleSheet.create({
   badgeStack: {
     position: 'absolute',
     top: SPACING.sm,
-    right: SPACING.sm,
+    left: SPACING.sm,
     gap: 4,
-    alignItems: 'flex-end',
   } as ViewStyle,
   trendingBadge: {
     flexDirection: 'row',
@@ -597,7 +601,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.mono,
     fontSize: 9,
     color: COLORS.coral,
-    letterSpacing: 0.5,
+    letterSpacing: 0,
   } as TextStyle,
   timingBadge: {
     flexDirection: 'row',
@@ -617,7 +621,7 @@ const styles = StyleSheet.create({
   priceBadge: {
     position: 'absolute',
     top: SPACING.sm,
-    left: SPACING.sm,
+    right: SPACING.sm,
     backgroundColor: COLORS.overlayDim,
     borderRadius: RADIUS.sm,
     paddingHorizontal: SPACING.xs,

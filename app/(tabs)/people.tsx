@@ -8,6 +8,7 @@ import {
   Image,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -25,13 +26,19 @@ import {
   MapPin,
   MessageCircle,
   Sparkles,
+  UserPlus,
   Users,
   Zap,
 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { useAppStore } from '../../lib/store';
 import { track } from '../../lib/analytics';
+import { captureEvent } from '../../lib/posthog';
+import { planningLabel } from '../../lib/social-proof';
+import { getReferralCode, getReferralUrl } from '../../lib/referral';
+import { supabase } from '../../lib/supabase';
 
 // ---------------------------------------------------------------------------
 // Mock traveler data — replace with Supabase queries
@@ -158,7 +165,6 @@ const TravelerCard = React.memo(function TravelerCard({
   traveler: Traveler;
   onPress: () => void;
 }) {
-  const { t } = useTranslation();
   return (
     <Pressable
       onPress={() => {
@@ -195,7 +201,7 @@ const TravelerCard = React.memo(function TravelerCard({
         ))}
         <View style={styles.countriesPill}>
           <Globe size={11} color={COLORS.gold} strokeWidth={2} />
-          <Text style={styles.countriesText}>{t('people.countries', { count: traveler.countries })}</Text>
+          <Text style={styles.countriesText}>{traveler.countries} countries</Text>
         </View>
       </View>
 
@@ -207,7 +213,7 @@ const TravelerCard = React.memo(function TravelerCard({
           }}
         >
           <MessageCircle size={16} color={COLORS.bg} strokeWidth={2} />
-          <Text style={styles.actionBtnPrimaryText}>{t('people.connect')}</Text>
+          <Text style={styles.actionBtnPrimaryText}>Connect</Text>
         </Pressable>
         <Pressable
           style={({ pressed }) => [styles.actionBtn, styles.actionBtnSecondary, { opacity: pressed ? 0.85 : 1 }]}
@@ -232,7 +238,6 @@ const GroupCard = React.memo(function GroupCard({
   group: TripGroup;
   onPress: () => void;
 }) {
-  const { t } = useTranslation();
   return (
     <Pressable
       onPress={() => {
@@ -243,13 +248,13 @@ const GroupCard = React.memo(function GroupCard({
     >
       <Image source={{ uri: group.image }} style={styles.groupImage} />
       <LinearGradient
-        colors={['transparent', COLORS.overlayDark]}
+        colors={['transparent', 'rgba(0,0,0,0.7)']}
         style={styles.groupGradient}
       />
       <View style={styles.groupContent}>
         <View style={styles.groupMemberBadge}>
           <Users size={12} color={COLORS.bg} strokeWidth={2} />
-          <Text style={styles.groupMemberText}>{t('people.going', { count: group.memberCount })}</Text>
+          <Text style={styles.groupMemberText}>{group.memberCount} going</Text>
         </View>
         <Text style={styles.groupDest}>{group.destination}</Text>
         <Text style={styles.groupDates}>{group.dateRange}</Text>
@@ -265,24 +270,47 @@ const GroupCard = React.memo(function GroupCard({
 // Main Component
 // ---------------------------------------------------------------------------
 export default function PeopleScreen() {
-  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { t } = useTranslation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  // Personalised social proof using the user's most recent trip destination
+  const trips = useAppStore((s) => s.trips);
+  const latestDest = trips.length > 0
+    ? [...trips].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0].destination
+    : null;
+  const socialProofLabel = latestDest ? planningLabel(latestDest) : null;
 
   useEffect(() => {
     track({ type: 'screen_view', screen: 'people' });
-    const anim = Animated.timing(fadeAnim, {
+    Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 400,
       useNativeDriver: true,
-    });
-    anim.start();
-    return () => anim.stop();
+    }).start();
   }, [fadeAnim]);
 
+  const handleInvite = useCallback(async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    captureEvent('people_invite_tapped', {});
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData?.session?.user?.id;
+      const code = userId ? getReferralCode(userId) : null;
+      const url = code ? getReferralUrl(code) : 'https://tryroam.netlify.app/people';
+      const dest = latestDest ?? 'your next destination';
+      await Share.share({
+        title: 'Find your travel crew on ROAM',
+        message: `I found people going to ${dest} the same week as me. Join me on ROAM: ${url}`,
+        url,
+      });
+    } catch {
+      // Share dismissed — no-op
+    }
+  }, [latestDest]);
+
   const handleTravelerPress = useCallback((traveler: Traveler) => {
-    // Future: navigate to traveler profile
     router.push({ pathname: '/coming-soon', params: { title: `${traveler.name}'s Profile` } } as never);
   }, [router]);
 
@@ -299,8 +327,21 @@ export default function PeopleScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>{t('people.title')}</Text>
-          <Text style={styles.headerSub}>{t('people.headerSub')}</Text>
+          <View style={styles.headerRow}>
+            <View style={styles.headerText}>
+              <Text style={styles.headerTitle}>{t('people.title')}</Text>
+              <Text style={styles.headerSub}>{t('people.headerSub')}</Text>
+            </View>
+            <Pressable
+              onPress={handleInvite}
+              style={({ pressed }) => [styles.inviteBtn, { opacity: pressed ? 0.75 : 1 }]}
+              accessibilityRole="button"
+              accessibilityLabel="Invite a travel buddy"
+            >
+              <UserPlus size={18} color={COLORS.sage} strokeWidth={2} />
+              <Text style={styles.inviteBtnText}>Invite</Text>
+            </Pressable>
+          </View>
         </View>
 
         {/* Hero — "Who's going where you're going?" */}
@@ -353,7 +394,9 @@ export default function PeopleScreen() {
         {/* Matched Travelers */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{t('people.matchedTravelers')}</Text>
-          <Text style={styles.sectionSub}>{t('people.matchedTravelersSub')}</Text>
+          <Text style={styles.sectionSub}>
+            {socialProofLabel ?? t('people.matchedTravelersSub')}
+          </Text>
         </View>
 
         {MOCK_TRAVELERS.map((traveler) => (
@@ -371,6 +414,7 @@ export default function PeopleScreen() {
             style={({ pressed }) => [styles.profileBtn, { opacity: pressed ? 0.85 : 1 }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              captureEvent('people_setup_profile_tapped', { source: 'people_bottom_cta' });
               router.push('/profile' as never);
             }}
           >
@@ -404,6 +448,31 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.lg,
     paddingBottom: SPACING.md,
   } as ViewStyle,
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  } as ViewStyle,
+  headerText: {
+    flex: 1,
+  } as ViewStyle,
+  inviteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+    backgroundColor: COLORS.sageLight,
+    marginTop: 4,
+  } as ViewStyle,
+  inviteBtnText: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 13,
+    color: COLORS.sage,
+  } as TextStyle,
   headerTitle: {
     fontFamily: FONTS.header,
     fontSize: 32,
@@ -535,7 +604,7 @@ const styles = StyleSheet.create({
   groupDest: {
     fontFamily: FONTS.header,
     fontSize: 22,
-    color: COLORS.white,
+    color: '#FFFFFF',
   } as TextStyle,
   groupDates: {
     fontFamily: FONTS.mono,
@@ -545,7 +614,7 @@ const styles = StyleSheet.create({
   } as TextStyle,
   groupVibePill: {
     marginTop: SPACING.sm,
-    backgroundColor: COLORS.whiteMuted,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 3,
