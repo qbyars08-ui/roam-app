@@ -35,7 +35,6 @@ import {
   type Destination,
   type DestinationCategory,
 } from '../../lib/constants';
-import { useAppStore } from '../../lib/store';
 import i18n from '../../lib/i18n';
 import { tCategory } from '../../lib/i18n/helpers';
 import { track } from '../../lib/analytics';
@@ -237,8 +236,6 @@ export default function DiscoverScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const setPlanWizard = useAppStore((s) => s.setPlanWizard);
-  const setGenerateMode = useAppStore((s) => s.setGenerateMode);
 
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -289,11 +286,10 @@ export default function DiscoverScreen() {
   // Handlers
   const handleDestinationPress = useCallback(
     (dest: Destination) => {
-      setPlanWizard({ destination: dest.label });
-      setGenerateMode('quick');
-      router.push('/(tabs)/generate');
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      router.push(`/destination/${encodeURIComponent(dest.label)}`);
     },
-    [setPlanWizard, setGenerateMode, router]
+    [router]
   );
 
   const handleCategoryPress = useCallback((id: string) => {
