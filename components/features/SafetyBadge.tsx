@@ -4,7 +4,7 @@
 // =============================================================================
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
-import { COLORS, FONTS } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { getCitySafetyScore, SAFETY_COLORS, type SafetyLevel } from '../../lib/teleport-safety';
 
 interface SafetyBadgeProps {
@@ -48,15 +48,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    gap: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    gap: SPACING.sm,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.sm,
     borderWidth: 1,
     backgroundColor: COLORS.bgCard,
   } as ViewStyle,
   compact: {
-    paddingHorizontal: 6,
+    paddingHorizontal: SPACING.sm,
     paddingVertical: 2,
   } as ViewStyle,
   dot: {
