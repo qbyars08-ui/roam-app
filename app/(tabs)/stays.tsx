@@ -13,8 +13,10 @@ import {
   Platform,
   Animated,
   Dimensions,
+  Image,
   type ViewStyle,
   type TextStyle,
+  type ImageStyle,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -179,37 +181,48 @@ function getGradientForStay(destination: string, index: number): [string, string
 }
 
 // ---------------------------------------------------------------------------
-// Map placeholder (web / fallback)
+// Unsplash images for stay types
 // ---------------------------------------------------------------------------
+const STAY_TYPE_IMAGES: Record<string, string> = {
+  hostel: 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=600&q=80',
+  boutique: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=600&q=80',
+  airbnb: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&q=80',
+  hotel: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80',
+  capsule: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=80',
+  villa: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600&q=80',
+};
 
-function MapPlaceholder() {
-  const h = 220;
-  const w = SCREEN_WIDTH - SPACING.lg * 2;
-  const positions = [0.2, 0.4, 0.6, 0.8];
+// Curated stay categories for the empty state
+const STAY_CATEGORIES = [
+  { type: 'boutique', title: 'Boutique Hotels', subtitle: 'Design-forward, locally owned', image: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=600&q=80' },
+  { type: 'hostel', title: 'Social Hostels', subtitle: 'Meet other travelers', image: 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=600&q=80' },
+  { type: 'airbnb', title: 'Local Apartments', subtitle: 'Live like a local', image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&q=80' },
+  { type: 'villa', title: 'Private Villas', subtitle: 'Your own retreat', image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600&q=80' },
+];
+
+// ---------------------------------------------------------------------------
+// Neighborhood Guide (replaces map placeholder on web)
+// ---------------------------------------------------------------------------
+function NeighborhoodGuide({ stays }: { stays: StayListing[] }) {
+  const neighborhoods = [...new Set(stays.map((s) => s.neighborhood))];
   return (
-    <View style={styles.mapPlaceholder}>
-      <View style={styles.mapGrid}>
-        {positions.map((pct, i) => (
-          <View
-            key={`h-${i}`}
-            style={[
-              styles.gridLine,
-              { top: h * pct, left: 0, width: w, height: 1 },
-            ]}
-          />
-        ))}
-        {positions.map((pct, i) => (
-          <View
-            key={`v-${i}`}
-            style={[
-              styles.gridLine,
-              { left: w * pct, top: 0, width: 1, height: h },
-            ]}
-          />
-        ))}
-      </View>
-      <MapPin size={32} color={COLORS.sage} strokeWidth={2} />
-      <Text style={styles.mapPlaceholderLabel}>Map view</Text>
+    <View style={styles.neighborhoodGuide}>
+      <Text style={styles.neighborhoodTitle}>Neighborhoods</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.neighborhoodScroll}>
+        {neighborhoods.map((n) => {
+          const staysInArea = stays.filter((s) => s.neighborhood === n);
+          const cheapest = Math.min(...staysInArea.map((s) => s.pricePerNight));
+          return (
+            <View key={n} style={styles.neighborhoodCard}>
+              <MapPin size={16} color={COLORS.sage} strokeWidth={2} />
+              <Text style={styles.neighborhoodName}>{n}</Text>
+              <Text style={styles.neighborhoodMeta}>
+                {staysInArea.length} stays · from ${cheapest}
+              </Text>
+            </View>
+          );
+        })}
+      </ScrollView>
     </View>
   );
 }
@@ -225,7 +238,7 @@ function StayMapView({
   stays: StayListing[];
   destination: string;
 }) {
-  if (isWeb) return <MapPlaceholder />;
+  if (isWeb) return <NeighborhoodGuide stays={stays} />;
 
   const MapView = require('react-native-maps').default;
   const Marker = require('react-native-maps').Marker;
@@ -339,8 +352,6 @@ function StayCard({
     onPress();
   }, [onPress, scaleAnim]);
 
-  const gradient = getGradientForStay(destination, index);
-
   return (
     <Animated.View
       style={[
@@ -358,10 +369,15 @@ function StayCard({
         accessibilityLabel={`${stay.name}, ${stay.neighborhood}`}
       >
         <View style={styles.cardPhotoWrap}>
-          <LinearGradient
-            colors={[gradient[0], gradient[1], COLORS.bg]}
-            locations={[0, 0.6, 1]}
+          <Image
+            source={{ uri: STAY_TYPE_IMAGES[stay.type] ?? STAY_TYPE_IMAGES.hotel }}
             style={styles.cardPhoto}
+            resizeMode="cover"
+          />
+          <LinearGradient
+            colors={['transparent', COLORS.bg]}
+            locations={[0.5, 1]}
+            style={styles.cardPhotoOverlay}
           />
           <View style={styles.cardBadge}>
             <Text style={styles.cardBadgeText}>{stay.type}</Text>
@@ -513,21 +529,50 @@ export default function StaysScreen() {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.contextBar}>
-          <Text style={styles.noDestination}>Set a destination first</Text>
+          <Text style={styles.contextTitle}>Where are you staying?</Text>
         </View>
-        <View style={styles.emptyCenter}>
-          <Building2 size={48} color={COLORS.creamVeryFaint} strokeWidth={1.5} />
-          <Text style={styles.emptyTitle}>No destination set</Text>
-          <Text style={styles.emptySub}>
-            Plan a trip or pick a destination to browse stays
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + SPACING.xl }]}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.emptyHeroSub}>
+            Pick a destination first, and we will find the best places to stay.
           </Text>
           <Pressable
             onPress={() => router.push('/(tabs)/generate')}
-            style={({ pressed }) => [styles.ctaBtn, { opacity: pressed ? 0.85 : 1 }]}
+            style={({ pressed }) => [styles.ctaBtn, { opacity: pressed ? 0.85 : 1, alignSelf: 'flex-start', marginLeft: SPACING.lg, marginBottom: SPACING.lg }]}
           >
-            <Text style={styles.ctaBtnText}>Go to Plan</Text>
+            <Text style={styles.ctaBtnText}>Plan a trip</Text>
           </Pressable>
-        </View>
+
+          <Text style={styles.sectionHeader}>Browse by type</Text>
+          {STAY_CATEGORIES.map((cat) => (
+            <Pressable
+              key={cat.type}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/(tabs)/generate');
+              }}
+              style={({ pressed }) => [styles.categoryCard, { opacity: pressed ? 0.9 : 1 }]}
+            >
+              <Image
+                source={{ uri: cat.image }}
+                style={styles.categoryImage}
+                resizeMode="cover"
+              />
+              <LinearGradient
+                colors={['transparent', 'rgba(8,15,10,0.85)']}
+                locations={[0.3, 1]}
+                style={StyleSheet.absoluteFill}
+              />
+              <View style={styles.categoryContent}>
+                <Text style={styles.categoryTitle}>{cat.title}</Text>
+                <Text style={styles.categorySub}>{cat.subtitle}</Text>
+              </View>
+            </Pressable>
+          ))}
+        </ScrollView>
       </View>
     );
   }
@@ -690,31 +735,84 @@ const styles = StyleSheet.create({
   } as TextStyle,
   mapContainer: {
     width: '100%',
-    height: 220,
     borderRadius: RADIUS.xl,
     overflow: 'hidden',
     marginHorizontal: SPACING.lg,
     marginBottom: SPACING.md,
   } as ViewStyle,
-  mapPlaceholder: {
-    flex: 1,
-    backgroundColor: COLORS.bgCard,
-    alignItems: 'center',
-    justifyContent: 'center',
+  neighborhoodGuide: {
+    paddingVertical: SPACING.md,
   } as ViewStyle,
-  mapGrid: {
-    ...StyleSheet.absoluteFillObject,
-  } as ViewStyle,
-  gridLine: {
-    position: 'absolute',
-    backgroundColor: COLORS.cream,
-    opacity: 0.05,
-  } as ViewStyle,
-  mapPlaceholderLabel: {
-    fontFamily: FONTS.body,
+  neighborhoodTitle: {
+    fontFamily: FONTS.mono,
     fontSize: 12,
-    color: COLORS.creamDimLight,
-    marginTop: SPACING.sm,
+    color: COLORS.creamMuted,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 1,
+    marginBottom: SPACING.sm,
+    paddingHorizontal: SPACING.xs,
+  } as TextStyle,
+  neighborhoodScroll: {
+    gap: SPACING.sm,
+  } as ViewStyle,
+  neighborhoodCard: {
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    minWidth: 140,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  } as ViewStyle,
+  neighborhoodName: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.cream,
+    marginTop: SPACING.xs,
+  } as TextStyle,
+  neighborhoodMeta: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.creamMuted,
+    marginTop: 4,
+  } as TextStyle,
+  emptyHeroSub: {
+    fontFamily: FONTS.body,
+    fontSize: 15,
+    color: COLORS.creamDim,
+    paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
+    lineHeight: 22,
+  } as TextStyle,
+  categoryCard: {
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.sm + 4,
+    borderRadius: RADIUS.xl,
+    overflow: 'hidden',
+    height: 140,
+    position: 'relative',
+  } as ViewStyle,
+  categoryImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  } as ImageStyle,
+  categoryContent: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: SPACING.md,
+  } as ViewStyle,
+  categoryTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 22,
+    color: COLORS.cream,
+  } as TextStyle,
+  categorySub: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamSoft,
+    marginTop: 2,
   } as TextStyle,
   mapWrap: {
     flex: 1,
@@ -758,6 +856,11 @@ const styles = StyleSheet.create({
     position: 'relative',
   } as ViewStyle,
   cardPhoto: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  } as ImageStyle,
+  cardPhotoOverlay: {
     ...StyleSheet.absoluteFillObject,
   } as ViewStyle,
   cardBadge: {
