@@ -132,9 +132,12 @@ export default function GenerateConversationMode({
     setIsLoading(true);
     try {
       const history = [...messages, userMsg];
-      const { content } = await sendConversationMessage(history);
+      // Anthropic API requires first message to be role:'user' — filter out leading assistant messages
+      const apiMessages = history.filter((m, i) => !(i === 0 && m.role === 'assistant'));
+      const { content } = await sendConversationMessage(apiMessages);
       processResponse(content, history);
-    } catch {
+    } catch (err) {
+      console.error('Chat chip error:', err);
       setMessages((prev) => [
         ...prev,
         { role: 'assistant', content: 'Something went wrong. Try again?' },
@@ -158,9 +161,12 @@ export default function GenerateConversationMode({
     setIsLoading(true);
     try {
       const history = [...messages, userMsg];
-      const { content } = await sendConversationMessage(history);
+      // Anthropic API requires first message to be role:'user' — filter out leading assistant messages
+      const apiMessages = history.filter((m, i) => !(i === 0 && m.role === 'assistant'));
+      const { content } = await sendConversationMessage(apiMessages);
       processResponse(content, history);
-    } catch {
+    } catch (err) {
+      console.error('Chat send error:', err);
       setMessages((prev) => [
         ...prev,
         { role: 'assistant', content: 'Connection issue. Try again.' },

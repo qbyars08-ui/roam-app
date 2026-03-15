@@ -30,7 +30,7 @@ import { getDestinationPhoto } from '../../lib/photos';
 import { useAppStore } from '../../lib/store';
 import { generateItinerary, TripLimitReachedError } from '../../lib/claude';
 import { supabase } from '../../lib/supabase';
-import WaitlistCaptureModal from '../../components/features/WaitlistCaptureModal';
+// WaitlistCaptureModal removed — onboarding now always shows real auth
 
 import { ONBOARDING_COMPLETE } from '../../lib/storage-keys';
 const DESTINATION_CHOICES = DESTINATIONS.slice(0, 4);
@@ -450,23 +450,7 @@ export default function OnboardScreen() {
     );
   }
 
-  // Guest or anonymous: show waitlist capture modal instead of signup
-  if (isGuestLike) {
-    return (
-      <View style={styles.container}>
-        <View style={[styles.step, { paddingTop: insets.top, justifyContent: 'center' }]}>
-          <Text style={styles.signupTitle}>Your {destination} trip is ready</Text>
-          <Text style={styles.signupSub}>Save it and get early access</Text>
-        </View>
-        <WaitlistCaptureModal
-          visible={true}
-          destination={destination}
-          onViewTrip={handleSkipSignup}
-        />
-      </View>
-    );
-  }
-
+  // Always show real auth (Apple/Google/Email) — never block with waitlist
   return (
     <View style={styles.container}>
       <StepSignup
