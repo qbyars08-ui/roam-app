@@ -1,99 +1,47 @@
 # Captain Status Board
-
-Last updated: 2026-03-15 (post-merge deploy)
+Last updated: 2026-03-15 (Sun — fresh compile)
 
 ## Quick Pulse
-- **System:** GREEN
-- **TypeScript:** 0 errors
-- **Site:** LIVE at https://tryroam.netlify.app
-- **Tab Structure:** 5 tabs — Plan, Discover, People, Flights, Prep
-- **PRs:** ALL 14 MERGED (0 open)
-- **Deploy:** Production live with all agent work merged
-- **Blockers:** 4 (all Quinn-only)
-
-## What Just Happened
-
-**All 14 agent PRs merged to main in one session:**
-
-| # | PR | Title | Status |
-|---|-----|-------|--------|
-| 1 | #30 | GDPR DACH compliance (Security) | MERGED |
-| 2 | #27 | Application health check (Debugger) | MERGED |
-| 3 | #34 | Live app test matrix (Tester) | MERGED |
-| 4 | #33 | German localization (Localization) | MERGED |
-| 5 | #32 | App copy and store text (Content) | MERGED |
-| 6 | #36 | Design audit violations (Design) | MERGED |
-| 7 | #35 | DACH travel micro-influencers (DACH Growth) | MERGED |
-| 8 | #29 | Investor narrative enhancement (Investor) | MERGED |
-| 9 | #31 | Agent 14 UGC (UGC Engine) | MERGED |
-| 10 | #23 | Destination image APIs (Researcher) | MERGED |
-| 11 | #24 | CAPTAIN (Captain) | MERGED |
-| 12 | #25 | Gen Z growth audit (Growth) | MERGED |
-| 13 | #26 | ROAM monetization model (Monetization) | MERGED |
-| 14 | #28 | DACH analytics specification (Analytics) | MERGED |
-
-**Conflicts resolved during merge:**
-- Duplicate `german` keys in locale files (en, es, fr, ja, i18n/index.ts)
-- People tab i18n vs hardcoded strings (kept i18n)
-- Plan tab conflicts from concurrent agent edits (kept main)
-- GenerateModeSelect i18n vs design rework (kept i18n)
+- **System:** GREEN — TypeScript 0 errors, 423 tests passing, live at https://tryroam.netlify.app
+- **Agents active:** 5 active/new, 9 pending Cursor Cloud rebuild
+- **Blockers:** 6 (all Quinn-only actions)
+- **PRs pending:** 0
 
 ## Agent Status
+| # | Agent | Status | Last Output | Key Finding |
+|---|-------|--------|------------|-------------|
+| 01 | Tester | PENDING REBUILD | — | 423 tests passing last sprint; no new test_results.md yet |
+| 02 | Researcher | PENDING REBUILD | — | Image API eval in progress; research_report.md not created |
+| 03 | Design | DONE | design_audit.md (Mar 13) | 70 violations fixed; 36 intentional circle radii remain |
+| 04 | Builder | KEEP (Opus) | PRs merged (Mar 14) | Generate flow hardened; TripGeneratingLoader wired |
+| 05 | Debugger | PENDING REBUILD | system_health.md (Mar 15) | CI pipeline live; system GREEN |
+| 06 | Growth | DONE | growth_dashboard.md (Mar 14) | ASO + 5 TikTok scripts + 3 A/B tests designed |
+| 07 | Monetization | PENDING REBUILD | — | Affiliate links wired; monetization_model.md not created |
+| 08 | Security | DONE | — | Admin bypass in claude-proxy; security_audit.md not created |
+| 09 | Localization | PENDING REBUILD | — | i18n live (en/es/fr/ja); German de.ts missing; localization_audit.md not created |
+| 10 | Analytics | PENDING REBUILD | — | PostHog instrumented; analytics_spec.md not created |
+| 11 | Content | DONE | copy_library.md (Mar 14) | Full waitlist copy + 5-email sequence approved |
+| 12 | Investor | DONE | investor_narrative.md + weekly_memo.md (Mar 15) | Pitch doc + memo ready |
+| 13 | DACH Growth | NEW | dach_strategy.md + dach_scripts.md (Mar 15) | 10 TikTok scripts done; influencer research not yet started |
+| 14 | UGC Engine | NEW | ugc_research.md (Mar 15) | Insense recommended; creator_outreach.md not yet created |
 
-| # | Agent | Status | Output | Merged |
-|---|-------|--------|--------|--------|
-| 01 | Tester | DONE | test_results.md, bugs_found.md | PR #34 |
-| 02 | Researcher | DONE | research_report.md | PR #23 |
-| 03 | Design | DONE | design_audit.md + component fixes | PR #36 |
-| 04 | Builder (Opus) | READY | — | 5-tab restructure (PR #37) |
-| 05 | Debugger | DONE | system_health.md | PR #27 |
-| 06 | Growth | DONE | growth_dashboard.md, social-proof.ts, match-score.ts | PR #25 |
-| 07 | Monetization | DONE | monetization_model.md, pro-gate.ts | PR #26 |
-| 08 | Security | DONE | security_audit.md, 2 SQL migrations | PR #30 |
-| 09 | Localization | DONE | de.ts, localization_audit.md | PR #33 |
-| 10 | Analytics | DONE | analytics_spec.md, posthog-events.ts | PR #28 |
-| 11 | Content | DONE | copy_library.md, GenerateModeSelect copy | PR #32 |
-| 12 | Investor | DONE | investor_narrative.md, weekly_memo.md | PR #29 |
-| 13 | DACH Growth | DONE | dach_growth.md, dach_influencers.md | PR #35 |
-| 14 | UGC Engine | DONE | creator_kit.md, ambassador_program.md | PR #31 |
-| CP | Captain | ACTIVE | captain_status.md | — |
+## Needs Quinn's Attention (priority order)
+1. **Agent Rebuild** — Delete old Cursor agents, recreate per roam/AGENT_REBUILD.md (~15 min). Unblocks all 9 PENDING agents.
+2. **Supabase Secret** — Add `ADMIN_TEST_EMAILS=qbyars08@gmail.com` to edge function secrets (testing bypass)
+3. **Amadeus Cleanup** — Remove `AMADEUS_KEY` + `AMADEUS_SECRET` from Supabase Dashboard (security)
+4. **Booking.com AID** — Sign up at partners.booking.com for real affiliate ID
+5. **RevenueCat Products** — Create Pro subscription products in RC dashboard
+6. **PostHog Key** — Verify PostHog project key is set in environment
 
-## Needs Quinn's Attention
+## Conflicts Detected
+None. File ownership is clean per MASTER_HANDOFF.md.
 
-1. **Cursor Agent Rebuild** — Paste first messages from roam/NEW_AGENT_MESSAGES.md into each new agent. All agents now have POST-RESTRUCTURE tasks in AGENT_BOARD.md.
-2. **Supabase: People table** — Create `traveler_profiles` table with RLS for People tab backend
-3. **Booking.com AID** — Sign up at partners.booking.com, replace placeholder in lib/affiliates.ts
-4. **RevenueCat Products** — Create Pro subscription in RC dashboard
-
-## Live Site Verification
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Plan tab | LIVE | Trip cards, generate flow, quick actions |
-| Discover tab | LIVE | All 37 images, trending badges |
-| People tab | LIVE | Traveler matching, group trips, profiles |
-| Flights tab | LIVE | Popular routes, price calendar, Skyscanner |
-| Prep tab | LIVE | Weather, safety, currency, holidays, emergency |
-| Tab bar | LIVE | 5 tabs: Plan, Discover, People, Flights, Prep |
-| Auth flow | LIVE | Google, Email, Guest |
-| German locale | LIVE | de.ts merged with full coverage |
-
-## Demo Ready? YES
-
-30-second elevator pitch:
-"ROAM is an AI travel planner meets travel social network for Gen Z. Pick a destination, set your budget and vibe, and get a full itinerary in 30 seconds. But here's what nobody else has: a People tab that matches you with travelers going to the same place at the same time. We're launching in Germany first with a TikTok creator strategy. 15 AI agents built this app in 48 hours. It's live right now."
-
-## What Shipped This Session
-- [x] 5-tab restructure: Plan, Discover, People, Flights, Prep
-- [x] Plan tab: unified trip planning with generate flow + trip cards
-- [x] People tab: traveler matching, group trips, companion profiles
-- [x] All 14 agent PRs merged to main (0 open PRs)
-- [x] German localization (de.ts) fully merged
-- [x] Security: RLS migrations, GDPR audit merged
-- [x] Analytics: PostHog events + funnels instrumented
-- [x] Growth: social proof banner, match scoring merged
-- [x] Monetization: Pro gate, FlightPriceCard merged
-- [x] Design audit: component fixes across 11 files merged
-- [x] Duplicate locale key fix (german key appeared twice)
-- [x] Production deploy live at https://tryroam.netlify.app
-- [x] AGENT_BOARD.md updated with post-restructure tasks for all 14 agents
+## This Week's Wins
+- All 37 destinations have direct Unsplash photo URLs (image system unblocked)
+- DACH go-to-market strategy complete — 10 German TikTok scripts production-ready
+- UGC platform research done (Insense = best for DACH, direct outreach first)
+- Investor pitch + weekly memo written with real numbers
+- Prep tab: 5 live intel components (AQI, forecast, sun times, emergency, currency)
+- Design: 70 violations fixed across 2 PRs, design system fully tokenized
+- CI pipeline live (.eslintrc.js + GitHub Actions)
+- Agent .mdc files updated with model headers (cost optimization done)
