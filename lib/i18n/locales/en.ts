@@ -185,6 +185,56 @@ const en = {
   },
 
   // ---------------------------------------------------------------------------
+  // Plan tab (unified trip planning)
+  // ---------------------------------------------------------------------------
+  plan: {
+    title: 'Plan',
+    yourTrips: 'Your trips',
+    tripsPlanned: '{{count}} trip planned',
+    tripsPlanned_other: '{{count}} trips planned',
+    planNewTrip: 'Plan a new trip',
+    backToTrips: 'Back to my trips',
+    sectionYourTrips: 'YOUR TRIPS',
+    latest: 'LATEST',
+    findStays: 'Find stays',
+    staysSub: 'Hotels, hostels, villas',
+    findFood: 'Find food',
+    foodSub: 'Restaurants, street food',
+    bookFlights: 'Book flights',
+    flightsSub: 'Compare prices',
+    today: 'Today',
+    yesterday: 'Yesterday',
+    daysAgo: '{{count}} days ago',
+    rateLimitTitle: 'You hit your free limit',
+    rateLimitBody: 'Free accounts get {{count}} trip per month. Upgrade to Pro for unlimited trips and the full ROAM experience.',
+    seeProPlans: 'See Pro Plans',
+    maybeLater: 'Maybe later',
+    dismiss: 'Dismiss',
+  },
+
+  // ---------------------------------------------------------------------------
+  // People tab (social / traveler matching)
+  // ---------------------------------------------------------------------------
+  people: {
+    title: 'People',
+    headerSub: 'Find travelers going where you are going',
+    heroTitle: 'Travel is better together',
+    heroSub: 'We match you with travelers heading to the same place, at the same time, with the same energy.',
+    activeTravelers: 'Active travelers',
+    destinations: 'Destinations',
+    groupsForming: 'Groups forming',
+    openGroups: 'Open groups',
+    openGroupsSub: 'Join a trip that is forming',
+    matchedTravelers: 'Matched travelers',
+    matchedTravelersSub: 'People heading to your destinations',
+    connect: 'Connect',
+    completeProfileCta: 'Complete your travel profile to get better matches',
+    setUpProfile: 'Set up profile',
+    going: '{{count}} going',
+    countries: '{{count}} countries',
+  },
+
+  // ---------------------------------------------------------------------------
   // Generate screen
   // ---------------------------------------------------------------------------
   generate: {
@@ -544,6 +594,7 @@ const en = {
     japanese: '\u65E5\u672C\u8A9E',
     korean: '\uD55C\uAD6D\uC5B4',
     portuguese: 'Portugu\u00EAs',
+    german: 'Deutsch',
     languageChanged: 'Language changed',
     restartRequired: 'Some changes may require restarting the app.',
   },
