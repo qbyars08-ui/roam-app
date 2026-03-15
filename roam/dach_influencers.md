@@ -560,3 +560,107 @@ Track every outreach in a spreadsheet with these columns:
 ---
 
 *Cross-references: `roam/dach_strategy.md` · `roam/dach_scripts.md` · `roam/dach_growth.md` · `roam/ugc_research.md`*
+
+---
+
+## Top 10 German-Speaking Travel Micro-Influencers: 10K–100K Followers
+
+The AGENT_BOARD tasks specifically request 10K-100K creators (slightly wider than the 5K-50K list above). This section focuses on creators in that range who are most likely to have established audiences, better content quality, and more responsive DMs.
+
+| # | Creator | TikTok | Instagram | Followers (Primary) | ER | Style | Top Destinations | Cost/Video |
+|---|---------|--------|-----------|--------------------|----|-------|-----------------|-----------|
+| 1 | Leonie Feliciaa | @leonie.feliciaa **95K** | @leonie.feliciaa 552K | 95K TikTok | 8–12% | vlog/raw POV | Costa Rica, Guatemala, Norway | €80–120 |
+| 2 | Jakob Tepler | @jakob.tepler ~35K | @jakob.tepler **42K** | 42K IG | 4–5% | vlog/adventure | Europe cycling, Turkey, Central Asia | €40–60 |
+| 3 | @kaffeeamstrand | @kaffeeamstrand **48.4K** | est. 12K | 48.4K TikTok | 5–6% | aesthetic/lifestyle | European beaches, outdoors | €35–50 |
+| 4 | Franziska Reichel | @coconut_sports est. 12K | @coconut_sports **29K** | 29K IG | 3–5% | vlog/active | Thailand, Alps (skiing), Europe | €30–50 |
+| 5 | Kamelia Willich | @kameliawillich est. 8K | @kameliawillich **30K** | 30K IG | 3–4% | aesthetic/adventure | Dolomites, Alps, Japan | €30–50 |
+| 6 | Paul Maximilian | @paull.max **48.7K** | @paull.max est. 12K | 48.7K TikTok | 2–3% | aesthetic/lifestyle | European cities, mixed | €30–45 |
+| 7 | @kardelenakbay | @kardelenakbay **45K** | not found | 45K TikTok | 3–4% | lifestyle/tips | Mixed European + international | €25–35 |
+| 8 | Janine Wenzel | @gepackt_und_los est. 8K | @gepackt_und_los **~20K** | 20K IG | 4–6% | vlog/hiking | Austrian Alps, Steiermark, Central Europe | €25–40 |
+| 9 | Steffi Armbruster | @steffistraumzeit est. 8K | @steffistraumzeit **~15K** | 15K IG | 4–7% | vlog/solo/vanlife | Scandinavia, Germany, Alps | €20–35 |
+| 10 | Rike | @rike.mountainlife **~12K** | @rike.mountaingirl ~18K | 18K IG | 5–7% | vlog/POV/solo | Alps, Bali, New Zealand | €20–35 |
+
+### Why These 10 for the 10K-100K Priority List
+
+These are the 10 with the strongest combination of: confirmed DACH audience, authentic travel content, reachable contact methods, and ROAM content fit. They are not just the 10 biggest — they are the 10 most likely to produce content that actually converts DACH Gen Z to downloads.
+
+**Highest priority for immediate outreach:**
+1. **Leonie Feliciaa** — 95K TikTok, 8-12% ER, budget backpacker = ROAM's perfect DACH persona. Contact via kollektif-agency.com.
+2. **Franziska Reichel** — flight attendant credibility, Munich audience, email contact confirmed. contact via coconut-sports.de/kontakt/
+3. **Janine Wenzel** — Austria, solo female travel, high ER. Audience wants planning tools. DM @gepackt_und_los.
+
+---
+
+## 3 German Travel Subreddits/Forums for Organic Seeding
+
+### 1. r/reisen (reddit.com/r/reisen)
+
+**Size:** ~55,000 members (2026 est.)
+**Language:** Primarily German
+**Content:** Trip planning questions, destination recommendations, travel tips, gear advice, visa questions
+**Audience:** German-speaking travelers of all ages, skews toward 20–35, heavy trip planners
+
+**Why it's perfect for ROAM:**
+r/reisen is the largest German-language travel community on Reddit. Users actively ask "wie plane ich [Destination]?" questions — these are exactly the moments ROAM solves. The community values authenticity over promotional content.
+
+**ROAM seeding strategy:**
+- Answer trip planning questions genuinely: "Ich hab ROAM benutzt für meinen [Destination]-Trip — hat mir [specific thing] gespart. Link im Profil falls du's ausprobieren willst."
+- Don't post promotional content directly. Comment helpfully in existing threads first.
+- Post a "Ich hab KI meinen Interrail-Trip planen lassen — hier was rausgekommen ist" thread with the actual ROAM output as a screenshot. Value-first, ROAM as the method.
+- Best thread types: Japan-Planung, Interrail-Routen, Backpacking-Budget, Thailand-Reisetipps
+
+**Rules to follow:** No direct promotional posts. Comments in relevant threads only. Link only when directly relevant to the question. r/reisen mods are strict about spam.
+
+---
+
+### 2. r/Interrail (reddit.com/r/Interrail)
+
+**Size:** ~115,000 members (global, ~20-25% German-speaking)
+**Language:** English + German (German users code-switch frequently)
+**Content:** Route planning, pass types, city recommendations, timing, budget tips, hostel recommendations
+**Audience:** 18-28 year olds planning first or second European rail trip — quintessential ROAM user
+
+**Why it's perfect for ROAM:**
+Interrail is ROAM's single strongest DACH use case — and r/Interrail is where Interrail planners go. Unlike r/reisen, this sub has a global reach which means ROAM's German/English crossover works perfectly here. A high-quality ROAM-generated Interrail route posted with full transparency ("I used an AI to plan this — here's what it recommended") can get significant upvotes and organic reach.
+
+**ROAM seeding strategy:**
+- Post a detailed "ROAM-generated 3-week Interrail route — full plan including timing, budget, hostel picks" post. Be transparent that it's AI-generated. Show the actual output.
+- Answer "help me plan my Interrail route" comments with a ROAM-generated suggestion + offer to generate a custom one.
+- Create a "I tested 5 Interrail planning tools — here's what ROAM got right that others didn't" comparison post.
+
+**German-specific angle:** Add a comment in German below English posts — captures the DACH audience that reads r/Interrail but prefers German. Posts get dual-language reach.
+
+---
+
+### 3. Facebook Group: "Interrail & Eurail — Tipps & Tricks" (German-language)
+
+**Size:** ~65,000 members
+**Language:** German
+**Content:** Real-time route advice, pass purchase questions, city itinerary questions, trip reports
+**Audience:** 18-30 year olds in Germany, Austria, Switzerland actively planning Interrail trips
+
+**Why it's perfect for ROAM:**
+This is the single most concentrated German-language community of Interrail planners. The group is highly active — 20-50 posts per day — and nearly every post is a planning question that ROAM can answer. Unlike Reddit, Facebook group members expect recommendations and app mentions if they're genuinely useful.
+
+**ROAM seeding strategy:**
+- Answer route planning questions with ROAM-generated itineraries: "Ich hab das gerade durch ROAM laufen lassen — hier ist die Route für dich: [screenshot of ROAM itinerary]." Show the actual output.
+- Post a "Hat jemand ROAM probiert für Interrail-Planung?" discussion thread — drives organic conversation without being promotional.
+- Share a "ROAM hat mir meinen 4-Stadt-Interrail in 30 Sekunden geplant" trip report with actual screenshots showing the value.
+- Monitor for "Wie soll ich [X Städte] planen?" posts and respond within 2 hours for maximum visibility.
+
+**Rules to follow:** Follow group admin rules. Don't post direct ads. First 5 posts should be pure value (answering questions) before any ROAM mention. Always lead with the useful information, mention ROAM as the tool that helped generate it.
+
+---
+
+### Bonus: Backpacking Weltweit (Facebook Group)
+
+**Size:** ~185,000 members
+**Language:** German
+**Content:** World travel tips, budget travel, backpacking routes, gear, visas
+
+Not one of the primary 3 above, but worth joining and monitoring. Lower Interrail density but very high ROAM-relevant budget travel content. Good for Script 02 (Bali), Script 06 (Thailand) content seeding.
+
+---
+
+*All forum/subreddit strategies: value-first, ROAM-as-tool not ROAM-as-advertisement. German communities are more skeptical of promotional content than English ones. The best ROAM content in these communities looks like a helpful user sharing a tool they found, not a brand posting an ad.*
+
