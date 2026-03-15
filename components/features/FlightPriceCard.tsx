@@ -10,6 +10,8 @@ import { Plane } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { AFFILIATES } from '../../lib/constants';
 import { buildAffiliateUrl, trackAffiliateClick } from '../../lib/affiliate-tracking';
+import { captureEvent } from '../../lib/posthog';
+import { EVENTS } from '../../lib/posthog-events';
 
 interface FlightPriceCardProps {
   origin?: string;
@@ -31,6 +33,12 @@ export default function FlightPriceCard({
 
   const handlePress = async () => {
     await trackAffiliateClick({
+      partner: 'skyscanner',
+      destination,
+      placement,
+      url: skyscannerUrl,
+    });
+    captureEvent(EVENTS.AFFILIATE_CLICK.name, {
       partner: 'skyscanner',
       destination,
       placement,
