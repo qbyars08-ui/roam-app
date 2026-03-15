@@ -32,6 +32,7 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { track } from '../../lib/analytics';
+import { captureEvent } from '../../lib/posthog';
 
 // ---------------------------------------------------------------------------
 // Mock traveler data — replace with Supabase queries
@@ -204,6 +205,11 @@ const TravelerCard = React.memo(function TravelerCard({
           style={({ pressed }) => [styles.actionBtn, styles.actionBtnPrimary, { opacity: pressed ? 0.85 : 1 }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            captureEvent('people_connect_tapped', {
+              traveler_id: traveler.id,
+              destination: traveler.destination,
+              match_score: traveler.matchScore,
+            });
           }}
         >
           <MessageCircle size={16} color={COLORS.bg} strokeWidth={2} />
@@ -213,6 +219,10 @@ const TravelerCard = React.memo(function TravelerCard({
           style={({ pressed }) => [styles.actionBtn, styles.actionBtnSecondary, { opacity: pressed ? 0.85 : 1 }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            captureEvent('people_traveler_saved', {
+              traveler_id: traveler.id,
+              destination: traveler.destination,
+            });
           }}
         >
           <Heart size={16} color={COLORS.cream} strokeWidth={2} />
@@ -282,11 +292,20 @@ export default function PeopleScreen() {
   }, [fadeAnim]);
 
   const handleTravelerPress = useCallback((traveler: Traveler) => {
-    // Future: navigate to traveler profile
+    captureEvent('people_traveler_viewed', {
+      traveler_id: traveler.id,
+      destination: traveler.destination,
+      match_score: traveler.matchScore,
+    });
     router.push({ pathname: '/coming-soon', params: { title: `${traveler.name}'s Profile` } } as never);
   }, [router]);
 
   const handleGroupPress = useCallback((group: TripGroup) => {
+    captureEvent('people_group_tapped', {
+      group_id: group.id,
+      destination: group.destination,
+      member_count: group.memberCount,
+    });
     router.push({ pathname: '/coming-soon', params: { title: `${group.destination} Group Trip` } } as never);
   }, [router]);
 
@@ -371,6 +390,7 @@ export default function PeopleScreen() {
             style={({ pressed }) => [styles.profileBtn, { opacity: pressed ? 0.85 : 1 }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              captureEvent('people_setup_profile_tapped', { source: 'people_bottom_cta' });
               router.push('/profile' as never);
             }}
           >
