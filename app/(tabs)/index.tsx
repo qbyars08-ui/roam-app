@@ -156,18 +156,18 @@ const DestinationPhotoCard = React.memo(function DestinationPhotoCard({
           <Text style={styles.priceBadgeText}>{costLabel}</Text>
         </View>
 
-        {/* Trending + timing badges (top-left) */}
+        {/* Trending + timing badges (top-right) */}
         <View style={styles.badgeStack}>
           {isTrending && (
             <View style={styles.trendingBadge}>
-              <Flame size={10} color={COLORS.coral} />
-              <Text style={styles.trendingText}>{i18n.t('discover.trending')}</Text>
+              <Flame size={14} color={COLORS.coral} strokeWidth={2} />
+              <Text style={styles.trendingText}>{destination.trendScore}</Text>
             </View>
           )}
           {isPerfectTiming && (
             <View style={styles.timingBadge}>
-              <Clock size={10} color={COLORS.sage} />
-              <Text style={styles.timingText}>Perfect timing</Text>
+              <Clock size={14} color={COLORS.sage} strokeWidth={2} />
+              <Text style={styles.timingText}>{i18n.t('discover.perfectTiming')}</Text>
             </View>
           )}
         </View>
@@ -584,8 +584,9 @@ const styles = StyleSheet.create({
   badgeStack: {
     position: 'absolute',
     top: SPACING.sm,
-    left: SPACING.sm,
+    right: SPACING.sm,
     gap: 4,
+    alignItems: 'flex-end',
   } as ViewStyle,
   trendingBadge: {
     flexDirection: 'row',
@@ -620,7 +621,7 @@ const styles = StyleSheet.create({
   priceBadge: {
     position: 'absolute',
     top: SPACING.sm,
-    right: SPACING.sm,
+    left: SPACING.sm,
     backgroundColor: COLORS.overlayDim,
     borderRadius: RADIUS.sm,
     paddingHorizontal: SPACING.xs,

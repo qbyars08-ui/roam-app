@@ -1215,22 +1215,4 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
     paddingTop: SPACING.sm,
   } as ViewStyle,
-  skeletonFlightCard: {
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: SPACING.md,
-  } as ViewStyle,
-  skeletonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  } as ViewStyle,
-  skeletonBlock: {
-    backgroundColor: COLORS.bgGlass,
-    borderRadius: RADIUS.sm,
-    height: 14,
-    width: 80,
-  } as ViewStyle,
 });
