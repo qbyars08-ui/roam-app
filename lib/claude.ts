@@ -164,6 +164,36 @@ export class TripLimitReachedError extends Error {
 }
 
 // ---------------------------------------------------------------------------
+// ensureValidSession — upgrade fake guest sessions to real anonymous auth
+// ---------------------------------------------------------------------------
+// Guest users get a fake session with access_token: '' which can't authenticate
+// to the edge function. This helper upgrades them to a real Supabase anonymous
+// session so API calls work. Called before every edge function invocation.
+// ---------------------------------------------------------------------------
+
+async function ensureValidSession(): Promise<void> {
+  const session = useAppStore.getState().session;
+
+  // No session at all, or fake guest session with empty access_token
+  const needsUpgrade =
+    !session ||
+    !session.access_token ||
+    String(session.user?.id).startsWith('guest-');
+
+  if (!needsUpgrade) return;
+
+  try {
+    const { data, error } = await supabase.auth.signInAnonymously();
+    if (!error && data.session) {
+      useAppStore.getState().setSession(data.session);
+    }
+  } catch {
+    // If anonymous auth fails, the API call will fail with 401 —
+    // that's fine, the caller will show the error
+  }
+}
+
+// ---------------------------------------------------------------------------
 // callClaude — all AI calls route through Supabase edge function (secure)
 // ---------------------------------------------------------------------------
 // SECURITY: Direct Anthropic API calls removed. The API key must NEVER be
@@ -177,6 +207,9 @@ export async function callClaude(
   /** If true, this counts as a trip generation (rate-limited) */
   isTripGeneration = false
 ): Promise<ClaudeResponse> {
+  // Ensure we have a real JWT before calling the edge function
+  await ensureValidSession();
+
   // Client-side timeout: 90s for trip generation, 30s for chat
   const timeoutMs = isTripGeneration ? 90_000 : 30_000;
   const controller = new AbortController();
@@ -233,6 +266,9 @@ export async function callClaudeWithMessages(
   messages: Array<{ role: 'user' | 'assistant'; content: string }>,
   isTripGeneration = false
 ): Promise<ClaudeResponse> {
+  // Ensure we have a real JWT before calling the edge function
+  await ensureValidSession();
+
   const timeoutMs = isTripGeneration ? 90_000 : 30_000;
   const timeoutId = setTimeout(() => {}, timeoutMs); // placeholder for abort
 
