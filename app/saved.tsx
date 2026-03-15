@@ -228,7 +228,7 @@ export default function SavedScreen() {
   );
 
   const handlePlan = useCallback(() => {
-    router.push('/(tabs)/generate');
+    router.push('/(tabs)/plan');
   }, [router]);
 
   const handleCreateGroup = useCallback(() => {

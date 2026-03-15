@@ -2,12 +2,13 @@
 // ROAM — People Tab (social layer — find travel companions)
 // The feature nobody else has. Travelers matched by destination, dates, vibe.
 // =============================================================================
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import {
   Animated,
   Image,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -24,16 +25,20 @@ import {
   Heart,
   MapPin,
   MessageCircle,
-  Search,
   Sparkles,
+  UserPlus,
   Users,
   Zap,
 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
 import { track } from '../../lib/analytics';
+import { captureEvent } from '../../lib/posthog';
 import { planningLabel } from '../../lib/social-proof';
+import { getReferralCode, getReferralUrl } from '../../lib/referral';
+import { supabase } from '../../lib/supabase';
 
 // ---------------------------------------------------------------------------
 // Mock traveler data — replace with Supabase queries
@@ -267,9 +272,10 @@ const GroupCard = React.memo(function GroupCard({
 export default function PeopleScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { t } = useTranslation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  // Use the destination from the user's most recent trip for personalised social proof
+  // Personalised social proof using the user's most recent trip destination
   const trips = useAppStore((s) => s.trips);
   const latestDest = trips.length > 0
     ? [...trips].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0].destination
@@ -285,8 +291,26 @@ export default function PeopleScreen() {
     }).start();
   }, [fadeAnim]);
 
+  const handleInvite = useCallback(async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    captureEvent('people_invite_tapped', {});
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData?.session?.user?.id;
+      const code = userId ? getReferralCode(userId) : null;
+      const url = code ? getReferralUrl(code) : 'https://tryroam.netlify.app/people';
+      const dest = latestDest ?? 'your next destination';
+      await Share.share({
+        title: 'Find your travel crew on ROAM',
+        message: `I found people going to ${dest} the same week as me. Join me on ROAM: ${url}`,
+        url,
+      });
+    } catch {
+      // Share dismissed — no-op
+    }
+  }, [latestDest]);
+
   const handleTravelerPress = useCallback((traveler: Traveler) => {
-    // Future: navigate to traveler profile
     router.push({ pathname: '/coming-soon', params: { title: `${traveler.name}'s Profile` } } as never);
   }, [router]);
 
@@ -303,8 +327,21 @@ export default function PeopleScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>People</Text>
-          <Text style={styles.headerSub}>Find travelers going where you are going</Text>
+          <View style={styles.headerRow}>
+            <View style={styles.headerText}>
+              <Text style={styles.headerTitle}>{t('people.title')}</Text>
+              <Text style={styles.headerSub}>{t('people.headerSub')}</Text>
+            </View>
+            <Pressable
+              onPress={handleInvite}
+              style={({ pressed }) => [styles.inviteBtn, { opacity: pressed ? 0.75 : 1 }]}
+              accessibilityRole="button"
+              accessibilityLabel="Invite a travel buddy"
+            >
+              <UserPlus size={18} color={COLORS.sage} strokeWidth={2} />
+              <Text style={styles.inviteBtnText}>Invite</Text>
+            </Pressable>
+          </View>
         </View>
 
         {/* Hero — "Who's going where you're going?" */}
@@ -314,33 +351,30 @@ export default function PeopleScreen() {
             style={StyleSheet.absoluteFill}
           />
           <Sparkles size={24} color={COLORS.sage} strokeWidth={1.5} />
-          <Text style={styles.heroTitle}>Travel is better together</Text>
-          <Text style={styles.heroSub}>
-            We match you with travelers heading to the same place,
-            at the same time, with the same energy.
-          </Text>
+          <Text style={styles.heroTitle}>{t('people.heroTitle')}</Text>
+          <Text style={styles.heroSub}>{t('people.heroSub')}</Text>
           <View style={styles.heroStats}>
             <View style={styles.heroStat}>
               <Text style={styles.heroStatNum}>2.4k</Text>
-              <Text style={styles.heroStatLabel}>Active travelers</Text>
+              <Text style={styles.heroStatLabel}>{t('people.activeTravelers')}</Text>
             </View>
             <View style={styles.heroStatDivider} />
             <View style={styles.heroStat}>
               <Text style={styles.heroStatNum}>47</Text>
-              <Text style={styles.heroStatLabel}>Destinations</Text>
+              <Text style={styles.heroStatLabel}>{t('people.destinations')}</Text>
             </View>
             <View style={styles.heroStatDivider} />
             <View style={styles.heroStat}>
               <Text style={styles.heroStatNum}>128</Text>
-              <Text style={styles.heroStatLabel}>Groups forming</Text>
+              <Text style={styles.heroStatLabel}>{t('people.groupsForming')}</Text>
             </View>
           </View>
         </View>
 
         {/* Open Groups */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Open groups</Text>
-          <Text style={styles.sectionSub}>Join a trip that is forming</Text>
+          <Text style={styles.sectionTitle}>{t('people.openGroups')}</Text>
+          <Text style={styles.sectionSub}>{t('people.openGroupsSub')}</Text>
         </View>
 
         <ScrollView
@@ -359,9 +393,9 @@ export default function PeopleScreen() {
 
         {/* Matched Travelers */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Matched travelers</Text>
+          <Text style={styles.sectionTitle}>{t('people.matchedTravelers')}</Text>
           <Text style={styles.sectionSub}>
-            {socialProofLabel ?? 'People heading to your destinations'}
+            {socialProofLabel ?? t('people.matchedTravelersSub')}
           </Text>
         </View>
 
@@ -375,17 +409,16 @@ export default function PeopleScreen() {
 
         {/* Bottom CTA */}
         <View style={styles.bottomCta}>
-          <Text style={styles.bottomCtaText}>
-            Complete your travel profile to get better matches
-          </Text>
+          <Text style={styles.bottomCtaText}>{t('people.completeProfileCta')}</Text>
           <Pressable
             style={({ pressed }) => [styles.profileBtn, { opacity: pressed ? 0.85 : 1 }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              captureEvent('people_setup_profile_tapped', { source: 'people_bottom_cta' });
               router.push('/profile' as never);
             }}
           >
-            <Text style={styles.profileBtnText}>Set up profile</Text>
+            <Text style={styles.profileBtnText}>{t('people.setUpProfile')}</Text>
             <ChevronRight size={16} color={COLORS.sage} strokeWidth={2} />
           </Pressable>
         </View>
@@ -415,6 +448,31 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.lg,
     paddingBottom: SPACING.md,
   } as ViewStyle,
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  } as ViewStyle,
+  headerText: {
+    flex: 1,
+  } as ViewStyle,
+  inviteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+    backgroundColor: COLORS.sageLight,
+    marginTop: 4,
+  } as ViewStyle,
+  inviteBtnText: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 13,
+    color: COLORS.sage,
+  } as TextStyle,
   headerTitle: {
     fontFamily: FONTS.header,
     fontSize: 32,

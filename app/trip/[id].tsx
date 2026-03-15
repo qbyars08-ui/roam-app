@@ -77,7 +77,7 @@ export default function PublicTripScreen() {
     if (!trip) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setPlanWizard({ destination: trip.destination });
-    router.replace('/(tabs)/generate');
+    router.replace('/(tabs)/plan');
   }, [trip, setPlanWizard, router]);
 
   const handleOpenInApp = useCallback(() => {

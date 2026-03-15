@@ -199,7 +199,7 @@ function TripDupeScreen() {
       budget: 'backpacker',
       vibes: dupeResult.similarVibes.slice(0, 3),
     });
-    router.push('/(tabs)/generate');
+    router.push('/(tabs)/plan');
   }, [dupeResult, router]);
 
   const handleShare = useCallback(async () => {

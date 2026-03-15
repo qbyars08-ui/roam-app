@@ -39,6 +39,7 @@ import { useAppStore } from '../../lib/store';
 import i18n from '../../lib/i18n';
 import { tCategory } from '../../lib/i18n/helpers';
 import { track } from '../../lib/analytics';
+import { weeklyBadgeLabel } from '../../lib/social-proof';
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -161,7 +162,7 @@ const DestinationPhotoCard = React.memo(function DestinationPhotoCard({
           {isTrending && (
             <View style={styles.trendingBadge}>
               <Flame size={10} color={COLORS.coral} />
-              <Text style={styles.trendingText}>{i18n.t('discover.trending')}</Text>
+              <Text style={styles.trendingText}>{weeklyBadgeLabel(destination.label)}</Text>
             </View>
           )}
           {isPerfectTiming && (
@@ -291,7 +292,7 @@ export default function DiscoverScreen() {
     (dest: Destination) => {
       setPlanWizard({ destination: dest.label });
       setGenerateMode('quick');
-      router.push('/(tabs)/generate');
+      router.push('/(tabs)/plan');
     },
     [setPlanWizard, setGenerateMode, router]
   );
@@ -339,7 +340,7 @@ export default function DiscoverScreen() {
             <View style={styles.searchInputWrap}>
               {/* Using a simple text input to avoid PlacesInput complexity */}
               <Pressable
-                onPress={() => router.push('/(tabs)/generate')}
+                onPress={() => router.push('/(tabs)/plan')}
                 style={styles.searchTapArea}
                 accessibilityRole="button"
                 accessibilityLabel={t('discover.searchPlaceholder')}
@@ -600,7 +601,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.mono,
     fontSize: 9,
     color: COLORS.coral,
-    letterSpacing: 0.5,
+    letterSpacing: 0,
   } as TextStyle,
   timingBadge: {
     flexDirection: 'row',

@@ -104,7 +104,7 @@ function CreateGroupScreen() {
         </View>
         <View style={[styles.scrollInner, { flex: 1, justifyContent: 'center' }]}>
           <Text style={styles.emptyMessage}>Plan a trip first, then come back to invite friends.</Text>
-          <Button label="Plan my trip" variant="sage" onPress={() => router.replace('/(tabs)/generate')} />
+          <Button label="Plan my trip" variant="sage" onPress={() => router.replace('/(tabs)/plan')} />
         </View>
       </View>
     );

@@ -68,7 +68,7 @@ function MoodSectionInner({ onDestinationPick }: Props) {
       setShowResults(false);
       setSelectedMood(null);
       onDestinationPick?.(label);
-      router.push('/(tabs)/generate');
+      router.push('/(tabs)/plan');
     },
     [setPlanWizard, router, onDestinationPick]
   );

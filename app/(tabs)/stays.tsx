@@ -540,7 +540,7 @@ export default function StaysScreen() {
             Pick a destination first, and we will find the best places to stay.
           </Text>
           <Pressable
-            onPress={() => router.push('/(tabs)/generate')}
+            onPress={() => router.push('/(tabs)/plan')}
             style={({ pressed }) => [styles.ctaBtn, { opacity: pressed ? 0.85 : 1, alignSelf: 'flex-start', marginLeft: SPACING.lg, marginBottom: SPACING.lg }]}
           >
             <Text style={styles.ctaBtnText}>Plan a trip</Text>
@@ -552,7 +552,7 @@ export default function StaysScreen() {
               key={cat.type}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/(tabs)/generate');
+                router.push('/(tabs)/plan');
               }}
               style={({ pressed }) => [styles.categoryCard, { opacity: pressed ? 0.9 : 1 }]}
             >

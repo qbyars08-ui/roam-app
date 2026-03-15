@@ -385,7 +385,7 @@ function DupeFinderScreen() {
               onPress={() => {
                 if (result.dupes[0]) {
                   router.push({
-                    pathname: '/(tabs)/generate',
+                    pathname: '/(tabs)/plan',
                     params: { destination: result.dupes[0].destination },
                   });
                 }

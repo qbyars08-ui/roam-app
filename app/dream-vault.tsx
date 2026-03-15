@@ -146,7 +146,7 @@ function DreamVaultScreen() {
           </Text>
           <Pressable
             style={styles.addBtn}
-            onPress={() => router.push('/(tabs)/generate')}
+            onPress={() => router.push('/(tabs)/plan')}
           >
             <Text style={styles.addBtnText}>Plan a trip</Text>
           </Pressable>
