@@ -41,7 +41,9 @@ const ja: TranslationKeys = {
   },
 
   tabs: {
+    plan: '\u30d7\u30e9\u30f3',
     discover: '\u767a\u898b',
+    people: '\u4ef2\u9593',
     generate: '\u4f5c\u6210',
     flights: '\u30d5\u30e9\u30a4\u30c8',
     stays: '\u5bbf\u6cca',
