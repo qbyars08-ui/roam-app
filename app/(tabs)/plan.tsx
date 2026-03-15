@@ -211,6 +211,7 @@ export default function PlanScreen() {
   const [rateLimitVisible, setRateLimitVisible] = useState(false);
   const [showGenerator, setShowGenerator] = useState(false);
   const [peopleBannerDismissed, setPeopleBannerDismissed] = useState(false);
+  const [customizeMode, setCustomizeMode] = useState(false);
   const generatingDestRef = useRef<string>('');
   const isMountedRef = useRef(true);
 
@@ -312,7 +313,7 @@ export default function PlanScreen() {
       await new Promise((r) => setTimeout(r, 800));
       if (!isMountedRef.current) return;
       setShowGenerator(false);
-      router.push({ pathname: '/itinerary', params: { tripId: trip.id } });
+      router.push({ pathname: '/itinerary', params: { tripId: trip.id, edit: customizeMode ? '1' : '0' } });
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       if (err instanceof TripLimitReachedError) {
@@ -372,7 +373,7 @@ export default function PlanScreen() {
       await new Promise((r) => setTimeout(r, 800));
       if (!isMountedRef.current) return;
       setShowGenerator(false);
-      router.push({ pathname: '/itinerary', params: { tripId: trip.id } });
+      router.push({ pathname: '/itinerary', params: { tripId: trip.id, edit: customizeMode ? '1' : '0' } });
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       if (err instanceof TripLimitReachedError) {
@@ -417,6 +418,24 @@ export default function PlanScreen() {
                 <Text style={styles.backToTripsText}>{t('plan.backToTrips')}</Text>
               </Pressable>
             )}
+            {/* Generate for me vs I'll customize toggle */}
+            <View style={styles.planToggle}>
+              <Pressable
+                style={[styles.planToggleBtn, !customizeMode && styles.planToggleBtnActive]}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setCustomizeMode(false); }}
+              >
+                <Sparkles size={14} color={!customizeMode ? COLORS.bg : COLORS.creamMuted} strokeWidth={2} />
+                <Text style={[styles.planToggleText, !customizeMode && styles.planToggleTextActive]}>Generate for me</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.planToggleBtn, customizeMode && styles.planToggleBtnActive]}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setCustomizeMode(true); }}
+              >
+                <Wallet size={14} color={customizeMode ? COLORS.bg : COLORS.creamMuted} strokeWidth={2} />
+                <Text style={[styles.planToggleText, customizeMode && styles.planToggleTextActive]}>I'll customize</Text>
+              </Pressable>
+            </View>
+
             <GenerateModeSelect onSelect={handleModeSelect} firstTime={!hasTrips} />
           </View>
         );
@@ -857,6 +876,34 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodyMedium,
     fontSize: 14,
     color: COLORS.sage,
+  } as TextStyle,
+  planToggle: {
+    flexDirection: 'row',
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: 'hidden',
+  } as ViewStyle,
+  planToggleBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.sm + 2,
+  } as ViewStyle,
+  planToggleBtnActive: {
+    backgroundColor: COLORS.sage,
+  } as ViewStyle,
+  planToggleText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 13,
+    color: COLORS.creamMuted,
+  } as TextStyle,
+  planToggleTextActive: {
+    color: COLORS.bg,
   } as TextStyle,
 
   // ── Error banner ──
