@@ -24,7 +24,7 @@ import { impactAsync, ImpactFeedbackStyle } from '../lib/haptics';
 
 const INVESTOR_EMAILS = (process.env.EXPO_PUBLIC_INVESTOR_EMAILS ?? '')
   .split(',')
-  .map((e) => e.trim().toLowerCase())
+  .map((e: string) => e.trim().toLowerCase())
   .filter(Boolean);
 
 // =============================================================================
