@@ -5,18 +5,18 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, type TextStyle, type ViewStyle } from 'react-native';
 import { COLORS, FONTS, SPACING } from '../../lib/constants';
-import { getDestinationStats } from '../../lib/social-proof';
+import { getDestinationStats, type DestinationStats } from '../../lib/social-proof';
 
 interface SocialProofBannerProps {
   destination: string;
 }
 
 export default function SocialProofBanner({ destination }: SocialProofBannerProps) {
-  const [stats, setStats] = useState<{ plannedThisWeek: number } | null>(null);
+  const [stats, setStats] = useState<DestinationStats | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    getDestinationStats(destination).then((s) => {
+    getDestinationStats(destination).then((s: DestinationStats) => {
       if (!cancelled) setStats(s);
     });
     return () => { cancelled = true; };
