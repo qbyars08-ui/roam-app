@@ -48,9 +48,6 @@ import TripLimitBanner from '../../components/monetization/TripLimitBanner';
 import { track, trackEvent } from '../../lib/analytics';
 import { captureEvent } from '../../lib/posthog';
 import { parseItinerary } from '../../lib/types/itinerary';
-import { getDestinationCount } from '../../lib/social-proof';
-import { buildDemoTrip } from '../../lib/demo-trip';
-import { Map, Users } from 'lucide-react-native';
 
 // ---------------------------------------------------------------------------
 // Destination images for trip cards
@@ -209,10 +206,8 @@ export default function PlanScreen() {
   const insets = useSafeAreaInsets();
 
   const [networkError, setNetworkError] = useState<string | null>(null);
-  const [showDemoOffer, setShowDemoOffer] = useState(false);
   const [rateLimitVisible, setRateLimitVisible] = useState(false);
   const [showGenerator, setShowGenerator] = useState(false);
-  const [peopleBannerDismissed, setPeopleBannerDismissed] = useState(false);
   const generatingDestRef = useRef<string>('');
   const isMountedRef = useRef(true);
 
@@ -321,9 +316,7 @@ export default function PlanScreen() {
         captureEvent('rate_limit_hit', { destination: generatingDestRef.current, source: 'quick' });
         setRateLimitVisible(true);
       } else {
-        captureEvent('generation_error', { destination: generatingDestRef.current, source: 'quick' });
-        setNetworkError('Our AI is taking a moment. Try again or see a demo trip.');
-        setShowDemoOffer(true);
+        setNetworkError(err instanceof Error ? err.message : 'Something went wrong. Try again.');
       }
     } finally {
       setIsGenerating(false);
@@ -383,9 +376,7 @@ export default function PlanScreen() {
         captureEvent('rate_limit_hit', { destination: generatingDestRef.current, source: 'conversation' });
         setRateLimitVisible(true);
       } else {
-        captureEvent('generation_error', { destination: generatingDestRef.current, source: 'conversation' });
-        setNetworkError('Our AI is taking a moment. Try again or see a demo trip.');
-        setShowDemoOffer(true);
+        setNetworkError(err instanceof Error ? err.message : 'Something went wrong. Try again.');
       }
     } finally {
       setIsGenerating(false);
@@ -395,19 +386,7 @@ export default function PlanScreen() {
   const clearError = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setNetworkError(null);
-    setShowDemoOffer(false);
   }, []);
-
-  const handleViewDemo = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    captureEvent('demo_trip_viewed', { trigger: 'generation_error' });
-    const demoTrip = buildDemoTrip();
-    addTrip(demoTrip);
-    setNetworkError(null);
-    setShowDemoOffer(false);
-    setShowGenerator(false);
-    router.push({ pathname: '/itinerary', params: { tripId: demoTrip.id } });
-  }, [addTrip, router]);
 
   const handleUpgrade = useCallback(() => {
     setRateLimitVisible(false);
@@ -435,7 +414,7 @@ export default function PlanScreen() {
                 <Text style={styles.backToTripsText}>{t('plan.backToTrips')}</Text>
               </Pressable>
             )}
-            <GenerateModeSelect onSelect={handleModeSelect} firstTime={!hasTrips} />
+            <GenerateModeSelect onSelect={handleModeSelect} />
           </View>
         );
       }
@@ -445,12 +424,12 @@ export default function PlanScreen() {
           <View style={styles.fill}>
             <TripLimitBanner />
             {networkError ? (
-              <GenerationErrorBanner
-                message={networkError}
-                showDemo={showDemoOffer}
-                onDismiss={clearError}
-                onViewDemo={handleViewDemo}
-              />
+              <View style={styles.errorBanner}>
+                <Text style={styles.errorBannerText}>{networkError}</Text>
+                <Pressable onPress={clearError} hitSlop={8}>
+                  <Text style={styles.errorBannerRetry}>{t('plan.dismiss')}</Text>
+                </Pressable>
+              </View>
             ) : null}
             <GenerateQuickMode onSubmit={handleQuickSubmit} isGenerating={isGenerating} />
           </View>
@@ -461,14 +440,14 @@ export default function PlanScreen() {
         <View style={styles.fill}>
           <TripLimitBanner />
           {networkError ? (
-            <GenerationErrorBanner
-              message={networkError}
-              showDemo={showDemoOffer}
-              onDismiss={clearError}
-              onViewDemo={handleViewDemo}
-            />
-          ) : null}
-          <GenerateConversationMode onGenerate={handleConversationGenerate} isGenerating={isGenerating} />
+            <View style={styles.errorBanner}>
+              <Text style={styles.errorBannerText}>{networkError}</Text>
+              <Pressable onPress={clearError} hitSlop={8}>
+                  <Text style={styles.errorBannerRetry}>{t('plan.dismiss')}</Text>
+                </Pressable>
+              </View>
+            ) : null}
+            <GenerateConversationMode onGenerate={handleConversationGenerate} isGenerating={isGenerating} />
         </View>
       );
     };
@@ -520,15 +499,6 @@ export default function PlanScreen() {
           </LinearGradient>
         </Pressable>
 
-        {/* People nudge — social proof for latest destination */}
-        {!peopleBannerDismissed && sortedTrips.length > 0 && (
-          <PeopleNudgeBanner
-            destination={sortedTrips[0].destination}
-            onTap={() => router.push('/(tabs)/people' as never)}
-            onDismiss={() => setPeopleBannerDismissed(true)}
-          />
-        )}
-
         {/* Quick Actions */}
         <View style={styles.quickActions}>
           {QUICK_ACTIONS.map((action) => (
@@ -569,76 +539,6 @@ export default function PlanScreen() {
         onDismiss={() => setRateLimitVisible(false)}
       />
     </View>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Generation Error Banner — user-friendly error + demo trip offer
-// ---------------------------------------------------------------------------
-function GenerationErrorBanner({
-  message,
-  showDemo,
-  onDismiss,
-  onViewDemo,
-}: {
-  message: string;
-  showDemo: boolean;
-  onDismiss: () => void;
-  onViewDemo: () => void;
-}) {
-  return (
-    <View style={styles.genErrorBanner}>
-      <View style={styles.genErrorTop}>
-        <Text style={styles.genErrorText}>{message}</Text>
-        <Pressable onPress={onDismiss} hitSlop={12}>
-          <Text style={styles.genErrorDismiss}>✕</Text>
-        </Pressable>
-      </View>
-      {showDemo && (
-        <Pressable
-          onPress={onViewDemo}
-          style={({ pressed }) => [styles.genErrorDemoBtn, { opacity: pressed ? 0.85 : 1 }]}
-        >
-          <Map size={15} color={COLORS.bg} strokeWidth={2} />
-          <Text style={styles.genErrorDemoBtnText}>See a sample Tokyo itinerary</Text>
-        </Pressable>
-      )}
-    </View>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// People Nudge Banner — social proof for the latest destination
-// ---------------------------------------------------------------------------
-function PeopleNudgeBanner({
-  destination,
-  onTap,
-  onDismiss,
-}: {
-  destination: string;
-  onTap: () => void;
-  onDismiss: () => void;
-}) {
-  const count = getDestinationCount(destination, new Date().getMonth() + 1);
-  return (
-    <Pressable
-      onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        onTap();
-      }}
-      style={({ pressed }) => [styles.peopleBanner, { opacity: pressed ? 0.85 : 1 }]}
-    >
-      <View style={styles.peopleBannerLeft}>
-        <Users size={16} color={COLORS.sage} strokeWidth={2} />
-        <Text style={styles.peopleBannerText}>
-          <Text style={styles.peopleBannerBold}>{count} people</Text>
-          {' '}are planning {destination} this month
-        </Text>
-      </View>
-      <Pressable onPress={onDismiss} hitSlop={12} style={styles.peopleBannerDismiss}>
-        <Text style={styles.peopleBannerDismissText}>✕</Text>
-      </Pressable>
-    </Pressable>
   );
 }
 
@@ -732,44 +632,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.header,
     fontSize: 20,
     color: COLORS.bg,
-  } as TextStyle,
-
-  // ── People Nudge Banner ──
-  peopleBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.sageBorder,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm + 2,
-    marginBottom: SPACING.md,
-  } as ViewStyle,
-  peopleBannerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    flex: 1,
-  } as ViewStyle,
-  peopleBannerText: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.creamMuted,
-    flex: 1,
-  } as TextStyle,
-  peopleBannerBold: {
-    fontFamily: FONTS.bodySemiBold,
-    color: COLORS.sage,
-  } as TextStyle,
-  peopleBannerDismiss: {
-    paddingLeft: SPACING.sm,
-  } as ViewStyle,
-  peopleBannerDismissText: {
-    fontFamily: FONTS.mono,
-    fontSize: 12,
-    color: COLORS.creamMuted,
   } as TextStyle,
 
   // ── Quick Actions ──
@@ -937,54 +799,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodySemiBold,
     fontSize: 14,
     color: COLORS.coral,
-  } as TextStyle,
-
-  // ── Generation Error Banner (with demo offer) ──
-  genErrorBanner: {
-    backgroundColor: COLORS.coralSubtle,
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.coral,
-    marginHorizontal: SPACING.md,
-    marginTop: SPACING.sm,
-    marginBottom: SPACING.sm,
-    borderRadius: RADIUS.md,
-    overflow: 'hidden',
-  } as ViewStyle,
-  genErrorTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-  } as ViewStyle,
-  genErrorText: {
-    flex: 1,
-    fontFamily: FONTS.body,
-    fontSize: 14,
-    color: COLORS.cream,
-  } as TextStyle,
-  genErrorDismiss: {
-    fontFamily: FONTS.mono,
-    fontSize: 12,
-    color: COLORS.creamMuted,
-    paddingLeft: SPACING.sm,
-  } as TextStyle,
-  genErrorDemoBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    backgroundColor: COLORS.coral,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    marginHorizontal: SPACING.md,
-    marginBottom: SPACING.md,
-    borderRadius: RADIUS.md,
-    justifyContent: 'center',
-  } as ViewStyle,
-  genErrorDemoBtnText: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 14,
-    color: COLORS.bg,
   } as TextStyle,
 
   // ── Loader ──

@@ -505,6 +505,7 @@ const fr: TranslationKeys = {
     japanese: '\u65E5\u672C\u8A9E',
     korean: '\uD55C\uAD6D\uC5B4',
     portuguese: 'Portugu\u00EAs',
+    german: 'Deutsch',
     languageChanged: 'Langue modifi\u00e9e',
     restartRequired: 'Certains changements peuvent n\u00e9cessiter un red\u00e9marrage.',
   },
