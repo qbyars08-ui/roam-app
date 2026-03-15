@@ -1,23 +1,23 @@
 // =============================================================================
 // ROAM — Custom tab bar: frosted glass (dark), gold active, label only when focused
 // =============================================================================
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
-import { IconPlan, IconDiscover, IconPeople, IconFlights, IconPrep } from './TabIcons';
-import { captureEvent } from '../../lib/posthog';
+import { IconDiscover, IconGenerate, IconFlights, IconStays, IconFood, IconPrep } from './TabIcons';
 
-const TAB_ORDER = ['plan', 'index', 'people', 'flights', 'prep'] as const;
+const TAB_ORDER = ['index', 'generate', 'flights', 'stays', 'food', 'prep'] as const;
 type TabIconComponent = React.ComponentType<{ size?: number; color?: string; focused?: boolean }>;
 const TAB_ICONS: Record<string, { i18nKey: string; Icon: TabIconComponent }> = {
-  plan: { i18nKey: 'tabs.plan', Icon: IconPlan },
   index: { i18nKey: 'tabs.discover', Icon: IconDiscover },
-  people: { i18nKey: 'tabs.people', Icon: IconPeople },
+  generate: { i18nKey: 'tabs.generate', Icon: IconGenerate },
   flights: { i18nKey: 'tabs.flights', Icon: IconFlights },
+  stays: { i18nKey: 'tabs.stays', Icon: IconStays },
+  food: { i18nKey: 'tabs.food', Icon: IconFood },
   prep: { i18nKey: 'tabs.prep', Icon: IconPrep },
 };
 
@@ -25,14 +25,6 @@ export default function ROAMTabBar({ state, descriptors, navigation }: BottomTab
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const visibleRoutes = TAB_ORDER.map((name) => state.routes.find((r) => r.name === name)).filter(Boolean) as typeof state.routes;
-
-  // Track time spent per tab
-  const tabEntryRef = useRef<{ tab: string; enteredAt: number } | null>(null);
-  const currentTabName = state.routes[state.index]?.name ?? '';
-
-  useEffect(() => {
-    tabEntryRef.current = { tab: currentTabName, enteredAt: Date.now() };
-  }, [currentTabName]);
 
   const barContent = (
     <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 12), paddingTop: SPACING.sm }]}>
@@ -51,15 +43,6 @@ export default function ROAMTabBar({ state, descriptors, navigation }: BottomTab
             canPreventDefault: true,
           });
           if (!isFocused && !event.defaultPrevented) {
-            const now = Date.now();
-            const prev = tabEntryRef.current;
-            if (prev) {
-              captureEvent('tab_switched', {
-                from_tab: prev.tab,
-                to_tab: route.name,
-                time_spent_ms: now - prev.enteredAt,
-              });
-            }
             navigation.navigate(route.name, route.params);
           }
         };
