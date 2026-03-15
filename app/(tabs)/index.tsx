@@ -50,12 +50,10 @@ const CARD_WIDTH = (SCREEN_WIDTH - GRID_PADDING * 2 - GRID_GAP) / 2;
 const CARD_HEIGHT_TALL = 240;
 const CARD_HEIGHT_SHORT = 200;
 
-// ---------------------------------------------------------------------------
-// Unsplash fallback — zero API key needed
-// ---------------------------------------------------------------------------
-function getUnsplashUrl(query: string, w = 800, h = 600): string {
-  return `https://source.unsplash.com/${w}x${h}/?${encodeURIComponent(query)},travel`;
-}
+// Generic travel fallback — used when a destination has no unsplashUrl set
+// source.unsplash.com is dead since mid-2024 — never use it
+const GENERIC_TRAVEL_FALLBACK_URL =
+  'https://images.unsplash.com/photo-1488085061387-422e29b40080?w=800&q=85&fm=webp';
 
 // ---------------------------------------------------------------------------
 // DestinationPhotoCard
@@ -74,8 +72,7 @@ const DestinationPhotoCard = React.memo(function DestinationPhotoCard({
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [imageLoaded, setImageLoaded] = useState(false);
 
-  const imageUrl = destination.unsplashUrl
-    ?? getUnsplashUrl(destination.photoQuery);
+  const imageUrl = destination.unsplashUrl ?? GENERIC_TRAVEL_FALLBACK_URL;
 
   useEffect(() => {
     const delay = Math.min(index * 80, 400);

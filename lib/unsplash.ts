@@ -1,5 +1,7 @@
 // =============================================================================
 // ROAM — Unsplash helpers (client-side, with graceful fallbacks)
+// NOTE: source.unsplash.com is DEAD (deprecated 2021, broke mid-2024).
+// Always use images.unsplash.com/photo-{id} URLs.
 // =============================================================================
 type UnsplashPhoto = {
   id: string;
@@ -12,9 +14,8 @@ export type UnsplashPhotoRef = {
   /** Unsplash photo ID (not a slug). */
   id: string;
   /**
-   * A guaranteed-working fallback image URL. Prefer using:
-   * - https://source.unsplash.com/<id>/<w>x<h>
-   * so it works without an API key.
+   * A reliable CDN URL for this photo.
+   * Use images.unsplash.com/photo-{id}?w=800&q=85&fm=webp — NOT source.unsplash.com (dead).
    */
   fallbackUrl: string;
 };
@@ -69,3 +70,18 @@ export function optimizeUnsplashUrl(url: string, w = 800): string {
   return u.toString();
 }
 
+/**
+ * Proxy an existing image URL through Cloudinary's CDN for global edge caching,
+ * WebP conversion, and reliability insulation from Unsplash.
+ *
+ * Setup: add EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME to your .env file.
+ * Free tier: 25 GB bandwidth/month (~312K image serves at 80KB).
+ *
+ * If cloud name is not set, returns the original URL unchanged (graceful fallback).
+ */
+export function cloudinaryFetch(sourceUrl: string, w = 800): string {
+  const cloud = process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  if (!cloud || !sourceUrl) return sourceUrl;
+  const params = `f_auto,q_auto,w_${w}`;
+  return `https://res.cloudinary.com/${cloud}/image/fetch/${params}/${encodeURIComponent(sourceUrl)}`;
+}
