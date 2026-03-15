@@ -52,7 +52,7 @@ import {
 } from 'lucide-react-native';
 
 import { useTranslation } from 'react-i18next';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { COLORS, DESTINATIONS, FONTS, RADIUS, SPACING } from '../../lib/constants';
 import { useAppStore, type Trip } from '../../lib/store';
 import {
   getEmergencyForDestination,
@@ -73,7 +73,6 @@ import {
   destinationToCountryCode,
   type PassportNationality,
 } from '../../lib/visa-intel';
-import { DESTINATIONS } from '../../lib/constants';
 import { parseItinerary, type Itinerary, type ItineraryDay } from '../../lib/types/itinerary';
 import { withComingSoon } from '../../lib/with-coming-soon';
 import { getMedicalGuideByDestination, type MedicalGuide } from '../../lib/medical-abroad';
