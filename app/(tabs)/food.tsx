@@ -5,11 +5,13 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
+  type ImageStyle,
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
@@ -319,12 +321,33 @@ export default function FoodScreen() {
   );
 
   if (!destination) {
+    const foodCategories = [
+      { title: 'Street Food', subtitle: 'The real flavors, no pretension', image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80' },
+      { title: 'Local Markets', subtitle: 'Where the locals actually shop', image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&q=80' },
+      { title: 'Late Night Eats', subtitle: 'For when the night gets hungry', image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80' },
+    ];
     return (
       <View style={[styles.screen, { paddingTop: insets.top }]}>
-        <View style={styles.emptyState}>
-          <UtensilsCrossed size={48} color={COLORS.creamVeryFaint} strokeWidth={1.5} />
-          <Text style={styles.emptyTitle}>Add a destination to discover local food</Text>
-        </View>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + SPACING.xl }]}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.emptyHeader}>What are you eating?</Text>
+          <Text style={styles.emptySubtext}>
+            Plan a trip and we will find the spots only locals know about.
+          </Text>
+          {foodCategories.map((cat) => (
+            <View key={cat.title} style={styles.foodCategoryCard}>
+              <Image source={{ uri: cat.image }} style={styles.foodCategoryImage} resizeMode="cover" />
+              <LinearGradient colors={['transparent', 'rgba(8,15,10,0.85)']} locations={[0.3, 1]} style={StyleSheet.absoluteFill} />
+              <View style={styles.foodCategoryContent}>
+                <Text style={styles.foodCategoryTitle}>{cat.title}</Text>
+                <Text style={styles.foodCategorySub}>{cat.subtitle}</Text>
+              </View>
+            </View>
+          ))}
+        </ScrollView>
       </View>
     );
   }
@@ -845,6 +868,53 @@ const styles = StyleSheet.create({
     color: COLORS.creamDim,
     marginTop: SPACING.lg,
     textAlign: 'center',
+  } as TextStyle,
+  emptyHeader: {
+    fontFamily: FONTS.header,
+    fontSize: 26,
+    color: COLORS.cream,
+    paddingHorizontal: SPACING.lg,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.xs,
+  } as TextStyle,
+  emptySubtext: {
+    fontFamily: FONTS.body,
+    fontSize: 15,
+    color: COLORS.creamDim,
+    paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.lg,
+    lineHeight: 22,
+  } as TextStyle,
+  foodCategoryCard: {
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.sm + 4,
+    borderRadius: RADIUS.xl,
+    overflow: 'hidden',
+    height: 140,
+    position: 'relative',
+  } as ViewStyle,
+  foodCategoryImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  } as ImageStyle,
+  foodCategoryContent: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: SPACING.md,
+  } as ViewStyle,
+  foodCategoryTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 22,
+    color: COLORS.cream,
+  } as TextStyle,
+  foodCategorySub: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamSoft,
+    marginTop: 2,
   } as TextStyle,
   toastWrap: {
     position: 'absolute',
