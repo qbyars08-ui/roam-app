@@ -4,6 +4,8 @@
 // =============================================================================
 import { Linking } from 'react-native';
 import { trackAffiliateClick, isSafeUrl } from './affiliate-tracking';
+import { captureEvent } from './posthog';
+import { EVENTS } from './posthog-events';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -109,5 +111,11 @@ export async function openBookingLink(
 ): Promise<void> {
   if (!isSafeUrl(url)) return;
   await trackAffiliateClick({ partner, destination, placement, url });
+  captureEvent(EVENTS.AFFILIATE_CLICK.name, {
+    partner,
+    destination,
+    placement,
+    url,
+  });
   await Linking.openURL(url).catch(() => {});
 }
