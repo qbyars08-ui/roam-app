@@ -1503,8 +1503,8 @@ const styles = StyleSheet.create({
 
   heroCard: {
     backgroundColor: COLORS.bgCard,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: RADIUS.xl,
+    padding: SPACING.lg,
     alignItems: 'center',
     marginBottom: SPACING.lg,
   } as ViewStyle,
@@ -1709,8 +1709,8 @@ const styles = StyleSheet.create({
 
   embassyCard: {
     backgroundColor: COLORS.bgCard,
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
   } as ViewStyle,
   embassyLabel: {
     fontFamily: FONTS.mono,
@@ -1774,8 +1774,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    borderRadius: 10,
-    padding: 12,
+    borderRadius: RADIUS.md,
+    padding: SPACING.sm,
     marginTop: SPACING.md,
   } as ViewStyle,
   insuranceText: {
@@ -1890,9 +1890,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.bgCard,
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 8,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
   } as ViewStyle,
   phraseCardBody: {
     flex: 1,
@@ -1927,7 +1927,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   } as TextStyle,
   visaHeroCard: {
-    borderRadius: 12,
+    borderRadius: RADIUS.lg,
     borderWidth: 1,
     padding: SPACING.lg,
     marginBottom: SPACING.md,
@@ -2140,8 +2140,8 @@ const styles = StyleSheet.create({
   // Shared info card
   infoCard: {
     backgroundColor: COLORS.bgCard,
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
     marginBottom: SPACING.sm,
   } as ViewStyle,
   infoCardRow: {
@@ -2188,9 +2188,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: COLORS.bgCard,
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 6,
+    borderRadius: RADIUS.md,
+    padding: SPACING.sm,
+    marginBottom: SPACING.xs,
   } as ViewStyle,
   esimName: {
     fontFamily: FONTS.bodySemiBold,
@@ -2212,9 +2212,9 @@ const styles = StyleSheet.create({
   } as TextStyle,
   etiquetteCard: {
     backgroundColor: COLORS.bgCard,
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 8,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
     gap: SPACING.sm,
   } as ViewStyle,
   etiquetteRow: {
