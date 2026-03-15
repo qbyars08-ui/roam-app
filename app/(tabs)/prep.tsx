@@ -225,21 +225,19 @@ function SafetyScoreHero({
 }
 
 // ---------------------------------------------------------------------------
-// Section Pills (labelKey = i18n key when present)
+// Section Pills — all use labelKey for i18n
 // ---------------------------------------------------------------------------
-const SECTIONS: Array<
-  | { id: 'schedule' | 'overview' | 'currency' | 'connectivity' | 'culture'; label: string }
-  | { id: 'emergency' | 'health' | 'language' | 'visa'; labelKey: string }
-> = [
-  { id: 'schedule', label: 'Schedule' },
-  { id: 'overview', label: 'Overview' },
+type SectionId = 'schedule' | 'overview' | 'emergency' | 'health' | 'language' | 'visa' | 'currency' | 'connectivity' | 'culture';
+const SECTIONS: Array<{ id: SectionId; labelKey: string }> = [
+  { id: 'schedule', labelKey: 'prep.sectionSchedule' },
+  { id: 'overview', labelKey: 'prep.sectionOverview' },
   { id: 'emergency', labelKey: 'prep.emergency' },
   { id: 'health', labelKey: 'prep.health' },
   { id: 'language', labelKey: 'prep.language' },
   { id: 'visa', labelKey: 'prep.visa' },
-  { id: 'currency', label: 'Currency' },
-  { id: 'connectivity', label: 'SIM & WiFi' },
-  { id: 'culture', label: 'Culture' },
+  { id: 'currency', labelKey: 'prep.sectionCurrency' },
+  { id: 'connectivity', labelKey: 'prep.sectionConnectivity' },
+  { id: 'culture', labelKey: 'prep.sectionCulture' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -248,13 +246,12 @@ const SECTIONS: Array<
 const SLOT_DEFAULTS: Record<string, string> = { morning: '9:00 AM', afternoon: '2:00 PM', evening: '6:00 PM' };
 
 function ScheduleTab({ itinerary }: { itinerary: Itinerary | null }) {
+  const { t } = useTranslation();
   if (!itinerary?.days?.length) {
     return (
       <View style={styles.tabContent}>
-        <Text style={styles.scheduleEmptyTitle}>No schedule yet</Text>
-        <Text style={styles.noDataText}>
-          Generate a trip in Plan to see your day-by-day schedule here.
-        </Text>
+        <Text style={styles.scheduleEmptyTitle}>{t('prep.scheduleEmpty')}</Text>
+        <Text style={styles.noDataText}>{t('prep.scheduleEmptySub')}</Text>
       </View>
     );
   }
@@ -291,6 +288,7 @@ function ScheduleTab({ itinerary }: { itinerary: Itinerary | null }) {
 // Overview Tab
 // ---------------------------------------------------------------------------
 function OverviewTab({ safety }: { safety: SafetyData }) {
+  const { t } = useTranslation();
   const advisoryColor =
     safety.advisoryLevel === 1
       ? COLORS.sage
@@ -302,7 +300,7 @@ function OverviewTab({ safety }: { safety: SafetyData }) {
   return (
     <View style={styles.tabContent}>
       <View style={styles.overviewRow}>
-        <Text style={styles.overviewLabel}>Travel Advisory</Text>
+        <Text style={styles.overviewLabel}>{t('prep.travelAdvisory')}</Text>
         <View style={[styles.advisoryBadge, { backgroundColor: advisoryColor + '20', borderColor: advisoryColor }]}>
           <Text
             style={[
@@ -329,19 +327,19 @@ function OverviewTab({ safety }: { safety: SafetyData }) {
 
       <View style={styles.metricsWrap}>
         <MetricRow
-          label="Crime Index"
+          label={t('prep.crimeIndex')}
           value={safety.crimeIndex}
           fillColor={COLORS.coral}
           invert
         />
         <MetricRow
-          label="Health Risk"
+          label={t('prep.healthRisk')}
           value={safety.healthRisk}
           fillColor={COLORS.coral}
           invert
         />
         <MetricRow
-          label="Political Stability"
+          label={t('prep.politicalStability')}
           value={safety.politicalStability}
           fillColor={COLORS.sage}
         />
@@ -485,15 +483,16 @@ function SOSButton({
 // Emergency Numbers (finger-friendly, min 48px height)
 // ---------------------------------------------------------------------------
 function EmergencyNumbers({ data }: { data: EmergencyData }) {
+  const { t } = useTranslation();
   const openTel = useCallback((num: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Linking.openURL(`tel:${num.replace(/\s/g, '')}`).catch(() => {});
   }, []);
 
   const rows: Array<{ icon: LucideIcon; label: string; number: string }> = [
-    { icon: Shield, label: 'Police', number: data.police },
-    { icon: Truck, label: 'Ambulance', number: data.ambulance },
-    { icon: Flame, label: 'Fire', number: data.fire },
+    { icon: Shield, label: t('prep.policeLabel'), number: data.police },
+    { icon: Truck, label: t('prep.ambulanceLabel'), number: data.ambulance },
+    { icon: Flame, label: t('prep.fireLabel'), number: data.fire },
   ];
 
   return (
@@ -518,6 +517,7 @@ function EmergencyNumbers({ data }: { data: EmergencyData }) {
 // Embassy Card
 // ---------------------------------------------------------------------------
 function EmbassyCard({ data }: { data: EmergencyData }) {
+  const { t } = useTranslation();
   const openTel = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Linking.openURL(`tel:${data.usEmbassy.phone.replace(/\s/g, '')}`).catch(() => {});
@@ -531,8 +531,8 @@ function EmbassyCard({ data }: { data: EmergencyData }) {
 
   return (
     <View style={styles.embassyCard}>
-      <Text style={styles.embassyLabel}>Nearest Embassy</Text>
-      <Text style={styles.embassyName}>US Embassy — {data.usEmbassy.city}</Text>
+      <Text style={styles.embassyLabel}>{t('prep.nearestEmbassy')}</Text>
+      <Text style={styles.embassyName}>{t('prep.usEmbassyLabel', { city: data.usEmbassy.city })}</Text>
       <TouchableOpacity style={styles.embassyAddressRow} onPress={openMap} activeOpacity={0.7}>
         <MapPin size={12} color={COLORS.sage} />
         <Text style={[styles.embassyAddress, { color: COLORS.sage }]}>{data.usEmbassy.address}</Text>
@@ -557,6 +557,7 @@ function HealthTab({
   tapWaterFromCultural: boolean | null;
   medicalGuide: MedicalGuide | null;
 }) {
+  const { t } = useTranslation();
   const tapSafe = safety.tapWaterSafe ?? tapWaterFromCultural ?? medicalGuide?.tapWaterSafe ?? false;
 
   const hospitalColor =
@@ -578,7 +579,7 @@ function HealthTab({
           <View style={styles.medicalGrid}>
             <View style={styles.medicalGridItem}>
               <Stethoscope size={18} color={hospitalColor} />
-              <Text style={styles.medicalGridLabel}>Hospitals</Text>
+              <Text style={styles.medicalGridLabel}>{t('prep.hospitalsLabel')}</Text>
               <Text style={[styles.medicalGridValue, { color: hospitalColor }]}>
                 {medicalGuide.hospitalQuality.charAt(0).toUpperCase() + medicalGuide.hospitalQuality.slice(1)}
               </Text>
@@ -586,9 +587,9 @@ function HealthTab({
             </View>
             <View style={styles.medicalGridItem}>
               <Pill size={18} color={medicalGuide.pharmacyOTC ? COLORS.sage : COLORS.gold} />
-              <Text style={styles.medicalGridLabel}>Pharmacy</Text>
+              <Text style={styles.medicalGridLabel}>{t('prep.pharmacyLabel')}</Text>
               <Text style={[styles.medicalGridValue, { color: medicalGuide.pharmacyOTC ? COLORS.sage : COLORS.gold }]}>
-                {medicalGuide.pharmacyOTC ? 'OTC available' : 'Rx required'}
+                {medicalGuide.pharmacyOTC ? t('prep.otcAvailable') : t('prep.rxRequired')}
               </Text>
               <Text style={styles.medicalGridNote}>{medicalGuide.pharmacyNote}</Text>
             </View>
@@ -598,7 +599,7 @@ function HealthTab({
             <View style={styles.medicalCostRow}>
               <Heart size={14} color={COLORS.coral} />
               <Text style={styles.medicalCostText}>
-                ER visit without insurance: {medicalGuide.erCostRange}
+                {t('prep.erCostLabel', { range: medicalGuide.erCostRange })}
               </Text>
             </View>
           )}
@@ -607,7 +608,7 @@ function HealthTab({
             <AlertTriangle size={18} color={insuranceColor} />
             <View style={{ flex: 1 }}>
               <Text style={[styles.insuranceText, { color: insuranceColor }]}>
-                Insurance: {medicalGuide.insurancePriority === 'critical' ? 'Critical' : medicalGuide.insurancePriority === 'recommended' ? 'Recommended' : 'Nice to have'}
+                {t('prep.insurancePrefix')} {medicalGuide.insurancePriority === 'critical' ? t('prep.insuranceCritical') : medicalGuide.insurancePriority === 'recommended' ? t('prep.insuranceRecommended') : t('prep.insuranceNiceToHave')}
               </Text>
               <Text style={styles.medicalGridNote}>{medicalGuide.insuranceNote}</Text>
             </View>
@@ -615,7 +616,7 @@ function HealthTab({
 
           {medicalGuide.whereToGo.length > 0 && (
             <>
-              <Text style={styles.healthSectionLabel}>Where to Go</Text>
+              <Text style={styles.healthSectionLabel}>{t('prep.whereToGoLabel')}</Text>
               {medicalGuide.whereToGo.map((item, i) => (
                 <View key={i} style={styles.whereToGoRow}>
                   <Text style={styles.whereToGoCondition}>{item.condition}</Text>
@@ -667,7 +668,7 @@ function HealthTab({
             { color: tapSafe ? COLORS.sage : COLORS.coral },
           ]}
         >
-          {tapSafe ? 'Safe to drink' : 'Do not drink'}
+          {tapSafe ? t('prep.tapWaterSafe') : t('prep.tapWaterUnsafe')}
         </Text>
         {medicalGuide?.waterNote && (
           <Text style={styles.medicalGridNote}>{medicalGuide.waterNote}</Text>
@@ -733,6 +734,7 @@ function VisaTab({
   destination: string;
   passport: PassportNationality;
 }) {
+  const { t } = useTranslation();
   const visa = getVisaInfo(destination, passport);
   const countryCode = destinationToCountryCode(destination);
   const applyUrl = countryCode ? E_VISA_URLS[countryCode] : null;
@@ -781,21 +783,21 @@ function VisaTab({
           ]}
         >
           {isNotRequired
-            ? 'Visa Not Required'
+            ? t('prep.visaNotRequired')
             : isOnArrival
-              ? 'Visa on Arrival'
-              : 'Visa Required'}
+              ? t('prep.visaOnArrival')
+              : t('prep.visaRequired')}
         </Text>
       </View>
 
       {info.stayDays != null && info.stayDays < 999 && (
-        <Text style={styles.visaDetail}>Stay up to {info.stayDays} days</Text>
+        <Text style={styles.visaDetail}>{t('prep.stayUpTo', { count: info.stayDays })}</Text>
       )}
       {info.notes && (
         <Text style={styles.visaMeta}>{info.notes}</Text>
       )}
       {info.cost != null && (
-        <Text style={styles.visaMeta}>Application fee: ${info.cost}</Text>
+        <Text style={styles.visaMeta}>{t('prep.applicationFee', { cost: info.cost })}</Text>
       )}
 
       {isRequired && applyUrl && (
@@ -808,12 +810,12 @@ function VisaTab({
           activeOpacity={0.7}
         >
           <ExternalLink size={14} color={COLORS.sage} />
-          <Text style={styles.applyOnlineText}>Apply Online</Text>
+          <Text style={styles.applyOnlineText}>{t('common.learnMore')}</Text>
         </TouchableOpacity>
       )}
 
       <Text style={styles.visaChecklistLabel}>Requirements</Text>
-      {['Valid passport (6+ months)', 'Return ticket', 'Proof of accommodation'].map((item, i) => (
+      {[t('prep.validPassport'), t('prep.returnTicket'), t('prep.proofAccommodation')].map((item, i) => (
         <View key={i} style={styles.visaChecklistRow}>
           <CheckSquare size={16} color={COLORS.sage} />
           <Text style={styles.visaChecklistText}>{item}</Text>
@@ -1228,9 +1230,7 @@ function PrepScreen() {
   const [selectedDest, setSelectedDest] = useState(
     activeTrip?.destination ?? DESTINATIONS[0]?.label ?? 'Tokyo'
   );
-  const [activeSection, setActiveSection] = useState<
-    'schedule' | 'overview' | 'emergency' | 'health' | 'language' | 'visa' | 'currency' | 'connectivity' | 'culture'
-  >('schedule');
+  const [activeSection, setActiveSection] = useState<SectionId>('schedule');
 
   useEffect(() => {
     if (activeTrip) {
@@ -1272,7 +1272,7 @@ function PrepScreen() {
   const countryName = emergency?.country ?? safety?.country ?? selectedDest;
 
   const handleSectionChange = useCallback(
-    (id: (typeof SECTIONS)[number]['id']) => {
+    (id: SectionId) => {
       Haptics.selectionAsync();
       setActiveSection(id);
     },
@@ -1352,7 +1352,7 @@ function PrepScreen() {
                         isActive && styles.pillTextActive,
                       ]}
                     >
-                      {'labelKey' in s ? t(s.labelKey) : s.label}
+                      {t(s.labelKey)}
                     </Text>
                   </Pressable>
                 );

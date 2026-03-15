@@ -413,6 +413,7 @@ const RouteCard = React.memo(function RouteCard({
   route: PopularRoute;
   onPress: () => void;
 }) {
+  const { t } = useTranslation();
   const [imageLoaded, setImageLoaded] = useState(false);
 
   return (
@@ -450,12 +451,12 @@ const RouteCard = React.memo(function RouteCard({
           <Text style={styles.routeCode}>{route.toCode}</Text>
         </View>
         <Text style={styles.routeLabel}>
-          {route.from} to {route.to}
+          {t('flights.routeLabel', { from: route.from, to: route.to })}
         </Text>
         <View style={styles.routeBottom}>
           <Text style={styles.routePrice}>{route.price}</Text>
           <View style={styles.routeSearchBadge}>
-            <Text style={styles.routeSearchText}>Search</Text>
+            <Text style={styles.routeSearchText}>{t('flights.routeSearch')}</Text>
           </View>
         </View>
       </View>
@@ -654,10 +655,8 @@ export default function FlightsScreen() {
       >
         {/* ── Hero ── */}
         <View style={styles.hero}>
-          <Text style={styles.heroTitle}>Find your flight.</Text>
-          <Text style={styles.heroSub}>
-            We search Skyscanner so you get the best price, every time.
-          </Text>
+          <Text style={styles.heroTitle}>{t('flights.heroTitle')}</Text>
+          <Text style={styles.heroSub}>{t('flights.heroSub')}</Text>
         </View>
 
         {/* ── Search Form ── */}
@@ -669,11 +668,11 @@ export default function FlightsScreen() {
               <TextInput
                 style={styles.input}
                 value={fromText}
-                onChangeText={(t) => {
-                  setFromText(t);
+                onChangeText={(v) => {
+                  setFromText(v);
                   setFromCode('');
                 }}
-                placeholder="From (city or airport)"
+                placeholder={t('flights.fromPlaceholder')}
                 placeholderTextColor={COLORS.creamDim}
                 onFocus={() => {
                   setFromFocused(true);
@@ -711,11 +710,11 @@ export default function FlightsScreen() {
               <TextInput
                 style={styles.input}
                 value={toText}
-                onChangeText={(t) => {
-                  setToText(t);
+                onChangeText={(v) => {
+                  setToText(v);
                   setToCode('');
                 }}
-                placeholder="To (city or airport)"
+                placeholder={t('flights.toPlaceholder')}
                 placeholderTextColor={COLORS.creamDim}
                 onFocus={() => {
                   setToFocused(true);
@@ -734,12 +733,12 @@ export default function FlightsScreen() {
           {/* Dates */}
           <View style={styles.dateRow}>
             <DatePickerInline
-              label="DEPART"
+              label={t('flights.depart')}
               value={departDate}
               onSelect={setDepartDate}
             />
             <DatePickerInline
-              label="RETURN"
+              label={t('flights.returnLabel')}
               value={returnDate}
               onSelect={setReturnDate}
               minimumDate={departDate}
@@ -748,7 +747,7 @@ export default function FlightsScreen() {
 
           {/* Passengers */}
           <View style={styles.passengersRow}>
-            <Text style={styles.passengersLabel}>Passengers</Text>
+            <Text style={styles.passengersLabel}>{t('flights.passengers')}</Text>
             <View style={styles.counter}>
               <Pressable
                 style={({ pressed }) => [
@@ -794,16 +793,14 @@ export default function FlightsScreen() {
             onPress={handleSearch}
           >
             <ExternalLink size={18} color={COLORS.bg} strokeWidth={2} />
-            <Text style={styles.searchBtnText}>Search on Skyscanner</Text>
+            <Text style={styles.searchBtnText}>{t('flights.searchSkyscanner')}</Text>
           </Pressable>
         </View>
 
         {/* ── Popular Routes ── */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Popular routes</Text>
-          <Text style={styles.sectionSub}>
-            The flights everyone is booking right now
-          </Text>
+          <Text style={styles.sectionTitle}>{t('flights.popularRoutes')}</Text>
+          <Text style={styles.sectionSub}>{t('flights.popularRoutesSub')}</Text>
         </View>
 
         <View style={styles.routeGrid}>
@@ -818,10 +815,8 @@ export default function FlightsScreen() {
 
         {/* ── Best Time to Fly ── */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Best time to fly</Text>
-          <Text style={styles.sectionSub}>
-            Peak season, lowest crowds, perfect weather
-          </Text>
+          <Text style={styles.sectionTitle}>{t('flights.bestTimeToFly')}</Text>
+          <Text style={styles.sectionSub}>{t('flights.bestTimeSub')}</Text>
         </View>
 
         <ScrollView
@@ -839,10 +834,7 @@ export default function FlightsScreen() {
         </ScrollView>
 
         {/* ── Affiliate disclaimer ── */}
-        <Text style={styles.disclaimer}>
-          ROAM earns a small commission when you book through Skyscanner. This
-          keeps the app free.
-        </Text>
+        <Text style={styles.disclaimer}>{t('flights.disclaimer')}</Text>
       </Animated.ScrollView>
     </View>
   );
