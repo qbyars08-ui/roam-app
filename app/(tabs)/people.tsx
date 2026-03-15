@@ -33,6 +33,7 @@ import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
 import { track } from '../../lib/analytics';
+import { planningLabel } from '../../lib/social-proof';
 
 // ---------------------------------------------------------------------------
 // Mock traveler data — replace with Supabase queries
@@ -268,6 +269,13 @@ export default function PeopleScreen() {
   const router = useRouter();
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
+  // Use the destination from the user's most recent trip for personalised social proof
+  const trips = useAppStore((s) => s.trips);
+  const latestDest = trips.length > 0
+    ? [...trips].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0].destination
+    : null;
+  const socialProofLabel = latestDest ? planningLabel(latestDest) : null;
+
   useEffect(() => {
     track({ type: 'screen_view', screen: 'people' });
     Animated.timing(fadeAnim, {
@@ -352,7 +360,9 @@ export default function PeopleScreen() {
         {/* Matched Travelers */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Matched travelers</Text>
-          <Text style={styles.sectionSub}>People heading to your destinations</Text>
+          <Text style={styles.sectionSub}>
+            {socialProofLabel ?? 'People heading to your destinations'}
+          </Text>
         </View>
 
         {MOCK_TRAVELERS.map((traveler) => (
