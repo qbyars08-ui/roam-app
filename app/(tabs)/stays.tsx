@@ -562,7 +562,7 @@ export default function StaysScreen() {
                 resizeMode="cover"
               />
               <LinearGradient
-                colors={['transparent', 'rgba(8,15,10,0.85)']}
+                colors={['transparent', COLORS.bgDarkGreenOverlay]}
                 locations={[0.3, 1]}
                 style={StyleSheet.absoluteFill}
               />
