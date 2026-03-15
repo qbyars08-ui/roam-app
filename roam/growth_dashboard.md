@@ -4,6 +4,98 @@
 
 ---
 
+## Gen Z UX Audit — tryroam.netlify.app
+
+**Date:** 2026-03-15  
+**Auditor:** Agent 06  
+**Lens:** Gen Z user, 18–24, discovering ROAM for the first time
+
+---
+
+### Audit Findings
+
+#### 1. Does Discover communicate value in 3 seconds?
+
+**Verdict: No.**
+
+The Discover screen opens on a rotating editorial subtitle — beautiful Cormorant Garamond at 40px — but the first header a user likely sees is "Travel like you know someone there." That's aspirational copy with zero verb. There is no call to action above the fold. The "ROAM" brandmark is 14px mono in sage — nearly invisible. The search bar is a fake tap target that navigates to the Generate tab. A first-time Gen Z user scrolling in sees gorgeous destination cards but has no mental model of what tapping one does. There is no "AI," no "30 seconds," no "free first trip" framing anywhere on this screen.
+
+**What's missing:** A persistent value hook with a verb. "Plan any trip in 30 seconds. First one free." + a CTA button, above the fold, before the card grid.
+
+---
+
+#### 2. Do cards make you want to tap?
+
+**Verdict: Partially.**
+
+The card layout is strong: full-bleed Unsplash photo, gradient overlay, large city name, price badge, trending/timing chips. On paper this is good. In practice:
+
+- The hook text (`destination.hook`) renders at 11px with truncation — Gen Z won't squint to read it.
+- The `$` / `$$` / `$$$` price indicator is ambiguous. No unit label. "$$ per day? total? a drink?"
+- The "TRENDING" badge and "Perfect timing" badge are correct instincts but generic. 9px flame icon + "TRENDING" at 9px mono is invisible.
+- Cards have zero tap affordance. No "Plan this trip" label, no "→", no visual reward hint. Tapping is an act of faith.
+- No social proof: "247 trips generated this week" would convert curiosity into FOMO.
+
+---
+
+#### 3. Is generate empty state clear?
+
+**Verdict: No.**
+
+When `generateMode` is `null`, the Generate tab shows `GenerateModeSelect`. Two cards: Quick (Zap icon, sage) and Chat (MessageCircle, gold). The screen headline is `t('generate.title')` = "Plan a trip." The subtitle is `t('generate.quickModeDesc')` = "Fill out a form, get a full itinerary." **This exact same string then appears as the subtitle inside the Quick card itself — users read the same sentence twice in 3 lines.** That's a bug and a trust signal failure.
+
+The mode select has no destination photos, no social proof, no "first trip free" framing, no indication of what the output looks like. A user who arrived cold has no idea they're about to get a 5-day day-by-day itinerary with real restaurant names. "Fill out a form" sounds like admin work.
+
+---
+
+#### 4. Is share moment obvious?
+
+**Verdict: No.**
+
+After generating an itinerary, the share affordance lives in the header as a `Share2` icon — one of four header buttons (Invite, Link2, Share2, ViralCards icon). Four near-identical 20px icons in a row. No visual hierarchy. No label. No prompt. The user has to already know to look there.
+
+The in-app `ShareCard` component (inside the modal) works correctly. The standalone `/share-card` page is **wrapped with `withComingSoon`**, making it inaccessible in production. The web download UX says "Open image in new tab" → "Screenshot or right-click to save" — a 2-step friction cliff on mobile. There is no post-generation "Moment" screen that presents the share card unprompted.
+
+---
+
+#### 5. What would make someone post this?
+
+**Verdict: Not enough, not yet.**
+
+The share card design (9:16, full bleed photo, Cormorant destination name, pill badges, day themes) is genuinely Instagram-worthy. The bones are right. But:
+
+- "Built with ROAM" appears in `COLORS.successMuted` at 10px — invisible. No brand attribution survives the post.
+- No pre-filled caption or hashtags. Users will post with no copy, no hashtags, no referral link. Zero viral loop.
+- No direct Instagram Stories / TikTok intent launch. Web Share API is available; it's not used.
+- Budget amounts on the card (`$85/day`) could feel exposing. Users may not want to share their spend. No toggle to hide budget.
+- The generate flow itself — 30 seconds of compass animation producing a real itinerary — is the highest-shareable moment and there's no screen recording nudge at that exact peak.
+
+---
+
+### 10 Actionable Recommendations
+
+- [ ] **#1 — Add a CTA button to Discover above the fold.** Below the editorial subtitle in `app/(tabs)/index.tsx`, add a full-width "Generate my trip" `Pressable` with sage border that navigates to the Generate tab. The rotating taglines are good but they land on an ambient experience with no action. This single change closes the Discover → Generate funnel gap. Expected lift: +25% generate tab entries from Discover. File: `app/(tabs)/index.tsx`, insert after `<Text style={styles.editorialSubtitle}>`.
+
+- [ ] **#2 — Fix the duplicate subtitle bug in GenerateModeSelect.** `components/generate/GenerateModeSelect.tsx` line 51 uses `t('generate.quickModeDesc')` as the screen subtitle, which is the identical string shown again inside the Quick card on line 66. Replace the screen subtitle with a distinct value hook: "Your first trip is free. Takes 30 seconds." This is the highest-trust moment before a new user commits to generating. File: `components/generate/GenerateModeSelect.tsx`, change `styles.subtitle` text.
+
+- [ ] **#3 — Replace the Generate empty state with a destination-forward entry screen.** Before showing the Quick / Chat mode cards, show a 3-card horizontal scroll strip of destination photo cards (reuse `DestinationPhotoCard` from Discover) above the mode selection. When a user taps a destination card, it pre-fills the destination field and jumps straight into Quick mode. Removes "I don't know where to start" drop-off. Expected lift: −20% generate screen bounce rate. Files: `components/generate/GenerateModeSelect.tsx`, pull `DESTINATIONS` from constants.
+
+- [ ] **#4 — Remove `withComingSoon` from `app/share-card.tsx` and fix web download UX.** The standalone share card page is gated in production, breaking the shareable link feature entirely. Remove the `withComingSoon` wrapper. Replace the "Open image in new tab → right-click save" pattern with a single "Save to Camera Roll" button on native (already works via `captureRef`) and a direct `<a download>` anchor on web. File: `app/share-card.tsx`.
+
+- [ ] **#5 — Trigger a full-screen "Share your trip" moment immediately after generation.** After `router.push('/itinerary')` resolves, push a bottom sheet or interstitial that shows the share card preview with a single "Share to Stories" CTA. Right now the share button is one of four 20px icons in the header — invisible to new users. The post-generation high is the peak motivational moment. Move the share prompt to that exact moment. Expected lift: share rate 3×. Files: `app/generate.tsx` (add post-navigation prompt), or add a `showSharePrompt` param to the itinerary route.
+
+- [ ] **#6 — Pre-fill a viral caption + hashtags when sharing.** In `lib/sharing.ts` and `components/features/ShareCard.tsx`, append a pre-written caption to the share sheet: `"I let AI plan my [destination] trip in 30 seconds. tryroam.netlify.app #ROAM #AITravel #TravelTok"`. Copy it to clipboard as a fallback. Users will not write their own copy. Giving them 180 pre-written characters with a referral URL is the difference between 0 hashtag posts and a TikTok thread. This is the highest-leverage single code change for virality.
+
+- [ ] **#7 — Make "Built with ROAM" a visible, tappable referral watermark on the share card.** In `components/features/ShareCard.tsx` (and `app/share-card.tsx`), change `styles.builtWith` from `COLORS.successMuted` to `COLORS.gold`, increase fontSize to 13, add letterSpacing, and on native wrap it in a `Linking.openURL('https://tryroam.netlify.app?ref=[userCode]')` pressable. Every shared card becomes a tracked referral. Currently the watermark is invisible at 10px in faint green — zero brand recall survives the post.
+
+- [ ] **#8 — Add live social proof counts to Trending destination cards.** In `DestinationPhotoCard` (`app/(tabs)/index.tsx`), replace the static "TRENDING" text badge with dynamic copy pulled from a `DESTINATIONS` constant field (e.g. `destination.weeklyTrips`). Render: "247 trips this week" in the badge. Even if the number is seeded/approximate initially, specificity converts. "TRENDING" is a pattern Gen Z has learned to ignore. "247 trips this week" creates real FOMO. Files: `lib/constants.ts` (add `weeklyTrips` to `Destination` type), `app/(tabs)/index.tsx`.
+
+- [ ] **#9 — Add a "Budget is private" toggle to the share card.** In `components/features/ShareCard.tsx`, add a toggle that hides the `$X/day` pill and replaces it with "Budget trip" / "Comfort" / "No limits" — the style label without dollar amounts. Many 18-24 year olds don't want to broadcast their spend publicly. Removing this friction point will increase share rate among the budget-conscious segment. One checkbox, three lines of conditional render.
+
+- [ ] **#10 — Add a "Record your generate moment" nudge on the loading screen.** During trip generation, `TripGeneratingLoader` (`components/premium/LoadingStates.tsx`) shows a compass animation for ~30 seconds. This is the most screen-recordable, TikTok-worthy moment in the product. Add a one-line banner above the compass: "Screen record this — it's worth posting." with a camera dot indicator. No technical work required. This primes the user to create UGC during the only 30-second window where they're watching the screen and have nothing else to do.
+
+---
+
 ## ASO Keywords — App Store Metadata
 
 **Status:** Complete  
