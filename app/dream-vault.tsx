@@ -9,7 +9,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Linking,
   Alert,
   type ViewStyle,
   type TextStyle,
@@ -31,6 +30,7 @@ import {
 import { withComingSoon } from '../lib/with-coming-soon';
 import { validateDestination } from '../lib/params-validator';
 import { getHomeAirport } from '../lib/flights';
+import { openBookingLink } from '../lib/booking-links';
 
 function DreamVaultScreen() {
   const insets = useSafeAreaInsets();
@@ -68,9 +68,7 @@ function DreamVaultScreen() {
   const handleSearchFlights = async (dest: SavedDestination) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const url = getSkyscannerUrl(dest.destination);
-    await Linking.openURL(url).catch(() =>
-      Alert.alert('Error', 'Could not open Skyscanner')
-    );
+    openBookingLink(url, 'skyscanner', dest.destination, 'dream-vault').catch(() => {});
   };
 
   const handleRemove = (dest: SavedDestination) => {

@@ -154,8 +154,9 @@ export function isPricesLow(dest: SavedDestination): boolean {
   return dest.baselinePrice != null && dest.baselinePrice < 500;
 }
 
-/** Build Skyscanner search URL for destination */
+/** Build Skyscanner search URL for destination (includes affiliate ID) */
 export function getSkyscannerUrl(destination: string): string {
   const encoded = encodeURIComponent(destination);
-  return `https://www.skyscanner.com/transport/flights/?q=${encoded}`;
+  const campaign = encodeURIComponent(destination.toLowerCase());
+  return `https://www.skyscanner.com/transport/flights/?q=${encoded}&associateId=roam&utm_source=roam&utm_medium=app&utm_campaign=${campaign}`;
 }

@@ -3,7 +3,7 @@
 // Save destinations to watch, search on Skyscanner for deals
 // =============================================================================
 import React, { useState } from 'react';
-import { Linking, Pressable, StyleSheet, Text, View, Alert, type ViewStyle, type TextStyle } from 'react-native';
+import { Pressable, StyleSheet, Text, View, Alert, type ViewStyle, type TextStyle } from 'react-native';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import {
@@ -14,6 +14,7 @@ import {
   type SavedDestination,
 } from '../../lib/flight-deals';
 import { getHomeAirport } from '../../lib/flights';
+import { openBookingLink } from '../../lib/booking-links';
 import { TrendingDown, ExternalLink } from 'lucide-react-native';
 
 interface FlightDealCardProps {
@@ -66,7 +67,7 @@ export default function FlightDealCard({ destination, onDealAlert }: FlightDealC
   const handleSearchDeals = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const url = getSkyscannerUrl(destination);
-    Linking.openURL(url).catch(() => {});
+    openBookingLink(url, 'skyscanner', destination, 'flight-deal-card').catch(() => {});
   };
 
   return (

@@ -37,6 +37,8 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
 import { track } from '../../lib/analytics';
 import { captureEvent } from '../../lib/posthog';
+import { EVENTS } from '../../lib/posthog-events';
+import { trackAffiliateClick } from '../../lib/affiliate-tracking';
 import {
   US_AIRPORTS,
   getDestinationAirport,
@@ -595,6 +597,13 @@ export default function FlightsScreen() {
       return: returnStr,
       passengers,
     });
+    captureEvent(EVENTS.AFFILIATE_CLICK.name, {
+      partner: 'skyscanner',
+      destination: dest || 'anywhere',
+      placement: 'flights-search',
+      url,
+    });
+    trackAffiliateClick({ partner: 'skyscanner', destination: dest || 'anywhere', placement: 'flights-search', url }).catch(() => {});
 
     Linking.openURL(url).catch(() => {});
   }, [fromCode, fromText, toCode, toText, departDate, returnDate, passengers]);
@@ -613,6 +622,13 @@ export default function FlightsScreen() {
         departureDate: format(departDate, 'yyMMdd'),
         returnDate: format(returnDate, 'yyMMdd'),
       });
+      captureEvent(EVENTS.AFFILIATE_CLICK.name, {
+        partner: 'skyscanner',
+        destination: route.to,
+        placement: 'flights-popular-routes',
+        url,
+      });
+      trackAffiliateClick({ partner: 'skyscanner', destination: route.to, placement: 'flights-popular-routes', url }).catch(() => {});
       Linking.openURL(url).catch(() => {});
     },
     [departDate, returnDate],
@@ -629,6 +645,13 @@ export default function FlightsScreen() {
       origin: 'anywhere',
       destination: card.destination,
     });
+    captureEvent(EVENTS.AFFILIATE_CLICK.name, {
+      partner: 'skyscanner',
+      destination: card.destination,
+      placement: 'flights-inspiration',
+      url,
+    });
+    trackAffiliateClick({ partner: 'skyscanner', destination: card.destination, placement: 'flights-inspiration', url }).catch(() => {});
     Linking.openURL(url).catch(() => {});
   }, []);
 

@@ -1,249 +1,177 @@
 # Monetization Model — 2026-03-15
 
-> Agent 07 — MONETIZATION ARCHITECT output
-> Post-restructure update: 5-tab navigation (Plan, Discover, People, Flights, Prep)
-> Aligned with: `roam/dach_strategy.md`, `roam/growth_dashboard.md`, `roam/AGENT_BOARD.md`
+> Agent 07 — MONETIZATION output
+> Sprint: Overnight quality pass + affiliate link audit
+> Branch: `cursor/roam-monetization-model-d222`
 
 ---
 
-## Revenue Streams
+## Affiliate Link Audit (2026-03-15)
 
-| Stream | Status | Monthly Estimate | Notes |
-|--------|--------|-----------------|-------|
-| RevenueCat Pro (monthly) | Live | $125–$300 | 5% free-to-paid conversion |
-| RevenueCat Pro (yearly) | Live | $80–$200 | Lower volume, higher LTV |
-| Skyscanner affiliate | Live + PostHog fixed | $30–$80 | ~2% click-to-book rate |
-| Booking.com affiliate | Live | $20–$60 | AID placeholder — needs real AID |
-| GetYourGuide affiliate | Live | $15–$40 | Experiences are high-margin |
-| Creator revenue share (Micro tier) | Planned Month 1 | $0 | 10% of attributed Pro MRR |
-| Creator revenue share (Partner tier) | Planned Month 2+ | $0 | 15% of attributed Pro MRR |
-| **Total** | | **$270–$680** | Pre-DACH scale |
+### Task: Verify all Skyscanner links include `associateId=roam`
+
+Complete audit across all 8 Skyscanner link surfaces.
 
 ---
 
-## People Tab Monetization
+### Skyscanner Affiliate Link Status
 
-### The Paywall Structure
+| Surface | File | Uses `getSkyscannerFlightUrl`? | `associateId=roam`? | AFFILIATE_CLICK event? | Status |
+|---------|------|-------------------------------|--------------------|-----------------------|--------|
+| Hero search form | `app/(tabs)/flights.tsx` | ✅ | ✅ | ✅ Fixed | **FIXED** |
+| Popular routes grid | `app/(tabs)/flights.tsx` | ✅ | ✅ | ✅ Fixed | **FIXED** |
+| Inspiration cards | `app/(tabs)/flights.tsx` | ✅ | ✅ | ✅ Fixed | **FIXED** |
+| FlightCard (itinerary) | `components/features/FlightCard.tsx` | ✅ | ✅ | ✅ (via openBookingLink) | OK |
+| FlightPriceCard | `components/features/FlightPriceCard.tsx` | ✅ (buildAffiliateUrl) | ✅ | ✅ (direct captureEvent) | OK |
+| FlightDealCard | `components/features/FlightDealCard.tsx` | ❌ `getSkyscannerUrl()` | ❌ Missing | ❌ Missing | **FIXED** |
+| Dream Vault | `app/dream-vault.tsx` | ❌ `getSkyscannerUrl()` | ❌ Missing | ❌ Missing | **FIXED** |
+| `getSkyscannerUrl()` source | `lib/flight-deals.ts` | — | ❌ Missing | — | **FIXED** |
 
-The People tab is ROAM's viral differentiator and the highest-leverage monetization surface.
-Every interaction that creates real value is Pro-gated; the free tier is designed to create
-FOMO and urgency, not to satisfy.
+### Bugs Found and Fixed
 
-#### Free Tier — People Tab
-- See first **3 matched travelers** per session (cards 4+ are dimmed with a Pro gate overlay)
-- Browse all open group trips (visible, but join is limited)
-- **Join 1 group trip** (groups 2+ show a Pro lock badge; tapping → paywall)
-- "Connect" button on any traveler → paywall (DM is Pro-only)
-- View traveler profiles (destination, dates, vibes, bio, match score)
-- See hero stats (active travelers, destinations, groups forming)
+#### Bug 1: `lib/flight-deals.ts` `getSkyscannerUrl()` — Missing `associateId=roam`
 
-#### Pro Tier — People Tab
-- **Unlimited matched travelers** — see all matches for every destination
-- **Direct messages** — Connect button opens messaging thread
-- **Join unlimited groups** — no cap on group membership
-- **Create groups** — start a new group trip (Pro-only creation flow)
-- **Live presence** — "Who's in [destination] right now" feature (future release)
-- First-mover positioning: "ROAM is the only travel app with real traveler matching"
+**Before:**
+```
+https://www.skyscanner.com/transport/flights/?q=tokyo
+```
+**After:**
+```
+https://www.skyscanner.com/transport/flights/?q=tokyo&associateId=roam&utm_source=roam&utm_medium=app&utm_campaign=tokyo
+```
+**Impact:** FlightDealCard and Dream Vault were sending users to Skyscanner without affiliate attribution. Every booking from those surfaces earned $0 in commission.
 
-### Paywall Trigger Design
+#### Bug 2: `FlightDealCard.tsx` — No affiliate click tracking
 
-The paywall fires at the moment of highest intent — not on tab load, but on action:
+`handleSearchDeals()` used raw `Linking.openURL()`. No Supabase insert, no PostHog event.
 
-| Trigger | Condition | Paywall Reason | Headline |
-|---------|-----------|----------------|----------|
-| "Connect" button tapped | Any traveler, any tier | `feature` / `people-dm` | "Direct messages are a Pro feature. Connect for real." |
-| Traveler card 4+ tapped | Free user | `feature` / `people-unlimited-matches` | "See every traveler going where you're going." |
-| Pro gate banner tapped | Free user, between card 3 and 4 | `feature` / `people-unlimited-matches` | "Unlock all travelers" |
-| Group join tapped (group 2+) | Free user | `feature` / `people-groups` | "Join every group. Pro unlocks unlimited groups." |
+**Fix:** Replaced with `openBookingLink(url, 'skyscanner', destination, 'flight-deal-card')` which fires both the Supabase `affiliate_clicks` insert and the PostHog `AFFILIATE_CLICK` event.
 
-**Why Connect always requires Pro:** Direct messaging is the action that creates real social value.
-Letting free users browse travelers without connecting creates curiosity and FOMO — then the moment they
-find someone they want to meet, the paywall converts at maximum intent.
+#### Bug 3: `dream-vault.tsx` — No affiliate click tracking
 
-### PostHog Events for People Tab
+`handleSearchFlights()` used raw `Linking.openURL()`. No tracking at all.
 
-| Event | Properties | Purpose |
-|-------|-----------|---------|
-| `pro_gate_shown` | `feature: people-dm` | Track Connect block |
-| `pro_gate_shown` | `feature: people-unlimited-matches` | Track match limit hits |
-| `pro_gate_shown` | `feature: people-groups` | Track group join blocks |
-| `paywall_viewed` | `reason: feature, feature: people-*` | Funnel entry |
-| `purchase_success` | — | Conversion |
+**Fix:** Replaced with `openBookingLink(url, 'skyscanner', destination, 'dream-vault')`.
+
+#### Bug 4: `app/(tabs)/flights.tsx` — Three Skyscanner handlers firing custom events but not standard `AFFILIATE_CLICK`
+
+All three handlers (`handleSearch`, `handleRoutePress`, `handleInspirationPress`) fired custom PostHog events (`flights_search_skyscanner`, `flights_popular_route_tapped`, `flights_inspiration_tapped`) but NOT the standard `AFFILIATE_CLICK` event that the `FLIGHT_BOOKING_FUNNEL` in `lib/posthog-funnels.ts` expects.
+
+**Fix:** Added `captureEvent(EVENTS.AFFILIATE_CLICK.name, { partner: 'skyscanner', ... })` and `trackAffiliateClick(...)` (Supabase insert) to all three handlers. Custom events are preserved for richer analytics.
 
 ---
 
-## Plan Tab Monetization
+### PostHog Affiliate Event Coverage (after fixes)
 
-### Free vs. Pro on Plan Tab
+| Placement | Event fired | Properties |
+|-----------|------------|------------|
+| `flights.tsx` hero search | `affiliate_click` + `flights_search_skyscanner` | `partner=skyscanner, destination, placement=flights-search` |
+| `flights.tsx` popular routes | `affiliate_click` + `flights_popular_route_tapped` | `partner=skyscanner, destination, placement=flights-popular-routes` |
+| `flights.tsx` inspiration | `affiliate_click` + `flights_inspiration_tapped` | `partner=skyscanner, destination, placement=flights-inspiration` |
+| `FlightCard.tsx` | `affiliate_click` | via `openBookingLink()` |
+| `FlightPriceCard.tsx` | `affiliate_click` | direct `captureEvent` |
+| `FlightDealCard.tsx` | `affiliate_click` | via `openBookingLink()` (fixed) |
+| `dream-vault.tsx` | `affiliate_click` | via `openBookingLink()` (fixed) |
 
-| Feature | Free | Pro |
-|---------|------|-----|
-| Generate trips | 1/month | Unlimited |
-| Trip cards view | All trips visible | All trips visible |
-| AI re-generation | Locked (Pro gate) | Re-generate with new options |
-| Hotel alternatives | Locked (Pro gate) | Swap stays inline |
-| Food alternatives | Locked (Pro gate) | Swap restaurants inline |
-| Conversation mode | Available | Priority AI (faster) |
-| Quick mode | Available | Available |
-
-### Plan Tab Pro Features (Implemented as Gates)
-
-Two Pro feature teaser cards appear in the trip list view (below Quick Actions) for free users:
-- **Re-generate** (`plan-regenerate`) — regenerate the itinerary with fresh AI suggestions
-- **Hotel alternatives** (`plan-hotel-alternatives`) — swap stays from 3–5 curated options
-
-Both show a lock icon and `COLORS.gold` styling (premium signal). Tapping → paywall with
-`reason: feature, feature: plan-regenerate` or `plan-hotel-alternatives`.
-
-### Plan Tab Affiliate Revenue Map
-
-The three Quick Action cards in the Plan tab's trip list view each drive affiliate revenue:
-
-| Quick Action | Destination | Partner | Revenue Model |
-|-------------|-------------|---------|---------------|
-| Find stays (hotel icon) | Opens quick generate mode | Booking.com via itinerary | CPA per booking |
-| Find food (fork icon) | Opens quick generate mode | GetYourGuide via itinerary | CPA per booking |
-| Book flights (plane icon) | Navigates to Flights tab | Skyscanner via FlightCard | CPC/CPA per click |
-
-**Revenue chain for Plan → Stays/Food:**
-1. User taps "Find stays" → generate mode with hotel/food focus
-2. AI generates itinerary with hotel recommendations
-3. Itinerary screen shows Booking.com affiliate card
-4. User taps → `openBookingLink()` fires `AFFILIATE_CLICK` PostHog event + Supabase insert
-5. User books on Booking.com → affiliate commission to ROAM
-
-**Revenue chain for Plan → Flights:**
-1. User taps "Book flights" → Flights tab
-2. Flights tab shows `FlightCard` with Skyscanner affiliate URL
-3. User taps "Search flights" → `openBookingLink()` fires `AFFILIATE_CLICK`
-4. User books on Skyscanner → affiliate commission to ROAM
-
-**Estimated Plan tab affiliate revenue:**
-- $25–60/month from hotel referrals (Booking.com needs real AID first)
-- $30–80/month from flight referrals (Skyscanner `associateId=roam`)
-- $15–40/month from experience referrals (GetYourGuide)
+The `FLIGHT_BOOKING_FUNNEL` (`lib/posthog-funnels.ts`) now has full data:
+```
+Flights tab → flight_search → affiliate_click[partner=skyscanner]
+```
 
 ---
 
-## RevenueCat Subscription Details
+### Booking.com AID Audit
 
-| Product ID | Plan | Price | Entitlement |
-|-----------|------|-------|-------------|
-| `roam_pro_monthly` | Pro Monthly | $4.99/month | `pro` |
-| `roam_global_yearly` | Pro Yearly | $29.99/year | `pro` |
+| Surface | File | Uses `openBookingLink()`? | `aid=` param? | Status |
+|---------|------|--------------------------|--------------|--------|
+| Stays card tap | `app/(tabs)/stays.tsx` | ✅ | `aid=roam` | ⚠️ Placeholder |
+| Stays book button | `app/(tabs)/stays.tsx` | ✅ | `aid=roam` | ⚠️ Placeholder |
+| Itinerary booking | `app/itinerary.tsx` | ✅ (via openAffiliate) | `aid=roam` | ⚠️ Placeholder |
 
-**Free tier:** 1 trip/month + 3 People matches + 1 group join  
-**Guest tier:** 1 trip total, then paywall  
-**Pro tier:** Unlimited trips, all gated features
+**Status:** Booking.com `aid=roam` is a placeholder. The real AID requires signing up at `partners.booking.com`. **Blocked on Quinn.**
 
-### Full Pro Feature Gate Registry (`lib/pro-gate.ts`)
+Until the real AID is set, Booking.com clicks will NOT earn commission even though the tracking infrastructure works correctly.
 
-| Feature Key | Description |
-|-------------|-------------|
-| `unlimited-trips` | Unlimited AI trip generations |
-| `offline-prep` | Offline PREP mode (safety, visa, currency) |
-| `priority-ai` | Priority Claude responses |
-| `travel-twin` | Travel personality matching |
-| `trip-chemistry` | Group compatibility analysis |
-| `memory-lane` | Travel memory journal |
-| `people-dm` | Direct messages on People tab |
-| `people-unlimited-matches` | See all matched travelers (>3) |
-| `people-groups` | Join multiple groups |
-| `people-create-group` | Create a new group trip |
-| `people-live-presence` | Who's in a destination right now |
-| `plan-regenerate` | Re-generate itinerary with AI |
-| `plan-hotel-alternatives` | Swap hotels inline |
-| `plan-food-alternatives` | Swap restaurants inline |
+**Revenue impact:** $0 from Booking.com until AID is real. Estimated $20–60/month upside once AID is live.
 
 ---
 
-## 3-Tier Creator Payment Model
+## Revenue Streams Summary
+
+| Stream | Status | Affiliate ID | PostHog Tracking | Monthly Est. |
+|--------|--------|-------------|-----------------|--------------|
+| Skyscanner (flights.tsx) | ✅ Live | `associateId=roam` | ✅ Fixed | $30–80 |
+| Skyscanner (FlightCard) | ✅ Live | `associateId=roam` | ✅ | $10–20 |
+| Skyscanner (FlightDealCard) | ✅ Fixed | `associateId=roam` | ✅ Fixed | $5–15 |
+| Skyscanner (dream-vault) | ✅ Fixed | `associateId=roam` | ✅ Fixed | $3–8 |
+| Booking.com | ⚠️ Placeholder AID | `aid=roam` (placeholder) | ✅ | $0 until real AID |
+| GetYourGuide | ✅ Live | `partner_id=roam` | ✅ | $15–40 |
+| RevenueCat Pro monthly | ✅ Live | — | ✅ | $125–300 |
+| RevenueCat Pro yearly | ✅ Live | — | ✅ | $80–200 |
+
+---
+
+## Pro Feature Gate Registry
+
+| Feature | Gate Key | Paywall Trigger | Status |
+|---------|---------|----------------|--------|
+| Unlimited trips | `unlimited-trips` | Plan tab trip limit | ✅ Live |
+| Offline PREP | `offline-prep` | PREP feature tap | ✅ Live |
+| AI priority | `priority-ai` | Conversation mode hint | ✅ Live |
+| Travel Twin | `travel-twin` | Feature tap | ✅ Live |
+| Trip Chemistry | `trip-chemistry` | Feature tap | ✅ Live |
+| Memory Lane | `memory-lane` | Feature tap | ✅ Live |
+| People: DM/Connect | `people-dm` | Connect button | ✅ Live |
+| People: matches >3 | `people-unlimited-matches` | Card 4+ tap | ✅ Live |
+| People: groups >1 | `people-groups` | Group 2+ tap | ✅ Live |
+| People: create group | `people-create-group` | Create button | ✅ Live |
+| People: live presence | `people-live-presence` | Live Now teaser | ✅ Live |
+| Plan: re-generate | `plan-regenerate` | Pro teaser | ✅ Live |
+| Plan: hotel alternatives | `plan-hotel-alternatives` | Pro teaser | ✅ Live |
+| Plan: food alternatives | `plan-food-alternatives` | Pro teaser | ✅ Live |
+
+---
+
+## 3-Tier Creator Payment Model (DACH UGC)
 
 ### Tier 1 — Barter
-**For:** Nano creators (<10K), university ambassadors, travel club members  
-**Cash:** $0  
-**Perks:** Free ROAM Pro (lifetime) + featured on `roamapp.co/creators`  
-**Obligations:** 2 posts/month, must use personal referral code as bio link  
-**Tracking:** Referral code → `waitlist_emails.referral_count`
+- **Who:** Nano creators (<10K followers), university ambassadors  
+- **Cash:** $0  
+- **Compensation:** Free ROAM Pro (lifetime) + featured on `roamapp.co/creators`  
+- **Obligation:** 2 posts/month, personal referral code in bio  
+- **Volume target:** 20–40 Month 1–2
 
 ### Tier 2 — Micro
-**For:** Micro creators (10K–100K followers), DACH audience, >3% engagement  
-**Cash:** $20–50 per video (based on audience size)  
-**Revenue share:** 10% of attributed Pro MRR for 90 days  
-**Attribution:** `utm_source=creator&utm_medium=ugc&utm_campaign={creator_slug}`  
-**Minimum views:** 10K for full payment; 5K–10K earns 50%  
-**Upgrade trigger:** 15+ Pro conversions/month → auto-offered Partner tier
+- **Who:** 10K–100K DACH followers, >3% engagement  
+- **Cash:** $20–50/video (scales with audience size)  
+- **Revenue share:** 10% of attributed Pro MRR for 90 days  
+- **Attribution:** `utm_source=creator&utm_medium=ugc&utm_campaign={creator_slug}`  
+- **Upgrade:** Auto-upgrade to Partner if they drive 15+ Pro subs/month
 
-### Tier 3 — Partner
-**For:** Mid-macro creators (100K–500K+) or upgraded Micro performers  
-**Cash:** $200–500 per video (negotiated per creator)  
-**Revenue share:** 15% of attributed Pro MRR for 180 days  
-**Extras:** Custom itinerary package sent cold, 30-min onboarding call, exclusivity clause  
-**Bonus:** $100 at 1M+ views; $150 at 50+ conversions per video
+### Tier 3 — Partner  
+- **Who:** 100K–500K+ or upgraded Micro performers  
+- **Cash:** $200–500/video (negotiated)  
+- **Revenue share:** 15% of attributed Pro MRR for 180 days  
+- **Extras:** Custom itinerary package, onboarding call, 30-day exclusivity clause  
+- **Bonus:** $100 at 1M+ views; $150 at 50+ conversions/video
 
 ---
 
-## Affiliate Performance
+## Blocked on Quinn
 
-| Partner | Integration | PostHog | Est. CTR | Monthly Rev Est. |
-|---------|-------------|---------|----------|-----------------|
-| Skyscanner | FlightCard, FlightPriceCard, itinerary | Fixed | 8–12% | $30–80 |
-| Booking.com | BookingCards, itinerary | Fixed | 6–10% | $20–60 |
-| GetYourGuide | BookingCards, itinerary | Fixed | 5–9% | $15–40 |
-| SafetyWing | booking-links.ts | Via openBookingLink | 2–4% | $5–15 |
-| Airalo | booking-links.ts | Via openBookingLink | 3–6% | $8–20 |
+| Item | Action | Revenue Impact |
+|------|--------|---------------|
+| Booking.com real AID | Sign up at partners.booking.com | +$20–60/month immediately |
+| RevenueCat products | Create products in RC dashboard | Pro tier currently non-functional |
+| PostHog project key | Verify key set in environment | Analytics blind without it |
+| Waitlist DB migration | Apply `20260325000001_waitlist_comprehensive_fix.sql` | Waitlist signups not persisting |
 
 ---
 
 ## Optimization Opportunities
 
-- [ ] **Fix Booking.com AID** — Current `aid=roam` is a placeholder. Sign up at `partners.booking.com`. Zero-cost revenue unlock — est. +$20–60/month immediately.
-- [ ] **Plug itinerary.tsx `openAffiliate()` gap** — Raw `Linking.openURL()` bypasses tracking. Estimated 30–40% of affiliate clicks invisible.
-- [ ] **People tab: Create Group flow** — Lock "Create Group" button behind Pro. Currently `pro-create-group` is gated in `lib/pro-gate.ts` but no UI exists yet. Add a "+" button to the groups section header.
-- [ ] **People tab: Live presence** — "Who's in Tokyo right now" — Pro feature. Requires Supabase Realtime + `traveler_profiles` table (blocked on Quinn: schema creation needed).
-- [ ] **Plan tab: AI re-generation** — Actually implement the re-generate flow (call Claude with same params + `regenerate: true`). Currently just a Pro gate teaser.
-- [ ] **German landing page** — Dedicated `roamapp.co/de` for DACH creator links. Est. +15% DACH install conversion.
-- [ ] **Paywall: People-specific headline** — Add `reason: 'people'` to paywall headlines. "Your travel squad is waiting. Go Pro to connect." 
-- [ ] **Skyscanner Affiliate Partner Program** — Apply for live price data API. Live prices → 3–5x CTR on FlightCard.
-- [ ] **A/B test People paywall trigger** — Test: gate fires on 3rd traveler vs. fires only when "Connect" is tapped. Hypothesis: action-based trigger converts 20% better than passive limit.
-- [ ] **Revenue share automation** — By Month 3, build PostHog → Wise API payout script. Manual payments don't scale past 10 creators.
-
----
-
-## Key Metrics
-
-| Metric | Target | Tracking |
-|--------|--------|----------|
-| Free → Pro conversion (People trigger) | 8% (higher-intent gate) | PostHog funnel |
-| Free → Pro conversion (Plan limit) | 3–5% | PostHog funnel |
-| People tab paywall view → purchase | 5% | RevenueCat + PostHog |
-| Affiliate CTR (Skyscanner) | 10% of flight card views | PostHog `affiliate_click` |
-| Creator CAC (flat + share ÷ installs) | Under $2 | Monthly spreadsheet |
-| DACH paid users | 25 by Month 2, 100 by Month 4 | RevenueCat + PostHog geo |
-| Churn (monthly) | Under 8% | RevenueCat |
-
----
-
-## Referral Program
-
-| Referrals | Reward |
-|-----------|--------|
-| 3 | 1 month Pro free |
-| 6 | 2 months Pro free |
-| 9 | 3 months Pro free |
-| 10 | 1 year Pro free |
-
-Tracked in `referral_codes` table; `pro_referral_expires_at` on profiles.
-
----
-
-## DACH Creator Budget (Month 1)
-
-| Line Item | Cost |
-|-----------|------|
-| Barter creators (20 × Pro lifetime) | $0 |
-| Micro flat rate (20 posts × $25 avg) | $500 |
-| Partner test (1 creator × $200) | $200 |
-| UGC platform fee (Billo/Insense) | $150 |
-| **Total cash** | **$850** |
-| **Expected attributed MRR** | **$125–300** |
+- [ ] **Skyscanner Partner API** — Apply for live price data. Currently showing "from ~$XXX" estimates. Live prices → estimated 3–5x CTR improvement on popular routes grid.
+- [ ] **A/B test affiliate placement** — Test FlightCard above Day 1 vs. current bottom position in itinerary. Hypothesis: mid-itinerary placement when user is most engaged → +20% CTR.
+- [ ] **FlightDealCard tracking enrichment** — Add `homeAirport` to the `trackAffiliateClick` call so Supabase data shows which origin airports are most active.
+- [ ] **Dream Vault → pricing enrichment** — When user has saved a destination + has home airport set, link directly to `getSkyscannerFlightUrl({ origin: homeAirport, destination })` instead of generic search. Better UX = higher conversion.
+- [ ] **itinerary.tsx `openAffiliate()` tracking gap** — Raw `Linking.openURL()` calls in itinerary.tsx bypass all tracking. Estimated 30–40% of affiliate clicks invisible in analytics.
