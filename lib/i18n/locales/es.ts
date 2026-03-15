@@ -182,6 +182,8 @@ const es: TranslationKeys = {
     seeProPlans: 'Ver planes Pro',
     maybeLater: 'Quiz\u00e1s despu\u00e9s',
     dismiss: 'Ignorar',
+    peoplePlanningCount: '{{count}} personas',
+    peoplePlanningMonth: 'planean {{destination}} este mes',
   },
 
   people: {
@@ -504,7 +506,6 @@ const es: TranslationKeys = {
     japanese: '\u65E5\u672C\u8A9E',
     korean: '\uD55C\uAD6D\uC5B4',
     portuguese: 'Portugu\u00EAs',
-    german: 'Deutsch',
     languageChanged: 'Idioma cambiado',
     restartRequired: 'Algunos cambios pueden requerir reiniciar la app.',
   },

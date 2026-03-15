@@ -566,6 +566,7 @@ function PeopleNudgeBanner({
   onTap: () => void;
   onDismiss: () => void;
 }) {
+  const { t } = useTranslation();
   const count = getDestinationCount(destination, new Date().getMonth() + 1);
   return (
     <Pressable
@@ -578,8 +579,8 @@ function PeopleNudgeBanner({
       <View style={styles.peopleBannerLeft}>
         <Users size={16} color={COLORS.sage} strokeWidth={2} />
         <Text style={styles.peopleBannerText}>
-          <Text style={styles.peopleBannerBold}>{count} people</Text>
-          {' '}are planning {destination} this month
+          <Text style={styles.peopleBannerBold}>{t('plan.peoplePlanningCount', { count })}</Text>
+          {' '}{t('plan.peoplePlanningMonth', { destination })}
         </Text>
       </View>
       <Pressable onPress={onDismiss} hitSlop={12} style={styles.peopleBannerDismiss}>

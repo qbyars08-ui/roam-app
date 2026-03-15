@@ -214,6 +214,8 @@ const de: TranslationKeys = {
     seeProPlans: 'Pro-Pl\u00e4ne ansehen',
     maybeLater: 'Vielleicht sp\u00e4ter',
     dismiss: 'Schlie\u00dfen',
+    peoplePlanningCount: '{{count}} Personen',
+    peoplePlanningMonth: 'planen gerade {{destination}}',
   },
 
   // ---------------------------------------------------------------------------
