@@ -48,6 +48,8 @@ import TripLimitBanner from '../../components/monetization/TripLimitBanner';
 import { track, trackEvent } from '../../lib/analytics';
 import { captureEvent } from '../../lib/posthog';
 import { parseItinerary } from '../../lib/types/itinerary';
+import { getDestinationCount } from '../../lib/social-proof';
+import { Users } from 'lucide-react-native';
 
 // ---------------------------------------------------------------------------
 // Destination images for trip cards
@@ -208,6 +210,7 @@ export default function PlanScreen() {
   const [networkError, setNetworkError] = useState<string | null>(null);
   const [rateLimitVisible, setRateLimitVisible] = useState(false);
   const [showGenerator, setShowGenerator] = useState(false);
+  const [peopleBannerDismissed, setPeopleBannerDismissed] = useState(false);
   const generatingDestRef = useRef<string>('');
   const isMountedRef = useRef(true);
 
@@ -499,6 +502,15 @@ export default function PlanScreen() {
           </LinearGradient>
         </Pressable>
 
+        {/* People nudge — social proof for latest destination */}
+        {!peopleBannerDismissed && sortedTrips.length > 0 && (
+          <PeopleNudgeBanner
+            destination={sortedTrips[0].destination}
+            onTap={() => router.push('/(tabs)/people' as never)}
+            onDismiss={() => setPeopleBannerDismissed(true)}
+          />
+        )}
+
         {/* Quick Actions */}
         <View style={styles.quickActions}>
           {QUICK_ACTIONS.map((action) => (
@@ -539,6 +551,41 @@ export default function PlanScreen() {
         onDismiss={() => setRateLimitVisible(false)}
       />
     </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// People Nudge Banner — social proof for the latest destination
+// ---------------------------------------------------------------------------
+function PeopleNudgeBanner({
+  destination,
+  onTap,
+  onDismiss,
+}: {
+  destination: string;
+  onTap: () => void;
+  onDismiss: () => void;
+}) {
+  const count = getDestinationCount(destination, new Date().getMonth() + 1);
+  return (
+    <Pressable
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onTap();
+      }}
+      style={({ pressed }) => [styles.peopleBanner, { opacity: pressed ? 0.85 : 1 }]}
+    >
+      <View style={styles.peopleBannerLeft}>
+        <Users size={16} color={COLORS.sage} strokeWidth={2} />
+        <Text style={styles.peopleBannerText}>
+          <Text style={styles.peopleBannerBold}>{count} people</Text>
+          {' '}are planning {destination} this month
+        </Text>
+      </View>
+      <Pressable onPress={onDismiss} hitSlop={12} style={styles.peopleBannerDismiss}>
+        <Text style={styles.peopleBannerDismissText}>✕</Text>
+      </Pressable>
+    </Pressable>
   );
 }
 
@@ -632,6 +679,44 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.header,
     fontSize: 20,
     color: COLORS.bg,
+  } as TextStyle,
+
+  // ── People Nudge Banner ──
+  peopleBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm + 2,
+    marginBottom: SPACING.md,
+  } as ViewStyle,
+  peopleBannerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    flex: 1,
+  } as ViewStyle,
+  peopleBannerText: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamMuted,
+    flex: 1,
+  } as TextStyle,
+  peopleBannerBold: {
+    fontFamily: FONTS.bodySemiBold,
+    color: COLORS.sage,
+  } as TextStyle,
+  peopleBannerDismiss: {
+    paddingLeft: SPACING.sm,
+  } as ViewStyle,
+  peopleBannerDismissText: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.creamMuted,
   } as TextStyle,
 
   // ── Quick Actions ──
