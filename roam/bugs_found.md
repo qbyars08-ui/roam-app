@@ -1,70 +1,60 @@
-# Bugs Found — 2026-03-15
+# Bugs Found
 
 ---
 
 ## Bug 1: Stale Expo Router Type File Missing `/(tabs)/generate`
 
-- **Severity:** P1
+- **Severity:** P1 — **STATUS: FIXED (2026-03-15)**
 - **Screen:** `.expo/types/router.d.ts` (auto-generated, gitignored)
 - **Repro:**
   1. Run `npx tsc --noEmit`
   2. Observe 20 TypeScript errors: `Argument of type '"/(tabs)/generate"' is not assignable to parameter of type ...`
-- **Expected:** `/(tabs)/generate` is a valid typed route (file exists at `app/(tabs)/generate.tsx`).
-- **Actual:** Router type file was generated from an older version of the tab structure. Lists `/(tabs)/chat`, `/(tabs)/globe`, `/(tabs)/plan`, etc. as tabs, but is missing `/(tabs)/generate`, `/(tabs)/stays`, `/(tabs)/food`, `/(tabs)/group`.
-- **Affected files (20):**
-  - `app/(tabs)/group.tsx`, `app/(tabs)/index.tsx`, `app/(tabs)/stays.tsx`
-  - `app/create-group.tsx`, `app/dream-vault.tsx`, `app/dupe-finder.tsx`
-  - `app/memory-lane.tsx`, `app/passport.tsx`, `app/pets.tsx`, `app/saved.tsx`
-  - `app/travel-profile.tsx`, `app/trip-collections.tsx`, `app/trip-dupe.tsx`
-  - `app/trip-trading.tsx`, `app/trip/[id].tsx`
-  - `components/features/MoodDiscovery.tsx`, `components/features/MoodSection.tsx`
-  - `components/features/SurpriseMe.tsx`
-- **Fix applied:** Added `/(tabs)/generate`, `/(tabs)/stays`, `/(tabs)/food`, `/(tabs)/group` routes to `.expo/types/router.d.ts`. To permanently fix, run `npx expo export --platform web` (or start the dev server) to regenerate the file fully, then commit it or add it to `.gitignore` so stale types don't reappear.
-- **Status:** FIXED (types patched manually in this run)
+- **Expected:** `/(tabs)/generate` is a valid typed route.
+- **Actual:** Router type file was generated from an older version of the tab structure.
+- **Fix:** Added `/(tabs)/generate`, `/(tabs)/stays`, `/(tabs)/food`, `/(tabs)/group` routes to `.expo/types/router.d.ts`. Permanent fix: run `npx expo export --platform web` to regenerate.
+- **Post-fix:** `npx tsc --noEmit` → 0 errors.
 
 ---
 
 ## Bug 2: ESLint Error — Empty `catch {}` Block in `lib/referral.ts`
 
-- **Severity:** P3
+- **Severity:** P3 — **STATUS: FIXED (2026-03-15)**
 - **Screen:** `lib/referral.ts:261`
-- **Repro:**
-  1. Run `npx eslint lib/referral.ts`
-  2. Observe: `261:11 error Empty block statement no-empty`
-- **Expected:** Catch blocks should either handle the error or use `catch (_err) { /* intentionally swallowed */ }` with an eslint-disable comment.
-- **Actual:** `catch {}` with no comment — ESLint `no-empty` rule violation.
-- **Code:**
-  ```ts
-  } catch {}  // line 261 — empty, no comment
-  ```
-- **Fix:** Change to `catch (_err) { /* getReferralStats — fallback to defaults on any error */ }` or add `// eslint-disable-next-line no-empty` with a comment explaining intent.
-- **Status:** OPEN
+- **Repro:** Run `npx eslint lib/referral.ts`
+- **Fix:** Changed `catch {}` to `catch (_err) { /* getReferralStats — falls through to default values on any error */ }`
 
 ---
 
 ## Bug 3: `app/(tabs)/generate.tsx` Has No i18n Support
 
-- **Severity:** P3
+- **Severity:** P3 — **STATUS: OPEN**
 - **Screen:** `app/(tabs)/generate.tsx`
-- **Repro:**
-  1. Change device language to Spanish/French/Japanese.
-  2. Open Generate tab.
-  3. Observe all text is hardcoded English.
-- **Expected:** All user-facing strings use `useTranslation()` / `t('...')` per project conventions.
-- **Actual:** `generate.tsx` does not import `useTranslation`. Error banners ("Dismiss"), rate limit modals ("You hit your free limit", "unlimited trips and the full ROAM experience") are hardcoded English strings.
-- **Affected strings (examples):**
-  - `"You hit your free limit"` (line ~283)
-  - `"unlimited trips and the full ROAM experience."` (line ~286)
-  - `"Dismiss"` (error banner dismissal, lines 234, 250)
-  - `"Upgrade to Pro"` (rate limit modal button)
-- **Fix:** Add `const { t } = useTranslation()` and replace hardcoded strings with `t('generate.errorBannerDismiss')`, `t('generate.rateLimitTitle')`, etc. Add keys to all 4 locale files.
-- **Status:** OPEN
+- **Details:** Hardcoded English strings in rate limit modal and error banners. No `useTranslation()` usage.
+- **Fix:** Add `const { t } = useTranslation()` and replace hardcoded strings. Add keys to all 4 locale files.
 
 ---
 
-## Warnings (Not Bugs)
+## Bugs 4–12: Design Violations in New Tab Files (5-Tab Restructure)
 
-These are ESLint warnings (not errors) noted for awareness. None block functionality.
+- **Severity:** P3 — **STATUS: ALL FIXED (2026-03-15)**
+
+| File | Issue | Fix |
+|---|---|---|
+| `app/(tabs)/plan.tsx:706` | `color: '#FFFFFF'` | → `COLORS.white` |
+| `app/(tabs)/people.tsx:539` | `color: '#FFFFFF'` | → `COLORS.white` |
+| `app/(tabs)/plan.tsx:132` | `rgba(0,0,0,0.7)` in gradient | → `COLORS.overlayDark` |
+| `app/(tabs)/plan.tsx:717` | `rgba(255,255,255,0.15)` | → `COLORS.whiteMuted` |
+| `app/(tabs)/plan.tsx:732` | `rgba(255,255,255,0.15)` | → `COLORS.whiteMuted` |
+| `app/(tabs)/people.tsx:245` | `rgba(0,0,0,0.7)` in gradient | → `COLORS.overlayDark` |
+| `app/(tabs)/people.tsx:549` | `rgba(255,255,255,0.15)` | → `COLORS.whiteMuted` |
+| `app/(tabs)/people.tsx` | Unused imports: `useMemo`, `useState`, `Search`, `useAppStore` | Removed |
+| `app/(tabs)/plan.tsx` | Unused imports: `Animated`, `MapPin` | Removed |
+
+---
+
+## Warnings (Not Bugs — Pre-existing)
+
+These are ESLint warnings across the codebase noted for awareness. None block functionality.
 
 | File | Warning |
 |---|---|
@@ -76,4 +66,4 @@ These are ESLint warnings (not errors) noted for awareness. None block functiona
 | `lib/push-notifications.ts:169` | `checkInType` is defined but never used |
 | `lib/visa-intel.ts:145` | `countryCode` is defined but never used |
 | `lib/weather.ts:195` | `today` is assigned but never used |
-| (26 others) | Various `@typescript-eslint/no-unused-vars` warnings |
+| (34+ others) | Various `@typescript-eslint/no-unused-vars` warnings across older files |
