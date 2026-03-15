@@ -29,6 +29,7 @@ import {
   Calendar,
   Plane,
 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore, type Trip } from '../../lib/store';
@@ -92,6 +93,7 @@ const TripCard = React.memo(function TripCard({
   onPress: () => void;
   isLatest: boolean;
 }) {
+  const { t } = useTranslation();
   const imageUrl = DEST_IMAGES[trip.destination] ?? FALLBACK_IMAGE;
   const parsed = useMemo(() => {
     try {
@@ -107,11 +109,11 @@ const TripCard = React.memo(function TripCard({
     const now = new Date();
     const diffMs = now.getTime() - d.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  }, [trip.createdAt]);
+    if (diffDays === 0) return t('plan.today');
+    if (diffDays === 1) return t('plan.yesterday');
+    if (diffDays < 7) return t('plan.daysAgo', { count: diffDays });
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }, [trip.createdAt, t]);
 
   return (
     <Pressable
@@ -133,7 +135,7 @@ const TripCard = React.memo(function TripCard({
       {isLatest && (
         <View style={styles.latestBadge}>
           <Sparkles size={10} color={COLORS.bg} />
-          <Text style={styles.latestBadgeText}>LATEST</Text>
+          <Text style={styles.latestBadgeText}>{t('plan.latest')}</Text>
         </View>
       )}
       <View style={styles.tripCardContent}>
@@ -141,7 +143,7 @@ const TripCard = React.memo(function TripCard({
         <View style={styles.tripCardMeta}>
           <View style={styles.tripCardChip}>
             <Calendar size={12} color={COLORS.creamSoft} strokeWidth={2} />
-            <Text style={styles.tripCardChipText}>{dayCount} days</Text>
+            <Text style={styles.tripCardChipText}>{t('common.days', { count: dayCount })}</Text>
           </View>
           <View style={styles.tripCardChip}>
             <Wallet size={12} color={COLORS.creamSoft} strokeWidth={2} />
@@ -161,28 +163,36 @@ const TripCard = React.memo(function TripCard({
 });
 
 // ---------------------------------------------------------------------------
-// Quick Action Cards
+// Quick Action Cards — labels resolved at render time via t()
 // ---------------------------------------------------------------------------
-const QUICK_ACTIONS = [
+interface QuickAction {
+  id: string;
+  icon: React.ElementType;
+  labelKey: string;
+  subKey: string;
+  color: string;
+}
+
+const QUICK_ACTIONS: QuickAction[] = [
   {
     id: 'hotels',
     icon: Bed,
-    label: 'Find stays',
-    sub: 'Hotels, hostels, villas',
+    labelKey: 'plan.findStays',
+    subKey: 'plan.staysSub',
     color: COLORS.sage,
   },
   {
     id: 'food',
     icon: Utensils,
-    label: 'Find food',
-    sub: 'Restaurants, street food',
+    labelKey: 'plan.findFood',
+    subKey: 'plan.foodSub',
     color: COLORS.coral,
   },
   {
     id: 'flights',
     icon: Plane,
-    label: 'Book flights',
-    sub: 'Compare prices',
+    labelKey: 'plan.bookFlights',
+    subKey: 'plan.flightsSub',
     color: COLORS.gold,
   },
 ];
@@ -191,6 +201,7 @@ const QUICK_ACTIONS = [
 // Main Component
 // ---------------------------------------------------------------------------
 export default function PlanScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -400,7 +411,7 @@ export default function PlanScreen() {
                   setShowGenerator(false);
                 }}
               >
-                <Text style={styles.backToTripsText}>Back to my trips</Text>
+                <Text style={styles.backToTripsText}>{t('plan.backToTrips')}</Text>
               </Pressable>
             )}
             <GenerateModeSelect onSelect={handleModeSelect} />
@@ -416,7 +427,7 @@ export default function PlanScreen() {
               <View style={styles.errorBanner}>
                 <Text style={styles.errorBannerText}>{networkError}</Text>
                 <Pressable onPress={clearError} hitSlop={8}>
-                  <Text style={styles.errorBannerRetry}>Dismiss</Text>
+                  <Text style={styles.errorBannerRetry}>{t('plan.dismiss')}</Text>
                 </Pressable>
               </View>
             ) : null}
@@ -432,11 +443,11 @@ export default function PlanScreen() {
             <View style={styles.errorBanner}>
               <Text style={styles.errorBannerText}>{networkError}</Text>
               <Pressable onPress={clearError} hitSlop={8}>
-                <Text style={styles.errorBannerRetry}>Dismiss</Text>
-              </Pressable>
-            </View>
-          ) : null}
-          <GenerateConversationMode onGenerate={handleConversationGenerate} isGenerating={isGenerating} />
+                  <Text style={styles.errorBannerRetry}>{t('plan.dismiss')}</Text>
+                </Pressable>
+              </View>
+            ) : null}
+            <GenerateConversationMode onGenerate={handleConversationGenerate} isGenerating={isGenerating} />
         </View>
       );
     };
@@ -468,9 +479,9 @@ export default function PlanScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Your trips</Text>
+          <Text style={styles.headerTitle}>{t('plan.yourTrips')}</Text>
           <Text style={styles.headerSub}>
-            {sortedTrips.length} {sortedTrips.length === 1 ? 'trip' : 'trips'} planned
+            {t('plan.tripsPlanned', { count: sortedTrips.length })}
           </Text>
         </View>
 
@@ -484,7 +495,7 @@ export default function PlanScreen() {
             style={styles.newTripGradient}
           >
             <Plus size={22} color={COLORS.bg} strokeWidth={2.5} />
-            <Text style={styles.newTripText}>Plan a new trip</Text>
+            <Text style={styles.newTripText}>{t('plan.planNewTrip')}</Text>
           </LinearGradient>
         </Pressable>
 
@@ -499,14 +510,14 @@ export default function PlanScreen() {
               <View style={[styles.quickActionIcon, { backgroundColor: `${action.color}20` }]}>
                 <action.icon size={18} color={action.color} strokeWidth={2} />
               </View>
-              <Text style={styles.quickActionLabel}>{action.label}</Text>
-              <Text style={styles.quickActionSub}>{action.sub}</Text>
+              <Text style={styles.quickActionLabel}>{t(action.labelKey)}</Text>
+              <Text style={styles.quickActionSub}>{t(action.subKey)}</Text>
             </Pressable>
           ))}
         </View>
 
         {/* Trip Cards */}
-        <Text style={styles.sectionLabel}>YOUR TRIPS</Text>
+        <Text style={styles.sectionLabel}>{t('plan.sectionYourTrips')}</Text>
         {sortedTrips.map((trip, index) => (
           <TripCard
             key={trip.id}
@@ -543,26 +554,26 @@ function RateLimitModal({
   onUpgrade: () => void;
   onDismiss: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onDismiss}>
       <View style={styles.rateLimitOverlay}>
         <View style={styles.rateLimitCard}>
           <View style={styles.rateLimitDot} />
-          <Text style={styles.rateLimitTitle}>You hit your free limit</Text>
+          <Text style={styles.rateLimitTitle}>{t('plan.rateLimitTitle')}</Text>
           <Text style={styles.rateLimitBody}>
-            Free accounts get {FREE_TRIPS_PER_MONTH} trip per month. Upgrade to Pro for
-            unlimited trips and the full ROAM experience.
+            {t('plan.rateLimitBody', { count: FREE_TRIPS_PER_MONTH })}
           </Text>
           <Pressable onPress={onUpgrade} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
             <LinearGradient
               colors={[COLORS.gold, COLORS.goldDark]}
               style={styles.rateLimitUpgradeBtn}
             >
-              <Text style={styles.rateLimitUpgradeText}>See Pro Plans</Text>
+              <Text style={styles.rateLimitUpgradeText}>{t('plan.seeProPlans')}</Text>
             </LinearGradient>
           </Pressable>
           <Pressable onPress={onDismiss} style={styles.rateLimitDismiss} hitSlop={12}>
-            <Text style={styles.rateLimitDismissText}>Maybe later</Text>
+            <Text style={styles.rateLimitDismissText}>{t('plan.maybeLater')}</Text>
           </Pressable>
         </View>
       </View>
