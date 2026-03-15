@@ -140,7 +140,7 @@ export default function GenerateConversationMode({
       console.error('Chat chip error:', err);
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: 'Something went wrong. Try again?' },
+        { role: 'assistant', content: 'Lost connection for a second. Mind sending that again?' },
       ]);
       setSuggestions(['Try again', 'Start over']);
     } finally {
