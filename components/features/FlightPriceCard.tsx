@@ -91,6 +91,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodyMedium,
     fontSize: 13,
     color: COLORS.sage,
-    marginTop: 2,
+    marginTop: SPACING.xs / 2,
   },
 });

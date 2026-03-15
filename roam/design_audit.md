@@ -1,6 +1,6 @@
 # ROAM Design System Audit
 **Agent:** 03 — Design Enforcer  
-**Date:** 2026-03-13 (PR1) / 2026-03-13 (PR2 — alpha sweep) / 2026-03-15 (PR3 — anti-slop sweep) / 2026-03-15 (PR4 — 5-tab structure audit)  
+**Date:** 2026-03-13 (PR1) / 2026-03-13 (PR2 — alpha sweep) / 2026-03-15 (PR3 — anti-slop sweep) / 2026-03-15 (PR4 — 5-tab structure audit) / 2026-03-15 (PR5 — post-merge sweep)  
 **Scope:** `app/` and `components/` — all `.tsx` files  
 **Design system tokens:** `lib/constants.ts` → `COLORS`, `FONTS`, `SPACING`, `RADIUS`
 
@@ -8,24 +8,26 @@
 
 ## Executive Summary
 
-| Category | Found | PR1 Fixed | PR2 Fixed | PR3 Fixed | PR4 Fixed | Remaining |
-|---|---|---|---|---|---|---|
-| Hardcoded hex colors (`'#xxxxxx'`) | 7 | 3 | — | 1 | 3 | **0** |
-| Raw `rgba()` in style objects | 7 | 1 | 3 | — | 3 | **0** |
-| `COLORS.x + 'hex'` alpha modifiers | 32 | 9 | 22 | — | 1 | **0** |
-| Non-RADIUS `borderRadius` values | 63 | 26 | — | 14 | 1 | ~22 (geometric circles — intentional) |
-| Non-lucide icon libraries | 0 | — | — | — | — | 0 |
-| Hardcoded font family strings | 0 | — | — | — | — | 0 |
-| Emoji in UI | 0 | — | — | — | — | 0 |
-| `fontWeight` on custom fonts | 1 | — | — | 1 | — | **0** |
-| Visual anti-slop (form-like UI, missing editorial sections) | 3 screens | — | — | 3 | — | **0** |
-| Hardcoded spacing/gap values (not SPACING.*) | ~12 new | — | — | — | 12 | **0** |
-| Tab bar config regression (wrong TAB_ORDER after rebase) | 1 | — | — | — | 1 | **0** |
+| Category | Found | PR1 Fixed | PR2 Fixed | PR3 Fixed | PR4 Fixed | PR5 Fixed | Remaining |
+|---|---|---|---|---|---|---|---|
+| Hardcoded hex colors (`'#xxxxxx'`) | 7 | 3 | — | 1 | 3 | — | **0** |
+| Raw `rgba()` in style objects | 7 | 1 | 3 | — | 3 | — | **0** |
+| `COLORS.x + 'hex'` alpha modifiers | 32 | 9 | 22 | — | 1 | — | **0** |
+| Non-RADIUS `borderRadius` values | 63 | 26 | — | 14 | 1 | — | ~22 (geometric circles — intentional) |
+| Non-lucide icon libraries | 0 | — | — | — | — | — | 0 |
+| Hardcoded font family strings | 0 | — | — | — | — | — | 0 |
+| Emoji in UI | 0 | — | — | — | — | — | 0 |
+| `fontWeight` on custom fonts | 1 | — | — | 1 | — | — | **0** |
+| Visual anti-slop (form-like UI, missing editorial sections) | 3 screens | — | — | 3 | — | — | **0** |
+| Hardcoded spacing/gap values (not SPACING.*) | ~12 new | — | — | — | 12 | — | **0** |
+| Tab bar config regression (wrong TAB_ORDER after rebase) | 1 | — | — | — | 1 | — | **0** |
+| Hardcoded `marginTop: 2` in new component | 1 | — | — | — | — | 1 | **0** |
 
 **PR1 total: 35 fixes across 10 files.**  
 **PR2 total: 35 substitutions across 19 files + 3 new tokens added to `lib/constants.ts`.**  
 **PR3 total: 24+ fixes across 11 files — flights visual rework, stays curated sections, generate conversational redesign.**  
-**PR4 total: 22 fixes across 4 files — Plan tab, People tab, ROAMTabBar (critical regression fix), stays.tsx.**
+**PR4 total: 22 fixes across 4 files — Plan tab, People tab, ROAMTabBar (critical regression fix), stays.tsx.**  
+**PR5 total: 1 fix in 1 file — post-merge sweep of analytics/monetization additions.**
 
 ---
 
@@ -599,6 +601,52 @@ The 5-icon tab bar (`IconPlan`, `IconDiscover`, `IconPeople`, `IconFlights`, `Ic
 - `IconPrep`: shield outline — safety/security metaphor
 - Active state: gold (`COLORS.gold`) — consistent across all icons
 - Inactive state: `COLORS.creamDim` — readable but recessive
+
+---
+
+---
+
+## PR5 — Post-Merge Sweep (2026-03-15)
+
+**Scope:** New files added by analytics, monetization, growth, and social proof commits that landed on `main` after PR3/PR4 branches were cut.
+
+**Files audited:**
+- `components/features/SocialProofBanner.tsx` (new)
+- `components/features/FlightPriceCard.tsx` (new)
+- `app/(tabs)/people.tsx` (updated — Pro gate additions)
+- `app/(tabs)/plan.tsx` (updated — monetization additions)
+- `app/(tabs)/flights.tsx` (updated — affiliate tracking additions)
+- `app/(tabs)/prep.tsx` (updated — no style changes)
+
+### Results
+
+| File | P0 | P1 | P2 | Status |
+|------|----|----|----|----|
+| `SocialProofBanner.tsx` | 0 | 0 | 0 | CLEAN |
+| `FlightPriceCard.tsx` | 0 | 0 | 1 | FIXED |
+| `people.tsx` | 0 | 0 | 7* | DOCUMENTED |
+| `plan.tsx` | 0 | 0 | 4* | DOCUMENTED |
+| `flights.tsx` | 0 | 0 | 0 | CLEAN |
+| `prep.tsx` | 0 | 0 | 0 | CLEAN |
+
+### FIX — `components/features/FlightPriceCard.tsx` [P2]
+
+| Line | Before | After |
+|------|--------|-------|
+| 94 | `marginTop: 2` | `marginTop: SPACING.xs / 2` |
+
+### Documented P2 — Not Fixed (Intentional)
+
+The following P2 items in `people.tsx` and `plan.tsx` are intentional design decisions:
+
+| File | Style | Value | Reason |
+|------|-------|-------|--------|
+| `people.tsx`, `plan.tsx` | `scrollContent.paddingBottom` | `120` | Tab bar clearance — no SPACING token covers this value; adding it as a named constant is tracked as tech debt |
+| `people.tsx` | multiple `SPACING.xs / 2` | `2px` | Sub-token gap — no `SPACING.xxs` exists. Consistent with existing pattern in badge/pill micro-spacing |
+| `people.tsx`, `plan.tsx` | `badge/chip paddingVertical` | `3` | Tight badge padding — 1px tighter than SPACING.xs (4) for visual balance in inline badges |
+| `plan.tsx` | `tripCardArrow.marginTop` | `-10` | Intentional negative margin to center 32px element at 50% position |
+
+**Tech debt recommendation:** Add `SPACING.xxs = 2` to `lib/constants.ts` to replace the `SPACING.xs / 2` arithmetic pattern used in ~8 places. Also add `SPACING.tabBarClearance = 120` for scroll view bottom padding.
 
 ---
 
