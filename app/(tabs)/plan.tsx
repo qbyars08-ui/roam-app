@@ -123,9 +123,8 @@ export default function PlanScreen() {
   const handleNewTrip = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setShowGenerator(true);
-    // Reset to mode select screen — setState supports null
-    useAppStore.setState({ generateMode: null });
-  }, []);
+    setGenerateMode(null);
+  }, [setGenerateMode]);
 
   const handleQuickAction = useCallback((id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
