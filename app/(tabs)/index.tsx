@@ -581,7 +581,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: SPACING.sm,
     right: SPACING.sm,
-    gap: 4,
+    gap: SPACING.xs,
     alignItems: 'flex-end',
   } as ViewStyle,
   trendingBadge: {
@@ -639,13 +639,13 @@ const styles = StyleSheet.create({
   cardLabel: {
     fontFamily: FONTS.header,
     fontSize: 24,
-    color: COLORS.white,
-    marginBottom: 2,
+    color: COLORS.cream,
+    marginBottom: SPACING.xs / 2,
   } as TextStyle,
   cardMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: SPACING.xs,
   } as ViewStyle,
   cardCountry: {
     fontFamily: FONTS.mono,

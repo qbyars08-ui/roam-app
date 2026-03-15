@@ -793,7 +793,7 @@ export default function FlightsScreen() {
             ]}
             onPress={handleSearch}
           >
-            <ExternalLink size={18} color={COLORS.bg} strokeWidth={2} />
+            <ExternalLink size={20} color={COLORS.bg} strokeWidth={2} />
             <Text style={styles.searchBtnText}>Search on Skyscanner</Text>
           </Pressable>
         </View>
@@ -998,7 +998,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 13,
     color: COLORS.creamMuted,
-    marginTop: 2,
+    marginTop: SPACING.xs / 2,
   } as TextStyle,
 
   // ── Popular Routes Grid ──
@@ -1032,7 +1032,7 @@ const styles = StyleSheet.create({
   routeCodeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: SPACING.xs,
     marginBottom: 2,
   } as ViewStyle,
   routeCode: {
@@ -1044,8 +1044,8 @@ const styles = StyleSheet.create({
   routeLabel: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 14,
-    color: COLORS.white,
-    marginBottom: 4,
+    color: COLORS.cream,
+    marginBottom: SPACING.xs,
   } as TextStyle,
   routeBottom: {
     flexDirection: 'row',
@@ -1099,10 +1099,10 @@ const styles = StyleSheet.create({
   inspirationMonthBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: SPACING.xs,
     backgroundColor: COLORS.overlayDim,
     alignSelf: 'flex-start',
-    paddingHorizontal: 8,
+    paddingHorizontal: SPACING.sm,
     paddingVertical: 3,
     borderRadius: RADIUS.sm,
     marginBottom: SPACING.sm,
@@ -1116,13 +1116,13 @@ const styles = StyleSheet.create({
   inspirationDest: {
     fontFamily: FONTS.header,
     fontSize: 22,
-    color: COLORS.white,
+    color: COLORS.cream,
   } as TextStyle,
   inspirationReason: {
     fontFamily: FONTS.body,
     fontSize: 12,
     color: COLORS.creamSoft,
-    marginTop: 2,
+    marginTop: SPACING.xs / 2,
     lineHeight: 18,
   } as TextStyle,
 

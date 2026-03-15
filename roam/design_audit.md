@@ -1,6 +1,6 @@
 # ROAM Design System Audit
 **Agent:** 03 — Design Enforcer  
-**Date:** 2026-03-13 (PR1) / 2026-03-13 (PR2 — alpha sweep) / 2026-03-15 (PR3 — anti-slop sweep) / 2026-03-15 (PR4 — 5-tab structure audit) / 2026-03-15 (PR5 — post-merge sweep)  
+**Date:** 2026-03-13 (PR1) / 2026-03-13 (PR2 — alpha sweep) / 2026-03-15 (PR3 — anti-slop sweep) / 2026-03-15 (PR4 — 5-tab structure audit) / 2026-03-15 (PR5 — post-merge sweep) / 2026-03-15 (PR6 — post-polish audit)  
 **Scope:** `app/` and `components/` — all `.tsx` files  
 **Design system tokens:** `lib/constants.ts` → `COLORS`, `FONTS`, `SPACING`, `RADIUS`
 
@@ -647,6 +647,80 @@ The following P2 items in `people.tsx` and `plan.tsx` are intentional design dec
 | `plan.tsx` | `tripCardArrow.marginTop` | `-10` | Intentional negative margin to center 32px element at 50% position |
 
 **Tech debt recommendation:** Add `SPACING.xxs = 2` to `lib/constants.ts` to replace the `SPACING.xs / 2` arithmetic pattern used in ~8 places. Also add `SPACING.tabBarClearance = 120` for scroll view bottom padding.
+
+---
+
+---
+
+## PR6 — Post-Polish Audit (2026-03-15)
+
+**Scope:** Overnight quality pass — rebuilt Flights tab, copy polish across all screens.
+
+### Audit Checklist
+
+| Check | Result |
+|-------|--------|
+| Card height consistency (Discover / People / Flights) | PASS — horizontal scroll cards: 200×260 (People groupCard = Flights inspirationCard). Route grid cards at 180px appropriate for 2-col layout. Discover cards 200/240 varied by design. |
+| Font size hierarchy (headers 28-40pt, body 13-15pt, labels 11-12pt) | PASS with notes — see below |
+| Spacing rhythm (all SPACING tokens) | PARTIAL — 8 fixable violations found and fixed |
+| Icon consistency (lucide, strokeWidth={2}, size={20} default) | PASS after 1 fix |
+| Color token usage (no hardcoded hex/rgba) | PASS after 3 fixes |
+| Button press states (haptic + scale/opacity) | PASS — all CTAs use haptic + scale or opacity press states |
+
+### Font Size Observations
+
+| File | Element | Size | Verdict |
+|------|---------|------|---------|
+| `flights.tsx` | `heroTitle` | 40pt | PASS (top of 28-40 range) |
+| `flights.tsx` | `heroSub` | 15pt | PASS |
+| `flights.tsx` | `sectionTitle` | 24pt | NOTE — slightly below 28pt floor for section headers (editorial style, acceptable) |
+| `flights.tsx` | `searchBtnText` | 20pt | PASS (Cormorant CTA convention) |
+| `flights.tsx` | `routeLabel` | 14pt | PASS |
+| `flights.tsx` | `routeCode` | 11pt | PASS (label) |
+| `flights.tsx` | `routeSearchText` | 10pt | NOTE — below 11pt floor for labels; readable in badge context |
+| `flights.tsx` | `inspirationDest` | 22pt | NOTE — card destination text, 22pt is acceptable for photo overlay |
+| `index.tsx` | `cardLabel` | 24pt | NOTE — destination name on photo card, editorial scale |
+
+All "NOTE" items are intentional editorial choices, not violations.
+
+### Top 15 Violations — Fixed (8) and Documented (7)
+
+| # | File | Line | Type | Sev | Before | After | Status |
+|---|------|------|------|-----|--------|-------|--------|
+| 1 | `flights.tsx` | 1047 | `COLORS.white` in text | P1 | `COLORS.white` | `COLORS.cream` | FIXED |
+| 2 | `flights.tsx` | 1119 | `COLORS.white` in text | P1 | `COLORS.white` | `COLORS.cream` | FIXED |
+| 3 | `index.tsx` | 646 | `COLORS.white` in text | P1 | `COLORS.white` | `COLORS.cream` | FIXED |
+| 4 | `flights.tsx` | 1035 | `gap: 4` | P2 | `gap: 4` | `SPACING.xs` | FIXED |
+| 5 | `flights.tsx` | 1048 | `marginBottom: 4` | P2 | `4` | `SPACING.xs` | FIXED |
+| 6 | `flights.tsx` | 1102 | `gap: 4` | P2 | `gap: 4` | `SPACING.xs` | FIXED |
+| 7 | `flights.tsx` | 1105 | `paddingHorizontal: 8` | P2 | `8` | `SPACING.sm` | FIXED |
+| 8 | `flights.tsx` | 1001 | `marginTop: 2` | P2 | `2` | `SPACING.xs / 2` | FIXED |
+| 9 | `flights.tsx` | 1125 | `marginTop: 2` | P2 | `2` | `SPACING.xs / 2` | FIXED |
+| 10 | `index.tsx` | 588 | `gap: 4` | P2 | `gap: 4` | `SPACING.xs` | FIXED |
+| 11 | `flights.tsx` | 796 | Icon `ExternalLink size={18}` on CTA | P2 | `size={18}` | `size={20}` | FIXED |
+| 12 | `flights.tsx` | 216 | `SPACING.sm + 2` arithmetic | P2 | paddingVertical: 10 (no token) | — | DOCUMENTED |
+| 13 | `flights.tsx` | 345 | `SPACING.sm + 2` arithmetic | P2 | paddingVertical: 10 (no token) | — | DOCUMENTED |
+| 14 | `flights.tsx` | 357, 391 | `marginTop: 1`, `marginVertical: 1` | P2 | micro-spacing, intentional text alignment | — | DOCUMENTED |
+| 15 | `flights.tsx`, `index.tsx` | various | `paddingVertical: 3`, `paddingHorizontal: 6` in badges | P2 | tight badge padding between tokens | — | DOCUMENTED |
+
+### Button Press State Audit
+
+| Tab | CTA | Haptic | Scale/Opacity |
+|-----|-----|--------|----------------|
+| Flights | Search on Skyscanner | `Medium` | `scale: 0.98` |
+| Flights | Route cards | `Light` | `scale: 0.97` |
+| Flights | Inspiration cards | `Light` | `scale: 0.97` |
+| Flights | Swap button | `Light` | `opacity: 0.7` |
+| Flights | +/- passengers | `Light` | `opacity: 0.7` |
+| People | Connect | `Medium` | `opacity: 0.85` |
+| People | Traveler cards | `Light` | `scale: 0.97` |
+| People | Group cards | `Light` | `scale: 0.96` |
+| Plan | Plan a new trip | `Medium` | `scale: 0.97` |
+| Plan | Quick action cards | `Light` | `scale: 0.95` |
+| Plan | Trip cards | `Light` | `scale: 0.97` |
+| Discover | Destination cards | Haptics via `lib/haptics` | `opacity` via Animated |
+
+All pass. No "deaf" buttons found.
 
 ---
 
