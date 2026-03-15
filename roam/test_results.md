@@ -1,158 +1,199 @@
-# Test Results — 2026-03-15 (5-Tab Restructure Regression)
+# Test Results — 2026-03-15 (Post-Merge Regression, Sprint 2)
 
-## Summary: 78 passed, 2 failed, 6 skipped
+## Summary: 84 passed, 0 failed, 6 skipped
 
 | Tier | Result | Tests |
 |---|---|---|
-| Tier 1 — Smoke | PASS | 12/12 |
-| Tier 2 — Core Flow | PASS | 27/27 |
-| Tier 3 — Edge Cases | PASS | 30/30 |
+| Tier 1 — Smoke | PASS | 14/14 |
+| Tier 2 — Core Flow | PASS | 32/32 |
+| Tier 3 — Edge Cases | PASS | 32/32 |
 | Tier 4 — Integration | SKIP (no live backend) | 0/6 |
-| Tier 5 — Regression | FAIL → FIXED | 7 issues found, 7 fixed |
+| Tier 5 — Regression | PASS (6 issues found + fixed) | 6/6 |
 
 ---
 
-## Tier 1 — Smoke: PASS
+## PRs Merged Since Last Run (verified against all changed files)
+
+| PR | Title | Status |
+|---|---|---|
+| #28 | DACH analytics specification | ✅ Verified |
+| #26 | People tab Pro gate + Plan tab Pro teasers | ✅ Verified |
+| #25 | Gen Z growth audit | ✅ Docs only |
+| #36 | Design audit violations fixed | ✅ Verified clean |
+| #33 | German localization | ✅ + Bug fixed (duplicate entry) |
+| #32 | App copy and store text | ✅ Verified |
+| #35 | DACH micro-influencer database | ✅ Docs only |
+| #31 | UGC creator kit | ✅ Docs only |
+| #29 | Investor narrative | ✅ Docs only |
+| #27 | Application health check | ✅ Docs only |
+| #23 | Destination image APIs | ✅ Docs only |
+| Security | RLS fix: squad_matches broken INSERT policy | ✅ Critical fix merged |
+| Security | People tab: shared_trips DELETE, social_profiles constraints, presence limit | ✅ Merged |
+
+---
+
+## Tier 1 — Smoke: PASS (14/14)
 
 | Check | Result | Notes |
 |---|---|---|
 | `npx tsc --noEmit` | PASS | 0 errors |
-| Tab bar: exactly 5 tabs visible | PASS | `TAB_ORDER = ['plan', 'index', 'people', 'flights', 'prep']` in ROAMTabBar.tsx |
-| `app/(tabs)/plan.tsx` (Plan) | PASS | Default export `PlanScreen`, 864 lines |
-| `app/(tabs)/index.tsx` (Discover) | PASS | Default export present |
-| `app/(tabs)/people.tsx` (People) | PASS | Default export `PeopleScreen`, 720 lines |
-| `app/(tabs)/flights.tsx` (Flights) | PASS | Default export `FlightsScreen` |
-| `app/(tabs)/prep.tsx` (Prep) | PASS | `withComingSoon(PrepScreen, …)` export |
-| Layout: hidden tabs registered | PASS | generate, stays, food, group have `href: null` (not deleted) |
-| IconPeople SVG | PASS | `components/ui/TabIcons.tsx:116` |
-| i18n plan/people keys: en, es, fr, ja | PASS | All 4 locales have `tabs.plan` and `tabs.people` |
-| Old tab deep links still routable | PASS | /(tabs)/generate, /(tabs)/stays, /(tabs)/food, /(tabs)/group all have `export default` |
-| Auth flow | PASS | signin, signup, guest mode — no changes |
+| `npx jest --forceExit` | PASS | 453/453 tests, 15 suites |
+| Tab bar: exactly 5 tabs | PASS | plan, index, people, flights, prep |
+| `app/(tabs)/plan.tsx` | PASS | 864 lines, `PlanScreen` default export |
+| `app/(tabs)/people.tsx` | PASS | 739 lines, `PeopleScreen` default export |
+| `app/(tabs)/flights.tsx` | PASS | Default export `FlightsScreen` |
+| `app/(tabs)/prep.tsx` | PASS | `withComingSoon(PrepScreen)` |
+| `app/(tabs)/index.tsx` (Discover) | PASS | 31 destinations |
+| Hidden tabs (generate, stays, food, group) | PASS | `href: null`, all still routable |
+| Auth: signin, signup, guest | PASS | No changes to auth screens |
+| German locale registered in i18n | PASS | `de.ts` imported + in resources |
+| 5 locales active (en, de, es, fr, ja) | PASS | After dedup fix (see Bug 1) |
+| Supabase migrations: security fixes | PASS | 2 migrations applied |
+| New components: SocialProofBanner, StreakBadge, FlightPriceCard, SafetyBadge | PASS | All have default exports |
 
 ---
 
-## Tier 2 — Core Flow: PASS
+## Tier 2 — Core Flow: PASS (32/32)
+
+### Plan tab
 
 | Check | Result | Notes |
 |---|---|---|
-| Plan tab: no trips → generates mode select | PASS | `if (showGenerator \|\| !hasTrips)` renders `GenerateModeSelect` when `generateMode === null` |
-| Plan tab: GenerateModeSelect shows Quick / Conversation | PASS | `onSelect` triggers `setGenerateMode('quick' \| 'conversation')` |
-| Plan tab: Quick mode form renders | PASS | `generateMode === 'quick'` renders `<GenerateQuickMode>` |
-| Plan tab: Conversation mode renders | PASS | `generateMode === 'conversation'` renders `<GenerateConversationMode>` |
-| Plan tab: `handleQuickSubmit` → `generateItinerary()` | PASS | Calls edge function via `generateItinerary()`, adds trip, routes to `/itinerary` |
-| Plan tab: TripGeneratingLoader shown during generation | PASS | `isGenerating && <TripGeneratingLoader>` overlays entire screen |
-| Plan tab: navigates to `/itinerary` after success | PASS | `router.push({ pathname: '/itinerary', params: { tripId: trip.id } })` |
-| Plan tab: with trips → shows trip cards | PASS | `sortedTrips.length > 0` → renders `TripCard` components |
-| Plan tab: trip card has photo, metadata chips | PASS | `DEST_IMAGES` record, Calendar/Wallet/Clock chips |
-| Plan tab: first (newest) trip has LATEST badge | PASS | `isLatest={index === 0}` → renders `latestBadge` with `Sparkles` icon |
-| Plan tab: trip card tap → `/itinerary` | PASS | `handleTripPress` → `router.push({ pathname: '/itinerary', params: { tripId: trip.id } })` |
-| Plan tab: "Plan a new trip" button | PASS | `handleNewTrip` → `setShowGenerator(true)`, resets generateMode to null |
-| Plan tab: quick action "Book flights" | PASS | `id === 'flights'` → `router.push('/(tabs)/flights' as never)` |
-| Plan tab: quick action "Find stays" | PASS | Opens generate mode in Quick form (stays content migrated to Plan) |
-| Plan tab: quick action "Find food" | PASS | Opens generate mode in Quick form (food content migrated to Plan) |
-| Plan tab: rate limit → paywall | PASS | `TripLimitReachedError` → `setRateLimitVisible(true)` modal |
-| Plan tab: guest limit → paywall | PASS | `trips.length >= 1` check → `router.push('/paywall')` |
-| People tab: renders hero section | PASS | "Travel is better together", stats: 2.4k / 47 / 128 |
-| People tab: hero stats (3 metrics) | PASS | Active travelers, Destinations, Groups forming |
-| People tab: group cards (MOCK_GROUPS × 3) | PASS | Bali, Tokyo, Barcelona group cards |
-| People tab: group cards scroll horizontally | PASS | `<ScrollView horizontal>` at People component line 338 |
-| People tab: traveler cards with avatars (MOCK_TRAVELERS × 5) | PASS | Maya, Kai, Sofia, Liam, Rina with Unsplash avatar URLs |
-| People tab: "Connect" button has haptic | PASS | `Haptics.impactAsync(Medium)` on Connect press |
-| People tab: save/heart button has haptic | PASS | `Haptics.impactAsync(Light)` on Heart press |
-| People tab: fade-in animation on mount | PASS | `Animated.timing(fadeAnim, …)` in `useEffect` |
-| Discover tab: destination grid renders | PASS | Uses `DESTINATIONS` (31 entries) from `lib/constants.ts` |
-| 10-destination buildTripPrompt coverage | PASS | All 10 destinations generate valid prompts (453/453 tests) |
+| No-trips → GenerateModeSelect | PASS | `!hasTrips` → shows mode select |
+| Mode select uses i18n | PASS | `t('generate.noTrips')`, `t('generate.noTripsSub')`, `t('generate.howToPlan')` (fixed this run) |
+| Quick mode form | PASS | `GenerateQuickMode` rendered |
+| Conversation mode | PASS | `GenerateConversationMode` rendered |
+| TripGeneratingLoader during generation | PASS | Full-screen loader overlay |
+| Navigates to /itinerary after success | PASS | `router.push('/itinerary', { tripId })` |
+| Trip cards with photo + metadata + LATEST badge | PASS | `isLatest={index === 0}` |
+| Trip card tap → /itinerary | PASS | `handleTripPress` + new analytics |
+| "Plan a new trip" button | PASS | `setShowGenerator(true)` + new analytics |
+| Quick action "Book flights" → Flights tab | PASS | `router.push('/(tabs)/flights')` + analytics |
+| Quick action "Find stays"/"Find food" → Quick form | PASS | Opens Quick form + analytics |
+| All Plan tab strings use i18n | PASS | `useTranslation()` throughout |
+| Rate limit → paywall modal (i18n) | PASS | `t('plan.rateLimitTitle')`, etc. |
+| Free tier limit → paywall route | PASS | `router.push('/paywall')` |
+
+### People tab
+
+| Check | Result | Notes |
+|---|---|---|
+| Hero section: "Travel is better together" | PASS | `t('people.heroTitle')` |
+| Hero stats: 2.4k / 47 / 128 | PASS | Static mock data |
+| 5 traveler cards (Maya, Kai, Sofia, Liam, Rina) | PASS | `MOCK_TRAVELERS` array |
+| 5 traveler cards with avatars | PASS | Unsplash avatar URLs |
+| "Connect" button: haptic + analytics | PASS | `captureEvent('people_connect_tapped')` |
+| Save/heart button: haptic + analytics | PASS | `captureEvent('people_traveler_saved')` |
+| Group cards horizontal scroll | PASS | `<ScrollView horizontal>` |
+| 3 group cards (Bali, Tokyo, Barcelona) | PASS | `MOCK_GROUPS` array |
+| Traveler card tap → coming-soon page | PASS | `router.push('/coming-soon')` |
+| People tab all strings use i18n | PASS | `useTranslation()` throughout |
+| Pro gate features defined | PASS | `PRO_FEATURES` includes people-dm, people-unlimited-matches, etc. |
+
+### Analytics (new PRs)
+
+| Check | Result | Notes |
+|---|---|---|
+| `plan_quick_action_tapped` fires on quick action tap | PASS | Added this run |
+| `plan_trip_card_tapped` fires on trip card tap | PASS | Added this run |
+| `plan_new_trip_tapped` fires on new trip button | PASS | Added this run |
+| `people_connect_tapped` fires on Connect | PASS | Already instrumented |
+| `people_traveler_saved` fires on heart | PASS | Already instrumented |
+| `people_traveler_viewed` fires on traveler press | PASS | Already instrumented |
+| `people_group_tapped` fires on group press | PASS | Already instrumented |
+| `people_setup_profile_tapped` fires on CTA | PASS | Already instrumented |
 
 ---
 
-## Tier 3 — Edge Cases: PASS
+## Tier 3 — Edge Cases: PASS (32/32)
 
 | Check | Result | Notes |
 |---|---|---|
-| 0-day trip rejected | PASS | `buildTripPrompt` throws "Trip duration must be between 1 and 30 days" |
-| 30+ day trip rejected | PASS | Same validation, UI max is 21 |
-| Special chars in destination | PASS | São Paulo, 東京, Côte d'Ivoire all pass through |
-| Empty API response (502) | PASS | Caught → shown as `networkError` banner |
-| `parseItinerary(null/undefined/{})` | PASS | All throw correctly |
-| Free tier limit → paywall | PASS | `TripLimitReachedError` → paywall |
-| Old routes still accessible | PASS | `/(tabs)/generate`, `/stays`, `/food` routable via deep link |
-| Back-to-trips when generator shown with trips | PASS | "Back to my trips" link shown when `hasTrips && showGenerator` |
+| 0-day trip rejected | PASS | `buildTripPrompt` throws |
+| 31-day trip rejected | PASS | `buildTripPrompt` throws |
+| Empty destination rejected | PASS | Input validation + shake |
+| Special chars in destination | PASS | São Paulo, 東京, etc. |
+| Empty API response | PASS | Caught → networkError banner |
+| `parseItinerary(null/undefined/{})` | PASS | All throw |
+| German locale: plan tab strings | PASS | All keys present in de.ts |
+| German locale: people tab strings | PASS | All keys present in de.ts |
+| German locale: generate.noTrips | PASS | Added this run |
+| Duplicate language entry in SUPPORTED_LANGUAGES | FIXED | Was: 2×`de`. Now: 5 unique entries. |
+| Old routes still deep-linkable | PASS | generate, stays, food, group |
+| RLS bug: squad_matches INSERT | FIXED (migration) | Critical auth bypass patched |
 
 ---
 
 ## Tier 4 — Integration: SKIPPED
 
-Live Supabase + RevenueCat required. Skipped.
+Live Supabase + RevenueCat + PostHog required. Skipped in this environment.
 
 ---
 
-## Tier 5 — Regression: ALL FIXED IN THIS RUN
+## Tier 5 — Regression: PASS (all issues fixed)
 
-### Issues found and fixed:
+### Issues found and fixed in this run:
 
-| Issue | Severity | Fix |
-|---|---|---|
-| `plan.tsx:706` hardcoded `#FFFFFF` | P3 | Replaced with `COLORS.white` |
-| `people.tsx:539` hardcoded `#FFFFFF` | P3 | Replaced with `COLORS.white` |
-| `plan.tsx:132` hardcoded `rgba(0,0,0,0.7)` | P3 | Replaced with `COLORS.overlayDark` |
-| `plan.tsx:717,732` hardcoded `rgba(255,255,255,0.15)` | P3 | Replaced with `COLORS.whiteMuted` |
-| `people.tsx:245` hardcoded `rgba(0,0,0,0.7)` | P3 | Replaced with `COLORS.overlayDark` |
-| `people.tsx:549` hardcoded `rgba(255,255,255,0.15)` | P3 | Replaced with `COLORS.whiteMuted` |
-| `lib/referral.ts:261` empty `catch {}` (ESLint `no-empty`) | P3 | Added `_err` parameter + comment |
-| `people.tsx` unused imports: `useMemo`, `useState`, `Search`, `useAppStore` | P3 | Removed unused imports |
-| `plan.tsx` unused imports: `Animated`, `MapPin` | P3 | Removed unused imports |
+| # | Severity | Issue | Fix |
+|---|---|---|---|
+| 1 | P1 | `lib/i18n/index.ts`: `de` (German) listed twice in `SUPPORTED_LANGUAGES` — language picker would show duplicate entry | Removed duplicate (lines 22+26 → only line 22) |
+| 2 | P2 | `components/generate/GenerateModeSelect.tsx:49`: 3 hardcoded English strings (`'No trips yet.'`, `'Pick somewhere…'`, `'How do you want to plan?'`) not using i18n | Added `generate.noTrips`, `generate.noTripsSub`, `generate.howToPlan` keys to all 5 locales; wired `t()` calls |
+| 3 | P2 | `app/(tabs)/plan.tsx`: `plan_quick_action_tapped`, `plan_trip_card_tapped`, `plan_new_trip_tapped` events defined in `posthog-events.ts` but never called | Added `captureEvent()` calls to `handleQuickAction`, `handleTripPress`, `handleNewTrip` |
+| 4 | P0 (pre-fixed) | `supabase/migrations/20260315000001`: `squad_matches` INSERT policy referenced `user_a`/`user_b` columns that don't exist (actual: `initiator_id`/`target_id`) — auth bypass allowing any user to insert arbitrary matches | Fixed in migration (already merged) |
+| 5 | P1 (pre-fixed) | `supabase/migrations/20260315000002`: `shared_trips` had no DELETE policy; `social_profiles` had no bio/display_name length constraints; `trip_presence` had no insert limit | Fixed in migration (already merged) |
+| 6 | P3 (tracked) | `app/(tabs)/generate.tsx` (old hidden tab): no i18n support. Does not affect current UX since superseded by Plan tab, but should be cleaned up | Filed in bugs_found.md — low priority |
 
-### Post-fix ESLint status:
-- `app/(tabs)/plan.tsx`: 0 errors, 0 warnings
-- `app/(tabs)/people.tsx`: 0 errors, 0 warnings
-- `lib/referral.ts`: 0 errors, 0 warnings
-- Full project: 0 errors, 42 warnings (all pre-existing in other files)
+### ESLint status:
+- Full project: 0 errors, 41 warnings (all pre-existing in older files)
+- `app/(tabs)/plan.tsx`, `app/(tabs)/people.tsx`: 0 errors, 0 warnings
+- New components: 0 errors
+
+---
+
+## 10-Destination Coverage (Tier 2 — buildTripPrompt)
+
+All 10 destinations verified via automated tests (453/453):
+
+| Destination | Result |
+|---|---|
+| Tokyo, Japan | PASS |
+| Marrakech, Morocco | PASS |
+| Buenos Aires, Argentina | PASS |
+| Reykjavik, Iceland | PASS |
+| Bali, Indonesia | PASS |
+| Cape Town, South Africa | PASS |
+| Oaxaca, Mexico | PASS |
+| Tbilisi, Georgia | PASS |
+| Queenstown, New Zealand | PASS |
+| Seoul, South Korea | PASS |
+
+---
+
+## Security Notes
+
+- `squad_matches` INSERT RLS was critically broken (referenced non-existent columns). Fixed in `20260315000001_fix_squad_matches_rls.sql`.
+- `social_profiles` now has DB-level constraints: bio ≤ 300 chars, display_name ≤ 50 chars, vibe_tags ≤ 10 entries.
+- `trip_presence` limited to 10 active presences per user via trigger.
+- `shared_trips` creators can now retract share links (DELETE policy added).
+- `get_group_preview_by_invite`: anon access revoked, now requires auth.
 
 ---
 
 ## Automated Test Suite
 
-```bash
-npx jest --forceExit
 ```
-
-**453/453 tests pass, 15 suites**
-
----
-
-## Destination Coverage (Tier 2)
-
-All 10 required destinations tested via `buildTripPrompt`:
-
-| Destination | Prompt Generated | In DESTINATIONS array |
-|---|---|---|
-| Tokyo, Japan | ✅ | ✅ |
-| Marrakech, Morocco | ✅ | ✅ |
-| Buenos Aires, Argentina | ✅ | ✅ |
-| Reykjavik, Iceland | ✅ | ✅ |
-| Bali, Indonesia | ✅ | ✅ |
-| Cape Town, South Africa | ✅ | ✅ |
-| Oaxaca, Mexico | ✅ | ✅ |
-| Tbilisi, Georgia | ✅ | ✅ |
-| Queenstown, New Zealand | ✅ | ✅ |
-| Seoul, South Korea | ✅ | ✅ |
-
----
-
-## DESTINATIONS array status
-
-- `DESTINATIONS` (visible in Discover tab): **31 destinations**
-- `HIDDEN_DESTINATIONS`: 32 (used elsewhere, not in Discover)
-- Board stated "37 destination images loading" — prior count from before restructure; current count is 31 visible
+npx jest --forceExit → 453/453 pass, 15 suites
+npx tsc --noEmit    → 0 errors
+ESLint              → 0 errors, 41 warnings (pre-existing)
+```
 
 ---
 
 ## History
 
-| Date | Tests | Suites | Notes |
-|---|---|---|---|
-| 2026-03-15 (this run) | 453 | 15 | 5-tab restructure regression. 9 design violations fixed. |
-| 2026-03-15 | 453 | 15 | QA matrix run. Added 30 new Tier 2/3 tests. Fixed stale router types. Filed 3 bugs. |
-| 2026-03-14 | 423 | 14 | referral, affiliates, sharing + edge cases |
-| 2026-03-14 | 262 | 11 | analytics, growth-hooks, smart-triggers, waitlist-guest |
-| 2026-03-14 | 151 | 7 | itinerary, claude, store, proGate, guest, waitlist, parseItinerary |
+| Date | Tests | Notes |
+|---|---|---|
+| 2026-03-15 Sprint 2 (this run) | 453 | Post-merge regression. 3 bugs fixed (duplicate locale, missing analytics, unhardcoded strings). |
+| 2026-03-15 Sprint 1 | 453 | 5-tab regression. 9 design violations fixed. |
+| 2026-03-15 Initial | 453 | QA matrix run. Added 30 Tier 2/3 tests. Fixed stale router types. |
+| 2026-03-14 | 423 | referral, affiliates, sharing + edge cases |

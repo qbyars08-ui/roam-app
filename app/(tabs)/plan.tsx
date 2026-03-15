@@ -243,16 +243,17 @@ export default function PlanScreen() {
 
   const handleNewTrip = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    captureEvent('plan_new_trip_tapped', {});
     setShowGenerator(true);
     setGenerateMode(null);
   }, [setGenerateMode]);
 
   const handleQuickAction = useCallback((id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    captureEvent('plan_quick_action_tapped', { action: id });
     if (id === 'flights') {
       router.push('/(tabs)/flights' as never);
     } else if (id === 'hotels' || id === 'food') {
-      // Navigate to plan with context
       setShowGenerator(true);
       setGenerateMode('quick');
     }
@@ -397,6 +398,7 @@ export default function PlanScreen() {
   }, [router]);
 
   const handleTripPress = useCallback((trip: Trip) => {
+    captureEvent('plan_trip_card_tapped', { destination: trip.destination, tripId: trip.id });
     router.push({ pathname: '/itinerary', params: { tripId: trip.id } });
   }, [router]);
 
