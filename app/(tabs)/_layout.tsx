@@ -1,7 +1,6 @@
 // =============================================================================
 // ROAM — Tab Navigator Layout
-// 6 visible tabs: Discover / Generate / Flights / Stays / Food / Prep
-// Displaced screens (saved, profile, globe, passport, pets) → standalone routes
+// 5 tabs: Plan / Discover / People / Flights / Prep
 // =============================================================================
 import React from 'react';
 import { View } from 'react-native';
@@ -26,13 +25,16 @@ export default function TabsLayout() {
           lazy: true,
         }}
       >
-        {/* ── Visible tabs (6) ── */}
+        {/* ── Visible tabs (5) ── */}
+        <Tabs.Screen name="plan" options={{ title: 'Plan' }} />
         <Tabs.Screen name="index" options={{ title: 'Discover' }} />
-        <Tabs.Screen name="generate" options={{ title: 'Generate' }} />
+        <Tabs.Screen name="people" options={{ title: 'People' }} />
         <Tabs.Screen name="flights" options={{ title: 'Flights' }} />
-        <Tabs.Screen name="stays" options={{ title: 'Stays' }} />
-        <Tabs.Screen name="food" options={{ title: 'Food' }} />
         <Tabs.Screen name="prep" options={{ title: 'Prep' }} />
+        {/* ── Hidden screens (still routable, not in tab bar) ── */}
+        <Tabs.Screen name="generate" options={{ href: null }} />
+        <Tabs.Screen name="stays" options={{ href: null }} />
+        <Tabs.Screen name="food" options={{ href: null }} />
         <Tabs.Screen name="group" options={{ href: null }} />
       </Tabs>
       <LiveCompanionFAB />
