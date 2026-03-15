@@ -112,6 +112,7 @@ const fr: TranslationKeys = {
     bestIn: 'Id\u00e9al en {{month}}',
     dailyCost: '{{cost}}$/jour',
     trending: 'tendance',
+    perfectTiming: 'Moment id\u00e9al',
   },
 
   categories: {
