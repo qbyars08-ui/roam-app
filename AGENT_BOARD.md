@@ -1,78 +1,99 @@
-# ROAM Agent Board — Updated March 16, 2026
+# ROAM Agent Board — Updated March 16, 2026 (Post-3-Features)
+
+---
+
+## Status: ALL 3 GROUNDBREAKING FEATURES LIVE
+
+| Feature | Status | Screen | Key Components |
+|---------|--------|--------|----------------|
+| ROAM Intelligence Dashboard | LIVE | app/destination/[name].tsx | ROAMScoreBadge, SeasonalIntel, HolidayCrowdCalendar, CurrencySparkline, GoldenHourCard, GoNowFeed, RouteIntelCard, DualClockWidget, CostComparisonWidget |
+| Trip Audio Guide | LIVE | app/itinerary.tsx | AudioGuideBar (floating), NarrationToggle, narrateItinerary(), ElevenLabs voice proxy |
+| Traveler Radar | LIVE | app/(tabs)/people.tsx | TripPresenceCard, MatchCard, ProfileCard, ChemistryBadge, social-feed, social-chemistry, 5 sub-tabs |
+| Prep Tab (IAmHereNow) | LIVE | app/(tabs)/prep.tsx | IAmHereNow at top, IntelligenceCardsGrid, AirQualitySunCard, EmergencyQuickCard, CurrencyQuickCard |
+
+### Merges Completed
+- PR #38 (localization) — MERGED
+- PR #39 (intelligence strategy) — MERGED
+- 0 open PRs
 
 ---
 
 ## Composer 1 — Visual
 
-Full visual pass on onboarding screens. Make the hook screen genuinely beautiful. Dream vault redesign. Profile tab redesign. Use magazine editorial aesthetic (Cormorant Garamond italic headers, DM Sans body, DM Mono data). Dark UI only (#080F0A bg). Colors: sage #7CAF8A, cream #F5EDD8, coral #E8614A, gold #C9A84C.
+Polish the 3 new features visually. Ensure editorial consistency across Intelligence Dashboard, Audio Guide Bar, and Traveler Radar.
 
 ### Tasks
 
-- Redesign onboarding Screen 1 (the hook) — full bleed, text fades in, no signup
-- Redesign onboarding Screen 2 (magic reveal) — streaming demo trip
-- Design Dream Vault cards — full bleed photo, 350px, saved date, price estimate
-- Redesign Profile tab — travel identity, Travel DNA preview, subscription status
-- Visual pass on paywall screen — annual prominent with gold badge
+- Visual audit of destination/[name].tsx — ensure all 9 widgets flow with proper spacing
+- AudioGuideBar design review — ensure floating bar doesn't obscure content
+- People tab 5-sub-tab design — ensure tab chips are scannable, active states clear
+- IAmHereNow at top of Prep — ensure it's visually prominent, emergency buttons large
+- GoNowFeed horizontal scroll — ensure deal cards are attractive with proper photo treatment
+- Dark mode audit on all 3 features — no light backgrounds leaking
 
 ---
 
 ## Composer 2 — Builder
 
-Wire RevenueCat paywall completely. Affiliate link audit and fix. Dream vault price calculation logic. Onboarding flow implementation.
+Wire remaining unused components. There are 33 unused components and 65 unused lib modules that could add value.
 
 ### Tasks
 
-- Verify RevenueCat paywall flow end to end (free limit -> paywall -> purchase -> unlimited)
-- Wire affiliate links: hotels -> Booking.com, flights -> Skyscanner, activities -> GetYourGuide
-- Build Dream Vault price estimate (use what-if-calculator.ts for cost estimation)
-- Implement new onboarding flow: Hook -> Magic Reveal -> One Question -> Where To -> Signup
-- Wire social proof queries (trip counts per destination from Supabase)
+- Wire SocialProofBanner into onboarding flow
+- Wire LiveFeedTicker into Pulse tab header
+- Wire MoodDiscovery + MoodPrompt into trip generation flow
+- Wire PocketConcierge into itinerary as floating helper
+- Wire VisaRequirementsCard into Prep visa section
+- Wire HealthBriefCard into body-intel screen
+- Wire StreakBadge into profile screen
+- Wire VoiceInputButton into chat/generate screens
 
 ---
 
 ## Composer 3 — Debug
 
-Run full pre-launch checklist. Fix every console error. Test paywall flow end to end. Test affiliate links.
+Full regression test after 3-feature merge + 2 PR merges. Ensure nothing broke.
 
 ### Tasks
 
-- Run npx tsc --noEmit — verify 0 errors
-- Test generate flow 5 times with different destinations
-- Test paywall: exhaust free tier, verify paywall appears, test purchase
-- Test auth: Google, Apple, Email, Guest mode
-- Audit all console.error and console.warn in production
-- Verify no placeholder text visible to users
+- Run npx tsc --noEmit — verify 0 errors (CONFIRMED ✅)
+- Test destination dashboard: Tokyo, Bali, Paris — all widgets render
+- Test itinerary audio: generate trip → tap NarrationToggle → AudioGuideBar appears
+- Test People tab: create profile → all 5 sub-tabs functional
+- Test Prep tab: IAmHereNow shows at top, emergency buttons tap-to-call
+- Test offline mode: prep tab works with airplane mode
+- Verify Netlify deploy at https://tryroam.netlify.app
 - Report to system_health.md
 
 ---
 
 ## Composer 4 — Research/Growth
 
-Write Reddit launch post. Write DACH creator DM templates. Research Product Hunt strategy.
+Post-feature launch marketing. These 3 features are differentiators — use them in outreach.
 
 ### Tasks
 
-- Draft Reddit post for r/solotravel and r/backpacking (genuine, not spammy)
-- Write 3 DACH creator DM templates (German/Austrian/Swiss travel influencers)
-- Research Product Hunt launch: timing, tagline, first comment strategy
-- Draft email waitlist announcement for launch day
-- Write to growth_dashboard.md with full strategy
+- Update Reddit launch post highlighting Intelligence Dashboard + Audio Guide
+- Write Twitter thread: "We built a travel app that talks to you" (audio guide angle)
+- Draft Product Hunt tagline featuring all 3 features
+- Write DACH creator pitch emphasizing Traveler Radar social feature
+- Update waitlist email with feature highlights
+- Research TikTok trend: "my travel app just narrated my Tokyo trip"
 
 ---
 
 ## Composer 5 — QA/Captain
 
-Test every tab on mobile. Test full onboarding as new user. Test generate flow.
+End-to-end testing of all user flows with the 3 new features integrated.
 
 ### Tasks
 
-- Test all 5 tabs load correctly with real data
-- Test generate flow: quick mode + conversation mode
-- Test onboarding as brand new user (clear AsyncStorage)
-- Test offline mode (airplane mode -> prep tab should work)
-- Test share card generation and native share sheet
-- Test language switching (EN/ES/FR/JA)
-- Report to test_results.md
+- Test full flow: plan trip → generate itinerary → listen to audio guide → view destination intel
+- Test social flow: create profile → post trip → see matches → message
+- Test prep flow: select destination → IAmHereNow → emergency numbers → currency calc
+- Test with 4 destinations: Tokyo, Bali, Vienna, New York
+- Test language switching on all new features (EN/ES/FR/DE/JA)
+- Test share card with new features visible
 - Update captain_status.md with overall status
 
 ---
@@ -104,17 +125,21 @@ Test every tab on mobile. Test full onboarding as new user. Test generate flow.
 
 | File/Directory | Owner Agent | Notes |
 |----------------|-------------|-------|
-| app/(tabs)/flights.tsx | Orchestrator | Just rebuilt — hero + Skyscanner links |
-| app/(tabs)/index.tsx | Agent 06 (Growth) | Discover/acquisition |
+| app/destination/[name].tsx | Orchestrator | Intelligence Dashboard — 9 widgets wired |
+| app/itinerary.tsx | Orchestrator | Audio Guide — AudioGuideBar + NarrationToggle |
+| app/(tabs)/people.tsx | Agent 06 (Growth) | Traveler Radar — 5 sub-tabs, social chemistry |
+| app/(tabs)/prep.tsx | Agent 09 (Localization) | IAmHereNow at top + full intel grid |
+| app/(tabs)/flights.tsx | Orchestrator | Skyscanner affiliate + i18n |
 | app/(tabs)/plan.tsx | Orchestrator | Generate flow |
-| app/(tabs)/people.tsx | Agent 06 (Growth) | Social layer |
-| app/(tabs)/prep.tsx | Agent 09 (Localization) | Offline prep data |
 | lib/claude.ts | Orchestrator | P0 critical — generate flow |
 | lib/store.ts | Orchestrator | Shared ownership |
-| lib/flights.ts | Agent 07 (Monetization) | Skyscanner affiliate |
+| lib/elevenlabs.ts | Orchestrator | Audio guide engine |
+| lib/social-chemistry.ts | Agent 06 (Growth) | Traveler compatibility scoring |
+| lib/social-feed.ts | Agent 06 (Growth) | Social feed queries |
 | lib/constants.ts | Agent 03 (Design) | Design tokens |
-| components/ui/ | Agent 03 (Design) | UI primitives |
-| components/premium/ | Agent 03 (Design) | Premium components |
+| components/audio/ | Orchestrator | AudioGuideBar, NarrationToggle, PronunciationButton |
+| components/social/ | Agent 06 (Growth) | MatchCard, TripPresenceCard, ChemistryBadge, ProfileCard |
+| components/prep/ | Agent 09 (Localization) | IAmHereNow, EmergencyQuickCard, CurrencyQuickCard |
 | supabase/functions/ | Agent 08 (Security) | Edge functions + RLS |
 | lib/analytics.ts | Agent 10 (Analytics) | Event tracking |
 | lib/i18n/ | Agent 09 (Localization) | Translations |
@@ -126,8 +151,9 @@ Test every tab on mobile. Test full onboarding as new user. Test generate flow.
 | Task | Blocker | Owner |
 |------|---------|-------|
 | Booking.com real AID | Quinn needs to sign up at partners.booking.com | Quinn |
-| Waitlist DB writes | Apply migration 20260325000001_waitlist_comprehensive_fix.sql in Supabase SQL Editor | Quinn |
+| Waitlist DB writes | Apply migration 20260316_waitlist.sql in Supabase SQL Editor | Quinn |
 | Admin rate limit bypass | Add ADMIN_TEST_EMAILS=qbyars08@gmail.com to Supabase secrets | Quinn |
+| ElevenLabs voice proxy | Deploy voice-proxy edge function to Supabase | Quinn |
 
 ---
 
