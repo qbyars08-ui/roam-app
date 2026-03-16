@@ -67,7 +67,7 @@ function TripTradingScreen() {
       if (trip) {
         addTrip(trip);
         Alert.alert('Claimed!', `Your ${t.destination} trip is in your trips.`);
-        router.push('/(tabs)/generate');
+        router.push('/(tabs)/generate' as never);
       } else {
         Alert.alert('Oops', 'Couldn\'t claim this trip. Sign in and try again.');
       }

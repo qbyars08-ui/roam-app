@@ -305,7 +305,7 @@ export default function DiscoverScreen() {
     (dest: Destination) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       trackBehavior({ type: 'destination_opened', timestamp: new Date().toISOString(), data: { destination: dest.label, category: dest.category } }).catch(() => {});
-      router.push(`/destination/${encodeURIComponent(dest.label)}`);
+      router.push(`/destination/${encodeURIComponent(dest.label)}` as never);
     },
     [router]
   );
@@ -353,7 +353,7 @@ export default function DiscoverScreen() {
             <View style={styles.searchInputWrap}>
               {/* Using a simple text input to avoid PlacesInput complexity */}
               <Pressable
-                onPress={() => router.push('/(tabs)/generate')}
+                onPress={() => router.push('/(tabs)/generate' as never)}
                 style={styles.searchTapArea}
                 accessibilityRole="button"
                 accessibilityLabel={t('discover.searchPlaceholder')}
@@ -374,7 +374,7 @@ export default function DiscoverScreen() {
               action={contextStrategy.contextBanner.action}
               onAction={contextStrategy.contextBanner.destination ? () => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push(`/destination/${encodeURIComponent(contextStrategy.contextBanner?.destination ?? '')}`);
+                router.push(`/destination/${encodeURIComponent(contextStrategy.contextBanner?.destination ?? '')}` as never);
               } : undefined}
               onDismiss={() => setShowBanner(false)}
             />
@@ -421,7 +421,7 @@ export default function DiscoverScreen() {
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/what-if');
+                router.push('/what-if' as never);
               }}
               style={({ pressed }) => [styles.quickLink, { opacity: pressed ? 0.8 : 1 }]}
             >
@@ -516,7 +516,7 @@ export default function DiscoverScreen() {
           <Pressable
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              router.push('/what-if');
+              router.push('/what-if' as never);
             }}
             style={({ pressed }) => [
               styles.whatIfCard,

@@ -1115,7 +1115,7 @@ export default function ItineraryScreen() {
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                router.push({ pathname: '/trip-story', params: { tripId: trip.id } });
+                router.push({ pathname: '/trip-story', params: { tripId: trip.id } } as never);
               }}
               style={({ pressed }) => [
                 styles.itineraryExtraCard,
@@ -1136,7 +1136,7 @@ export default function ItineraryScreen() {
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                router.push({ pathname: '/trip-album', params: { tripId: trip.id } });
+                router.push({ pathname: '/trip-album', params: { tripId: trip.id } } as never);
               }}
               style={({ pressed }) => [
                 styles.itineraryExtraCard,

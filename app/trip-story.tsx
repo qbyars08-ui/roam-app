@@ -381,7 +381,7 @@ function TripStoryScreen() {
                 subtitleSlide={subtitleSlide}
                 onPlanYours={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  router.push('/(tabs)/generate');
+                  router.push('/(tabs)/generate' as never);
                 }}
               />
             )}

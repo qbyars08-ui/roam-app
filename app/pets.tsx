@@ -248,7 +248,7 @@ function PetAICard() {
       role: 'user',
       content: message,
     });
-    router.push('/(tabs)/generate');
+    router.push('/(tabs)/generate' as never);
   }, [firstPet, latestTrip, appendChatMessage, router]);
 
   return (
@@ -339,7 +339,7 @@ function PetDestinations() {
       // Extract city name before comma for the plan wizard
       const destination = city.split(',')[0].trim();
       setPlanWizard({ destination });
-      router.push('/(tabs)/generate');
+      router.push('/(tabs)/generate' as never);
     },
     [setPlanWizard, router]
   );

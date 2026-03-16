@@ -228,7 +228,7 @@ function PassportScreen() {
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/(tabs)/generate');
+                router.push('/(tabs)/generate' as never);
               }}
               style={({ pressed }) => [styles.emptyCta, { opacity: pressed ? 0.85 : 1 }]}
             >

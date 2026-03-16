@@ -389,7 +389,7 @@ function CompatibilityScreen() {
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                router.push('/(tabs)/generate');
+                router.push('/(tabs)/generate' as never);
               }}
               style={({ pressed }) => [
                 styles.planTogetherCard,
