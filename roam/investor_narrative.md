@@ -1,6 +1,6 @@
 # ROAM — Investor Narrative
 
-Last updated: 2026-03-15
+Last updated: 2026-03-16
 
 ## One-Liner
 ROAM isn't just a trip planner — it's a travel social network. AI generates your complete itinerary in 30 seconds. Then it finds you people going to the same place, at the same time, with the same energy.
@@ -45,7 +45,7 @@ Six forces are converging that make ROAM possible — and make the timing irreve
 
 4. **Gen Z is the biggest travel generation in history** — 69% of Gen Z and millennials find travel inspiration on social media. 80% of young travelers rely on mobile apps for trip planning. Post-COVID revenge travel + digital nomad culture = the largest, most mobile, most spend-ready travel cohort ever assembled.
 
-5. **AI travel planning is an exploding market** — The AI trip planner market was $1.74B in 2024, growing at 18.9% CAGR to $9.13B by 2033. No dominant player has emerged. The category is wide open.
+5. **AI travel planning is an exploding market** — The AI travel planning app market was $904M in 2024, projected to $2.36B by 2031 at 14.7% CAGR (QY Research). 72% of Gen Z confident using AI for 2026 trips (Skyscanner). No dominant player has emerged. The category is wide open.
 
 6. **The travel social network throne is vacant** — Couchsurfing pivoted to paid-only in 2020 and lost the majority of its community overnight. Nothing credible has replaced it. There are 1,464 travel social network startups globally — 231 funded — and none have achieved scale. The segment needs a product-first builder, not another clone of a dead idea.
 
@@ -54,7 +54,7 @@ Six forces are converging that make ROAM possible — and make the timing irreve
 ### TAM
 - Global travel market: $1.9T (2025, WTTC)
 - Online travel booking: $820B
-- AI travel planning tools: $1.74B (2024) → $9.13B by 2033 at 18.9% CAGR
+- AI travel planning apps: $904M (2024) → $2.36B by 2031 at 14.7% CAGR (QY Research)
 - Travel social platforms: adjacent to $1T+ social commerce market growing at 20-30% CAGR
 
 ### TAM Expansion: The Social Network Premium

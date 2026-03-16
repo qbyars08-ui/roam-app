@@ -1,6 +1,6 @@
 # ROAM DACH Influencer Database
 
-Last updated: 2026-03-15
+Last updated: 2026-03-16
 Status: Ready for outreach — Phase 0 (direct DM) + Phase 1 (Insense)
 Agent: 13 — DACH Growth
 
@@ -39,7 +39,7 @@ Total German-speaking travel micro-influencers identified (under 50K): **524** o
 **Content style:** Bicycle world travel, raw adventure storytelling, minimalist backpacking, daily video diaries from remote routes. Casual, self-deprecating, grounded. No corporate polish. He started with a cheap eBay bike and cycled 22,000+ km through 23 countries.
 **Top destinations:** Germany → Europe → Middle East → Central Asia (Turkey, Iran, Pakistan, Kyrgyzstan)
 **Why ROAM fits:** His audience plans long-distance and multi-country trips. ROAM's multi-city itinerary feature (Script 09 Interrail angle) is a direct match. His followers ask him constantly "how do you plan routes?" — ROAM answers that.
-**Best script:** Script 09 (Interrail/multi-destination) or a custom "Ich benutze KI für meine Routen" version
+**Best script:** Script 09 (Interrail) or Script 12 (People tab Interrail Squad) — his audience plans multi-destination trips and wants companions
 **Contact:** DM @jakob.tepler on Instagram · Also reachable via velotraum.de/en/detail/jakob-tepler-an-up-and-coming-world-traveler
 **Est. cost per video:** €30–50 · Likely accepts Pro access + rev share as part deal
 **Tier:** A — Priority outreach
@@ -92,7 +92,7 @@ Total German-speaking travel micro-influencers identified (under 50K): **524** o
 **Content style:** Solo mountain hiking, alpine crossings, digital nomad lifestyle. Known for documenting alpine crossings solo (Garmisch to Lake Garda on foot). Has also lived in New Zealand, Hawaii, and Bali. Anti-tourist, authentic voice.
 **Top destinations:** Alps (Tirol, Zugspitze), New Zealand, Hawaii, Bali, California, Mediterranean
 **Why ROAM fits:** Solo traveler = ROAM's primary user persona. Her audience plans solo trips and wants planning shortcuts. "KI plant meine Soloreise" hook would land hard here.
-**Best script:** Script 02 (Bali) or Script 06 (Thailand) · Can add personal solo travel angle
+**Best script:** Script 02 (Bali) or Script 11 (People tab Reisebuddy) · Solo traveler = People tab natural fit
 **Contact:** DM @rike.mountaingirl on Instagram · Bio link: linktr.ee/rike.mountainlife
 **Est. cost per video:** €20–35
 **Tier:** A — Priority outreach
@@ -144,7 +144,7 @@ Total German-speaking travel micro-influencers identified (under 50K): **524** o
 **Note:** TikTok audience slightly above Tier 1 target (95K vs 50K limit). Instagram is within range. Treat as Tier 1.5 — budget accordingly.
 **Top destinations:** Costa Rica, Guatemala, Central America, 17+ countries across global backpacking
 **Why ROAM fits:** Perfect authentic voice for ROAM's budget backpacker angle. "Diese KI plant meine Reisen besser als ich" hook from someone with 10M likes carries weight.
-**Best script:** Script 02 (Bali budget angle) or Script 06 (Thailand Rundreise) — her energy matches these perfectly
+**Best script:** Script 02 (Bali) or Script 11 (People tab Reisebuddy) — budget backpacker + solo = perfect People tab testimonial
 **Contact:** DM @leonie.feliciaa on Instagram · Website: leoniefeliciaa.com
 **Est. cost per video:** €40–60 (slightly above micro range due to TikTok reach)
 **Tier:** B (TikTok over range but perfect fit) — high priority for Instagram-only deal
@@ -334,7 +334,7 @@ Total German-speaking travel micro-influencers identified (under 50K): **524** o
 **Content style:** Solo travel, vanlife, hiking. Focuses entirely on the transformative aspect of traveling alone — building self-trust, freedom, personal growth. Currently driving Vildmarksvägen and Kystriksveien (Norway's scenic coastal route). Runs a shop and newsletter. Strong community around her "Travel. Discover. Grow" philosophy.
 **Top destinations:** Sweden, Norway, Scandinavia, Germany, Alps, Europe by van
 **Why ROAM fits:** Her audience is planning solo trips but often feels overwhelmed by the logistics. ROAM as "the planning tool that handles the stress so you can focus on the experience" is a perfect match for her community's mindset.
-**Best script:** Custom "Alleine Reisen planen ohne Stress" — can reference how ROAM removes the anxiety of solo trip planning
+**Best script:** Script 13 (People tab Solo Female) or custom "Alleine Reisen planen ohne Stress" — solo vanlife audience = People tab natural fit
 **Contact:** DM @steffistraumzeit on Instagram · Linktree: linktr.ee/SteffiM · Newsletter opt-in via blog
 **Est. cost per video:** €20–35
 **Tier:** A — Niche community with high intent-to-travel, strong philosophical alignment
