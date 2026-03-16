@@ -254,21 +254,21 @@ export function getVisitVerdict(avgScore: number): {
   if (avgScore <= 30) return {
     verdict: 'great',
     label: 'Perfect timing',
-    detail: 'Low crowds and normal prices. This is when locals enjoy their city.',
+    detail: 'Low crowds, normal prices. This is when locals actually enjoy their city.',
   };
   if (avgScore <= 50) return {
     verdict: 'good',
     label: 'Good timing',
-    detail: 'Moderate crowds. You will have a great experience without the worst of the rush.',
+    detail: 'Moderate crowds. Manageable — just skip the main tourist sites between noon and 3pm.',
   };
   if (avgScore <= 70) return {
     verdict: 'okay',
     label: 'Peak season',
-    detail: 'Expect crowds and higher prices. Book ahead and visit popular spots early morning.',
+    detail: 'Busy and pricey. Book popular spots at least 3 days ahead and go early.',
   };
   return {
     verdict: 'avoid',
     label: 'Extreme crowds',
-    detail: 'Major events or holidays. Prices are way up and everything is packed. Consider shifting dates.',
+    detail: 'Major event or holiday. Prices are way up and everything is packed. Shift your dates if you can.',
   };
 }

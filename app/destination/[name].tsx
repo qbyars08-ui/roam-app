@@ -386,7 +386,7 @@ export default function DestinationDashboard() {
           onPress={handlePlanTrip}
         >
           <Sparkles size={20} color={COLORS.bg} strokeWidth={2} />
-          <Text style={styles.ctaText}>Plan a trip to {destination}</Text>
+          <Text style={styles.ctaText}>Plan my {destination} trip</Text>
         </Pressable>
 
         {/* Loading indicator for remaining data */}

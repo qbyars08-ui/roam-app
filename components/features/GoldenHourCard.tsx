@@ -222,7 +222,7 @@ export const GoldenHourCard: React.FC<GoldenHourCardProps> = ({ lat, lng }) => {
             marginBottom: SPACING.xs,
           }}
         >
-          Best Photo Window
+          Best photo window
         </Text>
         <Text
           style={{
@@ -232,7 +232,7 @@ export const GoldenHourCard: React.FC<GoldenHourCardProps> = ({ lat, lng }) => {
             lineHeight: 18,
           }}
         >
-          Shoot during golden hour for warm, soft light that flatters landscapes and portraits.
+          Light is soft and warm in these windows. Everything looks better here than at any other time of day.
         </Text>
       </View>
     </View>
