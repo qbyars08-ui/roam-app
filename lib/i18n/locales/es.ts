@@ -190,6 +190,7 @@ const es: TranslationKeys = {
   people: {
     title: 'Gente',
     headerSub: 'Encuentra viajeros que van a donde t\u00fa vas',
+    headerSubActive: 'Est\u00e1s abierto a conocer viajeros',
     heroTitle: 'Viajar es mejor juntos',
     heroSub: 'Te conectamos con viajeros que van al mismo lugar, al mismo tiempo, con la misma energ\u00eda.',
     activeTravelers: 'Viajeros activos',
@@ -273,6 +274,8 @@ const es: TranslationKeys = {
     bestValue: 'Mejor valor',
     noResults: 'No se encontraron vuelos',
     setHomeAirport: 'Configura tu aeropuerto',
+    layoverTitle: 'Optimizador de escalas',
+    layoverSub: 'Qu\u00e9 hacer con X horas en 8 aeropuertos principales',
   },
 
   stays: {
@@ -336,6 +339,8 @@ const es: TranslationKeys = {
     exploreFeatures: 'Explorar Funciones',
     yourPlan: 'Tu plan',
     emergencyContact: 'Contacto de emergencia',
+    emergencyCardCtaTitle: 'Tarjeta M\u00e9dica de Emergencia',
+    emergencyCardCtaSub: 'Configura tu info m\u00e9dica para emergencias de viaje',
     emergencyContactTitle: 'Contacto de emergencia',
     emergencyContactSub: 'Ingresa un n\u00famero de tel\u00e9fono para alertas SOS.',
     logOut: 'Cerrar sesi\u00f3n',

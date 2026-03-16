@@ -225,6 +225,7 @@ const de: TranslationKeys = {
   people: {
     title: 'Community',
     headerSub: 'Finde Reisende, die dahin fahren, wo du hinwillst',
+    headerSubActive: 'Du bist offen f\u00fcr Reisende',
     heroTitle: 'Reisen macht gemeinsam mehr Spa\u00df',
     heroSub: 'Wir bringen dich mit Reisenden zusammen, die zur gleichen Zeit, am gleichen Ort und mit der gleichen Energie unterwegs sind.',
     activeTravelers: 'Aktive Reisende',
@@ -317,6 +318,8 @@ const de: TranslationKeys = {
     bestValue: 'Bestes Preis-Leistungs-Verh\u00e4ltnis',
     noResults: 'Keine Fl\u00fcge gefunden',
     setHomeAirport: 'Heimatflughafen festlegen',
+    layoverTitle: 'Umsteige-Optimierer',
+    layoverSub: 'Was du mit X Stunden in 8 gro\u00dfen Flugh\u00e4fen machen kannst',
   },
 
   // ---------------------------------------------------------------------------
@@ -394,6 +397,8 @@ const de: TranslationKeys = {
     yourPlan: 'Dein Plan',
     emergencyContact: 'Notfallkontakt',
     emergencyContactTitle: 'Notfallkontakt',
+    emergencyCardCtaTitle: 'Notfall-Medizinkarte',
+    emergencyCardCtaSub: 'Lege deine medizinischen Infos f\u00fcr Reisenotf\u00e4lle an',
     emergencyContactSub: 'Gib eine Telefonnummer f\u00fcr SOS-Alerts ein.',
     logOut: 'Ausloggen',
     logOutTitle: 'Schon weg?',

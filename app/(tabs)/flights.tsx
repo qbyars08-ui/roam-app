@@ -871,8 +871,8 @@ export default function FlightsScreen() {
         >
           <Clock size={20} color={COLORS.gold} strokeWidth={2} />
           <View style={{ flex: 1 }}>
-            <Text style={styles.layoverTitle}>Layover Optimizer</Text>
-            <Text style={styles.layoverSub}>What to do with X hours in 8 major airports</Text>
+            <Text style={styles.layoverTitle}>{t('flights.layoverTitle')}</Text>
+            <Text style={styles.layoverSub}>{t('flights.layoverSub')}</Text>
           </View>
           <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
         </Pressable>
