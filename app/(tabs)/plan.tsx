@@ -31,10 +31,9 @@ import {
 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { COLORS, FONTS, FREE_TRIPS_PER_MONTH, RADIUS, SPACING } from '../../lib/constants';
 import { useAppStore, type Trip } from '../../lib/store';
 import { generateItinerary, TripLimitReachedError } from '../../lib/claude';
-import { FREE_TRIPS_PER_MONTH } from '../../lib/constants';
 import { isGuestUser } from '../../lib/guest';
 import type { QuickModeState } from '../../components/generate/GenerateQuickMode';
 import { BUDGET_TO_BACKEND } from '../../components/generate/GenerateQuickMode';

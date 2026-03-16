@@ -63,8 +63,7 @@ const fetchGoldenHourData = async (lat: number, lng: number): Promise<GoldenHour
       sunrise: json.results.sunrise,
       sunset: json.results.sunset,
     });
-  } catch (error) {
-    console.error('Error fetching golden hour data:', error);
+  } catch {
     return null;
   }
 };

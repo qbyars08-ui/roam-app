@@ -24,7 +24,6 @@ import {
   Thermometer,
   Wind,
 } from 'lucide-react-native';
-import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
@@ -197,7 +196,6 @@ export default function DestinationDashboard() {
   const destination = name ?? '';
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { t } = useTranslation();
   const setPlanWizard = useAppStore((s) => s.setPlanWizard);
   const setGenerateMode = useAppStore((s) => s.setGenerateMode);
 
