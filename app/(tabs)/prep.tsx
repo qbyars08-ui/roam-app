@@ -21,6 +21,7 @@ import Svg, { Circle } from 'react-native-svg';
 
 const AnimatedSvgCircle = Animated.createAnimatedComponent(Circle);
 import * as Haptics from '../../lib/haptics';
+import { pronounce } from '../../lib/elevenlabs';
 import {
   WifiOff,
   AlertTriangle,
@@ -878,10 +879,15 @@ function HealthTab({
 function LanguageTab({ pack }: { pack: LanguagePack }) {
   const phrases = useMemo(() => getSurvivalPhrases(pack), [pack]);
 
-  const handlePlay = useCallback((_phrase: Phrase) => {
+  const langCode = useMemo(() => {
+    const map: Record<string, string> = { Japanese: 'ja', Spanish: 'es', French: 'fr', German: 'de', Thai: 'th', Italian: 'it', Portuguese: 'pt', Arabic: 'ar', Hindi: 'hi', Mandarin: 'zh', Korean: 'ko' };
+    return map[pack.language] ?? 'en';
+  }, [pack.language]);
+
+  const handlePlay = useCallback((phrase: Phrase) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    // Stub: no audio implementation
-  }, []);
+    pronounce(phrase.local, langCode).catch(() => {});
+  }, [langCode]);
 
   return (
     <View style={styles.tabContent}>

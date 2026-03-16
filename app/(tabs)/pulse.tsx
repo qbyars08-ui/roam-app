@@ -27,6 +27,7 @@ import { getTimezoneByDestination } from '../../lib/timezone';
 import LiveFeedTicker from '../../components/features/LiveFeedTicker';
 import SocialProofBanner from '../../components/features/SocialProofBanner';
 import GoNowFeed from '../../components/features/GoNowFeed';
+import WanderlustFeed from '../../components/features/WanderlustFeed';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -871,6 +872,11 @@ export default function PulseScreen() {
 
         {/* ── Go Now Flight Deals ── */}
         <GoNowFeed />
+
+        {/* ── Wanderlust — aspirational destination moments ── */}
+        <View style={{ paddingHorizontal: 20, marginTop: SPACING.lg }}>
+          <WanderlustFeed />
+        </View>
 
         {/* ── This Month Section ── */}
         <View style={[styles.section, styles.sectionLast]}>

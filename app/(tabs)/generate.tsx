@@ -240,6 +240,15 @@ export default function GenerateScreen() {
       return (
         <View style={[styles.fill, { paddingTop: insets.top }]}>
           <GenerateModeSelect onSelect={handleModeSelect} />
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+              router.push('/chaos-mode' as never);
+            }}
+            style={({ pressed }) => [styles.chaosBtn, { opacity: pressed ? 0.7 : 1 }]}
+          >
+            <Text style={styles.chaosBtnText}>Surprise me</Text>
+          </Pressable>
         </View>
       );
     }
@@ -424,5 +433,17 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodyMedium,
     fontSize: 14,
     color: COLORS.creamMuted,
+  },
+  chaosBtn: {
+    alignSelf: 'center',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.xl,
+  },
+  chaosBtnText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
+    color: COLORS.creamDim,
+    textDecorationLine: 'underline',
   },
 });
