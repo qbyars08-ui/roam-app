@@ -1878,6 +1878,15 @@ function PrepScreen() {
               countryName={countryName}
             />
 
+            {/* I Am Here Now — ALWAYS first, works offline */}
+            <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
+              <IAmHereNow
+                destination={selectedDest}
+                hotelName={parsedItinerary?.days?.[0]?.accommodation?.name ?? undefined}
+                hotelAddress={undefined}
+              />
+            </View>
+
             <IntelligenceCardsGrid
               destination={selectedDest}
               safety={safety}

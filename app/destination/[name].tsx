@@ -45,6 +45,7 @@ import { getDestinationCurrency } from '../../lib/currency-history';
 import ROAMScoreBadge from '../../components/features/ROAMScoreBadge';
 import SeasonalIntel from '../../components/features/SeasonalIntel';
 import RouteIntelCard from '../../components/features/RouteIntelCard';
+import GoNowFeed from '../../components/features/GoNowFeed';
 
 // ---------------------------------------------------------------------------
 // Data fetching hook
@@ -394,6 +395,11 @@ export default function DestinationDashboard() {
             />
           </View>
         )}
+
+        {/* Go Now — flight deals */}
+        <View style={styles.section}>
+          <GoNowFeed />
+        </View>
 
         {/* CTA */}
         <Pressable
