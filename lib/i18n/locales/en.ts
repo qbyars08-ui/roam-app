@@ -53,6 +53,8 @@ const en = {
     stays: 'Stays',
     food: 'Food',
     prep: 'Prep',
+    health: 'Health',
+    pulse: 'Pulse',
   },
 
   // ---------------------------------------------------------------------------

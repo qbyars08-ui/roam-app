@@ -49,6 +49,8 @@ const es: TranslationKeys = {
     stays: 'Alojamiento',
     food: 'Comida',
     prep: 'Preparar',
+    health: 'Salud',
+    pulse: 'Pulso',
   },
 
   errorBoundary: {

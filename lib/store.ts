@@ -10,6 +10,7 @@ import type { LocationSharingState, MemberLocation } from './types/location-shar
 import { DEFAULT_LOCATION_STATE } from './types/location-sharing';
 import { getHomeCurrency, setHomeCurrency as persistHomeCurrency, fetchExchangeRates } from './currency';
 import type { ExchangeRates } from './currency';
+import type { SocialProfile, SquadMatch, TripPresence } from './types/social';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -73,6 +74,14 @@ type AppState = {
   generateMode: 'quick' | 'conversation' | null;
   /** Location sharing state for group trips */
   locationSharing: LocationSharingState;
+  /** Social layer state */
+  socialProfile: SocialProfile | null;
+  socialProfileLoaded: boolean;
+  squadMatches: SquadMatch[];
+  myTripPresences: TripPresence[];
+  unreadChatCount: number;
+  openToMeet: boolean;
+  activePeopleTab: 'feed' | 'squad' | 'groups' | 'meetups' | 'matches';
 
   // Actions
   setSession: (session: Session | null) => void;
@@ -105,6 +114,14 @@ type AppState = {
   setLocationSharing: (state: Partial<LocationSharingState>) => void;
   updateMemberLocation: (location: MemberLocation) => void;
   removeMemberLocation: (memberId: string) => void;
+  // Social layer actions
+  setSocialProfile: (profile: SocialProfile | null) => void;
+  setSocialProfileLoaded: (loaded: boolean) => void;
+  setSquadMatches: (matches: SquadMatch[]) => void;
+  setMyTripPresences: (presences: TripPresence[]) => void;
+  setUnreadChatCount: (count: number) => void;
+  setOpenToMeet: (open: boolean) => void;
+  setActivePeopleTab: (tab: 'feed' | 'squad' | 'groups' | 'meetups' | 'matches') => void;
 };
 
 const defaultPlanWizard: PlanWizardState = {
@@ -123,6 +140,7 @@ const PET_REMINDERS_KEY = 'roam_pet_reminders';
 const TRAVEL_PROFILE_KEY = 'roam_travel_profile';
 const PROFILE_COMPLETED_KEY = 'roam_profile_completed';
 const BOOKMARKED_RESTAURANTS_KEY = 'roam_bookmarked_restaurants';
+const SOCIAL_PROFILE_KEY = 'roam_social_profile';
 
 function persistBookmarkedRestaurants(ids: string[]) {
   AsyncStorage.setItem(BOOKMARKED_RESTAURANTS_KEY, JSON.stringify(ids)).catch(() => {});
@@ -166,6 +184,13 @@ export const useAppStore = create<AppState>((set) => ({
   generateMode: null,
   bookmarkedRestaurantIds: [],
   locationSharing: { ...DEFAULT_LOCATION_STATE },
+  socialProfile: null,
+  socialProfileLoaded: false,
+  squadMatches: [],
+  myTripPresences: [],
+  unreadChatCount: 0,
+  openToMeet: false,
+  activePeopleTab: 'feed',
 
   setSession: (session) => set({ session }),
   addTrip: (trip) =>
@@ -311,6 +336,19 @@ export const useAppStore = create<AppState>((set) => ({
         ),
       },
     })),
+  // Social layer
+  setSocialProfile: (profile) => {
+    if (profile) {
+      AsyncStorage.setItem(SOCIAL_PROFILE_KEY, JSON.stringify(profile)).catch(() => {});
+    }
+    set({ socialProfile: profile });
+  },
+  setSocialProfileLoaded: (loaded) => set({ socialProfileLoaded: loaded }),
+  setSquadMatches: (matches) => set({ squadMatches: matches }),
+  setMyTripPresences: (presences) => set({ myTripPresences: presences }),
+  setUnreadChatCount: (count) => set({ unreadChatCount: count }),
+  setOpenToMeet: (open) => set({ openToMeet: open }),
+  setActivePeopleTab: (tab) => set({ activePeopleTab: tab }),
 }));
 
 // ---------------------------------------------------------------------------
@@ -451,6 +489,21 @@ export async function loadPersistedTravelProfile(): Promise<void> {
     }
     if (completedRaw) {
       useAppStore.getState().setHasCompletedProfile(JSON.parse(completedRaw));
+    }
+  } catch {
+    // silent — first launch or corrupt data
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Load persisted social profile on app start
+// ---------------------------------------------------------------------------
+export async function loadPersistedSocialProfile(): Promise<void> {
+  try {
+    const raw = await AsyncStorage.getItem(SOCIAL_PROFILE_KEY);
+    if (raw) {
+      const profile = JSON.parse(raw) as SocialProfile;
+      useAppStore.setState({ socialProfile: profile, socialProfileLoaded: true });
     }
   } catch {
     // silent — first launch or corrupt data

@@ -19,6 +19,7 @@ import {
   type ImageStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import {
   MapPin,
   ArrowLeftRight,
@@ -26,6 +27,8 @@ import {
   Plane,
   Minus,
   Plus,
+  Clock,
+  ChevronRight,
   ExternalLink,
   Sun,
 } from 'lucide-react-native';
@@ -42,6 +45,8 @@ import {
   getDestinationAirport,
   getSkyscannerFlightUrl,
 } from '../../lib/flights';
+import GoNowFeed from '../../components/features/GoNowFeed';
+import FlightPriceCalendar from '../../components/features/FlightPriceCalendar';
 
 // ---------------------------------------------------------------------------
 // Data
@@ -512,6 +517,7 @@ const InspirationCardComponent = React.memo(function InspirationCardComponent({
 // Main Screen
 // ---------------------------------------------------------------------------
 export default function FlightsScreen() {
+  const router = useRouter();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const planDestination = useAppStore((s) => s.planWizard.destination);
@@ -660,6 +666,9 @@ export default function FlightsScreen() {
           </Text>
         </View>
 
+        {/* ── Go Now Deal Feed ── */}
+        <GoNowFeed />
+
         {/* ── Search Form ── */}
         <View style={styles.searchCard}>
           {/* From / To */}
@@ -798,6 +807,17 @@ export default function FlightsScreen() {
           </Pressable>
         </View>
 
+        {/* ── Price Calendar ── */}
+        {fromText.length > 1 && toText.length > 1 && (
+          <View style={{ paddingHorizontal: SPACING.md, marginBottom: SPACING.md }}>
+            <FlightPriceCalendar
+              origin={fromCode || fromText.trim()}
+              destination={toCode || toText.trim()}
+              startDate={departDate}
+            />
+          </View>
+        )}
+
         {/* ── Popular Routes ── */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Popular routes</Text>
@@ -837,6 +857,25 @@ export default function FlightsScreen() {
             />
           ))}
         </ScrollView>
+
+        {/* ── Layover Optimizer ── */}
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            router.push('/layover' as never);
+          }}
+          style={({ pressed }) => [
+            styles.layoverBanner,
+            pressed && { opacity: 0.8 },
+          ]}
+        >
+          <Clock size={20} color={COLORS.gold} strokeWidth={2} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.layoverTitle}>Layover Optimizer</Text>
+            <Text style={styles.layoverSub}>What to do with X hours in 8 major airports</Text>
+          </View>
+          <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
+        </Pressable>
 
         {/* ── Affiliate disclaimer ── */}
         <Text style={styles.disclaimer}>
@@ -1135,5 +1174,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.xl,
     marginTop: SPACING.md,
     lineHeight: 16,
+  } as TextStyle,
+  layoverBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginHorizontal: SPACING.md,
+    marginTop: SPACING.lg,
+    padding: SPACING.md,
+    backgroundColor: COLORS.gold + '14',
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.gold + '30',
+  } as ViewStyle,
+  layoverTitle: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.gold,
+  } as TextStyle,
+  layoverSub: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+    marginTop: 2,
   } as TextStyle,
 });

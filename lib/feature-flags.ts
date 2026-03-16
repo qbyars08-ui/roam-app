@@ -14,13 +14,17 @@ const V1_CORE_ROUTES = new Set([
   'splash', 'hook', 'signin', 'signup', 'welcome', 'onboard', 'onboarding',
   'social-proof', 'value-preview', 'personalization',
   // Main tabs
-  'index', 'plan', 'saved', 'profile', 'chat',
+  'index', 'plan', 'saved', 'profile', 'chat', 'prep', 'flights', 'generate', 'people',
   // Trip flow
   'itinerary',
   // Essential screens
   'paywall', 'privacy', 'terms', 'support', 'referral',
   // Dynamic routes
-  'trip/[id]',
+  'trip/[id]', 'destination/[name]', 'traveler/[id]', 'chat/[channelId]',
+  // Social
+  'social-profile-edit',
+  // Viral & shareable experiences
+  'passport', 'trip-wrapped', 'viral-cards', 'trip-story', 'trip-album', 'trip-countdown', 'expense-tracker', 'compatibility', 'travel-card', 'trip-journal', 'body-intel', 'before-you-land', 'emergency-card', 'layover',
 ]);
 
 /**

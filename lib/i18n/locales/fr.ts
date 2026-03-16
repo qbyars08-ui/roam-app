@@ -48,7 +48,9 @@ const fr: TranslationKeys = {
     flights: 'Vols',
     stays: 'H\u00e9bergements',
     food: 'Cuisine',
-    prep: 'Pr\u00e9parer',
+    prep: 'Préparer',
+    health: 'Santé',
+    pulse: 'Pouls',
   },
 
   errorBoundary: {

@@ -1,6 +1,6 @@
 # ROAM AGENT BOARD
 
-Last updated: 2026-03-15 (overnight quality pass)
+Last updated: 2026-03-15 (evening feature expansion pass)
 
 ## Agent Registry
 
@@ -23,20 +23,48 @@ Last updated: 2026-03-15 (overnight quality pass)
 | CP | Captain | claude-sonnet-4-5 | captain.mdc | ROAM — Captain | /captain_status.md | ACTIVE |
 | -- | Orchestrator | claude-opus-4-5 | orchestrator.mdc | (Claude Code) | /AGENT_BOARD.md | ACTIVE |
 
-## Current Sprint — OVERNIGHT QUALITY PASS (2026-03-15)
+## Current Sprint — FEATURE EXPANSION PASS (2026-03-15 evening)
 
-### What Just Shipped (Claude Code Orchestrator)
-- Flights tab complete rework: hero search, Skyscanner deep links, popular routes grid, inspiration cards
-- General polish pass across all screens (copy, empty states, loading states)
-- Performance: lazy loading 3 heaviest screens
-- P0 Bug fixes: AI chat + sign-in flow + deploy with real Supabase credentials
-- netlify.toml: build.ignore for smart rebuilds
+### What Just Shipped (Claude Code Orchestrator — this session)
+
+**New Screens (4):**
+- `app/before-you-land.tsx` — 24-hour pre-departure briefing (weather, currency, timezone, emergency, cultural tips, checklist)
+- `app/emergency-card.tsx` — bilingual medical card with allergies, meds, blood type translated to local language
+- `app/layover.tsx` — airport layover optimizer for 8 major airports (JFK, LAX, LHR, NRT, DXB, SIN, CDG, ICN)
+- `lib/layover-data.ts` — curated airport guides with transit info, in-airport perks, timed activities
+
+**New Components (6):**
+- `components/features/FlightPriceCalendar.tsx` — 6-week color-coded departure price grid
+- `components/features/RouteIntelCard.tsx` — flight intel for any route (avg price, best month, tips)
+- `components/features/SeasonalIntel.tsx` — why now is/isn't the right time to visit
+- `components/features/TravelStats.tsx` — compact travel history summary
+- `components/features/TripRecap.tsx` — shareable trip summary card with cost estimate
+- `lib/emergency-card.ts` — medical translations for 10 languages + AsyncStorage persistence
+
+**Integrations Wired (12):**
+- ROAM Score badge on Discover cards (bottom-right)
+- Body Intel CTA in Prep Health section + Emergency Card CTA in Emergency section
+- Before You Land CTA in Prep tab + itinerary
+- Emergency Medical Card CTA in Profile screen
+- FlightPriceCalendar in Flights tab (appears when origin + destination filled)
+- Layover Optimizer banner in Flights tab
+- Route Intelligence + Seasonal Intel in itinerary page
+- ROAM Score (lg) + Seasonal Intel + Route Intel on destination dashboard
+- TravelStats bar at top of Saved Trips list
+- All new screens added to feature flags + ExploreHub
+
+**Previous Session (overnight):**
+- Flights tab rework, polish pass, lazy loading, P0 bug fixes
+- Body Intel, Travel Card, Trip Journal, Go Now Feed, ROAM Score Badge
+- Flight intelligence engine, symptom checker, trip journal data layer
 
 ### What's Live
-- **tryroam.netlify.app** — deployed with real Supabase credentials (verified in bundle)
-- Chat works (guest auto-upgrades to anonymous auth)
-- Sign-in shows real auth (Apple/Google/Email), not waitlist
-- Flights tab: hero search + 6 popular routes + 4 inspiration cards + Skyscanner affiliate links
+- **tryroam.netlify.app** — deployed with real Supabase credentials
+- 86 total screens/routes in the app
+- Zero TypeScript errors across entire codebase
+- Flights: hero + routes + price calendar + layover optimizer + Skyscanner links
+- Destination dashboard: ROAM Score + Seasonal Intel + Route Intel + weather + currency + crowds
+- Health: Body Intel + Emergency Card + Before You Land
 
 ---
 

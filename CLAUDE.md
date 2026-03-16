@@ -1,5 +1,14 @@
 # ROAM — Project CLAUDE.md
 
+## Memory System
+At the start of every session, read these files for persistent context:
+- `memory/decisions.md` — Architectural and product decisions with reasoning
+- `memory/people.md` — Key people involved in the project
+- `memory/preferences.md` — Quinn's development, design, and deploy preferences
+- `memory/user.md` — Quinn's profile, skills, and working style
+
+At the end of every session, update these files with any new decisions, preferences, or learnings.
+
 ## What is ROAM?
 AI-powered travel planner for Gen Z. React Native + Expo Router + Supabase + RevenueCat.
 
@@ -74,6 +83,42 @@ npx eslint . --ext .ts,.tsx
 - Free API modules (all free, no API key, AsyncStorage cached):
   - Existing: `lib/air-quality.ts`, `lib/sun-times.ts`, `lib/timezone.ts`, `lib/public-holidays.ts`, `lib/cost-of-living.ts`
   - New: `lib/weather-forecast.ts` (Open-Meteo), `lib/exchange-rates.ts` (Frankfurter), `lib/country-info.ts` (REST Countries), `lib/travel-safety.ts` (travel-advisory.info), `lib/emergency-numbers.ts` (emergencynumberapi.com), `lib/geocoding.ts` (Open-Meteo)
+  - Newest: `lib/crowd-intelligence.ts` (holiday+event crowd forecasting), `lib/currency-history.ts` (30-day rate history via Frankfurter), `lib/golden-hour.ts` (sunrise-sunset.org), `lib/jet-lag.ts` (pure calculation, no API)
+- Feature widgets in `components/features/`:
+  - `HolidayCrowdCalendar.tsx` — horizontal scrolling crowd forecast calendar
+  - `CostComparisonWidget.tsx` — side-by-side destination cost comparison
+  - `CurrencySparkline.tsx` — 30-day exchange rate sparkline with SVG
+  - `DualClockWidget.tsx` — home vs destination clocks + jet lag
+  - `GoldenHourCard.tsx` — photography golden hour times
+- Destination dashboard: `app/destination/[name].tsx` — all widgets combined
+- New data modules (no API, local data):
+  - `lib/flight-intelligence.ts` — deal scoring, price calendar, route intel, Go Now feed
+  - `lib/roam-score.ts` — composite 0-100 destination score
+  - `lib/symptom-checker.ts` — destination-aware symptom intelligence
+  - `lib/layover-data.ts` — curated guides for 8 major airports
+  - `lib/emergency-card.ts` — medical card data + translations
+  - `lib/trip-journal.ts` — daily diary with mood tracking
+- New feature components:
+  - `components/features/FlightPriceCalendar.tsx` — 6-week color-coded grid
+  - `components/features/RouteIntelCard.tsx` — flight intel for a route
+  - `components/features/SeasonalIntel.tsx` — why now is/isn't the right time
+  - `components/features/ROAMScoreBadge.tsx` — reusable score badge (sm/md/lg)
+  - `components/features/GoNowFeed.tsx` — horizontal flight deal cards
+  - `components/features/TravelStats.tsx` — compact travel history summary
+  - `components/features/TripRecap.tsx` — shareable trip summary card
+- New screens:
+  - `app/body-intel.tsx` — destination-aware health intelligence
+  - `app/before-you-land.tsx` — pre-departure briefing
+  - `app/emergency-card.tsx` — bilingual medical card
+  - `app/layover.tsx` — airport layover optimizer
+  - `app/travel-card.tsx` — shareable personality card
+  - `app/trip-journal.tsx` — daily travel diary
+
+### API Types (avoid wrong property names)
+- `getTimezoneByDestination()` returns `string | null` (synchronous, NOT a Promise)
+- `DailyForecast.precipitationChance` (0-100), NOT `pop`
+- `SafetyData.safetyScore`, NOT `overallScore`
+- `track()` accepts `AnalyticsEvent` union — use `payload` for custom fields, NOT top-level properties
 
 ### Verification
 - After code changes: run `npx tsc --noEmit` before proceeding

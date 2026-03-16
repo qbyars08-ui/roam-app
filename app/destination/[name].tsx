@@ -42,6 +42,9 @@ import DualClockWidget from '../../components/features/DualClockWidget';
 import { GoldenHourCard } from '../../components/features/GoldenHourCard';
 import { CurrencySparkline } from '../../components/features/CurrencySparkline';
 import { getDestinationCurrency } from '../../lib/currency-history';
+import ROAMScoreBadge from '../../components/features/ROAMScoreBadge';
+import SeasonalIntel from '../../components/features/SeasonalIntel';
+import RouteIntelCard from '../../components/features/RouteIntelCard';
 
 // ---------------------------------------------------------------------------
 // Data fetching hook
@@ -312,6 +315,21 @@ export default function DestinationDashboard() {
             subValue={data.safety ? `${data.safety.safetyScore}/100` : undefined}
             accentColor={safetyBadge?.color ?? COLORS.sage}
           />
+        </View>
+
+        {/* ROAM Score */}
+        <View style={styles.section}>
+          <ROAMScoreBadge destination={destination} size="lg" />
+        </View>
+
+        {/* Seasonal Intelligence */}
+        <View style={styles.section}>
+          <SeasonalIntel destination={destination} />
+        </View>
+
+        {/* Route Intelligence */}
+        <View style={styles.section}>
+          <RouteIntelCard destination={destination} />
         </View>
 
         {/* Dual Clock + Jet Lag */}

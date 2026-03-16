@@ -8,17 +8,17 @@ import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
-import { IconPlan, IconDiscover, IconPeople, IconFlights, IconPrep } from './TabIcons';
+import { IconPlan, IconDiscover, IconPeople, IconFlights, IconPrep, IconHealth, IconPulse } from './TabIcons';
 import { captureEvent } from '../../lib/posthog';
 
-const TAB_ORDER = ['plan', 'index', 'people', 'flights', 'prep'] as const;
+const TAB_ORDER = ['plan', 'index', 'body-intel', 'flights', 'pulse'] as const;
 type TabIconComponent = React.ComponentType<{ size?: number; color?: string; focused?: boolean }>;
 const TAB_ICONS: Record<string, { i18nKey: string; Icon: TabIconComponent }> = {
   plan: { i18nKey: 'tabs.plan', Icon: IconPlan },
   index: { i18nKey: 'tabs.discover', Icon: IconDiscover },
-  people: { i18nKey: 'tabs.people', Icon: IconPeople },
+  'body-intel': { i18nKey: 'tabs.health', Icon: IconHealth },
   flights: { i18nKey: 'tabs.flights', Icon: IconFlights },
-  prep: { i18nKey: 'tabs.prep', Icon: IconPrep },
+  pulse: { i18nKey: 'tabs.pulse', Icon: IconPulse },
 };
 
 export default function ROAMTabBar({ state, descriptors, navigation }: BottomTabBarProps) {

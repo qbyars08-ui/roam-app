@@ -48,9 +48,17 @@ import {
   DollarSign,
   CalendarDays,
   Thermometer,
+  Plane,
+  Luggage,
+  Users,
+  BedDouble,
+  Coffee,
+  ShieldCheck,
+  ChevronRight,
   type LucideIcon,
 } from 'lucide-react-native';
 
+import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore, type Trip } from '../../lib/store';
@@ -87,6 +95,11 @@ import AirQualitySunCard from '../../components/prep/AirQualitySunCard';
 import EmergencyQuickCard from '../../components/prep/EmergencyQuickCard';
 import CurrencyQuickCard from '../../components/prep/CurrencyQuickCard';
 import CostOfLivingCard from '../../components/prep/CostOfLivingCard';
+import DualClockWidget from '../../components/features/DualClockWidget';
+import PackingList from '../../components/features/PackingList';
+import HolidayCrowdCalendar from '../../components/features/HolidayCrowdCalendar';
+import IAmHereNow from '../../components/prep/IAmHereNow';
+import { getJetLagForDestination, type JetLagPlan } from '../../lib/jet-lag';
 
 // ---------------------------------------------------------------------------
 // Survival phrase keys (6 phrases for Language tab)
@@ -227,12 +240,17 @@ function SafetyScoreHero({
 // ---------------------------------------------------------------------------
 // Section Pills (labelKey = i18n key when present)
 // ---------------------------------------------------------------------------
+type SectionId = 'schedule' | 'overview' | 'currency' | 'connectivity' | 'culture' | 'packing' | 'jetlag' | 'crowds' | 'emergency' | 'health' | 'language' | 'visa';
+
 const SECTIONS: Array<
-  | { id: 'schedule' | 'overview' | 'currency' | 'connectivity' | 'culture'; label: string }
-  | { id: 'emergency' | 'health' | 'language' | 'visa'; labelKey: string }
+  | { id: SectionId; label: string }
+  | { id: SectionId; labelKey: string }
 > = [
   { id: 'schedule', label: 'Schedule' },
   { id: 'overview', label: 'Overview' },
+  { id: 'packing', label: 'Packing' },
+  { id: 'jetlag', label: 'Jet Lag' },
+  { id: 'crowds', label: 'Crowds' },
   { id: 'emergency', labelKey: 'prep.emergency' },
   { id: 'health', labelKey: 'prep.health' },
   { id: 'language', labelKey: 'prep.language' },
@@ -546,17 +564,20 @@ function EmbassyCard({ data }: { data: EmergencyData }) {
 }
 
 // ---------------------------------------------------------------------------
-// Health Tab
+// Health Tab — redesigned for clarity
 // ---------------------------------------------------------------------------
 function HealthTab({
   safety,
   tapWaterFromCultural,
   medicalGuide,
+  destination,
 }: {
   safety: SafetyData;
   tapWaterFromCultural: boolean | null;
   medicalGuide: MedicalGuide | null;
+  destination: string;
 }) {
+  const router = useRouter();
   const tapSafe = safety.tapWaterSafe ?? tapWaterFromCultural ?? medicalGuide?.tapWaterSafe ?? false;
 
   const hospitalColor =
@@ -570,117 +591,206 @@ function HealthTab({
     : medicalGuide?.insurancePriority === 'recommended' ? COLORS.gold
     : COLORS.sage;
 
+  const requiredVaccines = safety.vaccinations.filter((v) => v.required);
+  const recommendedVaccines = safety.vaccinations.filter((v) => !v.required);
+  const healthRisks = medicalGuide?.healthRisks ?? safety.commonHealthRisks;
+
   return (
     <View style={styles.tabContent}>
-      {/* Medical guide — hospital & pharmacy intel */}
-      {medicalGuide && (
-        <>
-          <View style={styles.medicalGrid}>
-            <View style={styles.medicalGridItem}>
-              <Stethoscope size={18} color={hospitalColor} />
-              <Text style={styles.medicalGridLabel}>Hospitals</Text>
-              <Text style={[styles.medicalGridValue, { color: hospitalColor }]}>
+      {/* ── 1. The Big Three: Water · Insurance · Hospital ── */}
+      <View style={styles.healthQuickGlance}>
+        {/* Tap Water — biggest, most asked question */}
+        <View style={[styles.healthQuickCard, {
+          backgroundColor: tapSafe ? COLORS.sage + '18' : COLORS.coral + '18',
+          borderColor: tapSafe ? COLORS.sage + '40' : COLORS.coral + '40',
+        }]}>
+          <Droplets size={28} color={tapSafe ? COLORS.sage : COLORS.coral} />
+          <Text style={[styles.healthQuickValue, { color: tapSafe ? COLORS.sage : COLORS.coral }]}>
+            {tapSafe ? 'Tap water safe' : 'Don\'t drink tap water'}
+          </Text>
+          {medicalGuide?.waterNote ? (
+            <Text style={styles.healthQuickNote}>{medicalGuide.waterNote}</Text>
+          ) : !tapSafe ? (
+            <Text style={styles.healthQuickNote}>Stick to bottled or filtered water</Text>
+          ) : null}
+        </View>
+
+        {/* Two-column: Insurance + Hospitals */}
+        <View style={styles.healthQuickRow}>
+          <View style={[styles.healthQuickCardSmall, {
+            backgroundColor: insuranceColor + '14',
+            borderColor: insuranceColor + '30',
+          }]}>
+            <AlertTriangle size={20} color={insuranceColor} />
+            <Text style={[styles.healthQuickSmallLabel, { color: insuranceColor }]}>
+              Insurance
+            </Text>
+            <Text style={[styles.healthQuickSmallValue, { color: insuranceColor }]}>
+              {medicalGuide?.insurancePriority === 'critical' ? 'Critical'
+                : medicalGuide?.insurancePriority === 'recommended' ? 'Get it'
+                : medicalGuide ? 'Nice to have' : 'Recommended'}
+            </Text>
+          </View>
+
+          {medicalGuide ? (
+            <View style={[styles.healthQuickCardSmall, {
+              backgroundColor: hospitalColor + '14',
+              borderColor: hospitalColor + '30',
+            }]}>
+              <Stethoscope size={20} color={hospitalColor} />
+              <Text style={[styles.healthQuickSmallLabel, { color: hospitalColor }]}>
+                Hospitals
+              </Text>
+              <Text style={[styles.healthQuickSmallValue, { color: hospitalColor }]}>
                 {medicalGuide.hospitalQuality.charAt(0).toUpperCase() + medicalGuide.hospitalQuality.slice(1)}
               </Text>
-              <Text style={styles.medicalGridNote}>{medicalGuide.hospitalNote}</Text>
             </View>
-            <View style={styles.medicalGridItem}>
-              <Pill size={18} color={medicalGuide.pharmacyOTC ? COLORS.sage : COLORS.gold} />
-              <Text style={styles.medicalGridLabel}>Pharmacy</Text>
-              <Text style={[styles.medicalGridValue, { color: medicalGuide.pharmacyOTC ? COLORS.sage : COLORS.gold }]}>
-                {medicalGuide.pharmacyOTC ? 'OTC available' : 'Rx required'}
+          ) : (
+            <View style={[styles.healthQuickCardSmall, {
+              backgroundColor: COLORS.bgElevated,
+              borderColor: COLORS.border,
+            }]}>
+              <Stethoscope size={20} color={COLORS.creamMuted} />
+              <Text style={styles.healthQuickSmallLabel}>Hospitals</Text>
+              <Text style={[styles.healthQuickSmallValue, { color: COLORS.creamMuted }]}>
+                Research locally
               </Text>
-              <Text style={styles.medicalGridNote}>{medicalGuide.pharmacyNote}</Text>
+            </View>
+          )}
+        </View>
+      </View>
+
+      {/* ── 2. Medical Details (if available) ── */}
+      {medicalGuide && (
+        <View style={styles.healthSection}>
+          <Text style={styles.healthSectionTitle}>Medical Details</Text>
+
+          {/* Pharmacy */}
+          <View style={styles.healthDetailRow}>
+            <Pill size={16} color={medicalGuide.pharmacyOTC ? COLORS.sage : COLORS.gold} />
+            <View style={styles.healthDetailContent}>
+              <Text style={styles.healthDetailLabel}>
+                Pharmacy: {medicalGuide.pharmacyOTC ? 'OTC meds available' : 'Prescription required'}
+              </Text>
+              <Text style={styles.healthDetailNote}>{medicalGuide.pharmacyNote}</Text>
             </View>
           </View>
 
+          {/* ER Cost */}
           {medicalGuide.erCostRange && (
-            <View style={styles.medicalCostRow}>
-              <Heart size={14} color={COLORS.coral} />
-              <Text style={styles.medicalCostText}>
-                ER visit without insurance: {medicalGuide.erCostRange}
-              </Text>
+            <View style={styles.healthDetailRow}>
+              <Heart size={16} color={COLORS.coral} />
+              <View style={styles.healthDetailContent}>
+                <Text style={styles.healthDetailLabel}>ER visit (no insurance)</Text>
+                <Text style={[styles.healthDetailNote, { color: COLORS.coral }]}>
+                  {medicalGuide.erCostRange}
+                </Text>
+              </View>
             </View>
           )}
 
-          <View style={[styles.insuranceCard, { backgroundColor: insuranceColor + '14' }]}>
-            <AlertTriangle size={18} color={insuranceColor} />
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.insuranceText, { color: insuranceColor }]}>
-                Insurance: {medicalGuide.insurancePriority === 'critical' ? 'Critical' : medicalGuide.insurancePriority === 'recommended' ? 'Recommended' : 'Nice to have'}
-              </Text>
-              <Text style={styles.medicalGridNote}>{medicalGuide.insuranceNote}</Text>
+          {/* Insurance note */}
+          {medicalGuide.insuranceNote && (
+            <View style={styles.healthDetailRow}>
+              <AlertTriangle size={16} color={insuranceColor} />
+              <View style={styles.healthDetailContent}>
+                <Text style={styles.healthDetailNote}>{medicalGuide.insuranceNote}</Text>
+              </View>
             </View>
-          </View>
-
-          {medicalGuide.whereToGo.length > 0 && (
-            <>
-              <Text style={styles.healthSectionLabel}>Where to Go</Text>
-              {medicalGuide.whereToGo.map((item, i) => (
-                <View key={i} style={styles.whereToGoRow}>
-                  <Text style={styles.whereToGoCondition}>{item.condition}</Text>
-                  <Text style={styles.whereToGoGo}>{item.go}</Text>
-                </View>
-              ))}
-            </>
           )}
-        </>
-      )}
 
-      <Text style={styles.healthSectionLabel}>Required Vaccinations</Text>
-      {safety.vaccinations
-        .filter((v) => v.required)
-        .map((v, i) => (
-          <View key={i} style={styles.vaccineRow}>
-            <CheckCircle size={14} color={COLORS.sage} />
-            <Text style={styles.vaccineName}>{v.name}</Text>
-          </View>
-        ))}
-      {safety.vaccinations.filter((v) => v.required).length === 0 && (
-        <Text style={styles.healthMuted}>Routine immunizations recommended</Text>
-      )}
-
-      <Text style={[styles.healthSectionLabel, { marginTop: SPACING.md }]}>
-        Recommended Vaccinations
-      </Text>
-      {safety.vaccinations
-        .filter((v) => !v.required)
-        .map((v, i) => (
-          <View key={i} style={styles.vaccineRow}>
-            <CheckCircle size={14} color={COLORS.sage} />
-            <Text style={styles.vaccineName}>{v.name}</Text>
-          </View>
-        ))}
-
-      {!medicalGuide && (
-        <View style={[styles.insuranceCard, { backgroundColor: COLORS.goldFaint }]}>
-          <AlertTriangle size={18} color={COLORS.gold} />
-          <Text style={styles.insuranceText}>Travel insurance strongly recommended</Text>
+          {/* Hospital note */}
+          {medicalGuide.hospitalNote && (
+            <View style={styles.healthDetailRow}>
+              <Stethoscope size={16} color={hospitalColor} />
+              <View style={styles.healthDetailContent}>
+                <Text style={styles.healthDetailNote}>{medicalGuide.hospitalNote}</Text>
+              </View>
+            </View>
+          )}
         </View>
       )}
 
-      <View style={styles.tapWaterWrap}>
-        <Droplets size={24} color={tapSafe ? COLORS.sage : COLORS.coral} />
-        <Text
-          style={[
-            styles.tapWaterLabel,
-            { color: tapSafe ? COLORS.sage : COLORS.coral },
-          ]}
-        >
-          {tapSafe ? 'Safe to drink' : 'Do not drink'}
-        </Text>
-        {medicalGuide?.waterNote && (
-          <Text style={styles.medicalGridNote}>{medicalGuide.waterNote}</Text>
+      {/* ── 3. If You Get Sick ── */}
+      {medicalGuide && medicalGuide.whereToGo.length > 0 && (
+        <View style={styles.healthSection}>
+          <Text style={styles.healthSectionTitle}>If You Get Sick</Text>
+          {medicalGuide.whereToGo.map((item, i) => (
+            <View key={i} style={styles.whereToGoRow}>
+              <Text style={styles.whereToGoCondition}>{item.condition}</Text>
+              <Text style={styles.whereToGoGo}>→ {item.go}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {/* ── 4. Vaccinations ── */}
+      <View style={styles.healthSection}>
+        <Text style={styles.healthSectionTitle}>Vaccinations</Text>
+
+        {requiredVaccines.length > 0 ? (
+          <>
+            <Text style={styles.healthSubLabel}>REQUIRED</Text>
+            {requiredVaccines.map((v, i) => (
+              <View key={i} style={styles.vaccineRow}>
+                <AlertTriangle size={14} color={COLORS.coral} />
+                <Text style={[styles.vaccineName, { color: COLORS.coral }]}>{v.name}</Text>
+              </View>
+            ))}
+          </>
+        ) : (
+          <View style={styles.healthGoodNews}>
+            <CheckCircle size={16} color={COLORS.sage} />
+            <Text style={styles.healthGoodNewsText}>No required vaccinations</Text>
+          </View>
+        )}
+
+        {recommendedVaccines.length > 0 && (
+          <>
+            <Text style={[styles.healthSubLabel, { marginTop: SPACING.md }]}>RECOMMENDED</Text>
+            {recommendedVaccines.map((v, i) => (
+              <View key={i} style={styles.vaccineRow}>
+                <CheckCircle size={14} color={COLORS.sage} />
+                <Text style={styles.vaccineName}>{v.name}</Text>
+              </View>
+            ))}
+          </>
         )}
       </View>
 
-      <Text style={styles.healthSectionLabel}>Common Health Risks</Text>
-      {(medicalGuide?.healthRisks ?? safety.commonHealthRisks).map((risk, i) => (
-        <View key={i} style={styles.healthRiskRow}>
-          <View style={styles.healthRiskDot} />
-          <Text style={styles.healthRiskText}>{risk}</Text>
+      {/* ── 5. Health Risks ── */}
+      {healthRisks.length > 0 && (
+        <View style={styles.healthSection}>
+          <Text style={styles.healthSectionTitle}>Watch Out For</Text>
+          {healthRisks.map((risk, i) => (
+            <View key={i} style={styles.healthRiskRow}>
+              <View style={styles.healthRiskDot} />
+              <Text style={styles.healthRiskText}>{risk}</Text>
+            </View>
+          ))}
         </View>
-      ))}
+      )}
+
+      {/* ── 6. Body Intel CTA ── */}
+      <Pressable
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          router.push({ pathname: '/body-intel', params: { destination } } as never);
+        }}
+        style={({ pressed }) => [
+          styles.bodyIntelCta,
+          pressed && { opacity: 0.7 },
+        ]}
+      >
+        <ShieldCheck size={20} color={COLORS.sage} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.bodyIntelCtaTitle}>Body Intel</Text>
+          <Text style={styles.bodyIntelCtaSubtitle}>
+            Symptom checker, emergency phrases & local medication
+          </Text>
+        </View>
+        <ChevronRight size={18} color={COLORS.creamMuted} />
+      </Pressable>
     </View>
   );
 }
@@ -1023,6 +1133,366 @@ function CultureTab({
 }
 
 // ---------------------------------------------------------------------------
+// Trip Countdown Hero
+// ---------------------------------------------------------------------------
+function TripCountdownHero({
+  trip,
+  destination,
+}: {
+  trip: Trip | null;
+  destination: string;
+}) {
+  if (!trip) return null;
+
+  const tripDuration = trip.days ?? 0;
+
+  return (
+    <View style={countdownStyles.container}>
+      <View style={countdownStyles.row}>
+        <View style={countdownStyles.numberWrap}>
+          <Text style={countdownStyles.number}>{tripDuration}</Text>
+          <Text style={countdownStyles.unit}>days</Text>
+        </View>
+        <View style={countdownStyles.details}>
+          <Text style={countdownStyles.heading}>{destination}</Text>
+          <Text style={countdownStyles.dates}>
+            {trip.budget} budget · {trip.vibes.slice(0, 2).join(', ')}
+          </Text>
+          <Text style={countdownStyles.duration}>
+            {trip.isMockData ? 'Sample trip' : 'Your trip'}
+          </Text>
+        </View>
+        <Plane size={24} color={COLORS.sage} strokeWidth={2} />
+      </View>
+    </View>
+  );
+}
+
+const countdownStyles = StyleSheet.create({
+  container: {
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.sage + '30',
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+  } as ViewStyle,
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+  } as ViewStyle,
+  numberWrap: {
+    alignItems: 'center',
+  } as ViewStyle,
+  number: {
+    fontFamily: FONTS.header,
+    fontSize: 48,
+    color: COLORS.sage,
+    lineHeight: 52,
+  } as TextStyle,
+  unit: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    marginTop: -4,
+  } as TextStyle,
+  details: {
+    flex: 1,
+    gap: 4,
+  } as ViewStyle,
+  heading: {
+    fontFamily: FONTS.header,
+    fontSize: 22,
+    color: COLORS.cream,
+  } as TextStyle,
+  dates: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+  } as TextStyle,
+  duration: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+  } as TextStyle,
+});
+
+// ---------------------------------------------------------------------------
+// Jet Lag Tab
+// ---------------------------------------------------------------------------
+function JetLagTab({ destination }: { destination: string }) {
+  const jetLag = useMemo(() => getJetLagForDestination(destination), [destination]);
+
+  if (!jetLag || jetLag.severity === 'none') {
+    return (
+      <View style={styles.tabContent}>
+        <View style={jetLagStyles.noLag}>
+          <Coffee size={24} color={COLORS.sage} />
+          <Text style={jetLagStyles.noLagTitle}>No jet lag expected</Text>
+          <Text style={styles.noDataText}>
+            {destination} is in a similar timezone — no adjustment needed.
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  const severityColor =
+    jetLag.severity === 'severe' ? COLORS.coral
+    : jetLag.severity === 'moderate' ? COLORS.gold
+    : COLORS.sage;
+
+  return (
+    <View style={styles.tabContent}>
+      {/* Severity hero */}
+      <View style={[jetLagStyles.heroCard, { borderColor: severityColor + '30' }]}>
+        <View style={jetLagStyles.heroRow}>
+          <View>
+            <Text style={[jetLagStyles.heroHours, { color: severityColor }]}>
+              {jetLag.hoursDifference}h {jetLag.direction}
+            </Text>
+            <Text style={jetLagStyles.heroSeverity}>
+              {jetLag.severity.charAt(0).toUpperCase() + jetLag.severity.slice(1)} jet lag
+            </Text>
+          </View>
+          <View style={jetLagStyles.recoveryBadge}>
+            <BedDouble size={16} color={COLORS.cream} />
+            <Text style={jetLagStyles.recoveryText}>
+              ~{jetLag.recoveryDays} day{jetLag.recoveryDays !== 1 ? 's' : ''} to adjust
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Dual clocks */}
+      <View style={{ marginBottom: SPACING.lg }}>
+        <DualClockWidget destination={destination} />
+      </View>
+
+      {/* Pre-flight advice */}
+      <Text style={styles.healthSectionLabel}>Before Your Flight</Text>
+      <View style={jetLagStyles.adviceCard}>
+        <Plane size={16} color={COLORS.sage} />
+        <Text style={jetLagStyles.adviceText}>{jetLag.preFlightAdvice}</Text>
+      </View>
+
+      {/* Arrival strategy */}
+      <Text style={[styles.healthSectionLabel, { marginTop: SPACING.md }]}>On Arrival</Text>
+      <View style={jetLagStyles.adviceCard}>
+        <MapPin size={16} color={COLORS.gold} />
+        <Text style={jetLagStyles.adviceText}>{jetLag.arrivalStrategy}</Text>
+      </View>
+
+      {/* Melatonin window */}
+      {jetLag.melatoninWindow && (
+        <>
+          <Text style={[styles.healthSectionLabel, { marginTop: SPACING.md }]}>Melatonin</Text>
+          <View style={jetLagStyles.adviceCard}>
+            <Pill size={16} color={COLORS.coral} />
+            <Text style={jetLagStyles.adviceText}>{jetLag.melatoninWindow}</Text>
+          </View>
+        </>
+      )}
+
+      {/* Tips */}
+      <Text style={[styles.healthSectionLabel, { marginTop: SPACING.md }]}>Adjustment Tips</Text>
+      {jetLag.tips.map((tip, i) => (
+        <View key={i} style={jetLagStyles.tipRow}>
+          <View style={[jetLagStyles.tipDot, { backgroundColor: severityColor }]} />
+          <Text style={jetLagStyles.tipText}>{tip}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+const jetLagStyles = StyleSheet.create({
+  heroCard: {
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+  } as ViewStyle,
+  heroRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  } as ViewStyle,
+  heroHours: {
+    fontFamily: FONTS.header,
+    fontSize: 28,
+  } as TextStyle,
+  heroSeverity: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.creamMuted,
+    marginTop: 2,
+  } as TextStyle,
+  recoveryBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: COLORS.bgElevated,
+    borderRadius: RADIUS.full,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+  } as ViewStyle,
+  recoveryText: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.cream,
+  } as TextStyle,
+  adviceCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.bgElevated,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
+  } as ViewStyle,
+  adviceText: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.cream,
+    flex: 1,
+    lineHeight: 19,
+  } as TextStyle,
+  tipRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
+  } as ViewStyle,
+  tipDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginTop: 6,
+  } as ViewStyle,
+  tipText: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.cream,
+    flex: 1,
+    lineHeight: 19,
+  } as TextStyle,
+  noLag: {
+    alignItems: 'center',
+    paddingVertical: SPACING.xl,
+    gap: SPACING.sm,
+  } as ViewStyle,
+  noLagTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 20,
+    color: COLORS.cream,
+  } as TextStyle,
+});
+
+// ---------------------------------------------------------------------------
+// Packing Tab
+// ---------------------------------------------------------------------------
+function PackingTab({
+  destination,
+  trip,
+  itinerary,
+}: {
+  destination: string;
+  trip: Trip | null;
+  itinerary: Itinerary | null;
+}) {
+  const essentials = useMemo(() => {
+    // Use AI-generated packing essentials from itinerary first
+    if (itinerary?.packingEssentials?.length) {
+      return itinerary.packingEssentials;
+    }
+    // Fallback: extract "bring" tips from day activities
+    const items: string[] = [];
+    if (itinerary?.days) {
+      for (const day of itinerary.days) {
+        for (const slot of ['morning', 'afternoon', 'evening'] as const) {
+          const tip = day[slot]?.tip;
+          if (tip && tip.toLowerCase().includes('bring')) {
+            items.push(tip);
+          }
+        }
+      }
+    }
+    return items.slice(0, 5);
+  }, [itinerary]);
+
+  return (
+    <View style={styles.tabContent}>
+      <PackingList
+        essentials={essentials}
+        destination={destination}
+        tripId={trip?.id}
+      />
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Crowds Tab
+// ---------------------------------------------------------------------------
+function CrowdsTab({
+  destination,
+  trip,
+}: {
+  destination: string;
+  trip: Trip | null;
+}) {
+  const { startDate, endDate } = useMemo(() => {
+    const now = new Date();
+    const start = now.toISOString().split('T')[0];
+    const days = trip?.days ?? 7;
+    const end = new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    return { startDate: start, endDate: end };
+  }, [trip?.days]);
+
+  return (
+    <View style={styles.tabContent}>
+      <View style={crowdsStyles.header}>
+        <Users size={20} color={COLORS.sage} />
+        <Text style={crowdsStyles.title}>Crowd Forecast</Text>
+      </View>
+      <Text style={crowdsStyles.subtitle}>
+        How busy {destination} will be during your trip
+      </Text>
+      <HolidayCrowdCalendar
+        destination={destination}
+        startDate={startDate}
+        endDate={endDate}
+      />
+    </View>
+  );
+}
+
+const crowdsStyles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: 4,
+  } as ViewStyle,
+  title: {
+    fontFamily: FONTS.header,
+    fontSize: 22,
+    color: COLORS.cream,
+  } as TextStyle,
+  subtitle: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamMuted,
+    marginBottom: SPACING.lg,
+  } as TextStyle,
+});
+
+// ---------------------------------------------------------------------------
 // No-Data State
 // ---------------------------------------------------------------------------
 function NoDataState({ destination }: { destination: string }) {
@@ -1213,6 +1683,7 @@ const intelStyles = StyleSheet.create({
 // Main Screen
 // ---------------------------------------------------------------------------
 function PrepScreen() {
+  const router = useRouter();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const netInfo = useNetInfo();
@@ -1228,9 +1699,7 @@ function PrepScreen() {
   const [selectedDest, setSelectedDest] = useState(
     activeTrip?.destination ?? DESTINATIONS[0]?.label ?? 'Tokyo'
   );
-  const [activeSection, setActiveSection] = useState<
-    'schedule' | 'overview' | 'emergency' | 'health' | 'language' | 'visa' | 'currency' | 'connectivity' | 'culture'
-  >('schedule');
+  const [activeSection, setActiveSection] = useState<SectionId>('schedule');
 
   useEffect(() => {
     if (activeTrip) {
@@ -1303,6 +1772,11 @@ function PrepScreen() {
           <NoDataState destination={selectedDest} />
         ) : (
           <>
+            <TripCountdownHero
+              trip={activeTrip}
+              destination={selectedDest}
+            />
+
             <SafetyScoreHero
               safety={safety}
               destination={selectedDest}
@@ -1367,8 +1841,31 @@ function PrepScreen() {
               <OverviewTab safety={safety} />
             )}
 
+            {activeSection === 'packing' && (
+              <PackingTab
+                destination={selectedDest}
+                trip={activeTrip}
+                itinerary={parsedItinerary}
+              />
+            )}
+
+            {activeSection === 'jetlag' && (
+              <JetLagTab destination={selectedDest} />
+            )}
+
+            {activeSection === 'crowds' && (
+              <CrowdsTab destination={selectedDest} trip={activeTrip} />
+            )}
+
             {activeSection === 'emergency' && (
               <View style={styles.tabContent}>
+                {/* I Am Here Now — lifeline card with big tap-to-call buttons */}
+                <IAmHereNow
+                  destination={selectedDest}
+                  hotelName={parsedItinerary?.days?.[0]?.accommodation?.name ?? undefined}
+                  hotelAddress={undefined}
+                />
+
                 <SOSButton
                   onActivate={() => {}}
                   emergency={emergency}
@@ -1383,6 +1880,28 @@ function PrepScreen() {
                     Emergency numbers not available for {selectedDest}. Select another destination.
                   </Text>
                 )}
+
+                {/* Emergency Medical Card CTA */}
+                <Pressable
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    router.push({ pathname: '/emergency-card', params: { destination: selectedDest } } as never);
+                  }}
+                  style={({ pressed }) => [
+                    styles.bodyIntelCta,
+                    { borderColor: COLORS.coral + '30', backgroundColor: COLORS.coral + '14' },
+                    pressed && { opacity: 0.7 },
+                  ]}
+                >
+                  <Heart size={20} color={COLORS.coral} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.bodyIntelCtaTitle, { color: COLORS.coral }]}>Emergency Medical Card</Text>
+                    <Text style={styles.bodyIntelCtaSubtitle}>
+                      One-tap card with your allergies, meds & blood type in local language
+                    </Text>
+                  </View>
+                  <ChevronRight size={18} color={COLORS.creamMuted} />
+                </Pressable>
               </View>
             )}
 
@@ -1391,6 +1910,7 @@ function PrepScreen() {
                 safety={safety}
                 tapWaterFromCultural={tapWaterFromCultural}
                 medicalGuide={medicalGuide}
+                destination={selectedDest}
               />
             )}
 
@@ -1428,6 +1948,30 @@ function PrepScreen() {
               <CultureTab cultural={cultural} destination={selectedDest} />
             )}
           </>
+        )}
+
+        {/* Before You Land — quick action */}
+        {!hasNoData && (
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push({ pathname: '/before-you-land', params: { destination: selectedDest } } as never);
+            }}
+            style={({ pressed }) => [
+              styles.bodyIntelCta,
+              { borderColor: COLORS.gold + '30', backgroundColor: COLORS.gold + '14', marginTop: SPACING.lg },
+              pressed && { opacity: 0.7 },
+            ]}
+          >
+            <Plane size={20} color={COLORS.gold} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.bodyIntelCtaTitle, { color: COLORS.gold }]}>Before You Land</Text>
+              <Text style={styles.bodyIntelCtaSubtitle}>
+                Pre-departure brief: weather, currency, time zone & essentials
+              </Text>
+            </View>
+            <ChevronRight size={18} color={COLORS.creamMuted} />
+          </Pressable>
         )}
 
         {!hasNoData && (
@@ -1747,11 +2291,107 @@ const styles = StyleSheet.create({
     color: COLORS.cream,
   } as TextStyle,
 
+  // Health tab — redesigned styles
+  healthQuickGlance: {
+    gap: SPACING.sm,
+    marginBottom: SPACING.lg,
+  } as ViewStyle,
+  healthQuickCard: {
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    padding: SPACING.lg,
+    alignItems: 'center',
+    gap: 8,
+  } as ViewStyle,
+  healthQuickValue: {
+    fontFamily: FONTS.header,
+    fontSize: 22,
+    textAlign: 'center',
+  } as TextStyle,
+  healthQuickNote: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+    textAlign: 'center',
+    lineHeight: 16,
+  } as TextStyle,
+  healthQuickRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  } as ViewStyle,
+  healthQuickCardSmall: {
+    flex: 1,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    padding: SPACING.md,
+    alignItems: 'center',
+    gap: 6,
+  } as ViewStyle,
+  healthQuickSmallLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: COLORS.creamMuted,
+  } as TextStyle,
+  healthQuickSmallValue: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+  } as TextStyle,
+  healthSection: {
+    marginBottom: SPACING.lg,
+  } as ViewStyle,
+  healthSectionTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 18,
+    color: COLORS.cream,
+    marginBottom: SPACING.md,
+  } as TextStyle,
   healthSectionLabel: {
     fontFamily: FONTS.mono,
     fontSize: 11,
     color: COLORS.sage,
     marginBottom: SPACING.sm,
+  } as TextStyle,
+  healthSubLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.creamMuted,
+    letterSpacing: 1.5,
+    marginBottom: SPACING.xs,
+  } as TextStyle,
+  healthDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
+    paddingVertical: 4,
+  } as ViewStyle,
+  healthDetailContent: {
+    flex: 1,
+  } as ViewStyle,
+  healthDetailLabel: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.cream,
+    marginBottom: 2,
+  } as TextStyle,
+  healthDetailNote: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+    lineHeight: 16,
+  } as TextStyle,
+  healthGoodNews: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    paddingVertical: 4,
+  } as ViewStyle,
+  healthGoodNewsText: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.sage,
   } as TextStyle,
   vaccineRow: {
     flexDirection: 'row',
@@ -1812,48 +2452,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.cream,
   } as TextStyle,
-  medicalGrid: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-    marginBottom: SPACING.md,
-  } as ViewStyle,
-  medicalGridItem: {
-    flex: 1,
-    backgroundColor: COLORS.bgElevated,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    gap: 4,
-  } as ViewStyle,
-  medicalGridLabel: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.creamMuted,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginTop: 4,
-  } as TextStyle,
-  medicalGridValue: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 14,
-  } as TextStyle,
   medicalGridNote: {
     fontFamily: FONTS.body,
     fontSize: 12,
     color: COLORS.creamMuted,
     lineHeight: 16,
     marginTop: 2,
-  } as TextStyle,
-  medicalCostRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    marginBottom: SPACING.sm,
-    paddingHorizontal: SPACING.xs,
-  } as ViewStyle,
-  medicalCostText: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.coral,
   } as TextStyle,
   whereToGoRow: {
     backgroundColor: COLORS.bgElevated,
@@ -2248,6 +2852,28 @@ const styles = StyleSheet.create({
     color: COLORS.cream,
     flex: 1,
     lineHeight: 18,
+  } as TextStyle,
+  bodyIntelCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginTop: SPACING.lg,
+    padding: SPACING.md,
+    backgroundColor: COLORS.sage + '14',
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.sage + '30',
+  } as ViewStyle,
+  bodyIntelCtaTitle: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.sage,
+  } as TextStyle,
+  bodyIntelCtaSubtitle: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+    marginTop: 2,
   } as TextStyle,
 });
 

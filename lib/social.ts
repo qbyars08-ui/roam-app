@@ -16,6 +16,13 @@ import type {
   LocationCheckIn,
   ChatMessage,
   VibeTag,
+  PublicTrip,
+  NightlifeVenue,
+  NightlifeGroup,
+  LocalProfile,
+  LocalBooking,
+  LocalOfferType,
+  ChatChannel,
 } from './types/social';
 
 // ---------------------------------------------------------------------------
@@ -587,4 +594,265 @@ export function subscribeToChatMessages(
   return () => {
     supabase.removeChannel(channel);
   };
+}
+
+// ---------------------------------------------------------------------------
+// Trip Presence — additional queries
+// ---------------------------------------------------------------------------
+
+/** Fetch the current user's active trip presences */
+export async function getMyTripPresences(): Promise<TripPresence[]> {
+  const userId = getUserId();
+  const { data } = await supabase
+    .from('trip_presence')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false });
+  return (data ?? []) as TripPresence[];
+}
+
+/** Fetch all active trip presences, optionally filtered by destination city */
+export async function getTripPresenceFeed(city?: string): Promise<TripPresence[]> {
+  let query = supabase
+    .from('trip_presence')
+    .select('*, social_profiles!inner(*)')
+    .eq('status', 'active')
+    .eq('social_profiles.visibility', 'visible')
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (city) {
+    query = query.eq('destination', city);
+  }
+
+  const { data } = await query;
+  return (data ?? []) as TripPresence[];
+}
+
+/** Fetch a specific user's social profile by user_id */
+export async function getSocialProfileById(userId: string): Promise<SocialProfile | null> {
+  const { data } = await supabase
+    .from('social_profiles')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
+  return data as SocialProfile | null;
+}
+
+/** Remove a trip presence by setting status to hidden */
+export async function removeTripPresence(presenceId: string): Promise<boolean> {
+  const userId = getUserId();
+  const { error } = await supabase
+    .from('trip_presence')
+    .update({ status: 'hidden' })
+    .eq('id', presenceId)
+    .eq('user_id', userId);
+  return !error;
+}
+
+// ---------------------------------------------------------------------------
+// Feature 5: Group Trip Builder
+// ---------------------------------------------------------------------------
+
+/** Fetch open public trips, optionally filtered by destination */
+export async function getPublicTrips(destination?: string): Promise<PublicTrip[]> {
+  let query = supabase
+    .from('public_trips')
+    .select('*')
+    .eq('status', 'open')
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  if (destination) {
+    query = query.eq('destination', destination);
+  }
+
+  const { data } = await query;
+  return (data ?? []) as PublicTrip[];
+}
+
+/** Create a new public trip */
+export async function createPublicTrip(params: {
+  destination: string;
+  startDate: string;
+  endDate: string;
+  days: number;
+  budget: string;
+  vibes: string[];
+  description: string;
+  maxMembers: number;
+  itineraryId?: string;
+}): Promise<PublicTrip | null> {
+  const userId = getUserId();
+  const { data } = await supabase
+    .from('public_trips')
+    .insert({
+      creator_id: userId,
+      destination: params.destination,
+      start_date: params.startDate,
+      end_date: params.endDate,
+      days: params.days,
+      budget: params.budget,
+      vibes: params.vibes,
+      description: params.description,
+      max_members: params.maxMembers,
+      current_members: [userId],
+      itinerary_id: params.itineraryId ?? null,
+      status: 'open',
+    })
+    .select()
+    .single();
+  return data as PublicTrip | null;
+}
+
+/** Request to join a public trip */
+export async function requestJoinPublicTrip(tripId: string, message: string): Promise<boolean> {
+  const userId = getUserId();
+  const { error } = await supabase.from('trip_join_requests').insert({
+    trip_id: tripId,
+    requester_id: userId,
+    message,
+    status: 'pending',
+  });
+  return !error;
+}
+
+// ---------------------------------------------------------------------------
+// Feature 4: Nightlife Crew
+// ---------------------------------------------------------------------------
+
+/** Fetch nightlife venues in a city, ordered by roam users going */
+export async function getNightlifeVenues(city: string): Promise<NightlifeVenue[]> {
+  const { data } = await supabase
+    .from('nightlife_venues')
+    .select('*')
+    .eq('city', city)
+    .order('roam_users_going', { ascending: false })
+    .limit(20);
+  return (data ?? []) as NightlifeVenue[];
+}
+
+/** Find or create a nightlife group for a venue+date, then add the current user */
+export async function joinNightlifeGroup(venueId: string, date: string): Promise<NightlifeGroup | null> {
+  const userId = getUserId();
+
+  // Find existing group for this venue + date
+  let { data: group } = await supabase
+    .from('nightlife_groups')
+    .select('*')
+    .eq('venue_id', venueId)
+    .eq('date', date)
+    .in('status', ['forming', 'active'])
+    .single();
+
+  if (!group) {
+    // Create a new group
+    const { data: newGroup } = await supabase
+      .from('nightlife_groups')
+      .insert({
+        venue_id: venueId,
+        date,
+        member_ids: [userId],
+        chat_channel_id: null,
+        status: 'forming',
+      })
+      .select()
+      .single();
+    group = newGroup;
+  } else {
+    // Add user to existing group's member_ids if not already present
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase row boundary
+    const existing = (group as any).member_ids as string[];
+    if (!existing.includes(userId)) {
+      const updated = [...existing, userId];
+      const { data: updatedGroup } = await supabase
+        .from('nightlife_groups')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase row boundary
+        .update({ member_ids: updated })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase row boundary
+        .eq('id', (group as any).id)
+        .select()
+        .single();
+      group = updatedGroup;
+    }
+  }
+
+  return group as NightlifeGroup | null;
+}
+
+// ---------------------------------------------------------------------------
+// Feature 6: Local Connect
+// ---------------------------------------------------------------------------
+
+/** Fetch active local profiles in a city */
+export async function getLocalProfiles(city: string): Promise<LocalProfile[]> {
+  const { data } = await supabase
+    .from('local_profiles')
+    .select('*')
+    .eq('city', city)
+    .eq('status', 'active')
+    .limit(20);
+  return (data ?? []) as LocalProfile[];
+}
+
+/** Book a local experience */
+export async function bookLocal(
+  localId: string,
+  offerType: LocalOfferType,
+  date: string,
+  timeSlot: 'morning' | 'afternoon' | 'evening',
+  message: string,
+): Promise<LocalBooking | null> {
+  const userId = getUserId();
+  const { data } = await supabase
+    .from('local_bookings')
+    .insert({
+      local_id: localId,
+      traveler_id: userId,
+      offer_type: offerType,
+      date,
+      time_slot: timeSlot,
+      message,
+      status: 'pending',
+      review_left: false,
+    })
+    .select()
+    .single();
+  return data as LocalBooking | null;
+}
+
+// ---------------------------------------------------------------------------
+// Chat — additional queries
+// ---------------------------------------------------------------------------
+
+/** Fetch all chat channels the current user is a member of */
+export async function getMyChats(): Promise<ChatChannel[]> {
+  const userId = getUserId();
+  const { data } = await supabase
+    .from('social_chat_channels')
+    .select('*')
+    .contains('member_ids', [userId])
+    .order('last_message_at', { ascending: false });
+  return (data ?? []) as ChatChannel[];
+}
+
+/** Count unread messages: messages in user's channels from last 24h not sent by user */
+export async function getUnreadCount(): Promise<number> {
+  const userId = getUserId();
+
+  const channels = await getMyChats();
+  if (!channels.length) return 0;
+
+  const channelIds = channels.map((c) => c.id);
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+  const { count } = await supabase
+    .from('social_chat_messages')
+    .select('*', { count: 'exact', head: true })
+    .in('channel_id', channelIds)
+    .neq('sender_id', userId)
+    .gte('created_at', since);
+
+  return count ?? 0;
 }

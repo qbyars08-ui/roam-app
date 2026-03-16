@@ -34,6 +34,8 @@ import { trackItineraryOutcome } from '../lib/ai-improvement';
 import { track } from '../lib/analytics';
 import Button from '../components/ui/Button';
 import { EmptySuitcase } from '../components/ui/EmptyStateIllustrations';
+import TravelStats from '../components/features/TravelStats';
+import { BookOpen, BarChart3, Play, Clock, Wallet, Camera, PenLine } from 'lucide-react-native';
 
 // ---------------------------------------------------------------------------
 // Trip card component
@@ -44,12 +46,22 @@ function TripCard({
   onDelete,
   onHype,
   onInvite,
+  onStory,
+  onCountdown,
+  onExpenses,
+  onPhotos,
+  onJournal,
 }: {
   trip: Trip;
   onPress: (t: Trip) => void;
   onDelete: (t: Trip) => void;
   onHype: (t: Trip) => void;
   onInvite: (t: Trip) => void;
+  onStory: (t: Trip) => void;
+  onCountdown: (t: Trip) => void;
+  onExpenses: (t: Trip) => void;
+  onPhotos: (t: Trip) => void;
+  onJournal: (t: Trip) => void;
 }) {
   const [loaded, setLoaded] = useState(false);
   const [useFallback, setUseFallback] = useState(false);
@@ -88,6 +100,22 @@ function TripCard({
       <View style={styles.cardHeader}>
         <Text style={styles.cardDestination}>{trip.destination}</Text>
         <View style={styles.cardHeaderRight}>
+          <Pressable
+            onPress={(e) => {
+              e?.stopPropagation?.();
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onStory(trip);
+            }}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={`View cinematic story for ${trip.destination}`}
+            style={({ pressed }) => [
+              styles.storyBtn,
+              { opacity: pressed ? 0.6 : 1, transform: [{ scale: pressed ? 0.9 : 1 }] },
+            ]}
+          >
+            <Play size={12} color={COLORS.bg} strokeWidth={3} />
+          </Pressable>
           <Pressable
             onPress={(e) => {
               e?.stopPropagation?.();
@@ -141,6 +169,70 @@ function TripCard({
             <Text style={styles.detailText}>+{trip.vibes.length - 2}</Text>
           </View>
         )}
+      </View>
+
+      {/* Quick actions row */}
+      <View style={styles.quickActionsRow}>
+        <Pressable
+          onPress={(e) => {
+            e?.stopPropagation?.();
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onCountdown(trip);
+          }}
+          hitSlop={6}
+          style={({ pressed }) => [
+            styles.quickActionBtn,
+            { opacity: pressed ? 0.6 : 1, transform: [{ scale: pressed ? 0.9 : 1 }] },
+          ]}
+        >
+          <Clock size={14} color={COLORS.sage} strokeWidth={2} />
+          <Text style={styles.quickActionLabel}>Countdown</Text>
+        </Pressable>
+        <Pressable
+          onPress={(e) => {
+            e?.stopPropagation?.();
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onExpenses(trip);
+          }}
+          hitSlop={6}
+          style={({ pressed }) => [
+            styles.quickActionBtn,
+            { opacity: pressed ? 0.6 : 1, transform: [{ scale: pressed ? 0.9 : 1 }] },
+          ]}
+        >
+          <Wallet size={14} color={COLORS.gold} strokeWidth={2} />
+          <Text style={styles.quickActionLabel}>Expenses</Text>
+        </Pressable>
+        <Pressable
+          onPress={(e) => {
+            e?.stopPropagation?.();
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onPhotos(trip);
+          }}
+          hitSlop={6}
+          style={({ pressed }) => [
+            styles.quickActionBtn,
+            { opacity: pressed ? 0.6 : 1, transform: [{ scale: pressed ? 0.9 : 1 }] },
+          ]}
+        >
+          <Camera size={14} color={COLORS.coral} strokeWidth={2} />
+          <Text style={styles.quickActionLabel}>Photos</Text>
+        </Pressable>
+        <Pressable
+          onPress={(e) => {
+            e?.stopPropagation?.();
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onJournal(trip);
+          }}
+          hitSlop={6}
+          style={({ pressed }) => [
+            styles.quickActionBtn,
+            { opacity: pressed ? 0.6 : 1, transform: [{ scale: pressed ? 0.9 : 1 }] },
+          ]}
+        >
+          <PenLine size={14} color={COLORS.cream} strokeWidth={2} />
+          <Text style={styles.quickActionLabel}>Journal</Text>
+        </Pressable>
       </View>
         </LinearGradient>
       </ImageBackground>
@@ -227,6 +319,46 @@ export default function SavedScreen() {
     [router]
   );
 
+  const handleStory = useCallback(
+    (trip: Trip) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      router.push({ pathname: '/trip-story', params: { tripId: trip.id } });
+    },
+    [router]
+  );
+
+  const handleCountdown = useCallback(
+    (trip: Trip) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      router.push({ pathname: '/trip-countdown', params: { tripId: trip.id, destination: trip.destination } });
+    },
+    [router]
+  );
+
+  const handleExpenses = useCallback(
+    (trip: Trip) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      router.push({ pathname: '/expense-tracker', params: { tripId: trip.id, destination: trip.destination } });
+    },
+    [router]
+  );
+
+  const handlePhotos = useCallback(
+    (trip: Trip) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      router.push({ pathname: '/trip-album', params: { tripId: trip.id, destination: trip.destination } });
+    },
+    [router]
+  );
+
+  const handleJournal = useCallback(
+    (trip: Trip) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      router.push({ pathname: '/trip-journal', params: { tripId: trip.id, destination: trip.destination } });
+    },
+    [router]
+  );
+
   const handlePlan = useCallback(() => {
     router.push('/(tabs)/generate');
   }, [router]);
@@ -272,6 +404,7 @@ export default function SavedScreen() {
             <Text style={styles.guestBannerCta}>Create account</Text>
           </Pressable>
         )}
+        {trips.length > 0 && <TravelStats trips={trips} />}
         {trips.length > 0 && (
           <Pressable
             style={({ pressed }) => [styles.groupTripCard, { opacity: pressed ? 0.9 : 1 }]}
@@ -299,6 +432,32 @@ export default function SavedScreen() {
             ))}
           </View>
         )}
+        {/* Quick access — Passport + Trip Wrapped */}
+        {trips.length > 0 && (
+          <View style={styles.quickAccessRow}>
+            <Pressable
+              style={({ pressed }) => [styles.quickAccessCard, { opacity: pressed ? 0.85 : 1 }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/passport');
+              }}
+            >
+              <BookOpen size={20} color={COLORS.gold} strokeWidth={2} />
+              <Text style={styles.quickAccessLabel}>Passport</Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [styles.quickAccessCard, { opacity: pressed ? 0.85 : 1 }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/trip-wrapped');
+              }}
+            >
+              <BarChart3 size={20} color={COLORS.sage} strokeWidth={2} />
+              <Text style={styles.quickAccessLabel}>Wrapped</Text>
+            </Pressable>
+          </View>
+        )}
+
         <View style={styles.header}>
           <Text style={styles.headerTitle}>{i18n.t('saved.title')}</Text>
           <Text style={styles.headerCount}>
@@ -332,6 +491,11 @@ export default function SavedScreen() {
             onDelete={handleDelete}
             onHype={handleHype}
             onInvite={handleInvite}
+            onStory={handleStory}
+            onCountdown={handleCountdown}
+            onExpenses={handleExpenses}
+            onPhotos={handlePhotos}
+            onJournal={handleJournal}
           />
         )}
         ListEmptyComponent={<EmptyState onPlan={handlePlan} />}
@@ -348,6 +512,29 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.bg,
   } as ViewStyle,
+  quickAccessRow: {
+    flexDirection: 'row',
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  } as ViewStyle,
+  quickAccessCard: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingVertical: SPACING.md,
+  } as ViewStyle,
+  quickAccessLabel: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.cream,
+  } as TextStyle,
   groupTripCard: {
     marginHorizontal: SPACING.lg,
     marginBottom: SPACING.md,
@@ -484,6 +671,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: SPACING.sm,
   } as ViewStyle,
+  storyBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.sage,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
   hypeBtn: {
     width: 30,
     height: 30,
@@ -526,6 +721,30 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.cream,
     opacity: 0.7,
+    letterSpacing: 0.3,
+  } as TextStyle,
+  // Quick actions
+  quickActionsRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginTop: SPACING.sm,
+  } as ViewStyle,
+  quickActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: SPACING.sm + 2,
+    paddingVertical: SPACING.xs + 1,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.bgGlass,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  } as ViewStyle,
+  quickActionLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.cream,
+    opacity: 0.8,
     letterSpacing: 0.3,
   } as TextStyle,
   // Empty state

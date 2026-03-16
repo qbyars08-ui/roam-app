@@ -49,6 +49,8 @@ const ja: TranslationKeys = {
     stays: '\u5bbf\u6cca',
     food: '\u30b0\u30eb\u30e1',
     prep: '\u6e96\u5099',
+    health: 'u5065u5eb7',
+    pulse: 'u30d1u30ebu30b9',
   },
 
   errorBoundary: {

@@ -112,7 +112,7 @@ export const MOODS: Mood[] = [
 // Scoring engine
 // ---------------------------------------------------------------------------
 
-interface ScoredDestination {
+export interface ScoredDestination {
   destination: Destination;
   score: number;
   reasons: string[];

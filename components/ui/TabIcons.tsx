@@ -161,6 +161,30 @@ export function IconYou({ size = SIZE, color, focused }: IconProps) {
   );
 }
 
+// Health — heartbeat / activity line
+export function IconHealth({ size = SIZE, color, focused }: IconProps) {
+  const c = color ?? (focused ? activeColor : inactiveColor);
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M4 12h4l2-6 4 12 2-6h4" />
+    </Svg>
+  );
+}
+
+// Pulse — radio waves
+export function IconPulse({ size = SIZE, color, focused }: IconProps) {
+  const c = color ?? (focused ? activeColor : inactiveColor);
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round">
+      <Circle cx={12} cy={12} r={2} />
+      <Path d="M8.46 15.54a5 5 0 010-7.08" />
+      <Path d="M15.54 8.46a5 5 0 010 7.08" />
+      <Path d="M5.64 18.36a9 9 0 010-12.72" />
+      <Path d="M18.36 5.64a9 9 0 010 12.72" />
+    </Svg>
+  );
+}
+
 // Ask tab pulse dot (green, subtle)
 export function IconAskPulseDot({ size = 6 }: { size?: number }) {
   return (

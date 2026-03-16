@@ -2,8 +2,10 @@
 // ROAM — Profile Screen
 // User info, subscription status, sign out
 // =============================================================================
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  Dimensions,
+  Image,
   View,
   Text,
   ScrollView,
@@ -12,6 +14,7 @@ import {
   Modal,
   TextInput,
   StyleSheet,
+  type ImageStyle,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
@@ -27,15 +30,28 @@ import { hasRatedBadge } from '../lib/rating';
 import { useAppStore } from '../lib/store';
 import { isGuestUser, clearGuestMode } from '../lib/guest';
 import { logoutRevenueCat } from '../lib/revenue-cat';
-import { Sparkles, Repeat, Gift, Shield, ChevronRight, BarChart3, CreditCard, LogOut, Globe } from 'lucide-react-native';
+import {
+  Sparkles, Repeat, Gift, Shield, ChevronRight, BarChart3,
+  CreditCard, LogOut, Globe, Camera, MapPin, ImageIcon, Heart, Scan,
+} from 'lucide-react-native';
+import { hasEnoughData } from '../lib/travel-dna';
 import { track } from '../lib/analytics';
 import Button from '../components/ui/Button';
 import ExploreHub from '../components/features/ExploreHub';
 import SubscriptionCard from '../components/monetization/SubscriptionCard';
 import { SUPPORTED_LANGUAGES, changeLanguage } from '../lib/i18n';
 import type { SupportedLanguage } from '../lib/i18n';
+import { getAllPhotos, getAllAlbums } from '../lib/trip-photos';
+import { getDestinationTheme } from '../lib/destination-themes';
+import { computeTravelPersonality } from '../lib/travel-personality';
+import type { TripPhoto, TripAlbum } from '../lib/types/trip-photos';
 
 import { EMERGENCY_CONTACT, ONBOARDING_COMPLETE } from '../lib/storage-keys';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const GALLERY_GAP = 3;
+const GALLERY_COLS = 3;
+const GALLERY_SIZE = (SCREEN_WIDTH - SPACING.lg * 2 - GALLERY_GAP * (GALLERY_COLS - 1)) / GALLERY_COLS;
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -48,6 +64,39 @@ export default function ProfileScreen() {
   const trips = useAppStore((s) => s.trips);
 
   const userEmail = session?.user?.email ?? t('common.guest');
+
+  // Photo gallery state
+  const [allPhotos, setAllPhotos] = useState<TripPhoto[]>([]);
+  const [albums, setAlbums] = useState<TripAlbum[]>([]);
+
+  useEffect(() => {
+    getAllPhotos().then(setAllPhotos);
+    getAllAlbums().then(setAlbums);
+  }, []);
+
+  // Unique destinations from trips
+  const destinationsCount = useMemo(() => {
+    const dests = new Set(trips.map((t) => t.destination));
+    return dests.size;
+  }, [trips]);
+
+  // Recent photos for profile grid (max 9)
+  const profilePhotos = useMemo(() => {
+    return [...allPhotos]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 9);
+  }, [allPhotos]);
+
+  // Public albums for showcase
+  const publicAlbums = useMemo(() => {
+    return albums.filter((a) => a.isPublic);
+  }, [albums]);
+
+  // Travel personality
+  const personality = useMemo(() => {
+    if (trips.length === 0) return null;
+    return computeTravelPersonality(trips);
+  }, [trips]);
 
   // Language selector state
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
@@ -69,6 +118,7 @@ export default function ProfileScreen() {
   const [emergencyContact, setEmergencyContact] = useState('');
   const [ratedBadge, setRatedBadge] = useState(false);
   const [emergencyModalVisible, setEmergencyModalVisible] = useState(false);
+  const [showDNA, setShowDNA] = useState(false);
   const [emergencyInputValue, setEmergencyInputValue] = useState('');
 
   useEffect(() => {
@@ -76,6 +126,10 @@ export default function ProfileScreen() {
       if (val) setEmergencyContact(val);
     });
     hasRatedBadge().then(setRatedBadge);
+  }, []);
+
+  useEffect(() => {
+    hasEnoughData().then(setShowDNA).catch(() => {});
   }, []);
 
   // eslint-disable-next-line react-hooks/preserve-manual-memoization, react-hooks/exhaustive-deps
@@ -159,12 +213,227 @@ export default function ProfileScreen() {
             <Text style={styles.statLabel}>{t('profile.tripsBuilt')}</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statValue}>
-              {tripsThisMonth}/{isPro ? '\u221E' : FREE_TRIPS_PER_MONTH}
-            </Text>
-            <Text style={styles.statLabel}>{t('profile.thisMonth')}</Text>
+            <Text style={styles.statValue}>{destinationsCount}</Text>
+            <Text style={styles.statLabel}>DESTINATIONS</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{allPhotos.length}</Text>
+            <Text style={styles.statLabel}>PHOTOS</Text>
           </View>
         </View>
+
+        {/* ── Travel DNA ── */}
+        {showDNA && (
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push('/travel-mirror');
+            }}
+            style={({ pressed }) => [styles.dnaCard, { opacity: pressed ? 0.9 : 1 }]}
+          >
+            <View style={styles.dnaIconWrap}>
+              <Scan size={22} color={COLORS.sage} strokeWidth={2} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.dnaTitle}>Your Travel DNA</Text>
+              <Text style={styles.dnaSub}>See how you actually travel</Text>
+            </View>
+            <ChevronRight size={18} color={COLORS.creamDim} strokeWidth={2} />
+          </Pressable>
+        )}
+
+        {/* ── Travel Personality ── */}
+        {personality && (
+          <View style={styles.personalityCard}>
+            <View style={styles.personalityHeader}>
+              <Text style={styles.personalityEmoji}>{personality.primary.emoji}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.personalityLabel}>YOUR TRAVEL TYPE</Text>
+                <Text style={styles.personalityName}>{personality.primary.name}</Text>
+              </View>
+            </View>
+            <Text style={styles.personalityTagline}>
+              &ldquo;{personality.primary.tagline}&rdquo;
+            </Text>
+            <Text style={styles.personalityDesc}>
+              {personality.primary.description}
+            </Text>
+            <View style={styles.personalityTraits}>
+              {personality.primary.traits.map((trait) => (
+                <View key={trait} style={[styles.personalityTrait, { borderColor: personality.primary.color }]}>
+                  <Text style={[styles.personalityTraitText, { color: personality.primary.color }]}>
+                    {trait}
+                  </Text>
+                </View>
+              ))}
+            </View>
+            {personality.secondary && (
+              <Text style={styles.personalitySecondary}>
+                Also a bit of a {personality.secondary.emoji} {personality.secondary.name}
+              </Text>
+            )}
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/travel-card');
+              }}
+              style={({ pressed }) => [
+                styles.shareCardBtn,
+                { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
+              ]}
+            >
+              <Sparkles size={14} color={COLORS.bg} strokeWidth={2} />
+              <Text style={styles.shareCardBtnText}>Share your travel card</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {/* ── Emergency Medical Card ── */}
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            router.push('/emergency-card' as never);
+          }}
+          style={({ pressed }) => [
+            styles.emergencyCardCta,
+            pressed && { opacity: 0.8 },
+          ]}
+        >
+          <Shield size={18} color={COLORS.coral} strokeWidth={2} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.emergencyCardCtaTitle}>Emergency Medical Card</Text>
+            <Text style={styles.emergencyCardCtaSub}>Set up your medical info for travel emergencies</Text>
+          </View>
+          <ChevronRight size={16} color={COLORS.creamMuted} strokeWidth={2} />
+        </Pressable>
+
+        {/* ── Photo Gallery ── */}
+        {profilePhotos.length > 0 && (
+          <View style={styles.gallerySection}>
+            <View style={styles.gallerySectionHeader}>
+              <Text style={styles.sectionTitle}>My Photos</Text>
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  if (trips.length > 0) {
+                    router.push({ pathname: '/trip-album', params: { tripId: trips[0].id } });
+                  }
+                }}
+              >
+                <Text style={styles.seeAllLink}>See all</Text>
+              </Pressable>
+            </View>
+            <View style={styles.galleryGrid}>
+              {profilePhotos.map((photo) => (
+                <Pressable
+                  key={photo.id}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    const tripForPhoto = trips.find((t) => t.id === photo.tripId);
+                    if (tripForPhoto) {
+                      router.push({ pathname: '/trip-album', params: { tripId: tripForPhoto.id } });
+                    }
+                  }}
+                  style={({ pressed }) => [
+                    styles.galleryThumb,
+                    { opacity: pressed ? 0.8 : 1 },
+                  ]}
+                >
+                  <Image
+                    source={{ uri: photo.uri }}
+                    style={styles.galleryImage}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.galleryPhotoOverlay}>
+                    <Text style={styles.galleryPhotoLocation} numberOfLines={1}>
+                      {photo.destination}
+                    </Text>
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* ── Trip Albums ── */}
+        {albums.length > 0 && (
+          <View style={styles.albumsSection}>
+            <Text style={styles.sectionTitle}>Trip Albums</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.albumsScroll}
+            >
+              {albums.map((album) => {
+                const theme = getDestinationTheme(album.destination);
+                const albumPhotos = allPhotos.filter((p) => p.tripId === album.tripId);
+                const coverPhoto = albumPhotos.find((p) => p.id === album.coverPhotoId) ?? albumPhotos[0];
+                return (
+                  <Pressable
+                    key={album.tripId}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      router.push({ pathname: '/trip-album', params: { tripId: album.tripId } });
+                    }}
+                    style={({ pressed }) => [
+                      styles.albumCard,
+                      { opacity: pressed ? 0.85 : 1 },
+                    ]}
+                  >
+                    {coverPhoto ? (
+                      <Image
+                        source={{ uri: coverPhoto.uri }}
+                        style={styles.albumCover}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View style={[styles.albumCover, { backgroundColor: theme.gradient[0], alignItems: 'center', justifyContent: 'center' }]}>
+                        <Text style={{ fontSize: 32 }}>{theme.emoji}</Text>
+                      </View>
+                    )}
+                    <View style={styles.albumInfo}>
+                      <Text style={styles.albumDest} numberOfLines={1}>
+                        {album.destination}
+                      </Text>
+                      <Text style={styles.albumMeta}>
+                        {albumPhotos.length} photos · {album.days}d
+                      </Text>
+                      {album.isPublic && (
+                        <View style={styles.albumPublicBadge}>
+                          <Globe size={10} color={COLORS.sage} strokeWidth={2} />
+                          <Text style={styles.albumPublicText}>Public</Text>
+                        </View>
+                      )}
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* ── No Photos CTA ── */}
+        {allPhotos.length === 0 && trips.length > 0 && (
+          <Pressable
+            style={({ pressed }) => [
+              styles.addPhotosCta,
+              { opacity: pressed ? 0.85 : 1 },
+            ]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push({ pathname: '/trip-album', params: { tripId: trips[0].id } });
+            }}
+          >
+            <Camera size={28} color={COLORS.sage} strokeWidth={1.5} />
+            <Text style={styles.addPhotosTitle}>Add trip photos</Text>
+            <Text style={styles.addPhotosSub}>
+              Build your travel gallery. Add photos from your trips to share on your profile.
+            </Text>
+            <View style={styles.addPhotosBtn}>
+              <Text style={styles.addPhotosBtnText}>Add photos</Text>
+            </View>
+          </Pressable>
+        )}
 
         {/* Guest: Create account CTA */}
         {isGuestUser() && (
@@ -201,7 +470,7 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        {/* Trip Wrapped — Coming Soon badge */}
+        {/* Trip Wrapped — live */}
         <Pressable
           style={({ pressed }) => [
             styles.tripWrappedCard,
@@ -209,26 +478,63 @@ export default function ProfileScreen() {
           ]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            router.push({ pathname: '/coming-soon', params: { title: 'Trip Wrapped' } });
+            router.push('/trip-wrapped');
           }}
         >
-          <View style={styles.comingSoonBadgeWrap}>
-            <Text style={styles.comingSoonBadgeText}>{t('common.comingSoon')}</Text>
-          </View>
           <View style={styles.tripWrappedContent}>
             <View style={styles.tripWrappedIconWrap}>
-              <BarChart3 size={24} color={COLORS.creamMuted} strokeWidth={2} />
+              <BarChart3 size={24} color={COLORS.gold} strokeWidth={2} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.tripWrappedTitle, { opacity: 0.85 }]}>{t('profile.tripWrapped')}</Text>
+              <Text style={styles.tripWrappedTitle}>{t('profile.tripWrapped')}</Text>
               <Text style={styles.tripWrappedSub}>{t('profile.tripWrappedSub')}</Text>
             </View>
-            <ChevronRight size={22} color={COLORS.creamMuted} strokeWidth={2} />
+            <ChevronRight size={22} color={COLORS.sage} strokeWidth={2} />
           </View>
         </Pressable>
 
-        {/* Fun features — Coming Soon badges */}
+        {/* Travel Passport */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.tripWrappedCard,
+            { opacity: pressed ? 0.9 : 1 },
+          ]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            router.push('/passport');
+          }}
+        >
+          <View style={styles.tripWrappedContent}>
+            <View style={styles.tripWrappedIconWrap}>
+              <Globe size={24} color={COLORS.sage} strokeWidth={2} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.tripWrappedTitle}>Travel Passport</Text>
+              <Text style={styles.tripWrappedSub}>Stamps, badges & world map</Text>
+            </View>
+            <ChevronRight size={22} color={COLORS.sage} strokeWidth={2} />
+          </View>
+        </Pressable>
+
+        {/* Fun features */}
         <View style={[styles.menuSection, { marginTop: SPACING.lg }]}>
+          {/* Travel Compatibility — LIVE */}
+          <Pressable
+            style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.7 : 1 }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/compatibility');
+            }}
+          >
+            <View style={styles.menuIconWrap}><Heart size={18} color={COLORS.coral} strokeWidth={2} /></View>
+            <Text style={[styles.menuLabel, { flex: 1 }]}>Travel Compatibility</Text>
+            <View style={styles.referralBadge}><Text style={styles.referralBadgeText}>NEW</Text></View>
+            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
+          </Pressable>
+
+          <View style={styles.menuDivider} />
+
+          {/* Travel Alter-Ego — Coming Soon */}
           <Pressable
             style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.7 : 1 }]}
             onPress={() => {
@@ -780,6 +1086,238 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: COLORS.bg,
   } as TextStyle,
+  // Travel personality
+  personalityCard: {
+    marginTop: SPACING.lg,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.lg,
+    gap: SPACING.sm,
+  } as ViewStyle,
+  personalityHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+  } as ViewStyle,
+  personalityEmoji: {
+    fontSize: 36,
+  } as TextStyle,
+  personalityLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.creamMuted,
+    letterSpacing: 2,
+  } as TextStyle,
+  personalityName: {
+    fontFamily: FONTS.header,
+    fontSize: 22,
+    color: COLORS.cream,
+    marginTop: 2,
+  } as TextStyle,
+  personalityTagline: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.sage,
+    fontStyle: 'italic',
+  } as TextStyle,
+  personalityDesc: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamMuted,
+    lineHeight: 20,
+  } as TextStyle,
+  personalityTraits: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: SPACING.xs,
+  } as ViewStyle,
+  personalityTrait: {
+    borderWidth: 1,
+    borderRadius: RADIUS.full,
+    paddingHorizontal: SPACING.sm + 2,
+    paddingVertical: 4,
+  } as ViewStyle,
+  personalityTraitText: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    letterSpacing: 0.5,
+  } as TextStyle,
+  personalitySecondary: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+    marginTop: SPACING.xs,
+  } as TextStyle,
+  shareCardBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: SPACING.md,
+    paddingVertical: SPACING.sm + 2,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.sage,
+  } as ViewStyle,
+  shareCardBtnText: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 13,
+    color: COLORS.bg,
+  } as TextStyle,
+
+  emergencyCardCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginTop: SPACING.md,
+    padding: SPACING.md,
+    backgroundColor: COLORS.coral + '14',
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.coral + '30',
+  } as ViewStyle,
+  emergencyCardCtaTitle: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.coral,
+  } as TextStyle,
+  emergencyCardCtaSub: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+    marginTop: 2,
+  } as TextStyle,
+
+  // Photo gallery
+  gallerySection: {
+    marginTop: SPACING.lg,
+  } as ViewStyle,
+  gallerySectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.md,
+  } as ViewStyle,
+  seeAllLink: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.sage,
+  } as TextStyle,
+  galleryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: GALLERY_GAP,
+  } as ViewStyle,
+  galleryThumb: {
+    width: GALLERY_SIZE,
+    height: GALLERY_SIZE,
+    borderRadius: RADIUS.sm,
+    overflow: 'hidden',
+    position: 'relative',
+  } as ViewStyle,
+  galleryImage: {
+    width: '100%',
+    height: '100%',
+  } as ImageStyle,
+  galleryPhotoOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  } as ViewStyle,
+  galleryPhotoLocation: {
+    fontFamily: FONTS.mono,
+    fontSize: 8,
+    color: '#fff',
+    letterSpacing: 0.5,
+  } as TextStyle,
+  // Albums
+  albumsSection: {
+    marginTop: SPACING.lg,
+  } as ViewStyle,
+  albumsScroll: {
+    gap: SPACING.md,
+    paddingRight: SPACING.lg,
+  } as ViewStyle,
+  albumCard: {
+    width: 140,
+    borderRadius: RADIUS.lg,
+    overflow: 'hidden',
+    backgroundColor: COLORS.bgCard,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  } as ViewStyle,
+  albumCover: {
+    width: 140,
+    height: 100,
+  } as ImageStyle,
+  albumInfo: {
+    padding: SPACING.sm,
+    gap: 2,
+  } as ViewStyle,
+  albumDest: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 13,
+    color: COLORS.cream,
+  } as TextStyle,
+  albumMeta: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.creamMuted,
+    letterSpacing: 0.5,
+  } as TextStyle,
+  albumPublicBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    marginTop: 2,
+  } as ViewStyle,
+  albumPublicText: {
+    fontFamily: FONTS.mono,
+    fontSize: 9,
+    color: COLORS.sage,
+  } as TextStyle,
+  // Add photos CTA
+  addPhotosCta: {
+    marginTop: SPACING.lg,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+    padding: SPACING.lg,
+    alignItems: 'center',
+    gap: SPACING.sm,
+  } as ViewStyle,
+  addPhotosTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 20,
+    color: COLORS.cream,
+    marginTop: SPACING.xs,
+  } as TextStyle,
+  addPhotosSub: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamMuted,
+    textAlign: 'center',
+    lineHeight: 20,
+  } as TextStyle,
+  addPhotosBtn: {
+    backgroundColor: COLORS.sage,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.md,
+    marginTop: SPACING.xs,
+  } as ViewStyle,
+  addPhotosBtnText: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.bg,
+  } as TextStyle,
   // Version
   version: {
     fontFamily: FONTS.mono,
@@ -829,5 +1367,36 @@ const styles = StyleSheet.create({
   } as TextStyle,
   languageSubActive: {
     color: COLORS.sageMedium,
+  } as TextStyle,
+  // Travel DNA
+  dnaCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    marginTop: SPACING.lg,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+    padding: SPACING.md,
+  } as ViewStyle,
+  dnaIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.sageLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
+  dnaTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 20,
+    color: COLORS.cream,
+  } as TextStyle,
+  dnaSub: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamMuted,
+    marginTop: 2,
   } as TextStyle,
 });

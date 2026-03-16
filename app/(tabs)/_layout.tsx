@@ -1,6 +1,6 @@
 // =============================================================================
 // ROAM — Tab Navigator Layout
-// 5 tabs: Plan / Discover / People / Flights / Prep
+// 5 tabs: Plan / Discover / Health / Flights / Pulse
 // =============================================================================
 import React from 'react';
 import { View } from 'react-native';
@@ -28,14 +28,16 @@ export default function TabsLayout() {
         {/* ── Visible tabs (5) ── */}
         <Tabs.Screen name="plan" options={{ title: 'Plan' }} />
         <Tabs.Screen name="index" options={{ title: 'Discover' }} />
-        <Tabs.Screen name="people" options={{ title: 'People' }} />
+        <Tabs.Screen name="body-intel" options={{ title: 'Health' }} />
         <Tabs.Screen name="flights" options={{ title: 'Flights' }} />
-        <Tabs.Screen name="prep" options={{ title: 'Prep' }} />
+        <Tabs.Screen name="pulse" options={{ title: 'Pulse' }} />
         {/* ── Hidden screens (still routable, not in tab bar) ── */}
         <Tabs.Screen name="generate" options={{ href: null }} />
         <Tabs.Screen name="stays" options={{ href: null }} />
         <Tabs.Screen name="food" options={{ href: null }} />
         <Tabs.Screen name="group" options={{ href: null }} />
+        <Tabs.Screen name="people" options={{ href: null }} />
+        <Tabs.Screen name="prep" options={{ href: null }} />
       </Tabs>
       <LiveCompanionFAB />
     </View>

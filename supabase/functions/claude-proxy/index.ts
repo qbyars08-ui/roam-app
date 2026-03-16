@@ -63,6 +63,7 @@ Deno.serve(async (req: Request) => {
     // Legacy: { systemPrompt, messages }
     const systemPrompt = body.system ?? body.systemPrompt;
     const isTripGeneration = body.isTripGeneration === true;
+    const wantStream = body.stream === true;
     let messages = body.messages;
     if (!messages && body.message != null) {
       messages = [{ role: "user", content: String(body.message) }];
@@ -163,6 +164,20 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // ── Increment trip count (do it BEFORE the API call for streaming) ─
+    let newCount = profile.trips_generated_this_month;
+    if (isTripGeneration) {
+      newCount = profile.trips_generated_this_month + 1;
+      try {
+        await supabaseAdmin
+          .from("profiles")
+          .update({ trips_generated_this_month: newCount })
+          .eq("id", user.id);
+      } catch (incrementErr) {
+        console.error("Failed to increment trip count:", incrementErr);
+      }
+    }
+
     // ── Call Anthropic API ─────────────────────────────────────────────
     const anthropicResponse = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -176,6 +191,7 @@ Deno.serve(async (req: Request) => {
         max_tokens: 8192,
         system: systemPrompt,
         messages,
+        ...(wantStream ? { stream: true } : {}),
       }),
     });
 
@@ -193,6 +209,70 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // ── STREAMING MODE ────────────────────────────────────────────────
+    if (wantStream && anthropicResponse.body) {
+      const encoder = new TextEncoder();
+      const decoder = new TextDecoder();
+      const reader = anthropicResponse.body.getReader();
+
+      const stream = new ReadableStream({
+        async start(controller) {
+          // Send metadata event first
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({ type: "meta", tripsUsed: newCount, limit: isFree ? FREE_TIER_LIMIT : null })}\n\n`
+            )
+          );
+
+          try {
+            let buffer = "";
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split("\n");
+              buffer = lines.pop() ?? "";
+
+              for (const line of lines) {
+                if (!line.startsWith("data: ")) continue;
+                const payload = line.slice(6).trim();
+                if (payload === "[DONE]") continue;
+
+                try {
+                  const event = JSON.parse(payload);
+                  // Forward text delta events to the client
+                  if (event.type === "content_block_delta" && event.delta?.type === "text_delta") {
+                    controller.enqueue(
+                      encoder.encode(`data: ${JSON.stringify({ type: "text", text: event.delta.text })}\n\n`)
+                    );
+                  }
+                } catch {
+                  // Skip malformed JSON lines
+                }
+              }
+            }
+          } catch (streamErr) {
+            console.error("Stream error:", streamErr);
+          } finally {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "done" })}\n\n`));
+            controller.close();
+          }
+        },
+      });
+
+      return new Response(stream, {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          "Connection": "keep-alive",
+        },
+      });
+    }
+
+    // ── NON-STREAMING MODE (default) ──────────────────────────────────
     const anthropicData = await anthropicResponse.json();
 
     // ── Extract text from content blocks ───────────────────────────────
@@ -211,21 +291,6 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: "AI returned empty response. Please try again." }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
-    }
-
-    // ── Increment trip count only for trip generation ──────────────────
-    let newCount = profile.trips_generated_this_month;
-    if (isTripGeneration) {
-      newCount = profile.trips_generated_this_month + 1;
-      try {
-        await supabaseAdmin
-          .from("profiles")
-          .update({ trips_generated_this_month: newCount })
-          .eq("id", user.id);
-      } catch (incrementErr) {
-        console.error("Failed to increment trip count:", incrementErr);
-        // Continue — user already got their trip, don't block response
-      }
     }
 
     return new Response(

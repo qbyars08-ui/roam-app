@@ -38,11 +38,14 @@ import {
 import i18n from '../../lib/i18n';
 import { tCategory } from '../../lib/i18n/helpers';
 import { track } from '../../lib/analytics';
+import { trackBehavior } from '../../lib/travel-dna';
 import { useAppStore } from '../../lib/store';
 import { getForYouFeed } from '../../lib/recommendations';
 import { getDestinationPhoto } from '../../lib/photos';
 import ROAMScoreBadge from '../../components/features/ROAMScoreBadge';
 import TravelTruthCard from '../../components/features/TravelTruthCard';
+import ContextBanner from '../../components/features/ContextBanner';
+import { getContext, buildStrategy, type ContentStrategy } from '../../lib/context-engine';
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -252,6 +255,8 @@ export default function DiscoverScreen() {
   const [headerIndex, setHeaderIndex] = useState(0);
   const headerFade = useRef(new Animated.Value(1)).current;
   const [forYouPicks, setForYouPicks] = useState<Destination[]>([]);
+  const [contextStrategy, setContextStrategy] = useState<ContentStrategy | null>(null);
+  const [showBanner, setShowBanner] = useState(true);
   const trips = useAppStore((s) => s.trips);
 
   useEffect(() => {
@@ -259,6 +264,10 @@ export default function DiscoverScreen() {
     // Load personalized recommendations
     getForYouFeed({ limit: 6 }).then((scored) => {
       setForYouPicks(scored.map((s) => s.destination));
+    }).catch(() => {});
+    // Load context-aware strategy
+    getContext().then((signals) => {
+      setContextStrategy(buildStrategy(signals));
     }).catch(() => {});
   }, []);
 
@@ -303,6 +312,7 @@ export default function DiscoverScreen() {
   const handleDestinationPress = useCallback(
     (dest: Destination) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      trackBehavior({ type: 'destination_opened', timestamp: new Date().toISOString(), data: { destination: dest.label, category: dest.category } }).catch(() => {});
       router.push(`/destination/${encodeURIComponent(dest.label)}`);
     },
     [router]
@@ -363,6 +373,21 @@ export default function DiscoverScreen() {
             </View>
           </View>
         </View>
+
+        {/* Context-aware banner */}
+        {showBanner && contextStrategy?.contextBanner && (
+          <View style={{ paddingHorizontal: SPACING.md, marginBottom: SPACING.sm }}>
+            <ContextBanner
+              text={contextStrategy.contextBanner.text}
+              action={contextStrategy.contextBanner.action}
+              onAction={contextStrategy.contextBanner.destination ? () => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push(`/destination/${encodeURIComponent(contextStrategy.contextBanner?.destination ?? '')}`);
+              } : undefined}
+              onDismiss={() => setShowBanner(false)}
+            />
+          </View>
+        )}
 
         {/* Quick links */}
         {trips.length > 0 && (
@@ -573,6 +598,8 @@ export default function DiscoverScreen() {
       router,
       headerFade,
       t,
+      showBanner,
+      contextStrategy,
     ]
   );
 

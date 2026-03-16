@@ -2,15 +2,34 @@
 // ROAM — ElevenLabs TTS (via Supabase voice-proxy Edge Function)
 // =============================================================================
 
-import { Audio } from 'expo-av';
 import { supabase } from './supabase';
 import type { TimeSlotActivity } from './types/itinerary';
+
+// ---------------------------------------------------------------------------
+// Lazy-load expo-av — the native module is not available in Expo Go,
+// so a top-level import crashes the entire module tree.
+// ---------------------------------------------------------------------------
+
+let Audio: typeof import('expo-av').Audio | null = null;
+
+async function getAudio() {
+  if (!Audio) {
+    try {
+      const mod = await import('expo-av');
+      Audio = mod.Audio;
+    } catch {
+      throw new Error('expo-av is not available — use a development build for TTS.');
+    }
+  }
+  return Audio;
+}
 
 // ---------------------------------------------------------------------------
 // Module-level state for managing playback
 // ---------------------------------------------------------------------------
 
-let currentSound: Audio.Sound | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let currentSound: any = null;
 let isPlaying = false;
 
 // ---------------------------------------------------------------------------
@@ -37,8 +56,10 @@ export async function narrateText(
   await stopNarration();
 
   try {
+    const AudioModule = await getAudio();
+
     // Configure audio session for playback
-    await Audio.setAudioModeAsync({
+    await AudioModule.setAudioModeAsync({
       allowsRecordingIOS: false,
       playsInSilentModeIOS: true,
       staysActiveInBackground: false,
@@ -84,7 +105,7 @@ export async function narrateText(
     callbacks?.onStart?.();
     isPlaying = true;
 
-    const { sound } = await Audio.Sound.createAsync(
+    const { sound } = await AudioModule.Sound.createAsync(
       { uri: audioUri },
       { shouldPlay: true }
     );

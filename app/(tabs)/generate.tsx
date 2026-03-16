@@ -24,6 +24,7 @@ import { evaluateTrigger } from '../../lib/smart-triggers';
 import TripLimitBanner from '../../components/monetization/TripLimitBanner';
 import { track, trackEvent } from '../../lib/analytics';
 import { captureEvent } from '../../lib/posthog';
+import { trackBehavior } from '../../lib/travel-dna';
 
 const RANDOM_CITIES = [
   'Tokyo', 'Bali', 'Lisbon', 'Mexico City', 'Bangkok', 'Barcelona', 'Cape Town',
@@ -121,6 +122,7 @@ export default function GenerateScreen() {
       setTripsThisMonth(tripsUsed);
       setStreamingProgress('Trip ready!');
       captureEvent('trip_generation_completed', { destination: state.destination, days: state.duration, budget: BUDGET_TO_BACKEND[state.budget], mode: 'quick' });
+      trackBehavior({ type: 'trip_generated', timestamp: new Date().toISOString(), data: { destination: state.destination, days: state.duration, budget: BUDGET_TO_BACKEND[state.budget] } }).catch(() => {});
       recordGrowthEvent('trip_generated').catch(() => {});
       evaluateTrigger('post_generation').catch(() => {});
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -199,6 +201,7 @@ export default function GenerateScreen() {
       setTripsThisMonth(tripsUsed);
       setStreamingProgress('Trip ready!');
       captureEvent('trip_generation_completed', { destination: dest, days, budget, mode: 'conversation' });
+      trackBehavior({ type: 'trip_generated', timestamp: new Date().toISOString(), data: { destination: dest, days, budget } }).catch(() => {});
       recordGrowthEvent('trip_generated').catch(() => {});
       evaluateTrigger('post_generation').catch(() => {});
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

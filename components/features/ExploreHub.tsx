@@ -24,7 +24,11 @@ import { useAppStore } from '../../lib/store';
 // ---------------------------------------------------------------------------
 // Feature definitions — 5 visible & functional; rest show "Coming Soon"
 // ---------------------------------------------------------------------------
-const LIVE_FEATURE_IDS = ['budget-guardian', 'flights', 'language-survival', 'prep', 'group-trips'] as const;
+const LIVE_FEATURE_IDS = [
+  'budget-guardian', 'flights', 'language-survival', 'prep', 'group-trips',
+  'compatibility', 'expense-tracker', 'trip-countdown', 'trip-story', 'trip-album',
+  'passport', 'trip-wrapped', 'chaos-mode', 'travel-card', 'trip-journal', 'body-intel', 'before-you-land', 'emergency-card',
+] as const;
 const ICON_MAP = {
   MessageSquare,
   Shield,
@@ -62,6 +66,16 @@ type Feature = {
 };
 
 const FEATURES: Feature[] = [
+  { id: 'body-intel', icon: 'Shield', name: 'Body Intel', description: 'Destination-aware health intelligence', route: '/body-intel' },
+  { id: 'before-you-land', icon: 'Plane', name: 'Before You Land', description: '24-hour pre-departure briefing', route: '/before-you-land' },
+  { id: 'emergency-card', icon: 'Heart', name: 'Emergency Card', description: 'Medical card in any language', route: '/emergency-card' },
+  { id: 'travel-card', icon: 'Star', name: 'Travel Card', description: 'Shareable personality card for socials', route: '/travel-card' },
+  { id: 'trip-journal', icon: 'BookOpen', name: 'Trip Journal', description: 'Daily diary with mood + highlights', route: '/trip-journal' },
+  { id: 'compatibility', icon: 'Heart', name: 'Compatibility', description: 'Travel soulmate quiz — share results', route: '/compatibility' },
+  { id: 'expense-tracker', icon: 'Wallet', name: 'Expense Tracker', description: 'Track spending vs AI estimate', route: '/expense-tracker' },
+  { id: 'trip-countdown', icon: 'Clock', name: 'Trip Countdown', description: 'Live timer + daily travel tips', route: '/trip-countdown' },
+  { id: 'trip-story', icon: 'Image', name: 'Trip Stories', description: 'Cinematic auto-advancing stories', route: '/trip-story' },
+  { id: 'trip-album', icon: 'Image', name: 'Photo Albums', description: 'Trip photo journal & gallery', route: '/trip-album' },
   { id: 'chat', icon: 'MessageSquare', name: 'Ask AI', description: 'Chat with your travel assistant', route: '/(tabs)/generate' },
   { id: 'prep', icon: 'Shield', name: 'Trip Prep', description: 'Packing lists, visas & essentials', route: '/(tabs)/prep' },
   { id: 'flights', icon: 'Plane', name: 'Flights', description: 'Track and manage your flights', route: '/(tabs)/flights' },

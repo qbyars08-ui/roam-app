@@ -57,6 +57,8 @@ const de: TranslationKeys = {
     stays: 'Unterk\u00fcnfte',
     food: 'Food',
     prep: 'Vorbereitung',
+    health: 'Gesundheit',
+    pulse: 'Puls',
   },
 
   // ---------------------------------------------------------------------------
