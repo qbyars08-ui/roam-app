@@ -32,7 +32,6 @@ import { getHeroPhotoUrl } from '../lib/heroPhotos';
 import { getDestinationPhoto } from '../lib/photos';
 import { getCostOfLiving } from '../lib/cost-of-living';
 import { ChevronLeft, Share2, MapPin, Clock, Wallet, Sparkles } from 'lucide-react-native';
-import { withComingSoon } from '../lib/with-coming-soon';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const PROGRESS_BAR_HEIGHT = 3;
@@ -381,7 +380,7 @@ function TripStoryScreen() {
                 subtitleSlide={subtitleSlide}
                 onPlanYours={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  router.push('/(tabs)/generate');
+                  router.push('/(tabs)/generate' as never);
                 }}
               />
             )}
@@ -1128,7 +1127,4 @@ const styles = StyleSheet.create({
   } as TextStyle,
 });
 
-export default withComingSoon(TripStoryScreen, {
-  routeName: 'trip-story',
-  title: 'Trip Story',
-});
+export default TripStoryScreen;

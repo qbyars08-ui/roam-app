@@ -1208,7 +1208,7 @@ export default function GroupScreen() {
                   Generate a trip first, then invite your crew.
                 </Text>
                 <Pressable
-                  onPress={() => router.push('/(tabs)/generate')}
+                  onPress={() => router.push('/(tabs)/generate' as never)}
                   style={styles.emptyCta}
                 >
                   <Text style={styles.emptyCtaText}>Generate Trip</Text>

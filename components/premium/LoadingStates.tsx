@@ -444,15 +444,15 @@ const styles = StyleSheet.create({
 
   // --- SkeletonCard ---
   skeletonBase: {
-    backgroundColor: COLORS.bgCard,
+    backgroundColor: '#0D1710',
     overflow: 'hidden',
   },
   shimmerStripe: {
     position: 'absolute',
     top: 0,
     bottom: 0,
-    width: 160,
-    backgroundColor: COLORS.border,
+    width: 200,
+    backgroundColor: '#1A2E1A',
   },
 
   // --- PulseLoader ---

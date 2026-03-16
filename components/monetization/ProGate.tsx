@@ -79,7 +79,7 @@ export default function ProGate({
               ]}
             >
               <LinearGradient
-                colors={[COLORS.gold, '#A8893A']}
+                colors={[COLORS.gold, COLORS.goldDark]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.gateCta}
@@ -115,7 +115,7 @@ export default function ProGate({
         ]}
       >
         <LinearGradient
-          colors={[COLORS.gold, '#A8893A']}
+          colors={[COLORS.gold, COLORS.goldDark]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.replaceCta}

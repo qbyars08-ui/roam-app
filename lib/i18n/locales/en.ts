@@ -55,6 +55,7 @@ const en = {
     prep: 'Prep',
     health: 'Health',
     pulse: 'Pulse',
+    pets: 'Pets',
   },
 
   // ---------------------------------------------------------------------------
@@ -221,6 +222,7 @@ const en = {
   people: {
     title: 'People',
     headerSub: 'Find travelers going where you are going',
+    headerSubActive: "You're open to meeting travelers",
     heroTitle: 'Travel is better together',
     heroSub: 'We match you with travelers heading to the same place, at the same time, with the same energy.',
     activeTravelers: 'Active travelers',
@@ -313,6 +315,8 @@ const en = {
     bestValue: 'Best value',
     noResults: 'No flights found',
     setHomeAirport: 'Set your home airport',
+    layoverTitle: 'Layover Optimizer',
+    layoverSub: 'What to do with X hours in 8 major airports',
   },
 
   // ---------------------------------------------------------------------------
@@ -389,6 +393,8 @@ const en = {
     yourPlan: 'Your plan',
     emergencyContact: 'Emergency Contact',
     emergencyContactTitle: 'Emergency contact',
+    emergencyCardCtaTitle: 'Emergency Medical Card',
+    emergencyCardCtaSub: 'Set up your medical info for travel emergencies',
     emergencyContactSub: 'Enter a phone number for SOS alerts.',
     logOut: 'Log out',
     logOutTitle: 'Heading out?',

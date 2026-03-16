@@ -57,7 +57,7 @@ function TripCollectionsScreen() {
     (dest: string) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setPlanWizard({ destination: dest });
-      router.push('/(tabs)/generate');
+      router.push('/(tabs)/generate' as never);
     },
     [setPlanWizard, router]
   );

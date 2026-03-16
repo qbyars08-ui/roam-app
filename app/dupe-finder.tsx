@@ -26,7 +26,6 @@ import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../lib/constants';
 import { getDestinationPhoto } from '../lib/photos';
 import ShimmerOverlay from '../components/ui/ShimmerOverlay';
 import { callClaude } from '../lib/claude';
-import { withComingSoon } from '../lib/with-coming-soon';
 
 // =============================================================================
 // Types
@@ -387,7 +386,7 @@ function DupeFinderScreen() {
                   router.push({
                     pathname: '/(tabs)/generate',
                     params: { destination: result.dupes[0].destination },
-                  });
+                  } as never);
                 }
               }}
             >
@@ -916,4 +915,4 @@ const styles = StyleSheet.create({
   } as TextStyle,
 });
 
-export default withComingSoon(DupeFinderScreen, { routeName: 'dupe-finder', title: 'Dupe Finder' });
+export default DupeFinderScreen;

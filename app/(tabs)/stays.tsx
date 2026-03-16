@@ -1,727 +1,558 @@
 // =============================================================================
-// ROAM — Accommodation Discovery
-// Editorial travel magazine, not booking engine
+// ROAM — Stays Tab
+// Hero + curated destinations + Booking.com deep links. Zero broken APIs.
+// Same pattern as Flights tab.
 // =============================================================================
-
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
-  ScrollView,
+  TextInput,
   Pressable,
+  ScrollView,
   StyleSheet,
-  Platform,
-  Animated,
-  Dimensions,
   Image,
+  Linking,
+  Animated,
   type ViewStyle,
   type TextStyle,
   type ImageStyle,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { MapPin, Calendar, Bed, Minus, Plus, ExternalLink, Building2 } from 'lucide-react-native';
+import { addDays, format, isSameDay, startOfDay } from 'date-fns';
 import { useTranslation } from 'react-i18next';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../../lib/haptics';
-import {
-  COLORS,
-  FONTS,
-  SPACING,
-  RADIUS,
-  DESTINATION_THEME_PALETTES,
-} from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
-import {
-  SlidersHorizontal,
-  MapPin,
-  Star,
-  Heart,
-  Building2,
-  ExternalLink,
-} from 'lucide-react-native';
-import { getCoordsForDestination } from '../../lib/destination-coords';
-import { SkeletonCard } from '../../components/premium/LoadingStates';
-import * as Linking from 'expo-linking';
+import { track } from '../../lib/analytics';
+import { captureEvent } from '../../lib/posthog';
 import { getHotelLink, openBookingLink } from '../../lib/booking-links';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const isWeb = Platform.OS === 'web';
-
 // ---------------------------------------------------------------------------
-// Types
+// Curated destination data (no APIs)
 // ---------------------------------------------------------------------------
-
-export type StayType =
-  | 'all'
-  | 'hostel'
-  | 'hotel'
-  | 'airbnb'
-  | 'boutique'
-  | 'villa'
-  | 'capsule';
-
-export interface StayListing {
-  id: string;
-  name: string;
-  type: StayType;
-  neighborhood: string;
+interface PopularStay {
+  destination: string;
   vibe: string;
-  rating: number;
-  reviewCount: number;
-  distanceKm: number;
-  pricePerNight: number;
-  lat: number;
-  lng: number;
+  price: string;
+  image: string;
 }
 
-const STAY_TYPES: { id: StayType; labelKey?: string; label?: string }[] = [
-  { id: 'all', labelKey: 'categories.all' },
-  { id: 'hostel', labelKey: 'stays.hostels' },
-  { id: 'hotel', labelKey: 'stays.hotels' },
-  { id: 'airbnb', label: 'Airbnb' },
-  { id: 'boutique', label: 'Boutique' },
-  { id: 'villa', label: 'Villa' },
-  { id: 'capsule', label: 'Capsule' },
+const POPULAR_STAYS: PopularStay[] = [
+  {
+    destination: 'Tokyo',
+    vibe: 'Capsule hotels, ryokans, design hostels',
+    price: 'from ~$45/night',
+    image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&q=80',
+  },
+  {
+    destination: 'Bali',
+    vibe: 'Villas, surf hostels, jungle retreats',
+    price: 'from ~$25/night',
+    image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&q=80',
+  },
+  {
+    destination: 'Paris',
+    vibe: 'Boutique hotels, Marais apartments',
+    price: 'from ~$120/night',
+    image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&q=80',
+  },
+  {
+    destination: 'Barcelona',
+    vibe: 'Gothic Quarter lofts, beach hostels',
+    price: 'from ~$65/night',
+    image: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&q=80',
+  },
+  {
+    destination: 'Lisbon',
+    vibe: 'Alfama apartments, design hostels',
+    price: 'from ~$55/night',
+    image: 'https://images.unsplash.com/photo-1585208798174-6cedd86e019a?w=400&q=80',
+  },
+  {
+    destination: 'Mexico City',
+    vibe: 'Roma Norte lofts, Condesa boutiques',
+    price: 'from ~$50/night',
+    image: 'https://images.unsplash.com/photo-1585464231875-d9ef1f5ad396?w=400&q=80',
+  },
 ];
 
-// ---------------------------------------------------------------------------
-// Mock Data
-// ---------------------------------------------------------------------------
-
-// Destination-specific neighborhoods for realistic listings
-const CITY_NEIGHBORHOODS: Record<string, string[]> = {
-  Tokyo: ['Shinjuku', 'Shibuya', 'Roppongi', 'Asakusa', 'Ginza'],
-  Paris: ['Le Marais', 'Montmartre', 'Saint-Germain', 'Bastille', 'Belleville'],
-  Bali: ['Canggu', 'Seminyak', 'Ubud', 'Uluwatu', 'Jimbaran'],
-  'New York': ['Williamsburg', 'Lower East Side', 'SoHo', 'Chelsea', 'Bushwick'],
-  Barcelona: ['El Born', 'Gràcia', 'Eixample', 'Gothic Quarter', 'Barceloneta'],
-  Bangkok: ['Silom', 'Sukhumvit', 'Khao San', 'Thonglor', 'Chinatown'],
-  Lisbon: ['Alfama', 'Bairro Alto', 'Mouraria', 'Santos', 'Príncipe Real'],
-  'Mexico City': ['Roma Norte', 'Condesa', 'Coyoacán', 'Juárez', 'Polanco'],
-  Budapest: ['District VII', 'District V', 'Buda Castle', 'Erzsébetváros', 'Óbuda'],
-  Marrakech: ['Medina', 'Gueliz', 'Kasbah', 'Mellah', 'Hivernage'],
-  'Cape Town': ['Bo-Kaap', 'Woodstock', 'Sea Point', 'Gardens', 'Green Point'],
-  Medellín: ['El Poblado', 'Laureles', 'Envigado', 'La Candelaria', 'Belén'],
-  Kyoto: ['Higashiyama', 'Gion', 'Arashiyama', 'Downtown', 'Fushimi'],
-  'Buenos Aires': ['Palermo', 'San Telmo', 'Recoleta', 'La Boca', 'Belgrano'],
-};
-
-// Destination-aware stay templates
-const STAY_TEMPLATES: { type: StayType; namePattern: string; vibe: string; ratingBase: number; reviewBase: number; priceMultiplier: number }[] = [
-  { type: 'hostel', namePattern: '{dest} Social House', vibe: 'Social', ratingBase: 4.5, reviewBase: 1200, priceMultiplier: 0.15 },
-  { type: 'boutique', namePattern: '{neighborhood} Boutique', vibe: 'Quiet', ratingBase: 4.8, reviewBase: 400, priceMultiplier: 1.2 },
-  { type: 'airbnb', namePattern: 'Charming {neighborhood} Flat', vibe: 'Local', ratingBase: 4.7, reviewBase: 180, priceMultiplier: 0.6 },
-  { type: 'hotel', namePattern: '{dest} Grand Hotel', vibe: 'Classic', ratingBase: 4.6, reviewBase: 2100, priceMultiplier: 0.9 },
-  { type: 'capsule', namePattern: 'Pod {dest}', vibe: 'Digital Nomad', ratingBase: 4.4, reviewBase: 3000, priceMultiplier: 0.2 },
-  { type: 'villa', namePattern: 'Villa {neighborhood}', vibe: 'Retreat', ratingBase: 4.9, reviewBase: 90, priceMultiplier: 2.0 },
-];
-
-// Base nightly price per destination (mid-range hotel in USD)
-const BASE_PRICES: Record<string, number> = {
-  Tokyo: 120, Paris: 160, Bali: 45, 'New York': 220, Barcelona: 110,
-  Bangkok: 40, Lisbon: 90, 'Mexico City': 65, Budapest: 60, Marrakech: 50,
-  'Cape Town': 70, Medellín: 45, Kyoto: 130, 'Buenos Aires': 55,
-  Rome: 140, London: 180, Seoul: 100, Dubai: 200, Amsterdam: 150,
-  Istanbul: 60, Sydney: 170, Porto: 80, Dubrovnik: 100, Santorini: 140,
-};
-
-function generateMockStays(destination: string): StayListing[] {
-  const coords = getCoordsForDestination(destination) ?? { lat: 35.6762, lng: 139.6503 };
-  const baseLat = coords.lat;
-  const baseLng = coords.lng;
-  const neighborhoods = CITY_NEIGHBORHOODS[destination] ?? ['Old Town', 'City Center', 'Arts District', 'Waterfront', 'University Quarter'];
-  const basePrice = BASE_PRICES[destination] ?? 100;
-
-  // Deterministic seed from destination name for consistent results
-  const seed = destination.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-
-  return STAY_TEMPLATES.map((template, i) => {
-    const neighborhood = neighborhoods[i % neighborhoods.length];
-    const name = template.namePattern
-      .replace('{dest}', destination.split(' ')[0])
-      .replace('{neighborhood}', neighborhood);
-    const offsetLat = ((seed + i * 17) % 10 - 5) * 0.001;
-    const offsetLng = ((seed + i * 23) % 10 - 5) * 0.001;
-
-    return {
-      id: `${i + 1}`,
-      name,
-      type: template.type,
-      neighborhood,
-      vibe: template.vibe,
-      rating: Math.round((template.ratingBase + ((seed + i) % 5) * 0.1) * 10) / 10,
-      reviewCount: template.reviewBase + ((seed * (i + 1)) % 500),
-      distanceKm: Math.round((0.3 + ((seed + i * 7) % 30) * 0.1) * 10) / 10,
-      pricePerNight: Math.round(basePrice * template.priceMultiplier),
-      lat: baseLat + offsetLat,
-      lng: baseLng + offsetLng,
-    };
-  });
-}
-
-// ---------------------------------------------------------------------------
-// Gradient seed from destination name
-// ---------------------------------------------------------------------------
-
-function getGradientForStay(destination: string, index: number): [string, string] {
-  const palette = DESTINATION_THEME_PALETTES[destination];
-  if (palette?.gradient) {
-    const g = palette.gradient;
-    return [g[index % g.length], g[(index + 1) % g.length]];
-  }
-  const fallbacks: [string, string][] = [
-    [COLORS.sage, COLORS.gradientCard],
-    [COLORS.goldMuted, COLORS.gradientCard],
-    [COLORS.creamMuted, COLORS.gradientCard],
-    [COLORS.sageDark, COLORS.gradientCard],
-    [COLORS.goldBorder, COLORS.gradientCard],
-    [COLORS.creamDim, COLORS.gradientCard],
-  ];
-  return fallbacks[index % fallbacks.length];
-}
-
-// ---------------------------------------------------------------------------
-// Unsplash images for stay types
-// ---------------------------------------------------------------------------
-const STAY_TYPE_IMAGES: Record<string, string> = {
-  hostel: 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=600&q=80',
-  boutique: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=600&q=80',
-  airbnb: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&q=80',
-  hotel: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80',
-  capsule: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=80',
-  villa: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600&q=80',
-};
-
-// Curated stay categories for the empty state
-const STAY_CATEGORIES = [
-  { type: 'boutique', title: 'Boutique Hotels', subtitle: 'Design-forward, locally owned', image: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=600&q=80' },
-  { type: 'hostel', title: 'Social Hostels', subtitle: 'Meet other travelers', image: 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=600&q=80' },
-  { type: 'airbnb', title: 'Local Apartments', subtitle: 'Live like a local', image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&q=80' },
-  { type: 'villa', title: 'Private Villas', subtitle: 'Your own retreat', image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600&q=80' },
-];
-
-// ---------------------------------------------------------------------------
-// Neighborhood Guide (replaces map placeholder on web)
-// ---------------------------------------------------------------------------
-function NeighborhoodGuide({ stays }: { stays: StayListing[] }) {
-  const neighborhoods = [...new Set(stays.map((s) => s.neighborhood))];
-  return (
-    <View style={styles.neighborhoodGuide}>
-      <Text style={styles.neighborhoodTitle}>Neighborhoods</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.neighborhoodScroll}>
-        {neighborhoods.map((n) => {
-          const staysInArea = stays.filter((s) => s.neighborhood === n);
-          const cheapest = Math.min(...staysInArea.map((s) => s.pricePerNight));
-          return (
-            <View key={n} style={styles.neighborhoodCard}>
-              <MapPin size={16} color={COLORS.sage} strokeWidth={2} />
-              <Text style={styles.neighborhoodName}>{n}</Text>
-              <Text style={styles.neighborhoodMeta}>
-                {staysInArea.length} stays · from ${cheapest}
-              </Text>
-            </View>
-          );
-        })}
-      </ScrollView>
-    </View>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Map with pins (native)
-// ---------------------------------------------------------------------------
-
-function StayMapView({
-  stays,
-  destination,
-}: {
-  stays: StayListing[];
+interface StayInspiration {
   destination: string;
-}) {
-  if (isWeb) return <NeighborhoodGuide stays={stays} />;
-
-  const MapView = require('react-native-maps').default;
-  const Marker = require('react-native-maps').Marker;
-  const coords = getCoordsForDestination(destination) ?? { lat: 35.6762, lng: 139.6503 };
-  const region = {
-    latitude: coords.lat,
-    longitude: coords.lng,
-    latitudeDelta: 0.04,
-    longitudeDelta: 0.04,
-  };
-
-  return (
-    <View style={styles.mapWrap}>
-      <MapView
-        style={StyleSheet.absoluteFill}
-        initialRegion={region}
-        customMapStyle={[
-          { elementType: 'geometry', stylers: [{ color: COLORS.bg }] },
-          { elementType: 'labels.text.fill', stylers: [{ color: COLORS.creamMuted }] },
-          { featureType: 'road', elementType: 'geometry', stylers: [{ color: COLORS.mapRoad }] },
-        ]}
-        showsUserLocation={false}
-      >
-        {stays.map((stay) => (
-          <Marker
-            key={stay.id}
-            coordinate={{ latitude: stay.lat, longitude: stay.lng }}
-            tracksViewChanges={false}
-          >
-            <View style={styles.priceBubble}>
-              <Text style={styles.priceBubbleText}>${stay.pricePerNight}</Text>
-            </View>
-          </Marker>
-        ))}
-      </MapView>
-    </View>
-  );
+  reason: string;
+  image: string;
 }
 
-// ---------------------------------------------------------------------------
-// Stay Card
-// ---------------------------------------------------------------------------
+const STAY_INSPIRATION: StayInspiration[] = [
+  {
+    destination: 'Boutique hotels in Marrakech',
+    reason: 'Riads with courtyards and rooftop terraces',
+    image: 'https://images.unsplash.com/photo-1597212618440-806262de4f6b?w=400&q=80',
+  },
+  {
+    destination: 'Hostels in Bangkok',
+    reason: 'Social, cheap, rooftop pools',
+    image: 'https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=400&q=80',
+  },
+  {
+    destination: 'Villas in Santorini',
+    reason: 'Cave houses with caldera views',
+    image: 'https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?w=400&q=80',
+  },
+  {
+    destination: 'Apartments in Budapest',
+    reason: 'Art Nouveau buildings, thermal baths nearby',
+    image: 'https://images.unsplash.com/photo-1549285509-8fe27c27302b?w=400&q=80',
+  },
+];
 
-function StayCard({
-  stay,
-  destination,
-  index,
-  onPress,
-  onBook,
+// ---------------------------------------------------------------------------
+// Date Picker Inline
+// ---------------------------------------------------------------------------
+function DatePickerInline({
+  label,
+  value,
+  onSelect,
+  minimumDate,
 }: {
-  stay: StayListing;
-  destination: string;
-  index: number;
-  onPress: () => void;
-  onBook: () => void;
+  label: string;
+  value: Date;
+  onSelect: (d: Date) => void;
+  minimumDate?: Date;
 }) {
-  const [saved, setSaved] = useState(false);
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const opacityAnim = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(12)).current;
-  const heartScale = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(opacityAnim, {
-        toValue: 1,
-        duration: 400,
-        delay: index * 60,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateY, {
-        toValue: 0,
-        duration: 400,
-        delay: index * 60,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [index, opacityAnim, translateY]);
-
-  const handleSave = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSaved((prev) => !prev);
-    Animated.sequence([
-      Animated.timing(heartScale, {
-        toValue: 1.3,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-      Animated.timing(heartScale, {
-        toValue: 1,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [heartScale]);
-
-  const handleCardPress = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 0.99,
-        duration: 80,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-    ]).start();
-    onPress();
-  }, [onPress, scaleAnim]);
+  const [expanded, setExpanded] = useState(false);
+  const minDate = minimumDate ?? startOfDay(new Date());
+  const dates = useMemo(() => {
+    const result: Date[] = [];
+    for (let i = 0; i < 90; i++) {
+      result.push(addDays(minDate, i));
+    }
+    return result;
+  }, [minDate]);
 
   return (
-    <Animated.View
-      style={[
-        styles.card,
-        {
-          opacity: opacityAnim,
-          transform: [{ scale: scaleAnim }, { translateY }],
-        },
-      ]}
-    >
+    <View style={dateStyles.wrapper}>
       <Pressable
-        onPress={handleCardPress}
-        style={({ pressed }) => [{ opacity: pressed ? 0.95 : 1 }]}
-        accessibilityRole="button"
-        accessibilityLabel={`${stay.name}, ${stay.neighborhood}`}
+        style={({ pressed }) => [dateStyles.trigger, { opacity: pressed ? 0.8 : 1 }]}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          setExpanded(!expanded);
+        }}
       >
-        <View style={styles.cardPhotoWrap}>
-          <Image
-            source={{ uri: STAY_TYPE_IMAGES[stay.type] ?? STAY_TYPE_IMAGES.hotel }}
-            style={styles.cardPhoto}
-            resizeMode="cover"
-          />
-          <LinearGradient
-            colors={['transparent', COLORS.bg]}
-            locations={[0.5, 1]}
-            style={styles.cardPhotoOverlay}
-          />
-          <View style={styles.cardBadge}>
-            <Text style={styles.cardBadgeText}>{stay.type}</Text>
-          </View>
-          <Pressable
-            onPress={handleSave}
-            hitSlop={12}
-            style={styles.saveBtn}
-            accessibilityRole="button"
-            accessibilityLabel={saved ? 'Unsave' : 'Save'}
-          >
-            <Animated.View style={{ transform: [{ scale: heartScale }] }}>
-              <Heart
-                size={22}
-                color={COLORS.cream}
-                strokeWidth={2}
-                fill={saved ? COLORS.coral : 'transparent'}
-              />
-            </Animated.View>
-          </Pressable>
-        </View>
-
-        <View style={styles.cardContent}>
-          <Text style={styles.cardName}>{stay.name}</Text>
-          <Text style={styles.cardNeighborhood}>
-            {stay.neighborhood} · {stay.vibe}
-          </Text>
-
-          <View style={styles.ratingRow}>
-            <Star size={14} color={COLORS.gold} fill={COLORS.gold} strokeWidth={0} />
-            <Text style={styles.ratingText}>{stay.rating}</Text>
-            <Text style={styles.reviewCount}>({stay.reviewCount} reviews)</Text>
-          </View>
-
-          <View style={styles.distanceRow}>
-            <MapPin size={12} color={COLORS.creamMuted} strokeWidth={2} />
-            <Text style={styles.distanceText}>{stay.distanceKm} km from center</Text>
-          </View>
-
-          <View style={styles.cardBottom}>
-            <Text style={styles.priceRow}>
-              <Text style={styles.priceLabel}>from </Text>
-              <Text style={styles.priceValue}>${stay.pricePerNight}</Text>
-              <Text style={styles.priceSuffix}>/night</Text>
-            </Text>
-            <Pressable
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                onBook();
-              }}
-              style={({ pressed }) => [
-                styles.bookBtn,
-                { opacity: pressed ? 0.85 : 1 },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={`Book ${stay.name}`}
-            >
-              <Text style={styles.bookBtnText}>Book</Text>
-              <ExternalLink size={12} color={COLORS.bg} strokeWidth={2} />
-            </Pressable>
-          </View>
+        <Calendar size={18} color={COLORS.creamMuted} strokeWidth={2} />
+        <View>
+          <Text style={dateStyles.label}>{label}</Text>
+          <Text style={dateStyles.value}>{format(value, 'EEE, MMM d')}</Text>
         </View>
       </Pressable>
-    </Animated.View>
+      {expanded && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={dateStyles.scroll}
+          contentContainerStyle={dateStyles.scrollContent}
+        >
+          {dates.map((d) => {
+            const isSelected = isSameDay(d, value);
+            return (
+              <Pressable
+                key={d.toISOString()}
+                style={[dateStyles.dateChip, isSelected && dateStyles.dateChipSelected]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  onSelect(d);
+                  setExpanded(false);
+                }}
+              >
+                <Text style={[dateStyles.dateChipDay, isSelected && dateStyles.dateChipDaySelected]}>
+                  {format(d, 'EEE')}
+                </Text>
+                <Text style={[dateStyles.dateChipNum, isSelected && dateStyles.dateChipNumSelected]}>
+                  {format(d, 'd')}
+                </Text>
+                <Text style={[dateStyles.dateChipMonth, isSelected && dateStyles.dateChipMonthSelected]}>
+                  {format(d, 'MMM')}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      )}
+    </View>
   );
 }
+
+const dateStyles = StyleSheet.create({
+  wrapper: { flex: 1 } as ViewStyle,
+  trigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm + 2,
+  } as ViewStyle,
+  label: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.creamMuted,
+    letterSpacing: 0.5,
+  } as TextStyle,
+  value: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
+    color: COLORS.cream,
+    marginTop: 1,
+  } as TextStyle,
+  scroll: { marginTop: SPACING.sm, maxHeight: 72 } as ViewStyle,
+  scrollContent: { gap: SPACING.xs } as ViewStyle,
+  dateChip: {
+    width: 56,
+    alignItems: 'center',
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.bgCard,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  } as ViewStyle,
+  dateChipSelected: {
+    backgroundColor: COLORS.sage,
+    borderColor: COLORS.sage,
+  } as ViewStyle,
+  dateChipDay: {
+    fontFamily: FONTS.body,
+    fontSize: 10,
+    color: COLORS.creamMuted,
+  } as TextStyle,
+  dateChipDaySelected: { color: COLORS.bg } as TextStyle,
+  dateChipNum: {
+    fontFamily: FONTS.mono,
+    fontSize: 16,
+    color: COLORS.cream,
+    marginVertical: 1,
+  } as TextStyle,
+  dateChipNumSelected: { color: COLORS.bg } as TextStyle,
+  dateChipMonth: {
+    fontFamily: FONTS.body,
+    fontSize: 10,
+    color: COLORS.creamMuted,
+  } as TextStyle,
+  dateChipMonthSelected: { color: COLORS.bg } as TextStyle,
+});
+
+// ---------------------------------------------------------------------------
+// Popular Stay Card
+// ---------------------------------------------------------------------------
+const StayCard = React.memo(function StayCard({
+  stay,
+  onPress,
+}: {
+  stay: PopularStay;
+  onPress: () => void;
+}) {
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  return (
+    <Pressable
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onPress();
+      }}
+      style={({ pressed }) => [styles.stayCard, { transform: [{ scale: pressed ? 0.97 : 1 }] }]}
+    >
+      {!imageLoaded && (
+        <LinearGradient
+          colors={[COLORS.bgCard, COLORS.bg]}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
+      <Image
+        source={{ uri: stay.image }}
+        style={styles.stayImage}
+        onLoad={() => setImageLoaded(true)}
+        resizeMode="cover"
+      />
+      <LinearGradient
+        colors={['transparent', COLORS.overlayDark]}
+        locations={[0.3, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={styles.stayContent}>
+        <Text style={styles.stayDest}>{stay.destination}</Text>
+        <Text style={styles.stayVibe} numberOfLines={2}>
+          {stay.vibe}
+        </Text>
+        <View style={styles.stayBottom}>
+          <Text style={styles.stayPrice}>{stay.price}</Text>
+          <View style={styles.staySearchBadge}>
+            <Text style={styles.staySearchText}>Search</Text>
+          </View>
+        </View>
+      </View>
+    </Pressable>
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Inspiration Card
+// ---------------------------------------------------------------------------
+const InspirationCardComponent = React.memo(function InspirationCardComponent({
+  card,
+  onPress,
+}: {
+  card: StayInspiration;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onPress();
+      }}
+      style={({ pressed }) => [
+        styles.inspirationCard,
+        { transform: [{ scale: pressed ? 0.97 : 1 }] },
+      ]}
+    >
+      <Image
+        source={{ uri: card.image }}
+        style={styles.inspirationImage}
+        resizeMode="cover"
+      />
+      <LinearGradient
+        colors={['transparent', COLORS.overlayDark]}
+        locations={[0.2, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={styles.inspirationContent}>
+        <Text style={styles.inspirationDest}>{card.destination}</Text>
+        <Text style={styles.inspirationReason} numberOfLines={2}>
+          {card.reason}
+        </Text>
+      </View>
+    </Pressable>
+  );
+});
 
 // ---------------------------------------------------------------------------
 // Main Screen
 // ---------------------------------------------------------------------------
-
 export default function StaysScreen() {
+  const router = useRouter();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const router = useRouter();
-  const planWizard = useAppStore((s) => s.planWizard);
-  const trips = useAppStore((s) => s.trips);
+  const planDestination = useAppStore((s) => s.planWizard.destination);
 
-  const destination = useMemo(() => {
-    const fromPlan = planWizard.destination?.trim();
-    if (fromPlan) return fromPlan;
-    const fromTrip = trips[0]?.destination;
-    return fromTrip ?? '';
-  }, [planWizard.destination, trips]);
+  const [destinationText, setDestinationText] = useState(planDestination ?? '');
+  const [checkIn, setCheckIn] = useState(startOfDay(addDays(new Date(), 7)));
+  const [checkOut, setCheckOut] = useState(startOfDay(addDays(new Date(), 14)));
+  const [guests, setGuests] = useState(2);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  const [selectedType, setSelectedType] = useState<StayType>('all');
-  const [isLoading, setIsLoading] = useState(true);
-  const resultsOpacityRef = useRef(new Animated.Value(1)).current;
-
-  const allStays = useMemo(
-    () => (destination ? generateMockStays(destination) : []),
-    [destination]
-  );
-
-  // Brief loading state for perceived quality
   useEffect(() => {
-    if (!destination) return;
-    setIsLoading(true);
-    const timer = setTimeout(() => setIsLoading(false), 600);
-    return () => clearTimeout(timer);
-  }, [destination]);
+    track({ type: 'screen_view', screen: 'stays' });
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 400,
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnim]);
 
-  const filteredStays = useMemo(() => {
-    if (selectedType === 'all') return allStays;
-    return allStays.filter((s) => s.type === selectedType);
-  }, [allStays, selectedType]);
+  useEffect(() => {
+    if (planDestination) setDestinationText(planDestination);
+  }, [planDestination]);
 
-  const handleFilterChange = useCallback((type: StayType) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSelectedType(type);
-    Animated.sequence([
-      Animated.timing(resultsOpacityRef, {
-        toValue: 0.4,
-        duration: 120,
-        useNativeDriver: true,
-      }),
-      Animated.timing(resultsOpacityRef, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [resultsOpacityRef]);
-
-  const handleCardPress = useCallback((stay: StayListing) => {
+  const handleSearch = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // Search for the specific property by name + destination
-    const query = `${stay.name} ${destination}`;
-    const url = getHotelLink({ destination: query, adults: 2 });
-    openBookingLink(url, 'booking', destination, 'stays-card').catch(() => {});
-  }, [destination]);
+    const dest = destinationText.trim() || 'anywhere';
+    const url = getHotelLink({
+      destination: dest,
+      checkin: format(checkIn, 'yyyy-MM-dd'),
+      checkout: format(checkOut, 'yyyy-MM-dd'),
+      adults: guests,
+    });
+    captureEvent('stays_search_booking', {
+      destination: dest,
+      checkin: format(checkIn, 'yyyy-MM-dd'),
+      checkout: format(checkOut, 'yyyy-MM-dd'),
+      guests,
+    });
+    openBookingLink(url, 'booking', dest, 'stays-search').catch(() => {});
+  }, [destinationText, checkIn, checkOut, guests]);
 
-  const handleBook = useCallback((stay: StayListing) => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    // Open booking search based on stay type with affiliate tracking
-    if (stay.type === 'hostel') {
-      const url = `https://www.hostelworld.com/find/hostels?search=${encodeURIComponent(destination)}`;
-      Linking.openURL(url).catch(() => {});
-    } else if (stay.type === 'airbnb') {
-      const url = `https://www.airbnb.com/s/${encodeURIComponent(destination)}/homes`;
-      Linking.openURL(url).catch(() => {});
-    } else {
-      const url = getHotelLink({ destination, adults: 2 });
-      openBookingLink(url, 'booking', destination, 'stays-book').catch(() => {});
-    }
-  }, [destination]);
+  const handleStayPress = useCallback((stay: PopularStay) => {
+    captureEvent('stays_popular_tapped', { destination: stay.destination });
+    const url = getHotelLink({
+      destination: stay.destination,
+      checkin: format(checkIn, 'yyyy-MM-dd'),
+      checkout: format(checkOut, 'yyyy-MM-dd'),
+      adults: guests,
+    });
+    openBookingLink(url, 'booking', stay.destination, 'stays-popular').catch(() => {});
+  }, [checkIn, checkOut, guests]);
 
-  if (!destination) {
-    return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <View style={styles.contextBar}>
-          <Text style={styles.contextTitle}>Where are you staying?</Text>
-        </View>
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + SPACING.xl }]}
-          showsVerticalScrollIndicator={false}
-        >
-          <Text style={styles.emptyHeroSub}>
-            Pick a destination first, and we will find the best places to stay.
-          </Text>
-          <Pressable
-            onPress={() => router.push('/(tabs)/generate')}
-            style={({ pressed }) => [styles.ctaBtn, { opacity: pressed ? 0.85 : 1, alignSelf: 'flex-start', marginLeft: SPACING.lg, marginBottom: SPACING.lg }]}
-          >
-            <Text style={styles.ctaBtnText}>Plan a trip</Text>
-          </Pressable>
+  const handleInspirationPress = useCallback((card: StayInspiration) => {
+    captureEvent('stays_inspiration_tapped', { destination: card.destination });
+    const url = getHotelLink({
+      destination: card.destination,
+      checkin: format(checkIn, 'yyyy-MM-dd'),
+      checkout: format(checkOut, 'yyyy-MM-dd'),
+      adults: guests,
+    });
+    openBookingLink(url, 'booking', card.destination, 'stays-inspiration').catch(() => {});
+  }, [checkIn, checkOut, guests]);
 
-          <Text style={styles.sectionHeader}>Browse by type</Text>
-          {STAY_CATEGORIES.map((cat) => (
-            <Pressable
-              key={cat.type}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/(tabs)/generate');
-              }}
-              style={({ pressed }) => [styles.categoryCard, { opacity: pressed ? 0.9 : 1 }]}
-            >
-              <Image
-                source={{ uri: cat.image }}
-                style={styles.categoryImage}
-                resizeMode="cover"
-              />
-              <LinearGradient
-                colors={['transparent', COLORS.bgDarkGreenOverlay]}
-                locations={[0.3, 1]}
-                style={StyleSheet.absoluteFill}
-              />
-              <View style={styles.categoryContent}>
-                <Text style={styles.categoryTitle}>{cat.title}</Text>
-                <Text style={styles.categorySub}>{cat.subtitle}</Text>
-              </View>
-            </Pressable>
-          ))}
-        </ScrollView>
-      </View>
-    );
-  }
+  const handlePlanTrip = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push('/(tabs)/generate' as never);
+  }, [router]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Section 1: Destination context bar */}
-      <View style={styles.contextBar}>
-        <Text style={styles.contextTitle}>{t('stays.title')} in {destination}</Text>
-        <Pressable
-          hitSlop={12}
-          style={({ pressed }) => [styles.filterIcon, { opacity: pressed ? 0.7 : 1 }]}
-          accessibilityRole="button"
-          accessibilityLabel="Filters"
-        >
-          <SlidersHorizontal size={20} color={COLORS.sage} strokeWidth={2} />
-        </Pressable>
-      </View>
-
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + SPACING.xl },
-        ]}
+      <Animated.ScrollView
+        style={[styles.fill, { opacity: fadeAnim }]}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Section 2: Type filter */}
+        {/* Hero */}
+        <View style={styles.hero}>
+          <Text style={styles.heroTitle}>Find your stay.</Text>
+          <Text style={styles.heroSub}>
+            We search Booking.com so you get the best price, every time.
+          </Text>
+        </View>
+
+        {/* Search Form */}
+        <View style={styles.searchCard}>
+          <View style={styles.inputWrap}>
+            <MapPin size={18} color={COLORS.sage} strokeWidth={2} />
+            <TextInput
+              style={styles.input}
+              value={destinationText}
+              onChangeText={setDestinationText}
+              placeholder="Where are you staying?"
+              placeholderTextColor={COLORS.creamDim}
+            />
+          </View>
+
+          <View style={styles.dateRow}>
+            <DatePickerInline
+              label="CHECK-IN"
+              value={checkIn}
+              onSelect={setCheckIn}
+            />
+            <DatePickerInline
+              label="CHECK-OUT"
+              value={checkOut}
+              onSelect={setCheckOut}
+              minimumDate={checkIn}
+            />
+          </View>
+
+          <View style={styles.guestsRow}>
+            <Text style={styles.guestsLabel}>Guests</Text>
+            <View style={styles.counter}>
+              <Pressable
+                style={({ pressed }) => [styles.counterBtn, { opacity: pressed ? 0.7 : 1 }]}
+                onPress={() => {
+                  if (guests > 1) {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setGuests(guests - 1);
+                  }
+                }}
+                disabled={guests <= 1}
+              >
+                <Minus
+                  size={16}
+                  color={guests <= 1 ? COLORS.creamDim : COLORS.cream}
+                  strokeWidth={2}
+                />
+              </Pressable>
+              <Text style={styles.counterValue}>{guests}</Text>
+              <Pressable
+                style={({ pressed }) => [styles.counterBtn, { opacity: pressed ? 0.7 : 1 }]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setGuests(guests + 1);
+                }}
+              >
+                <Plus size={16} color={COLORS.cream} strokeWidth={2} />
+              </Pressable>
+            </View>
+          </View>
+
+          <Pressable
+            style={({ pressed }) => [styles.searchBtn, { transform: [{ scale: pressed ? 0.98 : 1 }] }]}
+            onPress={handleSearch}
+          >
+            <ExternalLink size={18} color={COLORS.bg} strokeWidth={2} />
+            <Text style={styles.searchBtnText}>Search on Booking.com</Text>
+          </Pressable>
+        </View>
+
+        {/* No destination CTA */}
+        {!destinationText.trim() && (
+          <Pressable
+            onPress={handlePlanTrip}
+            style={({ pressed }) => [styles.planCta, pressed && { opacity: 0.8 }]}
+          >
+            <Building2 size={20} color={COLORS.gold} strokeWidth={2} />
+            <Text style={styles.planCtaText}>Plan a trip first to get personalized stays</Text>
+          </Pressable>
+        )}
+
+        {/* Popular Destinations */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Popular destinations</Text>
+          <Text style={styles.sectionSub}>
+            Where travelers are booking right now
+          </Text>
+        </View>
+
+        <View style={styles.stayGrid}>
+          {POPULAR_STAYS.map((stay) => (
+            <StayCard
+              key={stay.destination}
+              stay={stay}
+              onPress={() => handleStayPress(stay)}
+            />
+          ))}
+        </View>
+
+        {/* Stay Inspiration */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Stay inspiration</Text>
+          <Text style={styles.sectionSub}>
+            Unique stays by vibe and style
+          </Text>
+        </View>
+
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.pillsWrap}
-          style={styles.pillsScroll}
+          contentContainerStyle={styles.inspirationScroll}
         >
-          {STAY_TYPES.map((stayType) => (
-            <Pressable
-              key={stayType.id}
-              onPress={() => handleFilterChange(stayType.id)}
-              style={[
-                styles.pill,
-                selectedType === stayType.id ? styles.pillSelected : styles.pillUnselected,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.pillText,
-                  selectedType === stayType.id ? styles.pillTextSelected : styles.pillTextUnselected,
-                ]}
-              >
-                {stayType.labelKey ? t(stayType.labelKey) : stayType.label!}
-              </Text>
-            </Pressable>
+          {STAY_INSPIRATION.map((card) => (
+            <InspirationCardComponent
+              key={card.destination}
+              card={card}
+              onPress={() => handleInspirationPress(card)}
+            />
           ))}
         </ScrollView>
 
-        {/* Section 3: Map */}
-        <View style={styles.mapContainer}>
-          <StayMapView stays={filteredStays} destination={destination} />
-        </View>
-
-        {/* Section 4: Stay cards */}
-        <Animated.View style={{ opacity: resultsOpacityRef }}>
-          {isLoading ? (
-            <View style={styles.skeletonWrap}>
-              {[1, 2, 3].map((i) => (
-                <SkeletonCard key={i} height={240} borderRadius={RADIUS.xl} style={{ marginHorizontal: SPACING.lg, marginBottom: SPACING.sm }} />
-              ))}
-            </View>
-          ) : filteredStays.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Building2 size={48} color={COLORS.creamVeryFaint} strokeWidth={1.5} />
-              <Text style={styles.emptyTitle}>{t('stays.noResults')}</Text>
-              <Text style={styles.emptySub}>Try adjusting your filters</Text>
-            </View>
-          ) : (
-            <>
-              {/* Curated: Editor's Picks */}
-              {selectedType === 'all' && (() => {
-                const editorPicks = [...filteredStays].sort((a, b) => b.rating - a.rating).slice(0, 2);
-                return (
-                  <View style={styles.curatedSection}>
-                    <View style={styles.curatedHeader}>
-                      <View style={styles.curatedDot} />
-                      <Text style={styles.curatedLabel}>Editor's Picks</Text>
-                    </View>
-                    <Text style={styles.curatedSubtitle}>Highest rated in {destination}</Text>
-                    {editorPicks.map((stay, i) => (
-                      <StayCard
-                        key={`pick-${stay.id}`}
-                        stay={stay}
-                        destination={destination}
-                        index={i}
-                        onPress={() => handleCardPress(stay)}
-                        onBook={() => handleBook(stay)}
-                      />
-                    ))}
-                  </View>
-                );
-              })()}
-
-              {/* Curated: Best Value */}
-              {selectedType === 'all' && (() => {
-                const bestValue = [...filteredStays]
-                  .sort((a, b) => a.pricePerNight - b.pricePerNight)
-                  .filter((s) => s.rating >= 4.4)
-                  .slice(0, 2);
-                return bestValue.length > 0 ? (
-                  <View style={styles.curatedSection}>
-                    <View style={styles.curatedHeader}>
-                      <View style={[styles.curatedDot, styles.curatedDotGold]} />
-                      <Text style={[styles.curatedLabel, styles.curatedLabelGold]}>Best Value</Text>
-                    </View>
-                    <Text style={styles.curatedSubtitle}>Great stays, honest prices</Text>
-                    {bestValue.map((stay, i) => (
-                      <StayCard
-                        key={`value-${stay.id}`}
-                        stay={stay}
-                        destination={destination}
-                        index={i}
-                        onPress={() => handleCardPress(stay)}
-                        onBook={() => handleBook(stay)}
-                      />
-                    ))}
-                  </View>
-                ) : null;
-              })()}
-
-              {/* All stays section */}
-              <View style={styles.curatedSection}>
-                <View style={styles.curatedHeader}>
-                  <Text style={styles.sectionHeader}>
-                    {filteredStays.length} {selectedType === 'all' ? 'places' : selectedType + 's'} in {destination}
-                  </Text>
-                </View>
-                {filteredStays.map((stay, i) => (
-                  <StayCard
-                    key={stay.id}
-                    stay={stay}
-                    destination={destination}
-                    index={i}
-                    onPress={() => handleCardPress(stay)}
-                    onBook={() => handleBook(stay)}
-                  />
-                ))}
-              </View>
-            </>
-          )}
-        </Animated.View>
-      </ScrollView>
+        {/* Affiliate disclaimer */}
+        <Text style={styles.disclaimer}>
+          ROAM earns a small commission when you book through Booking.com. This
+          keeps the app free.
+        </Text>
+      </Animated.ScrollView>
     </View>
   );
 }
@@ -729,367 +560,253 @@ export default function StaysScreen() {
 // ---------------------------------------------------------------------------
 // Styles
 // ---------------------------------------------------------------------------
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.bg,
   } as ViewStyle,
-  contextBar: {
+  fill: { flex: 1 } as ViewStyle,
+  scrollContent: { paddingBottom: 120 } as ViewStyle,
+
+  hero: {
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.md,
+  } as ViewStyle,
+  heroTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 40,
+    color: COLORS.cream,
+    lineHeight: 46,
+  } as TextStyle,
+  heroSub: {
+    fontFamily: FONTS.body,
+    fontSize: 15,
+    color: COLORS.creamMuted,
+    marginTop: SPACING.xs,
+    lineHeight: 22,
+  } as TextStyle,
+
+  searchCard: {
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.xl,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.md,
+    gap: SPACING.md,
+  } as ViewStyle,
+  inputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.bg,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: SPACING.md,
+    height: 48,
+  } as ViewStyle,
+  input: {
+    flex: 1,
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.cream,
+    padding: 0,
+  } as TextStyle,
+  dateRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  } as ViewStyle,
+  guestsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
   } as ViewStyle,
-  contextTitle: {
-    fontFamily: FONTS.header,
-    fontSize: 22,
-    color: COLORS.cream,
-  } as TextStyle,
-  noDestination: {
+  guestsLabel: {
     fontFamily: FONTS.body,
     fontSize: 14,
-    color: COLORS.creamMuted,
-  } as TextStyle,
-  filterIcon: {
-    padding: SPACING.xs,
-  } as ViewStyle,
-  pillsScroll: {
-    marginBottom: SPACING.md,
-  } as ViewStyle,
-  pillsWrap: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-    paddingHorizontal: SPACING.lg,
-  } as ViewStyle,
-  pill: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.full,
-  } as ViewStyle,
-  pillSelected: {
-    backgroundColor: COLORS.sage,
-  } as ViewStyle,
-  pillUnselected: {
-    backgroundColor: COLORS.bgCard,
-    borderWidth: 1,
-    borderColor: COLORS.creamDimLight,
-  } as ViewStyle,
-  pillText: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-  } as TextStyle,
-  pillTextSelected: {
-    color: COLORS.bg,
-  } as TextStyle,
-  pillTextUnselected: {
     color: COLORS.cream,
   } as TextStyle,
-  mapContainer: {
-    width: '100%',
-    borderRadius: RADIUS.xl,
-    overflow: 'hidden',
-    marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.md,
-  } as ViewStyle,
-  neighborhoodGuide: {
-    paddingVertical: SPACING.md,
-  } as ViewStyle,
-  neighborhoodTitle: {
-    fontFamily: FONTS.mono,
-    fontSize: 12,
-    color: COLORS.creamMuted,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 1,
-    marginBottom: SPACING.sm,
-    paddingHorizontal: SPACING.xs,
-  } as TextStyle,
-  neighborhoodScroll: {
+  counter: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: SPACING.sm,
   } as ViewStyle,
-  neighborhoodCard: {
-    backgroundColor: COLORS.bgCard,
+  counterBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.bg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
+  counterValue: {
+    fontFamily: FONTS.mono,
+    fontSize: 16,
+    color: COLORS.cream,
+    width: 24,
+    textAlign: 'center',
+  } as TextStyle,
+  searchBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    height: 52,
     borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.sage,
+  } as ViewStyle,
+  searchBtnText: {
+    fontFamily: FONTS.header,
+    fontSize: 20,
+    color: COLORS.bg,
+  } as TextStyle,
+
+  planCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.xl,
     padding: SPACING.md,
-    minWidth: 140,
+    backgroundColor: COLORS.gold + '14',
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.gold + '30',
+  } as ViewStyle,
+  planCtaText: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.gold,
+  } as TextStyle,
+
+  sectionHeader: {
+    paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
+  } as ViewStyle,
+  sectionTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 24,
+    color: COLORS.cream,
+  } as TextStyle,
+  sectionSub: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamMuted,
+    marginTop: 2,
+  } as TextStyle,
+
+  stayGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.sm,
+    marginBottom: SPACING.xl,
+  } as ViewStyle,
+  stayCard: {
+    width: '48.5%' as unknown as number,
+    height: 180,
+    borderRadius: RADIUS.lg,
+    overflow: 'hidden',
     borderWidth: 1,
     borderColor: COLORS.border,
   } as ViewStyle,
-  neighborhoodName: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 14,
-    color: COLORS.cream,
-    marginTop: SPACING.xs,
-  } as TextStyle,
-  neighborhoodMeta: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.creamMuted,
-    marginTop: 4,
-  } as TextStyle,
-  emptyHeroSub: {
-    fontFamily: FONTS.body,
-    fontSize: 15,
-    color: COLORS.creamDim,
-    paddingHorizontal: SPACING.lg,
-    marginBottom: SPACING.md,
-    lineHeight: 22,
-  } as TextStyle,
-  categoryCard: {
-    marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.sm + 4,
-    borderRadius: RADIUS.xl,
-    overflow: 'hidden',
-    height: 140,
-    position: 'relative',
-  } as ViewStyle,
-  categoryImage: {
+  stayImage: {
     ...StyleSheet.absoluteFillObject,
     width: '100%',
     height: '100%',
   } as ImageStyle,
-  categoryContent: {
+  stayContent: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: SPACING.sm,
+  } as ViewStyle,
+  stayDest: {
+    fontFamily: FONTS.header,
+    fontSize: 20,
+    color: COLORS.white,
+    marginBottom: 2,
+  } as TextStyle,
+  stayVibe: {
+    fontFamily: FONTS.body,
+    fontSize: 11,
+    color: COLORS.creamSoft,
+    marginBottom: 4,
+  } as TextStyle,
+  stayBottom: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  } as ViewStyle,
+  stayPrice: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.gold,
+  } as TextStyle,
+  staySearchBadge: {
+    backgroundColor: COLORS.sage,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 3,
+    borderRadius: RADIUS.sm,
+  } as ViewStyle,
+  staySearchText: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.bg,
+    letterSpacing: 0.5,
+  } as TextStyle,
+
+  inspirationScroll: {
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.md,
+    paddingBottom: SPACING.xl,
+  } as ViewStyle,
+  inspirationCard: {
+    width: 200,
+    height: 260,
+    borderRadius: RADIUS.xl,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  } as ViewStyle,
+  inspirationImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  } as ImageStyle,
+  inspirationContent: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     padding: SPACING.md,
   } as ViewStyle,
-  categoryTitle: {
+  inspirationDest: {
     fontFamily: FONTS.header,
     fontSize: 22,
-    color: COLORS.cream,
+    color: COLORS.white,
   } as TextStyle,
-  categorySub: {
+  inspirationReason: {
     fontFamily: FONTS.body,
-    fontSize: 13,
+    fontSize: 12,
     color: COLORS.creamSoft,
     marginTop: 2,
+    lineHeight: 18,
   } as TextStyle,
-  mapWrap: {
-    flex: 1,
-    borderRadius: RADIUS.xl,
-    overflow: 'hidden',
-  } as ViewStyle,
-  priceBubble: {
-    backgroundColor: COLORS.gold,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.full,
-  } as ViewStyle,
-  priceBubbleText: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.bg,
-  } as TextStyle,
-  scroll: {
-    flex: 1,
-  } as ViewStyle,
-  scrollContent: {
-    paddingBottom: SPACING.xl,
-  } as ViewStyle,
-  sectionHeader: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.creamMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  } as TextStyle,
-  card: {
-    marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.md,
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.xl,
-    overflow: 'hidden',
-  } as ViewStyle,
-  cardPhotoWrap: {
-    height: 180,
-    position: 'relative',
-  } as ViewStyle,
-  cardPhoto: {
-    ...StyleSheet.absoluteFillObject,
-    width: '100%',
-    height: '100%',
-  } as ImageStyle,
-  cardPhotoOverlay: {
-    ...StyleSheet.absoluteFillObject,
-  } as ViewStyle,
-  cardBadge: {
-    position: 'absolute',
-    top: SPACING.sm,
-    left: SPACING.sm,
-    backgroundColor: COLORS.bgDarkGreen80,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.sm,
-  } as ViewStyle,
-  cardBadgeText: {
+
+  disclaimer: {
     fontFamily: FONTS.body,
     fontSize: 11,
-    color: COLORS.cream,
-    textTransform: 'capitalize',
-  } as TextStyle,
-  saveBtn: {
-    position: 'absolute',
-    top: SPACING.sm,
-    right: SPACING.sm,
-    padding: SPACING.xs,
-  } as ViewStyle,
-  cardContent: {
-    padding: SPACING.md,
-  } as ViewStyle,
-  cardName: {
-    fontFamily: FONTS.header,
-    fontSize: 20,
-    color: COLORS.cream,
-    marginBottom: SPACING.xs,
-  } as TextStyle,
-  cardNeighborhood: {
-    fontFamily: FONTS.body,
-    fontSize: 12,
-    color: COLORS.creamMuted,
-    marginBottom: SPACING.sm,
-  } as TextStyle,
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    marginBottom: SPACING.xs,
-  } as ViewStyle,
-  ratingText: {
-    fontFamily: FONTS.mono,
-    fontSize: 13,
-    color: COLORS.gold,
-  } as TextStyle,
-  reviewCount: {
-    fontFamily: FONTS.body,
-    fontSize: 12,
-    color: COLORS.creamMuted,
-  } as TextStyle,
-  distanceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    marginBottom: SPACING.sm,
-  } as ViewStyle,
-  distanceText: {
-    fontFamily: FONTS.body,
-    fontSize: 12,
-    color: COLORS.creamMuted,
-  } as TextStyle,
-  cardBottom: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  } as ViewStyle,
-  priceRow: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-  } as TextStyle,
-  priceLabel: {
-    color: COLORS.creamMuted,
-  } as TextStyle,
-  priceValue: {
-    fontFamily: FONTS.mono,
-    fontSize: 18,
-    color: COLORS.gold,
-  } as TextStyle,
-  priceSuffix: {
-    fontSize: 12,
-    color: COLORS.creamMuted,
-  } as TextStyle,
-  bookBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    backgroundColor: COLORS.sage,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.md,
-  } as ViewStyle,
-  bookBtnText: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.bg,
-  } as TextStyle,
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: SPACING.xxl,
-  } as ViewStyle,
-  emptyCenter: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    color: COLORS.creamDim,
+    textAlign: 'center',
     paddingHorizontal: SPACING.xl,
-  } as ViewStyle,
-  emptyTitle: {
-    fontFamily: FONTS.body,
-    fontSize: 16,
-    color: COLORS.creamMuted,
     marginTop: SPACING.md,
-  } as TextStyle,
-  emptySub: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.creamDimLight,
-    marginTop: SPACING.xs,
-  } as TextStyle,
-  ctaBtn: {
-    marginTop: SPACING.lg,
-    backgroundColor: COLORS.sage,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    borderRadius: RADIUS.lg,
-  } as ViewStyle,
-  ctaBtnText: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 15,
-    color: COLORS.bg,
-  } as TextStyle,
-
-  // ── Skeleton loaders ──
-  skeletonWrap: {
-    gap: SPACING.md,
-    paddingTop: SPACING.sm,
-  } as ViewStyle,
-
-  // ── Curated sections ──
-  curatedSection: {
-    marginTop: SPACING.lg,
-  } as ViewStyle,
-  curatedHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    paddingHorizontal: SPACING.lg,
-    marginBottom: SPACING.xs,
-  } as ViewStyle,
-  curatedDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: COLORS.sage,
-  } as ViewStyle,
-  curatedDotGold: {
-    backgroundColor: COLORS.gold,
-  } as ViewStyle,
-  curatedLabel: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.sage,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  } as TextStyle,
-  curatedLabelGold: {
-    color: COLORS.gold,
-  } as TextStyle,
-  curatedSubtitle: {
-    fontFamily: FONTS.body,
-    fontSize: 12,
-    color: COLORS.creamDimLight,
-    paddingHorizontal: SPACING.lg,
-    marginBottom: SPACING.sm,
+    lineHeight: 16,
   } as TextStyle,
 });

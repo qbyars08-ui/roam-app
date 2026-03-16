@@ -58,6 +58,78 @@ export function getTimezoneByDestination(destination: string): string | null {
   return DESTINATION_TIMEZONES[key] ?? null;
 }
 
+/**
+ * Compute timezone info locally using Intl.DateTimeFormat (no network needed).
+ * This is the primary method — works offline, instant, no API key.
+ */
+function computeTimezoneLocally(timezone: string): TimezoneInfo | null {
+  try {
+    const now = new Date();
+
+    // Get current time in the target timezone
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    const currentTime = formatter.format(now);
+
+    // Get abbreviation (e.g. "JST", "EST")
+    const abbrFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      timeZoneName: 'short',
+    });
+    const parts = abbrFormatter.formatToParts(now);
+    const abbreviation = parts.find((p) => p.type === 'timeZoneName')?.value ?? '';
+
+    // Calculate UTC offset
+    const utcFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'UTC',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      hour12: false,
+    });
+    const destFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      hour12: false,
+    });
+
+    const utcDate = new Date(utcFormatter.format(now));
+    const destDate = new Date(destFormatter.format(now));
+    const offsetMinutes = Math.round((destDate.getTime() - utcDate.getTime()) / 60000);
+    const sign = offsetMinutes >= 0 ? '+' : '-';
+    const absMinutes = Math.abs(offsetMinutes);
+    const offsetHours = Math.floor(absMinutes / 60).toString().padStart(2, '0');
+    const offsetMins = (absMinutes % 60).toString().padStart(2, '0');
+    const utcOffset = `${sign}${offsetHours}:${offsetMins}`;
+
+    // DST detection: compare January and July offsets
+    const jan = new Date(now.getFullYear(), 0, 1);
+    const jul = new Date(now.getFullYear(), 6, 1);
+    const janUtc = new Date(utcFormatter.format(jan));
+    const janDest = new Date(destFormatter.format(jan));
+    const julUtc = new Date(utcFormatter.format(jul));
+    const julDest = new Date(destFormatter.format(jul));
+    const janOffset = Math.round((janDest.getTime() - janUtc.getTime()) / 60000);
+    const julOffset = Math.round((julDest.getTime() - julUtc.getTime()) / 60000);
+    const isDst = offsetMinutes !== Math.min(janOffset, julOffset);
+
+    return {
+      timezone,
+      abbreviation,
+      utcOffset,
+      currentTime,
+      isDst,
+      fetchedAt: Date.now(),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function getTimezoneInfo(timezone: string): Promise<TimezoneInfo | null> {
   const cacheKey = `${CACHE_KEY}::${timezone}`;
 
@@ -74,6 +146,18 @@ export async function getTimezoneInfo(timezone: string): Promise<TimezoneInfo | 
     // Cache miss
   }
 
+  // Primary: compute locally via Intl API (no network, instant)
+  const local = computeTimezoneLocally(timezone);
+  if (local) {
+    try {
+      await AsyncStorage.setItem(cacheKey, JSON.stringify(local));
+    } catch {
+      // Non-critical
+    }
+    return local;
+  }
+
+  // Fallback: WorldTimeAPI (network-dependent)
   try {
     const url = `https://worldtimeapi.org/api/timezone/${timezone}`;
     const response = await fetch(url);

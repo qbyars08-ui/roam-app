@@ -60,7 +60,7 @@ import { exportCalendar } from '../lib/calendar';
 import { shareTrip, copyShareableLink } from '../lib/sharing';
 import { recordGrowthEvent } from '../lib/growth-hooks';
 import { evaluateTrigger } from '../lib/smart-triggers';
-import { buildDayNarration } from '../lib/elevenlabs';
+import { buildDayNarration, narrateItinerary, type NarrationController } from '../lib/elevenlabs';
 import WeatherCard from '../components/features/WeatherCard';
 import FlightPriceCard from '../components/features/FlightPriceCard';
 import WeatherDayStrip from '../components/features/WeatherDayStrip';
@@ -113,6 +113,8 @@ import MockDataBadge from '../components/ui/MockDataBadge';
 import ActivityEditModal from '../components/features/ActivityEditModal';
 import RouteIntelCard from '../components/features/RouteIntelCard';
 import SeasonalIntel from '../components/features/SeasonalIntel';
+import AudioGuideBar from '../components/audio/AudioGuideBar';
+import NarrationToggle from '../components/audio/NarrationToggle';
 
 // =============================================================================
 // Component
@@ -154,6 +156,7 @@ export default function ItineraryScreen() {
     slot: 'morning' | 'afternoon' | 'evening';
     data: TimeSlotActivity;
   } | null>(null);
+  const [narrationController, setNarrationController] = useState<NarrationController | null>(null);
   const mapRef = useRef<typeof MapView>(null);
   const dayPagerRef = useRef<ScrollView>(null);
   const updateTrip = useAppStore((s) => s.updateTrip);
@@ -373,6 +376,31 @@ export default function ItineraryScreen() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- trip used for narration only
   }, [currentDay, trip]);
+
+  // Full itinerary narration handler
+  const handleStartFullNarration = useCallback(() => {
+    if (!parsed) return;
+    // Stop previous controller if exists
+    if (narrationController?.isPlaying()) {
+      narrationController.stop();
+      setNarrationController(null);
+      return;
+    }
+    const controller = narrateItinerary(parsed, {
+      onDayChange: (day) => setActiveDay(day),
+      onComplete: () => setNarrationController(null),
+    });
+    setNarrationController(controller);
+    controller.play();
+  }, [parsed, narrationController]);
+
+  // Cleanup narration on unmount
+  useEffect(() => {
+    return () => {
+      narrationController?.stop();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fallbackNow = useMemo(
     () => Date.now(), // eslint-disable-line react-hooks/purity -- fallback when trip.createdAt missing
@@ -1115,7 +1143,7 @@ export default function ItineraryScreen() {
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                router.push({ pathname: '/trip-story', params: { tripId: trip.id } });
+                router.push({ pathname: '/trip-story', params: { tripId: trip.id } } as never);
               }}
               style={({ pressed }) => [
                 styles.itineraryExtraCard,
@@ -1136,7 +1164,7 @@ export default function ItineraryScreen() {
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                router.push({ pathname: '/trip-album', params: { tripId: trip.id } });
+                router.push({ pathname: '/trip-album', params: { tripId: trip.id } } as never);
               }}
               style={({ pressed }) => [
                 styles.itineraryExtraCard,
@@ -1509,10 +1537,18 @@ export default function ItineraryScreen() {
               {/* Voice guide */}
               {narrationText.length > 0 && (
                 <View style={styles.section}>
-                  <VoiceGuide
-                    text={narrationText}
-                    label={`Listen to Day ${currentDay.day}`}
-                  />
+                  <View style={{ flexDirection: 'row', gap: SPACING.sm, flexWrap: 'wrap' }}>
+                    <VoiceGuide
+                      text={narrationText}
+                      label={`Listen to Day ${currentDay.day}`}
+                    />
+                    {parsed && parsed.days.length > 1 && (
+                      <NarrationToggle
+                        itinerary={parsed}
+                        onControllerReady={(ctrl) => setNarrationController(ctrl)}
+                      />
+                    )}
+                  </View>
                 </View>
               )}
             </>
@@ -1732,6 +1768,17 @@ export default function ItineraryScreen() {
 
       {/* ── Emergency SOS ─────────────────────────────────────────────── */}
       <EmergencySOS />
+
+      {/* ── Audio Guide floating bar ──────────────────────────────── */}
+      <AudioGuideBar
+        controller={narrationController}
+        destination={trip?.destination ?? ''}
+        totalDays={parsed?.days.length ?? 0}
+        onClose={() => {
+          narrationController?.stop();
+          setNarrationController(null);
+        }}
+      />
 
       {/* ── Share modal ────────────────────────────────────────────────── */}
       <Modal

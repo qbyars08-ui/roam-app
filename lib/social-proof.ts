@@ -1,9 +1,10 @@
 // =============================================================================
 // ROAM — Social Proof Counts
-// Deterministic, destination-scoped traveler counts.
-// Before Supabase traveler_profiles table is live, these produce stable numbers
-// that feel real (different per destination, same every render for same month).
-// Once the table ships, replace getDestinationCount() with a live Supabase query.
+// ⚠️  PLACEHOLDER DATA — ALL FUNCTIONS IN THIS FILE ARE FAKE
+// Numbers are generated from a seeded pseudo-random algorithm, NOT real user data.
+// Before shipping to production, replace every function below with a live
+// Supabase query against the traveler_profiles (or equivalent) table.
+// Do NOT surface these numbers directly to users as factual counts.
 // =============================================================================
 
 // ---------------------------------------------------------------------------
@@ -33,6 +34,10 @@ export function getDestinationCount(destination: string, month: number): number 
 /**
  * "247 people planning Tokyo this month"
  * Used on destination cards, in the generate form, and in the People hero.
+ *
+ * @deprecated Returns fabricated placeholder count. Replace with a live
+ * Supabase query (e.g. `select count(*) from trips where destination = $1
+ * and created_at >= date_trunc('month', now())`) before surfacing to users.
  */
 export function planningLabel(destination: string): string {
   const n = getDestinationCount(destination, new Date().getMonth() + 1);
@@ -42,6 +47,9 @@ export function planningLabel(destination: string): string {
 /**
  * "You're one of 247 ROAM travelers going to Tokyo in April"
  * Used post-match confirmation and post-generation nudge.
+ *
+ * @deprecated Returns fabricated placeholder count. Replace with a live
+ * Supabase query for the real monthly trip count before surfacing to users.
  */
 export function postMatchLabel(destination: string): string {
   const n = getDestinationCount(destination, new Date().getMonth() + 1);
@@ -52,6 +60,9 @@ export function postMatchLabel(destination: string): string {
 /**
  * Short badge copy for destination cards: "247 trips this week"
  * Used in DestinationPhotoCard trending badge (replaces generic "TRENDING" text).
+ *
+ * @deprecated Returns fabricated placeholder count. Replace with a live
+ * Supabase query for the real weekly trip count before surfacing to users.
  */
 export function weeklyBadgeLabel(destination: string): string {
   // Weekly count is ~25% of monthly count, rounded to feel natural

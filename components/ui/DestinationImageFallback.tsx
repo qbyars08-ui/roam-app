@@ -26,7 +26,7 @@ const DESTINATION_THEME_COLORS: Record<string, string> = {
   Reykjavik: '#94A3B8',
 };
 
-const DEFAULT_THEME_COLOR = '#7CAF8A';
+const DEFAULT_THEME_COLOR = COLORS.sage;
 
 /**
  * Converts a hex color string to an rgba string at the given opacity.

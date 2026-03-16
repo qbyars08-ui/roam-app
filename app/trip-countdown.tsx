@@ -34,7 +34,6 @@ import {
   Sun, Cloud, Umbrella, ShoppingBag, Camera,
   Heart, MapPin, Star, Zap, Coffee,
 } from 'lucide-react-native';
-import { withComingSoon } from '../lib/with-coming-soon';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -445,10 +444,7 @@ function TripCountdownScreen() {
   );
 }
 
-export default withComingSoon(TripCountdownScreen, {
-  routeName: 'trip-countdown',
-  title: 'Trip Countdown',
-});
+export default TripCountdownScreen;
 
 // =============================================================================
 // Styles

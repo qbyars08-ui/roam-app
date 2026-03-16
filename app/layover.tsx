@@ -1,6 +1,7 @@
 // =============================================================================
 // ROAM — Layover Optimizer
 // What to do with X hours in a layover city.
+// Magazine aesthetic: dark cards, photo cards, editorial typography.
 // =============================================================================
 import React, { useCallback, useMemo, useState } from 'react';
 import {
@@ -9,28 +10,21 @@ import {
   ScrollView,
   Pressable,
   StyleSheet,
+  Image,
   type ViewStyle,
   type TextStyle,
+  type ImageStyle,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ArrowLeft,
-  Clock,
-  MapPin,
-  Utensils,
-  Compass,
-  Sparkles,
-  Palette,
-  ShoppingBag,
   Minus,
   Plus,
   Plane,
-  ChevronRight,
-  type LucideIcon,
 } from 'lucide-react-native';
 import * as Haptics from '../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, MAGAZINE } from '../lib/constants';
 import {
   getLayoverGuide,
   getLayoverActivities,
@@ -38,32 +32,87 @@ import {
   type LayoverGuide,
   type LayoverActivity,
 } from '../lib/layover-data';
-import { withComingSoon } from '../lib/with-coming-soon';
+import { getDestinationPhoto } from '../lib/photos';
 
 // ---------------------------------------------------------------------------
-// Constants
+// Lounge intel — curated notes per airport
 // ---------------------------------------------------------------------------
-const CATEGORY_ICONS: Record<LayoverActivity['category'], LucideIcon> = {
-  food: Utensils,
-  explore: Compass,
-  relax: Sparkles,
-  culture: Palette,
-  shop: ShoppingBag,
+const LOUNGE_INTEL: Record<string, string[]> = {
+  JFK: [
+    'Priority Pass accepted at most terminals. The Centurion Lounge (T4) is the gold standard.',
+    'Delta Sky Club in T4 is solid if you have access. Expect crowds during peak hours.',
+    'T5 JetBlue lounge is surprisingly decent for a budget carrier.',
+  ],
+  LAX: [
+    'Tom Bradley International has the best lounges. Star Alliance is worth seeking out.',
+    'The Centurion Lounge is small and waitlisted — arrive early or skip it.',
+    'United Polaris lounge in TBIT is excellent if you have access.',
+  ],
+  LHR: [
+    'T5 Galleries lounges are solid. Priority Pass gets you into Plaza Premium.',
+    'Cathay Pacific The Wing in T3 is one of the best in the airport.',
+    'Arrive early — T5 lounges fill up fast on transatlantic morning departures.',
+  ],
+  NRT: [
+    'JAL First Class Lounge is legendary if you can access it. Priority Pass works at IASS.',
+    'ANA Suite Lounge in T1 has excellent ramen — go for the noodles alone.',
+    'Sakura Lounge (JAL) is accessible on many itineraries and has great views of the tarmac.',
+  ],
+  DXB: [
+    'Emirates lounges set the bar. Priority Pass works at Marhaba. Showers available everywhere.',
+    'The Emirates First Class lounge in Concourse A is otherworldly — spa, à la carte dining.',
+    'Sleep pods are available in T3 if you need a proper rest between connections.',
+  ],
+  SIN: [
+    'Changi is a destination itself. Butterfly garden, rooftop pool (T1). Priority Pass at SATS.',
+    'The SATS Premier Lounge via Priority Pass is well-stocked and rarely crowded.',
+    'Jewel Changi is technically landside — clear immigration early to access it stress-free.',
+  ],
+  CDG: [
+    'Star Alliance lounge in T1 is decent. Bring your own food — CDG restaurants are overpriced.',
+    'Air France Salon in T2F is exceptional if your ticket qualifies.',
+    'Bypass CDG food courts — the brasseries near gates are better value and quieter.',
+  ],
+  ICN: [
+    'Free transit tours available. SkyHub Lounge via Priority Pass. Jjimjilbang spa is incredible.',
+    'Korean Air Prestige Lounge in T1 has a full Korean buffet — worth the early arrival.',
+    'The free Korean Cultural Experience zone on Level 3 is genuinely worth 30 minutes.',
+  ],
 };
 
-const CATEGORY_COLORS: Record<LayoverActivity['category'], string> = {
-  food: COLORS.coral,
-  explore: COLORS.sage,
-  relax: COLORS.gold,
-  culture: COLORS.cream,
-  shop: COLORS.sage,
+// ---------------------------------------------------------------------------
+// Terminal notes — concise airside/transit info
+// ---------------------------------------------------------------------------
+const TERMINAL_NOTES: Record<string, string> = {
+  JFK: 'Terminals NOT connected airside — allow 30 min for AirTrain transfer',
+  LAX: 'Terminals NOT connected airside — shuttle required between some terminals',
+  LHR: 'T5 is self-contained. T2/T3 connected airside. T4 requires transit',
+  NRT: 'T1 and T2 connected by free shuttle — allow 15 min',
+  DXB: 'All gates connected airside via Concourse system',
+  SIN: 'All terminals connected — Jewel accessible from T1 without clearing immigration',
+  CDG: 'T2 has multiple sub-terminals — allow extra time between 2E and 2F',
+  ICN: 'T1 and T2 require AREX or shuttle — NOT connected airside',
+};
+
+// ---------------------------------------------------------------------------
+// Airport city names for photo lookup
+// ---------------------------------------------------------------------------
+const AIRPORT_CITIES: Record<string, string> = {
+  JFK: 'New York',
+  LAX: 'Los Angeles',
+  LHR: 'London',
+  NRT: 'Tokyo',
+  DXB: 'Dubai',
+  SIN: 'Singapore',
+  CDG: 'Paris',
+  ICN: 'Seoul',
 };
 
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
 
-function AirportChip({
+function AirportPhotoCard({
   code,
   isActive,
   onPress,
@@ -72,6 +121,9 @@ function AirportChip({
   isActive: boolean;
   onPress: () => void;
 }) {
+  const city = AIRPORT_CITIES[code] ?? code;
+  const photoUri = getDestinationPhoto(city, 320);
+
   return (
     <Pressable
       onPress={() => {
@@ -79,40 +131,79 @@ function AirportChip({
         onPress();
       }}
       style={[
-        styles.airportChip,
-        isActive && styles.airportChipActive,
+        styles.airportCard,
+        isActive && styles.airportCardActive,
+        !isActive && styles.airportCardInactive,
       ]}
     >
-      <Text style={[styles.airportChipText, isActive && styles.airportChipTextActive]}>
-        {code}
-      </Text>
+      <Image
+        source={{ uri: photoUri }}
+        style={styles.airportCardPhoto}
+        resizeMode="cover"
+      />
+      <View style={styles.airportCardOverlay} />
+      <View style={styles.airportCardContent}>
+        <Text style={styles.airportCardCode}>{code}</Text>
+        <Text style={styles.airportCardCity}>{city}</Text>
+      </View>
     </Pressable>
   );
 }
 
-function ActivityCard({ activity }: { activity: LayoverActivity }) {
-  const Icon = CATEGORY_ICONS[activity.category];
-  const color = CATEGORY_COLORS[activity.category];
+function HeroSection({ guide }: { guide: LayoverGuide }) {
+  const photoUri = getDestinationPhoto(guide.city, 800);
+  const terminalNote = TERMINAL_NOTES[guide.airportCode] ?? 'Check terminal maps on arrival';
 
   return (
+    <View style={styles.heroContainer}>
+      <Image
+        source={{ uri: photoUri }}
+        style={styles.heroPhoto}
+        resizeMode="cover"
+      />
+      <View style={styles.heroGradient} />
+      <View style={styles.heroContent}>
+        <Text style={styles.heroAirportName}>{guide.airport}</Text>
+        <Text style={styles.heroTerminalNote}>{terminalNote}</Text>
+      </View>
+    </View>
+  );
+}
+
+function ActivityCard({ activity }: { activity: LayoverActivity }) {
+  return (
     <View style={styles.activityCard}>
-      <View style={styles.activityHeader}>
-        <View style={[styles.activityIconWrap, { backgroundColor: color + '18' }]}>
-          <Icon size={16} color={color} strokeWidth={2} />
+      <View style={styles.activityBorderAccent} />
+      <View style={styles.activityCardInner}>
+        <View style={styles.activityMeta}>
+          <Text style={styles.activityCategory}>{activity.category.toUpperCase()}</Text>
+          <Text style={styles.activityDuration}>{activity.duration}</Text>
         </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.activityTitle}>{activity.title}</Text>
-          <View style={styles.durationRow}>
-            <Clock size={10} color={COLORS.creamMuted} strokeWidth={2} />
-            <Text style={styles.activityDuration}>{activity.duration}</Text>
-          </View>
+        <Text style={styles.activityTitle}>{activity.title}</Text>
+        <Text style={styles.activityDesc}>{activity.description}</Text>
+        <View style={styles.tipContainer}>
+          <View style={styles.tipAccent} />
+          <Text style={styles.tipText}>{activity.tip}</Text>
         </View>
       </View>
-      <Text style={styles.activityDesc}>{activity.description}</Text>
-      <View style={styles.tipRow}>
-        <Sparkles size={12} color={COLORS.gold} strokeWidth={2} />
-        <Text style={styles.tipText}>{activity.tip}</Text>
-      </View>
+    </View>
+  );
+}
+
+function PerkItem({ text }: { text: string }) {
+  return (
+    <View style={styles.perkItem}>
+      <View style={styles.perkAccent} />
+      <Text style={styles.perkText}>{text}</Text>
+    </View>
+  );
+}
+
+function LoungeItem({ text }: { text: string }) {
+  return (
+    <View style={styles.loungeItem}>
+      <View style={styles.loungeAccent} />
+      <Text style={styles.loungeText}>{text}</Text>
     </View>
   );
 }
@@ -136,6 +227,11 @@ function LayoverScreen() {
   const { inAirport, canLeave, activities } = useMemo(
     () => getLayoverActivities(selectedAirport, hours),
     [selectedAirport, hours],
+  );
+
+  const loungeNotes = useMemo(
+    () => LOUNGE_INTEL[selectedAirport] ?? [],
+    [selectedAirport],
   );
 
   const handleDecrease = useCallback(() => {
@@ -172,15 +268,15 @@ function LayoverScreen() {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Airport selector */}
+        {/* Airport selector — photo cards */}
         <Text style={styles.sectionLabel}>AIRPORT</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipRow}
+          contentContainerStyle={styles.airportCardRow}
         >
           {airports.map((code) => (
-            <AirportChip
+            <AirportPhotoCard
               key={code}
               code={code}
               isActive={selectedAirport === code}
@@ -189,13 +285,16 @@ function LayoverScreen() {
           ))}
         </ScrollView>
 
-        {/* Airport info */}
+        {/* Hero — full-width city photo + airport name */}
+        {guide && <HeroSection guide={guide} />}
+
+        {/* Transit info */}
         {guide && (
-          <View style={styles.airportInfo}>
-            <Text style={styles.airportName}>{guide.airport}</Text>
-            <View style={styles.transitRow}>
-              <MapPin size={14} color={COLORS.sage} strokeWidth={2} />
-              <Text style={styles.transitText}>
+          <View style={styles.transitCard}>
+            <View style={styles.transitAccent} />
+            <View style={styles.transitCardInner}>
+              <Text style={styles.transitLabel}>CITY ACCESS</Text>
+              <Text style={styles.transitDetail}>
                 {guide.transitTime} via {guide.transitMethod}
               </Text>
             </View>
@@ -203,13 +302,13 @@ function LayoverScreen() {
         )}
 
         {/* Hours selector */}
-        <Text style={styles.sectionLabel}>LAYOVER TIME</Text>
+        <Text style={[styles.sectionLabel, { marginTop: SPACING.xl }]}>LAYOVER TIME</Text>
         <View style={styles.hoursRow}>
           <Pressable
             onPress={handleDecrease}
-            style={({ pressed }) => [styles.hoursBtn, pressed && { opacity: 0.6 }]}
+            style={({ pressed }) => [styles.hoursBtn, pressed && { opacity: 0.5 }]}
           >
-            <Minus size={20} color={COLORS.cream} strokeWidth={2} />
+            <Text style={styles.hoursBtnText}>−</Text>
           </Pressable>
           <View style={styles.hoursDisplay}>
             <Text style={styles.hoursNum}>{hours}</Text>
@@ -217,52 +316,61 @@ function LayoverScreen() {
           </View>
           <Pressable
             onPress={handleIncrease}
-            style={({ pressed }) => [styles.hoursBtn, pressed && { opacity: 0.6 }]}
+            style={({ pressed }) => [styles.hoursBtn, pressed && { opacity: 0.5 }]}
           >
-            <Plus size={20} color={COLORS.cream} strokeWidth={2} />
+            <Text style={styles.hoursBtnText}>+</Text>
           </Pressable>
         </View>
 
-        {/* Status */}
-        <View style={[styles.statusBadge, { backgroundColor: canLeave ? COLORS.sage + '18' : COLORS.gold + '18' }]}>
-          <Text style={[styles.statusText, { color: canLeave ? COLORS.sage : COLORS.gold }]}>
-            {canLeave
-              ? `${hours} hours is enough to explore ${guide?.city ?? 'the city'}`
-              : `Stay in the airport ${guide ? `(need ${guide.minHoursToLeave}+ hours to leave)` : ''}`}
-          </Text>
-        </View>
+        {/* Status — text only, no pill */}
+        <Text style={[
+          styles.statusText,
+          { color: canLeave ? COLORS.sage : COLORS.coral },
+        ]}>
+          {canLeave
+            ? `${hours} hours is enough to explore ${guide?.city ?? 'the city'}`
+            : `Stay in the airport${guide ? ` — need ${guide.minHoursToLeave}+ hours to leave` : ''}`}
+        </Text>
 
-        {/* In-airport options */}
+        {/* In-airport perks */}
         {inAirport.length > 0 && (
-          <>
-            <Text style={styles.sectionLabel}>IN THE AIRPORT</Text>
+          <View style={styles.section}>
+            <Text style={styles.sectionHeader}>Inside the airport</Text>
             {inAirport.map((perk, i) => (
-              <View key={i} style={styles.perkRow}>
-                <ChevronRight size={14} color={COLORS.sage} strokeWidth={2} />
-                <Text style={styles.perkText}>{perk}</Text>
-              </View>
+              <PerkItem key={i} text={perk} />
             ))}
-          </>
+          </View>
+        )}
+
+        {/* Lounge intel */}
+        {loungeNotes.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionHeader}>Lounge access</Text>
+            {loungeNotes.map((note, i) => (
+              <LoungeItem key={i} text={note} />
+            ))}
+          </View>
         )}
 
         {/* Outside activities */}
         {activities.length > 0 && (
-          <>
-            <Text style={styles.sectionLabel}>LEAVE THE AIRPORT</Text>
+          <View style={styles.section}>
+            <Text style={styles.sectionHeader}>Leave the airport</Text>
             <Text style={styles.sectionMeta}>
-              Activities that fit your {hours}-hour layover (includes 90 min buffer for transit + security)
+              Fits your {hours}-hour layover — 90 min buffer for transit and security included.
             </Text>
             {activities.map((activity, i) => (
               <ActivityCard key={i} activity={activity} />
             ))}
-          </>
+          </View>
         )}
 
-        {/* No activities message */}
+        {/* No activities fallback */}
         {canLeave && activities.length === 0 && (
           <View style={styles.emptyCard}>
+            <View style={styles.emptyAccent} />
             <Text style={styles.emptyText}>
-              Not enough time for city activities after accounting for transit and security. Enjoy the airport amenities instead.
+              Not enough time for city activities after transit and security. Enjoy the airport amenities instead.
             </Text>
           </View>
         )}
@@ -274,20 +382,25 @@ function LayoverScreen() {
 // ---------------------------------------------------------------------------
 // Styles
 // ---------------------------------------------------------------------------
+const CARD_BG = '#0D1710';
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.bg,
   } as ViewStyle,
+
+  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: MAGAZINE.padding,
     paddingVertical: SPACING.md,
   } as ViewStyle,
   headerTitle: {
     fontFamily: FONTS.header,
+    fontStyle: 'italic',
     fontSize: 26,
     color: COLORS.cream,
   } as TextStyle,
@@ -296,195 +409,340 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.creamMuted,
   } as TextStyle,
+
+  // Scroll
   scroll: {
     flex: 1,
   } as ViewStyle,
   scrollContent: {
-    paddingHorizontal: SPACING.lg,
-    gap: SPACING.sm,
+    paddingHorizontal: MAGAZINE.padding,
+    paddingTop: SPACING.xs,
   } as ViewStyle,
+
+  // Section labels (mono caps)
   sectionLabel: {
     fontFamily: FONTS.mono,
     fontSize: 10,
     color: COLORS.creamMuted,
     letterSpacing: 1.5,
+    marginBottom: SPACING.sm,
     marginTop: SPACING.md,
   } as TextStyle,
-  sectionMeta: {
-    fontFamily: FONTS.body,
-    fontSize: 12,
-    color: COLORS.creamDim,
-    marginBottom: SPACING.xs,
-  } as TextStyle,
-  chipRow: {
+
+  // Airport photo cards
+  airportCardRow: {
     flexDirection: 'row',
-    gap: SPACING.xs,
+    gap: SPACING.sm,
     paddingVertical: SPACING.xs,
+    paddingRight: MAGAZINE.padding,
   } as ViewStyle,
-  airportChip: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.bgElevated,
-    borderWidth: 1,
-    borderColor: COLORS.bgCard,
+  airportCard: {
+    width: 160,
+    height: 100,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'transparent',
   } as ViewStyle,
-  airportChipActive: {
-    backgroundColor: COLORS.sage + '20',
+  airportCardActive: {
     borderColor: COLORS.sage,
   } as ViewStyle,
-  airportChipText: {
+  airportCardInactive: {
+    opacity: 0.7,
+  } as ViewStyle,
+  airportCardPhoto: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+  } as ImageStyle,
+  airportCardOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  } as ViewStyle,
+  airportCardContent: {
+    position: 'absolute',
+    bottom: 8,
+    left: 10,
+  } as ViewStyle,
+  airportCardCode: {
     fontFamily: FONTS.mono,
-    fontSize: 13,
-    color: COLORS.creamMuted,
+    fontSize: 18,
+    color: COLORS.cream,
     letterSpacing: 1,
   } as TextStyle,
-  airportChipTextActive: {
-    color: COLORS.sage,
+  airportCardCity: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamSoft,
+    marginTop: 1,
   } as TextStyle,
-  airportInfo: {
-    backgroundColor: COLORS.bgElevated,
+
+  // Hero section
+  heroContainer: {
+    width: '100%',
+    height: 200,
     borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    gap: SPACING.xs,
+    overflow: 'hidden',
+    marginTop: SPACING.md,
   } as ViewStyle,
-  airportName: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 16,
+  heroPhoto: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+  } as ImageStyle,
+  heroGradient: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  } as ViewStyle,
+  heroContent: {
+    position: 'absolute',
+    bottom: MAGAZINE.padding,
+    left: MAGAZINE.padding,
+    right: MAGAZINE.padding,
+  } as ViewStyle,
+  heroAirportName: {
+    fontFamily: FONTS.header,
+    fontStyle: 'italic',
+    fontSize: 32,
+    color: COLORS.cream,
+    lineHeight: 36,
+  } as TextStyle,
+  heroTerminalNote: {
+    fontFamily: FONTS.mono,
+    fontSize: 13,
+    color: COLORS.creamSoft,
+    marginTop: 6,
+  } as TextStyle,
+
+  // Transit card
+  transitCard: {
+    flexDirection: 'row',
+    backgroundColor: CARD_BG,
+    borderRadius: RADIUS.lg,
+    marginTop: SPACING.sm,
+    overflow: 'hidden',
+  } as ViewStyle,
+  transitAccent: {
+    width: 3,
+    backgroundColor: COLORS.sage,
+    borderTopLeftRadius: RADIUS.lg,
+    borderBottomLeftRadius: RADIUS.lg,
+  } as ViewStyle,
+  transitCardInner: {
+    flex: 1,
+    paddingHorizontal: MAGAZINE.padding,
+    paddingVertical: SPACING.md,
+  } as ViewStyle,
+  transitLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.creamMuted,
+    letterSpacing: 1.5,
+    marginBottom: 4,
+  } as TextStyle,
+  transitDetail: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
     color: COLORS.cream,
   } as TextStyle,
-  transitRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-  } as ViewStyle,
-  transitText: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.sage,
-  } as TextStyle,
+
+  // Hours selector
   hoursRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: SPACING.lg,
+    gap: SPACING.xl,
     paddingVertical: SPACING.md,
   } as ViewStyle,
   hoursBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: COLORS.bgElevated,
-    alignItems: 'center',
-    justifyContent: 'center',
+    padding: SPACING.sm,
   } as ViewStyle,
+  hoursBtnText: {
+    fontFamily: FONTS.mono,
+    fontSize: 28,
+    color: COLORS.sage,
+    lineHeight: 32,
+  } as TextStyle,
   hoursDisplay: {
     alignItems: 'center',
     minWidth: 80,
   } as ViewStyle,
   hoursNum: {
-    fontFamily: FONTS.header,
+    fontFamily: FONTS.mono,
     fontSize: 48,
     color: COLORS.cream,
+    lineHeight: 52,
   } as TextStyle,
   hoursLabel: {
     fontFamily: FONTS.mono,
     fontSize: 11,
     color: COLORS.creamMuted,
     letterSpacing: 1,
-    marginTop: -4,
+    marginTop: 2,
   } as TextStyle,
-  statusBadge: {
-    borderRadius: RADIUS.md,
-    padding: SPACING.sm,
-    alignItems: 'center',
-  } as ViewStyle,
+
+  // Status text
   statusText: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 13,
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: SPACING.md,
+    lineHeight: 20,
   } as TextStyle,
-  perkRow: {
+
+  // Sections
+  section: {
+    marginTop: SPACING.xl,
+  } as ViewStyle,
+  sectionHeader: {
+    fontFamily: FONTS.header,
+    fontStyle: 'italic',
+    fontSize: 22,
+    color: COLORS.cream,
+    marginBottom: SPACING.md,
+  } as TextStyle,
+  sectionMeta: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamDim,
+    marginBottom: SPACING.md,
+    lineHeight: 18,
+  } as TextStyle,
+
+  // Perk items
+  perkItem: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.xs,
+    marginBottom: SPACING.sm,
+  } as ViewStyle,
+  perkAccent: {
+    width: 3,
+    backgroundColor: COLORS.sage,
+    borderRadius: 2,
+    marginRight: SPACING.md,
+    marginTop: 2,
+    marginBottom: 2,
   } as ViewStyle,
   perkText: {
     fontFamily: FONTS.body,
-    fontSize: 13,
+    fontSize: 14,
     color: COLORS.cream,
     flex: 1,
+    lineHeight: 20,
+    paddingVertical: 2,
   } as TextStyle,
-  activityCard: {
-    backgroundColor: COLORS.bgElevated,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    gap: SPACING.sm,
-    marginBottom: SPACING.xs,
-  } as ViewStyle,
-  activityHeader: {
+
+  // Lounge items
+  loungeItem: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
   } as ViewStyle,
-  activityIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  } as ViewStyle,
-  activityTitle: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 15,
-    color: COLORS.cream,
-  } as TextStyle,
-  durationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+  loungeAccent: {
+    width: 3,
+    backgroundColor: COLORS.sage,
+    borderRadius: 2,
+    marginRight: SPACING.md,
     marginTop: 2,
+    marginBottom: 2,
   } as ViewStyle,
-  activityDuration: {
+  loungeText: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.cream,
+    flex: 1,
+    lineHeight: 20,
+    paddingVertical: 2,
+  } as TextStyle,
+
+  // Activity cards
+  activityCard: {
+    flexDirection: 'row',
+    backgroundColor: CARD_BG,
+    borderRadius: RADIUS.lg,
+    marginBottom: MAGAZINE.cardGap,
+    overflow: 'hidden',
+  } as ViewStyle,
+  activityBorderAccent: {
+    width: 3,
+    backgroundColor: COLORS.sage,
+    borderTopLeftRadius: RADIUS.lg,
+    borderBottomLeftRadius: RADIUS.lg,
+  } as ViewStyle,
+  activityCardInner: {
+    flex: 1,
+    padding: MAGAZINE.padding,
+  } as ViewStyle,
+  activityMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  } as ViewStyle,
+  activityCategory: {
     fontFamily: FONTS.mono,
     fontSize: 11,
-    color: COLORS.creamMuted,
-    letterSpacing: 0.5,
+    color: COLORS.creamDim,
+    letterSpacing: 1,
+  } as TextStyle,
+  activityDuration: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.sage,
+  } as TextStyle,
+  activityTitle: {
+    fontFamily: FONTS.header,
+    fontStyle: 'italic',
+    fontSize: 20,
+    color: COLORS.cream,
+    marginBottom: 8,
+    lineHeight: 24,
   } as TextStyle,
   activityDesc: {
     fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.creamMuted,
-    lineHeight: 18,
+    fontSize: 14,
+    color: COLORS.creamSoft,
+    lineHeight: 22,
+    marginBottom: 12,
   } as TextStyle,
-  tipRow: {
+  tipContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: SPACING.xs,
-    backgroundColor: COLORS.gold + '10',
-    borderRadius: RADIUS.sm,
-    padding: SPACING.sm,
+  } as ViewStyle,
+  tipAccent: {
+    width: 3,
+    backgroundColor: COLORS.sage,
+    borderRadius: 2,
+    marginRight: SPACING.sm,
   } as ViewStyle,
   tipText: {
     fontFamily: FONTS.body,
-    fontSize: 12,
-    color: COLORS.gold,
+    fontStyle: 'italic',
+    fontSize: 13,
+    color: COLORS.creamDim,
     flex: 1,
-    lineHeight: 16,
+    lineHeight: 18,
   } as TextStyle,
+
+  // Empty state
   emptyCard: {
-    backgroundColor: COLORS.bgElevated,
+    flexDirection: 'row',
+    backgroundColor: CARD_BG,
     borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    alignItems: 'center',
+    marginTop: SPACING.xl,
+    overflow: 'hidden',
+  } as ViewStyle,
+  emptyAccent: {
+    width: 3,
+    backgroundColor: COLORS.sage,
+    borderTopLeftRadius: RADIUS.lg,
+    borderBottomLeftRadius: RADIUS.lg,
   } as ViewStyle,
   emptyText: {
     fontFamily: FONTS.body,
-    fontSize: 13,
+    fontSize: 14,
     color: COLORS.creamMuted,
-    textAlign: 'center',
-    lineHeight: 18,
+    lineHeight: 22,
+    flex: 1,
+    padding: MAGAZINE.padding,
   } as TextStyle,
 });
 
-export default withComingSoon(LayoverScreen, { routeName: 'layover', title: 'Layover Optimizer' });
+export default LayoverScreen;

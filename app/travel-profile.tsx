@@ -284,7 +284,7 @@ function TravelProfileScreen() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/(tabs)/generate');
+      router.replace('/(tabs)/generate' as never);
     }
   };
 

@@ -29,7 +29,6 @@ import {
   ROVER_AFFILIATE_URL,
   WAG_AFFILIATE_URL,
 } from '../lib/constants';
-import { withComingSoon } from '../lib/with-coming-soon';
 import { useAppStore, type Pet } from '../lib/store';
 import {
   schedulePetCheckIn,
@@ -248,7 +247,7 @@ function PetAICard() {
       role: 'user',
       content: message,
     });
-    router.push('/(tabs)/generate');
+    router.push('/(tabs)/generate' as never);
   }, [firstPet, latestTrip, appendChatMessage, router]);
 
   return (
@@ -339,7 +338,7 @@ function PetDestinations() {
       // Extract city name before comma for the plan wizard
       const destination = city.split(',')[0].trim();
       setPlanWizard({ destination });
-      router.push('/(tabs)/generate');
+      router.push('/(tabs)/generate' as never);
     },
     [setPlanWizard, router]
   );
@@ -754,4 +753,4 @@ const styles = StyleSheet.create({
   } as TextStyle,
 });
 
-export default withComingSoon(PetsScreen, { routeName: 'pets', title: 'Pet Travel' });
+export default PetsScreen;

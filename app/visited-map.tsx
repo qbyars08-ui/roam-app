@@ -39,7 +39,6 @@ import {
   ALL_CONTINENTS,
   WORLD_GRID,
 } from '../lib/visited-store';
-import { withComingSoon } from '../lib/with-coming-soon';
 
 // ---------------------------------------------------------------------------
 // Milestone thresholds
@@ -1086,4 +1085,4 @@ const styles = StyleSheet.create({
   } as TextStyle,
 });
 
-export default withComingSoon(VisitedMapScreen, { routeName: 'visited-map', title: 'Visited Map' });
+export default VisitedMapScreen;
