@@ -1,6 +1,6 @@
 // =============================================================================
-// ROAM — AI-curated local food discovery
-// Editorial, opinionated, sensory — not Yelp
+// ROAM — Food Tab
+// Hero + curated restaurant sections + Google Maps deep links. Same pattern as Flights.
 // =============================================================================
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -16,6 +16,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'expo-router';
 import { impactAsync as hapticImpact } from '../../lib/haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -25,6 +26,8 @@ import * as Linking from 'expo-linking';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore, getActiveTrip } from '../../lib/store';
 import { SkeletonCard } from '../../components/premium/LoadingStates';
+import { track } from '../../lib/analytics';
+import { captureEvent } from '../../lib/posthog';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -230,14 +233,26 @@ const FOOD_CATEGORIES: FoodCategory[] = [
   'Markets',
 ];
 
+// Popular food cities for hero/empty state (no destination)
+const POPULAR_FOOD_CITIES = [
+  { city: 'Tokyo', vibe: 'Ramen, sushi, izakaya', image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&q=80' },
+  { city: 'Bangkok', vibe: 'Street food capital', image: 'https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=400&q=80' },
+  { city: 'Paris', vibe: 'Bistros, pastries, wine', image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&q=80' },
+  { city: 'Mexico City', vibe: 'Tacos, mezcal, markets', image: 'https://images.unsplash.com/photo-1585464231875-d9ef1f5ad396?w=400&q=80' },
+  { city: 'Barcelona', vibe: 'Tapas, vermouth, paella', image: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&q=80' },
+  { city: 'Lisbon', vibe: 'Seafood, pasteis, petiscos', image: 'https://images.unsplash.com/photo-1585208798174-6cedd86e019a?w=400&q=80' },
+];
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 export default function FoodScreen() {
+  const router = useRouter();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const activeTrip = getActiveTrip();
   const planWizard = useAppStore((s) => s.planWizard);
+  const setPlanWizard = useAppStore((s) => s.setPlanWizard);
   const bookmarkedIds = useAppStore((s) => s.bookmarkedRestaurantIds);
   const toggleBookmark = useAppStore((s) => s.toggleBookmarkedRestaurant);
 
@@ -248,6 +263,10 @@ export default function FoodScreen() {
 
   const destination =
     activeTrip?.destination ?? planWizard.destination ?? null;
+
+  useEffect(() => {
+    track({ type: 'screen_view', screen: 'food' });
+  }, []);
 
   // Brief loading state for perceived quality
   useEffect(() => {
@@ -296,6 +315,11 @@ export default function FoodScreen() {
   const handleCardPress = useCallback(
     (restaurant: Restaurant | AIPickRestaurant) => {
       hapticImpact();
+      captureEvent('food_restaurant_maps_opened', {
+        restaurant: restaurant.name,
+        destination,
+        category: restaurant.category,
+      });
       const query = encodeURIComponent(`${restaurant.name} ${destination}`);
       Linking.openURL(`https://www.google.com/maps/search/${query}`);
     },
@@ -305,6 +329,10 @@ export default function FoodScreen() {
   const handleAIPickPress = useCallback(() => {
     if (!aiPick) return;
     hapticImpact();
+    captureEvent('food_ai_pick_maps_opened', {
+      restaurant: aiPick.name,
+      destination,
+    });
     const query = encodeURIComponent(`${aiPick.name} ${destination}`);
     Linking.openURL(`https://www.google.com/maps/search/${query}`);
   }, [aiPick, destination]);
@@ -320,12 +348,14 @@ export default function FoodScreen() {
     [toggleBookmark]
   );
 
+  const handlePopularCityPress = useCallback((city: string) => {
+    hapticImpact();
+    captureEvent('food_popular_city_tapped', { city });
+    setPlanWizard({ destination: city });
+    router.push('/(tabs)/plan' as never);
+  }, [router, setPlanWizard]);
+
   if (!destination) {
-    const foodCategories = [
-      { title: 'Street Food', subtitle: 'The real flavors, no pretension', image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80' },
-      { title: 'Local Markets', subtitle: 'Where the locals actually shop', image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&q=80' },
-      { title: 'Late Night Eats', subtitle: 'For when the night gets hungry', image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80' },
-    ];
     return (
       <View style={[styles.screen, { paddingTop: insets.top }]}>
         <ScrollView
@@ -333,20 +363,49 @@ export default function FoodScreen() {
           contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + SPACING.xl }]}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.emptyHeader}>What are you eating?</Text>
-          <Text style={styles.emptySubtext}>
-            Plan a trip and we will find the spots only locals know about.
-          </Text>
-          {foodCategories.map((cat) => (
-            <View key={cat.title} style={styles.foodCategoryCard}>
-              <Image source={{ uri: cat.image }} style={styles.foodCategoryImage} resizeMode="cover" />
-              <LinearGradient colors={['transparent', 'rgba(8,15,10,0.85)']} locations={[0.3, 1]} style={StyleSheet.absoluteFill} />
-              <View style={styles.foodCategoryContent}>
-                <Text style={styles.foodCategoryTitle}>{cat.title}</Text>
-                <Text style={styles.foodCategorySub}>{cat.subtitle}</Text>
-              </View>
-            </View>
-          ))}
+          <View style={styles.hero}>
+            <Text style={styles.heroTitle}>Eat like a local.</Text>
+            <Text style={styles.heroSub}>
+              Pick a destination and we will find the spots only locals know about.
+            </Text>
+          </View>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Popular food cities</Text>
+            <Text style={styles.sectionSub}>
+              Plan a trip to see curated picks
+            </Text>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.popularCitiesScroll}
+          >
+            {POPULAR_FOOD_CITIES.map((item) => (
+              <Pressable
+                key={item.city}
+                onPress={() => handlePopularCityPress(item.city)}
+                style={({ pressed }) => [
+                  styles.popularCityCard,
+                  { transform: [{ scale: pressed ? 0.97 : 1 }] },
+                ]}
+              >
+                <Image
+                  source={{ uri: item.image }}
+                  style={styles.popularCityImage}
+                  resizeMode="cover"
+                />
+                <LinearGradient
+                  colors={['transparent', COLORS.overlayDark]}
+                  locations={[0.3, 1]}
+                  style={StyleSheet.absoluteFill}
+                />
+                <View style={styles.popularCityContent}>
+                  <Text style={styles.popularCityName}>{item.city}</Text>
+                  <Text style={styles.popularCityVibe}>{item.vibe}</Text>
+                </View>
+              </Pressable>
+            ))}
+          </ScrollView>
         </ScrollView>
       </View>
     );
@@ -359,9 +418,13 @@ export default function FoodScreen() {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + SPACING.xl }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <Text style={styles.headerTitle}>Eat in {destination}</Text>
-        <Text style={styles.headerSubtitle}>AI-curated picks</Text>
+        {/* Hero */}
+        <View style={styles.hero}>
+          <Text style={styles.heroTitle}>Eat like a local.</Text>
+          <Text style={styles.heroSub}>
+            AI-curated picks in {destination}. Tap any spot to open in Google Maps.
+          </Text>
+        </View>
 
         {isLoading ? (
           <View style={styles.skeletonWrap}>
@@ -594,17 +657,71 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.md,
   } as ViewStyle,
-  headerTitle: {
+  hero: {
+    paddingBottom: SPACING.md,
+  } as ViewStyle,
+  heroTitle: {
     fontFamily: FONTS.header,
-    fontSize: 28,
+    fontSize: 40,
     color: COLORS.cream,
-    marginBottom: SPACING.xs,
+    lineHeight: 46,
   } as TextStyle,
-  headerSubtitle: {
+  heroSub: {
+    fontFamily: FONTS.body,
+    fontSize: 15,
+    color: COLORS.creamMuted,
+    marginTop: SPACING.xs,
+    lineHeight: 22,
+  } as TextStyle,
+  sectionHeader: {
+    marginBottom: SPACING.md,
+  } as ViewStyle,
+  sectionTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 24,
+    color: COLORS.cream,
+    marginBottom: SPACING.md,
+  } as TextStyle,
+  sectionSub: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: COLORS.sage,
-    marginBottom: SPACING.lg,
+    color: COLORS.creamMuted,
+    marginTop: 2,
+  } as TextStyle,
+  popularCitiesScroll: {
+    gap: SPACING.md,
+    paddingBottom: SPACING.xl,
+  } as ViewStyle,
+  popularCityCard: {
+    width: 180,
+    height: 200,
+    borderRadius: RADIUS.xl,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  } as ViewStyle,
+  popularCityImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  } as ImageStyle,
+  popularCityContent: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: SPACING.md,
+  } as ViewStyle,
+  popularCityName: {
+    fontFamily: FONTS.header,
+    fontSize: 22,
+    color: COLORS.white,
+  } as TextStyle,
+  popularCityVibe: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamSoft,
+    marginTop: 2,
   } as TextStyle,
   categoryScroll: {
     marginHorizontal: -SPACING.lg,
@@ -755,12 +872,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.sage,
     textDecorationLine: 'underline',
-  } as TextStyle,
-  sectionTitle: {
-    fontFamily: FONTS.header,
-    fontSize: 20,
-    color: COLORS.cream,
-    marginBottom: SPACING.md,
   } as TextStyle,
   restaurantCard: {
     backgroundColor: COLORS.bgCard,

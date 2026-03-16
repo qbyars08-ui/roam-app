@@ -45,6 +45,7 @@ import { getDestinationPhoto } from '../../lib/photos';
 import ROAMScoreBadge from '../../components/features/ROAMScoreBadge';
 import TravelTruthCard from '../../components/features/TravelTruthCard';
 import ContextBanner from '../../components/features/ContextBanner';
+import ResilientImage from '../../components/ui/ResilientImage';
 import { getContext, buildStrategy, type ContentStrategy } from '../../lib/context-engine';
 
 // ---------------------------------------------------------------------------
@@ -79,7 +80,6 @@ const DestinationPhotoCard = React.memo(function DestinationPhotoCard({
   index,
 }: DestinationPhotoCardProps) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const [imageLoaded, setImageLoaded] = useState(false);
 
   const imageUrl = destination.unsplashUrl
     ?? getUnsplashUrl(destination.photoQuery);
@@ -135,19 +135,11 @@ const DestinationPhotoCard = React.memo(function DestinationPhotoCard({
         accessibilityRole="button"
         accessibilityLabel={`${destination.label}, ${destination.country}`}
       >
-        {/* Placeholder gradient while image loads */}
-        {!imageLoaded && (
-          <LinearGradient
-            colors={[COLORS.bgElevated, COLORS.bgCard, COLORS.bg]}
-            style={StyleSheet.absoluteFill}
-          />
-        )}
-
-        {/* Photo */}
-        <Image
-          source={{ uri: imageUrl }}
+        <ResilientImage
+          uri={imageUrl}
           style={styles.cardImage}
-          onLoad={() => setImageLoaded(true)}
+          containerStyle={StyleSheet.absoluteFill}
+          fallbackColors={[COLORS.bgElevated, COLORS.bgCard, COLORS.bg]}
           resizeMode="cover"
         />
 
