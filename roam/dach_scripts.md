@@ -1,6 +1,6 @@
-# DACH TikTok Scripts x10
+# DACH TikTok Scripts x13
 
-Last updated: 2026-03-15
+Last updated: 2026-03-16
 
 ## Format Guide
 - All scripts in German (native-sounding, Gen Z register)
@@ -201,6 +201,65 @@ This is the "impulse travel" angle. Creator should convey spontaneity — "I lit
 
 ---
 
+---
+
+## SCRIPT 11: People Tab — Reisebuddy finden
+
+**HOOK (0-3 sec):**
+"Alleine nach Bali? Diese App findet dir Leute die zur gleichen Zeit da sind."
+
+**DEMO (3-45 sec):**
+Screen recording: Generate a Bali trip first. Then tap People tab. Show matched travelers — same destination, overlapping dates, vibe tags (Foodie, Adventure). Show match score, bio, countries visited. Tap "Connect" on one card. Cut to B-roll: creator at beach, hostel common area, group dinner — the "found my squad" vibe.
+
+**CTA (45-60 sec):**
+"ROAM plant deinen Trip UND findet dir Reisebuddy. Link in Bio. Kostenlos."
+
+**HASHTAGS:**
+#solotravel #reisebuddy #backpacking #bali #alleinereisen #reiseplanung #travelapp #digitalnomad #fernweh #solotraveler
+
+**CREATOR BRIEF:**
+This is the People tab hook — ROAM's unique differentiator. Creator should be solo traveler or someone who's traveled alone and wished for companions. Energy: "I found my people." Show the matching UI clearly. Authentic > polished.
+
+---
+
+## SCRIPT 12: People Tab — Interrail Squad
+
+**HOOK (0-3 sec):**
+"Interrail alleine? Nein. ROAM findet dir deine Zug-Crew."
+
+**DEMO (3-45 sec):**
+Generate multi-city Europe trip (Paris, Amsterdam, Berlin). Switch to People tab. Show "X travelers going to Berlin this month" — group trip cards forming. Tap into a group: "5 people, 18-25, Adventure + Nightlife." Show the match. Cut to B-roll: train window, hostel vibes, group at a bar, European sunset.
+
+**CTA (45-60 sec):**
+"Interrail mit Leuten die deine Energie haben. ROAM — Trip planen, Squad finden. Link in Bio."
+
+**HASHTAGS:**
+#interrail #interrailing #eurotrip #reisebuddy #backpacking #zugreise #europa #reisetipps #reiseplanung #squad
+
+**CREATOR BRIEF:**
+Interrail + People tab = perfect DACH combo. Creator should be 18-24, backpack energy. Show both planning AND matching. "I didn't know anyone going — now I have a crew" narrative.
+
+---
+
+## SCRIPT 13: People Tab — Solo Female Travel
+
+**HOOK (0-3 sec):**
+"Solo reisen als Frau? Diese App macht es sicherer — und weniger einsam."
+
+**DEMO (3-45 sec):**
+Generate a trip (e.g. Thailand, Portugal). People tab: show matched female travelers, vibe tags, "Solo" filter. Emphasize: matched by destination + dates, not random. Show that you see profiles before connecting — no blind meetups. Cut to B-roll: creator at cafe, beach, temple — confident solo energy.
+
+**CTA (45-60 sec):**
+"ROAM — planen und Leute finden die wirklich da sind. Kein Couchsurfing-Vibe. Link in Bio."
+
+**HASHTAGS:**
+#solotravel #solo female travel #alleinereisen #reiseplanung #travelapp #sicherreisen #backpacking #fernweh #solotraveler
+
+**CREATOR BRIEF:**
+Target solo female travel audience. Address safety + loneliness. ROAM's privacy defaults (opt-in visibility, no real photos until match) are a selling point. Creator: female, 20-30, authentic solo travel experience.
+
+---
+
 ## Production Notes
 
 ### Creator Selection Criteria
@@ -216,7 +275,8 @@ This is the "impulse travel" angle. Creator should convey spontaneity — "I lit
 - Tertiary: YouTube Shorts (longer shelf life)
 
 ### Posting Schedule
-- 2 scripts per week for first 5 weeks
+- 2 scripts per week for first 7 weeks (13 scripts total)
+- Scripts 11-13 (People tab) — prioritize creators with solo travel / Interrail / female travel audience
 - Best posting times DACH: 18:00-20:00 CET weekdays, 10:00-12:00 CET weekends
 - Each script gets 3 creator versions (different creators, same script)
 
