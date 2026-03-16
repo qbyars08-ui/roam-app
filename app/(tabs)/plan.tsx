@@ -138,7 +138,6 @@ const TripCard = React.memo(function TripCard({
       />
       {isLatest && (
         <View style={styles.latestBadge}>
-          <Sparkles size={10} color={COLORS.bg} />
           <Text style={styles.latestBadgeText}>{t('plan.latest')}</Text>
         </View>
       )}
@@ -768,44 +767,48 @@ const styles = StyleSheet.create({
     flex: 1,
   } as ViewStyle,
   scrollContent: {
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: 20,
     paddingBottom: 120,
   } as ViewStyle,
 
   // ── Header ──
   header: {
-    paddingTop: SPACING.lg,
-    paddingBottom: SPACING.md,
+    paddingTop: 24,
+    paddingBottom: 20,
   } as ViewStyle,
   headerTitle: {
     fontFamily: FONTS.header,
-    fontSize: 32,
+    fontSize: 36,
+    fontStyle: 'italic',
     color: COLORS.cream,
+    letterSpacing: -0.5,
   } as TextStyle,
   headerSub: {
     fontFamily: FONTS.mono,
-    fontSize: 13,
-    color: COLORS.creamMuted,
-    marginTop: 4,
+    fontSize: 12,
+    color: COLORS.creamDim,
+    marginTop: 6,
+    letterSpacing: 0.5,
   } as TextStyle,
 
   // ── New Trip Button ──
   newTripBtn: {
-    marginBottom: SPACING.lg,
-    borderRadius: RADIUS.xl,
+    marginBottom: 32,
+    borderRadius: 8,
     overflow: 'hidden',
   } as ViewStyle,
   newTripGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: SPACING.sm,
-    paddingVertical: SPACING.md + 2,
-    borderRadius: RADIUS.xl,
+    gap: 8,
+    paddingVertical: 16,
+    borderRadius: 8,
   } as ViewStyle,
   newTripText: {
     fontFamily: FONTS.header,
-    fontSize: 20,
+    fontSize: 18,
+    fontStyle: 'italic',
     color: COLORS.bg,
   } as TextStyle,
 
@@ -814,13 +817,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.sageBorder,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm + 2,
-    marginBottom: SPACING.md,
+    backgroundColor: '#0D1710',
+    borderRadius: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.sage,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    marginBottom: 20,
   } as ViewStyle,
   peopleBannerLeft: {
     flexDirection: 'row',
@@ -850,18 +853,16 @@ const styles = StyleSheet.create({
   // ── Quick Actions ──
   quickActions: {
     flexDirection: 'row',
-    gap: SPACING.sm,
-    marginBottom: SPACING.xl,
+    gap: 12,
+    marginBottom: 40,
   } as ViewStyle,
   quickAction: {
     flex: 1,
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: SPACING.md,
+    backgroundColor: '#0D1710',
+    borderRadius: 12,
+    padding: 16,
     alignItems: 'center',
-    gap: SPACING.xs,
+    gap: 4,
   } as ViewStyle,
   quickActionIcon: {
     width: 40,
@@ -886,25 +887,25 @@ const styles = StyleSheet.create({
 
   // ── Section Label ──
   sectionLabel: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.creamMuted,
-    letterSpacing: 1,
+    fontFamily: FONTS.header,
+    fontSize: 22,
+    fontStyle: 'italic',
+    color: COLORS.cream,
+    letterSpacing: -0.3,
     marginBottom: SPACING.md,
   } as TextStyle,
 
   // ── Trip Cards ──
   tripCard: {
-    height: 160,
-    borderRadius: RADIUS.xl,
+    height: 180,
+    borderRadius: 12,
     overflow: 'hidden',
-    marginBottom: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    marginBottom: 16,
   } as ViewStyle,
   tripCardLatest: {
-    height: 200,
-    borderColor: COLORS.sageBorder,
+    height: 220,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.sage,
   } as ViewStyle,
   tripCardImage: {
     ...StyleSheet.absoluteFillObject,
@@ -919,12 +920,14 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: SPACING.md,
+    padding: 20,
   } as ViewStyle,
   tripCardDest: {
     fontFamily: FONTS.header,
     fontSize: 28,
-    color: COLORS.white,
+    fontStyle: 'italic',
+    color: COLORS.cream,
+    letterSpacing: -0.5,
     marginBottom: 6,
   } as TextStyle,
   tripCardMeta: {
@@ -935,10 +938,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: COLORS.whiteMuted,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: RADIUS.sm,
   } as ViewStyle,
   tripCardChipText: {
     fontFamily: FONTS.mono,
@@ -947,43 +946,29 @@ const styles = StyleSheet.create({
   } as TextStyle,
   tripCardArrow: {
     position: 'absolute',
-    right: SPACING.md,
+    right: 20,
     top: '50%',
     marginTop: -10,
-    backgroundColor: COLORS.whiteMuted,
-    borderRadius: RADIUS.full,
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
   } as ViewStyle,
   latestBadge: {
     position: 'absolute',
-    top: SPACING.md,
-    left: SPACING.md,
-    backgroundColor: COLORS.sage,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: RADIUS.sm,
+    top: 20,
+    left: 20,
   } as ViewStyle,
   latestBadgeText: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: COLORS.bg,
-    letterSpacing: 0.5,
+    color: COLORS.sage,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   } as TextStyle,
 
   // ── Next Trip Hero ──
   heroCard: {
-    height: 260,
-    borderRadius: RADIUS.xl,
+    height: 280,
+    borderRadius: 12,
     overflow: 'hidden',
-    marginBottom: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.sageBorder,
+    marginBottom: 20,
   } as ViewStyle,
   heroImage: {
     ...StyleSheet.absoluteFillObject,

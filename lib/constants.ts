@@ -260,6 +260,11 @@ export const COLORS = {
   gradientForest: '#0a1f1a',
   gradientPurple: '#1a0a2e',
   gradientNavy: '#0d0f1a',
+  // Magazine card backgrounds
+  bgMagazine: '#0D1710',        // Clean dark card bg (NOT transparent)
+  bgMagazineElevated: '#121F16', // Slightly lighter for nested elements
+  // Shadow
+  shadowDark: 'rgba(0,0,0,0.4)',  // The one shadow: 0 4px 24px
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -361,6 +366,53 @@ export const RADIUS = {
   xl: 12,
   full: 9999,
 } as const;
+
+// ---------------------------------------------------------------------------
+// Magazine layout system — editorial spacing & photo sizing
+// ---------------------------------------------------------------------------
+export const MAGAZINE = {
+  padding: 20,          // Minimum padding everywhere
+  sectionGap: 40,       // Between major sections
+  cardGap: 16,          // Between cards in a list
+  photoHeight: 200,     // Standard photo card height
+  photoHeightHero: 280, // Hero photo height
+  photoHeightSmall: 140, // Small photo card height
+  lineWidth: 1,         // Thin sage line dividers
+  accentBorder: 3,      // Left accent border width
+  shadow: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+} as const;
+
+// ---------------------------------------------------------------------------
+// Destination hero photos — specific Unsplash URLs for consistency
+// ---------------------------------------------------------------------------
+export const DESTINATION_HERO_PHOTOS: Record<string, string> = {
+  'Tokyo': 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80',
+  'Bali': 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80',
+  'Barcelona': 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&q=80',
+  'Paris': 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80',
+  'Mexico City': 'https://images.unsplash.com/photo-1585464231875-d9ef1f5ad396?w=800&q=80',
+  'Bangkok': 'https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=800&q=80',
+  'Lisbon': 'https://images.unsplash.com/photo-1585208798174-6cedd86e019a?w=800&q=80',
+  'Rome': 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800&q=80',
+  'London': 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&q=80',
+  'New York': 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&q=80',
+  'Kyoto': 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&q=80',
+  'Istanbul': 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?w=800&q=80',
+  'Marrakech': 'https://images.unsplash.com/photo-1597212618440-806262de4f6b?w=800&q=80',
+  'Dubai': 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&q=80',
+  'Singapore': 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&q=80',
+  'Seoul': 'https://images.unsplash.com/photo-1534274988757-a28bf1a57c17?w=800&q=80',
+  'Sydney': 'https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=800&q=80',
+  'Reykjavik': 'https://images.unsplash.com/photo-1504829857797-ddff29c27927?w=800&q=80',
+  'Cape Town': 'https://images.unsplash.com/photo-1580060839134-75a5edca2e99?w=800&q=80',
+  'Buenos Aires': 'https://images.unsplash.com/photo-1589909202802-8f4aadce1849?w=800&q=80',
+};
 
 // ---------------------------------------------------------------------------
 // Free-tier limits
@@ -508,12 +560,13 @@ export const VIBES: Vibe[] = [
 // ---------------------------------------------------------------------------
 export const DISCOVER_HEADERS: string[] = [
   'Travel like you know someone there',
-  'Pick a place. We handle the rest.',
+  'Pick a place. We\u2019ll handle the rest.',
   '30 seconds to your next trip.',
   'Some trips plan themselves. This is one.',
-  'Tell us where. We tell you everything.',
-  'Real recs from someone who\u2019s been',
-  'Where to next? We\u2019ve got opinions.',
+  'Tell us where. We\u2019ll tell you everything.',
+  'The only app that makes you want to leave.',
+  'Go somewhere that changes you.',
+  'Not all who wander are lost. Some have ROAM.',
 ];
 
 // ---------------------------------------------------------------------------

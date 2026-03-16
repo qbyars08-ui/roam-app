@@ -44,10 +44,6 @@ import {
   Heart,
   Stethoscope,
   Pill,
-  Clock,
-  DollarSign,
-  CalendarDays,
-  Thermometer,
   Plane,
   Luggage,
   Users,
@@ -88,9 +84,8 @@ import { getMedicalGuideByDestination, type MedicalGuide } from '../../lib/medic
 import { getTimezoneByDestination } from '../../lib/timezone';
 import { getWeatherForecast, type DailyForecast } from '../../lib/weather-forecast';
 import { getExchangeRates } from '../../lib/exchange-rates';
-import { getPublicHolidays, getCountryCode, type PublicHoliday } from '../../lib/public-holidays';
+import { getCountryCode } from '../../lib/public-holidays';
 import { geocodeCity } from '../../lib/geocoding';
-import ForecastStrip from '../../components/prep/ForecastStrip';
 import AirQualitySunCard from '../../components/prep/AirQualitySunCard';
 import EmergencyQuickCard from '../../components/prep/EmergencyQuickCard';
 import CurrencyQuickCard from '../../components/prep/CurrencyQuickCard';
@@ -166,76 +161,97 @@ function OfflineBanner() {
 }
 
 // ---------------------------------------------------------------------------
-// Safety Score Hero
+// Editorial Intelligence Header
 // ---------------------------------------------------------------------------
-function SafetyScoreHero({
+function EditorialHeader({
   safety,
-  destination: _destination,
+  destination,
   countryName,
 }: {
   safety: SafetyData | null;
   destination: string;
   countryName: string;
 }) {
-  const animVal = useRef(new Animated.Value(0)).current;
-  const score = safety?.safetyScore ?? 0;
-  const circumference = 2 * Math.PI * 44;
-  const strokeColor =
-    score > 70 ? COLORS.sage : score >= 40 ? COLORS.gold : COLORS.coral;
-  const offset = circumference - (score / 100) * circumference;
+  const [localDateTime, setLocalDateTime] = useState<string | null>(null);
+  const [tempC, setTempC] = useState<number | null>(null);
 
   useEffect(() => {
-    Animated.timing(animVal, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: false,
-    }).start();
-  }, [animVal, score]);
+    let cancelled = false;
+    const tz = getTimezoneByDestination(destination);
+    if (tz) {
+      try {
+        const now = new Date();
+        const dayName = now.toLocaleDateString('en-US', { timeZone: tz, weekday: 'long' });
+        const timeStr = now.toLocaleTimeString('en-US', {
+          timeZone: tz,
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+        });
+        if (!cancelled) setLocalDateTime(`${dayName} ${timeStr}`);
+      } catch { /* silent */ }
+    }
+    (async () => {
+      try {
+        const geo = await geocodeCity(destination);
+        if (geo && !cancelled) {
+          const forecast = await getWeatherForecast(geo.latitude, geo.longitude);
+          if (forecast?.days?.[0] && !cancelled) {
+            setTempC(Math.round(forecast.days[0].tempMax));
+          }
+        }
+      } catch { /* silent */ }
+    })();
+    return () => { cancelled = true; };
+  }, [destination]);
 
-  const strokeDashoffset = animVal.interpolate({
-    inputRange: [0, 1],
-    outputRange: [circumference, offset],
-  });
+  const score = safety?.safetyScore ?? null;
+  const safetyLabel = score == null ? null : score > 70 ? 'Safe for travelers' : score >= 40 ? 'Use caution' : 'High risk';
 
   return (
-    <View style={styles.heroCard}>
-      <View style={styles.heroScoreWrap}>
-        <Svg width={96} height={96} style={styles.heroSvg}>
-          <Circle
-            cx={48}
-            cy={48}
-            r={44}
-            stroke={COLORS.bg}
-            strokeWidth={8}
-            fill="transparent"
-          />
-          <AnimatedSvgCircle
-            cx={48}
-            cy={48}
-            r={44}
-            stroke={strokeColor}
-            strokeWidth={8}
-            fill="transparent"
-            strokeDasharray={circumference}
-            strokeDashoffset={strokeDashoffset}
-            strokeLinecap="round"
-            transform="rotate(-90 48 48)"
-          />
-        </Svg>
-        <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-          <View style={styles.heroScoreCenter}>
-            <Text style={[styles.heroScoreNum, { color: strokeColor }]}>{score}</Text>
-          </View>
-        </View>
-      </View>
-      <Text style={styles.heroCountry}>{countryName}</Text>
-      <Text style={styles.heroLabel}>Safety Overview</Text>
-      <Text style={styles.heroUpdated}>
-        Last updated {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-      </Text>
+    <View style={editorialHeaderStyles.container}>
+      <Text style={editorialHeaderStyles.destination}>{countryName}</Text>
+      {(localDateTime || tempC != null) && (
+        <Text style={editorialHeaderStyles.meta}>
+          {[localDateTime, tempC != null ? `${tempC}\u00B0C` : null].filter(Boolean).join(' \u00B7 ')}
+        </Text>
+      )}
+      {score != null && (
+        <Text style={editorialHeaderStyles.safetyLine}>
+          Safety {score} — {safetyLabel}
+        </Text>
+      )}
     </View>
   );
 }
+
+const editorialHeaderStyles = StyleSheet.create({
+  container: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 24,
+    gap: 6,
+  } as ViewStyle,
+  destination: {
+    fontFamily: FONTS.header,
+    fontSize: 32,
+    color: COLORS.cream,
+    fontStyle: 'italic',
+    lineHeight: 38,
+  } as TextStyle,
+  meta: {
+    fontFamily: FONTS.mono,
+    fontSize: 14,
+    color: COLORS.creamSoft,
+    letterSpacing: 0.3,
+  } as TextStyle,
+  safetyLine: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.sage,
+    letterSpacing: 0.5,
+  } as TextStyle,
+});
 
 // ---------------------------------------------------------------------------
 // Section Pills (labelKey = i18n key when present)
@@ -500,7 +516,7 @@ function SOSButton({
 }
 
 // ---------------------------------------------------------------------------
-// Emergency Numbers (finger-friendly, min 48px height)
+// Emergency Numbers Strip (always visible, coral accent)
 // ---------------------------------------------------------------------------
 function EmergencyNumbers({ data }: { data: EmergencyData }) {
   const openTel = useCallback((num: string) => {
@@ -515,22 +531,62 @@ function EmergencyNumbers({ data }: { data: EmergencyData }) {
   ];
 
   return (
-    <View style={styles.emergencyNumbersWrap}>
-      {rows.map((r) => (
-        <TouchableOpacity
-          key={r.label}
-          style={styles.emergencyNumberRow}
-          onPress={() => openTel(r.number)}
-          activeOpacity={0.7}
-        >
-          <r.icon size={20} color={COLORS.cream} />
-          <Text style={styles.emergencyNumberLabel}>{r.label}</Text>
-          <Text style={styles.emergencyNumberValue}>{r.number}</Text>
-        </TouchableOpacity>
-      ))}
+    <View style={emergencyStripStyles.container}>
+      <Text style={emergencyStripStyles.label}>EMERGENCY</Text>
+      <View style={emergencyStripStyles.row}>
+        {rows.map((r) => (
+          <TouchableOpacity
+            key={r.label}
+            style={emergencyStripStyles.item}
+            onPress={() => openTel(r.number)}
+            activeOpacity={0.7}
+          >
+            <r.icon size={16} color={COLORS.coral} />
+            <Text style={emergencyStripStyles.itemLabel}>{r.label}</Text>
+            <Text style={emergencyStripStyles.itemNumber}>{r.number}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
     </View>
   );
 }
+
+const emergencyStripStyles = StyleSheet.create({
+  container: {
+    backgroundColor: COLORS.bgMagazine,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.coral,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: SPACING.lg,
+  } as ViewStyle,
+  label: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.coral,
+    letterSpacing: 1.5,
+    marginBottom: 12,
+  } as TextStyle,
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  } as ViewStyle,
+  item: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 4,
+  } as ViewStyle,
+  itemLabel: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamSoft,
+  } as TextStyle,
+  itemNumber: {
+    fontFamily: FONTS.mono,
+    fontSize: 18,
+    color: COLORS.cream,
+  } as TextStyle,
+});
 
 // ---------------------------------------------------------------------------
 // Embassy Card
@@ -601,8 +657,8 @@ function HealthTab({
       <View style={styles.healthQuickGlance}>
         {/* Tap Water — biggest, most asked question */}
         <View style={[styles.healthQuickCard, {
-          backgroundColor: tapSafe ? COLORS.sage + '18' : COLORS.coral + '18',
-          borderColor: tapSafe ? COLORS.sage + '40' : COLORS.coral + '40',
+          backgroundColor: COLORS.bgMagazine,
+          borderLeftColor: tapSafe ? COLORS.sage : COLORS.coral,
         }]}>
           <Droplets size={28} color={tapSafe ? COLORS.sage : COLORS.coral} />
           <Text style={[styles.healthQuickValue, { color: tapSafe ? COLORS.sage : COLORS.coral }]}>
@@ -618,8 +674,8 @@ function HealthTab({
         {/* Two-column: Insurance + Hospitals */}
         <View style={styles.healthQuickRow}>
           <View style={[styles.healthQuickCardSmall, {
-            backgroundColor: insuranceColor + '14',
-            borderColor: insuranceColor + '30',
+            backgroundColor: COLORS.bgMagazine,
+            borderLeftColor: insuranceColor,
           }]}>
             <AlertTriangle size={20} color={insuranceColor} />
             <Text style={[styles.healthQuickSmallLabel, { color: insuranceColor }]}>
@@ -634,8 +690,8 @@ function HealthTab({
 
           {medicalGuide ? (
             <View style={[styles.healthQuickCardSmall, {
-              backgroundColor: hospitalColor + '14',
-              borderColor: hospitalColor + '30',
+              backgroundColor: COLORS.bgMagazine,
+              borderLeftColor: hospitalColor,
             }]}>
               <Stethoscope size={20} color={hospitalColor} />
               <Text style={[styles.healthQuickSmallLabel, { color: hospitalColor }]}>
@@ -647,8 +703,9 @@ function HealthTab({
             </View>
           ) : (
             <View style={[styles.healthQuickCardSmall, {
-              backgroundColor: COLORS.bgElevated,
-              borderColor: COLORS.border,
+              backgroundColor: COLORS.bgMagazine,
+              borderLeftWidth: 3,
+              borderLeftColor: COLORS.sage,
             }]}>
               <Stethoscope size={20} color={COLORS.creamMuted} />
               <Text style={styles.healthQuickSmallLabel}>Hospitals</Text>
@@ -867,9 +924,8 @@ function VisaTab({
     isNotRequired
       ? COLORS.sage
       : isOnArrival
-        ? COLORS.gold
+        ? COLORS.sage
         : COLORS.coral;
-  const heroOpacity = '14';
 
   return (
     <View style={styles.tabContent}>
@@ -877,10 +933,7 @@ function VisaTab({
       <View
         style={[
           styles.visaHeroCard,
-          {
-            backgroundColor: heroBg + heroOpacity,
-            borderColor: heroBg,
-          },
+          { borderLeftColor: heroBg },
         ]}
       >
         <Text
@@ -1170,11 +1223,11 @@ function TripCountdownHero({
 
 const countdownStyles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.bgCard,
+    backgroundColor: COLORS.bgMagazine,
     borderRadius: RADIUS.xl,
-    borderWidth: 1,
-    borderColor: COLORS.sage + '30',
-    padding: SPACING.lg,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.sage,
+    padding: 20,
     marginBottom: SPACING.lg,
   } as ViewStyle,
   row: {
@@ -1311,9 +1364,9 @@ function JetLagTab({ destination }: { destination: string }) {
 
 const jetLagStyles = StyleSheet.create({
   heroCard: {
-    backgroundColor: COLORS.bgCard,
+    backgroundColor: COLORS.bgMagazine,
     borderRadius: RADIUS.xl,
-    borderWidth: 1,
+    borderLeftWidth: 3,
     padding: SPACING.lg,
     marginBottom: SPACING.lg,
   } as ViewStyle,
@@ -1336,8 +1389,6 @@ const jetLagStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: COLORS.bgElevated,
-    borderRadius: RADIUS.full,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
   } as ViewStyle,
@@ -1350,9 +1401,11 @@ const jetLagStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: SPACING.sm,
-    backgroundColor: COLORS.bgElevated,
+    backgroundColor: COLORS.bgMagazine,
     borderRadius: RADIUS.md,
-    padding: SPACING.md,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.sage,
+    padding: 16,
     marginBottom: SPACING.sm,
   } as ViewStyle,
   adviceText: {
@@ -1507,38 +1560,23 @@ function NoDataState({ destination }: { destination: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Right Now — live destination intelligence
+// Intelligence Cards Grid (2x2 magazine-style)
 // ---------------------------------------------------------------------------
-function DestinationIntelCard({ destination }: { destination: string }) {
-  const [localTime, setLocalTime] = useState<string | null>(null);
-  const [timezone, setTimezone] = useState<string | null>(null);
+function IntelligenceCardsGrid({
+  destination,
+  safety,
+}: {
+  destination: string;
+  safety: SafetyData | null;
+}) {
   const [weather, setWeather] = useState<DailyForecast | null>(null);
   const [exchangeRate, setExchangeRate] = useState<string | null>(null);
   const [currencyCode, setCurrencyCode] = useState<string | null>(null);
-  const [holidays, setHolidays] = useState<PublicHoliday[]>([]);
+  const [currencyTip, setCurrencyTip] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    // Timezone & local time
-    const tz = getTimezoneByDestination(destination);
-    if (tz) {
-      setTimezone(tz.split('/').pop()?.replace(/_/g, ' ') ?? tz);
-      try {
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('en-US', {
-          timeZone: tz,
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true,
-        });
-        setLocalTime(timeStr);
-      } catch {
-        setLocalTime(null);
-      }
-    }
-
-    // Weather (needs geocoding first)
     (async () => {
       try {
         const geo = await geocodeCity(destination);
@@ -1551,7 +1589,6 @@ function DestinationIntelCard({ destination }: { destination: string }) {
       } catch { /* silent */ }
     })();
 
-    // Exchange rates
     (async () => {
       try {
         const countryCode = getCountryCode(destination);
@@ -1570,25 +1607,9 @@ function DestinationIntelCard({ destination }: { destination: string }) {
         const rates = await getExchangeRates('USD');
         if (rates?.rates?.[curr] && !cancelled) {
           const rate = rates.rates[curr];
-          setExchangeRate(rate >= 100 ? Math.round(rate).toLocaleString() : rate.toFixed(2));
-        }
-      } catch { /* silent */ }
-    })();
-
-    // Public holidays
-    (async () => {
-      try {
-        const cc = getCountryCode(destination);
-        if (!cc) return;
-        const h = await getPublicHolidays(cc);
-        if (!cancelled) {
-          const now = new Date();
-          const thirtyDaysOut = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-          const upcoming = h.filter((hol) => {
-            const d = new Date(hol.date);
-            return d >= now && d <= thirtyDaysOut;
-          });
-          setHolidays(upcoming.slice(0, 2));
+          const formatted = rate >= 100 ? Math.round(rate).toLocaleString() : rate.toFixed(2);
+          setExchangeRate(formatted);
+          setCurrencyTip(`1 USD = ${formatted} ${curr}`);
         }
       } catch { /* silent */ }
     })();
@@ -1596,87 +1617,139 @@ function DestinationIntelCard({ destination }: { destination: string }) {
     return () => { cancelled = true; };
   }, [destination]);
 
-  const hasAnyData = localTime || weather || exchangeRate || holidays.length > 0;
-  if (!hasAnyData) return null;
+  const score = safety?.safetyScore ?? null;
+  const safetyColor = score == null ? COLORS.creamMuted : score > 70 ? COLORS.sage : score >= 40 ? COLORS.gold : COLORS.coral;
+  const safetyDesc = score == null ? '—' : score > 70 ? 'Safe for travelers' : score >= 40 ? 'Use caution' : 'High risk area';
+
+  const visa = getVisaInfo(destination, 'US');
+  const visaStatus = visa?.info?.status ?? null;
+  const visaLabel = visaStatus === 'visa_free' ? 'No visa required'
+    : visaStatus === 'visa_on_arrival' ? 'Visa on arrival'
+    : visaStatus === 'e_visa' ? 'e-Visa required'
+    : visaStatus === 'eta' ? 'ETA required'
+    : visaStatus === 'visa_required' ? 'Visa required'
+    : null;
+  const visaColor = visaStatus === 'visa_free' ? COLORS.sage
+    : visaStatus === 'visa_on_arrival' ? COLORS.sage
+    : COLORS.coral;
 
   return (
-    <View style={intelStyles.container}>
-      <Text style={intelStyles.sectionTitle}>Right now in {destination}</Text>
-      <View style={intelStyles.grid}>
-        {localTime && (
-          <View style={intelStyles.card}>
-            <Clock size={16} color={COLORS.sage} strokeWidth={2} />
-            <Text style={intelStyles.cardValue}>{localTime}</Text>
-            <Text style={intelStyles.cardLabel}>{timezone ?? 'Local time'}</Text>
-          </View>
-        )}
-        {weather && (
-          <View style={intelStyles.card}>
-            <Thermometer size={16} color={COLORS.coral} strokeWidth={2} />
-            <Text style={intelStyles.cardValue}>
-              {Math.round(weather.tempMax)}{'\u00B0'}
-            </Text>
-            <Text style={intelStyles.cardLabel}>{weather.weatherLabel}</Text>
-          </View>
-        )}
-        {exchangeRate && currencyCode && (
-          <View style={intelStyles.card}>
-            <DollarSign size={16} color={COLORS.gold} strokeWidth={2} />
-            <Text style={intelStyles.cardValue}>{exchangeRate}</Text>
-            <Text style={intelStyles.cardLabel}>1 USD = {currencyCode}</Text>
-          </View>
-        )}
-        {holidays.length > 0 && (
-          <View style={intelStyles.card}>
-            <CalendarDays size={16} color={COLORS.sage} strokeWidth={2} />
-            <Text style={intelStyles.cardValue} numberOfLines={1}>{holidays[0].name}</Text>
-            <Text style={intelStyles.cardLabel}>
-              {new Date(holidays[0].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-            </Text>
-          </View>
-        )}
+    <View style={intelGridStyles.container}>
+      <View style={intelGridStyles.row}>
+        {/* Safety card */}
+        <View style={intelGridStyles.card}>
+          <Text style={[intelGridStyles.bigNumber, { color: safetyColor }]}>
+            {score ?? '—'}
+          </Text>
+          <Text style={intelGridStyles.cardDesc}>{safetyDesc}</Text>
+          <Text style={intelGridStyles.cardLabel}>SAFETY SCORE</Text>
+        </View>
+
+        {/* Currency card */}
+        <View style={intelGridStyles.card}>
+          <Text style={[intelGridStyles.bigRate, { color: COLORS.cream }]}>
+            {exchangeRate ?? '—'}
+          </Text>
+          <Text style={intelGridStyles.cardDesc}>
+            {currencyTip ?? (currencyCode ? `1 USD = ${currencyCode}` : 'Exchange rate')}
+          </Text>
+          <Text style={intelGridStyles.cardLabel}>CURRENCY</Text>
+        </View>
+      </View>
+
+      <View style={intelGridStyles.row}>
+        {/* Weather card */}
+        <View style={intelGridStyles.card}>
+          {weather ? (
+            <>
+              <Text style={[intelGridStyles.bigNumber, { color: COLORS.cream }]}>
+                {Math.round(weather.tempMax)}&deg;
+              </Text>
+              <Text style={intelGridStyles.cardDesc}>{weather.weatherLabel}</Text>
+              {weather.precipitationChance > 0 && (
+                <Text style={[intelGridStyles.cardDesc, { color: COLORS.creamMuted }]}>
+                  {weather.precipitationChance}% rain
+                </Text>
+              )}
+            </>
+          ) : (
+            <Text style={[intelGridStyles.bigNumber, { color: COLORS.creamMuted }]}>—</Text>
+          )}
+          <Text style={intelGridStyles.cardLabel}>WEATHER</Text>
+        </View>
+
+        {/* Visa card */}
+        <View style={intelGridStyles.card}>
+          {visaLabel ? (
+            <>
+              <Text style={[intelGridStyles.visaStatus, { color: visaColor }]}>
+                {visaLabel}
+              </Text>
+              {visa?.info?.stayDays != null && visa.info.stayDays < 999 && (
+                <Text style={intelGridStyles.cardDesc}>Up to {visa.info.stayDays} days</Text>
+              )}
+            </>
+          ) : (
+            <Text style={[intelGridStyles.cardDesc, { color: COLORS.creamMuted }]}>Check requirements</Text>
+          )}
+          <Text style={intelGridStyles.cardLabel}>VISA</Text>
+        </View>
       </View>
     </View>
   );
 }
 
-const intelStyles = StyleSheet.create({
+const intelGridStyles = StyleSheet.create({
   container: {
-    marginBottom: SPACING.lg,
-    paddingHorizontal: SPACING.md,
-  },
-  sectionTitle: {
-    fontFamily: FONTS.header,
-    fontSize: 22,
-    color: COLORS.cream,
-    marginBottom: SPACING.md,
-  },
-  grid: {
+    paddingHorizontal: 20,
+    gap: 12,
+    marginBottom: 40,
+  } as ViewStyle,
+  row: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
-  },
+    gap: 12,
+  } as ViewStyle,
   card: {
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: SPACING.md,
-    minWidth: '47%' as unknown as number,
     flex: 1,
+    backgroundColor: COLORS.bgMagazine,
+    borderRadius: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.sage,
+    padding: 16,
     gap: 4,
-  },
-  cardValue: {
-    fontFamily: FONTS.header,
-    fontSize: 24,
+    minHeight: 100,
+    justifyContent: 'flex-end',
+  } as ViewStyle,
+  bigNumber: {
+    fontFamily: FONTS.mono,
+    fontSize: 36,
+    lineHeight: 40,
     color: COLORS.cream,
-  },
+  } as TextStyle,
+  bigRate: {
+    fontFamily: FONTS.mono,
+    fontSize: 18,
+    lineHeight: 22,
+  } as TextStyle,
+  visaStatus: {
+    fontFamily: FONTS.header,
+    fontSize: 16,
+    lineHeight: 20,
+    fontStyle: 'italic',
+  } as TextStyle,
+  cardDesc: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamSoft,
+    lineHeight: 16,
+  } as TextStyle,
   cardLabel: {
     fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.creamMuted,
-    textTransform: 'uppercase',
-  },
+    fontSize: 10,
+    color: COLORS.sage,
+    letterSpacing: 1.5,
+    marginTop: 4,
+  } as TextStyle,
 });
 
 // ---------------------------------------------------------------------------
@@ -1772,34 +1845,30 @@ function PrepScreen() {
           <NoDataState destination={selectedDest} />
         ) : (
           <>
-            <TripCountdownHero
-              trip={activeTrip}
-              destination={selectedDest}
-            />
-
-            <SafetyScoreHero
+            <EditorialHeader
               safety={safety}
               destination={selectedDest}
               countryName={countryName}
             />
 
-            <DestinationIntelCard destination={selectedDest} />
+            <IntelligenceCardsGrid
+              destination={selectedDest}
+              safety={safety}
+            />
 
-            <View style={{ paddingHorizontal: SPACING.md, marginBottom: SPACING.lg }}>
+            <View style={{ paddingHorizontal: 20, marginBottom: 40 }}>
               <AirQualitySunCard destination={selectedDest} />
             </View>
 
-            <ForecastStrip destination={selectedDest} />
-
-            <View style={{ marginTop: SPACING.lg }}>
+            <View style={{ paddingHorizontal: 20, marginTop: SPACING.lg, marginBottom: 40 }}>
               <CostOfLivingCard destination={selectedDest} />
             </View>
 
-            <View style={{ paddingHorizontal: SPACING.md, marginBottom: SPACING.lg }}>
+            <View style={{ paddingHorizontal: 20, marginBottom: 40 }}>
               <EmergencyQuickCard destination={selectedDest} />
             </View>
 
-            <View style={{ paddingHorizontal: SPACING.md, marginBottom: SPACING.lg }}>
+            <View style={{ paddingHorizontal: 20, marginBottom: 40 }}>
               <CurrencyQuickCard destination={selectedDest} />
             </View>
 
@@ -1889,7 +1958,7 @@ function PrepScreen() {
                   }}
                   style={({ pressed }) => [
                     styles.bodyIntelCta,
-                    { borderColor: COLORS.coral + '30', backgroundColor: COLORS.coral + '14' },
+                    { borderLeftColor: COLORS.coral },
                     pressed && { opacity: 0.7 },
                   ]}
                 >
@@ -1959,7 +2028,7 @@ function PrepScreen() {
             }}
             style={({ pressed }) => [
               styles.bodyIntelCta,
-              { borderColor: COLORS.gold + '30', backgroundColor: COLORS.gold + '14', marginTop: SPACING.lg },
+              { borderLeftColor: COLORS.gold, marginTop: SPACING.lg },
               pressed && { opacity: 0.7 },
             ]}
           >
@@ -2027,7 +2096,7 @@ const styles = StyleSheet.create({
     flex: 1,
   } as ViewStyle,
   scrollContent: {
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: 0,
   } as ViewStyle,
 
   offlineBanner: {
@@ -2046,10 +2115,12 @@ const styles = StyleSheet.create({
   } as TextStyle,
 
   heroCard: {
-    backgroundColor: COLORS.bgCard,
+    backgroundColor: COLORS.bgMagazine,
     borderRadius: RADIUS.xl,
-    padding: SPACING.lg,
-    alignItems: 'center',
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.sage,
+    padding: 20,
+    alignItems: 'flex-start',
     marginBottom: SPACING.lg,
   } as ViewStyle,
   heroScoreWrap: {
@@ -2076,6 +2147,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     color: COLORS.cream,
     marginBottom: 4,
+    fontStyle: 'italic',
   } as TextStyle,
   heroLabel: {
     fontFamily: FONTS.body,
@@ -2092,24 +2164,22 @@ const styles = StyleSheet.create({
 
   pillsScroll: {
     marginBottom: SPACING.lg,
-    marginHorizontal: -SPACING.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.sage + '20',
   } as ViewStyle,
   pillsContent: {
     flexDirection: 'row',
-    paddingHorizontal: SPACING.lg,
-    gap: SPACING.sm,
+    paddingHorizontal: 20,
+    gap: 0,
   } as ViewStyle,
   pill: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.bgCard,
-    borderWidth: 1,
-    borderColor: COLORS.creamMuted,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
   } as ViewStyle,
   pillActive: {
-    backgroundColor: COLORS.sage,
-    borderColor: COLORS.sage,
+    borderBottomColor: COLORS.sage,
   } as ViewStyle,
   pillText: {
     fontFamily: FONTS.body,
@@ -2117,11 +2187,12 @@ const styles = StyleSheet.create({
     color: COLORS.cream,
   } as TextStyle,
   pillTextActive: {
-    color: COLORS.bg,
+    color: COLORS.sage,
   } as TextStyle,
 
   tabContent: {
-    marginBottom: SPACING.xl,
+    paddingHorizontal: 20,
+    marginBottom: 40,
   } as ViewStyle,
 
   overviewRow: {
@@ -2138,8 +2209,6 @@ const styles = StyleSheet.create({
   advisoryBadge: {
     paddingHorizontal: SPACING.sm,
     paddingVertical: 4,
-    borderRadius: RADIUS.sm,
-    borderWidth: 1,
   } as ViewStyle,
   advisoryBadgeText: {
     fontFamily: FONTS.bodyMedium,
@@ -2179,9 +2248,9 @@ const styles = StyleSheet.create({
   } as TextStyle,
   metricBarWrap: {
     flex: 1,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: COLORS.bgCard,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: COLORS.bgMagazine,
     overflow: 'hidden',
   } as ViewStyle,
   metricBarFill: {
@@ -2252,9 +2321,11 @@ const styles = StyleSheet.create({
   } as TextStyle,
 
   embassyCard: {
-    backgroundColor: COLORS.bgCard,
+    backgroundColor: COLORS.bgMagazine,
     borderRadius: RADIUS.lg,
-    padding: SPACING.md,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.sage,
+    padding: 16,
   } as ViewStyle,
   embassyLabel: {
     fontFamily: FONTS.mono,
@@ -2298,8 +2369,8 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   healthQuickCard: {
     borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    padding: SPACING.lg,
+    borderLeftWidth: 3,
+    padding: 20,
     alignItems: 'center',
     gap: 8,
   } as ViewStyle,
@@ -2322,8 +2393,8 @@ const styles = StyleSheet.create({
   healthQuickCardSmall: {
     flex: 1,
     borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    padding: SPACING.md,
+    borderLeftWidth: 3,
+    padding: 16,
     alignItems: 'center',
     gap: 6,
   } as ViewStyle,
@@ -2460,9 +2531,11 @@ const styles = StyleSheet.create({
     marginTop: 2,
   } as TextStyle,
   whereToGoRow: {
-    backgroundColor: COLORS.bgElevated,
+    backgroundColor: COLORS.bgMagazine,
     borderRadius: RADIUS.md,
-    padding: SPACING.sm,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.sage,
+    padding: 12,
     marginBottom: SPACING.xs,
   } as ViewStyle,
   whereToGoCondition: {
@@ -2493,9 +2566,11 @@ const styles = StyleSheet.create({
   phraseCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.bgCard,
+    backgroundColor: COLORS.bgMagazine,
     borderRadius: RADIUS.lg,
-    padding: SPACING.md,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.sage,
+    padding: 16,
     marginBottom: SPACING.sm,
   } as ViewStyle,
   phraseCardBody: {
@@ -2531,9 +2606,10 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   } as TextStyle,
   visaHeroCard: {
+    backgroundColor: COLORS.bgMagazine,
     borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    padding: SPACING.lg,
+    borderLeftWidth: 3,
+    padding: 20,
     marginBottom: SPACING.md,
   } as ViewStyle,
   visaHeroText: {
@@ -2606,6 +2682,7 @@ const styles = StyleSheet.create({
 
   destPickerWrap: {
     marginTop: SPACING.lg,
+    paddingHorizontal: 20,
   } as ViewStyle,
   destPickerLabel: {
     fontFamily: FONTS.mono,
@@ -2618,25 +2695,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   } as ViewStyle,
   destChip: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.bgCard,
-    borderWidth: 1,
-    borderColor: COLORS.creamMuted,
-    marginRight: SPACING.sm,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+    marginRight: 4,
   } as ViewStyle,
   destChipActive: {
-    backgroundColor: COLORS.sage,
-    borderColor: COLORS.sage,
+    borderBottomColor: COLORS.sage,
   } as ViewStyle,
   destChipText: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: COLORS.cream,
+    color: COLORS.creamSoft,
   } as TextStyle,
   destChipTextActive: {
-    color: COLORS.bg,
+    color: COLORS.sage,
   } as TextStyle,
 
   scheduleIntro: {
@@ -2652,9 +2726,11 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   } as TextStyle,
   scheduleDayCard: {
-    backgroundColor: COLORS.bgCard,
+    backgroundColor: COLORS.bgMagazine,
     borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.sage,
+    padding: 20,
     marginBottom: SPACING.md,
   } as ViewStyle,
   scheduleDayLabel: {
@@ -2743,9 +2819,11 @@ const styles = StyleSheet.create({
 
   // Shared info card
   infoCard: {
-    backgroundColor: COLORS.bgCard,
+    backgroundColor: COLORS.bgMagazine,
     borderRadius: RADIUS.lg,
-    padding: SPACING.md,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.sage,
+    padding: 16,
     marginBottom: SPACING.sm,
   } as ViewStyle,
   infoCardRow: {
@@ -2791,9 +2869,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: COLORS.bgCard,
+    backgroundColor: COLORS.bgMagazine,
     borderRadius: RADIUS.md,
-    padding: SPACING.sm,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.sage,
+    padding: 12,
     marginBottom: SPACING.xs,
   } as ViewStyle,
   esimName: {
@@ -2815,9 +2895,11 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   } as TextStyle,
   etiquetteCard: {
-    backgroundColor: COLORS.bgCard,
+    backgroundColor: COLORS.bgMagazine,
     borderRadius: RADIUS.lg,
-    padding: SPACING.md,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.sage,
+    padding: 16,
     marginBottom: SPACING.sm,
     gap: SPACING.sm,
   } as ViewStyle,
@@ -2858,11 +2940,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: SPACING.sm,
     marginTop: SPACING.lg,
-    padding: SPACING.md,
-    backgroundColor: COLORS.sage + '14',
+    padding: 16,
+    backgroundColor: COLORS.bgMagazine,
     borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.sage + '30',
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.sage,
   } as ViewStyle,
   bodyIntelCtaTitle: {
     fontFamily: FONTS.bodySemiBold,

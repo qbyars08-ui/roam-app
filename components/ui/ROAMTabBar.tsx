@@ -11,14 +11,14 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { IconPlan, IconDiscover, IconPeople, IconFlights, IconPrep, IconHealth, IconPulse } from './TabIcons';
 import { captureEvent } from '../../lib/posthog';
 
-const TAB_ORDER = ['plan', 'index', 'body-intel', 'flights', 'pulse'] as const;
+const TAB_ORDER = ['plan', 'pulse', 'people', 'flights', 'prep'] as const;
 type TabIconComponent = React.ComponentType<{ size?: number; color?: string; focused?: boolean }>;
 const TAB_ICONS: Record<string, { i18nKey: string; Icon: TabIconComponent }> = {
   plan: { i18nKey: 'tabs.plan', Icon: IconPlan },
-  index: { i18nKey: 'tabs.discover', Icon: IconDiscover },
-  'body-intel': { i18nKey: 'tabs.health', Icon: IconHealth },
-  flights: { i18nKey: 'tabs.flights', Icon: IconFlights },
   pulse: { i18nKey: 'tabs.pulse', Icon: IconPulse },
+  people: { i18nKey: 'tabs.people', Icon: IconPeople },
+  flights: { i18nKey: 'tabs.flights', Icon: IconFlights },
+  prep: { i18nKey: 'tabs.prep', Icon: IconPrep },
 };
 
 export default function ROAMTabBar({ state, descriptors, navigation }: BottomTabBarProps) {

@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROAM — War Room</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:#080F0A;color:#F5EDD8;font-family:system-ui,-apple-system,sans-serif;font-size:13px;line-height:1.5;overflow-x:hidden}
+  ::-webkit-scrollbar{width:4px;height:4px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:#1A2B1E;border-radius:2px}
+
+  .war-room{display:grid;grid-template-columns:280px 1fr 320px;grid-template-rows:auto 1fr;height:100vh;overflow:hidden}
+
+  /* TOP BAR */
+  .top-bar{grid-column:1/-1;background:#0A130C;border-bottom:1px solid #1A2B1E;padding:10px 20px;display:flex;align-items:center;justify-content:space-between}
+  .top-bar .brand{display:flex;align-items:center;gap:16px}
+  .top-bar h1{font-size:16px;font-weight:800;color:#7CAF8A;letter-spacing:4px}
+  .top-bar .live-dot{width:8px;height:8px;border-radius:50%;background:#4ADE80;box-shadow:0 0 12px rgba(74,222,128,.6);animation:blink 2s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+  .top-bar .meta{display:flex;gap:16px;align-items:center}
+  .top-bar .clock{font-family:monospace;font-size:18px;color:#F5EDD8;letter-spacing:1px}
+  .top-bar .day{font-family:monospace;font-size:11px;color:#C9A84C;background:rgba(201,168,76,.08);padding:3px 10px;border-radius:3px;letter-spacing:1px}
+  .top-bar .motto{font-size:11px;color:#4A6050;font-style:italic;max-width:320px;text-align:right;transition:opacity .4s}
+  .top-bar .motto.fade{opacity:0}
+  .gear-btn{background:none;border:1px solid #1A2B1E;border-radius:4px;color:#4A6050;font-size:14px;padding:4px 8px;cursor:pointer;transition:all .15s}
+  .gear-btn:hover{border-color:#7CAF8A;color:#7CAF8A}
+
+  /* LEFT */
+  .left{background:#0A130C;border-right:1px solid #1A2B1E;overflow-y:auto;padding:16px}
+  .panel-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:3px;color:#4A6050;margin:16px 0 8px;padding-left:4px}
+  .panel-label:first-child{margin-top:0}
+
+  /* Health */
+  .health-card{background:#0D1710;border:1px solid #1A2B1E;border-radius:6px;padding:14px;margin-bottom:8px}
+  .health-card .hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .health-card .name{font-size:14px;font-weight:700;letter-spacing:1px}
+  .status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .status-dot.up{background:#4ADE80;box-shadow:0 0 8px rgba(74,222,128,.5)}
+  .status-dot.down{background:#E8614A;box-shadow:0 0 8px rgba(232,97,74,.5)}
+  .status-dot.checking{background:#C9A84C;animation:blink 1s infinite}
+  .health-card .metrics{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .metric{background:rgba(0,0,0,.2);border-radius:4px;padding:6px 8px}
+  .metric .k{font-size:9px;color:#4A6050;text-transform:uppercase;letter-spacing:1px}
+  .metric .v{font-family:monospace;font-size:13px;font-weight:700;color:#7CAF8A}
+  .metric .v.warn{color:#C9A84C}
+  .metric .v.bad{color:#E8614A}
+
+  .gh-stat{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#0D1710;border:1px solid #1A2B1E;border-radius:5px;margin-bottom:4px}
+  .gh-stat .label{font-size:12px;color:#F5EDD8}
+  .gh-stat .val{font-family:monospace;font-size:14px;font-weight:700;color:#7CAF8A}
+  .gh-stat .val.coral{color:#E8614A}
+  .gh-stat .val.gold{color:#C9A84C}
+
+  .qa-btn{width:100%;padding:8px 10px;background:#0D1710;border:1px solid #1A2B1E;border-radius:5px;color:#F5EDD8;font-size:11px;font-weight:600;cursor:pointer;text-align:left;margin-bottom:4px;transition:all .15s;display:flex;align-items:center;gap:8px}
+  .qa-btn:hover{border-color:#7CAF8A;color:#7CAF8A}
+  .qa-btn.fl{background:rgba(124,175,138,.1);border-color:#7CAF8A}
+  .qa-btn .icon{font-size:14px;width:20px;text-align:center;flex-shrink:0}
+
+  .link-row{display:block;padding:5px 10px;text-decoration:none;color:#F5EDD8;font-size:12px;border-radius:3px;transition:all .1s}
+  .link-row:hover{color:#7CAF8A;background:rgba(124,175,138,.04)}
+  .link-row::before{content:'→ ';color:#3A5040}
+  .link-row:hover::before{color:#7CAF8A}
+
+  /* CENTER */
+  .center{overflow-y:auto;padding:20px}
+  .feed-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .feed-header h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:3px;color:#7CAF8A}
+  .feed-header .refresh{padding:4px 10px;background:transparent;border:1px solid #1A2B1E;border-radius:4px;color:#4A6050;font-size:10px;cursor:pointer;transition:all .15s}
+  .feed-header .refresh:hover{border-color:#7CAF8A;color:#7CAF8A}
+
+  /* Deploy feed */
+  .deploy-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:#0D1710;border:1px solid #1A2B1E;border-radius:6px;margin-bottom:6px}
+  .deploy-item .d-status{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .deploy-item .d-status.ready{background:#4ADE80}
+  .deploy-item .d-status.building{background:#C9A84C;animation:blink 1s infinite}
+  .deploy-item .d-status.error{background:#E8614A}
+  .deploy-item .d-body{flex:1;min-width:0}
+  .deploy-item .d-title{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .deploy-item .d-meta{font-size:10px;color:#4A6050;margin-top:1px}
+  .deploy-item .d-time{font-family:monospace;font-size:11px;color:#7CAF8A}
+  .deploy-item a{color:#7CAF8A;text-decoration:none;font-size:10px}
+
+  .commit-item{display:flex;gap:12px;padding:12px 14px;background:#0D1710;border:1px solid #1A2B1E;border-radius:6px;margin-bottom:6px;position:relative;overflow:hidden}
+  .commit-item:hover{border-color:#243B29}
+  .commit-item .time-line{position:absolute;left:0;top:0;bottom:0;width:3px}
+  .commit-item .time-line.recent{background:#4ADE80}
+  .commit-item .time-line.mid{background:#C9A84C}
+  .commit-item .time-line.old{background:#1A2B1E}
+  .commit-item .avatar{width:32px;height:32px;border-radius:50%;background:#1A2B1E;flex-shrink:0;overflow:hidden}
+  .commit-item .avatar img{width:100%;height:100%}
+  .commit-item .body{flex:1;min-width:0}
+  .commit-item .msg{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .commit-item .meta-row{font-size:11px;color:#4A6050;margin-top:2px;display:flex;gap:12px}
+  .commit-item .sha{font-family:monospace;color:#7CAF8A;font-size:10px;cursor:pointer}
+  .commit-item .sha:hover{text-decoration:underline}
+
+  .pr-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:#0D1710;border:1px solid #1A2B1E;border-radius:6px;margin-bottom:6px}
+  .pr-item .pr-status{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .pr-item .pr-status.open{background:#4ADE80}
+  .pr-item .pr-status.draft{background:#C9A84C}
+  .pr-item .pr-title{flex:1;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pr-item .pr-meta{font-size:10px;color:#4A6050}
+  .pr-item a{color:#7CAF8A;text-decoration:none;font-size:11px}
+
+  .empty-state{text-align:center;padding:30px 20px;color:#3A5040;font-size:13px}
+  .section-gap{margin-top:24px}
+
+  .activity-graph{display:flex;align-items:flex-end;gap:2px;height:60px;padding:12px 14px;background:#0D1710;border:1px solid #1A2B1E;border-radius:6px;margin-bottom:6px}
+  .activity-graph .bar{flex:1;background:#7CAF8A;border-radius:2px 2px 0 0;min-height:2px;transition:height .3s;opacity:.6}
+  .activity-graph .bar:hover{opacity:1}
+  .activity-graph .bar.today{background:#4ADE80;opacity:1}
+  .graph-labels{display:flex;justify-content:space-between;padding:0 14px;margin-bottom:16px}
+  .graph-labels span{font-size:9px;color:#3A5040;font-family:monospace}
+
+  /* Netlify bandwidth */
+  .bw-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#0D1710;border:1px solid #1A2B1E;border-radius:6px;margin-bottom:6px}
+  .bw-bar .bw-label{font-size:11px;color:#4A6050;width:80px}
+  .bw-bar .bw-track{flex:1;height:6px;background:rgba(255,255,255,.04);border-radius:3px;overflow:hidden}
+  .bw-bar .bw-fill{height:100%;border-radius:3px;transition:width .3s}
+  .bw-bar .bw-val{font-family:monospace;font-size:12px;font-weight:700;color:#7CAF8A;width:70px;text-align:right}
+
+  /* RIGHT */
+  .right{background:#0A130C;border-left:1px solid #1A2B1E;overflow-y:auto;padding:16px}
+
+  .comp-mini{background:#0D1710;border:1px solid #1A2B1E;border-radius:6px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+  .comp-mini .num{font-size:16px;font-weight:800;color:#7CAF8A;width:24px;text-align:center}
+  .comp-mini .info{flex:1;min-width:0}
+  .comp-mini .role{font-size:11px;color:#4A6050}
+  .comp-mini .task-input{background:none;border:none;outline:none;color:#F5EDD8;font-size:11px;width:100%;padding:0;font-family:system-ui}
+  .comp-mini .st{padding:2px 8px;border-radius:8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;user-select:none;flex-shrink:0}
+  .comp-mini .st.idle{color:#4A6050;background:rgba(74,96,80,.15)}
+  .comp-mini .st.working{color:#7CAF8A;background:rgba(124,175,138,.15)}
+  .comp-mini .st.done{color:#4ADE80;background:rgba(74,222,128,.15)}
+  .comp-mini .cpb{padding:2px 8px;background:transparent;border:1px solid #1A2B1E;border-radius:4px;color:#4A6050;font-size:9px;cursor:pointer;flex-shrink:0;transition:all .1s}
+  .comp-mini .cpb:hover{border-color:#7CAF8A;color:#7CAF8A}
+  .comp-mini .cpb.fl{background:#7CAF8A;color:#080F0A}
+
+  .chk{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:4px;cursor:pointer;user-select:none;transition:background .1s}
+  .chk:hover{background:rgba(124,175,138,.03)}
+  .chk .bx{width:16px;height:16px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+  .chk .bx.off{border:1.5px solid #E8614A}
+  .chk .bx.on{background:#7CAF8A;color:#080F0A;border:1.5px solid #7CAF8A}
+  .chk .tx{font-size:12px;flex:1}
+  .chk .tx.dn{text-decoration:line-through;color:#7CAF8A;opacity:.5}
+  .chk-done{font-size:12px;color:#C9A84C;text-align:center;padding:8px;display:none;font-weight:700}
+
+  .bud-row{display:flex;align-items:center;gap:8px;padding:6px 10px;margin-bottom:3px}
+  .bud-row .nm{font-size:11px;width:100px;color:#4A6050}
+  .bud-row .pr{font-family:monospace;font-size:12px;font-weight:700;color:#C9A84C;width:50px;text-align:right;background:transparent;border:none;outline:none;cursor:pointer;padding:0}
+  .bud-row .pr:focus{color:#F5EDD8}
+  .bud-row .bw-t{flex:1;height:4px;background:rgba(255,255,255,.04);border-radius:2px;overflow:hidden}
+  .bud-row .bf{height:100%;border-radius:2px;transition:width .3s}
+  .bf.ok{background:#7CAF8A}.bf.warn{background:#C9A84C}.bf.bad{background:#E8614A}
+  .bud-total-row{display:flex;justify-content:space-between;padding:8px 10px;border-top:1px solid #1A2B1E}
+  .bud-total-row .tl{font-size:11px;color:#4A6050}
+  .bud-total-row .tv{font-family:monospace;font-size:13px;font-weight:700;color:#7CAF8A}
+
+  /* SETTINGS MODAL */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center}
+  .modal-bg.show{display:flex}
+  .modal{background:#0D1710;border:1px solid #1A2B1E;border-radius:10px;padding:28px;width:500px;max-height:80vh;overflow-y:auto}
+  .modal h2{font-size:16px;font-weight:700;color:#7CAF8A;margin-bottom:4px}
+  .modal .sub{font-size:12px;color:#4A6050;margin-bottom:20px}
+  .modal .field{margin-bottom:16px}
+  .modal .field label{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;margin-bottom:4px}
+  .modal .field label .dot{width:8px;height:8px;border-radius:50%}
+  .modal .field label .dot.set{background:#4ADE80}
+  .modal .field label .dot.unset{background:#E8614A}
+  .modal .field input{width:100%;padding:8px 10px;background:rgba(255,255,255,.03);border:1px solid #1A2B1E;border-radius:5px;color:#F5EDD8;font-family:monospace;font-size:12px;outline:none}
+  .modal .field input:focus{border-color:#7CAF8A}
+  .modal .field input::placeholder{color:#3A5040}
+  .modal .field .hint{font-size:10px;color:#3A5040;margin-top:3px}
+  .modal .save-btn{width:100%;padding:10px;background:#7CAF8A;border:none;border-radius:6px;color:#080F0A;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px;transition:opacity .15s}
+  .modal .save-btn:hover{opacity:.9}
+  .modal .warn{font-size:10px;color:#E8614A;margin-top:12px;text-align:center}
+
+  .loading{color:#3A5040;font-size:12px;padding:20px;text-align:center}
+  #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(8px);background:#7CAF8A;color:#080F0A;font-size:11px;font-weight:700;padding:6px 16px;border-radius:4px;z-index:9999;opacity:0;transition:all .15s;pointer-events:none}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* Token status badges in top bar */
+  .token-badges{display:flex;gap:6px;align-items:center}
+  .token-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:.5px;text-transform:uppercase}
+  .token-badge.on{background:rgba(74,222,128,.1);color:#4ADE80}
+  .token-badge.off{background:rgba(232,97,74,.1);color:#E8614A}
+
+  @media(max-width:1000px){.war-room{grid-template-columns:1fr;grid-template-rows:auto auto auto auto}.left,.right{border:none;border-bottom:1px solid #1A2B1E}}
+</style>
+</head>
+<body>
+
+<div class="war-room">
+
+<div class="top-bar">
+  <div class="brand">
+    <h1>ROAM</h1>
+    <div class="live-dot" id="master-dot"></div>
+    <span style="font-size:10px;color:#4A6050;letter-spacing:1px;text-transform:uppercase" id="master-label">CONNECTING...</span>
+    <div class="token-badges" id="token-badges"></div>
+  </div>
+  <div class="meta">
+    <span class="motto" id="motto"></span>
+    <span class="day" id="day">Day 0</span>
+    <span class="clock" id="clock">00:00:00</span>
+    <button class="gear-btn" onclick="openSettings()">⚙</button>
+  </div>
+</div>
+
+<div class="left">
+  <div class="panel-label">Site Health</div>
+  <div id="health"></div>
+
+  <div class="panel-label">GitHub Stats</div>
+  <div id="gh-stats"></div>
+
+  <div class="panel-label">Quick Actions</div>
+  <div id="qa"></div>
+
+  <div class="panel-label">Links</div>
+  <div id="links"></div>
+</div>
+
+<div class="center">
+  <div class="feed-header">
+    <h2>Live Activity</h2>
+    <button class="refresh" id="refresh-btn" onclick="refreshAll()">↻ Refresh</button>
+  </div>
+
+  <div class="panel-label" style="margin-top:0">Supabase — Live Database</div>
+  <div id="sb-stats"><div class="empty-state">Add Supabase URL + key in ⚙ Settings</div></div>
+
+  <div class="section-gap"></div>
+  <div class="panel-label">Recent Users</div>
+  <div id="sb-users"><div class="empty-state">—</div></div>
+
+  <div class="section-gap"></div>
+  <div class="panel-label">Recent Trips</div>
+  <div id="sb-trips"><div class="empty-state">—</div></div>
+
+  <div class="section-gap"></div>
+  <div class="panel-label">PostHog — Analytics</div>
+  <div id="ph-stats"><div class="empty-state">Add PostHog key in ⚙ Settings</div></div>
+
+  <div class="section-gap"></div>
+  <div class="panel-label">PostHog — Recent Events</div>
+  <div id="ph-events"><div class="empty-state">—</div></div>
+
+  <div class="section-gap"></div>
+  <div class="panel-label">RevenueCat — Revenue</div>
+  <div id="rc-stats"><div class="empty-state">Add RevenueCat key in ⚙ Settings</div></div>
+
+  <div class="section-gap"></div>
+  <div class="panel-label">Netlify Deploys</div>
+  <div id="deploys-feed"><div class="empty-state">Add Netlify token in ⚙ Settings</div></div>
+
+  <div class="section-gap"></div>
+  <div class="panel-label">Netlify Usage</div>
+  <div id="netlify-usage"></div>
+
+  <div class="section-gap"></div>
+  <div class="panel-label">Commit Frequency — 14 Days</div>
+  <div class="activity-graph" id="activity-graph"></div>
+  <div class="graph-labels" id="graph-labels"></div>
+
+  <div class="panel-label">Latest Commits</div>
+  <div id="commits-feed"><div class="loading">Waiting for GitHub...</div></div>
+
+  <div class="section-gap"></div>
+  <div class="panel-label">Open Pull Requests</div>
+  <div id="prs-feed"><div class="loading">Loading...</div></div>
+
+  <div class="section-gap"></div>
+  <div class="panel-label">Open Issues</div>
+  <div id="issues-feed"><div class="loading">Loading...</div></div>
+
+  <div class="section-gap"></div>
+  <div class="panel-label">Branches</div>
+  <div id="branches-feed"></div>
+</div>
+
+<div class="right">
+  <div class="panel-label">Composers</div>
+  <div id="composers"></div>
+
+  <div class="panel-label">Agent Prompts</div>
+  <div id="agent-prompts"></div>
+
+  <div class="panel-label">To-Dos</div>
+  <div id="checklist"></div>
+  <div class="chk-done" id="chk-done">✦ All done. Ship it.</div>
+
+  <div class="panel-label">Budget</div>
+  <div id="budget"></div>
+  <div class="bud-total-row"><span class="tl">TOTAL</span><span class="tv" id="btotal">$0</span></div>
+  <div class="bud-total-row" style="border:none;padding-top:0"><span class="tl">BREAK EVEN</span><span class="tv" id="bbreak">0 subs</span></div>
+</div>
+
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-bg" id="settings-modal">
+  <div class="modal">
+    <h2>⚙ API Tokens</h2>
+    <div class="sub">Stored in your browser only. Never committed to git. Never leaves this machine.</div>
+
+    <div class="field">
+      <label><span class="dot" id="gh-dot"></span> GitHub Personal Access Token</label>
+      <input id="gh-token-input" type="password" placeholder="ghp_xxxx or github_pat_xxxx" />
+      <div class="hint">github.com/settings/tokens → repo scope → 5,000 req/hr</div>
+    </div>
+
+    <div class="field">
+      <label><span class="dot" id="nf-dot"></span> Netlify Personal Access Token</label>
+      <input id="nf-token-input" type="password" placeholder="nfp_xxxx" />
+      <div class="hint">app.netlify.com/user/applications → live deploy history + bandwidth</div>
+    </div>
+
+    <div class="field">
+      <label><span class="dot" id="sb-url-dot"></span> Supabase Project URL</label>
+      <input id="sb-url-input" type="text" placeholder="https://xxxxx.supabase.co" />
+      <div class="hint">Supabase dashboard → Settings → API → Project URL</div>
+    </div>
+
+    <div class="field">
+      <label><span class="dot" id="sb-key-dot"></span> Supabase Service Role Key</label>
+      <input id="sb-key-input" type="password" placeholder="eyJhbGciOi..." />
+      <div class="hint">Settings → API → service_role key (bypasses RLS for admin reads)</div>
+    </div>
+
+    <div class="field">
+      <label><span class="dot" id="ph-dot"></span> PostHog Personal API Key</label>
+      <input id="ph-token-input" type="password" placeholder="phx_xxxx" />
+      <div class="hint">PostHog → Settings → Personal API Keys → live event stream + sessions</div>
+    </div>
+
+    <div class="field">
+      <label><span class="dot" id="rc-dot"></span> RevenueCat Secret API Key</label>
+      <input id="rc-token-input" type="password" placeholder="sk_xxxx" />
+      <div class="hint">RevenueCat → Project → API Keys → Secret key → subscriber + revenue data</div>
+    </div>
+
+    <button class="save-btn" onclick="saveTokens()">Save & Connect</button>
+    <div class="warn">⚠ Never paste tokens into chat or code. Only paste them here.</div>
+  </div>
+</div>
+
+<div id="toast">Copied!</div>
+
+<script>
+const REPO='qbyars08-ui/roam-app';
+const REPO_PP='qbyars08-ui/pillpal';
+const SITE_URL='https://tryroam.netlify.app';
+const NETLIFY_SITE_ID='tryroam';
+const START=new Date('2026-03-08');
+const GH_API='https://api.github.com/repos/';
+const NF_API='https://api.netlify.com/api/v1/';
+
+const MOTTOS=["The generate flow is the entire product.","Real users > more features.","Ship it. Fix it. Ship again.","The best travel app is the one someone actually uses.","Distribution beats perfection.","One more user is worth more than one more feature.","Revenue is the only real metric.","Make it work. Make it fast. Make it beautiful.","Your users don't care about your tech stack.","Don't build what you can't ship."];
+const COMP_ROLES=['Visual + Design','Frontend + UI','Backend + APIs','Tests + QA','Docs + Research'];
+const PASTE_MSG="git pull origin main\nRead AGENT_BOARD.md — your task is there.\nExecute completely. Don't stop until done.";
+const CSTATS=['idle','working','done'];
+
+const QA=[
+  {icon:'🚀',label:'Deploy ROAM',cmd:'npx expo export --platform web && netlify deploy --prod --dir=dist'},
+  {icon:'🔍',label:'TypeScript Check',cmd:'npx tsc --noEmit'},
+  {icon:'⬇️',label:'Pull + Install',cmd:'git pull origin main && npm install'},
+  {icon:'🧪',label:'Run Tests',cmd:'npx jest'},
+  {icon:'📊',label:'Git Status',cmd:'git status'},
+  {icon:'🔄',label:'Reset Trips',cmd:"UPDATE profiles SET trips_generated_this_month = 0 WHERE id = auth.uid();"},
+  {icon:'💊',label:'Deploy PillPal',cmd:'cd ~/pillpal && npx expo export --platform web && netlify deploy --prod --dir=dist'},
+  {icon:'📦',label:'Commit + Push',cmd:'git add -A && git commit -m "deploy: latest" && git push origin main'},
+];
+
+const AGENT_P=[
+  {name:'Planner',prompt:'You are a senior software architect. Read the codebase. Create a detailed implementation plan for the following feature:\n\n[DESCRIBE FEATURE]\n\nBreak it into phases. Identify files to create/modify. List risks.'},
+  {name:'Code Review',prompt:'Review the latest changes:\n\ngit diff HEAD~1\n\nCheck for bugs, security issues, performance problems. Rate each CRITICAL/HIGH/MEDIUM.'},
+  {name:'TDD',prompt:'Test-driven development. Write a failing test first for: [FEATURE]. Run it to confirm it fails. Then implement. Then refactor.'},
+  {name:'Security',prompt:'Full security audit. Check for hardcoded secrets, SQL injection, XSS, missing validation, exposed errors, auth bypasses. List every issue with file and line.'},
+  {name:'Build Fix',prompt:'Run npx tsc --noEmit. Fix every error. Re-run until 0 errors.'},
+  {name:'Director',prompt:'You are the Director. Read AGENT_BOARD.md. Assign tasks to 5 Composers by role:\n1: Visual\n2: Frontend\n3: Backend\n4: Tests\n5: Docs\nUpdate the board.'},
+  {name:'Researcher',prompt:'Research this before building: [TOPIC]\n\nSearch GitHub, npm, docs. Find 3 approaches. Recommend the best. Do NOT write code yet.'},
+  {name:'Deploy',prompt:'Full deploy:\n1. npx tsc --noEmit (0 errors)\n2. npx expo export --platform web\n3. netlify deploy --prod --dir=dist\n4. git add -A && commit && push\nStop if anything fails.'},
+];
+
+const TODOS=[
+  {id:'booking',text:'Booking.com affiliate'},
+  {id:'admin',text:'Test emails → Supabase'},
+  {id:'rc',text:'RevenueCat product ($7.99)'},
+  {id:'domain',text:'Buy tryroam.com'},
+  {id:'posthog',text:'PostHog key → .env'},
+  {id:'pprc',text:'PillPal RevenueCat'},
+  {id:'gemini',text:'Gemini API key'},
+  {id:'insense',text:'Insense DACH UGC'},
+];
+
+const BUDGET_DEF=[
+  {id:'cursor',name:'Cursor Ultra',cap:200},
+  {id:'claude',name:'Claude Max',cap:250},
+  {id:'netlify',name:'Netlify',cap:50},
+  {id:'misc',name:'On-Demand',cap:50},
+];
+
+const LINKS=[
+  {label:'ROAM Live',url:'https://tryroam.netlify.app'},
+  {label:'GitHub',url:'https://github.com/'+REPO},
+  {label:'Supabase',url:'https://supabase.com/dashboard'},
+  {label:'Netlify',url:'https://app.netlify.com'},
+  {label:'PostHog',url:'https://us.posthog.com'},
+  {label:'RevenueCat',url:'https://app.revenuecat.com'},
+  {label:'PillPal',url:'https://github.com/'+REPO_PP},
+];
+
+// ═══ STATE ═══
+const ld=(k,f)=>{try{const r=localStorage.getItem('wr-'+k);return r?JSON.parse(r):f}catch{return f}};
+const sv=(k,v)=>{try{localStorage.setItem('wr-'+k,JSON.stringify(v))}catch{}};
+
+let compSt=ld('comp',COMP_ROLES.map(()=>({status:'idle',task:''})));
+let chkSt=ld('chk',{});
+let budSt=ld('bud',{cursor:200,claude:250,netlify:19,misc:0});
+
+// Token getters — always from localStorage
+function ghToken(){return localStorage.getItem('wr-gh-token')||''}
+function nfToken(){return localStorage.getItem('wr-nf-token')||''}
+function sbUrl(){return localStorage.getItem('wr-sb-url')||''}
+function sbKey(){return localStorage.getItem('wr-sb-key')||''}
+function phToken(){return localStorage.getItem('wr-ph-token')||''}
+function rcToken(){return localStorage.getItem('wr-rc-token')||''}
+
+// ═══ UTILS ═══
+let tt;
+function toast(m='Copied!'){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('show'),1000)}
+function cp(text,btn){
+  navigator.clipboard.writeText(text).then(()=>{
+    if(btn){btn.classList.add('fl');setTimeout(()=>btn.classList.remove('fl'),600)}
+    toast();
+  }).catch(()=>{
+    const t=document.createElement('textarea');t.value=text;t.style.cssText='position:fixed;opacity:0';
+    document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);
+    if(btn){btn.classList.add('fl');setTimeout(()=>btn.classList.remove('fl'),600)}
+    toast();
+  });
+}
+function timeAgo(d){
+  const s=Math.floor((Date.now()-new Date(d))/1000);
+  if(s<60)return 'just now';if(s<3600)return Math.floor(s/60)+'m ago';
+  if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';
+}
+function escHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function ghHeaders(){const t=ghToken();return t?{Authorization:'Bearer '+t,'Accept':'application/vnd.github+json'}:{'Accept':'application/vnd.github+json'}}
+function nfHeaders(){return{Authorization:'Bearer '+nfToken()}}
+
+// ═══ SETTINGS MODAL ═══
+function openSettings(){
+  document.getElementById('settings-modal').classList.add('show');
+  document.getElementById('gh-token-input').value=ghToken();
+  document.getElementById('nf-token-input').value=nfToken();
+  document.getElementById('sb-url-input').value=sbUrl();
+  document.getElementById('sb-key-input').value=sbKey();
+  document.getElementById('ph-token-input').value=phToken();
+  document.getElementById('rc-token-input').value=rcToken();
+  updateTokenDots();
+}
+function closeSettings(){document.getElementById('settings-modal').classList.remove('show')}
+function saveTokens(){
+  const gh=document.getElementById('gh-token-input').value.trim();
+  const nf=document.getElementById('nf-token-input').value.trim();
+  const su=document.getElementById('sb-url-input').value.trim().replace(/\/$/,'');
+  const sk=document.getElementById('sb-key-input').value.trim();
+  if(gh)localStorage.setItem('wr-gh-token',gh);else localStorage.removeItem('wr-gh-token');
+  if(nf)localStorage.setItem('wr-nf-token',nf);else localStorage.removeItem('wr-nf-token');
+  if(su)localStorage.setItem('wr-sb-url',su);else localStorage.removeItem('wr-sb-url');
+  if(sk)localStorage.setItem('wr-sb-key',sk);else localStorage.removeItem('wr-sb-key');
+  const ph=document.getElementById('ph-token-input').value.trim();
+  const rc=document.getElementById('rc-token-input').value.trim();
+  if(ph)localStorage.setItem('wr-ph-token',ph);else localStorage.removeItem('wr-ph-token');
+  if(rc)localStorage.setItem('wr-rc-token',rc);else localStorage.removeItem('wr-rc-token');
+  closeSettings();
+  updateTokenBadges();
+  toast('Tokens saved — refreshing...');
+  refreshAll();
+}
+function updateTokenDots(){
+  document.getElementById('gh-dot').className='dot '+(ghToken()?'set':'unset');
+  document.getElementById('nf-dot').className='dot '+(nfToken()?'set':'unset');
+  document.getElementById('sb-url-dot').className='dot '+(sbUrl()?'set':'unset');
+  document.getElementById('sb-key-dot').className='dot '+(sbKey()?'set':'unset');
+  document.getElementById('ph-dot').className='dot '+(phToken()?'set':'unset');
+  document.getElementById('rc-dot').className='dot '+(rcToken()?'set':'unset');
+}
+function updateTokenBadges(){
+  const el=document.getElementById('token-badges');
+  el.innerHTML=`
+    <span class="token-badge ${ghToken()?'on':'off'}">GH ${ghToken()?'✓':'✗'}</span>
+    <span class="token-badge ${nfToken()?'on':'off'}">NF ${nfToken()?'✓':'✗'}</span>
+    <span class="token-badge ${sbKey()?'on':'off'}">SB ${sbKey()?'✓':'✗'}</span>
+    <span class="token-badge ${phToken()?'on':'off'}">PH ${phToken()?'✓':'✗'}</span>
+    <span class="token-badge ${rcToken()?'on':'off'}">RC ${rcToken()?'✓':'✗'}</span>
+  `;
+}
+document.getElementById('settings-modal').addEventListener('click',function(e){if(e.target===this)closeSettings()});
+
+// ═══ CLOCK ═══
+function tick(){
+  const n=new Date();
+  document.getElementById('clock').textContent=n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  document.getElementById('day').textContent='DAY '+Math.floor((n-START)/864e5);
+}
+let mi=Math.floor(Math.random()*MOTTOS.length);
+function nextMotto(){const e=document.getElementById('motto');e.classList.add('fade');setTimeout(()=>{mi=(mi+1)%MOTTOS.length;e.textContent=MOTTOS[mi];e.classList.remove('fade')},400)}
+
+// ═══ SITE HEALTH ═══
+let healthData={roam:{up:null,ms:null,lastCheck:null}};
+async function checkSiteHealth(){
+  try{
+    const start=performance.now();
+    await fetch(SITE_URL,{method:'HEAD',mode:'no-cors',cache:'no-store'});
+    healthData.roam={up:true,ms:Math.round(performance.now()-start),lastCheck:new Date().toISOString()};
+  }catch{healthData.roam={up:false,ms:null,lastCheck:new Date().toISOString()}}
+  renderHealth();
+}
+function renderHealth(){
+  const r=healthData.roam;
+  const sc=r.up===null?'checking':r.up?'up':'down';
+  const st=r.up===null?'CHECKING':r.up?'UP':'DOWN';
+  document.getElementById('health').innerHTML=`
+    <div class="health-card">
+      <div class="hdr"><span class="name">ROAM</span><div class="status-dot ${sc}"></div></div>
+      <div class="metrics">
+        <div class="metric"><div class="k">Status</div><div class="v ${r.up?'':'bad'}">${st}</div></div>
+        <div class="metric"><div class="k">Ping</div><div class="v ${r.ms>2000?'warn':''}">${r.ms?r.ms+'ms':'—'}</div></div>
+        <div class="metric"><div class="k">Checked</div><div class="v">${r.lastCheck?timeAgo(r.lastCheck):'—'}</div></div>
+        <div class="metric"><div class="k">URL</div><div class="v" style="font-size:10px">tryroam.app</div></div>
+      </div>
+    </div>`;
+  const dot=document.getElementById('master-dot'),lbl=document.getElementById('master-label');
+  if(r.up===false){dot.style.background='#E8614A';dot.style.boxShadow='0 0 12px rgba(232,97,74,.6)';lbl.textContent='ROAM DOWN';lbl.style.color='#E8614A'}
+  else if(r.up){dot.style.background='#4ADE80';dot.style.boxShadow='0 0 12px rgba(74,222,128,.6)';lbl.textContent='ALL SYSTEMS LIVE';lbl.style.color='#4A6050'}
+}
+
+// ═══ GITHUB (AUTHENTICATED) ═══
+let ghCache={commits:[],prs:[],issues:[],branches:[],stats:{},rateLimit:{}};
+
+async function fetchGitHub(){
+  try{
+    const h=ghHeaders();
+    const [commitR,prR,issueR,repoR,branchR,rateR]=await Promise.all([
+      fetch(GH_API+REPO+'/commits?per_page=30',{headers:h}),
+      fetch(GH_API+REPO+'/pulls?state=open&per_page=15',{headers:h}),
+      fetch(GH_API+REPO+'/issues?state=open&per_page=15&sort=updated',{headers:h}),
+      fetch(GH_API+REPO,{headers:h}),
+      fetch(GH_API+REPO+'/branches?per_page=20',{headers:h}),
+      fetch('https://api.github.com/rate_limit',{headers:h}),
+    ]);
+
+    if(commitR.ok)ghCache.commits=await commitR.json();
+    if(prR.ok)ghCache.prs=await prR.json();
+    if(issueR.ok)ghCache.issues=(await issueR.json()).filter(i=>!i.pull_request);
+    if(repoR.ok){const r=await repoR.json();ghCache.stats={stars:r.stargazers_count,forks:r.forks_count,openIssues:r.open_issues_count,size:r.size,branch:r.default_branch,push:r.pushed_at}}
+    if(branchR.ok)ghCache.branches=await branchR.json();
+    if(rateR.ok){const rl=await rateR.json();ghCache.rateLimit=rl.rate||{}}
+
+    renderGHStats();renderCommits();renderPRs();renderIssues();renderBranches();renderActivityGraph();
+  }catch(e){
+    document.getElementById('commits-feed').innerHTML='<div class="empty-state">GitHub API error — check token in ⚙ Settings</div>';
+  }
+}
+
+function renderGHStats(){
+  const s=ghCache.stats,rl=ghCache.rateLimit;
+  document.getElementById('gh-stats').innerHTML=`
+    <div class="gh-stat"><span class="label">Last Push</span><span class="val">${s.push?timeAgo(s.push):'—'}</span></div>
+    <div class="gh-stat"><span class="label">Open Issues</span><span class="val ${(s.openIssues||0)>10?'coral':''}">${s.openIssues??'—'}</span></div>
+    <div class="gh-stat"><span class="label">Open PRs</span><span class="val">${ghCache.prs.length}</span></div>
+    <div class="gh-stat"><span class="label">Branches</span><span class="val">${ghCache.branches.length}</span></div>
+    <div class="gh-stat"><span class="label">Commits (30)</span><span class="val">${ghCache.commits.length}</span></div>
+    <div class="gh-stat"><span class="label">Repo Size</span><span class="val">${s.size?Math.round(s.size/1024)+'MB':'—'}</span></div>
+    <div class="gh-stat"><span class="label">API Calls Left</span><span class="val ${(rl.remaining||0)<100?'coral':''}">${rl.remaining??'?'}/${rl.limit??'?'}</span></div>
+  `;
+}
+
+function renderCommits(){
+  const el=document.getElementById('commits-feed');
+  if(!ghCache.commits.length){el.innerHTML='<div class="empty-state">No commits</div>';return}
+  el.innerHTML=ghCache.commits.slice(0,20).map(c=>{
+    const age=(Date.now()-new Date(c.commit.author.date))/36e5;
+    const lc=age<2?'recent':age<24?'mid':'old';
+    const av=c.author?.avatar_url||'';
+    const sha=c.sha.slice(0,7);
+    return`<div class="commit-item"><div class="time-line ${lc}"></div>${av?`<div class="avatar"><img src="${av}"/></div>`:'<div class="avatar"></div>'}<div class="body"><div class="msg">${escHtml(c.commit.message.split('\n')[0])}</div><div class="meta-row"><span>${c.commit.author.name}</span><span>${timeAgo(c.commit.author.date)}</span><span class="sha" onclick="cp('${sha}',this)">${sha}</span></div></div></div>`;
+  }).join('');
+}
+
+function renderPRs(){
+  const el=document.getElementById('prs-feed');
+  if(!ghCache.prs.length){el.innerHTML='<div class="empty-state">No open PRs</div>';return}
+  el.innerHTML=ghCache.prs.map(p=>`<div class="pr-item"><div class="pr-status ${p.draft?'draft':'open'}"></div><div class="pr-title">${escHtml(p.title)}</div><div class="pr-meta">#${p.number} · ${timeAgo(p.created_at)}</div><a href="${p.html_url}" target="_blank">↗</a></div>`).join('');
+}
+
+function renderIssues(){
+  const el=document.getElementById('issues-feed');
+  if(!ghCache.issues.length){el.innerHTML='<div class="empty-state">No issues</div>';return}
+  el.innerHTML=ghCache.issues.slice(0,10).map(i=>`<div class="pr-item"><div class="pr-status open"></div><div class="pr-title">${escHtml(i.title)}</div><div class="pr-meta">#${i.number} · ${timeAgo(i.updated_at)}</div><a href="${i.html_url}" target="_blank">↗</a></div>`).join('');
+}
+
+function renderBranches(){
+  const el=document.getElementById('branches-feed');
+  if(!ghCache.branches.length){el.innerHTML='';return}
+  el.innerHTML=ghCache.branches.slice(0,10).map(b=>`<div class="pr-item"><div class="pr-status ${b.name==='main'?'open':'draft'}"></div><div class="pr-title">${escHtml(b.name)}</div><div class="pr-meta">${b.commit.sha.slice(0,7)}</div></div>`).join('');
+}
+
+function renderActivityGraph(){
+  const el=document.getElementById('activity-graph'),lb=document.getElementById('graph-labels');
+  const days=[];const now=new Date();
+  for(let i=13;i>=0;i--){const d=new Date(now);d.setDate(d.getDate()-i);days.push({key:d.toISOString().split('T')[0],label:d.toLocaleDateString('en-US',{weekday:'short'}).slice(0,2),count:0,today:i===0})}
+  ghCache.commits.forEach(c=>{const k=c.commit.author.date.split('T')[0];const f=days.find(d=>d.key===k);if(f)f.count++});
+  const mx=Math.max(...days.map(d=>d.count),1);
+  el.innerHTML=days.map(d=>`<div class="bar ${d.today?'today':''}" style="height:${Math.max(4,(d.count/mx)*100)}%" title="${d.key}: ${d.count}"></div>`).join('');
+  lb.innerHTML=days.filter((_,i)=>i%2===0).map(d=>`<span>${d.label}</span>`).join('');
+}
+
+// ═══ NETLIFY (AUTHENTICATED) ═══
+let nfCache={deploys:[],bandwidth:null,site:null};
+
+async function fetchNetlify(){
+  if(!nfToken()){
+    document.getElementById('deploys-feed').innerHTML='<div class="empty-state">Add Netlify token in ⚙ Settings to see live deploys</div>';
+    document.getElementById('netlify-usage').innerHTML='';
+    return;
+  }
+  try{
+    const h=nfHeaders();
+    // First get sites to find the site ID
+    const sitesR=await fetch(NF_API+'sites?filter=all&per_page=20',{headers:h});
+    if(!sitesR.ok)throw new Error('Netlify auth failed');
+    const sites=await sitesR.json();
+    const roamSite=sites.find(s=>s.name==='tryroam'||s.url?.includes('tryroam'));
+
+    if(roamSite){
+      nfCache.site=roamSite;
+      const deploysR=await fetch(NF_API+'sites/'+roamSite.id+'/deploys?per_page=15',{headers:h});
+      if(deploysR.ok)nfCache.deploys=await deploysR.json();
+
+      // bandwidth
+      const bwR=await fetch(NF_API+'sites/'+roamSite.id+'/bandwidth',{headers:h}).catch(()=>null);
+      if(bwR&&bwR.ok)nfCache.bandwidth=await bwR.json();
+    }
+    renderDeploys();renderNetlifyUsage();
+  }catch(e){
+    document.getElementById('deploys-feed').innerHTML='<div class="empty-state">Netlify error: '+escHtml(e.message)+'</div>';
+  }
+}
+
+function renderDeploys(){
+  const el=document.getElementById('deploys-feed');
+  if(!nfCache.deploys.length){el.innerHTML='<div class="empty-state">No deploys found</div>';return}
+  el.innerHTML=nfCache.deploys.map(d=>{
+    const st=d.state==='ready'?'ready':d.state==='building'||d.state==='uploading'?'building':'error';
+    const dur=d.deploy_time?d.deploy_time+'s':'—';
+    const msg=d.title||d.commit_ref?.slice(0,7)||'Manual deploy';
+    return`<div class="deploy-item">
+      <div class="d-status ${st}"></div>
+      <div class="d-body"><div class="d-title">${escHtml(msg)}</div><div class="d-meta">${d.state} · ${dur} · ${d.branch||'main'}</div></div>
+      <div class="d-time">${timeAgo(d.created_at)}</div>
+      ${d.deploy_ssl_url?`<a href="${d.deploy_ssl_url}" target="_blank">↗</a>`:''}
+    </div>`;
+  }).join('');
+}
+
+function renderNetlifyUsage(){
+  const el=document.getElementById('netlify-usage');
+  if(!nfCache.site){el.innerHTML='';return}
+  const s=nfCache.site;
+  const bw=nfCache.bandwidth;
+
+  let html=`
+    <div class="bw-bar">
+      <div class="bw-label">Status</div>
+      <div style="flex:1;font-size:12px;font-weight:700;color:#4ADE80">${s.published_deploy?.state==='ready'?'LIVE':'NOT LIVE'}</div>
+      <div class="bw-val">${s.ssl?'SSL ✓':'No SSL'}</div>
+    </div>
+  `;
+
+  if(bw){
+    const usedGB=((bw.used||0)/1e9).toFixed(2);
+    const capGB=((bw.included||100e9)/1e9).toFixed(0);
+    const pct=Math.min(100,Math.round((bw.used||0)/(bw.included||100e9)*100));
+    html+=`<div class="bw-bar">
+      <div class="bw-label">Bandwidth</div>
+      <div class="bw-track"><div class="bw-fill ${pct>80?'bad':pct>50?'warn':'ok'}" style="width:${pct}%"></div></div>
+      <div class="bw-val">${usedGB}/${capGB}GB</div>
+    </div>`;
+  }
+
+  const deployCount=nfCache.deploys.length;
+  const lastDeploy=nfCache.deploys[0];
+  if(lastDeploy){
+    html+=`<div class="bw-bar">
+      <div class="bw-label">Last Deploy</div>
+      <div style="flex:1;font-size:12px;color:#F5EDD8">${timeAgo(lastDeploy.created_at)} · ${lastDeploy.deploy_time||'?'}s build</div>
+      <div class="bw-val">${lastDeploy.state}</div>
+    </div>`;
+  }
+
+  el.innerHTML=html;
+}
+
+// ═══ SUPABASE (AUTHENTICATED) ═══
+let sbCache={profiles:[],trips:[],messages:0,totalUsers:0,totalTrips:0,tripsThisMonth:0};
+
+function sbHeaders(){return{'apikey':sbKey(),'Authorization':'Bearer '+sbKey(),'Content-Type':'application/json','Prefer':'count=exact'}}
+
+async function fetchSupabase(){
+  if(!sbUrl()||!sbKey()){
+    document.getElementById('sb-stats').innerHTML='<div class="empty-state">Add Supabase URL + key in ⚙ Settings</div>';
+    document.getElementById('sb-users').innerHTML='<div class="empty-state">—</div>';
+    document.getElementById('sb-trips').innerHTML='<div class="empty-state">—</div>';
+    return;
+  }
+  const base=sbUrl()+'/rest/v1/';
+  const h=sbHeaders();
+  try{
+    // Parallel fetch: profiles, trips, chat_messages count
+    const [profilesR,tripsR,msgsR,recentTripsR]=await Promise.all([
+      fetch(base+'profiles?select=id,email,display_name,trips_generated_this_month,created_at&order=created_at.desc&limit=20',{headers:h}),
+      fetch(base+'trips?select=id,destination,created_at,status&order=created_at.desc&limit=20',{headers:h}),
+      fetch(base+'chat_messages?select=id&limit=1',{headers:{...h,'Prefer':'count=exact','Range':'0-0'}}),
+      fetch(base+'trips?select=id&created_at=gte.'+new Date(new Date().getFullYear(),new Date().getMonth(),1).toISOString()+'&limit=1',{headers:{...h,'Prefer':'count=exact','Range':'0-0'}}),
+    ]);
+
+    if(profilesR.ok){
+      sbCache.profiles=await profilesR.json();
+      const countHeader=profilesR.headers.get('content-range');
+      if(countHeader){const parts=countHeader.split('/');sbCache.totalUsers=parseInt(parts[1])||sbCache.profiles.length}
+      else sbCache.totalUsers=sbCache.profiles.length;
+    }
+    if(tripsR.ok){
+      sbCache.trips=await tripsR.json();
+      const countHeader=tripsR.headers.get('content-range');
+      if(countHeader){const parts=countHeader.split('/');sbCache.totalTrips=parseInt(parts[1])||sbCache.trips.length}
+      else sbCache.totalTrips=sbCache.trips.length;
+    }
+    if(msgsR.ok){
+      const mc=msgsR.headers.get('content-range');
+      if(mc){const parts=mc.split('/');sbCache.messages=parseInt(parts[1])||0}
+    }
+    if(recentTripsR.ok){
+      const tc=recentTripsR.headers.get('content-range');
+      if(tc){const parts=tc.split('/');sbCache.tripsThisMonth=parseInt(parts[1])||0}
+    }
+
+    renderSBStats();renderSBUsers();renderSBTrips();
+  }catch(e){
+    document.getElementById('sb-stats').innerHTML='<div class="empty-state">Supabase error: '+escHtml(e.message)+'</div>';
+  }
+}
+
+function renderSBStats(){
+  const el=document.getElementById('sb-stats');
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px">
+      <div class="metric"><div class="k">Total Users</div><div class="v">${sbCache.totalUsers}</div></div>
+      <div class="metric"><div class="k">Total Trips</div><div class="v">${sbCache.totalTrips}</div></div>
+      <div class="metric"><div class="k">Trips This Mo</div><div class="v">${sbCache.tripsThisMonth}</div></div>
+      <div class="metric"><div class="k">Chat Messages</div><div class="v">${sbCache.messages}</div></div>
+    </div>
+  `;
+}
+
+function renderSBUsers(){
+  const el=document.getElementById('sb-users');
+  if(!sbCache.profiles.length){el.innerHTML='<div class="empty-state">No users yet</div>';return}
+  el.innerHTML=sbCache.profiles.slice(0,10).map(p=>{
+    const name=p.display_name||p.email||'anonymous';
+    const trips=p.trips_generated_this_month||0;
+    return`<div class="pr-item">
+      <div class="pr-status open"></div>
+      <div class="pr-title">${escHtml(name)}</div>
+      <div class="pr-meta">${trips} trip${trips!==1?'s':''} this mo</div>
+      <div class="pr-meta">${timeAgo(p.created_at)}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderSBTrips(){
+  const el=document.getElementById('sb-trips');
+  if(!sbCache.trips.length){el.innerHTML='<div class="empty-state">No trips yet</div>';return}
+  el.innerHTML=sbCache.trips.slice(0,10).map(t=>{
+    const dest=t.destination||'Unknown';
+    const st=t.status||'generated';
+    const stColor=st==='generating'?'draft':'open';
+    return`<div class="pr-item">
+      <div class="pr-status ${stColor}"></div>
+      <div class="pr-title">${escHtml(dest)}</div>
+      <div class="pr-meta">${st}</div>
+      <div class="pr-meta">${timeAgo(t.created_at)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ═══ POSTHOG (AUTHENTICATED) ═══
+let phCache={events:[],project:null};
+
+async function fetchPostHog(){
+  if(!phToken()){
+    document.getElementById('ph-stats').innerHTML='<div class="empty-state">Add PostHog key in ⚙ Settings</div>';
+    document.getElementById('ph-events').innerHTML='<div class="empty-state">—</div>';
+    return;
+  }
+  const PH='https://us.posthog.com/api/';
+  const h={Authorization:'Bearer '+phToken(),'Content-Type':'application/json'};
+  try{
+    const [projR,eventsR]=await Promise.all([
+      fetch(PH+'projects/@current/',{headers:h}),
+      fetch(PH+'projects/@current/events/?limit=15&orderBy=-timestamp',{headers:h}),
+    ]);
+
+    if(projR.ok)phCache.project=await projR.json();
+    if(eventsR.ok){const d=await eventsR.json();phCache.events=d.results||[]}
+
+    renderPHStats();renderPHEvents();
+  }catch(e){
+    document.getElementById('ph-stats').innerHTML='<div class="empty-state">PostHog error: '+escHtml(e.message)+'</div>';
+  }
+}
+
+function renderPHStats(){
+  const el=document.getElementById('ph-stats');
+  const p=phCache.project;
+  if(!p){el.innerHTML='<div class="empty-state">No project data</div>';return}
+  const eventCount=phCache.events.length;
+  const uniquePersons=new Set(phCache.events.map(e=>e.distinct_id)).size;
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+      <div class="metric"><div class="k">Project</div><div class="v" style="font-size:11px">${escHtml(p.name||'ROAM')}</div></div>
+      <div class="metric"><div class="k">Recent Events</div><div class="v">${eventCount}</div></div>
+      <div class="metric"><div class="k">Unique Users</div><div class="v">${uniquePersons}</div></div>
+    </div>
+  `;
+}
+
+function renderPHEvents(){
+  const el=document.getElementById('ph-events');
+  if(!phCache.events.length){el.innerHTML='<div class="empty-state">No recent events</div>';return}
+  el.innerHTML=phCache.events.slice(0,12).map(e=>{
+    const name=e.event||'unknown';
+    const person=e.distinct_id?.slice(0,12)||'?';
+    const isPageview=name==='$pageview';
+    const isCustom=!name.startsWith('$');
+    const color=isCustom?'open':isPageview?'draft':'draft';
+    const url=e.properties?.$current_url||'';
+    const page=url?new URL(url).pathname:'';
+    return`<div class="pr-item">
+      <div class="pr-status ${color}"></div>
+      <div class="pr-title">${escHtml(name)}${page?' · '+escHtml(page):''}</div>
+      <div class="pr-meta">${person}</div>
+      <div class="pr-meta">${timeAgo(e.timestamp)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ═══ REVENUECAT (AUTHENTICATED) ═══
+let rcCache={overview:null};
+
+async function fetchRevenueCat(){
+  if(!rcToken()){
+    document.getElementById('rc-stats').innerHTML='<div class="empty-state">Add RevenueCat key in ⚙ Settings</div>';
+    return;
+  }
+  const RC='https://api.revenuecat.com/v2/';
+  const h={Authorization:'Bearer '+rcToken(),'Content-Type':'application/json'};
+  try{
+    // Get project overview
+    const projR=await fetch(RC+'projects',{headers:h});
+    if(projR.ok){
+      const data=await projR.json();
+      rcCache.projects=data.items||[];
+    }
+    renderRCStats();
+  }catch(e){
+    // Try v1 API as fallback
+    try{
+      const RC1='https://api.revenuecat.com/v1/';
+      const h1={Authorization:'Bearer '+rcToken(),'Content-Type':'application/json'};
+      const overviewR=await fetch(RC1+'subscribers/$RCAnonymousID:app_overview',{headers:h1});
+      if(overviewR.ok)rcCache.overview=await overviewR.json();
+      renderRCStats();
+    }catch(e2){
+      document.getElementById('rc-stats').innerHTML='<div class="empty-state">RevenueCat connected — use dashboard for detailed metrics<br><a href="https://app.revenuecat.com" target="_blank" style="color:#7CAF8A">Open RevenueCat ↗</a></div>';
+    }
+  }
+}
+
+function renderRCStats(){
+  const el=document.getElementById('rc-stats');
+  if(rcCache.projects&&rcCache.projects.length){
+    el.innerHTML=`
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        ${rcCache.projects.map(p=>`
+          <div class="metric">
+            <div class="k">${escHtml(p.name||'Project')}</div>
+            <div class="v" style="font-size:11px">${p.id?.slice(0,12)||'—'}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div style="margin-top:8px;text-align:center"><a href="https://app.revenuecat.com" target="_blank" style="color:#7CAF8A;font-size:11px;text-decoration:none">Open full dashboard ↗</a></div>
+    `;
+  }else{
+    el.innerHTML='<div class="empty-state">RevenueCat connected ✓<br><a href="https://app.revenuecat.com" target="_blank" style="color:#7CAF8A;font-size:12px;text-decoration:none">Open RevenueCat Dashboard ↗</a></div>';
+  }
+}
+
+// ═══ REFRESH ═══
+function refreshAll(){
+  const btn=document.getElementById('refresh-btn');
+  btn.textContent='↻ Loading...';
+  setTimeout(()=>btn.textContent='↻ Refresh',2000);
+  checkSiteHealth();fetchGitHub();fetchNetlify();fetchSupabase();fetchPostHog();fetchRevenueCat();
+  toast('Refreshing all feeds...');
+}
+
+// ═══ COMPOSERS ═══
+function buildComps(){
+  const el=document.getElementById('composers');el.innerHTML='';
+  COMP_ROLES.forEach((role,i)=>{
+    const s=compSt[i]||{status:'idle',task:''};
+    const d=document.createElement('div');d.className='comp-mini';
+    d.innerHTML=`<div class="num">${i+1}</div><div class="info"><div class="role">${role}</div><input class="task-input" value="${escHtml(s.task)}" placeholder="task..." id="ct${i}"/></div><div class="st ${s.status}" id="cs${i}" onclick="cycleC(${i})">${s.status}</div><button class="cpb" id="cpb${i}" onclick="cp(PASTE_MSG,this)">⎘</button>`;
+    el.appendChild(d);
+    d.querySelector('#ct'+i).addEventListener('blur',function(){compSt[i]={...compSt[i],task:this.value};sv('comp',compSt)});
+  });
+}
+function cycleC(i){const nx=CSTATS[(CSTATS.indexOf(compSt[i].status)+1)%3];compSt[i]={...compSt[i],status:nx};sv('comp',compSt);const e=document.getElementById('cs'+i);e.className='st '+nx;e.textContent=nx}
+
+// ═══ AGENT PROMPTS ═══
+function buildAP(){
+  const el=document.getElementById('agent-prompts');el.innerHTML='';
+  AGENT_P.forEach((a,i)=>{const b=document.createElement('button');b.className='qa-btn';b.innerHTML=`<span class="icon">🤖</span>${a.name}`;b.addEventListener('click',()=>cp(a.prompt,b));el.appendChild(b)});
+}
+
+// ═══ QUICK ACTIONS ═══
+function buildQA(){
+  const el=document.getElementById('qa');el.innerHTML='';
+  QA.forEach(a=>{const b=document.createElement('button');b.className='qa-btn';b.innerHTML=`<span class="icon">${a.icon}</span>${a.label}`;b.addEventListener('click',()=>cp(a.cmd,b));el.appendChild(b)});
+}
+
+// ═══ LINKS ═══
+function buildLinks(){document.getElementById('links').innerHTML=LINKS.map(l=>`<a class="link-row" href="${l.url}" target="_blank">${l.label}</a>`).join('')}
+
+// ═══ CHECKLIST ═══
+function buildChk(){
+  const el=document.getElementById('checklist');el.innerHTML='';
+  TODOS.forEach(t=>{
+    const on=!!chkSt[t.id];const d=document.createElement('div');d.className='chk';
+    d.innerHTML=`<div class="bx ${on?'on':'off'}" id="x${t.id}">${on?'✓':''}</div><span class="tx ${on?'dn':''}" id="xt${t.id}">${t.text}</span>`;
+    d.addEventListener('click',()=>{chkSt={...chkSt,[t.id]:!chkSt[t.id]};sv('chk',chkSt);const o=chkSt[t.id];document.getElementById('x'+t.id).className='bx '+(o?'on':'off');document.getElementById('x'+t.id).textContent=o?'✓':'';document.getElementById('xt'+t.id).className='tx '+(o?'dn':'');document.getElementById('chk-done').style.display=TODOS.every(t=>!!chkSt[t.id])?'block':'none'});
+    el.appendChild(d);
+  });
+  document.getElementById('chk-done').style.display=TODOS.every(t=>!!chkSt[t.id])?'block':'none';
+}
+
+// ═══ BUDGET ═══
+function buildBud(){
+  const el=document.getElementById('budget');el.innerHTML='';
+  BUDGET_DEF.forEach(b=>{
+    const amt=budSt[b.id]??0;const pct=Math.min(100,Math.round(amt/b.cap*100));
+    const d=document.createElement('div');d.className='bud-row';
+    d.innerHTML=`<div class="nm">${b.name}</div><input class="pr" id="bp${b.id}" value="$${amt}"/><div class="bw-t"><div class="bf ${pct>=90?'bad':pct>=60?'warn':'ok'}" id="bb${b.id}" style="width:${pct}%"></div></div>`;
+    el.appendChild(d);
+    const inp=d.querySelector('#bp'+b.id);
+    inp.addEventListener('focus',function(){this.value=this.value.replace(/[$,]/g,'')});
+    inp.addEventListener('blur',function(){const v=parseFloat(this.value.replace(/[$,]/g,''))||0;budSt={...budSt,[b.id]:v};sv('bud',budSt);this.value='$'+v;const p=Math.min(100,Math.round(v/b.cap*100));const bar=document.getElementById('bb'+b.id);bar.style.width=p+'%';bar.className='bf '+(p>=90?'bad':p>=60?'warn':'ok');updTotals()});
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter')inp.blur()});
+  });updTotals();
+}
+function updTotals(){const t=Object.values(budSt).reduce((s,v)=>s+(v||0),0);document.getElementById('btotal').textContent='$'+t;document.getElementById('bbreak').textContent=Math.ceil(t/7.99)+' subs'}
+
+// ═══ AUTO-REFRESH ═══
+setInterval(checkSiteHealth,30000);
+setInterval(fetchGitHub,120000);
+setInterval(fetchNetlify,120000);
+setInterval(fetchSupabase,60000);
+setInterval(fetchPostHog,90000);
+setInterval(fetchRevenueCat,180000);
+
+// ═══ INIT ═══
+document.addEventListener('DOMContentLoaded',()=>{
+  tick();setInterval(tick,1000);
+  document.getElementById('motto').textContent=MOTTOS[mi];
+  setInterval(nextMotto,30000);
+  updateTokenBadges();
+  renderHealth();buildComps();buildAP();buildQA();buildLinks();buildChk();buildBud();
+
+  // If no tokens, pop settings on first load
+  if(!ghToken()&&!nfToken()&&!sbKey()&&!phToken()&&!rcToken()){
+    setTimeout(openSettings,500);
+  }
+
+  checkSiteHealth();fetchGitHub();fetchNetlify();fetchSupabase();fetchPostHog();fetchRevenueCat();
+});
+</script>
+</body>
+</html>

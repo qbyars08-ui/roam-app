@@ -53,10 +53,10 @@ import { getContext, buildStrategy, type ContentStrategy } from '../../lib/conte
 // ---------------------------------------------------------------------------
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GRID_GAP = 12;
-const GRID_PADDING = 16;
+const GRID_PADDING = 20;
 const CARD_WIDTH = (SCREEN_WIDTH - GRID_PADDING * 2 - GRID_GAP) / 2;
-const CARD_HEIGHT_TALL = 240;
-const CARD_HEIGHT_SHORT = 200;
+const CARD_HEIGHT_TALL = 280;
+const CARD_HEIGHT_SHORT = 240;
 
 // ---------------------------------------------------------------------------
 // Unsplash fallback — zero API key needed
@@ -101,12 +101,8 @@ const DestinationPhotoCard = React.memo(function DestinationPhotoCard({
     onPress(destination);
   }, [destination, onPress]);
 
-  // Vary gradient angle per card for visual variety
-  const gradientLocations: [number, number, number] = index % 3 === 0
-    ? [0, 0.4, 1]
-    : index % 3 === 1
-      ? [0, 0.5, 1]
-      : [0, 0.35, 1];
+  // Gradient — subtle bottom 40% only
+  const gradientLocations: [number, number, number] = [0.6, 0.8, 1];
 
   // Daily cost display
   const costLabel = destination.dailyCost <= 50
@@ -150,24 +146,16 @@ const DestinationPhotoCard = React.memo(function DestinationPhotoCard({
           style={styles.cardGradient}
         />
 
-        {/* Price badge */}
-        <View style={styles.priceBadge}>
-          <Text style={styles.priceBadgeText}>{costLabel}</Text>
-        </View>
+        {/* Price badge — text only, no background */}
+        <Text style={styles.priceBadgeText}>{costLabel}</Text>
 
-        {/* Trending + timing badges (top-right) */}
+        {/* Trending + timing badges (top-right) — no pill backgrounds */}
         <View style={styles.badgeStack}>
           {isTrending && (
-            <View style={styles.trendingBadge}>
-              <Flame size={14} color={COLORS.coral} strokeWidth={2} />
-              <Text style={styles.trendingText}>{destination.trendScore}</Text>
-            </View>
+            <Flame size={14} color={COLORS.coral} strokeWidth={2} />
           )}
           {isPerfectTiming && (
-            <View style={styles.timingBadge}>
-              <Clock size={14} color={COLORS.sage} strokeWidth={2} />
-              <Text style={styles.timingText}>{i18n.t('discover.perfectTiming')}</Text>
-            </View>
+            <Text style={styles.timingText}>{i18n.t('discover.perfectTiming')}</Text>
           )}
         </View>
 
@@ -221,7 +209,7 @@ const CategoryChip = React.memo(function CategoryChip({
       style={({ pressed }) => [
         styles.chip,
         isActive && styles.chipActive,
-        pressed && { transform: [{ scale: 0.95 }], opacity: 0.85 },
+        pressed && { opacity: 0.7 },
       ]}
       accessibilityRole="button"
       accessibilityState={{ selected: isActive }}
@@ -339,19 +327,18 @@ export default function DiscoverScreen() {
     () => (
       <View>
         {/* Brand header */}
-        <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <Text style={styles.brandMark}>ROAM</Text>
           <Animated.Text style={[styles.editorialSubtitle, { opacity: headerFade }]}>
             {(t('discover.editorialHeaders', { returnObjects: true }) as string[])[headerIndex] ?? DISCOVER_HEADERS[headerIndex]}
           </Animated.Text>
         </View>
 
-        {/* Search bar */}
+        {/* Search bar — bottom border only, no filled background */}
         <View style={styles.searchContainer}>
           <View style={styles.searchBar}>
             <Search size={18} color={COLORS.creamMuted} strokeWidth={2} />
             <View style={styles.searchInputWrap}>
-              {/* Using a simple text input to avoid PlacesInput complexity */}
               <Pressable
                 onPress={() => router.push('/(tabs)/generate' as never)}
                 style={styles.searchTapArea}
@@ -381,7 +368,7 @@ export default function DiscoverScreen() {
           </View>
         )}
 
-        {/* Quick links */}
+        {/* Quick links — text only with icons, no pill backgrounds */}
         {trips.length > 0 && (
           <ScrollView
             horizontal
@@ -393,39 +380,42 @@ export default function DiscoverScreen() {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 router.push('/compatibility' as never);
               }}
-              style={({ pressed }) => [styles.quickLink, { opacity: pressed ? 0.8 : 1 }]}
+              style={({ pressed }) => [styles.quickLink, { opacity: pressed ? 0.7 : 1 }]}
             >
-              <Heart size={16} color={COLORS.coral} strokeWidth={2} />
+              <Heart size={14} color={COLORS.coral} strokeWidth={2} />
               <Text style={styles.quickLinkText}>Compatibility</Text>
             </Pressable>
+            <Text style={styles.quickLinkDivider}>·</Text>
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 router.push('/passport');
               }}
-              style={({ pressed }) => [styles.quickLink, { opacity: pressed ? 0.8 : 1 }]}
+              style={({ pressed }) => [styles.quickLink, { opacity: pressed ? 0.7 : 1 }]}
             >
-              <BookOpen size={16} color={COLORS.gold} strokeWidth={2} />
+              <BookOpen size={14} color={COLORS.gold} strokeWidth={2} />
               <Text style={styles.quickLinkText}>Passport</Text>
             </Pressable>
+            <Text style={styles.quickLinkDivider}>·</Text>
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 router.push('/trip-wrapped');
               }}
-              style={({ pressed }) => [styles.quickLink, { opacity: pressed ? 0.8 : 1 }]}
+              style={({ pressed }) => [styles.quickLink, { opacity: pressed ? 0.7 : 1 }]}
             >
-              <Sparkles size={16} color={COLORS.sage} strokeWidth={2} />
+              <Sparkles size={14} color={COLORS.sage} strokeWidth={2} />
               <Text style={styles.quickLinkText}>Wrapped</Text>
             </Pressable>
+            <Text style={styles.quickLinkDivider}>·</Text>
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 router.push('/what-if' as never);
               }}
-              style={({ pressed }) => [styles.quickLink, { opacity: pressed ? 0.8 : 1 }]}
+              style={({ pressed }) => [styles.quickLink, { opacity: pressed ? 0.7 : 1 }]}
             >
-              <Compass size={16} color={COLORS.cream} strokeWidth={2} />
+              <Compass size={14} color={COLORS.cream} strokeWidth={2} />
               <Text style={styles.quickLinkText}>What if?</Text>
             </Pressable>
           </ScrollView>
@@ -475,7 +465,6 @@ export default function DiscoverScreen() {
         {forYouPicks.length > 0 && (
           <View style={styles.forYouSection}>
             <View style={styles.forYouHeader}>
-              <Sparkles size={16} color={COLORS.sage} strokeWidth={2} />
               <Text style={styles.forYouTitle}>For you</Text>
             </View>
             <ScrollView
@@ -511,7 +500,7 @@ export default function DiscoverScreen() {
           </View>
         )}
 
-        {/* What if — always visible, even for first-time users */}
+        {/* What if — text only, no card background */}
         {trips.length === 0 && (
           <Pressable
             onPress={() => {
@@ -520,16 +509,11 @@ export default function DiscoverScreen() {
             }}
             style={({ pressed }) => [
               styles.whatIfCard,
-              { opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
+              { opacity: pressed ? 0.7 : 1 },
             ]}
           >
-            <View style={styles.whatIfLeft}>
-              <Compass size={22} color={COLORS.sage} strokeWidth={2} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.whatIfTitle}>What if I just went?</Text>
-              <Text style={styles.whatIfSub}>Pick a place. See what it actually costs.</Text>
-            </View>
+            <Text style={styles.whatIfTitle}>What if I just went? →</Text>
+            <Text style={styles.whatIfSub}>Pick a place. See what it actually costs.</Text>
           </Pressable>
         )}
 
@@ -579,6 +563,7 @@ export default function DiscoverScreen() {
             {filteredDestinations.length} {filteredDestinations.length === 1 ? 'place' : 'places'}
           </Text>
         </View>
+
       </View>
     ),
     [
@@ -655,7 +640,6 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
     marginHorizontal: GRID_PADDING,
     marginBottom: SPACING.md,
-    backgroundColor: COLORS.bgCard,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.sageBorder,
@@ -664,8 +648,6 @@ const styles = StyleSheet.create({
   nextTripLeft: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.sageLight,
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
@@ -686,53 +668,53 @@ const styles = StyleSheet.create({
     color: COLORS.sage,
   } as TextStyle,
 
-  // Quick links
+  // Quick links — no backgrounds, just icon + text
   quickLinksRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: GRID_PADDING,
-    gap: SPACING.sm,
-    marginBottom: SPACING.md,
+    gap: SPACING.xs,
+    marginBottom: SPACING.lg,
   } as ViewStyle,
   quickLink: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.full,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 8,
+    gap: 5,
+    paddingVertical: 6,
   } as ViewStyle,
   quickLinkText: {
-    fontFamily: FONTS.bodySemiBold,
+    fontFamily: FONTS.body,
     fontSize: 13,
-    color: COLORS.cream,
+    color: COLORS.sage,
+  } as TextStyle,
+  quickLinkDivider: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.sageBorder,
+    paddingHorizontal: 4,
   } as TextStyle,
 
   // For You section
   forYouSection: {
-    marginBottom: SPACING.md,
+    marginBottom: 40,
   } as ViewStyle,
   forYouHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
     paddingHorizontal: GRID_PADDING,
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.md,
   } as ViewStyle,
   forYouTitle: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 16,
+    fontFamily: FONTS.header,
+    fontSize: 24,
+    fontStyle: 'italic',
     color: COLORS.cream,
   } as TextStyle,
   forYouScroll: {
     paddingHorizontal: GRID_PADDING,
-    gap: SPACING.sm,
+    gap: 12,
   } as ViewStyle,
   forYouCard: {
-    width: 160,
-    height: 100,
+    width: 180,
+    height: 120,
     borderRadius: RADIUS.lg,
     overflow: 'hidden',
   } as ViewStyle,
@@ -751,21 +733,22 @@ const styles = StyleSheet.create({
     padding: SPACING.sm,
   } as ViewStyle,
   forYouName: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 14,
+    fontFamily: FONTS.header,
+    fontSize: 18,
+    fontStyle: 'italic',
     color: '#fff',
   } as TextStyle,
   forYouHook: {
     fontFamily: FONTS.body,
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.7)',
-    marginTop: 1,
+    fontSize: 12,
+    color: 'rgba(245,237,216,0.75)',
+    marginTop: 2,
   } as TextStyle,
 
-  // Header — breathe
+  // Header
   header: {
     paddingHorizontal: GRID_PADDING,
-    marginBottom: SPACING.lg,
+    marginBottom: 24,
   } as ViewStyle,
   brandMark: {
     fontFamily: FONTS.mono,
@@ -776,31 +759,25 @@ const styles = StyleSheet.create({
   } as TextStyle,
   editorialSubtitle: {
     fontFamily: FONTS.header,
-    fontSize: 40,
+    fontSize: 36,
+    fontStyle: 'italic',
     color: COLORS.cream,
-    lineHeight: 50,
+    lineHeight: 44,
   } as TextStyle,
 
-  // Search
+  // Search — bottom border only
   searchContainer: {
     paddingHorizontal: GRID_PADDING,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.lg,
   } as ViewStyle,
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.bgElevated,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingHorizontal: SPACING.md,
-    height: 48,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.sageBorder,
+    paddingHorizontal: 0,
+    paddingVertical: 14,
     gap: SPACING.sm,
-    shadowColor: COLORS.black,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
   } as ViewStyle,
   searchInputWrap: {
     flex: 1,
@@ -808,34 +785,30 @@ const styles = StyleSheet.create({
   searchTapArea: {
     flex: 1,
     justifyContent: 'center',
-    height: 48,
   } as ViewStyle,
   searchPlaceholder: {
     fontFamily: FONTS.body,
     fontSize: 15,
-    color: COLORS.creamMuted,
+    color: COLORS.creamDim,
   } as TextStyle,
 
-  // Chips
+  // Chips — text only, active = underline
   chipsContainer: {
     paddingHorizontal: GRID_PADDING,
     paddingBottom: SPACING.md,
-    gap: SPACING.sm,
+    gap: 16,
   } as ViewStyle,
   chip: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.full,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.bgCard,
+    paddingHorizontal: 0,
+    paddingVertical: 6,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
   } as ViewStyle,
   chipActive: {
-    backgroundColor: COLORS.sageLight,
-    borderColor: COLORS.sageBorder,
+    borderBottomColor: COLORS.sage,
   } as ViewStyle,
   chipText: {
-    fontFamily: FONTS.bodyMedium,
+    fontFamily: FONTS.body,
     fontSize: 13,
     color: COLORS.creamMuted,
   } as TextStyle,
@@ -843,68 +816,51 @@ const styles = StyleSheet.create({
     color: COLORS.sage,
   } as TextStyle,
 
-  // What if card
+  // What if — text only, no card
   whatIfCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
     marginHorizontal: GRID_PADDING,
-    marginBottom: SPACING.lg,
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.sageBorder,
-    padding: SPACING.md,
-  } as ViewStyle,
-  whatIfLeft: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: COLORS.sageLight,
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: 40,
   } as ViewStyle,
   whatIfTitle: {
     fontFamily: FONTS.header,
-    fontSize: 20,
-    color: COLORS.cream,
+    fontSize: 22,
     fontStyle: 'italic',
+    color: COLORS.sage,
   } as TextStyle,
   whatIfSub: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: COLORS.creamMuted,
-    marginTop: 2,
+    color: COLORS.creamSoft,
+    marginTop: 4,
   } as TextStyle,
 
-  // Something true
+  // Truth section
   truthSection: {
-    paddingHorizontal: GRID_PADDING,
-    marginBottom: SPACING.lg,
+    marginHorizontal: GRID_PADDING,
+    marginVertical: 32,
   } as ViewStyle,
 
-  // Section — more breathing room
+  // Section heading — Cormorant italic, count below
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
     paddingHorizontal: GRID_PADDING,
     marginBottom: SPACING.lg,
     marginTop: SPACING.xs,
   } as ViewStyle,
   sectionTitle: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 16,
+    fontFamily: FONTS.header,
+    fontSize: 24,
+    fontStyle: 'italic',
     color: COLORS.cream,
-    lineHeight: 22,
+    lineHeight: 30,
   } as TextStyle,
   sectionCount: {
     fontFamily: FONTS.mono,
-    fontSize: 12,
-    color: COLORS.creamMuted,
+    fontSize: 11,
+    color: COLORS.creamDim,
+    marginTop: 4,
   } as TextStyle,
 
-  // Cards
+  // Cards — no border, more photo impact
   cardWrapper: {
     width: CARD_WIDTH,
     marginBottom: GRID_GAP,
@@ -913,9 +869,7 @@ const styles = StyleSheet.create({
     width: '100%',
     borderRadius: RADIUS.lg,
     overflow: 'hidden',
-    backgroundColor: COLORS.bgCard,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    backgroundColor: '#0D1710',
   } as ViewStyle,
   cardImage: {
     ...StyleSheet.absoluteFillObject,
@@ -932,49 +886,19 @@ const styles = StyleSheet.create({
     gap: 4,
     alignItems: 'flex-end',
   } as ViewStyle,
-  trendingBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: COLORS.overlayDim,
-    borderRadius: RADIUS.sm,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  } as ViewStyle,
-  trendingText: {
-    fontFamily: FONTS.mono,
-    fontSize: 9,
-    color: COLORS.coral,
-    letterSpacing: 0.5,
-  } as TextStyle,
-  timingBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: COLORS.overlayDim,
-    borderRadius: RADIUS.sm,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  } as ViewStyle,
   timingText: {
     fontFamily: FONTS.mono,
     fontSize: 9,
     color: COLORS.sage,
     letterSpacing: 0.5,
   } as TextStyle,
-  priceBadge: {
+  priceBadgeText: {
     position: 'absolute',
     top: SPACING.sm,
     left: SPACING.sm,
-    backgroundColor: COLORS.overlayDim,
-    borderRadius: RADIUS.sm,
-    paddingHorizontal: SPACING.xs,
-    paddingVertical: 2,
-  } as ViewStyle,
-  priceBadgeText: {
     fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.sage,
+    fontSize: 12,
+    color: COLORS.gold,
     letterSpacing: 0.5,
   } as TextStyle,
   cardContent: {
@@ -986,7 +910,8 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   cardLabel: {
     fontFamily: FONTS.header,
-    fontSize: 24,
+    fontSize: 18,
+    fontStyle: 'italic',
     color: COLORS.white,
     marginBottom: 2,
   } as TextStyle,
@@ -998,7 +923,7 @@ const styles = StyleSheet.create({
   cardCountry: {
     fontFamily: FONTS.mono,
     fontSize: 11,
-    color: COLORS.sage,
+    color: COLORS.creamSoft,
     letterSpacing: 1,
   } as TextStyle,
   cardDot: {
@@ -1039,8 +964,9 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
-    backgroundColor: COLORS.sageLight,
     borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
   } as ViewStyle,
   emptyButtonText: {
     fontFamily: FONTS.bodySemiBold,
