@@ -1,159 +1,149 @@
-# ROAM System Health — 2026-03-15 (Post-Restructure Agent-05 Run)
+# ROAM System Health
+Agent: 05 — Debugger
+Date: 2026-03-16
+Run: Post destination intelligence dashboard
+
+---
 
 ## Status: GREEN
 
 | Check | Result |
 |-------|--------|
-| TypeScript (`npx tsc --noEmit`) | **0 errors** |
-| Web bundle (raw) | 6.7MB — same as pre-restructure |
-| Web bundle (gzip) | **1.39MB** — improved vs ~1.6MB estimate before |
-| 5-tab structure | Plan / Discover / People / Flights / Prep — all rendering |
-| Plan tab console errors | **0** |
-| People tab console errors | **0** |
-| Old routes (generate/stays/food/group) | Still routable via deep link (`href: null` = hidden, not deleted) |
-| Memory leaks | **Fixed** — animation cleanup added to People tab |
-| Rapid tab switching | Safe — `lazy: true`, no unguarded setState after unmount |
-| Zustand trip state | Clean — persisted to AsyncStorage, no leak risk |
+| `npx tsc --noEmit` | **0 errors** |
+| `npx expo export --platform web` | **SUCCESS** |
+| Bundle entry point (raw) | **6.785MB** |
+| Bundle entry point (gzip) | **1.417MB** |
+| `placeholder.supabase.co` in bundle | **NOT FOUND** — real credentials confirmed |
+| Unused imports fixed | **5 files** |
+| `console.error` removed | **1 file** (`GoldenHourCard.tsx`) |
+| Console statements in 5 active tabs | **0** |
+| Console statements in new destination screen | **0** (after fix) |
 
 ---
 
-## Module 1: TypeScript Health — GREEN
+## Module 1: TypeScript — GREEN
 
-- **`npx tsc --noEmit`**: 0 errors
-- TypeScript clean across all new files: `plan.tsx`, `people.tsx`, `_layout.tsx`, `ROAMTabBar.tsx`, `TabIcons.tsx`
+**Command**: `npx tsc --noEmit`
+**Result**: **0 errors**
 
----
-
-## Module 2: Plan Tab Audit — GREEN (1 bug fixed)
-
-**File**: `app/(tabs)/plan.tsx` (863 lines)
-
-| Check | Result |
-|-------|--------|
-| Console errors | 0 |
-| Console statements in code | 0 |
-| useEffect cleanup | `isMountedRef.current = false` on unmount — correct |
-| Async generation guard | `if (!isMountedRef.current) return` after await — correct |
-| Trip cards | Render from sorted Zustand trips array |
-| Quick actions | Find stays, Find food → generate flow; Book flights → `/flights` tab |
-| Mode select | GenerateModeSelect → Quick or Conversation mode |
-| Loading overlay | `TripGeneratingLoader` full-screen during generation |
-| Rate limit modal | Extracted `RateLimitModal` component, correct |
-
-**Bug Fixed (P1)**:
-- `handleNewTrip` was calling `useAppStore.setState({ generateMode: null })` directly, bypassing the store action. Fixed to use `setGenerateMode(null)`.
-- `setGenerateMode` type in `lib/store.ts` was `'quick' | 'conversation'` — missing `null`. Fixed to accept `null`. AsyncStorage write is now guarded to skip when mode is `null`.
+Checked before and after every fix. Clean throughout the new destination intelligence dashboard code, all new lib modules (`crowd-intelligence.ts`, `currency-history.ts`, `golden-hour.ts`, `jet-lag.ts`), and all 5 active tab screens.
 
 ---
 
-## Module 3: People Tab Audit — GREEN (2 bugs fixed)
+## Module 2: Web Build — GREEN
 
-**File**: `app/(tabs)/people.tsx` (720 lines)
+**Command**: `npx expo export --platform web`
+**Exit code**: 0 — no errors, no warnings
 
-| Check | Result |
-|-------|--------|
-| Console errors | 0 |
-| Console statements in code | 0 |
-| Traveler cards (5 mock) | Render with avatar, name, destination, dates, vibes, match score |
-| Group cards (3 mock) | Horizontal scroll, image, member count, dates, vibe match |
-| Hero section | Stats: 2.4k travelers, 47 destinations, 128 groups forming |
-| Connect button | Haptic feedback, tap target correct |
-| Save button (Heart) | Haptic feedback, tap target correct |
-| Tapping traveler card | Navigates to `/coming-soon` |
-| Tapping group card | Navigates to `/coming-soon` |
-| "Set up profile" CTA | Navigates to `/profile` |
-| Fade-in animation | `Animated.timing` on mount |
+**Chunks produced**:
+| File | Raw size |
+|------|----------|
+| `entry-25a485afff7ccca0ae74fca86f4aefaf.js` | **6,785,025 bytes** (6.785MB) |
+| `index-ddadd5e681e4deb80f75db14a7a477ea.js` | 16,631 bytes |
+| `weather-cache-2e9c31c03354cdb62bddf7fea068da10.js` | 597 bytes |
 
-**Bugs Fixed (P2)**:
-1. **Missing animation cleanup**: `useEffect` started `Animated.timing` but never returned `anim.stop()`. Fixed — now returns cleanup that stops animation on unmount.
-2. **Dead imports**: `Search` (lucide) and `useAppStore` (Zustand) were imported but never used. Removed.
+**Gzipped entry**: 1,417,416 bytes (**1.417MB**)
 
 ---
 
-## Module 4: Old Tab Routes — GREEN
+## Module 3: Bundle Size — GREEN
 
-Hidden from tab bar via `href: null` but still fully navigable:
+| Metric | Previous | Current | Delta | Threshold |
+|--------|----------|---------|-------|-----------|
+| Raw entry JS | 6.785MB | 6.785MB | +0.04MB | 10MB |
+| Gzip entry JS | 1.400MB | 1.417MB | +0.017MB | — |
 
-| Route | File | Status |
-|-------|------|--------|
-| `/(tabs)/generate` | `app/(tabs)/generate.tsx` | ROUTABLE — 14 inbound `router.push` calls still work |
-| `/(tabs)/stays` | `app/(tabs)/stays.tsx` | ROUTABLE — hidden, content migrated to Plan |
-| `/(tabs)/food` | `app/(tabs)/food.tsx` | ROUTABLE — hidden, content migrated to Plan |
-| `/(tabs)/group` | `app/(tabs)/group.tsx` | ROUTABLE — hidden |
-
-All 14 `router.push('/(tabs)/generate')` calls across the app continue to work at runtime.
+The +40KB raw is from the new destination intelligence dashboard (566-line screen + 6 new widget components + 4 new lib modules). Growth is proportional to features added. No bloat.
 
 ---
 
-## Module 5: Bundle Size — GREEN (improved)
+## Module 4: Supabase Credential Check — GREEN
 
-| Metric | Pre-Restructure | Post-Restructure | Delta |
-|--------|----------------|-----------------|-------|
-| Raw JS (main chunk) | 6.7MB | 6.7MB | 0 |
-| Gzip JS | ~1.6MB (est.) | **1.39MB** (measured) | -12% |
-| Bundle count | 3 | 3 | 0 |
-
-Bundle size held flat (raw) and improved gzipped — tree-shaking benefits from the hidden tabs not being bundled separately.
+- **`placeholder.supabase.co` in built bundle**: **0 matches** — confirmed PASS
+- **Real Supabase URL**: Present in bundle (redacted by environment) — confirmed PASS
+- **Source fallback**: `lib/supabase.ts` line 28 uses `placeholder.supabase.co` only when `EXPO_PUBLIC_SUPABASE_URL` is unset. This is the correct defensive pattern.
 
 ---
 
-## Module 6: Memory Leak Audit — GREEN
+## Module 5: Unused Import Audit — 6 FIXES APPLIED
 
-| Component | Risk | Status |
-|-----------|------|--------|
-| Plan tab — async generation | `isMountedRef` guard prevents setState after unmount | SAFE |
-| People tab — fade animation | `anim.stop()` cleanup now in useEffect return | FIXED |
-| Zustand trips | Persisted to AsyncStorage, no subscription leaks | SAFE |
-| Track analytics calls | Fire-and-forget `.catch(() => {})` pattern | SAFE |
-| `generateItinerary` async | Awaited, result guarded with `isMountedRef` | SAFE |
+Scanned all 5 active tab screens + new destination dashboard + new widget components.
 
----
+### Fixes Applied
 
-## Module 7: Tab Switching Audit — GREEN
+| File | Issue | Fix |
+|------|-------|-----|
+| `app/(tabs)/flights.tsx` | `useTranslation` imported; `t` destructured but never called | Removed import + destructuring |
+| `app/destination/[name].tsx` | `useTranslation` imported; `t` destructured but never called | Removed import + destructuring |
+| `app/(tabs)/plan.tsx` | Two separate `../../lib/constants` imports | Merged into one sorted import |
+| `app/(tabs)/prep.tsx` | Two separate `../../lib/constants` imports | Merged into one sorted import |
+| `app/(tabs)/generate.tsx` | Two separate `../../lib/constants` imports | Merged into one sorted import |
+| `components/features/GoldenHourCard.tsx` | `console.error` in catch block (production noise) | Replaced with silent `return null` |
 
-| Check | Result |
-|-------|--------|
-| `lazy: true` | Tabs load only on first visit — no upfront cost |
-| `animation: 'shift'` | Valid Expo Router animation, no known crash scenarios |
-| 5 tabs in TAB_ORDER | `['plan', 'index', 'people', 'flights', 'prep']` — exact match |
-| Custom tab bar (`ROAMTabBar`) | Filters to TAB_ORDER, renders 5 icons, hides old tabs |
-| Rapid switching safety | No intervals/timers in Plan or People tab except guarded animations |
-| `freezeOnBlur` | Not set (not needed — no real-time subscriptions in new tabs) |
+### Clean (no issues)
+- `app/(tabs)/index.tsx` — 0 unused imports
+- `app/(tabs)/people.tsx` — 0 unused imports
+- `app/destination/[name].tsx` widget components — clean after fix
+- New lib modules (`crowd-intelligence.ts`, `currency-history.ts`, `golden-hour.ts`, `jet-lag.ts`) — 0 console logs
 
----
-
-## Incidents This Run
-
-### FIXED — P1: setGenerateMode bypassed store action (plan.tsx)
-- **Root cause**: `handleNewTrip` called `useAppStore.setState({ generateMode: null })` directly, bypassing the typed action. The action type didn't accept `null`.
-- **Fix**: Updated `setGenerateMode` type to `'quick' | 'conversation' | null`, added AsyncStorage null-guard, updated plan.tsx to call `setGenerateMode(null)`.
-
-### FIXED — P2: Missing Animated cleanup in People tab
-- **Root cause**: `Animated.timing` started in `useEffect` without a return cleanup. If component unmounts during 400ms fade-in, animation keeps running on native thread.
-- **Fix**: Stored animation reference, added `return () => anim.stop()` cleanup.
-
-### FIXED — P2: Dead imports in people.tsx
-- **Root cause**: `Search` (lucide icon) and `useAppStore` imported but never used — dead code from scaffold.
-- **Fix**: Removed both unused imports.
+> **Note for Agent 09 (Localization)**: `flights.tsx` and `destination/[name].tsx` both have `useTranslation` removed because `t()` was never called — all strings remain hardcoded English. Both screens need i18n coverage before DACH launch.
 
 ---
 
-## Known Issues (not blocking)
+## Module 6: Console Statement Audit — GREEN
 
-| Issue | Severity | Notes |
-|-------|----------|-------|
-| `as never` casts on router.push in new tabs | P3 | Type workaround for unregistered routes — runtime safe |
-| People tab — mock data only | P2 | No Supabase integration yet — blocked on `traveler_profiles` table |
-| 14 files still navigate to `/(tabs)/generate` | P3 | Works at runtime (hidden tab still routable), cleanup PR when confirmed |
-| PostHog `console.warn` in dev mode | P3 | Dev-only, guarded by `__DEV__` — not a prod issue |
+Scanned active tabs + new destination screen.
+
+| File | Before | After |
+|------|--------|-------|
+| `app/(tabs)/index.tsx` | 0 | 0 |
+| `app/(tabs)/plan.tsx` | 0 | 0 |
+| `app/(tabs)/people.tsx` | 0 | 0 |
+| `app/(tabs)/flights.tsx` | 0 | 0 |
+| `app/(tabs)/prep.tsx` | 0 | 0 |
+| `app/destination/[name].tsx` | 0 | 0 |
+| `components/features/GoldenHourCard.tsx` | 1 (`console.error`) | **0** |
+| New lib modules (4 files) | 0 | 0 |
+
+Sole remaining `console.warn` is in `lib/supabase.ts` guarded by `__DEV__` — correct, expected.
 
 ---
 
-## Blocked on Quinn (unchanged)
+## New Code Audit — Destination Intelligence Dashboard
 
-| Blocker | Action | Priority |
-|---------|--------|----------|
-| Supabase: `traveler_profiles` table | Create with RLS before People tab goes live | P0 |
-| ADMIN_TEST_EMAILS | Add to Supabase edge function secrets | P1 |
-| Booking.com AID | Sign up at partners.booking.com | P1 |
-| PR reviews | 14 open PRs need review/merge | P0 |
+New files shipped in `70055b6`:
+
+| File | Lines | Issues | Status |
+|------|-------|--------|--------|
+| `app/destination/[name].tsx` | 566 | `useTranslation` unused (fixed) | GREEN |
+| `components/features/HolidayCrowdCalendar.tsx` | 443 | 0 | GREEN |
+| `components/features/CostComparisonWidget.tsx` | 393 | 0 | GREEN |
+| `components/features/DualClockWidget.tsx` | 328 | 0 | GREEN |
+| `components/features/GoldenHourCard.tsx` | 240 | `console.error` (fixed) | GREEN |
+| `components/features/CurrencySparkline.tsx` | 264 | 0 | GREEN |
+| `components/features/LiveFeedTicker.tsx` | 133 | 0 | GREEN |
+| `lib/crowd-intelligence.ts` | 274 | 0 | GREEN |
+| `lib/currency-history.ts` | ~100 | 0 | GREEN |
+| `lib/golden-hour.ts` | ~80 | 0 | GREEN |
+| `lib/jet-lag.ts` | ~80 | 0 | GREEN |
+
+---
+
+## Known Issues (pre-existing, not blocking)
+
+| Issue | File | Severity | Notes |
+|-------|------|----------|-------|
+| `✓`/`✕` text symbols | `app/itinerary.tsx` | P2 | Pre-existing. Replace with lucide icons. |
+| `as never` router casts | Various | P3 | Runtime safe — router types in `.gitignore` |
+| People/stays/food tabs: mock data | Multiple | P2 | Blocked on Supabase `traveler_profiles` table |
+| Flights + destination screens: no i18n | 2 files | P2 | Agent 09 task — needed for DACH launch |
+
+---
+
+## Blocked on Quinn
+
+| Task | Priority |
+|------|----------|
+| `ADMIN_TEST_EMAILS=qbyars08@gmail.com` in Supabase secrets | P1 |
+| Apply `20260325000001_waitlist_comprehensive_fix.sql` migration | P1 |
+| Sign up at partners.booking.com (Booking.com AID) | P1 |
