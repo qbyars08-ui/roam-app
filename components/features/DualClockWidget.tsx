@@ -248,7 +248,7 @@ const s = StyleSheet.create({
   destTimeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: SPACING.xs,
   } as ViewStyle,
   tzAbbr: {
     fontFamily: FONTS.mono,

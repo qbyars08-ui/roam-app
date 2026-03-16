@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     padding: SPACING.md,
-    gap: 4,
+    gap: SPACING.xs,
   } as ViewStyle,
   statIconWrap: {
     width: 32,
@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   } as ViewStyle,
   statLabel: {
     fontFamily: FONTS.mono,
@@ -512,7 +512,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.coralSubtle,
     borderRadius: RADIUS.sm,
     paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
+    paddingVertical: SPACING.xs,
     width: 70,
     alignItems: 'center',
   } as ViewStyle,

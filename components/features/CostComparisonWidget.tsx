@@ -303,12 +303,12 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 12,
     backgroundColor: COLORS.bg,
-    borderRadius: 6,
+    borderRadius: RADIUS.sm,
     overflow: 'hidden',
   } as ViewStyle,
   barFill: {
     height: '100%',
-    borderRadius: 6,
+    borderRadius: RADIUS.sm,
   } as ViewStyle,
   barAmount: {
     fontFamily: FONTS.mono,

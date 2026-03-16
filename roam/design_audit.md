@@ -724,4 +724,58 @@ All pass. No "deaf" buttons found.
 
 ---
 
+---
+
+## PR7 — Destination Intelligence Dashboard Audit (2026-03-15)
+
+**Scope:** New `feat: destination intelligence dashboard` commit — 6 new components + 1 new screen.
+
+### Files Audited
+
+| File | Lines | P0 | P1 | P2 Fixed | P2 Documented | Status |
+|------|-------|----|----|----------|----------------|--------|
+| `app/destination/[name].tsx` | 566 | 0 | 0 | 3 | 2 | FIXED |
+| `components/features/CostComparisonWidget.tsx` | 393 | 0 | 2 | 0 | 1 | FIXED |
+| `components/features/CurrencySparkline.tsx` | 264 | 0 | 0 | 1 | 0 | FIXED |
+| `components/features/DualClockWidget.tsx` | 328 | 0 | 0 | 1 | 3 | FIXED |
+| `components/features/GoldenHourCard.tsx` | 240 | 0 | 0 | 0 | 0 | CLEAN |
+| `components/features/HolidayCrowdCalendar.tsx` | 443 | 0 | 0 | 3 | 5 | FIXED |
+| `components/features/LiveFeedTicker.tsx` | 133 | 0 | 0 | 0 | 0 | CLEAN |
+
+**Total: 0 P0, 2 P1 fixed, 8 P2 fixed.**
+
+### Fixes Applied
+
+| # | File | Type | Before | After |
+|---|------|------|--------|-------|
+| 1 | `CostComparisonWidget.tsx:306` | P1 `borderRadius: 6` | `borderRadius: 6` | `RADIUS.sm` |
+| 2 | `CostComparisonWidget.tsx:311` | P1 `borderRadius: 6` | `borderRadius: 6` | `RADIUS.sm` |
+| 3 | `destination/[name].tsx:466` | P2 `gap: 4` | `gap: 4` | `SPACING.xs` |
+| 4 | `destination/[name].tsx:474` | P2 `marginBottom: 4` | `marginBottom: 4` | `SPACING.xs` |
+| 5 | `destination/[name].tsx:515` | P2 `paddingVertical: 4` | `paddingVertical: 4` | `SPACING.xs` |
+| 6 | `CurrencySparkline.tsx:231` | P2 inline `gap: 4` | `gap: 4` | `SPACING.xs` |
+| 7 | `DualClockWidget.tsx:251` | P2 `gap: 4` | `gap: 4` | `SPACING.xs` |
+| 8 | `HolidayCrowdCalendar.tsx:295` | P2 `marginTop: 4` | `marginTop: 4` | `SPACING.xs` |
+| 9 | `HolidayCrowdCalendar.tsx:355` | P2 `gap: 4` | `gap: 4` | `SPACING.xs` |
+| 10 | `HolidayCrowdCalendar.tsx:336` bar `borderRadius: 3` | EXEMPT | 16px wide bar chart bar, intentional rounding | — |
+| 11 | `HolidayCrowdCalendar.tsx:342` `holidayDot borderRadius: 3` | EXEMPT | 6×6 circle (w/2) | — |
+| 12 | `HolidayCrowdCalendar.tsx:360` `legendDot borderRadius: 4` | EXEMPT | 8×8 circle (w/2) | — |
+
+### Documented P2 (Intentional)
+
+| File | Value | Reason |
+|------|-------|--------|
+| `destination/[name].tsx:449` | `marginTop: 2` | Sub-token text label offset |
+| `destination/[name].tsx:533` | `marginTop: 1` | Sub-token line spacing |
+| `CostComparisonWidget.tsx:357` | `gap: 6` | Between xs=4 and sm=8, intentional for bar row visual |
+| `DualClockWidget.tsx:233` | `gap: 2` | Sub-token digit spacing |
+| `DualClockWidget.tsx:297` | `marginTop: 2` | Sub-token recovery text offset |
+| `DualClockWidget.tsx:306` | `gap: 6` | Between tokens, intentional for tips list |
+| `HolidayCrowdCalendar.tsx:312` | `gap: 2` | Sub-token day cell gap |
+| `HolidayCrowdCalendar.tsx:343` | `marginTop: 2` | Sub-token holiday dot offset |
+| `HolidayCrowdCalendar.tsx:388` | `paddingVertical: 3` | Tight badge padding |
+| `HolidayCrowdCalendar.tsx:398,403,413` | `gap: 6` ×3 | Between tokens, detail card consistency |
+
+---
+
 *Report last updated by Agent 03 — Design Enforcer on 2026-03-15.*

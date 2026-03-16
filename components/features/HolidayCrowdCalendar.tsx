@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 13,
     color: COLORS.creamMuted,
-    marginTop: 4,
+    marginTop: SPACING.xs,
     lineHeight: 20,
   } as TextStyle,
 
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: SPACING.xs,
   } as ViewStyle,
   legendDot: {
     width: 8,

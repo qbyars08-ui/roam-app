@@ -228,7 +228,7 @@ export const CurrencySparkline: React.FC<CurrencySparklineProps> = ({
 
       {/* Trend info: percentage + color-coded icon */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.xs }}>
           {percentChange >= 0 ? (
             <TrendingUp size={16} color={COLORS.sage} strokeWidth={2} />
           ) : (
