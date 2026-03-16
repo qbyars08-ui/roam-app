@@ -114,6 +114,7 @@ import ActivityEditModal from '../components/features/ActivityEditModal';
 import RouteIntelCard from '../components/features/RouteIntelCard';
 import SeasonalIntel from '../components/features/SeasonalIntel';
 import AudioGuideBar from '../components/audio/AudioGuideBar';
+import PocketConcierge from '../components/features/PocketConcierge';
 import NarrationToggle from '../components/audio/NarrationToggle';
 
 // =============================================================================
@@ -1768,6 +1769,9 @@ export default function ItineraryScreen() {
 
       {/* ── Emergency SOS ─────────────────────────────────────────────── */}
       <EmergencySOS />
+
+      {/* ── Pocket Concierge — floating AI helper ──────────────── */}
+      <PocketConcierge />
 
       {/* ── Audio Guide floating bar ──────────────────────────────── */}
       <AudioGuideBar

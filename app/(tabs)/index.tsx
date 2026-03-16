@@ -44,6 +44,7 @@ import { getForYouFeed } from '../../lib/recommendations';
 import { getDestinationPhoto } from '../../lib/photos';
 import ROAMScoreBadge from '../../components/features/ROAMScoreBadge';
 import TravelTruthCard from '../../components/features/TravelTruthCard';
+import MoodDiscovery from '../../components/features/MoodDiscovery';
 import ContextBanner from '../../components/features/ContextBanner';
 import ResilientImage from '../../components/ui/ResilientImage';
 import { getContext, buildStrategy, type ContentStrategy } from '../../lib/context-engine';
@@ -516,6 +517,11 @@ export default function DiscoverScreen() {
             <Text style={styles.whatIfSub}>Pick a place. See what it actually costs.</Text>
           </Pressable>
         )}
+
+        {/* Mood Discovery — "How are you feeling?" → destination recs */}
+        <View style={{ paddingHorizontal: GRID_PADDING, marginBottom: SPACING.lg }}>
+          <MoodDiscovery />
+        </View>
 
         {/* Something true — the feature that makes people stop scrolling */}
         <View style={styles.truthSection}>

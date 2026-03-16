@@ -38,6 +38,7 @@ import { hasEnoughData } from '../lib/travel-dna';
 import { track } from '../lib/analytics';
 import Button from '../components/ui/Button';
 import ExploreHub from '../components/features/ExploreHub';
+import StreakBadge from '../components/features/StreakBadge';
 import SubscriptionCard from '../components/monetization/SubscriptionCard';
 import { SUPPORTED_LANGUAGES, changeLanguage } from '../lib/i18n';
 import type { SupportedLanguage } from '../lib/i18n';
@@ -200,6 +201,7 @@ export default function ProfileScreen() {
                 {isPro ? t('common.pro') : t('common.free')}
               </Text>
             </View>
+            <StreakBadge size="sm" showLabel animated />
             {ratedBadge && (
               <Text style={styles.ratedBadge}>{t('profile.thanksForRating')}</Text>
             )}
