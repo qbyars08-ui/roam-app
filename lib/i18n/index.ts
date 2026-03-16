@@ -87,7 +87,6 @@ async function initI18n() {
       es: { translation: es },
       fr: { translation: fr },
       ja: { translation: ja },
-      de: { translation: de },
     },
     lng,
     fallbackLng: 'en',

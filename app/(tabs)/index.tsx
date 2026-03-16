@@ -237,9 +237,6 @@ export default function DiscoverScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const setPlanWizard = useAppStore((s) => s.setPlanWizard);
-  const setGenerateMode = useAppStore((s) => s.setGenerateMode);
-
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [headerIndex, setHeaderIndex] = useState(0);
@@ -289,11 +286,10 @@ export default function DiscoverScreen() {
   // Handlers
   const handleDestinationPress = useCallback(
     (dest: Destination) => {
-      setPlanWizard({ destination: dest.label });
-      setGenerateMode('quick');
-      router.push('/(tabs)/generate');
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      router.push(`/destination/${encodeURIComponent(dest.label)}` as never);
     },
-    [setPlanWizard, setGenerateMode, router]
+    [router]
   );
 
   const handleCategoryPress = useCallback((id: string) => {
@@ -339,7 +335,7 @@ export default function DiscoverScreen() {
             <View style={styles.searchInputWrap}>
               {/* Using a simple text input to avoid PlacesInput complexity */}
               <Pressable
-                onPress={() => router.push('/(tabs)/generate')}
+                onPress={() => router.push('/(tabs)/plan')}
                 style={styles.searchTapArea}
                 accessibilityRole="button"
                 accessibilityLabel={t('discover.searchPlaceholder')}
