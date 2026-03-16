@@ -45,6 +45,7 @@ import { track } from '../../lib/analytics';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS, MAGAZINE } from '../../lib/constants';
 import type { SocialProfile, TripPresence as TripPresenceType } from '../../lib/types/social';
+import { DEFAULT_PRIVACY } from '../../lib/types/social';
 import { calculateChemistryScore, type ChemistryBreakdown } from '../../lib/social-chemistry';
 import ChemistryBadge from '../../components/social/ChemistryBadge';
 import ProfileCard from '../../components/social/ProfileCard';
@@ -126,7 +127,7 @@ function mockToSocialProfile(roamer: MockRoamer): SocialProfile {
     avatarEmoji: '',
     languages: roamer.languages,
     verified: false,
-    privacy: {},
+    privacy: { ...DEFAULT_PRIVACY },
     createdAt: new Date().toISOString(),
   };
 }
