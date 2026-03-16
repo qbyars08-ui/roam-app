@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { Svg, Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { TrendingUp, TrendingDown } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { getExchangeRates } from '../../lib/exchange-rates';
 
@@ -16,6 +17,7 @@ export const CurrencySparkline: React.FC<CurrencySparklineProps> = ({
   targetCurrency,
   destinationName,
 }) => {
+  const { t } = useTranslation();
   const [currentRate, setCurrentRate] = useState<number | null>(null);
   const [sparklineData, setSparklineData] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
@@ -196,7 +198,7 @@ export const CurrencySparkline: React.FC<CurrencySparklineProps> = ({
                 fontWeight: '600',
               }}
             >
-              BEST RATE
+              {t('currencySparkline.bestRate')}
             </Text>
           </View>
         )}
@@ -244,8 +246,7 @@ export const CurrencySparkline: React.FC<CurrencySparklineProps> = ({
             fontWeight: '600',
           }}
         >
-          {trendSign}
-          {formattedTrend}% (30-day)
+          {t('currencySparkline.trendLabel', { sign: trendSign, pct: formattedTrend })}
         </Text>
 
         <Text
@@ -256,7 +257,7 @@ export const CurrencySparkline: React.FC<CurrencySparklineProps> = ({
             marginLeft: SPACING.sm,
           }}
         >
-          in {destinationName}
+          {t('currencySparkline.inDestination', { destination: destinationName })}
         </Text>
       </View>
     </View>

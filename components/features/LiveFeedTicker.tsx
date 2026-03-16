@@ -7,6 +7,7 @@ import { Animated, StyleSheet, View } from 'react-native';
 import { MapPin, Plane, TrendingUp } from 'lucide-react-native';
 
 import { COLORS, FONTS, RADIUS, SPACING } from '../../lib/constants';
+import i18n from '../../lib/i18n';
 import { generateLiveFeedEvents } from '../../lib/social-feed';
 import type { FeedEvent, FeedEventType } from '../../lib/social-feed';
 
@@ -32,16 +33,16 @@ const ICON_COLORS: Record<FeedEventType, string> = {
 function formatEventText(event: FeedEvent): string {
   switch (event.type) {
     case 'trip_planned':
-      return `${event.name} just planned ${event.detail}`;
+      return i18n.t('liveFeed.tripPlanned', { name: event.name, detail: event.detail });
     case 'flight_searched':
-      return `${event.name} searched ${event.detail}`;
+      return i18n.t('liveFeed.flightSearched', { name: event.name, detail: event.detail });
     case 'destination_trending':
-      return `${event.destination} is ${event.detail}`;
+      return i18n.t('liveFeed.destinationTrending', { destination: event.destination, detail: event.detail });
   }
 }
 
 function formatTimeAgo(minutes: number): string {
-  return `${minutes}m ago`;
+  return i18n.t('liveFeed.minutesAgo', { minutes });
 }
 
 function EventIcon({ type }: { readonly type: FeedEventType }) {

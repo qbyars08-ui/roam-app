@@ -21,6 +21,8 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
+import i18n from '../../lib/i18n';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import {
   getCrowdForecast,
@@ -53,10 +55,10 @@ function crowdColor(level: CrowdLevel): string {
 
 function crowdLabel(level: CrowdLevel): string {
   switch (level) {
-    case 'low': return 'Low';
-    case 'moderate': return 'Moderate';
-    case 'high': return 'High';
-    case 'extreme': return 'Extreme';
+    case 'low': return i18n.t('crowdCalendar.crowdLow');
+    case 'moderate': return i18n.t('crowdCalendar.crowdModerate');
+    case 'high': return i18n.t('crowdCalendar.crowdHigh');
+    case 'extreme': return i18n.t('crowdCalendar.crowdExtreme');
   }
 }
 
@@ -110,6 +112,7 @@ export default function HolidayCrowdCalendar({
   startDate,
   endDate,
 }: HolidayCrowdCalendarProps) {
+  const { t } = useTranslation();
   const [summary, setSummary] = useState<CrowdSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState<CrowdForecast | null>(null);
@@ -148,7 +151,7 @@ export default function HolidayCrowdCalendar({
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="small" color={COLORS.sage} />
-        <Text style={styles.loadingText}>Analyzing crowd patterns...</Text>
+        <Text style={styles.loadingText}>{t('crowdCalendar.loadingCrowds')}</Text>
       </View>
     );
   }
@@ -162,7 +165,7 @@ export default function HolidayCrowdCalendar({
       {/* Header */}
       <View style={styles.header}>
         <Users size={18} color={COLORS.sage} strokeWidth={2} />
-        <Text style={styles.headerTitle}>Crowd forecast</Text>
+        <Text style={styles.headerTitle}>{t('crowdCalendar.title')}</Text>
       </View>
 
       {/* Verdict badge */}
@@ -228,7 +231,7 @@ export default function HolidayCrowdCalendar({
             <View style={styles.priceWarning}>
               <TrendingUp size={14} color={COLORS.coral} strokeWidth={2} />
               <Text style={styles.priceWarningText}>
-                Prices ~{Math.round((selectedDay.priceMultiplier - 1) * 100)}% higher than normal
+                {t('crowdCalendar.pricesHigher', { pct: Math.round((selectedDay.priceMultiplier - 1) * 100) })}
               </Text>
             </View>
           )}

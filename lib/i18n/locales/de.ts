@@ -580,6 +580,81 @@ const de: TranslationKeys = {
     featureRequest: 'Feature-Wunsch',
   },
 
+  destination: {
+    localTime: 'Ortszeit',
+    rightNow: 'Jetzt gerade',
+    airQuality: 'Luftqualit\u00e4t',
+    safety: 'Sicherheit',
+    weatherRainy: 'Regen',
+    weatherHot: 'Hei\u00df',
+    weatherWarm: 'Warm',
+    weatherCool: 'K\u00fchl',
+    rainChance: '{{pct}}% Regen',
+    safetyVerySafe: 'Sehr sicher',
+    safetySafe: 'Sicher',
+    safetyModerate: 'M\u00e4\u00dfig',
+    safetyUseCaution: 'Vorsicht',
+    upcomingHolidays: 'Bevorstehende Feiertage',
+    planTripCta: 'Trip nach {{destination}} planen',
+    loadingLiveData: 'Live-Daten werden geladen\u2026',
+  },
+
+  dualClock: {
+    title: 'Zeitzonen',
+    here: 'Hier',
+    recoveryDays: '~{{days}} Tage zur Einstellung',
+    noJetLag: 'Kein nennenswerter Jetlag',
+    jetLagSevere: 'Starker Jetlag',
+    jetLagModerate: 'M\u00e4\u00dfiger Jetlag',
+    jetLagMild: 'Leichter Jetlag',
+  },
+
+  goldenHour: {
+    title: 'Goldene Stunde',
+    morning: 'Morgen',
+    evening: 'Abend',
+    bestPhotoWindow: 'Bestes Fotofenster',
+    bestPhotoTip: 'In der goldenen Stunde aufnehmen f\u00fcr warmes, weiches Licht das Landschaften und Portraits schmeichelt.',
+  },
+
+  costComparison: {
+    title: 'Dein Dollar im Ausland',
+    tierBudget: 'Budget',
+    tierComfort: 'Komfort',
+    tierLuxury: 'Luxus',
+    dailyBudget: 'Tagesbudget',
+    savingsText: '${{amount}}/Tag sparen durch {{destination}} ({{comparison}})',
+    cheapestOption: 'g\u00fcnstigste Option',
+    vsComparison: 'gg\u00fc. {{dest}}',
+    detailStay: 'Unterkunft',
+    detailMeal: 'Essen',
+    detailTransport: 'Transport',
+    perDay: '${{amount}}/Tag',
+  },
+
+  currencySparkline: {
+    bestRate: 'BESTER KURS',
+    trendLabel: '{{sign}}{{pct}}% (30 Tage)',
+    inDestination: 'in {{destination}}',
+  },
+
+  crowdCalendar: {
+    loadingCrowds: 'Besucherprognose wird analysiert\u2026',
+    title: 'Besucherprognose',
+    crowdLow: 'Wenig',
+    crowdModerate: 'M\u00e4\u00dfig',
+    crowdHigh: 'Viel',
+    crowdExtreme: 'Sehr viel',
+    pricesHigher: 'Preise ~{{pct}}% h\u00f6her als normal',
+  },
+
+  liveFeed: {
+    tripPlanned: '{{name}} hat gerade {{detail}} geplant',
+    flightSearched: '{{name}} hat {{detail}} gesucht',
+    destinationTrending: '{{destination}} liegt im Trend',
+    minutesAgo: 'vor {{minutes}} Min.',
+  },
+
   // ---------------------------------------------------------------------------
   // Not found
   // ---------------------------------------------------------------------------

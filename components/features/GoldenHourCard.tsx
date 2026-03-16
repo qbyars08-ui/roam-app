@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, View, Text } from 'react-native';
 import { Sunrise, Sunset, Sun } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 
 interface GoldenHourCardProps {
@@ -70,6 +71,7 @@ const fetchGoldenHourData = async (lat: number, lng: number): Promise<GoldenHour
 };
 
 export const GoldenHourCard: React.FC<GoldenHourCardProps> = ({ lat, lng }) => {
+  const { t } = useTranslation();
   const [data, setData] = useState<GoldenHourData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -144,7 +146,7 @@ export const GoldenHourCard: React.FC<GoldenHourCardProps> = ({ lat, lng }) => {
             color: COLORS.cream,
           }}
         >
-          Golden Hour
+          {t('goldenHour.title')}
         </Text>
       </View>
 
@@ -159,7 +161,7 @@ export const GoldenHourCard: React.FC<GoldenHourCardProps> = ({ lat, lng }) => {
               color: COLORS.creamMuted,
             }}
           >
-            Morning
+            {t('goldenHour.morning')}
           </Text>
         </View>
         <Text
@@ -186,7 +188,7 @@ export const GoldenHourCard: React.FC<GoldenHourCardProps> = ({ lat, lng }) => {
               color: COLORS.creamMuted,
             }}
           >
-            Evening
+            {t('goldenHour.evening')}
           </Text>
         </View>
         <Text
@@ -222,7 +224,7 @@ export const GoldenHourCard: React.FC<GoldenHourCardProps> = ({ lat, lng }) => {
             marginBottom: SPACING.xs,
           }}
         >
-          Best Photo Window
+          {t('goldenHour.bestPhotoWindow')}
         </Text>
         <Text
           style={{
@@ -232,7 +234,7 @@ export const GoldenHourCard: React.FC<GoldenHourCardProps> = ({ lat, lng }) => {
             lineHeight: 18,
           }}
         >
-          Shoot during golden hour for warm, soft light that flatters landscapes and portraits.
+          {t('goldenHour.bestPhotoTip')}
         </Text>
       </View>
     </View>

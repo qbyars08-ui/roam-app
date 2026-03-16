@@ -13,6 +13,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { DollarSign, ChevronDown, TrendingDown } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../../lib/constants';
 import { getCostOfLiving, type CostOfLiving } from '../../lib/cost-of-living';
@@ -106,6 +107,7 @@ export default function CostComparisonWidget({
   destinations,
   initialTier = 'comfort',
 }: CostComparisonWidgetProps) {
+  const { t } = useTranslation();
   const [tier, setTier] = useState<BudgetTier>(initialTier);
 
   const accentColors = [COLORS.sage, COLORS.gold, COLORS.coral];
@@ -134,9 +136,9 @@ export default function CostComparisonWidget({
   if (costs.length < 2) return null;
 
   const tiers: { key: BudgetTier; label: string }[] = [
-    { key: 'budget', label: 'Budget' },
-    { key: 'comfort', label: 'Comfort' },
-    { key: 'luxury', label: 'Luxury' },
+    { key: 'budget', label: t('costComparison.tierBudget') },
+    { key: 'comfort', label: t('costComparison.tierComfort') },
+    { key: 'luxury', label: t('costComparison.tierLuxury') },
   ];
 
   return (
@@ -144,7 +146,7 @@ export default function CostComparisonWidget({
       {/* Header */}
       <View style={styles.header}>
         <DollarSign size={18} color={COLORS.sage} strokeWidth={2} />
-        <Text style={styles.headerTitle}>Your dollar abroad</Text>
+        <Text style={styles.headerTitle}>{t('costComparison.title')}</Text>
       </View>
 
       {/* Tier selector */}
@@ -172,7 +174,7 @@ export default function CostComparisonWidget({
 
       {/* Daily cost comparison bars */}
       <ComparisonBar
-        label="Daily budget"
+        label={t('costComparison.dailyBudget')}
         values={costs.map((c, i) => ({
           destination: c.destination,
           amount: c.dailyUsd,
@@ -186,9 +188,13 @@ export default function CostComparisonWidget({
         <View style={styles.savingsCard}>
           <TrendingDown size={16} color={COLORS.sage} strokeWidth={2} />
           <Text style={styles.savingsText}>
-            Save ${cheapest.savingPerDay}/day by choosing{' '}
-            <Text style={styles.savingsBold}>{cheapest.destination}</Text>
-            {' '}({costs.length > 2 ? 'cheapest option' : `vs ${costs.find((c) => c.destination !== cheapest.destination)?.destination}`})
+            {t('costComparison.savingsText', {
+              amount: cheapest.savingPerDay,
+              destination: cheapest.destination,
+              comparison: costs.length > 2
+                ? t('costComparison.cheapestOption')
+                : t('costComparison.vsComparison', { dest: costs.find((c) => c.destination !== cheapest.destination)?.destination ?? '' }),
+            })}
           </Text>
         </View>
       )}
@@ -205,15 +211,15 @@ export default function CostComparisonWidget({
           >
             <Text style={styles.detailDest}>{cost.destination}</Text>
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Stay</Text>
+              <Text style={styles.detailLabel}>{t('costComparison.detailStay')}</Text>
               <Text style={styles.detailValue}>{cost.accommodation}</Text>
             </View>
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Meal</Text>
+              <Text style={styles.detailLabel}>{t('costComparison.detailMeal')}</Text>
               <Text style={styles.detailValue}>{cost.meal}</Text>
             </View>
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Transport</Text>
+              <Text style={styles.detailLabel}>{t('costComparison.detailTransport')}</Text>
               <Text style={styles.detailValue}>{cost.transport}</Text>
             </View>
             <View style={styles.detailDivider} />

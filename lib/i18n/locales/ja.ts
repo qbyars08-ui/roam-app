@@ -584,6 +584,81 @@ const ja: TranslationKeys = {
     featureRequest: '\u6a5f\u80fd\u30ea\u30af\u30a8\u30b9\u30c8',
   },
 
+  destination: {
+    localTime: '\u73fe\u5730\u6642\u523b',
+    rightNow: '\u73fe\u5728',
+    airQuality: '\u7a7a\u6c17\u8cea',
+    safety: '\u6cbf\u5b89',
+    weatherRainy: '\u96e8',
+    weatherHot: '\u7b97\u3048\u308b',
+    weatherWarm: '\u6696\u304b\u3044',
+    weatherCool: '\u6dbc\u3057\u3044',
+    rainChance: '\u964d\u6c34{{pct}}%',
+    safetyVerySafe: '\u975e\u5e38\u306b\u5b89\u5168',
+    safetySafe: '\u5b89\u5168',
+    safetyModerate: '\u666e\u901a',
+    safetyUseCaution: '\u6ce8\u610f\u304c\u5fc5\u8981',
+    upcomingHolidays: '\u4e88\u5b9a\u7795\u65e5',
+    planTripCta: '{{destination}}\u3078\u306e\u30c8\u30ea\u30c3\u30d7\u3092\u8a08\u753b',
+    loadingLiveData: '\u30e9\u30a4\u30d6\u30c7\u30fc\u30bf\u3092\u8aad\u307f\u8fbc\u307f\u4e2d\u2026',
+  },
+
+  dualClock: {
+    title: '\u30bf\u30a4\u30e0\u30be\u30fc\u30f3',
+    here: '\u73fe\u5730',
+    recoveryDays: '\u6163\u6155\u307e\u3067\u7d04{{days}}\u65e5',
+    noJetLag: '\u6642\u5dee\u307c\u3051\u306a\u3057',
+    jetLagSevere: '\u3072\u3069\u3044\u6642\u5dee\u307c\u3051',
+    jetLagModerate: '\u4e2d\u7a0b\u5ea6\u306e\u6642\u5dee\u307c\u3051',
+    jetLagMild: '\u8efd\u5ea6\u306e\u6642\u5dee\u307c\u3051',
+  },
+
+  goldenHour: {
+    title: '\u30b4\u30fc\u30eb\u30c7\u30f3\u30a2\u30ef\u30fc',
+    morning: '\u671d',
+    evening: '\u5915\u65b9',
+    bestPhotoWindow: '\u30d9\u30b9\u30c8\u64ae\u5f71\u6642\u9593',
+    bestPhotoTip: '\u30b4\u30fc\u30eb\u30c7\u30f3\u30a2\u30ef\u30fc\u306b\u64ae\u5f71\u3059\u308b\u3068\u3001\u98a8\u666f\u3084\u30dd\u30fc\u30c8\u30ec\u30fc\u30c8\u3092\u5f15\u304d\u7acb\u3066\u308b\u6696\u304b\u3044\u6f38\u306e\u5149\u304c\u5f97\u3089\u308c\u307e\u3059\u3002',
+  },
+
+  costComparison: {
+    title: '\u6d77\u5916\u3067\u306e\u30c9\u30eb\u306e\u4fa1\u5024',
+    tierBudget: '\u7bc0\u7d04',
+    tierComfort: '\u30b3\u30f3\u30d5\u30a9\u30fc\u30c8',
+    tierLuxury: '\u30e9\u30b0\u30b8\u30e5\u30a2\u30ea\u30fc',
+    dailyBudget: '1\u65e5\u306e\u4e88\u7b97',
+    savingsText: '{{destination}}\u3092\u9078\u3076\u3068\uff11\u65e5${{amount}}\u7bc0\u7d04\uff08{{comparison}}\uff09',
+    cheapestOption: '\u6700\u5b89\u5024\u6bb5',
+    vsComparison: '{{dest}}\u3068\u6bd4\u8f03',
+    detailStay: '\u5bbf\u6cca',
+    detailMeal: '\u98df\u4e8b',
+    detailTransport: '\u4ea4\u901a',
+    perDay: '${{amount}}/\u65e5',
+  },
+
+  currencySparkline: {
+    bestRate: '\u6700\u826f\u30ec\u30fc\u30c8',
+    trendLabel: '{{sign}}{{pct}}%\uff0830\u65e5\u9593\uff09',
+    inDestination: '{{destination}}\u5411\u3051',
+  },
+
+  crowdCalendar: {
+    loadingCrowds: '\u6df7\u96d1\u5ea6\u3092\u5206\u6790\u4e2d\u2026',
+    title: '\u6df7\u96d1\u4e88\u5831',
+    crowdLow: '\u5c11\u306a\u3044',
+    crowdModerate: '\u666e\u901a',
+    crowdHigh: '\u591a\u3044',
+    crowdExtreme: '\u975e\u5e38\u306b\u591a\u3044',
+    pricesHigher: '\u6599\u91d1\u304c\u901a\u5e38\u6bd4\u7d04{{pct}}%\u9ad8\u3044',
+  },
+
+  liveFeed: {
+    tripPlanned: '{{name}}\u3055\u3093\u304c{{detail}}\u3092\u8a08\u753b\u3057\u307e\u3057\u305f',
+    flightSearched: '{{name}}\u3055\u3093\u304c{{detail}}\u3092\u691c\u7d22',
+    destinationTrending: '{{destination}}\u304c\u30c8\u30ec\u30f3\u30c9\u4e2d',
+    minutesAgo: '{{minutes}}\u5206\u524d',
+  },
+
   notFound: {
     title: '\u30da\u30fc\u30b8\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093',
     subtitle: '\u3053\u306e\u30da\u30fc\u30b8\u306f\u5b58\u5728\u3057\u307e\u305b\u3093\u3002',

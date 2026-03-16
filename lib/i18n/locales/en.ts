@@ -682,6 +682,102 @@ const en = {
   },
 
   // ---------------------------------------------------------------------------
+  // Destination intelligence dashboard
+  // ---------------------------------------------------------------------------
+  destination: {
+    localTime: 'Local time',
+    rightNow: 'Right now',
+    airQuality: 'Air quality',
+    safety: 'Safety',
+    weatherRainy: 'Rainy',
+    weatherHot: 'Hot',
+    weatherWarm: 'Warm',
+    weatherCool: 'Cool',
+    rainChance: '{{pct}}% rain',
+    safetyVerySafe: 'Very Safe',
+    safetySafe: 'Safe',
+    safetyModerate: 'Moderate',
+    safetyUseCaution: 'Use Caution',
+    upcomingHolidays: 'Upcoming holidays',
+    planTripCta: 'Plan a trip to {{destination}}',
+    loadingLiveData: 'Loading live data\u2026',
+  },
+
+  // ---------------------------------------------------------------------------
+  // Dual clock + jet lag widget
+  // ---------------------------------------------------------------------------
+  dualClock: {
+    title: 'Time zones',
+    here: 'Here',
+    recoveryDays: '~{{days}} days to adjust',
+    noJetLag: 'No significant jet lag',
+    jetLagSevere: 'Severe jet lag',
+    jetLagModerate: 'Moderate jet lag',
+    jetLagMild: 'Mild jet lag',
+  },
+
+  // ---------------------------------------------------------------------------
+  // Golden hour photography card
+  // ---------------------------------------------------------------------------
+  goldenHour: {
+    title: 'Golden Hour',
+    morning: 'Morning',
+    evening: 'Evening',
+    bestPhotoWindow: 'Best Photo Window',
+    bestPhotoTip: 'Shoot during golden hour for warm, soft light that flatters landscapes and portraits.',
+  },
+
+  // ---------------------------------------------------------------------------
+  // Cost comparison widget
+  // ---------------------------------------------------------------------------
+  costComparison: {
+    title: 'Your dollar abroad',
+    tierBudget: 'Budget',
+    tierComfort: 'Comfort',
+    tierLuxury: 'Luxury',
+    dailyBudget: 'Daily budget',
+    savingsText: 'Save ${{amount}}/day by choosing {{destination}} ({{comparison}})',
+    cheapestOption: 'cheapest option',
+    vsComparison: 'vs {{dest}}',
+    detailStay: 'Stay',
+    detailMeal: 'Meal',
+    detailTransport: 'Transport',
+    perDay: '${{amount}}/day',
+  },
+
+  // ---------------------------------------------------------------------------
+  // Currency sparkline
+  // ---------------------------------------------------------------------------
+  currencySparkline: {
+    bestRate: 'BEST RATE',
+    trendLabel: '{{sign}}{{pct}}% (30-day)',
+    inDestination: 'in {{destination}}',
+  },
+
+  // ---------------------------------------------------------------------------
+  // Crowd forecast calendar
+  // ---------------------------------------------------------------------------
+  crowdCalendar: {
+    loadingCrowds: 'Analyzing crowd patterns\u2026',
+    title: 'Crowd forecast',
+    crowdLow: 'Low',
+    crowdModerate: 'Moderate',
+    crowdHigh: 'High',
+    crowdExtreme: 'Extreme',
+    pricesHigher: 'Prices ~{{pct}}% higher than normal',
+  },
+
+  // ---------------------------------------------------------------------------
+  // Live feed ticker (social proof)
+  // ---------------------------------------------------------------------------
+  liveFeed: {
+    tripPlanned: '{{name}} just planned {{detail}}',
+    flightSearched: '{{name}} searched {{detail}}',
+    destinationTrending: '{{destination}} is {{detail}}',
+    minutesAgo: '{{minutes}}m ago',
+  },
+
+  // ---------------------------------------------------------------------------
   // Not found
   // ---------------------------------------------------------------------------
   notFound: {

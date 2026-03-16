@@ -584,6 +584,81 @@ const es: TranslationKeys = {
     featureRequest: 'Solicitar funci\u00f3n',
   },
 
+  destination: {
+    localTime: 'Hora local',
+    rightNow: 'Ahora mismo',
+    airQuality: 'Calidad del aire',
+    safety: 'Seguridad',
+    weatherRainy: 'Lluvioso',
+    weatherHot: 'Caluroso',
+    weatherWarm: 'C\u00e1lido',
+    weatherCool: 'Fresco',
+    rainChance: '{{pct}}% de lluvia',
+    safetyVerySafe: 'Muy seguro',
+    safetySafe: 'Seguro',
+    safetyModerate: 'Moderado',
+    safetyUseCaution: 'Precauci\u00f3n',
+    upcomingHolidays: 'Festivos pr\u00f3ximos',
+    planTripCta: 'Planear un viaje a {{destination}}',
+    loadingLiveData: 'Cargando datos en vivo\u2026',
+  },
+
+  dualClock: {
+    title: 'Husos horarios',
+    here: 'Aqu\u00ed',
+    recoveryDays: '~{{days}} d\u00edas para adaptarse',
+    noJetLag: 'Sin jet lag significativo',
+    jetLagSevere: 'Jet lag severo',
+    jetLagModerate: 'Jet lag moderado',
+    jetLagMild: 'Jet lag leve',
+  },
+
+  goldenHour: {
+    title: 'Hora dorada',
+    morning: 'Ma\u00f1ana',
+    evening: 'Tarde',
+    bestPhotoWindow: 'Mejor momento para fotos',
+    bestPhotoTip: 'Dispara durante la hora dorada para conseguir una luz c\u00e1lida y suave que favorece paisajes y retratos.',
+  },
+
+  costComparison: {
+    title: 'Tu d\u00f3lar en el extranjero',
+    tierBudget: 'Econ\u00f3mico',
+    tierComfort: 'C\u00f3modo',
+    tierLuxury: 'Lujo',
+    dailyBudget: 'Presupuesto diario',
+    savingsText: 'Ahorra ${{amount}}/d\u00eda eligiendo {{destination}} ({{comparison}})',
+    cheapestOption: 'opci\u00f3n m\u00e1s barata',
+    vsComparison: 'vs {{dest}}',
+    detailStay: 'Alojamiento',
+    detailMeal: 'Comida',
+    detailTransport: 'Transporte',
+    perDay: '${{amount}}/d\u00eda',
+  },
+
+  currencySparkline: {
+    bestRate: 'MEJOR TASA',
+    trendLabel: '{{sign}}{{pct}}% (30 d\u00edas)',
+    inDestination: 'en {{destination}}',
+  },
+
+  crowdCalendar: {
+    loadingCrowds: 'Analizando afluencia de visitantes\u2026',
+    title: 'Previsi\u00f3n de afluencia',
+    crowdLow: 'Baja',
+    crowdModerate: 'Moderada',
+    crowdHigh: 'Alta',
+    crowdExtreme: 'Extrema',
+    pricesHigher: 'Precios ~{{pct}}% m\u00e1s altos de lo normal',
+  },
+
+  liveFeed: {
+    tripPlanned: '{{name}} acaba de planear {{detail}}',
+    flightSearched: '{{name}} busc\u00f3 {{detail}}',
+    destinationTrending: '{{destination}} est\u00e1 en tendencia',
+    minutesAgo: 'hace {{minutes}} min',
+  },
+
   notFound: {
     title: 'P\u00e1gina no encontrada',
     subtitle: 'Esta p\u00e1gina no existe.',

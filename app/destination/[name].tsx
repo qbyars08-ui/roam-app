@@ -235,21 +235,21 @@ export default function DestinationDashboard() {
     if (!data.weather || data.weather.length === 0) return null;
     const today = data.weather[0];
     return {
-      temp: `${Math.round(today.tempMax)}°`,
-      description: today.precipitationChance > 50 ? 'Rainy' : today.tempMax > 28 ? 'Hot' : today.tempMax > 18 ? 'Warm' : 'Cool',
-      rainChance: `${today.precipitationChance}% rain`,
+      temp: `${Math.round(today.tempMax)}\u00b0`,
+      description: today.precipitationChance > 50 ? t('destination.weatherRainy') : today.tempMax > 28 ? t('destination.weatherHot') : today.tempMax > 18 ? t('destination.weatherWarm') : t('destination.weatherCool'),
+      rainChance: t('destination.rainChance', { pct: today.precipitationChance }),
     };
-  }, [data.weather]);
+  }, [data.weather, t]);
 
   // Safety badge
   const safetyBadge = useMemo(() => {
     if (!data.safety) return null;
     const score = data.safety.safetyScore;
-    if (score >= 80) return { label: 'Very Safe', color: COLORS.sage };
-    if (score >= 60) return { label: 'Safe', color: COLORS.sage };
-    if (score >= 40) return { label: 'Moderate', color: COLORS.gold };
-    return { label: 'Use Caution', color: COLORS.coral };
-  }, [data.safety]);
+    if (score >= 80) return { label: t('destination.safetyVerySafe'), color: COLORS.sage };
+    if (score >= 60) return { label: t('destination.safetySafe'), color: COLORS.sage };
+    if (score >= 40) return { label: t('destination.safetyModerate'), color: COLORS.gold };
+    return { label: t('destination.safetyUseCaution'), color: COLORS.coral };
+  }, [data.safety, t]);
 
   // Dates for crowd calendar (next 14 days)
   const crowdDates = useMemo(() => {
@@ -286,28 +286,28 @@ export default function DestinationDashboard() {
         <View style={styles.statsGrid}>
           <StatCard
             icon={data.localTime ? Globe : Globe}
-            label="Local time"
+            label={t('destination.localTime')}
             value={data.localTime ?? '--:--'}
             subValue={data.timezone?.split('/')[1]?.replace('_', ' ') ?? undefined}
             accentColor={COLORS.sage}
           />
           <StatCard
             icon={Thermometer}
-            label="Right now"
+            label={t('destination.rightNow')}
             value={weatherSummary?.temp ?? '--'}
             subValue={weatherSummary?.description}
             accentColor={COLORS.gold}
           />
           <StatCard
             icon={Wind}
-            label="Air quality"
+            label={t('destination.airQuality')}
             value={data.airQuality?.label ?? '--'}
             subValue={data.airQuality ? `AQI ${data.airQuality.aqi}` : undefined}
             accentColor={data.airQuality && data.airQuality.aqi > 100 ? COLORS.coral : COLORS.sage}
           />
           <StatCard
             icon={Shield}
-            label="Safety"
+            label={t('destination.safety')}
             value={safetyBadge?.label ?? '--'}
             subValue={data.safety ? `${data.safety.safetyScore}/100` : undefined}
             accentColor={safetyBadge?.color ?? COLORS.sage}
@@ -329,12 +329,12 @@ export default function DestinationDashboard() {
         {/* Upcoming holidays */}
         {data.holidays.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Upcoming holidays</Text>
+            <Text style={styles.sectionTitle}>{t('destination.upcomingHolidays')}</Text>
             {data.holidays.slice(0, 3).map((h) => (
               <View key={h.date} style={styles.holidayRow}>
                 <View style={styles.holidayDateBadge}>
                   <Text style={styles.holidayDateText}>
-                    {new Date(h.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    {new Date(h.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                   </Text>
                 </View>
                 <View>
@@ -386,14 +386,14 @@ export default function DestinationDashboard() {
           onPress={handlePlanTrip}
         >
           <Sparkles size={20} color={COLORS.bg} strokeWidth={2} />
-          <Text style={styles.ctaText}>Plan a trip to {destination}</Text>
+          <Text style={styles.ctaText}>{t('destination.planTripCta', { destination })}</Text>
         </Pressable>
 
         {/* Loading indicator for remaining data */}
         {loading && (
           <View style={styles.loadingRow}>
             <ActivityIndicator size="small" color={COLORS.sage} />
-            <Text style={styles.loadingText}>Loading live data...</Text>
+            <Text style={styles.loadingText}>{t('destination.loadingLiveData')}</Text>
           </View>
         )}
       </ScrollView>

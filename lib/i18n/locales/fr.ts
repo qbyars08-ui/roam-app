@@ -584,6 +584,81 @@ const fr: TranslationKeys = {
     featureRequest: 'Demande de fonctionnalit\u00e9',
   },
 
+  destination: {
+    localTime: 'Heure locale',
+    rightNow: 'En ce moment',
+    airQuality: 'Qualit\u00e9 de l\u2019air',
+    safety: 'S\u00e9curit\u00e9',
+    weatherRainy: 'Pluvieux',
+    weatherHot: 'Chaud',
+    weatherWarm: 'Doux',
+    weatherCool: 'Frais',
+    rainChance: '{{pct}}% de pluie',
+    safetyVerySafe: 'Tr\u00e8s s\u00fbr',
+    safetySafe: 'S\u00fbr',
+    safetyModerate: 'Mod\u00e9r\u00e9',
+    safetyUseCaution: 'Prudence',
+    upcomingHolidays: 'Jours f\u00e9ri\u00e9s \u00e0 venir',
+    planTripCta: 'Planifier un voyage \u00e0 {{destination}}',
+    loadingLiveData: 'Chargement des donn\u00e9es en direct\u2026',
+  },
+
+  dualClock: {
+    title: 'Fuseaux horaires',
+    here: 'Ici',
+    recoveryDays: '~{{days}} jours pour s\u2019adapter',
+    noJetLag: 'Pas de d\u00e9calage horaire significatif',
+    jetLagSevere: 'D\u00e9calage horaire s\u00e9v\u00e8re',
+    jetLagModerate: 'D\u00e9calage horaire mod\u00e9r\u00e9',
+    jetLagMild: 'D\u00e9calage horaire l\u00e9ger',
+  },
+
+  goldenHour: {
+    title: 'Heure dor\u00e9e',
+    morning: 'Matin',
+    evening: 'Soir',
+    bestPhotoWindow: 'Meilleure fen\u00eatre photo',
+    bestPhotoTip: 'Photographiez pendant l\u2019heure dor\u00e9e pour une lumi\u00e8re chaude et douce qui sublime les paysages et portraits.',
+  },
+
+  costComparison: {
+    title: 'Votre dollar \u00e0 l\u2019\u00e9tranger',
+    tierBudget: 'Budget',
+    tierComfort: 'Confort',
+    tierLuxury: 'Luxe',
+    dailyBudget: 'Budget quotidien',
+    savingsText: '\u00c9conomisez ${{amount}}/jour en choisissant {{destination}} ({{comparison}})',
+    cheapestOption: 'option la moins ch\u00e8re',
+    vsComparison: 'vs {{dest}}',
+    detailStay: 'H\u00e9bergement',
+    detailMeal: 'Repas',
+    detailTransport: 'Transport',
+    perDay: '${{amount}}/jour',
+  },
+
+  currencySparkline: {
+    bestRate: 'MEILLEUR TAUX',
+    trendLabel: '{{sign}}{{pct}}% (30\u00a0jours)',
+    inDestination: '\u00e0 {{destination}}',
+  },
+
+  crowdCalendar: {
+    loadingCrowds: 'Analyse de la fr\u00e9quentation\u2026',
+    title: 'Pr\u00e9vision d\u2019affluence',
+    crowdLow: 'Faible',
+    crowdModerate: 'Mod\u00e9r\u00e9e',
+    crowdHigh: '\u00c9lev\u00e9e',
+    crowdExtreme: 'Extr\u00eame',
+    pricesHigher: 'Prix ~{{pct}}% plus \u00e9lev\u00e9s que la normale',
+  },
+
+  liveFeed: {
+    tripPlanned: '{{name}} vient de planifier {{detail}}',
+    flightSearched: '{{name}} a recherch\u00e9 {{detail}}',
+    destinationTrending: '{{destination}} est en tendance',
+    minutesAgo: 'il y a {{minutes}}\u00a0min',
+  },
+
   notFound: {
     title: 'Page introuvable',
     subtitle: 'Cette page n\u2019existe pas.',
