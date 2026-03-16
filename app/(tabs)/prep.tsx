@@ -155,7 +155,7 @@ function OfflineBanner() {
   return (
     <View style={styles.offlineBanner}>
       <WifiOff size={14} color={COLORS.bg} />
-      <Text style={styles.offlineText}>Offline — all data available</Text>
+      <Text style={styles.offlineText}>Everything you need, no signal required</Text>
     </View>
   );
 }
@@ -230,7 +230,7 @@ const editorialHeaderStyles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 24,
-    gap: 6,
+    gap: 8,
   } as ViewStyle,
   destination: {
     fontFamily: FONTS.header,
@@ -287,7 +287,7 @@ function ScheduleTab({ itinerary }: { itinerary: Itinerary | null }) {
       <View style={styles.tabContent}>
         <Text style={styles.scheduleEmptyTitle}>No schedule yet</Text>
         <Text style={styles.noDataText}>
-          Generate a trip in Plan to see your day-by-day schedule here.
+          Plan a trip first — your prep intel loads after
         </Text>
       </View>
     );
@@ -337,7 +337,7 @@ function OverviewTab({ safety }: { safety: SafetyData }) {
     <View style={styles.tabContent}>
       <View style={styles.overviewRow}>
         <Text style={styles.overviewLabel}>Travel Advisory</Text>
-        <View style={[styles.advisoryBadge, { backgroundColor: advisoryColor + '20', borderColor: advisoryColor }]}>
+        <View style={[styles.advisoryBadge, { backgroundColor: advisoryColor + '1A', borderColor: advisoryColor }]}>
           <Text
             style={[
               styles.advisoryBadgeText,
@@ -481,6 +481,9 @@ function SOSButton({
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         style={({ pressed }) => [styles.sosButton, pressed && { opacity: 0.9 }]}
+        accessibilityLabel="SOS emergency button — hold for 2 seconds to activate"
+        accessibilityRole="button"
+        accessibilityHint="Hold for 2 seconds to call emergency services"
       >
         <Animated.View style={[styles.sosButtonInner, { opacity: pulse }]}>
           <ShieldAlert size={48} color={COLORS.bg} />
@@ -540,6 +543,9 @@ function EmergencyNumbers({ data }: { data: EmergencyData }) {
             style={emergencyStripStyles.item}
             onPress={() => openTel(r.number)}
             activeOpacity={0.7}
+            accessibilityLabel={`Call ${r.label}: ${r.number}`}
+            accessibilityRole="button"
+            accessibilityHint={`Dials ${r.number}`}
           >
             <r.icon size={16} color={COLORS.coral} />
             <Text style={emergencyStripStyles.itemLabel}>{r.label}</Text>
@@ -607,11 +613,24 @@ function EmbassyCard({ data }: { data: EmergencyData }) {
     <View style={styles.embassyCard}>
       <Text style={styles.embassyLabel}>Nearest Embassy</Text>
       <Text style={styles.embassyName}>US Embassy — {data.usEmbassy.city}</Text>
-      <TouchableOpacity style={styles.embassyAddressRow} onPress={openMap} activeOpacity={0.7}>
+      <TouchableOpacity
+        style={styles.embassyAddressRow}
+        onPress={openMap}
+        activeOpacity={0.7}
+        accessibilityLabel={`Open map to US Embassy at ${data.usEmbassy.address}`}
+        accessibilityRole="link"
+      >
         <MapPin size={12} color={COLORS.sage} />
         <Text style={[styles.embassyAddress, { color: COLORS.sage }]}>{data.usEmbassy.address}</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.embassyPhoneRow} onPress={openTel} activeOpacity={0.7}>
+      <TouchableOpacity
+        style={styles.embassyPhoneRow}
+        onPress={openTel}
+        activeOpacity={0.7}
+        accessibilityLabel={`Call US Embassy: ${data.usEmbassy.phone}`}
+        accessibilityRole="button"
+        accessibilityHint={`Dials ${data.usEmbassy.phone}`}
+      >
         <Text style={styles.embassyPhone}>{data.usEmbassy.phone}</Text>
         <Phone size={14} color={COLORS.sage} />
       </TouchableOpacity>
@@ -838,6 +857,8 @@ function HealthTab({
           styles.bodyIntelCta,
           pressed && { opacity: 0.7 },
         ]}
+        accessibilityLabel="Open Body Intel — symptom checker, emergency phrases and local medication"
+        accessibilityRole="button"
       >
         <ShieldCheck size={20} color={COLORS.sage} />
         <View style={{ flex: 1 }}>
@@ -881,6 +902,9 @@ function LanguageTab({ pack }: { pack: LanguagePack }) {
             style={styles.phrasePlayBtn}
             onPress={() => handlePlay(phrase)}
             activeOpacity={0.7}
+            accessibilityLabel={`Play pronunciation of ${phrase.english}`}
+            accessibilityRole="button"
+            accessibilityHint={`Plays audio for ${phrase.local}`}
           >
             <Volume2 size={18} color={COLORS.creamMuted} />
           </TouchableOpacity>
@@ -909,7 +933,7 @@ function VisaTab({
       <View style={styles.tabContent}>
         <Text style={styles.noDataText}>Visa data not available for this destination.</Text>
         <Text style={styles.visaReminder}>
-          Check before you book. Contact your embassy for requirements.
+          Visa intel — know before you go. Contact your embassy for requirements.
         </Text>
       </View>
     );
@@ -929,7 +953,7 @@ function VisaTab({
 
   return (
     <View style={styles.tabContent}>
-      <Text style={styles.visaReminder}>Check before you book</Text>
+      <Text style={styles.visaReminder}>Visa intel — know before you go</Text>
       <View
         style={[
           styles.visaHeroCard,
@@ -969,6 +993,8 @@ function VisaTab({
             Linking.openURL(applyUrl).catch(() => {});
           }}
           activeOpacity={0.7}
+          accessibilityLabel="Apply for visa online — opens official government website"
+          accessibilityRole="link"
         >
           <ExternalLink size={14} color={COLORS.sage} />
           <Text style={styles.applyOnlineText}>Apply Online</Text>
@@ -1031,10 +1057,10 @@ function CurrencyTab({
 
       <Text style={styles.currencySectionLabel}>Payment Tips</Text>
       {[
-        'Notify your bank before traveling to avoid card blocks',
-        'Carry small bills for street vendors and taxis',
-        'Compare exchange rates — airport rates are typically worst',
-        'Use no-foreign-fee cards when possible',
+        'Text your bank before departure — or your card gets blocked on day one',
+        'Small bills win at street food stalls and local taxis',
+        'Airport exchange = tourist tax. ATMs or local banks only',
+        'No-foreign-fee card? Bring it. It pays for itself in a weekend',
       ].map((tip, i) => (
         <View key={i} style={styles.currencyTipRow}>
           <View style={styles.currencyTipDot} />
@@ -1091,6 +1117,8 @@ function ConnectivityTab({
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             Linking.openURL(esim.url).catch(() => {});
           }}
+          accessibilityLabel={`Open ${esim.name} — ${esim.note}`}
+          accessibilityRole="link"
         >
           <View style={{ flex: 1 }}>
             <Text style={styles.esimName}>{esim.name}</Text>
@@ -1107,7 +1135,7 @@ function ConnectivityTab({
         </View>
         <Text style={styles.infoCardBody}>Plug type: {plugType}</Text>
         <Text style={styles.connTip}>
-          Cafes and co-working spaces usually have free WiFi. Download offline maps before you go.
+          Hit a cafe or co-working spot for reliable WiFi. Download offline maps before you leave — not when you land.
         </Text>
       </View>
     </View>
@@ -1301,7 +1329,7 @@ function JetLagTab({ destination }: { destination: string }) {
   return (
     <View style={styles.tabContent}>
       {/* Severity hero */}
-      <View style={[jetLagStyles.heroCard, { borderColor: severityColor + '30' }]}>
+      <View style={[jetLagStyles.heroCard, { borderColor: severityColor + '26' }]}>
         <View style={jetLagStyles.heroRow}>
           <View>
             <Text style={[jetLagStyles.heroHours, { color: severityColor }]}>
@@ -1388,7 +1416,7 @@ const jetLagStyles = StyleSheet.create({
   recoveryBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
   } as ViewStyle,
@@ -1888,6 +1916,9 @@ function PrepScreen() {
                       styles.pill,
                       isActive && styles.pillActive,
                     ]}
+                    accessibilityLabel={`${'labelKey' in s ? t(s.labelKey) : s.label} section${isActive ? ', selected' : ''}`}
+                    accessibilityRole="tab"
+                    accessibilityState={{ selected: isActive }}
                   >
                     <Text
                       style={[
@@ -1961,6 +1992,8 @@ function PrepScreen() {
                     { borderLeftColor: COLORS.coral },
                     pressed && { opacity: 0.7 },
                   ]}
+                  accessibilityLabel="Open Emergency Medical Card — your allergies, meds and blood type in local language"
+                  accessibilityRole="button"
                 >
                   <Heart size={20} color={COLORS.coral} />
                   <View style={{ flex: 1 }}>
@@ -2031,6 +2064,8 @@ function PrepScreen() {
               { borderLeftColor: COLORS.gold, marginTop: SPACING.lg },
               pressed && { opacity: 0.7 },
             ]}
+            accessibilityLabel="Open Before You Land — pre-departure brief with weather, currency and time zone"
+            accessibilityRole="button"
           >
             <Plane size={20} color={COLORS.gold} />
             <View style={{ flex: 1 }}>
@@ -2064,6 +2099,9 @@ function PrepScreen() {
                       styles.destChip,
                       isActive && styles.destChipActive,
                     ]}
+                    accessibilityLabel={`Select ${d.label}${isActive ? ', currently selected' : ''}`}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isActive }}
                   >
                     <Text
                       style={[
@@ -2102,7 +2140,7 @@ const styles = StyleSheet.create({
   offlineBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     backgroundColor: COLORS.coral,
     padding: 8,
     marginBottom: SPACING.md,
@@ -2165,7 +2203,7 @@ const styles = StyleSheet.create({
   pillsScroll: {
     marginBottom: SPACING.lg,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.sage + '20',
+    borderBottomColor: COLORS.sageBorder,
   } as ViewStyle,
   pillsContent: {
     flexDirection: 'row',
@@ -2342,7 +2380,7 @@ const styles = StyleSheet.create({
   embassyAddressRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     marginBottom: SPACING.xs,
   } as ViewStyle,
   embassyAddress: {
@@ -2396,7 +2434,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     padding: 16,
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   } as ViewStyle,
   healthQuickSmallLabel: {
     fontFamily: FONTS.mono,
@@ -2597,6 +2635,10 @@ const styles = StyleSheet.create({
   } as TextStyle,
   phrasePlayBtn: {
     padding: SPACING.sm,
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   } as ViewStyle,
 
   visaReminder: {

@@ -1,1462 +1,1539 @@
 // =============================================================================
-// ROAM — People Tab (social layer — real data from Supabase)
-// Sub-tabs: Feed | Squad | Groups | Meetups | Matches
+// ROAM — People Tab (rebuilt from scratch)
+// Three states: No Profile | Profile + No Trip | Full Experience
 // =============================================================================
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Animated,
   Dimensions,
-  Image,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
+  TextInput,
   View,
-  type ImageStyle,
-  type TextStyle,
-  type ViewStyle,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
+  ArrowRight,
   Calendar,
-  Camera,
+  Check,
+  Compass,
+  Eye,
+  EyeOff,
+  Globe,
   Heart,
   MapPin,
-  MessageCircle,
-  Play,
-  Plus,
+  Moon,
+  Mountain,
   Send,
-  Users,
-  Zap,
+  Star,
+  UserPlus,
+  Utensils,
+  Wallet,
 } from 'lucide-react-native';
-import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../lib/store';
-import { useTripPresence } from '../../lib/hooks/useTripPresence';
-import { useMatches } from '../../lib/hooks/useMatches';
 import { useSocialProfile } from '../../lib/hooks/useSocialProfile';
-import { getPublicTrips, findBreakfastListings } from '../../lib/social';
-import TripPresenceCard from '../../components/social/TripPresenceCard';
-import MatchCard from '../../components/social/MatchCard';
+import { useTripPresence } from '../../lib/hooks/useTripPresence';
+import { trackEvent } from '../../lib/analytics';
 import { track } from '../../lib/analytics';
-import { captureEvent } from '../../lib/posthog';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
-import { getAllPhotos } from '../../lib/trip-photos';
-import { getDestinationTheme } from '../../lib/destination-themes';
-import type { TripPhoto } from '../../lib/types/trip-photos';
-import type { PublicTrip, BreakfastClubListing, SocialProfile } from '../../lib/types/social';
-import { MEETUP_TYPE_LABELS } from '../../lib/types/social';
+import { COLORS, FONTS, SPACING, RADIUS, MAGAZINE } from '../../lib/constants';
+import type { SocialProfile } from '../../lib/types/social';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// ---------------------------------------------------------------------------
-// Sub-tab chips
-// ---------------------------------------------------------------------------
-type PeopleTab = 'feed' | 'squad' | 'groups' | 'meetups' | 'matches';
+// =============================================================================
+// TRAVEL STYLE DEFINITIONS
+// =============================================================================
+type TravelStyleOption = {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+};
 
-const TAB_LABELS: { id: PeopleTab; label: string }[] = [
-  { id: 'feed', label: 'Feed' },
-  { id: 'squad', label: 'Squad' },
-  { id: 'groups', label: 'Groups' },
-  { id: 'meetups', label: 'Meetups' },
-  { id: 'matches', label: 'Matches' },
+const TRAVEL_STYLES: TravelStyleOption[] = [
+  { id: 'solo-explorer', label: 'Solo explorer', icon: <Compass size={20} color={COLORS.creamSoft} strokeWidth={2} /> },
+  { id: 'cultural-deep-dive', label: 'Cultural deep-dive', icon: <Globe size={20} color={COLORS.creamSoft} strokeWidth={2} /> },
+  { id: 'adventure-seeker', label: 'Adventure seeker', icon: <Mountain size={20} color={COLORS.creamSoft} strokeWidth={2} /> },
+  { id: 'food-obsessed', label: 'Food obsessed', icon: <Utensils size={20} color={COLORS.creamSoft} strokeWidth={2} /> },
+  { id: 'slow-traveler', label: 'Slow traveler', icon: <Heart size={20} color={COLORS.creamSoft} strokeWidth={2} /> },
+  { id: 'night-owl', label: 'Night owl', icon: <Moon size={20} color={COLORS.creamSoft} strokeWidth={2} /> },
+  { id: 'budget-master', label: 'Budget master', icon: <Wallet size={20} color={COLORS.creamSoft} strokeWidth={2} /> },
+  { id: 'no-compromises', label: 'No compromises', icon: <Star size={20} color={COLORS.creamSoft} strokeWidth={2} /> },
 ];
 
-// ---------------------------------------------------------------------------
-// Setup CTA Card
-// ---------------------------------------------------------------------------
-const SetupProfileCta = React.memo(function SetupProfileCta({
-  onPress,
-}: {
-  onPress: () => void;
-}) {
+const LANGUAGE_OPTIONS = [
+  'English', 'Spanish', 'French', 'German', 'Japanese',
+  'Mandarin', 'Portuguese', 'Italian', 'Arabic', 'Korean',
+  'Dutch', 'Other',
+];
+
+// =============================================================================
+// PROFILE CREATION STATE
+// =============================================================================
+type ProfileDraft = {
+  name: string;
+  homeCity: string;
+  travelStyles: string[];
+  languages: string[];
+  bio: string;
+  firstTripDestination: string;
+  firstTripStartDate: string;
+  firstTripEndDate: string;
+};
+
+const EMPTY_DRAFT: ProfileDraft = {
+  name: '',
+  homeCity: '',
+  travelStyles: [],
+  languages: [],
+  bio: '',
+  firstTripDestination: '',
+  firstTripStartDate: '',
+  firstTripEndDate: '',
+};
+
+// =============================================================================
+// COMPATIBILITY SCORE CALCULATOR
+// =============================================================================
+function computeCompatibility(
+  myStyles: string[],
+  myLanguages: string[],
+  myTripCount: number,
+  theirStyles: string[],
+  theirLanguages: string[],
+  theirTripCount: number,
+  datesOverlap: boolean,
+): number {
+  let score = 0;
+  // Shared travel styles: 30 pts each, max 3
+  const sharedStyles = myStyles.filter((st) => theirStyles.includes(st));
+  score += Math.min(sharedStyles.length, 3) * 30;
+  // Overlapping dates
+  if (datesOverlap) score += 10;
+  // Shared language
+  const sharedLangs = myLanguages.filter((l) => theirLanguages.includes(l));
+  if (sharedLangs.length > 0) score += 20;
+  // Similar trip count (within 3)
+  if (Math.abs(myTripCount - theirTripCount) <= 3) score += 10;
+  return Math.min(score, 100);
+}
+
+// =============================================================================
+// CONNECTION STATUS TYPE
+// =============================================================================
+type ConnectionStatus = 'none' | 'requested' | 'connected';
+
+// =============================================================================
+// MOCK DATA FOR DEMO (replaces Supabase reads until tables exist)
+// =============================================================================
+type MockRoamer = {
+  id: string;
+  name: string;
+  homeCity: string;
+  travelStyles: string[];
+  languages: string[];
+  bio: string;
+  tripCount: number;
+  destination: string;
+  arrivalDate: string;
+  departureDate: string;
+  currentlyThere: boolean;
+};
+
+function getMockRoamers(destination: string): MockRoamer[] {
+  return [
+    {
+      id: 'mock-1',
+      name: 'Lena K.',
+      homeCity: 'Berlin',
+      travelStyles: ['cultural-deep-dive', 'food-obsessed', 'slow-traveler'],
+      languages: ['English', 'German', 'French'],
+      bio: 'Film photographer with a thing for street food markets.',
+      tripCount: 12,
+      destination,
+      arrivalDate: new Date(Date.now() + 2 * 86400000).toISOString(),
+      departureDate: new Date(Date.now() + 14 * 86400000).toISOString(),
+      currentlyThere: false,
+    },
+    {
+      id: 'mock-2',
+      name: 'Marco T.',
+      homeCity: 'Lisbon',
+      travelStyles: ['adventure-seeker', 'night-owl', 'budget-master'],
+      languages: ['English', 'Portuguese', 'Spanish'],
+      bio: 'Surf and sunsets. Looking for hiking partners.',
+      tripCount: 8,
+      destination,
+      arrivalDate: new Date(Date.now() - 3 * 86400000).toISOString(),
+      departureDate: new Date(Date.now() + 7 * 86400000).toISOString(),
+      currentlyThere: true,
+    },
+    {
+      id: 'mock-3',
+      name: 'Yuki A.',
+      homeCity: 'Tokyo',
+      travelStyles: ['solo-explorer', 'food-obsessed', 'cultural-deep-dive'],
+      languages: ['English', 'Japanese'],
+      bio: 'Architecture nerd. Will walk 30k steps for the right coffee.',
+      tripCount: 15,
+      destination,
+      arrivalDate: new Date(Date.now() + 5 * 86400000).toISOString(),
+      departureDate: new Date(Date.now() + 12 * 86400000).toISOString(),
+      currentlyThere: false,
+    },
+  ];
+}
+
+function getMockDestinationCounts(): { destination: string; count: number }[] {
+  return [
+    { destination: 'Tokyo', count: 24 },
+    { destination: 'Lisbon', count: 18 },
+    { destination: 'Mexico City', count: 15 },
+    { destination: 'Bali', count: 31 },
+    { destination: 'Barcelona', count: 12 },
+    { destination: 'Seoul', count: 9 },
+  ];
+}
+
+// =============================================================================
+// SUB-COMPONENT: StepIndicator
+// =============================================================================
+const StepIndicator = React.memo<{ current: number; total: number }>(({ current, total }) => (
+  <View style={styles.stepRow}>
+    {Array.from({ length: total }, (_, i) => (
+      <View
+        key={i}
+        style={[
+          styles.stepDot,
+          i < current
+            ? styles.stepDotComplete
+            : i === current
+              ? styles.stepDotActive
+              : styles.stepDotInactive,
+        ]}
+      />
+    ))}
+  </View>
+));
+StepIndicator.displayName = 'StepIndicator';
+
+// =============================================================================
+// SUB-COMPONENT: TravelStyleCard
+// =============================================================================
+const TravelStyleCard = React.memo<{
+  item: TravelStyleOption;
+  selected: boolean;
+  onToggle: (id: string) => void;
+}>(({ item, selected, onToggle }) => {
+  const handlePress = useCallback(async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onToggle(item.id);
+  }, [item.id, onToggle]);
+
   return (
     <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [styles.ctaCard, { opacity: pressed ? 0.85 : 1 }]}
+      onPress={handlePress}
+      accessibilityLabel={`${item.label} travel style${selected ? ', selected' : ''}`}
+      style={[
+        styles.styleCard,
+        selected ? styles.styleCardSelected : styles.styleCardUnselected,
+      ]}
     >
-      <Zap size={28} color={COLORS.sage} strokeWidth={2} />
-      <Text style={styles.ctaTitle}>Set up your travel profile</Text>
-      <Text style={styles.ctaBody}>
-        Connect with other travelers going to the same places on the same dates.
+      <View style={styles.styleCardIcon}>{item.icon}</View>
+      <Text
+        style={[
+          styles.styleCardLabel,
+          selected ? styles.styleCardLabelSelected : styles.styleCardLabelUnselected,
+        ]}
+        numberOfLines={2}
+      >
+        {item.label}
       </Text>
-      <View style={styles.ctaBtn}>
-        <Text style={styles.ctaBtnText}>Create profile</Text>
-      </View>
+      {selected && (
+        <View style={styles.styleCardCheck}>
+          <Check size={14} color={COLORS.sage} strokeWidth={2} />
+        </View>
+      )}
     </Pressable>
   );
 });
+TravelStyleCard.displayName = 'TravelStyleCard';
 
-// ---------------------------------------------------------------------------
-// Photo Feed Card — Instagram-style trip photo in the social feed
-// ---------------------------------------------------------------------------
-const PhotoFeedCard = React.memo(function PhotoFeedCard({
-  photo,
-  tripDestination,
-  tripDays,
-  tripId,
-  onTapPhoto,
-  onTapStory,
-}: {
-  photo: TripPhoto;
-  tripDestination: string;
-  tripDays: number;
-  tripId: string;
-  onTapPhoto: () => void;
-  onTapStory: () => void;
-}) {
-  const [liked, setLiked] = useState(photo.isLiked);
-  const [likeCount, setLikeCount] = useState(photo.likesCount);
-  const theme = useMemo(() => getDestinationTheme(tripDestination), [tripDestination]);
-
-  const handleLike = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setLiked((prev) => !prev);
-    setLikeCount((prev) => (liked ? Math.max(0, prev - 1) : prev + 1));
-  }, [liked]);
+// =============================================================================
+// SUB-COMPONENT: LanguageChip
+// =============================================================================
+const LanguageChip = React.memo<{
+  label: string;
+  selected: boolean;
+  onToggle: (lang: string) => void;
+}>(({ label, selected, onToggle }) => {
+  const handlePress = useCallback(async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onToggle(label);
+  }, [label, onToggle]);
 
   return (
-    <View style={styles.feedCard}>
-      {/* Author header */}
-      <View style={styles.feedCardHeader}>
-        <View style={[styles.feedAvatar, { backgroundColor: theme.gradient[0] }]}>
-          <Text style={styles.feedAvatarEmoji}>{theme.emoji}</Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.feedAuthorName}>{tripDestination}</Text>
-          <Text style={styles.feedAuthorMeta}>
-            Day {photo.dayNumber} · {photo.timeSlot}
-          </Text>
-        </View>
-        <Pressable
-          onPress={onTapStory}
-          style={({ pressed }) => [
-            styles.feedStoryBtn,
-            { opacity: pressed ? 0.7 : 1 },
-          ]}
-        >
-          <Play size={12} color={COLORS.sage} strokeWidth={2.5} fill={COLORS.sage} />
-        </Pressable>
-      </View>
-
-      {/* Photo */}
-      <Pressable onPress={onTapPhoto}>
-        <Image
-          source={{ uri: photo.uri }}
-          style={styles.feedPhoto}
-          resizeMode="cover"
-        />
-        {photo.caption ? (
-          <View style={styles.feedPhotoCaption}>
-            <Text style={styles.feedPhotoCaptionText}>{photo.caption}</Text>
-          </View>
-        ) : null}
-      </Pressable>
-
-      {/* Actions */}
-      <View style={styles.feedActions}>
-        <Pressable onPress={handleLike} style={styles.feedActionBtn} hitSlop={8}>
-          <Heart
-            size={22}
-            color={liked ? COLORS.coral : COLORS.creamMuted}
-            strokeWidth={2}
-            fill={liked ? COLORS.coral : 'none'}
-          />
-          {likeCount > 0 && (
-            <Text style={[styles.feedActionCount, liked && { color: COLORS.coral }]}>
-              {likeCount}
-            </Text>
-          )}
-        </Pressable>
-        <Pressable onPress={onTapPhoto} style={styles.feedActionBtn} hitSlop={8}>
-          <Camera size={20} color={COLORS.creamMuted} strokeWidth={2} />
-        </Pressable>
-        <View style={{ flex: 1 }} />
-        <Text style={styles.feedTimestamp}>
-          {new Date(photo.createdAt).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-          })}
-        </Text>
-      </View>
-    </View>
+    <Pressable
+      onPress={handlePress}
+      accessibilityLabel={`${label}${selected ? ', selected' : ''}`}
+      style={[styles.langChip, selected ? styles.langChipSelected : styles.langChipUnselected]}
+    >
+      <Text
+        style={[
+          styles.langChipText,
+          selected ? styles.langChipTextSelected : styles.langChipTextUnselected,
+        ]}
+      >
+        {label}
+      </Text>
+    </Pressable>
   );
 });
+LanguageChip.displayName = 'LanguageChip';
 
-// ---------------------------------------------------------------------------
-// Trip Completion Card — shows when user completes a trip (no photos)
-// ---------------------------------------------------------------------------
-const TripCompletionCard = React.memo(function TripCompletionCard({
-  destination,
-  days,
-  vibes,
-  tripId,
-  onTapStory,
-  onTapAlbum,
-}: {
+// =============================================================================
+// SUB-COMPONENT: DestinationChip (for "ROAM This Month")
+// =============================================================================
+const DestinationChip = React.memo<{
   destination: string;
-  days: number;
-  vibes: string[];
-  tripId: string;
-  onTapStory: () => void;
-  onTapAlbum: () => void;
-}) {
-  const theme = useMemo(() => getDestinationTheme(destination), [destination]);
+  count: number;
+  onPress: (dest: string) => void;
+}>(({ destination, count, onPress }) => {
+  const handlePress = useCallback(async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onPress(destination);
+  }, [destination, onPress]);
 
   return (
-    <View style={styles.completionCard}>
-      <View style={[styles.completionGradient, { backgroundColor: theme.gradient[0] }]}>
-        <Text style={styles.completionEmoji}>{theme.emoji}</Text>
-        <Text style={styles.completionDest}>{destination}</Text>
-        <Text style={styles.completionMeta}>{days} days planned</Text>
-        {vibes.length > 0 && (
-          <View style={styles.completionVibes}>
-            {vibes.slice(0, 3).map((v) => (
-              <View key={v} style={styles.completionVibe}>
-                <Text style={styles.completionVibeText}>{v}</Text>
-              </View>
-            ))}
-          </View>
-        )}
+    <Pressable
+      onPress={handlePress}
+      accessibilityLabel={`${destination}, ${count} ROAMers`}
+      style={({ pressed }) => [styles.destChip, pressed && styles.pressed]}
+    >
+      <MapPin size={14} color={COLORS.sage} strokeWidth={2} />
+      <Text style={styles.destChipText}>{destination}</Text>
+      <Text style={styles.destChipCount}>{count}</Text>
+    </Pressable>
+  );
+});
+DestinationChip.displayName = 'DestinationChip';
+
+// =============================================================================
+// SUB-COMPONENT: RoamerProfileCard
+// =============================================================================
+const RoamerProfileCard = React.memo<{
+  roamer: MockRoamer;
+  compatibilityScore: number;
+  connectionStatus: ConnectionStatus;
+  onConnect: (id: string) => void;
+}>(({ roamer, compatibilityScore, connectionStatus, onConnect }) => {
+  const handleConnect = useCallback(async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    onConnect(roamer.id);
+  }, [roamer.id, onConnect]);
+
+  const buttonLabel = useMemo(() => {
+    if (connectionStatus === 'connected') return 'Connected';
+    if (connectionStatus === 'requested') return 'Requested';
+    return 'Connect';
+  }, [connectionStatus]);
+
+  const buttonStyle = useMemo(() => {
+    if (connectionStatus === 'connected') return styles.connectBtnConnected;
+    if (connectionStatus === 'requested') return styles.connectBtnRequested;
+    return styles.connectBtnDefault;
+  }, [connectionStatus]);
+
+  const buttonTextStyle = useMemo(() => {
+    if (connectionStatus === 'connected') return styles.connectBtnTextConnected;
+    if (connectionStatus === 'requested') return styles.connectBtnTextRequested;
+    return styles.connectBtnTextDefault;
+  }, [connectionStatus]);
+
+  return (
+    <View style={styles.roamerCard}>
+      <View style={styles.roamerCardHeader}>
+        <View style={styles.roamerNameRow}>
+          <Text style={styles.roamerName}>{roamer.name}</Text>
+          <Text style={styles.roamerScore}>{compatibilityScore}%</Text>
+        </View>
+        <View style={styles.roamerMeta}>
+          <MapPin size={12} color={COLORS.creamMuted} strokeWidth={2} />
+          <Text style={styles.roamerCity}>{roamer.homeCity}</Text>
+          {roamer.languages.length > 0 && (
+            <>
+              <Globe size={12} color={COLORS.creamMuted} strokeWidth={2} />
+              <Text style={styles.roamerLangs} numberOfLines={1}>
+                {roamer.languages.slice(0, 2).join(', ')}
+              </Text>
+            </>
+          )}
+        </View>
       </View>
-      <View style={styles.completionActions}>
+      <View style={styles.roamerTags}>
+        {roamer.travelStyles.slice(0, 3).map((travelStyle) => (
+          <View key={travelStyle} style={styles.roamerTag}>
+            <Text style={styles.roamerTagText}>
+              {TRAVEL_STYLES.find((ts) => ts.id === travelStyle)?.label ?? travelStyle}
+            </Text>
+          </View>
+        ))}
+      </View>
+      <View style={styles.roamerFooter}>
+        <Text style={styles.roamerBio} numberOfLines={1}>{roamer.bio}</Text>
         <Pressable
-          onPress={onTapStory}
-          style={({ pressed }) => [styles.completionBtn, { opacity: pressed ? 0.7 : 1 }]}
+          onPress={handleConnect}
+          accessibilityLabel={`${buttonLabel} with ${roamer.name}`}
+          style={({ pressed }) => [styles.connectBtn, buttonStyle, pressed && styles.pressed]}
+          disabled={connectionStatus === 'connected'}
         >
-          <Play size={14} color={COLORS.sage} strokeWidth={2.5} fill={COLORS.sage} />
-          <Text style={styles.completionBtnText}>Watch Story</Text>
-        </Pressable>
-        <Pressable
-          onPress={onTapAlbum}
-          style={({ pressed }) => [styles.completionBtn, { opacity: pressed ? 0.7 : 1 }]}
-        >
-          <Camera size={14} color={COLORS.cream} strokeWidth={2} />
-          <Text style={styles.completionBtnText}>Add Photos</Text>
+          {connectionStatus === 'none' && (
+            <UserPlus size={14} color={COLORS.bg} strokeWidth={2} />
+          )}
+          <Text style={[styles.connectBtnText, buttonTextStyle]}>{buttonLabel}</Text>
         </Pressable>
       </View>
     </View>
   );
 });
+RoamerProfileCard.displayName = 'RoamerProfileCard';
 
-// ---------------------------------------------------------------------------
-// Feed tab
-// ---------------------------------------------------------------------------
-const FeedTab = React.memo(function FeedTab({
-  profile,
-  router,
-}: {
-  profile: SocialProfile | null;
-  router: ReturnType<typeof useRouter>;
-}) {
-  const { feed, myPresences, loading } = useTripPresence();
-  const trips = useAppStore((s) => s.trips);
-  const [photos, setPhotos] = useState<TripPhoto[]>([]);
+// =============================================================================
+// SUB-COMPONENT: EmptyMatchState
+// =============================================================================
+const EmptyMatchState = React.memo<{ destination: string }>(({ destination }) => (
+  <View style={styles.emptyState}>
+    <Text style={styles.emptyText}>
+      No other ROAMers heading to {destination} yet. You'd be the first.
+    </Text>
+    <Pressable
+      accessibilityLabel="Invite a friend"
+      style={({ pressed }) => [styles.inviteBtn, pressed && styles.pressed]}
+    >
+      <Send size={16} color={COLORS.sage} strokeWidth={2} />
+      <Text style={styles.inviteBtnText}>Invite a friend</Text>
+      <ArrowRight size={14} color={COLORS.sage} strokeWidth={2} />
+    </Pressable>
+  </View>
+));
+EmptyMatchState.displayName = 'EmptyMatchState';
 
-  // Load user's photos for the feed
+// =============================================================================
+// MAIN COMPONENT
+// =============================================================================
+export default function PeopleTab() {
+  const insets = useSafeAreaInsets();
+  const { profile: socialProfile, loading: profileLoading, upsert } = useSocialProfile();
+  const { myPresences, postPresence } = useTripPresence();
+  const trips = useAppStore((st) => st.trips);
+
+  // ---------------------------------------------------------------------------
+  // Profile creation state
+  // ---------------------------------------------------------------------------
+  const [step, setStep] = useState(0);
+  const [draft, setDraft] = useState<ProfileDraft>({ ...EMPTY_DRAFT });
+  const [saving, setSaving] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  // ---------------------------------------------------------------------------
+  // Full experience state
+  // ---------------------------------------------------------------------------
+  const [visibleToRoamers, setVisibleToRoamers] = useState(true);
+  const [connections, setConnections] = useState<Record<string, ConnectionStatus>>({});
+  const [tripDestInput, setTripDestInput] = useState('');
+  const [tripStartDate, setTripStartDate] = useState('');
+  const [tripEndDate, setTripEndDate] = useState('');
+
+  // ---------------------------------------------------------------------------
+  // Determine state
+  // ---------------------------------------------------------------------------
+  const hasProfile = socialProfile !== null;
+  const activeTrip = useMemo(() => {
+    if (myPresences.length > 0) return myPresences[0];
+    if (trips.length > 0) {
+      return {
+        destination: trips[0].destination,
+        arrivalDate: trips[0].createdAt,
+        departureDate: new Date(
+          new Date(trips[0].createdAt).getTime() + trips[0].days * 86400000
+        ).toISOString(),
+      };
+    }
+    return null;
+  }, [myPresences, trips]);
+
+  const hasTrip = activeTrip !== null;
+  const currentDestination = activeTrip?.destination ?? '';
+
+  // ---------------------------------------------------------------------------
+  // Mock data
+  // ---------------------------------------------------------------------------
+  const roamers = useMemo(
+    () => (currentDestination ? getMockRoamers(currentDestination) : []),
+    [currentDestination],
+  );
+  const destinationCounts = useMemo(() => getMockDestinationCounts(), []);
+
+  const alsoGoing = useMemo(
+    () => roamers.filter((r) => !r.currentlyThere),
+    [roamers],
+  );
+  const rightNow = useMemo(
+    () => roamers.filter((r) => r.currentlyThere),
+    [roamers],
+  );
+
+  // ---------------------------------------------------------------------------
+  // Analytics
+  // ---------------------------------------------------------------------------
   useEffect(() => {
-    getAllPhotos().then((allPhotos) => {
-      const sorted = [...allPhotos].sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-      setPhotos(sorted.slice(0, 20));
+    track({ type: 'screen_view', screen: 'people_tab' }).catch(() => {});
+    trackEvent('people_tab_opened').catch(() => {});
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // Step animation helper
+  // ---------------------------------------------------------------------------
+  const animateStep = useCallback(
+    (nextStep: number) => {
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }).start(() => {
+        setStep(nextStep);
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }).start();
+      });
+    },
+    [fadeAnim],
+  );
+
+  // ---------------------------------------------------------------------------
+  // Profile creation handlers
+  // ---------------------------------------------------------------------------
+  const updateDraft = useCallback((partial: Partial<ProfileDraft>) => {
+    setDraft((prev) => ({ ...prev, ...partial }));
+  }, []);
+
+  const toggleTravelStyle = useCallback((id: string) => {
+    setDraft((prev) => {
+      const has = prev.travelStyles.includes(id);
+      if (has) return { ...prev, travelStyles: prev.travelStyles.filter((ts) => ts !== id) };
+      if (prev.travelStyles.length >= 3) return prev;
+      return { ...prev, travelStyles: [...prev.travelStyles, id] };
     });
   }, []);
 
-  const handlePostTrip = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    captureEvent('people_post_trip_tapped', { source: 'feed' });
-    router.push('/social-profile-edit' as never);
-  }, [router]);
+  const toggleLanguage = useCallback((lang: string) => {
+    setDraft((prev) => {
+      const has = prev.languages.includes(lang);
+      if (has) return { ...prev, languages: prev.languages.filter((l) => l !== lang) };
+      return { ...prev, languages: [...prev.languages, lang] };
+    });
+  }, []);
 
-  const handleSetupProfile = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    captureEvent('people_setup_profile_tapped', { source: 'feed_cta' });
-    router.push('/social-profile-edit' as never);
-  }, [router]);
+  const handleNextStep = useCallback(async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (step < 5) {
+      animateStep(step + 1);
+    }
+  }, [step, animateStep]);
 
-  if (!profile) {
+  const handleSkipStep = useCallback(async () => {
+    await Haptics.selectionAsync();
+    if (step < 5) {
+      animateStep(step + 1);
+    }
+  }, [step, animateStep]);
+
+  const handleCompleteProfile = useCallback(async () => {
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setSaving(true);
+    try {
+      await upsert({
+        displayName: draft.name.trim(),
+        bio: draft.bio.trim(),
+        languages: draft.languages,
+        vibeTags: [],
+        travelStyle: 'comfort',
+        avatarEmoji: '',
+        ageRange: '25-30',
+      } as Partial<SocialProfile>);
+      trackEvent('profile_created', {
+        name: draft.name.trim(),
+        homeCity: draft.homeCity.trim(),
+        travelStyles: draft.travelStyles,
+        languages: draft.languages,
+      }).catch(() => {});
+      // Post first trip if provided
+      if (draft.firstTripDestination.trim()) {
+        const arrival = draft.firstTripStartDate || new Date().toISOString();
+        const departure = draft.firstTripEndDate ||
+          new Date(Date.now() + 7 * 86400000).toISOString();
+        await postPresence({
+          destination: draft.firstTripDestination.trim(),
+          arrivalDate: arrival,
+          departureDate: departure,
+          lookingFor: [],
+        });
+        trackEvent('trip_added_to_presence', {
+          destination: draft.firstTripDestination.trim(),
+        }).catch(() => {});
+      }
+    } catch {
+      // silent
+    } finally {
+      setSaving(false);
+    }
+  }, [draft, upsert, postPresence]);
+
+  // ---------------------------------------------------------------------------
+  // Full experience handlers
+  // ---------------------------------------------------------------------------
+  const handleToggleVisibility = useCallback(async (value: boolean) => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setVisibleToRoamers(value);
+  }, []);
+
+  const handleConnect = useCallback(async (roamerId: string) => {
+    const current = connections[roamerId] ?? 'none';
+    if (current !== 'none') return;
+    setConnections((prev) => ({ ...prev, [roamerId]: 'requested' }));
+    trackEvent('connect_tapped', { roamerId }).catch(() => {});
+  }, [connections]);
+
+  const handleDestinationChipPress = useCallback((_dest: string) => {
+    // Could navigate to destination-specific people view
+  }, []);
+
+  const handleAddTrip = useCallback(async () => {
+    if (!tripDestInput.trim()) return;
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const arrival = tripStartDate || new Date().toISOString();
+    const departure = tripEndDate || new Date(Date.now() + 7 * 86400000).toISOString();
+    await postPresence({
+      destination: tripDestInput.trim(),
+      arrivalDate: arrival,
+      departureDate: departure,
+      lookingFor: [],
+    });
+    trackEvent('trip_added_to_presence', {
+      destination: tripDestInput.trim(),
+    }).catch(() => {});
+    setTripDestInput('');
+    setTripStartDate('');
+    setTripEndDate('');
+  }, [tripDestInput, tripStartDate, tripEndDate, postPresence]);
+
+  // ---------------------------------------------------------------------------
+  // Can proceed check for each step
+  // ---------------------------------------------------------------------------
+  const canProceed = useMemo(() => {
+    switch (step) {
+      case 0: return draft.name.trim().length > 0;
+      case 1: return draft.homeCity.trim().length > 0;
+      case 2: return draft.travelStyles.length > 0;
+      case 3: return draft.languages.length > 0;
+      case 4: return true; // bio is optional
+      case 5: return true; // first trip is optional
+      default: return false;
+    }
+  }, [step, draft]);
+
+  // ---------------------------------------------------------------------------
+  // RENDER: STATE 1 — No Profile (ProfileCreation inline flow)
+  // ---------------------------------------------------------------------------
+  if (!hasProfile && !profileLoading) {
     return (
-      <View style={styles.tabContent}>
-        <SetupProfileCta onPress={handleSetupProfile} />
-
-        {/* Show trip completion cards even without a profile */}
-        {trips.length > 0 && (
-          <View style={{ gap: SPACING.md, marginTop: SPACING.md }}>
-            <Text style={styles.sectionTitle}>Your Trips</Text>
-            {trips.slice(0, 5).map((trip) => (
-              <TripCompletionCard
-                key={trip.id}
-                destination={trip.destination}
-                days={trip.days}
-                vibes={trip.vibes}
-                tripId={trip.id}
-                onTapStory={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  router.push({ pathname: '/trip-story', params: { tripId: trip.id } } as never);
-                }}
-                onTapAlbum={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  router.push({ pathname: '/trip-album', params: { tripId: trip.id } } as never);
-                }}
-              />
-            ))}
-          </View>
-        )}
-      </View>
-    );
-  }
-
-  if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator color={COLORS.sage} />
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.tabContent}>
-      {myPresences.length === 0 && (
-        <Pressable
-          onPress={handlePostTrip}
-          style={({ pressed }) => [styles.postTripBtn, { opacity: pressed ? 0.85 : 1 }]}
+      <KeyboardAvoidingView
+        style={[styles.container, { paddingTop: insets.top }]}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
+          contentContainerStyle={styles.creationScroll}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <Plus size={16} color={COLORS.bg} strokeWidth={2} />
-          <Text style={styles.postTripBtnText}>Post your trip</Text>
-        </Pressable>
-      )}
+          <StepIndicator current={step} total={6} />
 
-      {/* Photo feed — show trip photos in social feed style */}
-      {photos.length > 0 && (
-        <View style={{ gap: SPACING.md }}>
-          <Text style={styles.sectionTitle}>Recent Photos</Text>
-          {photos.slice(0, 8).map((photo) => {
-            const trip = trips.find((t) => t.id === photo.tripId);
-            return (
-              <PhotoFeedCard
-                key={photo.id}
-                photo={photo}
-                tripDestination={photo.destination}
-                tripDays={trip?.days ?? 0}
-                tripId={photo.tripId}
-                onTapPhoto={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push({ pathname: '/trip-album', params: { tripId: photo.tripId } } as never);
-                }}
-                onTapStory={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  router.push({ pathname: '/trip-story', params: { tripId: photo.tripId } } as never);
-                }}
-              />
-            );
-          })}
+          <Animated.View style={[styles.stepContainer, { opacity: fadeAnim }]}>
+            {/* Step 0: Name */}
+            {step === 0 && (
+              <View style={styles.stepContent}>
+                <Text style={styles.stepQuestion}>What do you go by?</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={draft.name}
+                  onChangeText={(t) => updateDraft({ name: t })}
+                  placeholder="Your name or alias"
+                  placeholderTextColor={COLORS.creamDimLight}
+                  autoFocus
+                  autoCapitalize="words"
+                  returnKeyType="next"
+                  onSubmitEditing={canProceed ? handleNextStep : undefined}
+                />
+              </View>
+            )}
+
+            {/* Step 1: Home */}
+            {step === 1 && (
+              <View style={styles.stepContent}>
+                <Text style={styles.stepQuestion}>Where are you based?</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={draft.homeCity}
+                  onChangeText={(t) => updateDraft({ homeCity: t })}
+                  placeholder="City, Country"
+                  placeholderTextColor={COLORS.creamDimLight}
+                  autoFocus
+                  autoCapitalize="words"
+                  returnKeyType="next"
+                  onSubmitEditing={canProceed ? handleNextStep : undefined}
+                />
+              </View>
+            )}
+
+            {/* Step 2: Travel Style */}
+            {step === 2 && (
+              <View style={styles.stepContent}>
+                <Text style={styles.stepQuestion}>How do you travel?</Text>
+                <Text style={styles.stepHint}>Select up to 3</Text>
+                <View style={styles.styleGrid}>
+                  {TRAVEL_STYLES.map((ts) => (
+                    <TravelStyleCard
+                      key={ts.id}
+                      item={ts}
+                      selected={draft.travelStyles.includes(ts.id)}
+                      onToggle={toggleTravelStyle}
+                    />
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Step 3: Languages */}
+            {step === 3 && (
+              <View style={styles.stepContent}>
+                <Text style={styles.stepQuestion}>What languages do you speak?</Text>
+                <View style={styles.langGrid}>
+                  {LANGUAGE_OPTIONS.map((lang) => (
+                    <LanguageChip
+                      key={lang}
+                      label={lang}
+                      selected={draft.languages.includes(lang)}
+                      onToggle={toggleLanguage}
+                    />
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Step 4: Bio */}
+            {step === 4 && (
+              <View style={styles.stepContent}>
+                <Text style={styles.stepQuestion}>Anything else travelers should know?</Text>
+                <TextInput
+                  style={[styles.textInput, styles.textArea]}
+                  value={draft.bio}
+                  onChangeText={(t) => {
+                    if (t.length <= 160) updateDraft({ bio: t });
+                  }}
+                  placeholder="Optional. 160 characters."
+                  placeholderTextColor={COLORS.creamDimLight}
+                  multiline
+                  maxLength={160}
+                  autoFocus
+                />
+                <Text style={styles.charCount}>{draft.bio.length}/160</Text>
+              </View>
+            )}
+
+            {/* Step 5: First Trip */}
+            {step === 5 && (
+              <View style={styles.stepContent}>
+                <Text style={styles.stepQuestion}>Where are you heading?</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={draft.firstTripDestination}
+                  onChangeText={(t) => updateDraft({ firstTripDestination: t })}
+                  placeholder="Destination"
+                  placeholderTextColor={COLORS.creamDimLight}
+                  autoFocus
+                  autoCapitalize="words"
+                />
+                <View style={styles.dateRow}>
+                  <TextInput
+                    style={[styles.textInput, styles.dateInput]}
+                    value={draft.firstTripStartDate}
+                    onChangeText={(t) => updateDraft({ firstTripStartDate: t })}
+                    placeholder="Start (YYYY-MM-DD)"
+                    placeholderTextColor={COLORS.creamDimLight}
+                  />
+                  <TextInput
+                    style={[styles.textInput, styles.dateInput]}
+                    value={draft.firstTripEndDate}
+                    onChangeText={(t) => updateDraft({ firstTripEndDate: t })}
+                    placeholder="End (YYYY-MM-DD)"
+                    placeholderTextColor={COLORS.creamDimLight}
+                  />
+                </View>
+              </View>
+            )}
+          </Animated.View>
+
+          {/* Navigation buttons */}
+          <View style={styles.navRow}>
+            {step === 5 ? (
+              <>
+                <Pressable
+                  onPress={handleCompleteProfile}
+                  accessibilityLabel="Complete profile"
+                  style={({ pressed }) => [
+                    styles.nextBtn,
+                    styles.nextBtnFinal,
+                    pressed && styles.pressed,
+                    saving && styles.btnDisabled,
+                  ]}
+                  disabled={saving}
+                >
+                  <Text style={styles.nextBtnText}>
+                    {saving ? 'Saving...' : 'Join the network'}
+                  </Text>
+                  <ArrowRight size={18} color={COLORS.bg} strokeWidth={2} />
+                </Pressable>
+                {!draft.firstTripDestination.trim() && (
+                  <Pressable
+                    onPress={handleCompleteProfile}
+                    accessibilityLabel="Skip and complete profile"
+                    style={({ pressed }) => [styles.skipBtn, pressed && styles.pressed]}
+                  >
+                    <Text style={styles.skipBtnText}>Skip for now</Text>
+                  </Pressable>
+                )}
+              </>
+            ) : (
+              <>
+                <Pressable
+                  onPress={handleNextStep}
+                  accessibilityLabel="Continue to next step"
+                  style={({ pressed }) => [
+                    styles.nextBtn,
+                    pressed && styles.pressed,
+                    !canProceed && styles.btnDisabled,
+                  ]}
+                  disabled={!canProceed}
+                >
+                  <Text style={styles.nextBtnText}>Continue</Text>
+                  <ArrowRight size={18} color={COLORS.bg} strokeWidth={2} />
+                </Pressable>
+                {step === 4 && (
+                  <Pressable
+                    onPress={handleSkipStep}
+                    accessibilityLabel="Skip this step"
+                    style={({ pressed }) => [styles.skipBtn, pressed && styles.pressed]}
+                  >
+                    <Text style={styles.skipBtnText}>Skip</Text>
+                  </Pressable>
+                )}
+              </>
+            )}
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // RENDER: STATE 2 — Profile Exists, No Trip
+  // ---------------------------------------------------------------------------
+  if (hasProfile && !hasTrip) {
+    return (
+      <ScrollView
+        style={[styles.container, { paddingTop: insets.top }]}
+        contentContainerStyle={styles.state2Scroll}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={styles.networkLabel}>You're in the ROAM network.</Text>
+
+        {/* ROAM This Month */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>ROAM This Month</Text>
         </View>
-      )}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.destChipsRow}
+        >
+          {destinationCounts.map((dc) => (
+            <DestinationChip
+              key={dc.destination}
+              destination={dc.destination}
+              count={dc.count}
+              onPress={handleDestinationChipPress}
+            />
+          ))}
+        </ScrollView>
 
-      {/* Trip completion cards */}
-      {trips.length > 0 && photos.length === 0 && (
-        <View style={{ gap: SPACING.md }}>
-          <Text style={styles.sectionTitle}>Your Trips</Text>
-          {trips.slice(0, 5).map((trip) => (
-            <TripCompletionCard
-              key={trip.id}
-              destination={trip.destination}
-              days={trip.days}
-              vibes={trip.vibes}
-              tripId={trip.id}
-              onTapStory={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                router.push({ pathname: '/trip-story', params: { tripId: trip.id } } as never);
-              }}
-              onTapAlbum={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                router.push({ pathname: '/trip-album', params: { tripId: trip.id } } as never);
-              }}
+        {/* Add Trip CTA */}
+        <View style={styles.addTripCard}>
+          <Text style={styles.addTripTitle}>Where are you going next?</Text>
+          <TextInput
+            style={styles.textInput}
+            value={tripDestInput}
+            onChangeText={setTripDestInput}
+            placeholder="Destination"
+            placeholderTextColor={COLORS.creamDimLight}
+            autoCapitalize="words"
+          />
+          <View style={styles.dateRow}>
+            <TextInput
+              style={[styles.textInput, styles.dateInput]}
+              value={tripStartDate}
+              onChangeText={setTripStartDate}
+              placeholder="Start (YYYY-MM-DD)"
+              placeholderTextColor={COLORS.creamDimLight}
+            />
+            <TextInput
+              style={[styles.textInput, styles.dateInput]}
+              value={tripEndDate}
+              onChangeText={setTripEndDate}
+              placeholder="End (YYYY-MM-DD)"
+              placeholderTextColor={COLORS.creamDimLight}
+            />
+          </View>
+          <Pressable
+            onPress={handleAddTrip}
+            accessibilityLabel="Add trip to ROAM network"
+            style={({ pressed }) => [
+              styles.nextBtn,
+              pressed && styles.pressed,
+              !tripDestInput.trim() && styles.btnDisabled,
+            ]}
+            disabled={!tripDestInput.trim()}
+          >
+            <Calendar size={16} color={COLORS.bg} strokeWidth={2} />
+            <Text style={styles.nextBtnText}>Add Trip</Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // RENDER: STATE 3 — Full Experience
+  // ---------------------------------------------------------------------------
+  return (
+    <ScrollView
+      style={[styles.container, { paddingTop: insets.top }]}
+      contentContainerStyle={styles.fullScroll}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Header */}
+      <View style={styles.fullHeader}>
+        <Text style={styles.fullTitle}>Who's Going</Text>
+        <View style={styles.privacyToggle}>
+          <Text style={styles.privacyLabel}>
+            {visibleToRoamers ? 'Visible to ROAMers' : 'Hidden'}
+          </Text>
+          {visibleToRoamers ? (
+            <Eye size={16} color={COLORS.sage} strokeWidth={2} />
+          ) : (
+            <EyeOff size={16} color={COLORS.creamMuted} strokeWidth={2} />
+          )}
+          <Switch
+            value={visibleToRoamers}
+            onValueChange={handleToggleVisibility}
+            trackColor={{ false: COLORS.bgElevated, true: COLORS.sageLight }}
+            thumbColor={visibleToRoamers ? COLORS.sage : COLORS.creamMuted}
+            accessibilityLabel="Toggle visibility to other ROAMers"
+          />
+        </View>
+      </View>
+
+      {/* Section 1: Also Going */}
+      {alsoGoing.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
+            Also going to {currentDestination}
+          </Text>
+          {alsoGoing.map((roamer) => (
+            <RoamerProfileCard
+              key={roamer.id}
+              roamer={roamer}
+              compatibilityScore={computeCompatibility(
+                draft.travelStyles.length > 0 ? draft.travelStyles : ['solo-explorer'],
+                draft.languages.length > 0 ? draft.languages : ['English'],
+                trips.length,
+                roamer.travelStyles,
+                roamer.languages,
+                roamer.tripCount,
+                true,
+              )}
+              connectionStatus={connections[roamer.id] ?? 'none'}
+              onConnect={handleConnect}
             />
           ))}
         </View>
       )}
 
-      {/* Trip presences */}
-      {feed.length === 0 && photos.length === 0 && trips.length === 0 ? (
-        <View style={styles.emptyState}>
-          <MapPin size={32} color={COLORS.sage} strokeWidth={1.5} />
-          <Text style={styles.emptyTitle}>You'd be the first</Text>
-          <Text style={styles.emptyBody}>
-            No one else has posted a trip here yet. That means you get to be the one someone finds later and messages: "Wait, you're going too?"
+      {/* Section 2: Right Now */}
+      {rightNow.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
+            Right now in {currentDestination}
           </Text>
-        </View>
-      ) : (
-        feed.map((presence) => (
-          <TripPresenceCard
-            key={presence.id}
-            presence={presence}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              captureEvent('people_presence_tapped', { presence_id: presence.id });
-            }}
-          />
-        ))
-      )}
-    </View>
-  );
-});
-
-// ---------------------------------------------------------------------------
-// Squad tab
-// ---------------------------------------------------------------------------
-const SquadTab = React.memo(function SquadTab({
-  profile,
-  router,
-}: {
-  profile: SocialProfile | null;
-  router: ReturnType<typeof useRouter>;
-}) {
-  const { myPresences, loading } = useTripPresence();
-
-  const handleSetupProfile = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    captureEvent('people_setup_profile_tapped', { source: 'squad_cta' });
-    router.push('/social-profile-edit' as never);
-  }, [router]);
-
-  if (!profile) {
-    return (
-      <View style={styles.tabContent}>
-        <SetupProfileCta onPress={handleSetupProfile} />
-      </View>
-    );
-  }
-
-  if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator color={COLORS.sage} />
-      </View>
-    );
-  }
-
-  if (myPresences.length === 0) {
-    return (
-      <View style={styles.tabContent}>
-        <View style={styles.emptyState}>
-          <Users size={32} color={COLORS.sage} strokeWidth={1.5} />
-          <Text style={styles.emptyTitle}>Solo doesn't mean alone</Text>
-          <Text style={styles.emptyBody}>
-            Post your trip in the Feed tab. Someone going to the same place, on the same dates, is probably looking for exactly this right now.
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.tabContent}>
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Your active trips</Text>
-        <Text style={styles.sectionSub}>
-          Swipe right on travelers going to the same place.
-        </Text>
-      </View>
-      {myPresences.map((presence) => (
-        <TripPresenceCard
-          key={presence.id}
-          presence={presence}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            captureEvent('people_squad_presence_tapped', { presence_id: presence.id });
-          }}
-        />
-      ))}
-    </View>
-  );
-});
-
-// ---------------------------------------------------------------------------
-// Public Trip card
-// ---------------------------------------------------------------------------
-const PublicTripCard = React.memo(function PublicTripCard({
-  trip,
-  onJoin,
-}: {
-  trip: PublicTrip;
-  onJoin: () => void;
-}) {
-  const spotsLeft = trip.maxMembers - trip.currentMembers.length;
-
-  return (
-    <View style={styles.publicTripCard}>
-      <View style={styles.publicTripHeader}>
-        <Text style={styles.publicTripDest} numberOfLines={1}>
-          {trip.destination}
-        </Text>
-        <View style={styles.memberBadge}>
-          <Users size={12} color={COLORS.sage} strokeWidth={2} />
-          <Text style={styles.memberBadgeText}>
-            {trip.currentMembers.length}/{trip.maxMembers}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.publicTripDateRow}>
-        <Calendar size={12} color={COLORS.creamMuted} strokeWidth={2} />
-        <Text style={styles.publicTripDates}>
-          {new Date(trip.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-          {' – '}
-          {new Date(trip.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-        </Text>
-        <Text style={styles.publicTripDays}>{trip.days}d</Text>
-      </View>
-
-      {trip.vibes.length > 0 && (
-        <View style={styles.vibesRow}>
-          {trip.vibes.slice(0, 4).map((vibe) => (
-            <View key={vibe} style={styles.vibePill}>
-              <Text style={styles.vibePillText}>{vibe}</Text>
-            </View>
+          {rightNow.map((roamer) => (
+            <RoamerProfileCard
+              key={roamer.id}
+              roamer={roamer}
+              compatibilityScore={computeCompatibility(
+                draft.travelStyles.length > 0 ? draft.travelStyles : ['solo-explorer'],
+                draft.languages.length > 0 ? draft.languages : ['English'],
+                trips.length,
+                roamer.travelStyles,
+                roamer.languages,
+                roamer.tripCount,
+                false,
+              )}
+              connectionStatus={connections[roamer.id] ?? 'none'}
+              onConnect={handleConnect}
+            />
           ))}
         </View>
       )}
 
-      {trip.description.length > 0 && (
-        <Text style={styles.publicTripDesc} numberOfLines={2}>
-          {trip.description}
-        </Text>
+      {/* Empty state if no roamers */}
+      {alsoGoing.length === 0 && rightNow.length === 0 && currentDestination.length > 0 && (
+        <EmptyMatchState destination={currentDestination} />
       )}
 
-      <Pressable
-        onPress={onJoin}
-        style={({ pressed }) => [
-          styles.joinBtn,
-          spotsLeft === 0 && styles.joinBtnDisabled,
-          { opacity: pressed ? 0.85 : 1 },
-        ]}
-        disabled={spotsLeft === 0}
-      >
-        <Text style={styles.joinBtnText}>
-          {spotsLeft === 0 ? 'Full' : `Request to Join · ${spotsLeft} spot${spotsLeft === 1 ? '' : 's'} left`}
-        </Text>
-      </Pressable>
-    </View>
-  );
-});
-
-// ---------------------------------------------------------------------------
-// Groups tab
-// ---------------------------------------------------------------------------
-const GroupsTab = React.memo(function GroupsTab({
-  router,
-}: {
-  router: ReturnType<typeof useRouter>;
-}) {
-  const [trips, setTrips] = useState<PublicTrip[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    getPublicTrips()
-      .then((data) => {
-        if (!cancelled) setTrips(data);
-      })
-      .catch(() => {
-        if (!cancelled) setTrips([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, []);
-
-  const handleCreate = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    captureEvent('people_create_public_trip_tapped', {});
-    router.push('/coming-soon' as never);
-  }, [router]);
-
-  const handleJoin = useCallback(
-    (trip: PublicTrip) => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      captureEvent('people_join_trip_tapped', { trip_id: trip.id, destination: trip.destination });
-      router.push('/coming-soon' as never);
-    },
-    [router],
-  );
-
-  return (
-    <View style={styles.tabContent}>
-      <Pressable
-        onPress={handleCreate}
-        style={({ pressed }) => [styles.postTripBtn, { opacity: pressed ? 0.85 : 1 }]}
-      >
-        <Plus size={16} color={COLORS.bg} strokeWidth={2} />
-        <Text style={styles.postTripBtnText}>Create Public Trip</Text>
-      </Pressable>
-
-      {loading && (
-        <View style={styles.centered}>
-          <ActivityIndicator color={COLORS.sage} />
-        </View>
-      )}
-
-      {!loading && trips.length === 0 && (
-        <View style={styles.emptyState}>
-          <Users size={32} color={COLORS.sage} strokeWidth={1.5} />
-          <Text style={styles.emptyTitle}>Start one. They'll come.</Text>
-          <Text style={styles.emptyBody}>
-            Every group trip starts with one person who posts it. The best travel stories start with "I met someone who was also going to..."
-          </Text>
-        </View>
-      )}
-
-      {!loading &&
-        trips.map((trip) => (
-          <PublicTripCard key={trip.id} trip={trip} onJoin={() => handleJoin(trip)} />
-        ))}
-    </View>
-  );
-});
-
-// ---------------------------------------------------------------------------
-// Meetup listing card
-// ---------------------------------------------------------------------------
-const MeetupCard = React.memo(function MeetupCard({
-  listing,
-  onJoin,
-}: {
-  listing: BreakfastClubListing;
-  onJoin: () => void;
-}) {
-  const spotsLeft = listing.maxPeople - listing.currentCount;
-  const label = MEETUP_TYPE_LABELS[listing.meetupType] ?? listing.meetupType;
-
-  return (
-    <View style={styles.meetupCard}>
-      <View style={styles.meetupTopRow}>
-        <View style={styles.meetupTypeBadge}>
-          <Text style={styles.meetupTypeBadgeText}>{label}</Text>
-        </View>
-        <Text style={styles.meetupTimeSlot}>{listing.timeSlot}</Text>
-      </View>
-
-      <Text style={styles.meetupLocation} numberOfLines={1}>
-        {listing.neighborhood}, {listing.city}
-      </Text>
-
-      <Text style={styles.meetupDate}>
-        {new Date(listing.date).toLocaleDateString('en-US', {
-          weekday: 'short',
-          month: 'short',
-          day: 'numeric',
-        })}
-      </Text>
-
-      {listing.description.length > 0 && (
-        <Text style={styles.meetupDesc} numberOfLines={2}>
-          {listing.description}
-        </Text>
-      )}
-
-      <View style={styles.meetupFooter}>
-        <Text style={styles.meetupSpots}>
-          {spotsLeft > 0 ? `${spotsLeft} spot${spotsLeft === 1 ? '' : 's'} left` : 'Full'}
-        </Text>
-        <Pressable
-          onPress={onJoin}
-          disabled={spotsLeft === 0}
-          style={({ pressed }) => [
-            styles.meetupJoinBtn,
-            spotsLeft === 0 && styles.joinBtnDisabled,
-            { opacity: pressed ? 0.85 : 1 },
-          ]}
-        >
-          <Text style={styles.meetupJoinBtnText}>{spotsLeft === 0 ? 'Full' : 'Join'}</Text>
-        </Pressable>
-      </View>
-    </View>
-  );
-});
-
-// ---------------------------------------------------------------------------
-// Meetups tab
-// ---------------------------------------------------------------------------
-const MeetupsTab = React.memo(function MeetupsTab({
-  router,
-}: {
-  router: ReturnType<typeof useRouter>;
-}) {
-  const [listings, setListings] = useState<BreakfastClubListing[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    // Use empty string as a placeholder city — UI can later filter by user's current city
-    findBreakfastListings('')
-      .then((data) => {
-        if (!cancelled) setListings(data);
-      })
-      .catch(() => {
-        if (!cancelled) setListings([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, []);
-
-  const handleCreate = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    captureEvent('people_create_meetup_tapped', {});
-    router.push('/coming-soon' as never);
-  }, [router]);
-
-  const handleJoin = useCallback(
-    (listing: BreakfastClubListing) => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      captureEvent('people_join_meetup_tapped', {
-        listing_id: listing.id,
-        meetup_type: listing.meetupType,
-        city: listing.city,
-      });
-      router.push('/coming-soon' as never);
-    },
-    [router],
-  );
-
-  return (
-    <View style={styles.tabContent}>
-      <Pressable
-        onPress={handleCreate}
-        style={({ pressed }) => [styles.postTripBtn, { opacity: pressed ? 0.85 : 1 }]}
-      >
-        <Plus size={16} color={COLORS.bg} strokeWidth={2} />
-        <Text style={styles.postTripBtnText}>Create Meetup</Text>
-      </Pressable>
-
-      {loading && (
-        <View style={styles.centered}>
-          <ActivityIndicator color={COLORS.sage} />
-        </View>
-      )}
-
-      {!loading && listings.length === 0 && (
-        <View style={styles.emptyState}>
-          <MessageCircle size={32} color={COLORS.sage} strokeWidth={1.5} />
-          <Text style={styles.emptyTitle}>Be the reason someone's trip gets better</Text>
-          <Text style={styles.emptyBody}>
-            Post a meetup — coffee, a walk, a day trip. The person who's nervous about eating alone tonight will thank you.
-          </Text>
-        </View>
-      )}
-
-      {!loading &&
-        listings.map((listing) => (
-          <MeetupCard
-            key={listing.id}
-            listing={listing}
-            onJoin={() => handleJoin(listing)}
-          />
-        ))}
-    </View>
-  );
-});
-
-// ---------------------------------------------------------------------------
-// Matches tab
-// ---------------------------------------------------------------------------
-const MatchesTab = React.memo(function MatchesTab({
-  profile,
-  router,
-}: {
-  profile: SocialProfile | null;
-  router: ReturnType<typeof useRouter>;
-}) {
-  const { matches, loading } = useMatches();
-
-  const handleSetupProfile = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    captureEvent('people_setup_profile_tapped', { source: 'matches_cta' });
-    router.push('/social-profile-edit' as never);
-  }, [router]);
-
-  const handleMessage = useCallback(
-    (channelId: string | null) => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      if (!channelId) return;
-      captureEvent('people_match_message_tapped', { channel_id: channelId });
-      router.push({ pathname: '/chat/[channelId]', params: { channelId } } as never);
-    },
-    [router],
-  );
-
-  if (!profile) {
-    return (
-      <View style={styles.tabContent}>
-        <SetupProfileCta onPress={handleSetupProfile} />
-      </View>
-    );
-  }
-
-  if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator color={COLORS.sage} />
-      </View>
-    );
-  }
-
-  if (matches.length === 0) {
-    return (
-      <View style={styles.tabContent}>
-        <View style={styles.emptyState}>
-          <Zap size={32} color={COLORS.creamMuted} strokeWidth={1.5} />
-          <Text style={styles.emptyTitle}>No matches yet</Text>
-          <Text style={styles.emptyBody}>
-            Start by posting your trip and swiping in the Squad tab to find your travel crew.
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.tabContent}>
-      {matches.map((match) => (
-        <MatchCard
-          key={match.id}
-          match={match}
-          profile={profile}
-          onMessage={() => handleMessage(match.chatChannelId)}
-        />
-      ))}
-    </View>
-  );
-});
-
-// ---------------------------------------------------------------------------
-// Main Component
-// ---------------------------------------------------------------------------
-export default function PeopleScreen() {
-  const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
-  const router = useRouter();
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-
-  const activePeopleTab = useAppStore((state) => state.activePeopleTab);
-  const setActivePeopleTab = useAppStore((state) => state.setActivePeopleTab);
-  const openToMeet = useAppStore((state) => state.openToMeet);
-
-  const { profile } = useSocialProfile();
-
-  useEffect(() => {
-    track({ type: 'screen_view', screen: 'people' });
-    const anim = Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 400,
-      useNativeDriver: true,
-    });
-    anim.start();
-    return () => anim.stop();
-  }, [fadeAnim]);
-
-  const handleTabPress = useCallback(
-    (tab: PeopleTab) => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      captureEvent('people_tab_switched', { tab });
-      setActivePeopleTab(tab);
-    },
-    [setActivePeopleTab],
-  );
-
-  return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <Animated.ScrollView
-        style={[styles.fill, { opacity: fadeAnim }]}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>{t('people.title', 'People')}</Text>
-          <Text style={styles.headerSub}>
-            {openToMeet
-              ? t('people.headerSubActive', 'You\'re open to meeting travelers')
-              : t('people.headerSub', 'Find travelers going where you\'re going')}
-          </Text>
-        </View>
-
-        {/* Compatibility quiz CTA */}
-        <Pressable
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            captureEvent('people_compat_quiz_tapped', {});
-            router.push('/compatibility' as never);
-          }}
-          style={({ pressed }) => [styles.compatCard, { opacity: pressed ? 0.85 : 1 }]}
-        >
-          <Text style={styles.compatEmoji}>{'\u2764\uFE0F\u200D\u{1F525}'}</Text>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.compatTitle}>Travel Compatibility Quiz</Text>
-            <Text style={styles.compatSub}>Are you travel soulmates? Find out in 60 seconds.</Text>
-          </View>
-          <Text style={styles.compatArrow}>{'\u2192'}</Text>
-        </Pressable>
-
-        {/* Sub-tab chips */}
+      {/* Section 3: Travel Network */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Your travel network</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.tabsScroll}
+          contentContainerStyle={styles.networkScroll}
         >
-          {TAB_LABELS.map(({ id, label }) => {
-            const active = activePeopleTab === id;
-            return (
-              <Pressable
-                key={id}
-                onPress={() => handleTabPress(id)}
-                style={[styles.tabChip, active && styles.tabChipActive]}
-              >
-                <Text style={[styles.tabChipText, active && styles.tabChipTextActive]}>
-                  {label}
+          {roamers.map((roamer) => (
+            <View key={roamer.id} style={styles.networkCard}>
+              <View style={styles.networkAvatar}>
+                <Text style={styles.networkAvatarText}>
+                  {roamer.name[0]?.toUpperCase() ?? '?'}
                 </Text>
-              </Pressable>
-            );
-          })}
+              </View>
+              <Text style={styles.networkName} numberOfLines={1}>{roamer.name}</Text>
+              <Text style={styles.networkCity} numberOfLines={1}>{roamer.homeCity}</Text>
+            </View>
+          ))}
         </ScrollView>
-
-        {/* Content area */}
-        {activePeopleTab === 'feed' && (
-          <FeedTab profile={profile} router={router} />
-        )}
-        {activePeopleTab === 'squad' && (
-          <SquadTab profile={profile} router={router} />
-        )}
-        {activePeopleTab === 'groups' && (
-          <GroupsTab router={router} />
-        )}
-        {activePeopleTab === 'meetups' && (
-          <MeetupsTab router={router} />
-        )}
-        {activePeopleTab === 'matches' && (
-          <MatchesTab profile={profile} router={router} />
-        )}
-      </Animated.ScrollView>
-    </View>
+      </View>
+    </ScrollView>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
+// =============================================================================
+// STYLES
+// =============================================================================
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.bg,
-  } as ViewStyle,
-  fill: {
-    flex: 1,
-  } as ViewStyle,
-  scrollContent: {
-    paddingBottom: 120,
-  } as ViewStyle,
+  },
+  pressed: {
+    opacity: 0.75,
+  },
+  btnDisabled: {
+    opacity: 0.4,
+  },
 
-  // ── Header ──
-  header: {
-    paddingHorizontal: SPACING.lg,
+  // ---------------------------------------------------------------------------
+  // Step indicator
+  // ---------------------------------------------------------------------------
+  stepRow: {
+    flexDirection: 'row',
+    gap: SPACING.xs,
+    paddingHorizontal: MAGAZINE.padding,
     paddingTop: SPACING.lg,
     paddingBottom: SPACING.md,
-  } as ViewStyle,
-  headerTitle: {
+  },
+  stepDot: {
+    flex: 1,
+    height: 3,
+    borderRadius: RADIUS.full,
+  },
+  stepDotActive: {
+    backgroundColor: COLORS.sage,
+  },
+  stepDotComplete: {
+    backgroundColor: COLORS.sageMedium,
+  },
+  stepDotInactive: {
+    backgroundColor: COLORS.bgElevated,
+  },
+
+  // ---------------------------------------------------------------------------
+  // Profile creation (State 1)
+  // ---------------------------------------------------------------------------
+  creationScroll: {
+    paddingBottom: SPACING.xxxl,
+    flexGrow: 1,
+  },
+  stepContainer: {
+    flex: 1,
+    paddingHorizontal: MAGAZINE.padding,
+    paddingTop: SPACING.xl,
+  },
+  stepContent: {
+    gap: SPACING.md,
+  },
+  stepQuestion: {
     fontFamily: FONTS.header,
     fontSize: 32,
+    fontStyle: 'italic',
     color: COLORS.cream,
-  } as TextStyle,
-  headerSub: {
-    fontFamily: FONTS.body,
-    fontSize: 15,
-    color: COLORS.creamMuted,
-    marginTop: 4,
-  } as TextStyle,
-
-  // ── Compatibility card ──
-  compatCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-    marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.md,
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.coralBorder,
-    padding: SPACING.md,
-  } as ViewStyle,
-  compatEmoji: {
-    fontSize: 28,
-  } as TextStyle,
-  compatTitle: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 14,
-    color: COLORS.cream,
-  } as TextStyle,
-  compatSub: {
-    fontFamily: FONTS.body,
+    lineHeight: 40,
+  },
+  stepHint: {
+    fontFamily: FONTS.mono,
     fontSize: 12,
     color: COLORS.creamMuted,
-    marginTop: 2,
-  } as TextStyle,
-  compatArrow: {
+    letterSpacing: 0.5,
+  },
+  textInput: {
+    fontFamily: FONTS.body,
     fontSize: 18,
-    color: COLORS.coral,
-  } as TextStyle,
-
-  // ── Sub-tab chips ──
-  tabsScroll: {
-    paddingHorizontal: SPACING.lg,
-    gap: SPACING.sm,
-    paddingBottom: SPACING.md,
-  } as ViewStyle,
-  tabChip: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 8,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.bgGlass,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  } as ViewStyle,
-  tabChipActive: {
-    backgroundColor: COLORS.sage,
-    borderColor: COLORS.sage,
-  } as ViewStyle,
-  tabChipText: {
-    fontFamily: FONTS.mono,
-    fontSize: 13,
-    color: COLORS.creamMuted,
-  } as TextStyle,
-  tabChipTextActive: {
-    color: COLORS.bg,
-  } as TextStyle,
-
-  // ── Shared tab content ──
-  tabContent: {
-    paddingHorizontal: SPACING.lg,
-    gap: SPACING.md,
-  } as ViewStyle,
-  centered: {
-    paddingVertical: SPACING.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-  } as ViewStyle,
-
-  // ── Section headers ──
-  sectionHeader: {
-    gap: 2,
-  } as ViewStyle,
-  sectionTitle: {
-    fontFamily: FONTS.header,
-    fontSize: 22,
     color: COLORS.cream,
-  } as TextStyle,
-  sectionSub: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.creamMuted,
-  } as TextStyle,
-
-  // ── Empty state ──
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: SPACING.xl,
-    paddingHorizontal: SPACING.lg,
-    gap: SPACING.sm,
-  } as ViewStyle,
-  emptyTitle: {
-    fontFamily: FONTS.header,
-    fontSize: 20,
-    color: COLORS.cream,
-    textAlign: 'center',
-    marginTop: SPACING.sm,
-  } as TextStyle,
-  emptyBody: {
-    fontFamily: FONTS.body,
-    fontSize: 14,
-    color: COLORS.creamMuted,
-    textAlign: 'center',
-    lineHeight: 22,
-  } as TextStyle,
-
-  // ── Setup CTA card ──
-  ctaCard: {
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.xl,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.sage,
+    paddingVertical: SPACING.sm,
+    minHeight: 44,
+  },
+  textArea: {
+    borderBottomWidth: 0,
     borderWidth: 1,
     borderColor: COLORS.sageBorder,
-    padding: SPACING.lg,
-    alignItems: 'center',
-    gap: SPACING.sm,
-  } as ViewStyle,
-  ctaTitle: {
-    fontFamily: FONTS.header,
-    fontSize: 22,
-    color: COLORS.cream,
-    textAlign: 'center',
-    marginTop: SPACING.sm,
-  } as TextStyle,
-  ctaBody: {
-    fontFamily: FONTS.body,
-    fontSize: 14,
-    color: COLORS.creamMuted,
-    textAlign: 'center',
-    lineHeight: 22,
-  } as TextStyle,
-  ctaBtn: {
-    marginTop: SPACING.sm,
-    backgroundColor: COLORS.sage,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.sm,
     borderRadius: RADIUS.md,
-  } as ViewStyle,
-  ctaBtnText: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 14,
-    color: COLORS.bg,
-  } as TextStyle,
-
-  // ── Post trip button ──
-  postTripBtn: {
+    paddingHorizontal: SPACING.sm,
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  charCount: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.creamMuted,
+    alignSelf: 'flex-end',
+  },
+  dateRow: {
     flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+  dateInput: {
+    flex: 1,
+    fontSize: 14,
+  },
+
+  // Travel style grid (2x4)
+  styleGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+  },
+  styleCard: {
+    width: (SCREEN_WIDTH - MAGAZINE.padding * 2 - SPACING.sm) / 2,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.sm,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.xs,
-    backgroundColor: COLORS.sage,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.md,
-  } as ViewStyle,
-  postTripBtnText: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 14,
-    color: COLORS.bg,
-  } as TextStyle,
-
-  // ── Public Trip card ──
-  publicTripCard: {
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.xl,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: SPACING.md,
-    gap: SPACING.sm,
-  } as ViewStyle,
-  publicTripHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: SPACING.sm,
-  } as ViewStyle,
-  publicTripDest: {
-    fontFamily: FONTS.header,
-    fontSize: 22,
-    color: COLORS.cream,
-    flex: 1,
-  } as TextStyle,
-  memberBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: COLORS.sageLight,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
-    borderRadius: RADIUS.sm,
-    borderWidth: 1,
-    borderColor: COLORS.sageBorder,
-  } as ViewStyle,
-  memberBadgeText: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
+    minHeight: 80,
+  },
+  styleCardSelected: {
+    borderColor: COLORS.sage,
+    backgroundColor: COLORS.sageVeryFaint,
+  },
+  styleCardUnselected: {
+    borderColor: COLORS.creamDimLight,
+    backgroundColor: COLORS.transparent,
+  },
+  styleCardIcon: {
+    marginBottom: SPACING.xs,
+  },
+  styleCardLabel: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  styleCardLabelSelected: {
     color: COLORS.sage,
-  } as TextStyle,
-  publicTripDateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  } as ViewStyle,
-  publicTripDates: {
-    fontFamily: FONTS.mono,
-    fontSize: 12,
+  },
+  styleCardLabelUnselected: {
     color: COLORS.creamMuted,
-    flex: 1,
-  } as TextStyle,
-  publicTripDays: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.creamMuted,
-  } as TextStyle,
-  vibesRow: {
+  },
+  styleCardCheck: {
+    position: 'absolute',
+    top: SPACING.xs,
+    right: SPACING.xs,
+  },
+
+  // Language chips
+  langGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
-  } as ViewStyle,
-  vibePill: {
-    backgroundColor: COLORS.bgGlass,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: RADIUS.sm,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  } as ViewStyle,
-  vibePillText: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.creamMuted,
-  } as TextStyle,
-  publicTripDesc: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.creamSoft,
-    lineHeight: 20,
-  } as TextStyle,
-  joinBtn: {
-    backgroundColor: COLORS.sage,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.md,
-    alignItems: 'center',
-    marginTop: SPACING.xs,
-  } as ViewStyle,
-  joinBtnDisabled: {
-    backgroundColor: COLORS.bgGlass,
-  } as ViewStyle,
-  joinBtnText: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 14,
-    color: COLORS.bg,
-  } as TextStyle,
-
-  // ── Photo feed card ──
-  feedCard: {
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.xl,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    overflow: 'hidden',
-  } as ViewStyle,
-  feedCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: SPACING.sm,
-    padding: SPACING.md,
-  } as ViewStyle,
-  feedAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  } as ViewStyle,
-  feedAvatarEmoji: {
-    fontSize: 18,
-  } as TextStyle,
-  feedAuthorName: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 14,
-    color: COLORS.cream,
-  } as TextStyle,
-  feedAuthorMeta: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.creamMuted,
-    textTransform: 'capitalize',
-  } as TextStyle,
-  feedStoryBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: COLORS.sageLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  } as ViewStyle,
-  feedPhoto: {
-    width: '100%',
-    height: SCREEN_WIDTH * 0.75,
-  } as ImageStyle,
-  feedPhotoCaption: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  langChip: {
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-  } as ViewStyle,
-  feedPhotoCaptionText: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: '#fff',
-    lineHeight: 18,
-  } as TextStyle,
-  feedActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: SPACING.md,
-    gap: SPACING.md,
-  } as ViewStyle,
-  feedActionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  } as ViewStyle,
-  feedActionCount: {
-    fontFamily: FONTS.mono,
-    fontSize: 12,
-    color: COLORS.creamMuted,
-  } as TextStyle,
-  feedTimestamp: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.creamMuted,
-  } as TextStyle,
-
-  // ── Trip completion card ──
-  completionCard: {
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.xl,
+    borderRadius: RADIUS.full,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    overflow: 'hidden',
-  } as ViewStyle,
-  completionGradient: {
-    padding: SPACING.lg,
+    minHeight: 44,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  langChipSelected: {
+    borderColor: COLORS.sage,
+    backgroundColor: COLORS.sageVeryFaint,
+  },
+  langChipUnselected: {
+    borderColor: COLORS.creamDimLight,
+    backgroundColor: COLORS.transparent,
+  },
+  langChipText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
+  },
+  langChipTextSelected: {
+    color: COLORS.sage,
+  },
+  langChipTextUnselected: {
+    color: COLORS.creamMuted,
+  },
+
+  // Nav buttons
+  navRow: {
+    paddingHorizontal: MAGAZINE.padding,
+    paddingTop: SPACING.xl,
     gap: SPACING.sm,
-  } as ViewStyle,
-  completionEmoji: {
-    fontSize: 40,
-  } as TextStyle,
-  completionDest: {
+  },
+  nextBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.sage,
+    minHeight: 52,
+  },
+  nextBtnFinal: {
+    backgroundColor: COLORS.sage,
+  },
+  nextBtnText: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 16,
+    color: COLORS.bg,
+  },
+  skipBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.sm,
+    minHeight: 44,
+  },
+  skipBtnText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
+    color: COLORS.creamMuted,
+  },
+
+  // ---------------------------------------------------------------------------
+  // State 2 — Profile exists, no trip
+  // ---------------------------------------------------------------------------
+  state2Scroll: {
+    paddingBottom: SPACING.xxxl,
+  },
+  networkLabel: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.creamSoft,
+    paddingHorizontal: MAGAZINE.padding,
+    paddingTop: SPACING.lg,
+  },
+  sectionHeader: {
+    paddingHorizontal: MAGAZINE.padding,
+    paddingTop: SPACING.xl,
+    paddingBottom: SPACING.sm,
+  },
+  sectionTitle: {
     fontFamily: FONTS.header,
     fontSize: 24,
+    fontStyle: 'italic',
     color: COLORS.cream,
-  } as TextStyle,
-  completionMeta: {
-    fontFamily: FONTS.mono,
-    fontSize: 12,
-    color: COLORS.creamMuted,
-    letterSpacing: 1,
-  } as TextStyle,
-  completionVibes: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginTop: SPACING.xs,
-    justifyContent: 'center',
-  } as ViewStyle,
-  completionVibe: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: RADIUS.full,
-  } as ViewStyle,
-  completionVibeText: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.cream,
-    letterSpacing: 0.5,
-  } as TextStyle,
-  completionActions: {
-    flexDirection: 'row',
+  },
+  destChipsRow: {
+    paddingHorizontal: MAGAZINE.padding,
     gap: SPACING.sm,
-    padding: SPACING.md,
-  } as ViewStyle,
-  completionBtn: {
-    flex: 1,
+    paddingBottom: SPACING.md,
+  },
+  destChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: COLORS.bgGlass,
+    gap: SPACING.xs,
+    paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  } as ViewStyle,
-  completionBtnText: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 13,
-    color: COLORS.cream,
-  } as TextStyle,
-
-  // ── Meetup card ──
-  meetupCard: {
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.xl,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: SPACING.md,
-    gap: SPACING.sm,
-  } as ViewStyle,
-  meetupTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  } as ViewStyle,
-  meetupTypeBadge: {
-    backgroundColor: COLORS.sageLight,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
-    borderRadius: RADIUS.sm,
+    borderRadius: RADIUS.full,
     borderWidth: 1,
     borderColor: COLORS.sageBorder,
-  } as ViewStyle,
-  meetupTypeBadgeText: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.sage,
-  } as TextStyle,
-  meetupTimeSlot: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.creamMuted,
-    textTransform: 'capitalize',
-  } as TextStyle,
-  meetupLocation: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 15,
+    backgroundColor: COLORS.sageVeryFaint,
+    minHeight: 44,
+  },
+  destChipText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
     color: COLORS.cream,
-  } as TextStyle,
-  meetupDate: {
+  },
+  destChipCount: {
     fontFamily: FONTS.mono,
     fontSize: 12,
-    color: COLORS.creamMuted,
-  } as TextStyle,
-  meetupDesc: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.creamSoft,
-    lineHeight: 20,
-  } as TextStyle,
-  meetupFooter: {
+    color: COLORS.sage,
+  },
+  addTripCard: {
+    marginHorizontal: MAGAZINE.padding,
+    marginTop: SPACING.xl,
+    padding: MAGAZINE.padding,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.bgCard,
+    gap: SPACING.md,
+  },
+  addTripTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 28,
+    fontStyle: 'italic',
+    color: COLORS.cream,
+  },
+
+  // ---------------------------------------------------------------------------
+  // State 3 — Full experience
+  // ---------------------------------------------------------------------------
+  fullScroll: {
+    paddingBottom: SPACING.xxxl,
+  },
+  fullHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: SPACING.xs,
-  } as ViewStyle,
-  meetupSpots: {
+    paddingHorizontal: MAGAZINE.padding,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.sm,
+  },
+  fullTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 32,
+    fontStyle: 'italic',
+    color: COLORS.cream,
+  },
+  privacyToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  privacyLabel: {
     fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.creamMuted,
+  },
+  section: {
+    paddingHorizontal: MAGAZINE.padding,
+    paddingTop: SPACING.xl,
+    gap: SPACING.md,
+  },
+
+  // Roamer profile cards
+  roamerCard: {
+    height: 140,
+    backgroundColor: COLORS.bgMagazine,
+    borderRadius: RADIUS.md,
+    borderLeftWidth: MAGAZINE.accentBorder,
+    borderLeftColor: COLORS.sage,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    justifyContent: 'space-between',
+  },
+  roamerCardHeader: {
+    gap: 2,
+  },
+  roamerNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  roamerName: {
+    fontFamily: FONTS.header,
+    fontSize: 20,
+    color: COLORS.cream,
+  },
+  roamerScore: {
+    fontFamily: FONTS.mono,
+    fontSize: 14,
+    color: COLORS.gold,
+  },
+  roamerMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  roamerCity: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.creamMuted,
+    marginRight: SPACING.xs,
+  },
+  roamerLangs: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.creamMuted,
+    flex: 1,
+  },
+  roamerTags: {
+    flexDirection: 'row',
+    gap: SPACING.xs,
+    flexWrap: 'wrap',
+  },
+  roamerTag: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.coralSubtle,
+  },
+  roamerTagText: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.coral,
+  },
+  roamerFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: SPACING.sm,
+  },
+  roamerBio: {
+    fontFamily: FONTS.body,
     fontSize: 12,
     color: COLORS.creamMuted,
-  } as TextStyle,
-  meetupJoinBtn: {
-    backgroundColor: COLORS.sage,
+    flex: 1,
+  },
+  connectBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
     paddingHorizontal: SPACING.md,
-    paddingVertical: 7,
+    paddingVertical: SPACING.sm,
     borderRadius: RADIUS.md,
-  } as ViewStyle,
-  meetupJoinBtnText: {
+    minHeight: 44,
+  },
+  connectBtnDefault: {
+    backgroundColor: COLORS.sage,
+  },
+  connectBtnRequested: {
+    backgroundColor: COLORS.transparent,
+    borderWidth: 1,
+    borderColor: COLORS.goldBorder,
+  },
+  connectBtnConnected: {
+    backgroundColor: COLORS.transparent,
+    borderWidth: 1,
+    borderColor: COLORS.successBorder,
+  },
+  connectBtnText: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 13,
+  },
+  connectBtnTextDefault: {
     color: COLORS.bg,
-  } as TextStyle,
+  },
+  connectBtnTextRequested: {
+    color: COLORS.gold,
+  },
+  connectBtnTextConnected: {
+    color: COLORS.sage,
+  },
+
+  // Empty state
+  emptyState: {
+    paddingHorizontal: MAGAZINE.padding,
+    paddingTop: SPACING.xxl,
+    alignItems: 'center',
+    gap: SPACING.md,
+  },
+  emptyText: {
+    fontFamily: FONTS.body,
+    fontSize: 15,
+    color: COLORS.creamMuted,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  inviteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.sm,
+    minHeight: 44,
+  },
+  inviteBtnText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
+    color: COLORS.sage,
+  },
+
+  // Network horizontal scroll (State 3, section 3)
+  networkScroll: {
+    gap: SPACING.sm,
+    paddingRight: MAGAZINE.padding,
+  },
+  networkCard: {
+    width: 100,
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  networkAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: COLORS.bgElevated,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  networkAvatarText: {
+    fontFamily: FONTS.header,
+    fontSize: 22,
+    color: COLORS.sage,
+  },
+  networkName: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 12,
+    color: COLORS.cream,
+    textAlign: 'center',
+  },
+  networkCity: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.creamMuted,
+    textAlign: 'center',
+  },
 });

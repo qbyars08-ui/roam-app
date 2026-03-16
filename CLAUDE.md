@@ -65,6 +65,43 @@ npx eslint . --ext .ts,.tsx
 - Keep `any` only at DB/SDK boundaries (Supabase rows, RevenueCat). Use `unknown` + type guards elsewhere.
 - All user-facing strings should use i18n `t()` function, not hardcoded English
 
+## Audio System (ElevenLabs + expo-av)
+
+### Architecture
+- All ElevenLabs API calls routed through `supabase/functions/voice-proxy/index.ts` (API key server-side)
+- Client engine: `lib/elevenlabs.ts` — multilingual TTS with LRU audio cache (10 items)
+- Ambient audio: `lib/ambient-audio.ts` — TTS-generated ambient sounds with expo-av fade-out
+- Voice input: `lib/voice-input.ts` — expo-speech-recognition wrapper with BCP-47 locale mapping
+- Survival phrases: `lib/survival-phrases.ts` — 72 curated phrases across es/fr/de/ja
+
+### Supported Languages & Voices
+| Language | Voice ID | Name | Model |
+|----------|----------|------|-------|
+| en | EXAVITQu4vr4xnSDxMaL | Sarah | eleven_turbo_v2_5 |
+| es | onwK4e9ZLuTAKqWW03F9 | Daniel | eleven_multilingual_v2 |
+| fr | XB0fDUnXU5powFXDhCwa | Charlotte | eleven_multilingual_v2 |
+| de | pqHfZKP75CvOlQylNhV4 | Bill | eleven_multilingual_v2 |
+| ja | iP95p4xoKVk53GoZ742B | Yuki | eleven_multilingual_v2 |
+
+### Key Functions
+- `narrateText(text, options?)` — Core TTS with language/speed/voice settings
+- `narrateItinerary(itinerary, options?)` → `NarrationController` — Full trip audio guide with play/pause/skip/stop
+- `pronounce(text, language?)` — Short TTS for location names (max 200 chars)
+- `narrateSurvivalPhrases(phrases, language, options?)` — Sequential phrase playback
+- `buildDayNarration(params)` — Rich prose builder (neighborhoods, transit, costs, accommodation)
+- `playAmbientSound(key)` — Destination ambient sounds with fade-out
+
+### UI Components (`components/audio/`)
+- `AudioGuideBar` — Floating podcast-style mini player
+- `NarrationToggle` — Headphones button to start/stop full trip audio guide
+- `PronunciationButton` — Inline tap-to-hear (Volume2 icon, 300ms debounce)
+- `SurvivalPhrasesCard` — Phrase card with play-all and individual pronunciation
+- `VoiceInputButton` — Animated mic button with pulsing red dot
+
+### Rate Limits
+- Voice proxy: 30 req/min per user (server-enforced)
+- Pronunciation: 200 char max text length
+
 ## Learnings (update after every correction)
 
 ### Shell
@@ -124,6 +161,37 @@ npx eslint . --ext .ts,.tsx
 - After code changes: run `npx tsc --noEmit` before proceeding
 - Preview: use preview tools (preview_start, preview_snapshot, preview_screenshot) to verify UI
 - Check console logs for errors (ignore RN web `collapsable` deprecation warnings — not a real issue)
+
+## Visual Design (Magazine Editorial Reset — March 2026)
+- All tabs redesigned with editorial/magazine aesthetic
+- Full-bleed photos via expo-image with blurhash placeholders
+- No colored card backgrounds — dark only, rgba(255,255,255,.02-.06) borders
+- Generous spacing (20px minimum padding)
+- Cormorant Garamond italic for all section headlines
+- 5 visible tabs: Plan / Pulse / People / Flights / Prep
+- Tab layout in `app/(tabs)/_layout.tsx`, custom tab bar in `components/ui/ROAMTabBar.tsx`
+- Hidden but routable: index, body-intel, generate, stays, food, group
+
+## Ops Dashboard (`roam-dashboard.html`)
+- Single-file HTML/CSS/JS war room — zero dependencies
+- 3-panel Palantir layout: left 25%, center 50%, right 25%, bottom budget bar
+- Live data feeds: GitHub (commits, PRs, branches), Netlify (deploys, bandwidth), Supabase (users, trips, messages), PostHog (events), RevenueCat (projects)
+- All tokens in localStorage via settings modal — NEVER in code
+- Auto-refresh: health 30s, GitHub 2min, Netlify 2min, Supabase 60s, PostHog 90s, RevenueCat 3min
+- Sections: Daily Focus, ROAM Metrics 2x3, Quick Wins Tracker, Burn Rate, 5 Composers with wake-up prompts, 10 Agent Prompts, Checklist, Budget
+
+## Installed Skills (Claude Code) — 11 total in `~/.claude/skills/`
+- `ui-ux-pro-max` — 50+ UI styles, 161 color palettes, 57 font pairings, UX guidelines
+- `frontend-design` — Anthropic's official skill for distinctive, production-grade frontend interfaces
+- `react-native-best-practices` — RN performance: FPS, TTI, bundle size, memory, Hermes, Reanimated
+- `app-store-aso` — Apple App Store ASO: metadata validation, keyword optimization, screenshots
+- `test-driven-development` — TDD enforcement: RED→GREEN→REFACTOR cycle
+- `mcp-builder` — MCP server development: TypeScript/Python, tool design, eval creation
+- `supabase` — Supabase CRUD operations: database, auth, storage, edge functions
+- `expo-revenuecat` — Expo + RevenueCat payments, AdMob, i18n, onboarding, paywall
+- `expo-official` — 11 official Expo skills: native UI, API routes, deployment, CI/CD
+- `i18n-best-practices` — Internationalization: translation keys, localization workflows, CDN delivery
+- `last30days` — Research topics from the last 30 days across social platforms
 
 ## Subscription Model
 - Free: 1 trip/month (reset monthly via edge function)

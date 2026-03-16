@@ -28,6 +28,8 @@ const LIVE_FEATURE_IDS = [
   'budget-guardian', 'flights', 'stays', 'food', 'language-survival', 'prep', 'group-trips',
   'compatibility', 'expense-tracker', 'trip-countdown', 'trip-story', 'trip-album',
   'passport', 'trip-wrapped', 'chaos-mode', 'travel-card', 'trip-journal', 'body-intel', 'before-you-land', 'emergency-card',
+  'pets', 'alter-ego', 'globe', 'dream-vault', 'arrival-mode', 'dupe-finder', 'anti-itinerary',
+  'chaos-dare', 'honest-reviews', 'visited-map', 'airport-guide', 'memory-lane',
 ] as const;
 const ICON_MAP = {
   MessageSquare,

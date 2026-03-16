@@ -624,6 +624,8 @@ function DestinationCard({
   return (
     <Pressable
       onPress={onPress}
+      accessibilityLabel={`Select ${dest.label}`}
+      accessibilityRole="button"
       style={[styles.destCard, active && styles.destCardActive]}
     >
       <Image
@@ -631,9 +633,10 @@ function DestinationCard({
         style={styles.destCardImage as ImageStyle}
         contentFit="cover"
         transition={200}
+        accessibilityLabel={`${dest.label} destination photo`}
       />
       <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.62)']}
+        colors={['transparent', COLORS.overlay]}
         style={styles.destCardGradient}
       />
       <Text style={[styles.destCardLabel, active && styles.destCardLabelActive]}>
@@ -651,9 +654,10 @@ function EditorialCard({ rec }: { rec: TimeRec }) {
         style={styles.editorialCardPhoto as ImageStyle}
         contentFit="cover"
         transition={300}
+        accessibilityLabel={`${rec.label} — ${rec.timeSlot}`}
       />
       <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.72)']}
+        colors={['transparent', COLORS.overlayDark]}
         style={styles.editorialCardGradient}
       />
       <View style={styles.editorialCardBottom}>
@@ -686,9 +690,10 @@ function SeasonalHeroCard({ event }: { event: SeasonalEvent }) {
         style={styles.seasonalHeroPhoto as ImageStyle}
         contentFit="cover"
         transition={300}
+        accessibilityLabel={`${event.event} in ${event.destination}`}
       />
       <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.78)']}
+        colors={['transparent', COLORS.overlayDark]}
         style={styles.seasonalHeroGradient}
       />
       <View style={styles.seasonalHeroBottom}>
@@ -696,7 +701,14 @@ function SeasonalHeroCard({ event }: { event: SeasonalEvent }) {
           <Text style={styles.seasonalHeroEvent}>{event.event}</Text>
           <Text style={styles.seasonalHeroDate}>{event.dateRange}</Text>
         </View>
-        <Text style={styles.seasonalLearnMore}>Learn more →</Text>
+        <Pressable
+          onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+          accessibilityLabel={`Learn more about ${event.event}`}
+          accessibilityRole="button"
+          style={styles.learnMoreButton}
+        >
+          <Text style={styles.seasonalLearnMore}>Read the brief →</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -710,9 +722,10 @@ function SeasonalSmallCard({ item }: { item: typeof SEASONAL_SMALL_EVENTS[0] }) 
         style={styles.seasonalSmallPhoto as ImageStyle}
         contentFit="cover"
         transition={200}
+        accessibilityLabel={`${item.name} — ${item.dest}`}
       />
       <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.68)']}
+        colors={['transparent', COLORS.overlayDim]}
         style={styles.seasonalSmallGradient}
       />
       <View style={styles.seasonalSmallBottom}>
@@ -811,7 +824,7 @@ export default function PulseScreen() {
         {/* ── Right Now Section ── */}
         <View style={styles.section}>
           <Text style={styles.sectionHeading}>
-            Right now in {selectedDest.label}
+            Right now in{'\n'}{selectedDest.label}
           </Text>
           {localTimeString ? (
             <Text style={styles.sectionSubMono}>{localTimeString}</Text>
@@ -827,7 +840,7 @@ export default function PulseScreen() {
             <View style={styles.emptyState}>
               <Clock size={24} color={COLORS.creamDim} strokeWidth={1.5} />
               <Text style={styles.emptyText}>
-                {`Recommendations for ${selectedDest.label} are coming soon.`}
+                {`Insider picks for ${selectedDest.label} are on their way.`}
               </Text>
             </View>
           )}
@@ -835,7 +848,7 @@ export default function PulseScreen() {
 
         {/* ── What Locals Know Section ── */}
         <View style={styles.section}>
-          <Text style={styles.sectionHeading}>What locals know</Text>
+          <Text style={styles.sectionHeading}>What locals won't tell you</Text>
           <View style={styles.tipsStack}>
             {localTips.map((tip, i) => (
               <LocalTipRow key={i} tip={tip} />
@@ -845,7 +858,7 @@ export default function PulseScreen() {
 
         {/* ── This Month Section ── */}
         <View style={[styles.section, styles.sectionLast]}>
-          <Text style={styles.sectionHeading}>This month</Text>
+          <Text style={styles.sectionHeading}>Worth going now</Text>
 
           <SeasonalHeroCard event={heroEvent} />
 
@@ -1032,7 +1045,7 @@ const styles = StyleSheet.create({
   } as TextStyle,
 
   timeContextChip: {
-    backgroundColor: 'rgba(124,175,138,0.18)',
+    backgroundColor: COLORS.sageLight,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
@@ -1118,16 +1131,23 @@ const styles = StyleSheet.create({
   seasonalHeroDate: {
     fontFamily: FONTS.mono,
     fontSize: 12,
-    color: 'rgba(245,237,216,0.6)',
+    color: COLORS.creamSoft,
     marginTop: 4,
     letterSpacing: 0.2,
   } as TextStyle,
+
+  learnMoreButton: {
+    minHeight: 44,
+    minWidth: 44,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    flexShrink: 0,
+  } as ViewStyle,
 
   seasonalLearnMore: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 13,
     color: COLORS.sage,
-    flexShrink: 0,
   } as TextStyle,
 
   // ── Seasonal small cards ──

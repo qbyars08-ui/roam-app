@@ -183,6 +183,8 @@ function AirportDropdown({
       {filtered.map((airport) => (
         <Pressable
           key={airport.code}
+          accessibilityLabel={`Select ${airport.city} (${airport.code})`}
+          accessibilityRole="button"
           style={({ pressed }) => [
             dropdownStyles.item,
             { opacity: pressed ? 0.7 : 1 },
@@ -206,10 +208,10 @@ const dropdownStyles = StyleSheet.create({
     top: 52,
     left: 0,
     right: 0,
-    backgroundColor: '#0D1710',
+    backgroundColor: COLORS.bgMagazine,
     borderRadius: RADIUS.md,
     borderWidth: 1,
-    borderColor: COLORS.sage + '40',
+    borderColor: COLORS.sageBorder,
     zIndex: 100,
     overflow: 'hidden',
   } as ViewStyle,
@@ -263,6 +265,8 @@ function DatePickerInline({
   return (
     <View style={dateStyles.wrapper}>
       <Pressable
+        accessibilityLabel={`${label}: ${format(value, 'EEEE, MMMM d')}. Tap to change.`}
+        accessibilityRole="button"
         style={({ pressed }) => [
           dateStyles.trigger,
           { opacity: pressed ? 0.8 : 1 },
@@ -290,6 +294,9 @@ function DatePickerInline({
             return (
               <Pressable
                 key={d.toISOString()}
+                accessibilityLabel={format(d, 'EEEE, MMMM d')}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isSelected }}
                 style={[
                   dateStyles.dateChip,
                   isSelected && dateStyles.dateChipSelected,
@@ -370,7 +377,7 @@ const dateStyles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: SPACING.sm,
     borderRadius: RADIUS.md,
-    backgroundColor: '#0D1710',
+    backgroundColor: COLORS.bgMagazine,
   } as ViewStyle,
   dateChipSelected: {
     backgroundColor: COLORS.sage,
@@ -417,6 +424,8 @@ const RouteCard = React.memo(function RouteCard({
 
   return (
     <Pressable
+      accessibilityLabel={`${route.from} to ${route.to}, ${route.price}. Search on Skyscanner.`}
+      accessibilityRole="button"
       onPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onPress();
@@ -435,6 +444,7 @@ const RouteCard = React.memo(function RouteCard({
       <Image
         source={{ uri: route.image }}
         style={styles.routeImage}
+        accessibilityLabel={`${route.to} destination photo`}
         onLoad={() => setImageLoaded(true)}
         resizeMode="cover"
       />
@@ -473,6 +483,8 @@ const InspirationCardComponent = React.memo(function InspirationCardComponent({
 }) {
   return (
     <Pressable
+      accessibilityLabel={`${card.destination} in ${card.month}. ${card.reason}. Search flights.`}
+      accessibilityRole="button"
       onPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onPress();
@@ -485,6 +497,7 @@ const InspirationCardComponent = React.memo(function InspirationCardComponent({
       <Image
         source={{ uri: card.image }}
         style={styles.inspirationImage}
+        accessibilityLabel={`${card.destination} travel photo`}
         resizeMode="cover"
       />
       <LinearGradient
@@ -654,7 +667,7 @@ export default function FlightsScreen() {
         <View style={styles.hero}>
           <Text style={styles.heroTitle}>Find your flight.</Text>
           <Text style={styles.heroSub}>
-            We search so you get the best price.
+            Every route. Every price. One search.
           </Text>
         </View>
 
@@ -693,6 +706,8 @@ export default function FlightsScreen() {
             </View>
 
             <Pressable
+              accessibilityLabel="Swap departure and destination airports"
+              accessibilityRole="button"
               style={({ pressed }) => [
                 styles.swapBtn,
                 { opacity: pressed ? 0.7 : 1 },
@@ -758,6 +773,8 @@ export default function FlightsScreen() {
             <Text style={styles.passengersLabel}>Passengers</Text>
             <View style={styles.counter}>
               <Pressable
+                accessibilityLabel="Remove one passenger"
+                accessibilityRole="button"
                 style={({ pressed }) => [
                   styles.counterBtn,
                   { opacity: pressed ? 0.7 : 1 },
@@ -778,6 +795,8 @@ export default function FlightsScreen() {
               </Pressable>
               <Text style={styles.counterValue}>{passengers}</Text>
               <Pressable
+                accessibilityLabel="Add one passenger"
+                accessibilityRole="button"
                 style={({ pressed }) => [
                   styles.counterBtn,
                   { opacity: pressed ? 0.7 : 1 },
@@ -794,6 +813,8 @@ export default function FlightsScreen() {
 
           {/* Search CTA */}
           <Pressable
+            accessibilityLabel="Search flights on Skyscanner"
+            accessibilityRole="button"
             style={({ pressed }) => [
               styles.searchBtn,
               { transform: [{ scale: pressed ? 0.98 : 1 }] },
@@ -820,7 +841,7 @@ export default function FlightsScreen() {
         <View style={[styles.sectionHeader, { marginTop: 40 }]}>
           <Text style={styles.sectionTitle}>Popular routes</Text>
           <Text style={styles.sectionSub}>
-            The flights everyone is booking right now
+            Routes worth the miles. Prices that don't hurt.
           </Text>
         </View>
 
@@ -842,7 +863,7 @@ export default function FlightsScreen() {
         <View style={[styles.sectionHeader, { marginTop: 40 }]}>
           <Text style={styles.sectionTitle}>Best time to fly</Text>
           <Text style={styles.sectionSub}>
-            Peak season, lowest crowds, perfect weather
+            Go when it matters. Skip the crowds.
           </Text>
         </View>
 
@@ -862,6 +883,8 @@ export default function FlightsScreen() {
 
         {/* ── Layover Optimizer ── */}
         <Pressable
+          accessibilityLabel="Layover Optimizer. Turn your stopover into a highlight. Open guide."
+          accessibilityRole="button"
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             router.push('/layover' as never);
@@ -874,7 +897,7 @@ export default function FlightsScreen() {
           <Clock size={20} color={COLORS.gold} strokeWidth={2} />
           <View style={{ flex: 1 }}>
             <Text style={styles.layoverTitle}>Layover Optimizer</Text>
-            <Text style={styles.layoverSub}>What to do with your time in 8 major airports</Text>
+            <Text style={styles.layoverSub}>Turn your stopover into a highlight.</Text>
           </View>
           <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
         </Pressable>
@@ -969,8 +992,8 @@ const styles = StyleSheet.create({
     padding: 0,
   } as TextStyle,
   swapBtn: {
-    width: 36,
-    height: 36,
+    width: 44,
+    height: 44,
     borderRadius: RADIUS.md,
     backgroundColor: COLORS.bgMagazine,
     alignItems: 'center',
@@ -998,10 +1021,10 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   } as ViewStyle,
   counterBtn: {
-    width: 32,
-    height: 32,
+    width: 44,
+    height: 44,
     borderRadius: RADIUS.sm,
-    backgroundColor: '#0D1710',
+    backgroundColor: COLORS.bgMagazine,
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
@@ -1018,7 +1041,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: SPACING.sm,
     height: 52,
-    borderRadius: 8,
+    borderRadius: RADIUS.md,
     backgroundColor: COLORS.sage,
   } as ViewStyle,
   searchBtnText: {
@@ -1173,8 +1196,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginTop: SPACING.lg,
     padding: 20,
-    backgroundColor: '#0D1710',
+    backgroundColor: COLORS.bgMagazine,
     borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     borderLeftWidth: 3,
     borderLeftColor: COLORS.sage,
   } as ViewStyle,

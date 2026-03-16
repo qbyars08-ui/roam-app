@@ -60,7 +60,7 @@ import { exportCalendar } from '../lib/calendar';
 import { shareTrip, copyShareableLink } from '../lib/sharing';
 import { recordGrowthEvent } from '../lib/growth-hooks';
 import { evaluateTrigger } from '../lib/smart-triggers';
-import { buildDayNarration } from '../lib/elevenlabs';
+import { buildDayNarration, narrateItinerary, type NarrationController } from '../lib/elevenlabs';
 import WeatherCard from '../components/features/WeatherCard';
 import FlightPriceCard from '../components/features/FlightPriceCard';
 import WeatherDayStrip from '../components/features/WeatherDayStrip';
@@ -154,6 +154,7 @@ export default function ItineraryScreen() {
     slot: 'morning' | 'afternoon' | 'evening';
     data: TimeSlotActivity;
   } | null>(null);
+  const [narrationController, setNarrationController] = useState<NarrationController | null>(null);
   const mapRef = useRef<typeof MapView>(null);
   const dayPagerRef = useRef<ScrollView>(null);
   const updateTrip = useAppStore((s) => s.updateTrip);
@@ -373,6 +374,31 @@ export default function ItineraryScreen() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- trip used for narration only
   }, [currentDay, trip]);
+
+  // Full itinerary narration handler
+  const handleStartFullNarration = useCallback(() => {
+    if (!parsed) return;
+    // Stop previous controller if exists
+    if (narrationController?.isPlaying()) {
+      narrationController.stop();
+      setNarrationController(null);
+      return;
+    }
+    const controller = narrateItinerary(parsed, {
+      onDayChange: (day) => setActiveDay(day),
+      onComplete: () => setNarrationController(null),
+    });
+    setNarrationController(controller);
+    controller.play();
+  }, [parsed, narrationController]);
+
+  // Cleanup narration on unmount
+  useEffect(() => {
+    return () => {
+      narrationController?.stop();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fallbackNow = useMemo(
     () => Date.now(), // eslint-disable-line react-hooks/purity -- fallback when trip.createdAt missing
@@ -1509,10 +1535,39 @@ export default function ItineraryScreen() {
               {/* Voice guide */}
               {narrationText.length > 0 && (
                 <View style={styles.section}>
-                  <VoiceGuide
-                    text={narrationText}
-                    label={`Listen to Day ${currentDay.day}`}
-                  />
+                  <View style={{ flexDirection: 'row', gap: SPACING.sm, flexWrap: 'wrap' }}>
+                    <VoiceGuide
+                      text={narrationText}
+                      label={`Listen to Day ${currentDay.day}`}
+                    />
+                    {parsed && parsed.days.length > 1 && (
+                      <Pressable
+                        onPress={handleStartFullNarration}
+                        accessibilityLabel="Listen to full trip audio guide"
+                        style={({ pressed }) => [{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          backgroundColor: narrationController?.isPlaying() ? COLORS.sageLight : COLORS.bgCard,
+                          borderRadius: RADIUS.full,
+                          borderWidth: 1,
+                          borderColor: narrationController?.isPlaying() ? COLORS.sage : COLORS.border,
+                          paddingVertical: SPACING.sm,
+                          paddingHorizontal: SPACING.md,
+                          gap: SPACING.sm,
+                          minHeight: 44,
+                          opacity: pressed ? 0.85 : 1,
+                        }]}
+                      >
+                        <Text style={{
+                          fontFamily: FONTS.bodyMedium,
+                          fontSize: 14,
+                          color: narrationController?.isPlaying() ? COLORS.sage : COLORS.cream,
+                        }}>
+                          {narrationController?.isPlaying() ? '■ Stop Guide' : '▶ Full Trip Guide'}
+                        </Text>
+                      </Pressable>
+                    )}
+                  </View>
                 </View>
               )}
             </>

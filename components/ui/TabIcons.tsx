@@ -185,6 +185,20 @@ export function IconPulse({ size = SIZE, color, focused }: IconProps) {
   );
 }
 
+// Pets — paw print
+export function IconPets({ size = SIZE, color, focused }: IconProps) {
+  const c = color ?? (focused ? activeColor : inactiveColor);
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round">
+      <Circle cx={11} cy={18} r={4} />
+      <Circle cx={7} cy={10} r={2} />
+      <Circle cx={17} cy={10} r={2} />
+      <Circle cx={5} cy={5} r={1.5} />
+      <Circle cx={19} cy={5} r={1.5} />
+    </Svg>
+  );
+}
+
 // Ask tab pulse dot (green, subtle)
 export function IconAskPulseDot({ size = 6 }: { size?: number }) {
   return (

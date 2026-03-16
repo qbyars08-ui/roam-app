@@ -79,10 +79,15 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { text, voice_id, model_id } = body as {
+    const ALLOWED_LANGUAGES = ["en", "es", "fr", "de", "ja"] as const;
+    type AllowedLanguage = typeof ALLOWED_LANGUAGES[number];
+
+    const { text, voice_id, model_id, language, voice_settings } = body as {
       text?: string;
       voice_id?: string;
       model_id?: string;
+      language?: string;
+      voice_settings?: Record<string, unknown>;
     };
 
     if (!text || typeof text !== "string" || text.length > MAX_TEXT_LENGTH) {
@@ -99,6 +104,35 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // ── Validate language parameter ────────────────────────────────────
+    const resolvedLanguage: AllowedLanguage = (
+      language && ALLOWED_LANGUAGES.includes(language as AllowedLanguage)
+    )
+      ? language as AllowedLanguage
+      : "en";
+
+    if (language && !ALLOWED_LANGUAGES.includes(language as AllowedLanguage)) {
+      return new Response(
+        JSON.stringify({
+          error: `Invalid language '${language}'. Allowed: ${ALLOWED_LANGUAGES.join(", ")}`,
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // ── Select model: multilingual for non-English, turbo for English ──
+    const resolvedModelId = model_id ??
+      (resolvedLanguage !== "en" ? "eleven_multilingual_v2" : "eleven_turbo_v2_5");
+
+    // ── Merge voice settings: defaults + optional client override ──────
+    const defaultVoiceSettings = {
+      stability: 0.5,
+      similarity_boost: 0.75,
+    };
+    const resolvedVoiceSettings = voice_settings
+      ? { ...defaultVoiceSettings, ...voice_settings }
+      : defaultVoiceSettings;
+
     const elevenLabsApiKey = Deno.env.get("ELEVENLABS_API_KEY")!;
 
     // ── Call ElevenLabs TTS API ────────────────────────────────────────
@@ -112,11 +146,8 @@ Deno.serve(async (req: Request) => {
         },
         body: JSON.stringify({
           text,
-          model_id: model_id ?? "eleven_turbo_v2_5",
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.75,
-          },
+          model_id: resolvedModelId,
+          voice_settings: resolvedVoiceSettings,
         }),
       },
     );

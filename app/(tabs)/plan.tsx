@@ -50,7 +50,6 @@ import TripLimitBanner from '../../components/monetization/TripLimitBanner';
 import { track, trackEvent } from '../../lib/analytics';
 import { captureEvent } from '../../lib/posthog';
 import { parseItinerary } from '../../lib/types/itinerary';
-import { getDestinationCount } from '../../lib/social-proof';
 import { Users } from 'lucide-react-native';
 
 // ---------------------------------------------------------------------------
@@ -125,13 +124,19 @@ const TripCard = React.memo(function TripCard({
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onPress();
       }}
+      accessibilityLabel={`Open ${trip.destination} itinerary — ${dayCount} days, ${trip.budget} budget`}
+      accessibilityRole="button"
       style={({ pressed }) => [
         styles.tripCard,
         isLatest && styles.tripCardLatest,
         { transform: [{ scale: pressed ? 0.97 : 1 }] },
       ]}
     >
-      <Image source={{ uri: imageUrl }} style={styles.tripCardImage} />
+      <Image
+        source={{ uri: imageUrl }}
+        style={styles.tripCardImage}
+        accessibilityLabel={`${trip.destination} destination photo`}
+      />
       <LinearGradient
         colors={['transparent', COLORS.overlayDark]}
         style={styles.tripCardGradient}
@@ -208,12 +213,18 @@ const NextTripHero = React.memo(function NextTripHero({
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onPress();
       }}
+      accessibilityLabel={`Open ${trip.destination} itinerary`}
+      accessibilityRole="button"
       style={({ pressed }) => [
         styles.heroCard,
         { transform: [{ scale: pressed ? 0.98 : 1 }] },
       ]}
     >
-      <Image source={{ uri: imageUrl }} style={styles.heroImage} />
+      <Image
+        source={{ uri: imageUrl }}
+        style={styles.heroImage}
+        accessibilityLabel={`${trip.destination} hero photo`}
+      />
       <LinearGradient
         colors={['transparent', COLORS.overlayStrong]}
         style={styles.heroGradient}
@@ -230,12 +241,14 @@ const NextTripHero = React.memo(function NextTripHero({
         <View style={styles.heroPills}>
           <Pressable
             onPress={handleBeforeYouLand}
+            accessibilityLabel={`Before you land briefing for ${trip.destination}`}
+            accessibilityRole="button"
             style={({ pressed }) => [
               styles.heroPill,
               styles.heroPillGold,
               { opacity: pressed ? 0.75 : 1 },
             ]}
-            hitSlop={6}
+            hitSlop={8}
           >
             <Plane size={12} color={COLORS.gold} strokeWidth={2} />
             <Text style={[styles.heroPillText, styles.heroPillTextGold]}>Before You Land</Text>
@@ -243,12 +256,14 @@ const NextTripHero = React.memo(function NextTripHero({
 
           <Pressable
             onPress={handleHealthBrief}
+            accessibilityLabel="View health brief for this destination"
+            accessibilityRole="button"
             style={({ pressed }) => [
               styles.heroPill,
               styles.heroPillSage,
               { opacity: pressed ? 0.75 : 1 },
             ]}
-            hitSlop={6}
+            hitSlop={8}
           >
             <ShieldCheck size={12} color={COLORS.sage} strokeWidth={2} />
             <Text style={[styles.heroPillText, styles.heroPillTextSage]}>Health Brief</Text>
@@ -256,12 +271,14 @@ const NextTripHero = React.memo(function NextTripHero({
 
           <Pressable
             onPress={handleEmergencyCard}
+            accessibilityLabel={`View emergency card for ${trip.destination}`}
+            accessibilityRole="button"
             style={({ pressed }) => [
               styles.heroPill,
               styles.heroPillCoral,
               { opacity: pressed ? 0.75 : 1 },
             ]}
-            hitSlop={6}
+            hitSlop={8}
           >
             <Heart size={12} color={COLORS.coral} strokeWidth={2} />
             <Text style={[styles.heroPillText, styles.heroPillTextCoral]}>Emergency Card</Text>
@@ -286,6 +303,7 @@ interface QuickAction {
   labelKey: string;
   subKey: string;
   color: string;
+  iconBg: string;
 }
 
 const QUICK_ACTIONS: QuickAction[] = [
@@ -295,6 +313,7 @@ const QUICK_ACTIONS: QuickAction[] = [
     labelKey: 'plan.findStays',
     subKey: 'plan.staysSub',
     color: COLORS.sage,
+    iconBg: COLORS.sageLight,
   },
   {
     id: 'food',
@@ -302,6 +321,7 @@ const QUICK_ACTIONS: QuickAction[] = [
     labelKey: 'plan.findFood',
     subKey: 'plan.foodSub',
     color: COLORS.coral,
+    iconBg: COLORS.coralLight,
   },
   {
     id: 'flights',
@@ -309,6 +329,7 @@ const QUICK_ACTIONS: QuickAction[] = [
     labelKey: 'plan.bookFlights',
     subKey: 'plan.flightsSub',
     color: COLORS.gold,
+    iconBg: COLORS.goldSubtle,
   },
 ];
 
@@ -543,6 +564,8 @@ export default function PlanScreen() {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   setShowGenerator(false);
                 }}
+                accessibilityLabel="Back to your trips"
+                accessibilityRole="button"
               >
                 <Text style={styles.backToTripsText}>{t('plan.backToTrips')}</Text>
               </Pressable>
@@ -559,7 +582,13 @@ export default function PlanScreen() {
             {networkError ? (
               <View style={styles.errorBanner}>
                 <Text style={styles.errorBannerText}>{networkError}</Text>
-                <Pressable onPress={clearError} hitSlop={8}>
+                <Pressable
+                  onPress={clearError}
+                  hitSlop={8}
+                  accessibilityLabel="Dismiss error"
+                  accessibilityRole="button"
+                  style={styles.errorBannerDismissBtn}
+                >
                   <Text style={styles.errorBannerRetry}>{t('plan.dismiss')}</Text>
                 </Pressable>
               </View>
@@ -621,6 +650,8 @@ export default function PlanScreen() {
         {/* New Trip Button */}
         <Pressable
           onPress={handleNewTrip}
+          accessibilityLabel="Plan a new trip"
+          accessibilityRole="button"
           style={({ pressed }) => [styles.newTripBtn, { transform: [{ scale: pressed ? 0.97 : 1 }] }]}
         >
           <LinearGradient
@@ -648,8 +679,10 @@ export default function PlanScreen() {
               key={action.id}
               style={({ pressed }) => [styles.quickAction, { transform: [{ scale: pressed ? 0.95 : 1 }] }]}
               onPress={() => handleQuickAction(action.id)}
+              accessibilityLabel={t(action.labelKey)}
+              accessibilityRole="button"
             >
-              <View style={[styles.quickActionIcon, { backgroundColor: `${action.color}20` }]}>
+              <View style={[styles.quickActionIcon, { backgroundColor: action.iconBg }]}>
                 <action.icon size={18} color={action.color} strokeWidth={2} />
               </View>
               <Text style={styles.quickActionLabel}>{t(action.labelKey)}</Text>
@@ -693,23 +726,33 @@ function PeopleNudgeBanner({
   onTap: () => void;
   onDismiss: () => void;
 }) {
-  const count = getDestinationCount(destination, new Date().getMonth() + 1);
   return (
     <Pressable
       onPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onTap();
       }}
+      accessibilityLabel={`See who else is heading to ${destination}`}
+      accessibilityRole="button"
       style={({ pressed }) => [styles.peopleBanner, { opacity: pressed ? 0.85 : 1 }]}
     >
       <View style={styles.peopleBannerLeft}>
         <Users size={16} color={COLORS.sage} strokeWidth={2} />
         <Text style={styles.peopleBannerText}>
-          <Text style={styles.peopleBannerBold}>{count} people</Text>
-          {' '}are planning {destination} this month
+          See who else is heading to{' '}
+          <Text style={styles.peopleBannerBold}>{destination}</Text>
         </Text>
       </View>
-      <Pressable onPress={onDismiss} hitSlop={12} style={styles.peopleBannerDismiss}>
+      <Pressable
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onDismiss();
+        }}
+        hitSlop={12}
+        accessibilityLabel="Dismiss people nudge"
+        accessibilityRole="button"
+        style={styles.peopleBannerDismiss}
+      >
         <Text style={styles.peopleBannerDismissText}>✕</Text>
       </Pressable>
     </Pressable>
@@ -738,7 +781,15 @@ function RateLimitModal({
           <Text style={styles.rateLimitBody}>
             {t('plan.rateLimitBody', { count: FREE_TRIPS_PER_MONTH })}
           </Text>
-          <Pressable onPress={onUpgrade} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              onUpgrade();
+            }}
+            accessibilityLabel="See ROAM Pro plans"
+            accessibilityRole="button"
+            style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
+          >
             <LinearGradient
               colors={[COLORS.gold, COLORS.goldDark]}
               style={styles.rateLimitUpgradeBtn}
@@ -746,7 +797,16 @@ function RateLimitModal({
               <Text style={styles.rateLimitUpgradeText}>{t('plan.seeProPlans')}</Text>
             </LinearGradient>
           </Pressable>
-          <Pressable onPress={onDismiss} style={styles.rateLimitDismiss} hitSlop={12}>
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onDismiss();
+            }}
+            accessibilityLabel="Maybe later — dismiss upgrade prompt"
+            accessibilityRole="button"
+            style={styles.rateLimitDismiss}
+            hitSlop={12}
+          >
             <Text style={styles.rateLimitDismissText}>{t('plan.maybeLater')}</Text>
           </Pressable>
         </View>
@@ -817,7 +877,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#0D1710',
+    backgroundColor: COLORS.bgMagazine,
     borderRadius: 12,
     borderLeftWidth: 3,
     borderLeftColor: COLORS.sage,
@@ -858,7 +918,7 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   quickAction: {
     flex: 1,
-    backgroundColor: '#0D1710',
+    backgroundColor: COLORS.bgMagazine,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -1052,6 +1112,8 @@ const styles = StyleSheet.create({
   backToTrips: {
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
+    minHeight: 44,
+    justifyContent: 'center',
   } as ViewStyle,
   backToTripsText: {
     fontFamily: FONTS.bodyMedium,
@@ -1085,6 +1147,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.coral,
   } as TextStyle,
+
+  // ── Error dismiss button ──
+  errorBannerDismissBtn: {
+    minHeight: 44,
+    minWidth: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
 
   // ── Loader ──
   loaderOverlay: {
@@ -1147,6 +1217,9 @@ const styles = StyleSheet.create({
   rateLimitDismiss: {
     marginTop: SPACING.md,
     paddingVertical: SPACING.sm,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   } as ViewStyle,
   rateLimitDismissText: {
     fontFamily: FONTS.bodyMedium,

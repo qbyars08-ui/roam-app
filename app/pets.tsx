@@ -29,7 +29,6 @@ import {
   ROVER_AFFILIATE_URL,
   WAG_AFFILIATE_URL,
 } from '../lib/constants';
-import { withComingSoon } from '../lib/with-coming-soon';
 import { useAppStore, type Pet } from '../lib/store';
 import {
   schedulePetCheckIn,
@@ -754,4 +753,4 @@ const styles = StyleSheet.create({
   } as TextStyle,
 });
 
-export default withComingSoon(PetsScreen, { routeName: 'pets', title: 'Pet Travel' });
+export default PetsScreen;

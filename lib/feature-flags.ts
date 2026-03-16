@@ -25,6 +25,12 @@ const V1_CORE_ROUTES = new Set([
   'social-profile-edit',
   // Viral & shareable experiences
   'passport', 'trip-wrapped', 'viral-cards', 'trip-story', 'trip-album', 'trip-countdown', 'expense-tracker', 'compatibility', 'travel-card', 'trip-journal', 'body-intel', 'before-you-land', 'emergency-card', 'layover',
+  // Pet travel
+  'pets',
+  // Newly unlocked features
+  'alter-ego', 'globe', 'dream-vault', 'arrival-mode', 'dupe-finder', 'anti-itinerary',
+  'chaos-dare', 'language-survival', 'chaos-mode', 'budget-guardian',
+  'honest-reviews', 'visited-map', 'airport-guide', 'memory-lane',
 ]);
 
 /**

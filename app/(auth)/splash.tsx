@@ -2,13 +2,12 @@
 // ROAM — Onboarding Screen 1: Splash
 // Cinematic logo reveal with travel backdrop, auto-advances to Hook
 // =============================================================================
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { assignOnboardingVariant } from '../../lib/ab-test';
 import {
   Animated,
   Easing,
   ImageBackground,
-  Pressable,
   StyleSheet,
   Text,
   View,
@@ -17,17 +16,10 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Haptics from '../../lib/haptics';
-import { supabase } from '../../lib/supabase';
-import { useAppStore } from '../../lib/store';
-import { enterGuestMode } from '../../lib/guest';
-import { COLORS, FONTS, SPACING } from '../../lib/constants';
-import { ONBOARDING_COMPLETE } from '../../lib/storage-keys';
+import { COLORS, FONTS } from '../../lib/constants';
 import { getDestinationPhoto } from '../../lib/photos';
 
 export default function SplashScreen() {
-  const [browsing, setBrowsing] = useState(false);
   const router = useRouter();
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const logoScale = useRef(new Animated.Value(0.85)).current;
@@ -89,27 +81,6 @@ export default function SplashScreen() {
     return () => timers.forEach(clearTimeout);
   }, [bgOpacity, glowOpacity, logoOpacity, logoScale, router, taglineOpacity]);
 
-  const handleBrowseFirst = useCallback(async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setBrowsing(true);
-    try {
-      const { data, error } = await supabase.auth.signInAnonymously();
-      if (!error && data.session) {
-        useAppStore.getState().setSession(data.session);
-        await AsyncStorage.setItem(ONBOARDING_COMPLETE, 'true');
-        router.replace('/(tabs)');
-      } else {
-        await enterGuestMode();
-        router.replace('/(tabs)');
-      }
-    } catch {
-      await enterGuestMode();
-      router.replace('/(tabs)');
-    } finally {
-      setBrowsing(false);
-    }
-  }, [router]);
-
   return (
     <View style={styles.container}>
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: bgOpacity }]}>
@@ -142,21 +113,6 @@ export default function SplashScreen() {
       <Animated.Text style={[styles.tagline, { opacity: taglineOpacity }]}>
         Go somewhere that changes you.
       </Animated.Text>
-
-      <Pressable
-        onPress={handleBrowseFirst}
-        disabled={browsing}
-        accessibilityRole="button"
-        accessibilityLabel="Browse first"
-        style={({ pressed }) => [
-          styles.browseFirst,
-          { opacity: pressed || browsing ? 0.7 : 1 },
-        ]}
-      >
-        <Text style={styles.browseFirstText}>
-          {browsing ? 'Loading...' : 'Browse first'}
-        </Text>
-      </Pressable>
     </View>
   );
 }
@@ -164,7 +120,7 @@ export default function SplashScreen() {
 const _rawStyles = {
   container: {
     flex: 1,
-    backgroundColor: COLORS.bg,
+    backgroundColor: COLORS.bgDarkGreen,
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
@@ -189,17 +145,6 @@ const _rawStyles = {
     opacity: 0.6,
     marginTop: 12,
     letterSpacing: 1,
-  } as TextStyle,
-  browseFirst: {
-    position: 'absolute',
-    bottom: SPACING.xxl,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-  } as ViewStyle,
-  browseFirstText: {
-    fontFamily: FONTS.body,
-    fontSize: 14,
-    color: COLORS.creamMuted,
   } as TextStyle,
 };
 const styles = StyleSheet.create(_rawStyles) as typeof _rawStyles;
