@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
-import { generateItinerary, TripLimitReachedError } from '../../lib/claude';
+import { generateItinerary, generateItineraryStreaming, TripLimitReachedError } from '../../lib/claude';
 import { FREE_TRIPS_PER_MONTH } from '../../lib/constants';
 import { isGuestUser } from '../../lib/guest';
 import type { QuickModeState } from '../../components/generate/GenerateQuickMode';
@@ -44,6 +44,7 @@ export default function GenerateScreen() {
 
   const [networkError, setNetworkError] = useState<string | null>(null);
   const [rateLimitVisible, setRateLimitVisible] = useState(false);
+  const [streamingProgress, setStreamingProgress] = useState<string | null>(null);
   const generatingDestRef = useRef<string>('');
   const isMountedRef = useRef(true);
 
@@ -78,8 +79,9 @@ export default function GenerateScreen() {
 
     generatingDestRef.current = state.destination;
     setIsGenerating(true);
+    setStreamingProgress(null);
     try {
-      const { itinerary, tripsUsed } = await generateItinerary({
+      const { itinerary, tripsUsed } = await generateItineraryStreaming({
         destination: state.destination,
         days: state.duration,
         budget: BUDGET_TO_BACKEND[state.budget],
@@ -95,11 +97,14 @@ export default function GenerateScreen() {
         mustVisit: state.mustVisit,
         avoidList: state.avoidList,
         specialRequests: state.specialRequests,
+        onProgress: (info) => {
+          setStreamingProgress(info.text);
+        },
       });
 
       // Validate itinerary has required structure before storing
       if (!itinerary?.destination || !itinerary?.days?.length) {
-        throw new Error('Generated itinerary is incomplete. Please try again.');
+        throw new Error('Almost had it — the trip came back a little incomplete. One more try should do it.');
       }
 
       const trip = {
@@ -114,6 +119,7 @@ export default function GenerateScreen() {
 
       addTrip(trip);
       setTripsThisMonth(tripsUsed);
+      setStreamingProgress('Trip ready!');
       captureEvent('trip_generation_completed', { destination: state.destination, days: state.duration, budget: BUDGET_TO_BACKEND[state.budget], mode: 'quick' });
       recordGrowthEvent('trip_generated').catch(() => {});
       evaluateTrigger('post_generation').catch(() => {});
@@ -127,10 +133,11 @@ export default function GenerateScreen() {
         captureEvent('rate_limit_hit', { destination: generatingDestRef.current, source: 'quick' });
         setRateLimitVisible(true);
       } else {
-        setNetworkError(err instanceof Error ? err.message : 'We couldn\u2019t build your trip. Check your connection and try again.');
+        setNetworkError(err instanceof Error ? err.message : 'Couldn\u2019t reach our servers — probably a WiFi thing. Give it a sec and try again.');
       }
     } finally {
       setIsGenerating(false);
+      setStreamingProgress(null);
     }
   }, [
     isPro,
@@ -160,18 +167,22 @@ export default function GenerateScreen() {
 
     generatingDestRef.current = dest;
     setIsGenerating(true);
+    setStreamingProgress(null);
     try {
-      const { itinerary, tripsUsed } = await generateItinerary({
+      const { itinerary, tripsUsed } = await generateItineraryStreaming({
         destination: dest,
         days,
         budget,
         vibes,
         groupSize,
+        onProgress: (info) => {
+          setStreamingProgress(info.text);
+        },
       });
 
       // Validate itinerary has required structure before storing
       if (!itinerary?.destination || !itinerary?.days?.length) {
-        throw new Error('Generated itinerary is incomplete. Please try again.');
+        throw new Error('Almost had it — the trip came back a little incomplete. One more try should do it.');
       }
 
       const trip = {
@@ -186,6 +197,7 @@ export default function GenerateScreen() {
 
       addTrip(trip);
       setTripsThisMonth(tripsUsed);
+      setStreamingProgress('Trip ready!');
       captureEvent('trip_generation_completed', { destination: dest, days, budget, mode: 'conversation' });
       recordGrowthEvent('trip_generated').catch(() => {});
       evaluateTrigger('post_generation').catch(() => {});
@@ -199,10 +211,11 @@ export default function GenerateScreen() {
         captureEvent('rate_limit_hit', { destination: generatingDestRef.current, source: 'conversation' });
         setRateLimitVisible(true);
       } else {
-        setNetworkError(err instanceof Error ? err.message : 'We couldn\u2019t build your trip. Check your connection and try again.');
+        setNetworkError(err instanceof Error ? err.message : 'Couldn\u2019t reach our servers — probably a WiFi thing. Give it a sec and try again.');
       }
     } finally {
       setIsGenerating(false);
+      setStreamingProgress(null);
     }
   }, [
     isPro,
@@ -271,7 +284,7 @@ export default function GenerateScreen() {
       {renderContent()}
       {isGenerating && (
         <View style={styles.loaderOverlay}>
-          <TripGeneratingLoader destination={generatingDestRef.current} />
+          <TripGeneratingLoader destination={generatingDestRef.current} statusOverride={streamingProgress} />
         </View>
       )}
 

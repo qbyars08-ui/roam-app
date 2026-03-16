@@ -46,9 +46,9 @@ export default function GenerateModeSelect({ onSelect, firstTime = false }: Gene
     });
   };
 
-  const headline = firstTime ? 'No trips yet.' : t('generate.title');
+  const headline = firstTime ? 'Where are you going?' : t('generate.title');
   const subtitle = firstTime
-    ? 'Pick somewhere. 30 seconds. You\u2019ll have a full plan before anyone talks you out of it.'
+    ? 'Pick a place. In 30 seconds you\u2019ll have a full trip plan with real restaurants, real directions, and real costs.'
     : 'How do you want to plan?';
 
   return (
@@ -105,18 +105,20 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   headline: {
     fontFamily: FONTS.header,
-    fontSize: 36,
+    fontSize: 40,
     color: COLORS.cream,
     textAlign: 'center',
+    fontStyle: 'italic',
     marginBottom: SPACING.sm,
   } as TextStyle,
   subtitle: {
     fontFamily: FONTS.body,
-    fontSize: 14,
-    color: COLORS.cream,
-    opacity: 0.5,
+    fontSize: 15,
+    color: COLORS.creamMuted,
     textAlign: 'center',
+    lineHeight: 22,
     marginBottom: SPACING.xl,
+    paddingHorizontal: SPACING.lg,
   } as TextStyle,
   cards: {
     gap: SPACING.md,

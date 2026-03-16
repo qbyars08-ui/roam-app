@@ -28,12 +28,14 @@ import {
   Bed,
   Calendar,
   Plane,
+  ShieldCheck,
+  Heart,
 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore, type Trip } from '../../lib/store';
-import { generateItinerary, TripLimitReachedError } from '../../lib/claude';
+import { generateItineraryStreaming, TripLimitReachedError } from '../../lib/claude';
 import { FREE_TRIPS_PER_MONTH } from '../../lib/constants';
 import { isGuestUser } from '../../lib/guest';
 import type { QuickModeState } from '../../components/generate/GenerateQuickMode';
@@ -165,6 +167,118 @@ const TripCard = React.memo(function TripCard({
 });
 
 // ---------------------------------------------------------------------------
+// Next Trip Hero — full-bleed hero card for the most recent trip
+// ---------------------------------------------------------------------------
+const NextTripHero = React.memo(function NextTripHero({
+  trip,
+  onPress,
+}: {
+  trip: Trip;
+  onPress: () => void;
+}) {
+  const router = useRouter();
+  const imageUrl = DEST_IMAGES[trip.destination] ?? FALLBACK_IMAGE;
+
+  const tagline = useMemo(() => {
+    try {
+      const parsed = parseItinerary(JSON.parse(trip.itinerary));
+      return parsed?.tagline ?? null;
+    } catch {
+      return null;
+    }
+  }, [trip.itinerary]);
+
+  const handleBeforeYouLand = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push({ pathname: '/before-you-land', params: { destination: trip.destination } } as never);
+  }, [router, trip.destination]);
+
+  const handleHealthBrief = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/(tabs)/body-intel' as never);
+  }, [router]);
+
+  const handleEmergencyCard = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push({ pathname: '/emergency-card', params: { destination: trip.destination } } as never);
+  }, [router, trip.destination]);
+
+  return (
+    <Pressable
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onPress();
+      }}
+      style={({ pressed }) => [
+        styles.heroCard,
+        { transform: [{ scale: pressed ? 0.98 : 1 }] },
+      ]}
+    >
+      <Image source={{ uri: imageUrl }} style={styles.heroImage} />
+      <LinearGradient
+        colors={['transparent', COLORS.overlayStrong]}
+        style={styles.heroGradient}
+      />
+
+      {/* Destination name + tagline */}
+      <View style={styles.heroContent}>
+        <Text style={styles.heroDest}>{trip.destination}</Text>
+        {tagline ? (
+          <Text style={styles.heroTagline} numberOfLines={2}>{tagline}</Text>
+        ) : null}
+
+        {/* Quick-link pills */}
+        <View style={styles.heroPills}>
+          <Pressable
+            onPress={handleBeforeYouLand}
+            style={({ pressed }) => [
+              styles.heroPill,
+              styles.heroPillGold,
+              { opacity: pressed ? 0.75 : 1 },
+            ]}
+            hitSlop={6}
+          >
+            <Plane size={12} color={COLORS.gold} strokeWidth={2} />
+            <Text style={[styles.heroPillText, styles.heroPillTextGold]}>Before You Land</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={handleHealthBrief}
+            style={({ pressed }) => [
+              styles.heroPill,
+              styles.heroPillSage,
+              { opacity: pressed ? 0.75 : 1 },
+            ]}
+            hitSlop={6}
+          >
+            <ShieldCheck size={12} color={COLORS.sage} strokeWidth={2} />
+            <Text style={[styles.heroPillText, styles.heroPillTextSage]}>Health Brief</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={handleEmergencyCard}
+            style={({ pressed }) => [
+              styles.heroPill,
+              styles.heroPillCoral,
+              { opacity: pressed ? 0.75 : 1 },
+            ]}
+            hitSlop={6}
+          >
+            <Heart size={12} color={COLORS.coral} strokeWidth={2} />
+            <Text style={[styles.heroPillText, styles.heroPillTextCoral]}>Emergency Card</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      {/* Tap-to-open arrow */}
+      <View style={styles.heroArrow}>
+        <ChevronRight size={20} color={COLORS.cream} strokeWidth={2} />
+      </View>
+    </Pressable>
+  );
+});
+
+// ---------------------------------------------------------------------------
 // Quick Action Cards — labels resolved at render time via t()
 // ---------------------------------------------------------------------------
 interface QuickAction {
@@ -210,6 +324,7 @@ export default function PlanScreen() {
   const [networkError, setNetworkError] = useState<string | null>(null);
   const [rateLimitVisible, setRateLimitVisible] = useState(false);
   const [showGenerator, setShowGenerator] = useState(false);
+  const [streamingProgress, setStreamingProgress] = useState<string | null>(null);
   const [peopleBannerDismissed, setPeopleBannerDismissed] = useState(false);
   const generatingDestRef = useRef<string>('');
   const isMountedRef = useRef(true);
@@ -270,8 +385,9 @@ export default function PlanScreen() {
 
     generatingDestRef.current = state.destination;
     setIsGenerating(true);
+    setStreamingProgress(null);
     try {
-      const { itinerary, tripsUsed } = await generateItinerary({
+      const { itinerary, tripsUsed } = await generateItineraryStreaming({
         destination: state.destination,
         days: state.duration,
         budget: BUDGET_TO_BACKEND[state.budget],
@@ -287,10 +403,13 @@ export default function PlanScreen() {
         mustVisit: state.mustVisit,
         avoidList: state.avoidList,
         specialRequests: state.specialRequests,
+        onProgress: (info) => {
+          setStreamingProgress(info.text);
+        },
       });
 
       if (!itinerary?.destination || !itinerary?.days?.length) {
-        throw new Error('Generated itinerary is incomplete. Please try again.');
+        throw new Error('Almost had it — the trip came back a little incomplete. One more try should do it.');
       }
 
       const trip = {
@@ -305,6 +424,7 @@ export default function PlanScreen() {
 
       addTrip(trip);
       setTripsThisMonth(tripsUsed);
+      setStreamingProgress('Trip ready!');
       captureEvent('trip_generation_completed', { destination: state.destination, days: state.duration, budget: BUDGET_TO_BACKEND[state.budget], mode: 'quick' });
       recordGrowthEvent('trip_generated').catch(() => {});
       evaluateTrigger('post_generation').catch(() => {});
@@ -319,10 +439,11 @@ export default function PlanScreen() {
         captureEvent('rate_limit_hit', { destination: generatingDestRef.current, source: 'quick' });
         setRateLimitVisible(true);
       } else {
-        setNetworkError(err instanceof Error ? err.message : 'We couldn\u2019t build your trip. Check your connection and try again.');
+        setNetworkError(err instanceof Error ? err.message : 'Couldn\u2019t reach our servers — probably a WiFi thing. Give it a sec and try again.');
       }
     } finally {
       setIsGenerating(false);
+      setStreamingProgress(null);
     }
   }, [isPro, tripsThisMonth, trips.length, setIsGenerating, addTrip, setTripsThisMonth, router]);
 
@@ -344,14 +465,22 @@ export default function PlanScreen() {
 
     generatingDestRef.current = dest;
     setIsGenerating(true);
+    setStreamingProgress(null);
     try {
-      const { itinerary, tripsUsed } = await generateItinerary({
+      const { itinerary, tripsUsed } = await generateItineraryStreaming({
         destination: dest,
         days,
         budget,
         vibes,
         groupSize,
+        onProgress: (info) => {
+          setStreamingProgress(info.text);
+        },
       });
+
+      if (!itinerary?.destination || !itinerary?.days?.length) {
+        throw new Error('Almost had it — the trip came back a little incomplete. One more try should do it.');
+      }
 
       const trip = {
         id: `gen-${Date.now()}`,
@@ -365,6 +494,7 @@ export default function PlanScreen() {
 
       addTrip(trip);
       setTripsThisMonth(tripsUsed);
+      setStreamingProgress('Trip ready!');
       captureEvent('trip_generation_completed', { destination: dest, days, budget, mode: 'conversation' });
       recordGrowthEvent('trip_generated').catch(() => {});
       evaluateTrigger('post_generation').catch(() => {});
@@ -379,10 +509,11 @@ export default function PlanScreen() {
         captureEvent('rate_limit_hit', { destination: generatingDestRef.current, source: 'conversation' });
         setRateLimitVisible(true);
       } else {
-        setNetworkError(err instanceof Error ? err.message : 'We couldn\u2019t build your trip. Check your connection and try again.');
+        setNetworkError(err instanceof Error ? err.message : 'Couldn\u2019t reach our servers — probably a WiFi thing. Give it a sec and try again.');
       }
     } finally {
       setIsGenerating(false);
+      setStreamingProgress(null);
     }
   }, [isPro, tripsThisMonth, trips.length, setIsGenerating, addTrip, setTripsThisMonth, router]);
 
@@ -460,7 +591,7 @@ export default function PlanScreen() {
         {renderGeneratorContent()}
         {isGenerating && (
           <View style={styles.loaderOverlay}>
-            <TripGeneratingLoader destination={generatingDestRef.current} />
+            <TripGeneratingLoader destination={generatingDestRef.current} statusOverride={streamingProgress} />
           </View>
         )}
         <RateLimitModal
@@ -531,18 +662,15 @@ export default function PlanScreen() {
         {/* Trip Cards */}
         <Text style={styles.sectionLabel}>{t('plan.sectionYourTrips')}</Text>
         {sortedTrips.map((trip, index) => (
-          <TripCard
-            key={trip.id}
-            trip={trip}
-            onPress={() => handleTripPress(trip)}
-            isLatest={index === 0}
-          />
+          index === 0
+            ? <NextTripHero key={trip.id} trip={trip} onPress={() => handleTripPress(trip)} />
+            : <TripCard key={trip.id} trip={trip} onPress={() => handleTripPress(trip)} isLatest={false} />
         ))}
       </ScrollView>
 
       {isGenerating && (
         <View style={styles.loaderOverlay}>
-          <TripGeneratingLoader destination={generatingDestRef.current} />
+          <TripGeneratingLoader destination={generatingDestRef.current} statusOverride={streamingProgress} />
         </View>
       )}
       <RateLimitModal
@@ -847,6 +975,93 @@ const styles = StyleSheet.create({
     color: COLORS.bg,
     letterSpacing: 0.5,
   } as TextStyle,
+
+  // ── Next Trip Hero ──
+  heroCard: {
+    height: 260,
+    borderRadius: RADIUS.xl,
+    overflow: 'hidden',
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+  } as ViewStyle,
+  heroImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  } as ImageStyle,
+  heroGradient: {
+    ...StyleSheet.absoluteFillObject,
+  } as ViewStyle,
+  heroContent: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: SPACING.md,
+  } as ViewStyle,
+  heroDest: {
+    fontFamily: FONTS.header,
+    fontSize: 36,
+    color: COLORS.white,
+    marginBottom: 4,
+  } as TextStyle,
+  heroTagline: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamSoft,
+    marginBottom: SPACING.md,
+    lineHeight: 18,
+  } as TextStyle,
+  heroPills: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
+  } as ViewStyle,
+  heroPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    backgroundColor: COLORS.overlayMedium,
+  } as ViewStyle,
+  heroPillGold: {
+    borderColor: COLORS.goldBorder,
+  } as ViewStyle,
+  heroPillSage: {
+    borderColor: COLORS.sageBorder,
+  } as ViewStyle,
+  heroPillCoral: {
+    borderColor: COLORS.coralBorder,
+  } as ViewStyle,
+  heroPillText: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    letterSpacing: 0.3,
+  } as TextStyle,
+  heroPillTextGold: {
+    color: COLORS.gold,
+  } as TextStyle,
+  heroPillTextSage: {
+    color: COLORS.sage,
+  } as TextStyle,
+  heroPillTextCoral: {
+    color: COLORS.coral,
+  } as TextStyle,
+  heroArrow: {
+    position: 'absolute',
+    right: SPACING.md,
+    top: SPACING.md,
+    backgroundColor: COLORS.whiteMuted,
+    borderRadius: RADIUS.full,
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
 
   // ── Back to trips ──
   backToTrips: {

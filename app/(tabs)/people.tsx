@@ -1,10 +1,12 @@
 // =============================================================================
-// ROAM — People Tab (social layer — find travel companions)
-// The feature nobody else has. Travelers matched by destination, dates, vibe.
+// ROAM — People Tab (social layer — real data from Supabase)
+// Sub-tabs: Feed | Squad | Groups | Meetups | Matches
 // =============================================================================
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Animated,
+  Dimensions,
   Image,
   Pressable,
   ScrollView,
@@ -15,259 +17,823 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  ChevronRight,
-  Globe,
+  Calendar,
+  Camera,
   Heart,
   MapPin,
   MessageCircle,
-  Sparkles,
+  Play,
+  Plus,
+  Send,
   Users,
   Zap,
 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { useAppStore } from '../../lib/store';
+import { useTripPresence } from '../../lib/hooks/useTripPresence';
+import { useMatches } from '../../lib/hooks/useMatches';
+import { useSocialProfile } from '../../lib/hooks/useSocialProfile';
+import { getPublicTrips, findBreakfastListings } from '../../lib/social';
+import TripPresenceCard from '../../components/social/TripPresenceCard';
+import MatchCard from '../../components/social/MatchCard';
 import { track } from '../../lib/analytics';
 import { captureEvent } from '../../lib/posthog';
+import * as Haptics from '../../lib/haptics';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { getAllPhotos } from '../../lib/trip-photos';
+import { getDestinationTheme } from '../../lib/destination-themes';
+import type { TripPhoto } from '../../lib/types/trip-photos';
+import type { PublicTrip, BreakfastClubListing, SocialProfile } from '../../lib/types/social';
+import { MEETUP_TYPE_LABELS } from '../../lib/types/social';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // ---------------------------------------------------------------------------
-// Mock traveler data — replace with Supabase queries
+// Sub-tab chips
 // ---------------------------------------------------------------------------
-interface Traveler {
-  id: string;
-  name: string;
-  age: number;
-  avatar: string;
-  destination: string;
-  dates: string;
-  vibes: string[];
-  bio: string;
-  countries: number;
-  matchScore: number;
-}
+type PeopleTab = 'feed' | 'squad' | 'groups' | 'meetups' | 'matches';
 
-const MOCK_TRAVELERS: Traveler[] = [
-  {
-    id: '1',
-    name: 'Maya',
-    age: 24,
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',
-    destination: 'Tokyo',
-    dates: 'Apr 12 – Apr 19',
-    vibes: ['foodie', 'culture', 'night-owl'],
-    bio: 'Street food hunter. 2AM ramen is my love language.',
-    countries: 23,
-    matchScore: 94,
-  },
-  {
-    id: '2',
-    name: 'Kai',
-    age: 22,
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
-    destination: 'Bali',
-    dates: 'May 1 – May 10',
-    vibes: ['adventure', 'beach', 'photography'],
-    bio: 'Chasing sunrises and surf breaks. Camera always on.',
-    countries: 15,
-    matchScore: 87,
-  },
-  {
-    id: '3',
-    name: 'Sofia',
-    age: 26,
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80',
-    destination: 'Barcelona',
-    dates: 'Jun 5 – Jun 12',
-    vibes: ['art', 'nightlife', 'foodie'],
-    bio: 'Museum mornings, tapas afternoons, rooftop nights.',
-    countries: 31,
-    matchScore: 91,
-  },
-  {
-    id: '4',
-    name: 'Liam',
-    age: 23,
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80',
-    destination: 'Mexico City',
-    dates: 'Apr 20 – Apr 27',
-    vibes: ['foodie', 'history', 'slow-morning'],
-    bio: 'Mezcal and museums. Currently learning Spanish.',
-    countries: 12,
-    matchScore: 82,
-  },
-  {
-    id: '5',
-    name: 'Rina',
-    age: 25,
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80',
-    destination: 'Lisbon',
-    dates: 'May 15 – May 22',
-    vibes: ['solo', 'culture', 'coffee'],
-    bio: 'Solo traveler. Give me a cafe with a view and I am home.',
-    countries: 18,
-    matchScore: 89,
-  },
-];
-
-interface TripGroup {
-  id: string;
-  destination: string;
-  image: string;
-  memberCount: number;
-  dateRange: string;
-  vibeMatch: string;
-}
-
-const MOCK_GROUPS: TripGroup[] = [
-  {
-    id: 'g1',
-    destination: 'Bali',
-    image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&q=80',
-    memberCount: 4,
-    dateRange: 'May 1–10',
-    vibeMatch: 'Adventure + Beach',
-  },
-  {
-    id: 'g2',
-    destination: 'Tokyo',
-    image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&q=80',
-    memberCount: 3,
-    dateRange: 'Apr 12–19',
-    vibeMatch: 'Foodie + Culture',
-  },
-  {
-    id: 'g3',
-    destination: 'Barcelona',
-    image: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&q=80',
-    memberCount: 2,
-    dateRange: 'Jun 5–12',
-    vibeMatch: 'Art + Nightlife',
-  },
+const TAB_LABELS: { id: PeopleTab; label: string }[] = [
+  { id: 'feed', label: 'Feed' },
+  { id: 'squad', label: 'Squad' },
+  { id: 'groups', label: 'Groups' },
+  { id: 'meetups', label: 'Meetups' },
+  { id: 'matches', label: 'Matches' },
 ];
 
 // ---------------------------------------------------------------------------
-// Traveler Card
+// Setup CTA Card
 // ---------------------------------------------------------------------------
-const TravelerCard = React.memo(function TravelerCard({
-  traveler,
+const SetupProfileCta = React.memo(function SetupProfileCta({
   onPress,
 }: {
-  traveler: Traveler;
   onPress: () => void;
 }) {
-  const { t } = useTranslation();
   return (
     <Pressable
-      onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        onPress();
-      }}
-      style={({ pressed }) => [styles.travelerCard, { transform: [{ scale: pressed ? 0.97 : 1 }] }]}
+      onPress={onPress}
+      style={({ pressed }) => [styles.ctaCard, { opacity: pressed ? 0.85 : 1 }]}
     >
-      <View style={styles.travelerHeader}>
-        <Image source={{ uri: traveler.avatar }} style={styles.travelerAvatar} />
-        <View style={styles.travelerInfo}>
-          <View style={styles.travelerNameRow}>
-            <Text style={styles.travelerName}>{traveler.name}, {traveler.age}</Text>
-            <View style={styles.matchBadge}>
-              <Zap size={10} color={COLORS.bg} />
-              <Text style={styles.matchText}>{traveler.matchScore}%</Text>
-            </View>
-          </View>
-          <View style={styles.travelerDestRow}>
-            <MapPin size={12} color={COLORS.sage} strokeWidth={2} />
-            <Text style={styles.travelerDest}>{traveler.destination}</Text>
-            <Text style={styles.travelerDates}>{traveler.dates}</Text>
-          </View>
-        </View>
-      </View>
-
-      <Text style={styles.travelerBio}>{traveler.bio}</Text>
-
-      <View style={styles.travelerVibes}>
-        {traveler.vibes.map((vibe) => (
-          <View key={vibe} style={styles.vibePill}>
-            <Text style={styles.vibePillText}>{vibe}</Text>
-          </View>
-        ))}
-        <View style={styles.countriesPill}>
-          <Globe size={11} color={COLORS.gold} strokeWidth={2} />
-          <Text style={styles.countriesText}>{t('people.countries', { count: traveler.countries })}</Text>
-        </View>
-      </View>
-
-      <View style={styles.travelerActions}>
-        <Pressable
-          style={({ pressed }) => [styles.actionBtn, styles.actionBtnPrimary, { opacity: pressed ? 0.85 : 1 }]}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            captureEvent('people_connect_tapped', {
-              traveler_id: traveler.id,
-              destination: traveler.destination,
-              match_score: traveler.matchScore,
-            });
-          }}
-        >
-          <MessageCircle size={16} color={COLORS.bg} strokeWidth={2} />
-          <Text style={styles.actionBtnPrimaryText}>{t('people.connect')}</Text>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [styles.actionBtn, styles.actionBtnSecondary, { opacity: pressed ? 0.85 : 1 }]}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            captureEvent('people_traveler_saved', {
-              traveler_id: traveler.id,
-              destination: traveler.destination,
-            });
-          }}
-        >
-          <Heart size={16} color={COLORS.cream} strokeWidth={2} />
-        </Pressable>
+      <Zap size={28} color={COLORS.sage} strokeWidth={2} />
+      <Text style={styles.ctaTitle}>Set up your travel profile</Text>
+      <Text style={styles.ctaBody}>
+        Connect with other travelers going to the same places on the same dates.
+      </Text>
+      <View style={styles.ctaBtn}>
+        <Text style={styles.ctaBtnText}>Create profile</Text>
       </View>
     </Pressable>
   );
 });
 
 // ---------------------------------------------------------------------------
-// Group Trip Card
+// Photo Feed Card — Instagram-style trip photo in the social feed
 // ---------------------------------------------------------------------------
-const GroupCard = React.memo(function GroupCard({
-  group,
-  onPress,
+const PhotoFeedCard = React.memo(function PhotoFeedCard({
+  photo,
+  tripDestination,
+  tripDays,
+  tripId,
+  onTapPhoto,
+  onTapStory,
 }: {
-  group: TripGroup;
-  onPress: () => void;
+  photo: TripPhoto;
+  tripDestination: string;
+  tripDays: number;
+  tripId: string;
+  onTapPhoto: () => void;
+  onTapStory: () => void;
 }) {
-  const { t } = useTranslation();
+  const [liked, setLiked] = useState(photo.isLiked);
+  const [likeCount, setLikeCount] = useState(photo.likesCount);
+  const theme = useMemo(() => getDestinationTheme(tripDestination), [tripDestination]);
+
+  const handleLike = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setLiked((prev) => !prev);
+    setLikeCount((prev) => (liked ? Math.max(0, prev - 1) : prev + 1));
+  }, [liked]);
+
   return (
-    <Pressable
-      onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        onPress();
-      }}
-      style={({ pressed }) => [styles.groupCard, { transform: [{ scale: pressed ? 0.96 : 1 }] }]}
-    >
-      <Image source={{ uri: group.image }} style={styles.groupImage} />
-      <LinearGradient
-        colors={['transparent', COLORS.overlayDark]}
-        style={styles.groupGradient}
-      />
-      <View style={styles.groupContent}>
-        <View style={styles.groupMemberBadge}>
-          <Users size={12} color={COLORS.bg} strokeWidth={2} />
-          <Text style={styles.groupMemberText}>{t('people.going', { count: group.memberCount })}</Text>
+    <View style={styles.feedCard}>
+      {/* Author header */}
+      <View style={styles.feedCardHeader}>
+        <View style={[styles.feedAvatar, { backgroundColor: theme.gradient[0] }]}>
+          <Text style={styles.feedAvatarEmoji}>{theme.emoji}</Text>
         </View>
-        <Text style={styles.groupDest}>{group.destination}</Text>
-        <Text style={styles.groupDates}>{group.dateRange}</Text>
-        <View style={styles.groupVibePill}>
-          <Text style={styles.groupVibeText}>{group.vibeMatch}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.feedAuthorName}>{tripDestination}</Text>
+          <Text style={styles.feedAuthorMeta}>
+            Day {photo.dayNumber} · {photo.timeSlot}
+          </Text>
+        </View>
+        <Pressable
+          onPress={onTapStory}
+          style={({ pressed }) => [
+            styles.feedStoryBtn,
+            { opacity: pressed ? 0.7 : 1 },
+          ]}
+        >
+          <Play size={12} color={COLORS.sage} strokeWidth={2.5} fill={COLORS.sage} />
+        </Pressable>
+      </View>
+
+      {/* Photo */}
+      <Pressable onPress={onTapPhoto}>
+        <Image
+          source={{ uri: photo.uri }}
+          style={styles.feedPhoto}
+          resizeMode="cover"
+        />
+        {photo.caption ? (
+          <View style={styles.feedPhotoCaption}>
+            <Text style={styles.feedPhotoCaptionText}>{photo.caption}</Text>
+          </View>
+        ) : null}
+      </Pressable>
+
+      {/* Actions */}
+      <View style={styles.feedActions}>
+        <Pressable onPress={handleLike} style={styles.feedActionBtn} hitSlop={8}>
+          <Heart
+            size={22}
+            color={liked ? COLORS.coral : COLORS.creamMuted}
+            strokeWidth={2}
+            fill={liked ? COLORS.coral : 'none'}
+          />
+          {likeCount > 0 && (
+            <Text style={[styles.feedActionCount, liked && { color: COLORS.coral }]}>
+              {likeCount}
+            </Text>
+          )}
+        </Pressable>
+        <Pressable onPress={onTapPhoto} style={styles.feedActionBtn} hitSlop={8}>
+          <Camera size={20} color={COLORS.creamMuted} strokeWidth={2} />
+        </Pressable>
+        <View style={{ flex: 1 }} />
+        <Text style={styles.feedTimestamp}>
+          {new Date(photo.createdAt).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+          })}
+        </Text>
+      </View>
+    </View>
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Trip Completion Card — shows when user completes a trip (no photos)
+// ---------------------------------------------------------------------------
+const TripCompletionCard = React.memo(function TripCompletionCard({
+  destination,
+  days,
+  vibes,
+  tripId,
+  onTapStory,
+  onTapAlbum,
+}: {
+  destination: string;
+  days: number;
+  vibes: string[];
+  tripId: string;
+  onTapStory: () => void;
+  onTapAlbum: () => void;
+}) {
+  const theme = useMemo(() => getDestinationTheme(destination), [destination]);
+
+  return (
+    <View style={styles.completionCard}>
+      <View style={[styles.completionGradient, { backgroundColor: theme.gradient[0] }]}>
+        <Text style={styles.completionEmoji}>{theme.emoji}</Text>
+        <Text style={styles.completionDest}>{destination}</Text>
+        <Text style={styles.completionMeta}>{days} days planned</Text>
+        {vibes.length > 0 && (
+          <View style={styles.completionVibes}>
+            {vibes.slice(0, 3).map((v) => (
+              <View key={v} style={styles.completionVibe}>
+                <Text style={styles.completionVibeText}>{v}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+      <View style={styles.completionActions}>
+        <Pressable
+          onPress={onTapStory}
+          style={({ pressed }) => [styles.completionBtn, { opacity: pressed ? 0.7 : 1 }]}
+        >
+          <Play size={14} color={COLORS.sage} strokeWidth={2.5} fill={COLORS.sage} />
+          <Text style={styles.completionBtnText}>Watch Story</Text>
+        </Pressable>
+        <Pressable
+          onPress={onTapAlbum}
+          style={({ pressed }) => [styles.completionBtn, { opacity: pressed ? 0.7 : 1 }]}
+        >
+          <Camera size={14} color={COLORS.cream} strokeWidth={2} />
+          <Text style={styles.completionBtnText}>Add Photos</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Feed tab
+// ---------------------------------------------------------------------------
+const FeedTab = React.memo(function FeedTab({
+  profile,
+  router,
+}: {
+  profile: SocialProfile | null;
+  router: ReturnType<typeof useRouter>;
+}) {
+  const { feed, myPresences, loading } = useTripPresence();
+  const trips = useAppStore((s) => s.trips);
+  const [photos, setPhotos] = useState<TripPhoto[]>([]);
+
+  // Load user's photos for the feed
+  useEffect(() => {
+    getAllPhotos().then((allPhotos) => {
+      const sorted = [...allPhotos].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setPhotos(sorted.slice(0, 20));
+    });
+  }, []);
+
+  const handlePostTrip = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    captureEvent('people_post_trip_tapped', { source: 'feed' });
+    router.push('/social-profile-edit' as never);
+  }, [router]);
+
+  const handleSetupProfile = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    captureEvent('people_setup_profile_tapped', { source: 'feed_cta' });
+    router.push('/social-profile-edit' as never);
+  }, [router]);
+
+  if (!profile) {
+    return (
+      <View style={styles.tabContent}>
+        <SetupProfileCta onPress={handleSetupProfile} />
+
+        {/* Show trip completion cards even without a profile */}
+        {trips.length > 0 && (
+          <View style={{ gap: SPACING.md, marginTop: SPACING.md }}>
+            <Text style={styles.sectionTitle}>Your Trips</Text>
+            {trips.slice(0, 5).map((trip) => (
+              <TripCompletionCard
+                key={trip.id}
+                destination={trip.destination}
+                days={trip.days}
+                vibes={trip.vibes}
+                tripId={trip.id}
+                onTapStory={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  router.push({ pathname: '/trip-story', params: { tripId: trip.id } } as never);
+                }}
+                onTapAlbum={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  router.push({ pathname: '/trip-album', params: { tripId: trip.id } } as never);
+                }}
+              />
+            ))}
+          </View>
+        )}
+      </View>
+    );
+  }
+
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator color={COLORS.sage} />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.tabContent}>
+      {myPresences.length === 0 && (
+        <Pressable
+          onPress={handlePostTrip}
+          style={({ pressed }) => [styles.postTripBtn, { opacity: pressed ? 0.85 : 1 }]}
+        >
+          <Plus size={16} color={COLORS.bg} strokeWidth={2} />
+          <Text style={styles.postTripBtnText}>Post your trip</Text>
+        </Pressable>
+      )}
+
+      {/* Photo feed — show trip photos in social feed style */}
+      {photos.length > 0 && (
+        <View style={{ gap: SPACING.md }}>
+          <Text style={styles.sectionTitle}>Recent Photos</Text>
+          {photos.slice(0, 8).map((photo) => {
+            const trip = trips.find((t) => t.id === photo.tripId);
+            return (
+              <PhotoFeedCard
+                key={photo.id}
+                photo={photo}
+                tripDestination={photo.destination}
+                tripDays={trip?.days ?? 0}
+                tripId={photo.tripId}
+                onTapPhoto={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push({ pathname: '/trip-album', params: { tripId: photo.tripId } } as never);
+                }}
+                onTapStory={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  router.push({ pathname: '/trip-story', params: { tripId: photo.tripId } } as never);
+                }}
+              />
+            );
+          })}
+        </View>
+      )}
+
+      {/* Trip completion cards */}
+      {trips.length > 0 && photos.length === 0 && (
+        <View style={{ gap: SPACING.md }}>
+          <Text style={styles.sectionTitle}>Your Trips</Text>
+          {trips.slice(0, 5).map((trip) => (
+            <TripCompletionCard
+              key={trip.id}
+              destination={trip.destination}
+              days={trip.days}
+              vibes={trip.vibes}
+              tripId={trip.id}
+              onTapStory={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                router.push({ pathname: '/trip-story', params: { tripId: trip.id } } as never);
+              }}
+              onTapAlbum={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                router.push({ pathname: '/trip-album', params: { tripId: trip.id } } as never);
+              }}
+            />
+          ))}
+        </View>
+      )}
+
+      {/* Trip presences */}
+      {feed.length === 0 && photos.length === 0 && trips.length === 0 ? (
+        <View style={styles.emptyState}>
+          <MapPin size={32} color={COLORS.sage} strokeWidth={1.5} />
+          <Text style={styles.emptyTitle}>You'd be the first</Text>
+          <Text style={styles.emptyBody}>
+            No one else has posted a trip here yet. That means you get to be the one someone finds later and messages: "Wait, you're going too?"
+          </Text>
+        </View>
+      ) : (
+        feed.map((presence) => (
+          <TripPresenceCard
+            key={presence.id}
+            presence={presence}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              captureEvent('people_presence_tapped', { presence_id: presence.id });
+            }}
+          />
+        ))
+      )}
+    </View>
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Squad tab
+// ---------------------------------------------------------------------------
+const SquadTab = React.memo(function SquadTab({
+  profile,
+  router,
+}: {
+  profile: SocialProfile | null;
+  router: ReturnType<typeof useRouter>;
+}) {
+  const { myPresences, loading } = useTripPresence();
+
+  const handleSetupProfile = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    captureEvent('people_setup_profile_tapped', { source: 'squad_cta' });
+    router.push('/social-profile-edit' as never);
+  }, [router]);
+
+  if (!profile) {
+    return (
+      <View style={styles.tabContent}>
+        <SetupProfileCta onPress={handleSetupProfile} />
+      </View>
+    );
+  }
+
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator color={COLORS.sage} />
+      </View>
+    );
+  }
+
+  if (myPresences.length === 0) {
+    return (
+      <View style={styles.tabContent}>
+        <View style={styles.emptyState}>
+          <Users size={32} color={COLORS.sage} strokeWidth={1.5} />
+          <Text style={styles.emptyTitle}>Solo doesn't mean alone</Text>
+          <Text style={styles.emptyBody}>
+            Post your trip in the Feed tab. Someone going to the same place, on the same dates, is probably looking for exactly this right now.
+          </Text>
         </View>
       </View>
-    </Pressable>
+    );
+  }
+
+  return (
+    <View style={styles.tabContent}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Your active trips</Text>
+        <Text style={styles.sectionSub}>
+          Swipe right on travelers going to the same place.
+        </Text>
+      </View>
+      {myPresences.map((presence) => (
+        <TripPresenceCard
+          key={presence.id}
+          presence={presence}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            captureEvent('people_squad_presence_tapped', { presence_id: presence.id });
+          }}
+        />
+      ))}
+    </View>
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Public Trip card
+// ---------------------------------------------------------------------------
+const PublicTripCard = React.memo(function PublicTripCard({
+  trip,
+  onJoin,
+}: {
+  trip: PublicTrip;
+  onJoin: () => void;
+}) {
+  const spotsLeft = trip.maxMembers - trip.currentMembers.length;
+
+  return (
+    <View style={styles.publicTripCard}>
+      <View style={styles.publicTripHeader}>
+        <Text style={styles.publicTripDest} numberOfLines={1}>
+          {trip.destination}
+        </Text>
+        <View style={styles.memberBadge}>
+          <Users size={12} color={COLORS.sage} strokeWidth={2} />
+          <Text style={styles.memberBadgeText}>
+            {trip.currentMembers.length}/{trip.maxMembers}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.publicTripDateRow}>
+        <Calendar size={12} color={COLORS.creamMuted} strokeWidth={2} />
+        <Text style={styles.publicTripDates}>
+          {new Date(trip.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          {' – '}
+          {new Date(trip.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+        </Text>
+        <Text style={styles.publicTripDays}>{trip.days}d</Text>
+      </View>
+
+      {trip.vibes.length > 0 && (
+        <View style={styles.vibesRow}>
+          {trip.vibes.slice(0, 4).map((vibe) => (
+            <View key={vibe} style={styles.vibePill}>
+              <Text style={styles.vibePillText}>{vibe}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {trip.description.length > 0 && (
+        <Text style={styles.publicTripDesc} numberOfLines={2}>
+          {trip.description}
+        </Text>
+      )}
+
+      <Pressable
+        onPress={onJoin}
+        style={({ pressed }) => [
+          styles.joinBtn,
+          spotsLeft === 0 && styles.joinBtnDisabled,
+          { opacity: pressed ? 0.85 : 1 },
+        ]}
+        disabled={spotsLeft === 0}
+      >
+        <Text style={styles.joinBtnText}>
+          {spotsLeft === 0 ? 'Full' : `Request to Join · ${spotsLeft} spot${spotsLeft === 1 ? '' : 's'} left`}
+        </Text>
+      </Pressable>
+    </View>
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Groups tab
+// ---------------------------------------------------------------------------
+const GroupsTab = React.memo(function GroupsTab({
+  router,
+}: {
+  router: ReturnType<typeof useRouter>;
+}) {
+  const [trips, setTrips] = useState<PublicTrip[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    getPublicTrips()
+      .then((data) => {
+        if (!cancelled) setTrips(data);
+      })
+      .catch(() => {
+        if (!cancelled) setTrips([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleCreate = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    captureEvent('people_create_public_trip_tapped', {});
+    router.push('/coming-soon' as never);
+  }, [router]);
+
+  const handleJoin = useCallback(
+    (trip: PublicTrip) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      captureEvent('people_join_trip_tapped', { trip_id: trip.id, destination: trip.destination });
+      router.push('/coming-soon' as never);
+    },
+    [router],
+  );
+
+  return (
+    <View style={styles.tabContent}>
+      <Pressable
+        onPress={handleCreate}
+        style={({ pressed }) => [styles.postTripBtn, { opacity: pressed ? 0.85 : 1 }]}
+      >
+        <Plus size={16} color={COLORS.bg} strokeWidth={2} />
+        <Text style={styles.postTripBtnText}>Create Public Trip</Text>
+      </Pressable>
+
+      {loading && (
+        <View style={styles.centered}>
+          <ActivityIndicator color={COLORS.sage} />
+        </View>
+      )}
+
+      {!loading && trips.length === 0 && (
+        <View style={styles.emptyState}>
+          <Users size={32} color={COLORS.sage} strokeWidth={1.5} />
+          <Text style={styles.emptyTitle}>Start one. They'll come.</Text>
+          <Text style={styles.emptyBody}>
+            Every group trip starts with one person who posts it. The best travel stories start with "I met someone who was also going to..."
+          </Text>
+        </View>
+      )}
+
+      {!loading &&
+        trips.map((trip) => (
+          <PublicTripCard key={trip.id} trip={trip} onJoin={() => handleJoin(trip)} />
+        ))}
+    </View>
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Meetup listing card
+// ---------------------------------------------------------------------------
+const MeetupCard = React.memo(function MeetupCard({
+  listing,
+  onJoin,
+}: {
+  listing: BreakfastClubListing;
+  onJoin: () => void;
+}) {
+  const spotsLeft = listing.maxPeople - listing.currentCount;
+  const label = MEETUP_TYPE_LABELS[listing.meetupType] ?? listing.meetupType;
+
+  return (
+    <View style={styles.meetupCard}>
+      <View style={styles.meetupTopRow}>
+        <View style={styles.meetupTypeBadge}>
+          <Text style={styles.meetupTypeBadgeText}>{label}</Text>
+        </View>
+        <Text style={styles.meetupTimeSlot}>{listing.timeSlot}</Text>
+      </View>
+
+      <Text style={styles.meetupLocation} numberOfLines={1}>
+        {listing.neighborhood}, {listing.city}
+      </Text>
+
+      <Text style={styles.meetupDate}>
+        {new Date(listing.date).toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+        })}
+      </Text>
+
+      {listing.description.length > 0 && (
+        <Text style={styles.meetupDesc} numberOfLines={2}>
+          {listing.description}
+        </Text>
+      )}
+
+      <View style={styles.meetupFooter}>
+        <Text style={styles.meetupSpots}>
+          {spotsLeft > 0 ? `${spotsLeft} spot${spotsLeft === 1 ? '' : 's'} left` : 'Full'}
+        </Text>
+        <Pressable
+          onPress={onJoin}
+          disabled={spotsLeft === 0}
+          style={({ pressed }) => [
+            styles.meetupJoinBtn,
+            spotsLeft === 0 && styles.joinBtnDisabled,
+            { opacity: pressed ? 0.85 : 1 },
+          ]}
+        >
+          <Text style={styles.meetupJoinBtnText}>{spotsLeft === 0 ? 'Full' : 'Join'}</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Meetups tab
+// ---------------------------------------------------------------------------
+const MeetupsTab = React.memo(function MeetupsTab({
+  router,
+}: {
+  router: ReturnType<typeof useRouter>;
+}) {
+  const [listings, setListings] = useState<BreakfastClubListing[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    // Use empty string as a placeholder city — UI can later filter by user's current city
+    findBreakfastListings('')
+      .then((data) => {
+        if (!cancelled) setListings(data);
+      })
+      .catch(() => {
+        if (!cancelled) setListings([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleCreate = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    captureEvent('people_create_meetup_tapped', {});
+    router.push('/coming-soon' as never);
+  }, [router]);
+
+  const handleJoin = useCallback(
+    (listing: BreakfastClubListing) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      captureEvent('people_join_meetup_tapped', {
+        listing_id: listing.id,
+        meetup_type: listing.meetupType,
+        city: listing.city,
+      });
+      router.push('/coming-soon' as never);
+    },
+    [router],
+  );
+
+  return (
+    <View style={styles.tabContent}>
+      <Pressable
+        onPress={handleCreate}
+        style={({ pressed }) => [styles.postTripBtn, { opacity: pressed ? 0.85 : 1 }]}
+      >
+        <Plus size={16} color={COLORS.bg} strokeWidth={2} />
+        <Text style={styles.postTripBtnText}>Create Meetup</Text>
+      </Pressable>
+
+      {loading && (
+        <View style={styles.centered}>
+          <ActivityIndicator color={COLORS.sage} />
+        </View>
+      )}
+
+      {!loading && listings.length === 0 && (
+        <View style={styles.emptyState}>
+          <MessageCircle size={32} color={COLORS.sage} strokeWidth={1.5} />
+          <Text style={styles.emptyTitle}>Be the reason someone's trip gets better</Text>
+          <Text style={styles.emptyBody}>
+            Post a meetup — coffee, a walk, a day trip. The person who's nervous about eating alone tonight will thank you.
+          </Text>
+        </View>
+      )}
+
+      {!loading &&
+        listings.map((listing) => (
+          <MeetupCard
+            key={listing.id}
+            listing={listing}
+            onJoin={() => handleJoin(listing)}
+          />
+        ))}
+    </View>
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Matches tab
+// ---------------------------------------------------------------------------
+const MatchesTab = React.memo(function MatchesTab({
+  profile,
+  router,
+}: {
+  profile: SocialProfile | null;
+  router: ReturnType<typeof useRouter>;
+}) {
+  const { matches, loading } = useMatches();
+
+  const handleSetupProfile = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    captureEvent('people_setup_profile_tapped', { source: 'matches_cta' });
+    router.push('/social-profile-edit' as never);
+  }, [router]);
+
+  const handleMessage = useCallback(
+    (channelId: string | null) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      if (!channelId) return;
+      captureEvent('people_match_message_tapped', { channel_id: channelId });
+      router.push({ pathname: '/chat/[channelId]', params: { channelId } } as never);
+    },
+    [router],
+  );
+
+  if (!profile) {
+    return (
+      <View style={styles.tabContent}>
+        <SetupProfileCta onPress={handleSetupProfile} />
+      </View>
+    );
+  }
+
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator color={COLORS.sage} />
+      </View>
+    );
+  }
+
+  if (matches.length === 0) {
+    return (
+      <View style={styles.tabContent}>
+        <View style={styles.emptyState}>
+          <Zap size={32} color={COLORS.creamMuted} strokeWidth={1.5} />
+          <Text style={styles.emptyTitle}>No matches yet</Text>
+          <Text style={styles.emptyBody}>
+            Start by posting your trip and swiping in the Squad tab to find your travel crew.
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.tabContent}>
+      {matches.map((match) => (
+        <MatchCard
+          key={match.id}
+          match={match}
+          profile={profile}
+          onMessage={() => handleMessage(match.chatChannelId)}
+        />
+      ))}
+    </View>
   );
 });
 
@@ -280,6 +846,12 @@ export default function PeopleScreen() {
   const router = useRouter();
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
+  const activePeopleTab = useAppStore((state) => state.activePeopleTab);
+  const setActivePeopleTab = useAppStore((state) => state.setActivePeopleTab);
+  const openToMeet = useAppStore((state) => state.openToMeet);
+
+  const { profile } = useSocialProfile();
+
   useEffect(() => {
     track({ type: 'screen_view', screen: 'people' });
     const anim = Animated.timing(fadeAnim, {
@@ -291,23 +863,14 @@ export default function PeopleScreen() {
     return () => anim.stop();
   }, [fadeAnim]);
 
-  const handleTravelerPress = useCallback((traveler: Traveler) => {
-    captureEvent('people_traveler_viewed', {
-      traveler_id: traveler.id,
-      destination: traveler.destination,
-      match_score: traveler.matchScore,
-    });
-    router.push({ pathname: '/coming-soon', params: { title: `${traveler.name}'s Profile` } } as never);
-  }, [router]);
-
-  const handleGroupPress = useCallback((group: TripGroup) => {
-    captureEvent('people_group_tapped', {
-      group_id: group.id,
-      destination: group.destination,
-      member_count: group.memberCount,
-    });
-    router.push({ pathname: '/coming-soon', params: { title: `${group.destination} Group Trip` } } as never);
-  }, [router]);
+  const handleTabPress = useCallback(
+    (tab: PeopleTab) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      captureEvent('people_tab_switched', { tab });
+      setActivePeopleTab(tab);
+    },
+    [setActivePeopleTab],
+  );
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -318,86 +881,69 @@ export default function PeopleScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>{t('people.title')}</Text>
-          <Text style={styles.headerSub}>{t('people.headerSub')}</Text>
+          <Text style={styles.headerTitle}>{t('people.title', 'People')}</Text>
+          <Text style={styles.headerSub}>
+            {openToMeet
+              ? t('people.headerSubActive', 'You\'re open to meeting travelers')
+              : t('people.headerSub', 'Find travelers going where you\'re going')}
+          </Text>
         </View>
 
-        {/* Hero — "Who's going where you're going?" */}
-        <View style={styles.heroCard}>
-          <LinearGradient
-            colors={[COLORS.sageFaint, COLORS.bg]}
-            style={StyleSheet.absoluteFill}
-          />
-          <Sparkles size={24} color={COLORS.sage} strokeWidth={1.5} />
-          <Text style={styles.heroTitle}>{t('people.heroTitle')}</Text>
-          <Text style={styles.heroSub}>{t('people.heroSub')}</Text>
-          <View style={styles.heroStats}>
-            <View style={styles.heroStat}>
-              <Text style={styles.heroStatNum}>2.4k</Text>
-              <Text style={styles.heroStatLabel}>{t('people.activeTravelers')}</Text>
-            </View>
-            <View style={styles.heroStatDivider} />
-            <View style={styles.heroStat}>
-              <Text style={styles.heroStatNum}>47</Text>
-              <Text style={styles.heroStatLabel}>{t('people.destinations')}</Text>
-            </View>
-            <View style={styles.heroStatDivider} />
-            <View style={styles.heroStat}>
-              <Text style={styles.heroStatNum}>128</Text>
-              <Text style={styles.heroStatLabel}>{t('people.groupsForming')}</Text>
-            </View>
+        {/* Compatibility quiz CTA */}
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            captureEvent('people_compat_quiz_tapped', {});
+            router.push('/compatibility' as never);
+          }}
+          style={({ pressed }) => [styles.compatCard, { opacity: pressed ? 0.85 : 1 }]}
+        >
+          <Text style={styles.compatEmoji}>{'\u2764\uFE0F\u200D\u{1F525}'}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.compatTitle}>Travel Compatibility Quiz</Text>
+            <Text style={styles.compatSub}>Are you travel soulmates? Find out in 60 seconds.</Text>
           </View>
-        </View>
+          <Text style={styles.compatArrow}>{'\u2192'}</Text>
+        </Pressable>
 
-        {/* Open Groups */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('people.openGroups')}</Text>
-          <Text style={styles.sectionSub}>{t('people.openGroupsSub')}</Text>
-        </View>
-
+        {/* Sub-tab chips */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.groupsScroll}
+          contentContainerStyle={styles.tabsScroll}
         >
-          {MOCK_GROUPS.map((group) => (
-            <GroupCard
-              key={group.id}
-              group={group}
-              onPress={() => handleGroupPress(group)}
-            />
-          ))}
+          {TAB_LABELS.map(({ id, label }) => {
+            const active = activePeopleTab === id;
+            return (
+              <Pressable
+                key={id}
+                onPress={() => handleTabPress(id)}
+                style={[styles.tabChip, active && styles.tabChipActive]}
+              >
+                <Text style={[styles.tabChipText, active && styles.tabChipTextActive]}>
+                  {label}
+                </Text>
+              </Pressable>
+            );
+          })}
         </ScrollView>
 
-        {/* Matched Travelers */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('people.matchedTravelers')}</Text>
-          <Text style={styles.sectionSub}>{t('people.matchedTravelersSub')}</Text>
-        </View>
-
-        {MOCK_TRAVELERS.map((traveler) => (
-          <TravelerCard
-            key={traveler.id}
-            traveler={traveler}
-            onPress={() => handleTravelerPress(traveler)}
-          />
-        ))}
-
-        {/* Bottom CTA */}
-        <View style={styles.bottomCta}>
-          <Text style={styles.bottomCtaText}>{t('people.completeProfileCta')}</Text>
-          <Pressable
-            style={({ pressed }) => [styles.profileBtn, { opacity: pressed ? 0.85 : 1 }]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              captureEvent('people_setup_profile_tapped', { source: 'people_bottom_cta' });
-              router.push('/profile' as never);
-            }}
-          >
-            <Text style={styles.profileBtnText}>{t('people.setUpProfile')}</Text>
-            <ChevronRight size={16} color={COLORS.sage} strokeWidth={2} />
-          </Pressable>
-        </View>
+        {/* Content area */}
+        {activePeopleTab === 'feed' && (
+          <FeedTab profile={profile} router={router} />
+        )}
+        {activePeopleTab === 'squad' && (
+          <SquadTab profile={profile} router={router} />
+        )}
+        {activePeopleTab === 'groups' && (
+          <GroupsTab router={router} />
+        )}
+        {activePeopleTab === 'meetups' && (
+          <MeetupsTab router={router} />
+        )}
+        {activePeopleTab === 'matches' && (
+          <MatchesTab profile={profile} router={router} />
+        )}
       </Animated.ScrollView>
     </View>
   );
@@ -436,64 +982,79 @@ const styles = StyleSheet.create({
     marginTop: 4,
   } as TextStyle,
 
-  // ── Hero Card ──
-  heroCard: {
-    marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.xl,
-    borderRadius: RADIUS.xl,
-    borderWidth: 1,
-    borderColor: COLORS.sageBorder,
-    padding: SPACING.lg,
-    alignItems: 'center',
-    overflow: 'hidden',
-  } as ViewStyle,
-  heroTitle: {
-    fontFamily: FONTS.header,
-    fontSize: 22,
-    color: COLORS.cream,
-    textAlign: 'center',
-    marginTop: SPACING.sm,
-  } as TextStyle,
-  heroSub: {
-    fontFamily: FONTS.body,
-    fontSize: 14,
-    color: COLORS.creamMuted,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginTop: SPACING.sm,
-    paddingHorizontal: SPACING.sm,
-  } as TextStyle,
-  heroStats: {
+  // ── Compatibility card ──
+  compatCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: SPACING.lg,
     gap: SPACING.md,
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.coralBorder,
+    padding: SPACING.md,
   } as ViewStyle,
-  heroStat: {
-    alignItems: 'center',
-  } as ViewStyle,
-  heroStatNum: {
-    fontFamily: FONTS.mono,
-    fontSize: 20,
-    color: COLORS.sage,
+  compatEmoji: {
+    fontSize: 28,
   } as TextStyle,
-  heroStatLabel: {
+  compatTitle: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.cream,
+  } as TextStyle,
+  compatSub: {
     fontFamily: FONTS.body,
-    fontSize: 11,
+    fontSize: 12,
     color: COLORS.creamMuted,
     marginTop: 2,
   } as TextStyle,
-  heroStatDivider: {
-    width: 1,
-    height: 30,
-    backgroundColor: COLORS.border,
+  compatArrow: {
+    fontSize: 18,
+    color: COLORS.coral,
+  } as TextStyle,
+
+  // ── Sub-tab chips ──
+  tabsScroll: {
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.sm,
+    paddingBottom: SPACING.md,
+  } as ViewStyle,
+  tabChip: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 8,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.bgGlass,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  } as ViewStyle,
+  tabChipActive: {
+    backgroundColor: COLORS.sage,
+    borderColor: COLORS.sage,
+  } as ViewStyle,
+  tabChipText: {
+    fontFamily: FONTS.mono,
+    fontSize: 13,
+    color: COLORS.creamMuted,
+  } as TextStyle,
+  tabChipTextActive: {
+    color: COLORS.bg,
+  } as TextStyle,
+
+  // ── Shared tab content ──
+  tabContent: {
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.md,
+  } as ViewStyle,
+  centered: {
+    paddingVertical: SPACING.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
   } as ViewStyle,
 
-  // ── Section Headers ──
+  // ── Section headers ──
   sectionHeader: {
-    paddingHorizontal: SPACING.lg,
-    marginBottom: SPACING.md,
+    gap: 2,
   } as ViewStyle,
   sectionTitle: {
     fontFamily: FONTS.header,
@@ -504,236 +1065,398 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 13,
     color: COLORS.creamMuted,
-    marginTop: 2,
   } as TextStyle,
 
-  // ── Group Cards ──
-  groupsScroll: {
-    paddingHorizontal: SPACING.lg,
-    gap: SPACING.md,
-    paddingBottom: SPACING.xl,
-  } as ViewStyle,
-  groupCard: {
-    width: 200,
-    height: 260,
-    borderRadius: RADIUS.xl,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  } as ViewStyle,
-  groupImage: {
-    ...StyleSheet.absoluteFillObject,
-    width: '100%',
-    height: '100%',
-  } as ImageStyle,
-  groupGradient: {
-    ...StyleSheet.absoluteFillObject,
-  } as ViewStyle,
-  groupContent: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: SPACING.md,
-  } as ViewStyle,
-  groupMemberBadge: {
-    flexDirection: 'row',
+  // ── Empty state ──
+  emptyState: {
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: COLORS.sage,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: RADIUS.sm,
-    marginBottom: SPACING.sm,
+    paddingVertical: SPACING.xl,
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.sm,
   } as ViewStyle,
-  groupMemberText: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.bg,
+  emptyTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 20,
+    color: COLORS.cream,
+    textAlign: 'center',
+    marginTop: SPACING.sm,
   } as TextStyle,
-  groupDest: {
+  emptyBody: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.creamMuted,
+    textAlign: 'center',
+    lineHeight: 22,
+  } as TextStyle,
+
+  // ── Setup CTA card ──
+  ctaCard: {
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+    padding: SPACING.lg,
+    alignItems: 'center',
+    gap: SPACING.sm,
+  } as ViewStyle,
+  ctaTitle: {
     fontFamily: FONTS.header,
     fontSize: 22,
-    color: COLORS.white,
-  } as TextStyle,
-  groupDates: {
-    fontFamily: FONTS.mono,
-    fontSize: 12,
-    color: COLORS.creamSoft,
-    marginTop: 2,
-  } as TextStyle,
-  groupVibePill: {
+    color: COLORS.cream,
+    textAlign: 'center',
     marginTop: SPACING.sm,
-    backgroundColor: COLORS.whiteMuted,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: RADIUS.sm,
-  } as ViewStyle,
-  groupVibeText: {
+  } as TextStyle,
+  ctaBody: {
     fontFamily: FONTS.body,
-    fontSize: 11,
-    color: COLORS.creamSoft,
+    fontSize: 14,
+    color: COLORS.creamMuted,
+    textAlign: 'center',
+    lineHeight: 22,
+  } as TextStyle,
+  ctaBtn: {
+    marginTop: SPACING.sm,
+    backgroundColor: COLORS.sage,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.md,
+  } as ViewStyle,
+  ctaBtnText: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.bg,
   } as TextStyle,
 
-  // ── Traveler Cards ──
-  travelerCard: {
-    marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.md,
+  // ── Post trip button ──
+  postTripBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    backgroundColor: COLORS.sage,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.md,
+  } as ViewStyle,
+  postTripBtnText: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.bg,
+  } as TextStyle,
+
+  // ── Public Trip card ──
+  publicTripCard: {
     backgroundColor: COLORS.bgCard,
     borderRadius: RADIUS.xl,
     borderWidth: 1,
     borderColor: COLORS.border,
     padding: SPACING.md,
+    gap: SPACING.sm,
   } as ViewStyle,
-  travelerHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-  } as ViewStyle,
-  travelerAvatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    borderWidth: 2,
-    borderColor: COLORS.sageBorder,
-  } as ImageStyle,
-  travelerInfo: {
-    flex: 1,
-  } as ViewStyle,
-  travelerNameRow: {
+  publicTripHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: SPACING.sm,
   } as ViewStyle,
-  travelerName: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 16,
+  publicTripDest: {
+    fontFamily: FONTS.header,
+    fontSize: 22,
     color: COLORS.cream,
+    flex: 1,
   } as TextStyle,
-  matchBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: COLORS.sage,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: RADIUS.sm,
-  } as ViewStyle,
-  matchText: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.bg,
-  } as TextStyle,
-  travelerDestRow: {
+  memberBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginTop: 4,
+    backgroundColor: COLORS.sageLight,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
   } as ViewStyle,
-  travelerDest: {
-    fontFamily: FONTS.bodyMedium,
-    fontSize: 13,
+  memberBadgeText: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
     color: COLORS.sage,
   } as TextStyle,
-  travelerDates: {
+  publicTripDateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  } as ViewStyle,
+  publicTripDates: {
     fontFamily: FONTS.mono,
     fontSize: 12,
     color: COLORS.creamMuted,
-    marginLeft: 4,
+    flex: 1,
   } as TextStyle,
-  travelerBio: {
-    fontFamily: FONTS.body,
-    fontSize: 14,
-    color: COLORS.creamSoft,
-    lineHeight: 20,
-    marginTop: SPACING.sm,
+  publicTripDays: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.creamMuted,
   } as TextStyle,
-  travelerVibes: {
+  vibesRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
-    marginTop: SPACING.sm,
   } as ViewStyle,
   vibePill: {
     backgroundColor: COLORS.bgGlass,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   } as ViewStyle,
   vibePillText: {
     fontFamily: FONTS.mono,
     fontSize: 11,
     color: COLORS.creamMuted,
   } as TextStyle,
-  countriesPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: COLORS.goldFaint,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: RADIUS.sm,
-  } as ViewStyle,
-  countriesText: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.gold,
+  publicTripDesc: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamSoft,
+    lineHeight: 20,
   } as TextStyle,
-  travelerActions: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-    marginTop: SPACING.md,
-  } as ViewStyle,
-  actionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
+  joinBtn: {
+    backgroundColor: COLORS.sage,
     paddingVertical: SPACING.sm,
     borderRadius: RADIUS.md,
+    alignItems: 'center',
+    marginTop: SPACING.xs,
   } as ViewStyle,
-  actionBtnPrimary: {
-    flex: 1,
-    backgroundColor: COLORS.sage,
+  joinBtnDisabled: {
+    backgroundColor: COLORS.bgGlass,
   } as ViewStyle,
-  actionBtnPrimaryText: {
+  joinBtnText: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 14,
     color: COLORS.bg,
   } as TextStyle,
-  actionBtnSecondary: {
-    width: 44,
-    backgroundColor: COLORS.bgGlass,
-  } as ViewStyle,
 
-  // ── Bottom CTA ──
-  bottomCta: {
-    marginHorizontal: SPACING.lg,
-    marginTop: SPACING.lg,
+  // ── Photo feed card ──
+  feedCard: {
     backgroundColor: COLORS.bgCard,
     borderRadius: RADIUS.xl,
     borderWidth: 1,
     borderColor: COLORS.border,
-    padding: SPACING.lg,
-    alignItems: 'center',
+    overflow: 'hidden',
   } as ViewStyle,
-  bottomCtaText: {
-    fontFamily: FONTS.body,
-    fontSize: 14,
-    color: COLORS.creamMuted,
-    textAlign: 'center',
-    marginBottom: SPACING.md,
+  feedCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    padding: SPACING.md,
+  } as ViewStyle,
+  feedAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
+  feedAvatarEmoji: {
+    fontSize: 18,
   } as TextStyle,
-  profileBtn: {
+  feedAuthorName: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.cream,
+  } as TextStyle,
+  feedAuthorMeta: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.creamMuted,
+    textTransform: 'capitalize',
+  } as TextStyle,
+  feedStoryBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: COLORS.sageLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
+  feedPhoto: {
+    width: '100%',
+    height: SCREEN_WIDTH * 0.75,
+  } as ImageStyle,
+  feedPhotoCaption: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+  } as ViewStyle,
+  feedPhotoCaptionText: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: '#fff',
+    lineHeight: 18,
+  } as TextStyle,
+  feedActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.md,
+    gap: SPACING.md,
+  } as ViewStyle,
+  feedActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   } as ViewStyle,
-  profileBtnText: {
+  feedActionCount: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+  } as TextStyle,
+  feedTimestamp: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.creamMuted,
+  } as TextStyle,
+
+  // ── Trip completion card ──
+  completionCard: {
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: 'hidden',
+  } as ViewStyle,
+  completionGradient: {
+    padding: SPACING.lg,
+    alignItems: 'center',
+    gap: SPACING.sm,
+  } as ViewStyle,
+  completionEmoji: {
+    fontSize: 40,
+  } as TextStyle,
+  completionDest: {
+    fontFamily: FONTS.header,
+    fontSize: 24,
+    color: COLORS.cream,
+  } as TextStyle,
+  completionMeta: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+    letterSpacing: 1,
+  } as TextStyle,
+  completionVibes: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: SPACING.xs,
+    justifyContent: 'center',
+  } as ViewStyle,
+  completionVibe: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: RADIUS.full,
+  } as ViewStyle,
+  completionVibeText: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.cream,
+    letterSpacing: 0.5,
+  } as TextStyle,
+  completionActions: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    padding: SPACING.md,
+  } as ViewStyle,
+  completionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: COLORS.bgGlass,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  } as ViewStyle,
+  completionBtnText: {
     fontFamily: FONTS.bodySemiBold,
-    fontSize: 14,
+    fontSize: 13,
+    color: COLORS.cream,
+  } as TextStyle,
+
+  // ── Meetup card ──
+  meetupCard: {
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.md,
+    gap: SPACING.sm,
+  } as ViewStyle,
+  meetupTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  } as ViewStyle,
+  meetupTypeBadge: {
+    backgroundColor: COLORS.sageLight,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+  } as ViewStyle,
+  meetupTypeBadgeText: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
     color: COLORS.sage,
+  } as TextStyle,
+  meetupTimeSlot: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.creamMuted,
+    textTransform: 'capitalize',
+  } as TextStyle,
+  meetupLocation: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 15,
+    color: COLORS.cream,
+  } as TextStyle,
+  meetupDate: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+  } as TextStyle,
+  meetupDesc: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamSoft,
+    lineHeight: 20,
+  } as TextStyle,
+  meetupFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: SPACING.xs,
+  } as ViewStyle,
+  meetupSpots: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+  } as TextStyle,
+  meetupJoinBtn: {
+    backgroundColor: COLORS.sage,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 7,
+    borderRadius: RADIUS.md,
+  } as ViewStyle,
+  meetupJoinBtnText: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 13,
+    color: COLORS.bg,
   } as TextStyle,
 });

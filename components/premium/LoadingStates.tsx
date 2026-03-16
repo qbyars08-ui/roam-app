@@ -27,9 +27,11 @@ function getStatusMessages(): string[] {
 
 interface TripGeneratingLoaderProps {
   destination?: string;
+  /** When provided, overrides the auto-cycling status text (e.g. streaming progress) */
+  statusOverride?: string | null;
 }
 
-export function TripGeneratingLoader({ destination }: TripGeneratingLoaderProps) {
+export function TripGeneratingLoader({ destination, statusOverride }: TripGeneratingLoaderProps) {
   const theme = destination ? getDestinationTheme(destination) : null;
   const accentColor = theme?.primary ?? COLORS.sage;
   const glowColor = theme?.glowColor ?? COLORS.sageStrong;
@@ -218,10 +220,10 @@ export function TripGeneratingLoader({ destination }: TripGeneratingLoaderProps)
       <Animated.Text
         style={[
           styles.statusText,
-          { opacity: textOpacity, color: COLORS.cream },
+          { opacity: statusOverride ? 1 : textOpacity, color: COLORS.cream },
         ]}
       >
-        {currentMessage}
+        {statusOverride ?? currentMessage}
       </Animated.Text>
 
       {/* Destination label */}

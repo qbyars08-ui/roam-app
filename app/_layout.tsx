@@ -38,6 +38,7 @@ import OfflineBanner from '../components/ui/OfflineBanner';
 import PhoneFrame from '../components/ui/PhoneFrame';
 import DestinationThemeOverlay from '../components/ui/DestinationThemeOverlay';
 import MilestoneModal from '../components/features/MilestoneModal';
+import DailyMoment from '../components/features/DailyMoment';
 import { PostHogProvider } from 'posthog-react-native';
 import { initPostHog, identifyUser, resetIdentity, getPostHogClient } from '../lib/posthog';
 
@@ -87,6 +88,7 @@ function useProtectedRoute(session: { user: { id: string } } | null) {
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
   const [activeMilestone, setActiveMilestone] = useState<Milestone | null>(null);
+  const [showDailyMoment, setShowDailyMoment] = useState(true);
   const router = useRouter();
   const session = useAppStore((s) => s.session);
   const setSession = useAppStore((s) => s.setSession);
@@ -558,8 +560,47 @@ export default function RootLayout() {
               animation: 'slide_from_bottom',
             }}
           />
+          <Stack.Screen
+            name="destination/[name]"
+            options={{
+              presentation: 'card',
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="chat/[channelId]"
+            options={{
+              presentation: 'card',
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="traveler/[id]"
+            options={{
+              presentation: 'card',
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="social-profile-edit"
+            options={{
+              presentation: 'modal',
+              animation: 'slide_from_bottom',
+            }}
+          />
+          <Stack.Screen
+            name="what-if"
+            options={{
+              presentation: 'modal',
+              animation: 'slide_from_bottom',
+            }}
+          />
         </Stack>
         </PhoneFrame>
+        <DailyMoment
+          onComplete={() => setShowDailyMoment(false)}
+          enabled={showDailyMoment && fontsLoaded && isReady}
+        />
         <MilestoneModal
           milestone={activeMilestone}
           onDismiss={() => setActiveMilestone(null)}

@@ -22,7 +22,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Search, MapPin, Flame, Clock } from 'lucide-react-native';
+import { Search, MapPin, Flame, Clock, Sparkles, BookOpen, Heart, Compass, HelpCircle } from 'lucide-react-native';
 import * as Haptics from '../../lib/haptics';
 import {
   COLORS,
@@ -38,6 +38,11 @@ import {
 import i18n from '../../lib/i18n';
 import { tCategory } from '../../lib/i18n/helpers';
 import { track } from '../../lib/analytics';
+import { useAppStore } from '../../lib/store';
+import { getForYouFeed } from '../../lib/recommendations';
+import { getDestinationPhoto } from '../../lib/photos';
+import ROAMScoreBadge from '../../components/features/ROAMScoreBadge';
+import TravelTruthCard from '../../components/features/TravelTruthCard';
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -171,6 +176,11 @@ const DestinationPhotoCard = React.memo(function DestinationPhotoCard({
           )}
         </View>
 
+        {/* ROAM Score — bottom right */}
+        <View style={styles.roamScoreWrap}>
+          <ROAMScoreBadge destination={destination.label} size="sm" />
+        </View>
+
         {/* Content overlay */}
         <View style={styles.cardContent}>
           <Text style={styles.cardLabel} numberOfLines={1}>
@@ -241,9 +251,15 @@ export default function DiscoverScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [headerIndex, setHeaderIndex] = useState(0);
   const headerFade = useRef(new Animated.Value(1)).current;
+  const [forYouPicks, setForYouPicks] = useState<Destination[]>([]);
+  const trips = useAppStore((s) => s.trips);
 
   useEffect(() => {
     track({ type: 'screen_view', screen: 'discover' });
+    // Load personalized recommendations
+    getForYouFeed({ limit: 6 }).then((scored) => {
+      setForYouPicks(scored.map((s) => s.destination));
+    }).catch(() => {});
   }, []);
 
   // Rotate editorial header every 5s with crossfade
@@ -346,6 +362,163 @@ export default function DiscoverScreen() {
               </Pressable>
             </View>
           </View>
+        </View>
+
+        {/* Quick links */}
+        {trips.length > 0 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.quickLinksRow}
+          >
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/compatibility' as never);
+              }}
+              style={({ pressed }) => [styles.quickLink, { opacity: pressed ? 0.8 : 1 }]}
+            >
+              <Heart size={16} color={COLORS.coral} strokeWidth={2} />
+              <Text style={styles.quickLinkText}>Compatibility</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/passport');
+              }}
+              style={({ pressed }) => [styles.quickLink, { opacity: pressed ? 0.8 : 1 }]}
+            >
+              <BookOpen size={16} color={COLORS.gold} strokeWidth={2} />
+              <Text style={styles.quickLinkText}>Passport</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/trip-wrapped');
+              }}
+              style={({ pressed }) => [styles.quickLink, { opacity: pressed ? 0.8 : 1 }]}
+            >
+              <Sparkles size={16} color={COLORS.sage} strokeWidth={2} />
+              <Text style={styles.quickLinkText}>Wrapped</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/what-if');
+              }}
+              style={({ pressed }) => [styles.quickLink, { opacity: pressed ? 0.8 : 1 }]}
+            >
+              <Compass size={16} color={COLORS.cream} strokeWidth={2} />
+              <Text style={styles.quickLinkText}>What if?</Text>
+            </Pressable>
+          </ScrollView>
+        )}
+
+        {/* Next Trip Countdown — brings users back daily */}
+        {trips.length > 0 && (() => {
+          const latestTrip = trips[0];
+          // Estimate departure: 14 days from creation
+          const departure = new Date(latestTrip.createdAt);
+          departure.setDate(departure.getDate() + 14);
+          const now = new Date();
+          const diffMs = departure.getTime() - now.getTime();
+          const daysLeft = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+
+          if (daysLeft > 0 && daysLeft <= 60) {
+            return (
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  router.push({ pathname: '/trip-countdown', params: { tripId: latestTrip.id } } as never);
+                }}
+                style={({ pressed }) => [
+                  styles.nextTripCard,
+                  { opacity: pressed ? 0.9 : 1 },
+                ]}
+              >
+                <View style={styles.nextTripLeft}>
+                  <Clock size={20} color={COLORS.sage} strokeWidth={2} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.nextTripTitle}>
+                    {latestTrip.destination} in {daysLeft} days
+                  </Text>
+                  <Text style={styles.nextTripSub}>
+                    Tap for your live countdown
+                  </Text>
+                </View>
+                <Text style={styles.nextTripDays}>{daysLeft}d</Text>
+              </Pressable>
+            );
+          }
+          return null;
+        })()}
+
+        {/* For You — personalized picks */}
+        {forYouPicks.length > 0 && (
+          <View style={styles.forYouSection}>
+            <View style={styles.forYouHeader}>
+              <Sparkles size={16} color={COLORS.sage} strokeWidth={2} />
+              <Text style={styles.forYouTitle}>For you</Text>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.forYouScroll}
+            >
+              {forYouPicks.map((dest) => (
+                <Pressable
+                  key={dest.label}
+                  onPress={() => handleDestinationPress(dest)}
+                  style={({ pressed }) => [
+                    styles.forYouCard,
+                    { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
+                  ]}
+                >
+                  <Image
+                    source={{ uri: dest.unsplashUrl ?? getDestinationPhoto(dest.photoQuery) }}
+                    style={styles.forYouImage}
+                    resizeMode="cover"
+                  />
+                  <LinearGradient
+                    colors={['transparent', 'rgba(0,0,0,0.7)']}
+                    style={styles.forYouGradient}
+                  />
+                  <View style={styles.forYouContent}>
+                    <Text style={styles.forYouName}>{dest.label}</Text>
+                    <Text style={styles.forYouHook} numberOfLines={1}>{dest.hook}</Text>
+                  </View>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* What if — always visible, even for first-time users */}
+        {trips.length === 0 && (
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push('/what-if');
+            }}
+            style={({ pressed }) => [
+              styles.whatIfCard,
+              { opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
+            ]}
+          >
+            <View style={styles.whatIfLeft}>
+              <Compass size={22} color={COLORS.sage} strokeWidth={2} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.whatIfTitle}>What if I just went?</Text>
+              <Text style={styles.whatIfSub}>Pick a place. See what it actually costs.</Text>
+            </View>
+          </Pressable>
+        )}
+
+        {/* Something true — the feature that makes people stop scrolling */}
+        <View style={styles.truthSection}>
+          <TravelTruthCard />
         </View>
 
         {/* Category chips */}
@@ -456,23 +629,137 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   } as ViewStyle,
 
-  // Header
+  // Next trip countdown
+  nextTripCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    marginHorizontal: GRID_PADDING,
+    marginBottom: SPACING.md,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+    padding: SPACING.md,
+  } as ViewStyle,
+  nextTripLeft: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.sageLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
+  nextTripTitle: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.cream,
+  } as TextStyle,
+  nextTripSub: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.creamMuted,
+    marginTop: 2,
+  } as TextStyle,
+  nextTripDays: {
+    fontFamily: FONTS.header,
+    fontSize: 24,
+    color: COLORS.sage,
+  } as TextStyle,
+
+  // Quick links
+  quickLinksRow: {
+    flexDirection: 'row',
+    paddingHorizontal: GRID_PADDING,
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  } as ViewStyle,
+  quickLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 8,
+  } as ViewStyle,
+  quickLinkText: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 13,
+    color: COLORS.cream,
+  } as TextStyle,
+
+  // For You section
+  forYouSection: {
+    marginBottom: SPACING.md,
+  } as ViewStyle,
+  forYouHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: GRID_PADDING,
+    marginBottom: SPACING.sm,
+  } as ViewStyle,
+  forYouTitle: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 16,
+    color: COLORS.cream,
+  } as TextStyle,
+  forYouScroll: {
+    paddingHorizontal: GRID_PADDING,
+    gap: SPACING.sm,
+  } as ViewStyle,
+  forYouCard: {
+    width: 160,
+    height: 100,
+    borderRadius: RADIUS.lg,
+    overflow: 'hidden',
+  } as ViewStyle,
+  forYouImage: {
+    width: '100%',
+    height: '100%',
+  } as ImageStyle,
+  forYouGradient: {
+    ...StyleSheet.absoluteFillObject,
+  } as ViewStyle,
+  forYouContent: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: SPACING.sm,
+  } as ViewStyle,
+  forYouName: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: '#fff',
+  } as TextStyle,
+  forYouHook: {
+    fontFamily: FONTS.body,
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.7)',
+    marginTop: 1,
+  } as TextStyle,
+
+  // Header — breathe
   header: {
     paddingHorizontal: GRID_PADDING,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.lg,
   } as ViewStyle,
   brandMark: {
     fontFamily: FONTS.mono,
     fontSize: 14,
     color: COLORS.sage,
     letterSpacing: 4,
-    marginBottom: SPACING.xs,
+    marginBottom: SPACING.sm,
   } as TextStyle,
   editorialSubtitle: {
     fontFamily: FONTS.header,
     fontSize: 40,
     color: COLORS.cream,
-    lineHeight: 46,
+    lineHeight: 50,
   } as TextStyle,
 
   // Search
@@ -537,18 +824,60 @@ const styles = StyleSheet.create({
     color: COLORS.sage,
   } as TextStyle,
 
-  // Section
+  // What if card
+  whatIfCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    marginHorizontal: GRID_PADDING,
+    marginBottom: SPACING.lg,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+    padding: SPACING.md,
+  } as ViewStyle,
+  whatIfLeft: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.sageLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
+  whatIfTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 20,
+    color: COLORS.cream,
+    fontStyle: 'italic',
+  } as TextStyle,
+  whatIfSub: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamMuted,
+    marginTop: 2,
+  } as TextStyle,
+
+  // Something true
+  truthSection: {
+    paddingHorizontal: GRID_PADDING,
+    marginBottom: SPACING.lg,
+  } as ViewStyle,
+
+  // Section — more breathing room
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
     paddingHorizontal: GRID_PADDING,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.lg,
+    marginTop: SPACING.xs,
   } as ViewStyle,
   sectionTitle: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 16,
     color: COLORS.cream,
+    lineHeight: 22,
   } as TextStyle,
   sectionCount: {
     fontFamily: FONTS.mono,
@@ -664,6 +993,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 11,
     color: COLORS.creamDim,
+    lineHeight: 16,
   } as TextStyle,
 
   // Empty
@@ -698,4 +1028,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.sage,
   } as TextStyle,
+  roamScoreWrap: {
+    position: 'absolute',
+    bottom: SPACING.sm,
+    right: SPACING.sm,
+  } as ViewStyle,
 });

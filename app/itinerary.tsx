@@ -95,7 +95,7 @@ import {
   SAFETY_COLORS,
 } from '../lib/neighborhood-safety';
 import { formatDualPrice, formatLocalPrice, type ExchangeRates } from '../lib/currency';
-import { AlertTriangle, X, Pencil, Calendar, Link2, Share2, MapPin, Receipt, Film, Wallet, Train, CreditCard, Plane, Heart, ShieldCheck, Droplets, Globe, Sun, Wind, PartyPopper } from 'lucide-react-native';
+import { AlertTriangle, X, Pencil, Calendar, Link2, Share2, MapPin, Receipt, Film, Wallet, Train, CreditCard, Plane, Heart, ShieldCheck, Droplets, Globe, Sun, Wind, PartyPopper, Camera, Clock, ChevronRight } from 'lucide-react-native';
 import { getTransitGuide, type TransitGuide } from '../lib/transit-data';
 import { getHomeAirport } from '../lib/flights';
 import { getMedicalGuideByDestination, type MedicalGuide } from '../lib/medical-abroad';
@@ -111,6 +111,8 @@ import { trackEvent } from '../lib/analytics';
 import { captureEvent } from '../lib/posthog';
 import MockDataBadge from '../components/ui/MockDataBadge';
 import ActivityEditModal from '../components/features/ActivityEditModal';
+import RouteIntelCard from '../components/features/RouteIntelCard';
+import SeasonalIntel from '../components/features/SeasonalIntel';
 
 // =============================================================================
 // Component
@@ -146,6 +148,7 @@ export default function ItineraryScreen() {
   const [safetyOverlay, setSafetyOverlay] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [shareVisible, setShareVisible] = useState(false);
+  const [shareNudgeDismissed, setShareNudgeDismissed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editingActivity, setEditingActivity] = useState<{
     slot: 'morning' | 'afternoon' | 'evening';
@@ -792,6 +795,30 @@ export default function ItineraryScreen() {
         </View>
       </View>
 
+      {/* ── Share nudge — shown for trips created in the last 5 minutes ── */}
+      {!shareNudgeDismissed && trip && (Date.now() - new Date(trip.createdAt).getTime() < 5 * 60 * 1000) && (
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            setShareVisible(true);
+            setShareNudgeDismissed(true);
+          }}
+          style={({ pressed }) => [
+            styles.shareNudge,
+            { opacity: pressed ? 0.9 : 1 },
+          ]}
+        >
+          <View style={styles.shareNudgeInner}>
+            <Share2 size={18} color={COLORS.sage} strokeWidth={2} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.shareNudgeTitle}>Your trip is ready</Text>
+              <Text style={styles.shareNudgeSub}>Share it with friends — one tap</Text>
+            </View>
+            <ChevronRight size={18} color={COLORS.sage} strokeWidth={2} />
+          </View>
+        </Pressable>
+      )}
+
       {/* ── Day tabs — themes as large editorial headlines ───────────────── */}
       <ScrollView
         ref={dayPagerRef}
@@ -1082,6 +1109,120 @@ export default function ItineraryScreen() {
               </LinearGradient>
             </Pressable>
           </View>
+
+          {/* Trip Story + Photo Album */}
+          <View style={styles.itineraryExtrasRow}>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                router.push({ pathname: '/trip-story', params: { tripId: trip.id } });
+              }}
+              style={({ pressed }) => [
+                styles.itineraryExtraCard,
+                { opacity: pressed ? 0.9 : 1, flex: 1 },
+              ]}
+            >
+              <LinearGradient
+                colors={[destTheme.gradient[0], destTheme.gradient[1], destTheme.gradient[2]]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.itineraryExtraGradient}
+              >
+                <View style={styles.itineraryExtraIconWrap}><Film size={24} color={COLORS.cream} strokeWidth={2} /></View>
+                <Text style={styles.itineraryExtraTitle}>Trip Story</Text>
+                <Text style={styles.itineraryExtraSub}>Cinematic preview</Text>
+              </LinearGradient>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                router.push({ pathname: '/trip-album', params: { tripId: trip.id } });
+              }}
+              style={({ pressed }) => [
+                styles.itineraryExtraCard,
+                { opacity: pressed ? 0.9 : 1, flex: 1 },
+              ]}
+            >
+              <LinearGradient
+                colors={[`${destTheme.primary}26`, `${destTheme.primary}0D`]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.itineraryExtraGradient}
+              >
+                <View style={styles.itineraryExtraIconWrap}><Camera size={24} color={COLORS.accentGold} strokeWidth={2} /></View>
+                <Text style={styles.itineraryExtraTitle}>Photo Album</Text>
+                <Text style={styles.itineraryExtraSub}>Add trip memories</Text>
+              </LinearGradient>
+            </Pressable>
+          </View>
+
+          {/* Trip Countdown — standalone card */}
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push({ pathname: '/trip-countdown', params: { tripId: trip.id } } as never);
+            }}
+            style={({ pressed }) => [
+              styles.countdownBanner,
+              { opacity: pressed ? 0.9 : 1 },
+            ]}
+          >
+            <LinearGradient
+              colors={[destTheme.gradient[0], destTheme.gradient[1]]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.countdownBannerInner}
+            >
+              <Clock size={20} color={COLORS.cream} strokeWidth={2} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.countdownBannerTitle}>Trip Countdown</Text>
+                <Text style={styles.countdownBannerSub}>Live timer + daily tips</Text>
+              </View>
+              <Text style={styles.countdownBannerArrow}>{'\u2192'}</Text>
+            </LinearGradient>
+          </Pressable>
+
+          {/* Expense Tracker banner */}
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push({ pathname: '/expense-tracker', params: { tripId: trip.id } } as never);
+            }}
+            style={({ pressed }) => [
+              styles.countdownBanner,
+              { opacity: pressed ? 0.9 : 1 },
+            ]}
+          >
+            <View style={[styles.countdownBannerInner, { backgroundColor: COLORS.bgCard, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.lg }]}>
+              <Wallet size={20} color={COLORS.gold} strokeWidth={2} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.countdownBannerTitle}>Expense Tracker</Text>
+                <Text style={styles.countdownBannerSub}>Track spending vs AI estimate</Text>
+              </View>
+              <Text style={[styles.countdownBannerArrow, { color: COLORS.gold }]}>{'\u2192'}</Text>
+            </View>
+          </Pressable>
+
+          {/* Trip Journal banner */}
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push({ pathname: '/trip-journal', params: { tripId: trip.id, destination: trip.destination } } as never);
+            }}
+            style={({ pressed }) => [
+              styles.countdownBanner,
+              { opacity: pressed ? 0.9 : 1 },
+            ]}
+          >
+            <View style={[styles.countdownBannerInner, { backgroundColor: COLORS.bgCard, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.lg }]}>
+              <Receipt size={20} color={COLORS.cream} strokeWidth={2} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.countdownBannerTitle}>Trip Journal</Text>
+                <Text style={styles.countdownBannerSub}>Daily diary with mood + highlights</Text>
+              </View>
+              <Text style={styles.countdownBannerArrow}>{'\u2192'}</Text>
+            </View>
+          </Pressable>
 
           {/* The Receipt + Main Character + Budget Guardian — trip extras */}
           <View style={styles.itineraryExtrasRow}>
@@ -1409,10 +1550,83 @@ export default function ItineraryScreen() {
             <MedicalAbroadSection guide={medicalGuide} />
           )}
 
+          {/* Body Intel — full health intelligence */}
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push({ pathname: '/body-intel', params: { destination: trip.destination } } as never);
+            }}
+            style={({ pressed }) => [
+              styles.countdownBanner,
+              { opacity: pressed ? 0.9 : 1 },
+            ]}
+          >
+            <View style={[styles.countdownBannerInner, { backgroundColor: COLORS.bgCard, borderWidth: 1, borderColor: COLORS.sage + '30', borderRadius: RADIUS.lg }]}>
+              <ShieldCheck size={20} color={COLORS.sage} strokeWidth={2} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.countdownBannerTitle}>Body Intel</Text>
+                <Text style={styles.countdownBannerSub}>Symptom checker + health brief for {trip.destination}</Text>
+              </View>
+              <Text style={[styles.countdownBannerArrow, { color: COLORS.sage }]}>{'\u2192'}</Text>
+            </View>
+          </Pressable>
+
+          {/* Route Intelligence — flight info for this destination */}
+          <View style={styles.section}>
+            <RouteIntelCard destination={trip.destination} compact />
+          </View>
+
+          {/* Seasonal Intelligence — why now is the right time */}
+          <View style={styles.section}>
+            <SeasonalIntel destination={trip.destination} />
+          </View>
+
           {/* Getting Around — Transit intelligence */}
           {transitGuide && (
             <TransitSection guide={transitGuide} />
           )}
+
+          {/* Before You Land — pre-departure briefing */}
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push({ pathname: '/before-you-land', params: { destination: trip.destination } } as never);
+            }}
+            style={({ pressed }) => [
+              styles.countdownBanner,
+              { opacity: pressed ? 0.9 : 1 },
+            ]}
+          >
+            <View style={[styles.countdownBannerInner, { backgroundColor: COLORS.bgCard, borderWidth: 1, borderColor: COLORS.gold + '30', borderRadius: RADIUS.lg }]}>
+              <Plane size={20} color={COLORS.gold} strokeWidth={2} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.countdownBannerTitle}>Before You Land</Text>
+                <Text style={styles.countdownBannerSub}>Everything you need to know before you arrive</Text>
+              </View>
+              <Text style={[styles.countdownBannerArrow, { color: COLORS.gold }]}>{'\u2192'}</Text>
+            </View>
+          </Pressable>
+
+          {/* Emergency Medical Card — bilingual health card */}
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push({ pathname: '/emergency-card', params: { destination: trip.destination } } as never);
+            }}
+            style={({ pressed }) => [
+              styles.countdownBanner,
+              { opacity: pressed ? 0.9 : 1 },
+            ]}
+          >
+            <View style={[styles.countdownBannerInner, { backgroundColor: COLORS.bgCard, borderWidth: 1, borderColor: COLORS.coral + '30', borderRadius: RADIUS.lg }]}>
+              <Heart size={20} color={COLORS.coral} strokeWidth={2} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.countdownBannerTitle}>Emergency Medical Card</Text>
+                <Text style={styles.countdownBannerSub}>Your health info in the local language</Text>
+              </View>
+              <Text style={[styles.countdownBannerArrow, { color: COLORS.coral }]}>{'\u2192'}</Text>
+            </View>
+          </Pressable>
 
           {/* Affiliate cards */}
           <View style={styles.section}>
@@ -2310,6 +2524,62 @@ const styles = StyleSheet.create({
     color: COLORS.sage,
   } as TextStyle,
 
+  shareNudge: {
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
+  } as ViewStyle,
+  shareNudgeInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    backgroundColor: COLORS.bgCard,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+    borderRadius: RADIUS.lg,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+  } as ViewStyle,
+  shareNudgeTitle: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 15,
+    color: COLORS.cream,
+  } as TextStyle,
+  shareNudgeSub: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+    marginTop: 1,
+  } as TextStyle,
+
+  countdownBanner: {
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
+    borderRadius: RADIUS.lg,
+    overflow: 'hidden',
+  } as ViewStyle,
+  countdownBannerInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+  } as ViewStyle,
+  countdownBannerTitle: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 15,
+    color: COLORS.cream,
+  } as TextStyle,
+  countdownBannerSub: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.creamMuted,
+    marginTop: 1,
+  } as TextStyle,
+  countdownBannerArrow: {
+    fontSize: 20,
+    color: COLORS.cream,
+  } as TextStyle,
+
   itineraryExtrasRow: {
     flexDirection: 'row',
     gap: SPACING.md,
@@ -2694,6 +2964,8 @@ const styles = StyleSheet.create({
     color: COLORS.cream,
     lineHeight: 22,
   } as TextStyle,
+
+
 
   // ── Affiliate cards ─────────────────────────────────────────────────────
   affiliateGradient: {

@@ -12,7 +12,7 @@ import { useAppStore } from './store';
 // System prompts
 // ---------------------------------------------------------------------------
 
-export const ITINERARY_SYSTEM_PROMPT = `You are ROAM — a travel planner that sounds like your most well-traveled friend, not a corporate chatbot.
+export const ITINERARY_SYSTEM_PROMPT = `You are ROAM — you sound like someone who lived in this city for a year, not a travel website.
 
 CRITICAL: Respond with ONLY valid JSON. No markdown, no explanation, no extra text.
 
@@ -20,52 +20,52 @@ JSON schema:
 
 {
   "destination": "City, Country",
-  "tagline": "Punchy, specific — think magazine headline, not brochure. Under 10 words.",
+  "tagline": "One line that makes someone want to book a flight. Under 10 words. Not generic — reference something only THIS city has. Bad: 'A city of culture and cuisine'. Good: 'Steak for $8. Bookshops open at midnight.'",
   "totalBudget": "$X,XXX",
   "days": [
     {
       "day": 1,
-      "theme": "Evocative theme like 'The Day You Eat Too Much' not 'Food & Culture Day'",
+      "theme": "A story chapter title, not a category. 'Your First Tokyo Evening' not 'Arrival Day'. 'The Day You Eat Too Much' not 'Food & Culture'. Make it feel like something that happens to YOU, in THIS city.",
       "morning": {
-        "activity": "Specific — not 'explore the area'",
-        "location": "Real place name — the actual spot",
-        "cost": "$XX",
-        "tip": "The kind of tip a local friend would whisper to you",
-        "time": "9:00 AM",
+        "activity": "THE specific thing to do — not 'visit the temple' but 'Senso-ji at 6AM before the tour buses arrive, then walk the empty Nakamise-dori'",
+        "location": "The actual place name locals use",
+        "cost": "$XX (also ¥X,XXX in local currency)",
+        "tip": "The thing you'd text a friend: 'Order the #3 set, sit at the counter, the guy on the left is the master.' Not 'arrive early for the best experience.'",
+        "time": "6:00 AM",
         "duration": "90",
-        "neighborhood": "Shibuya",
-        "address": "Google Maps-friendly address",
-        "transitToNext": "15 min walk through Cat Street"
+        "neighborhood": "Asakusa",
+        "address": "2-3-1 Asakusa, Taito City, Tokyo 111-0032",
+        "transitToNext": "Walk 3 min to Asakusa Station, take Ginza Line to Ueno (5 min, platform 1, ¥170)"
       },
       "afternoon": {
-        "activity": "Specific activity",
-        "location": "Real place name",
-        "cost": "$XX",
-        "tip": "What to order, where to sit, when to go",
+        "activity": "Not 'explore the area' — the actual activity with why NOW is the right time for it",
+        "location": "Real place",
+        "cost": "$XX (local currency equivalent)",
+        "tip": "Insider knowledge: what to order, where to sit, what most tourists miss",
         "time": "2:00 PM",
         "duration": "120",
-        "neighborhood": "Harajuku",
-        "address": "Full address for navigation",
-        "transitToNext": "Take Yamanote Line, 2 stops to Shinjuku (8 min)"
+        "neighborhood": "Yanaka",
+        "address": "Full navigable address",
+        "transitToNext": "Specific: which train line, which direction, which exit, how many minutes, fare"
       },
       "evening": {
-        "activity": "Specific activity",
-        "location": "Real place name",
-        "cost": "$XX",
-        "tip": "Insider knowledge, not 'arrive early'",
-        "time": "6:00 PM",
+        "activity": "Specific activity with the WHY — why THIS restaurant, why THIS bar, why THIS spot at THIS time",
+        "location": "Real place",
+        "cost": "$XX (local currency equivalent)",
+        "tip": "The kind of advice that makes someone say 'how did you know that'",
+        "time": "7:00 PM",
         "duration": "150",
-        "neighborhood": "Shinjuku",
+        "neighborhood": "Shimokitazawa",
         "address": "Full address"
       },
       "accommodation": {
-        "name": "Real name — the place you'd actually book",
+        "name": "A real place you'd tell a friend to book — not the #1 TripAdvisor result",
         "type": "hotel | hostel | airbnb | resort",
         "pricePerNight": "$XX",
-        "neighborhood": "Shinjuku"
+        "neighborhood": "Shimokitazawa"
       },
       "dailyCost": "$XXX",
-      "routeSummary": "Shibuya → Harajuku → Shinjuku"
+      "routeSummary": "Asakusa → Yanaka → Shimokitazawa (east to west, no backtracking)"
     }
   ],
   "budgetBreakdown": {
@@ -76,24 +76,35 @@ JSON schema:
     "miscellaneous": "$XXX"
   },
   "packingEssentials": ["item1", "item2", "item3"],
-  "proTip": "One piece of advice that saves real money or real time",
+  "proTip": "The one thing that separates someone who went to this city from someone who KNOWS this city",
   "visaInfo": "Current visa requirements for US passport holders"
 }
 
-Voice guidelines:
-- Sound like someone who's BEEN there. Be specific and opinionated.
-- Name the actual restaurant, the specific dish, the exact street.
-- Tips should be texts to a friend: "Order the #3, skip the appetizers"
-- REAL places only. If unsure, pick one you're confident about.
-- packingEssentials: destination-specific. "Reef-safe sunscreen" not just "sunscreen."
-- CRITICAL: Each morning/afternoon/evening slot MUST include ALL of these fields:
-  - "time": exact clock time in 12-hour format (e.g. "9:00 AM", "2:30 PM"). Never "Morning" or "Evening".
-  - "duration": estimated minutes as a string (e.g. "90", "120"). Be realistic — a temple visit is 60-90 min, a food tour is 180 min.
-  - "neighborhood": the district or area (e.g. "Shibuya", "Roma Norte", "Alfama"). Critical for route planning.
-  - "address": a Google Maps-friendly address users can tap to navigate.
-  - "transitToNext": how to get to the next activity. Be specific: "15 min walk along the canal" or "Take Metro Line 3, get off at Zócalo (12 min)". Skip for the last activity of the day (evening).
-- "routeSummary": a quick route overview for the day, e.g. "Shibuya → Harajuku → Shinjuku"
+THE SPECIFICITY STANDARD — this is what separates ROAM from every other travel app:
+- BAD: "Visit Tsukiji Market" → GOOD: "Tsukiji Outer Market at 7AM — go to Sushi Dai if the line is under 30 people, otherwise Daiwa Sushi next door is just as good and half the wait"
+- BAD: "Take the subway" → GOOD: "Take the Ginza Line from Asakusa (platform 1, toward Shibuya), get off at Ueno, take exit 7 — you'll be facing the park entrance. ¥170, 5 minutes."
+- BAD: "Try local food" → GOOD: "Ichiran Ramen in Shibuya — go to the basement floor (less crowded). Order extra firm noodles, extra garlic. ¥980."
+- BAD: "Explore the neighborhood" → GOOD: "Walk Yanaka Ginza shopping street — the yakitori at Suzuki is ¥100/stick and worth the 5 minute wait. Continue to Yanaka Cemetery, which sounds weird but it's one of the most peaceful walks in Tokyo."
+- BAD: "Visit a temple" → GOOD: "Meiji Shrine at 6:30AM. Enter through the main torii on Omotesando side. On weekday mornings you might see a traditional wedding procession. The inner garden costs ¥500 and has the best iris flowers in June."
+
+COSTS — Always include both USD and local currency: "$12 (¥1,800)" or "$25 (€23)". Travelers need local currency for cash payments.
+
+DAY THEMES — Each day is a chapter in a story. Not labels, not categories.
+Day 1 is always about arrival and first impressions: "Your First _____ Evening"
+The last day is always bittersweet: "One Last Morning in _____"
+Middle days tell a narrative arc — the day you go deep, the day you go far, the day you slow down.
+
+TIPS — The tip field is the most important text in the entire itinerary. It's the thing that makes someone screenshot this and send it to their group chat. Test each tip: "Would a local friend actually say this?" If it sounds like a travel blog, rewrite it.
+
+REQUIRED: Every morning/afternoon/evening MUST include ALL fields:
+  - "time": exact clock time. The time MATTERS — "6:00 AM" because the temple is empty, "10:30 PM" because that's when the jazz bar gets good. Explain why in the tip if the time is non-obvious.
+  - "duration": minutes as string. Realistic — temple is 60-90min, ramen is 45min, a full market exploration is 180min.
+  - "neighborhood": the district locals use. Not the city name.
+  - "address": Google Maps-friendly. Real addresses only.
+  - "transitToNext": Line name, direction, exit number, walking directions, fare. Skip for evening (last slot).
+- "routeSummary": neighborhoods flowing geographically, no zigzagging.
 - visaInfo: current 2025-2026 policies for US passport holders.
+- packingEssentials: destination-specific. "Portable fan for August humidity" not "comfortable shoes."
 
 PERSONALIZATION — Travel Style Profile:
 When a user's Travel Style Profile is provided, it MUST shape every recommendation:
@@ -313,6 +324,108 @@ export async function callClaudeWithMessages(
 }
 
 // ---------------------------------------------------------------------------
+// callClaudeStreaming — SSE streaming for trip generation
+// Returns accumulated text via onChunk callback for real-time UI updates.
+// ---------------------------------------------------------------------------
+
+export interface StreamingCallbacks {
+  onChunk: (accumulated: string, delta: string) => void;
+  onMeta?: (tripsUsed: number, limit: number | null) => void;
+  onDone: (fullText: string, tripsUsed: number, limit: number | null) => void;
+  onError: (error: Error) => void;
+}
+
+export async function callClaudeStreaming(
+  systemPrompt: string,
+  userMessage: string,
+  callbacks: StreamingCallbacks,
+): Promise<void> {
+  await ensureValidSession();
+
+  const session = useAppStore.getState().session;
+  const jwt = session?.access_token ?? '';
+  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
+  const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+
+  const url = `${supabaseUrl}/functions/v1/claude-proxy`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${jwt}`,
+        apikey: supabaseAnonKey,
+      },
+      body: JSON.stringify({
+        system: systemPrompt,
+        message: userMessage,
+        isTripGeneration: true,
+        stream: true,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Stream request failed' }));
+      if (errorData.code === 'LIMIT_REACHED') {
+        callbacks.onError(new TripLimitReachedError(errorData.tripsUsed ?? 0, errorData.limit ?? 1));
+      } else {
+        callbacks.onError(new Error(errorData.error ?? `HTTP ${response.status}`));
+      }
+      return;
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      callbacks.onError(new Error('No readable stream'));
+      return;
+    }
+
+    const decoder = new TextDecoder();
+    let accumulated = '';
+    let tripsUsed = 0;
+    let limit: number | null = null;
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const payload = line.slice(6).trim();
+        if (!payload) continue;
+
+        try {
+          const event = JSON.parse(payload);
+
+          if (event.type === 'meta') {
+            tripsUsed = event.tripsUsed ?? 0;
+            limit = event.limit ?? null;
+            callbacks.onMeta?.(tripsUsed, limit);
+          } else if (event.type === 'text') {
+            accumulated += event.text;
+            callbacks.onChunk(accumulated, event.text);
+          } else if (event.type === 'done') {
+            // Stream complete
+          }
+        } catch {
+          // Skip malformed JSON
+        }
+      }
+    }
+
+    callbacks.onDone(accumulated, tripsUsed, limit);
+  } catch (err: unknown) {
+    callbacks.onError(err instanceof Error ? err : new Error(String(err)));
+  }
+}
+
+// ---------------------------------------------------------------------------
 // buildTripPrompt — build the user message for itinerary generation
 // ---------------------------------------------------------------------------
 
@@ -516,6 +629,101 @@ export async function generateItinerary(params: {
     tripsUsed: response.tripsUsed,
     limit: response.limit,
   };
+}
+
+// ---------------------------------------------------------------------------
+// generateItineraryStreaming — stream-first version of generateItinerary
+// Shows real-time progress via onProgress callback.
+// ---------------------------------------------------------------------------
+
+export async function generateItineraryStreaming(params: {
+  destination: string;
+  days: number;
+  budget: string;
+  vibes: string[];
+  travelProfile?: TravelProfile | null;
+  weather?: WeatherContext | null;
+  startDate?: string;
+  groupSize?: number;
+  pace?: string;
+  accommodationStyle?: string;
+  morningType?: string;
+  tripComposition?: string;
+  dietary?: string[];
+  transport?: string[];
+  mustVisit?: string;
+  avoidList?: string;
+  specialRequests?: string;
+  onProgress?: (info: { daysFound: number; totalDays: number; text: string }) => void;
+}): Promise<{ itinerary: Itinerary; tripsUsed: number; limit: number }> {
+  const profile = params.travelProfile ?? (
+    useAppStore.getState().hasCompletedProfile
+      ? useAppStore.getState().travelProfile
+      : null
+  );
+
+  let weatherCtx = params.weather ?? null;
+  if (!weatherCtx) {
+    try {
+      const { getWeatherForecast } = await import('./weather');
+      const forecast = await getWeatherForecast(params.destination, {
+        startDate: params.startDate ?? new Date().toISOString().split('T')[0],
+        days: params.days,
+      });
+      if (forecast.days.length > 0) {
+        weatherCtx = {
+          days: forecast.days.slice(0, params.days).map((d) => ({
+            date: d.date,
+            tempMin: d.tempMin,
+            tempMax: d.tempMax,
+            description: d.description,
+            pop: d.pop,
+          })),
+        };
+      }
+    } catch {
+      // Weather fetch failed
+    }
+  }
+
+  const prompt = buildTripPrompt({
+    ...params,
+    travelProfile: profile,
+    weather: weatherCtx,
+    groupSize: params.groupSize,
+  });
+
+  return new Promise((resolve, reject) => {
+    callClaudeStreaming(ITINERARY_SYSTEM_PROMPT, prompt, {
+      onChunk(accumulated, _delta) {
+        // Count "day": patterns to track generation progress
+        const dayMatches = accumulated.match(/"day"\s*:\s*\d+/g);
+        const daysFound = dayMatches ? dayMatches.length : 0;
+        const statusMessages = [
+          `Building your ${params.destination} trip...`,
+          `Day ${Math.min(daysFound, params.days)} of ${params.days}...`,
+          `Crafting Day ${Math.min(daysFound, params.days)} recommendations...`,
+        ];
+        const text = daysFound > 0 ? statusMessages[1] : statusMessages[0];
+        params.onProgress?.({ daysFound, totalDays: params.days, text });
+      },
+      onDone(fullText, tripsUsed, limit) {
+        try {
+          const itinerary = parseItinerary(fullText);
+          resolve({
+            itinerary,
+            tripsUsed,
+            limit: limit ?? 1,
+          });
+        } catch (parseErr) {
+          reject(parseErr instanceof Error ? parseErr : new Error('Failed to parse itinerary'));
+        }
+      },
+      onError(error) {
+        reject(error);
+      },
+    });
+  });
 }
 
 // ---------------------------------------------------------------------------

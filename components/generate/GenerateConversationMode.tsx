@@ -169,7 +169,7 @@ export default function GenerateConversationMode({
       console.error('Chat send error:', err);
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: 'Connection issue. Try again.' },
+        { role: 'assistant', content: 'Hmm, connection dropped. Probably just a hiccup — try again?' },
       ]);
       setSuggestions(['Retry']);
     } finally {
@@ -262,7 +262,7 @@ export default function GenerateConversationMode({
           ) : (
             <>
               <Sparkles size={20} color={COLORS.bg} strokeWidth={2} />
-              <Text style={styles.generateBtnText}>Generate My Trip</Text>
+              <Text style={styles.generateBtnText}>{tripBrief.destination ? `See My ${tripBrief.destination} Trip` : 'See My Trip'}</Text>
             </>
           )}
         </Pressable>

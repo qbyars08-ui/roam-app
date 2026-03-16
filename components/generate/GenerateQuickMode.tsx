@@ -775,7 +775,7 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
           ) : (
             <>
               <Sparkles size={20} color={COLORS.bg} strokeWidth={2} />
-              <Text style={styles.ctaText}>Generate My Trip</Text>
+              <Text style={styles.ctaText}>{destination.trim() ? `See My ${destination.trim()} Trip` : 'See My Trip'}</Text>
             </>
           )}
         </Pressable>
