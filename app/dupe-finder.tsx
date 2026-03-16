@@ -387,7 +387,7 @@ function DupeFinderScreen() {
                   router.push({
                     pathname: '/(tabs)/generate',
                     params: { destination: result.dupes[0].destination },
-                  });
+                  } as never);
                 }
               }}
             >

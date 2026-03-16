@@ -218,7 +218,7 @@ function MemoryLaneScreen() {
             style={({ pressed }) => [styles.ctaButton, { opacity: pressed ? 0.85 : 1 }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              router.push('/(tabs)/generate');
+              router.push('/(tabs)/generate' as never);
             }}
           >
             <Text style={styles.ctaText}>Plan Your First Trip</Text>

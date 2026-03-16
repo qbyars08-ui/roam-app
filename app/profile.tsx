@@ -227,7 +227,7 @@ export default function ProfileScreen() {
           <Pressable
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              router.push('/travel-mirror');
+              router.push('/travel-mirror' as never);
             }}
             style={({ pressed }) => [styles.dnaCard, { opacity: pressed ? 0.9 : 1 }]}
           >
@@ -275,7 +275,7 @@ export default function ProfileScreen() {
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/travel-card');
+                router.push('/travel-card' as never);
               }}
               style={({ pressed }) => [
                 styles.shareCardBtn,
@@ -316,7 +316,7 @@ export default function ProfileScreen() {
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   if (trips.length > 0) {
-                    router.push({ pathname: '/trip-album', params: { tripId: trips[0].id } });
+                    router.push({ pathname: '/trip-album', params: { tripId: trips[0].id } } as never);
                   }
                 }}
               >
@@ -331,7 +331,7 @@ export default function ProfileScreen() {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     const tripForPhoto = trips.find((t) => t.id === photo.tripId);
                     if (tripForPhoto) {
-                      router.push({ pathname: '/trip-album', params: { tripId: tripForPhoto.id } });
+                      router.push({ pathname: '/trip-album', params: { tripId: tripForPhoto.id } } as never);
                     }
                   }}
                   style={({ pressed }) => [
@@ -373,7 +373,7 @@ export default function ProfileScreen() {
                     key={album.tripId}
                     onPress={() => {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      router.push({ pathname: '/trip-album', params: { tripId: album.tripId } });
+                      router.push({ pathname: '/trip-album', params: { tripId: album.tripId } } as never);
                     }}
                     style={({ pressed }) => [
                       styles.albumCard,
@@ -421,7 +421,7 @@ export default function ProfileScreen() {
             ]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              router.push({ pathname: '/trip-album', params: { tripId: trips[0].id } });
+              router.push({ pathname: '/trip-album', params: { tripId: trips[0].id } } as never);
             }}
           >
             <Camera size={28} color={COLORS.sage} strokeWidth={1.5} />
@@ -523,7 +523,7 @@ export default function ProfileScreen() {
             style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.7 : 1 }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push('/compatibility');
+              router.push('/compatibility' as never);
             }}
           >
             <View style={styles.menuIconWrap}><Heart size={18} color={COLORS.coral} strokeWidth={2} /></View>
