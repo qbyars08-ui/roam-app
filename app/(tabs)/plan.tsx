@@ -33,8 +33,9 @@ import {
 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, type Destination } from '../../lib/constants';
 import { useAppStore, type Trip } from '../../lib/store';
+import { Flame, Sparkle } from 'lucide-react-native';
 import { generateItineraryStreaming, TripLimitReachedError } from '../../lib/claude';
 import { FREE_TRIPS_PER_MONTH } from '../../lib/constants';
 import { isGuestUser } from '../../lib/guest';
@@ -85,6 +86,20 @@ interface ConversationBrief {
 }
 
 // ---------------------------------------------------------------------------
+// Destination lookup for trending/timing badges
+// ---------------------------------------------------------------------------
+const DEST_LOOKUP = new Map(DESTINATIONS.map((d) => [d.label.toLowerCase(), d]));
+
+function getDestinationMeta(name: string): Destination | undefined {
+  return DEST_LOOKUP.get(name.toLowerCase());
+}
+
+function isPerfectTiming(bestMonths: number[]): boolean {
+  const currentMonth = new Date().getMonth() + 1;
+  return bestMonths.includes(currentMonth);
+}
+
+// ---------------------------------------------------------------------------
 // Trip Card Component
 // ---------------------------------------------------------------------------
 const TripCard = React.memo(function TripCard({
@@ -98,6 +113,9 @@ const TripCard = React.memo(function TripCard({
 }) {
   const { t } = useTranslation();
   const imageUrl = DEST_IMAGES[trip.destination] ?? FALLBACK_IMAGE;
+  const destMeta = useMemo(() => getDestinationMeta(trip.destination), [trip.destination]);
+  const isTrending = (destMeta?.trendScore ?? 0) >= 85;
+  const perfectTiming = destMeta ? isPerfectTiming(destMeta.bestMonths) : false;
   const parsed = useMemo(() => {
     try {
       return parseItinerary(JSON.parse(trip.itinerary));
@@ -146,6 +164,21 @@ const TripCard = React.memo(function TripCard({
           <Text style={styles.latestBadgeText}>{t('plan.latest')}</Text>
         </View>
       )}
+      {/* Trending + Perfect Timing badges */}
+      <View style={styles.trendBadgeRow}>
+        {isTrending && (
+          <View style={styles.trendBadge}>
+            <Flame size={10} color={COLORS.coral} strokeWidth={2} />
+            <Text style={styles.trendBadgeText}>Trending</Text>
+          </View>
+        )}
+        {perfectTiming && (
+          <View style={styles.timingBadge}>
+            <Sparkle size={10} color={COLORS.gold} strokeWidth={2} />
+            <Text style={styles.timingBadgeText}>Perfect timing</Text>
+          </View>
+        )}
+      </View>
       <View style={styles.tripCardContent}>
         <Text style={styles.tripCardDest}>{trip.destination}</Text>
         <View style={styles.tripCardMeta}>
@@ -182,6 +215,9 @@ const NextTripHero = React.memo(function NextTripHero({
 }) {
   const router = useRouter();
   const imageUrl = DEST_IMAGES[trip.destination] ?? FALLBACK_IMAGE;
+  const destMeta = useMemo(() => getDestinationMeta(trip.destination), [trip.destination]);
+  const isTrending = (destMeta?.trendScore ?? 0) >= 85;
+  const perfectTiming = destMeta ? isPerfectTiming(destMeta.bestMonths) : false;
 
   const tagline = useMemo(() => {
     try {
@@ -229,6 +265,22 @@ const NextTripHero = React.memo(function NextTripHero({
         colors={['transparent', COLORS.overlayStrong]}
         style={styles.heroGradient}
       />
+
+      {/* Trending + Perfect Timing badges */}
+      <View style={styles.heroTrendRow}>
+        {isTrending && (
+          <View style={styles.trendBadge}>
+            <Flame size={10} color={COLORS.coral} strokeWidth={2} />
+            <Text style={styles.trendBadgeText}>Trending</Text>
+          </View>
+        )}
+        {perfectTiming && (
+          <View style={styles.timingBadge}>
+            <Sparkle size={10} color={COLORS.gold} strokeWidth={2} />
+            <Text style={styles.timingBadgeText}>Perfect timing</Text>
+          </View>
+        )}
+      </View>
 
       {/* Destination name + tagline */}
       <View style={styles.heroContent}>
@@ -1020,6 +1072,57 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: COLORS.sage,
     letterSpacing: 1,
+    textTransform: 'uppercase',
+  } as TextStyle,
+  trendBadgeRow: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    flexDirection: 'row',
+    gap: 6,
+  } as ViewStyle,
+  heroTrendRow: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    flexDirection: 'row',
+    gap: 6,
+    zIndex: 2,
+  } as ViewStyle,
+  trendBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: 'rgba(232, 97, 74, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(232, 97, 74, 0.3)',
+    borderRadius: 10,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+  } as ViewStyle,
+  trendBadgeText: {
+    fontFamily: FONTS.mono,
+    fontSize: 9,
+    color: COLORS.coral,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  } as TextStyle,
+  timingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: 'rgba(201, 168, 76, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(201, 168, 76, 0.3)',
+    borderRadius: 10,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+  } as ViewStyle,
+  timingBadgeText: {
+    fontFamily: FONTS.mono,
+    fontSize: 9,
+    color: COLORS.gold,
+    letterSpacing: 0.5,
     textTransform: 'uppercase',
   } as TextStyle,
 

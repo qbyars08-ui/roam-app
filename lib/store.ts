@@ -341,7 +341,7 @@ export const useAppStore = create<AppState>((set) => ({
     if (profile) {
       AsyncStorage.setItem(SOCIAL_PROFILE_KEY, JSON.stringify(profile)).catch(() => {});
     }
-    set({ socialProfile: profile });
+    set({ socialProfile: profile, socialProfileLoaded: true });
   },
   setSocialProfileLoaded: (loaded) => set({ socialProfileLoaded: loaded }),
   setSquadMatches: (matches) => set({ squadMatches: matches }),

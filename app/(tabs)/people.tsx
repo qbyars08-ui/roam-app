@@ -4,6 +4,7 @@
 // =============================================================================
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   Animated,
   Dimensions,
   KeyboardAvoidingView,
@@ -35,6 +36,7 @@ import {
   Utensils,
   Wallet,
 } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { useAppStore } from '../../lib/store';
 import { useSocialProfile } from '../../lib/hooks/useSocialProfile';
 import { useTripPresence } from '../../lib/hooks/useTripPresence';
@@ -71,6 +73,32 @@ const LANGUAGE_OPTIONS = [
   'Mandarin', 'Portuguese', 'Italian', 'Arabic', 'Korean',
   'Dutch', 'Other',
 ];
+
+// Map local travel style IDs → DB travel_style enum + vibe_tags
+import type { TravelStyle, VibeTag } from '../../lib/types/social';
+
+const STYLE_TO_DB: Record<string, { travelStyle: TravelStyle; vibeTags: VibeTag[] }> = {
+  'solo-explorer': { travelStyle: 'adventure', vibeTags: ['hiking-buddy', 'day-trip-companion'] },
+  'cultural-deep-dive': { travelStyle: 'slow-travel', vibeTags: ['culture-explorer', 'language-exchange'] },
+  'adventure-seeker': { travelStyle: 'adventure', vibeTags: ['hiking-buddy', 'day-trip-companion'] },
+  'food-obsessed': { travelStyle: 'comfort', vibeTags: ['food-tour-partner', 'coffee-chat'] },
+  'slow-traveler': { travelStyle: 'slow-travel', vibeTags: ['coffee-chat', 'culture-explorer'] },
+  'night-owl': { travelStyle: 'comfort', vibeTags: ['nightlife-crew', 'hostel-hangout'] },
+  'budget-master': { travelStyle: 'backpacker', vibeTags: ['hostel-hangout', 'hiking-buddy'] },
+  'no-compromises': { travelStyle: 'luxury', vibeTags: ['food-tour-partner', 'photography-partner'] },
+};
+
+function resolveProfileFromDraft(styles: string[]): { travelStyle: TravelStyle; vibeTags: VibeTag[] } {
+  if (styles.length === 0) return { travelStyle: 'comfort', vibeTags: [] };
+  const first = STYLE_TO_DB[styles[0]] ?? { travelStyle: 'comfort' as TravelStyle, vibeTags: [] as VibeTag[] };
+  // Merge vibe tags from all selected styles (deduplicated)
+  const allTags = new Set<VibeTag>();
+  for (const s of styles) {
+    const mapped = STYLE_TO_DB[s];
+    if (mapped) mapped.vibeTags.forEach((t) => allTags.add(t));
+  }
+  return { travelStyle: first.travelStyle, vibeTags: [...allTags] };
+}
 
 // =============================================================================
 // PROFILE CREATION STATE
@@ -427,6 +455,7 @@ EmptyMatchState.displayName = 'EmptyMatchState';
 // MAIN COMPONENT
 // =============================================================================
 export default function PeopleTab() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const { profile: socialProfile, loading: profileLoading, upsert } = useSocialProfile();
   const { myPresences, postPresence } = useTripPresence();
@@ -556,18 +585,23 @@ export default function PeopleTab() {
   }, [step, animateStep]);
 
   const handleCompleteProfile = useCallback(async () => {
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setSaving(true);
     try {
-      await upsert({
-        displayName: draft.name.trim(),
+      const { travelStyle, vibeTags } = resolveProfileFromDraft(draft.travelStyles);
+      const result = await upsert({
+        displayName: draft.name.trim() || 'Traveler',
         bio: draft.bio.trim(),
-        languages: draft.languages,
-        vibeTags: [],
-        travelStyle: 'comfort',
+        languages: draft.languages.length > 0 ? draft.languages : ['English'],
+        vibeTags,
+        travelStyle,
         avatarEmoji: '',
         ageRange: '25-30',
       } as Partial<SocialProfile>);
+      if (!result) {
+        Alert.alert('Couldn\u2019t save profile', 'Check your connection and try again.');
+        return;
+      }
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       trackEvent('profile_created', {
         name: draft.name.trim(),
         homeCity: draft.homeCity.trim(),
@@ -583,14 +617,14 @@ export default function PeopleTab() {
           destination: draft.firstTripDestination.trim(),
           arrivalDate: arrival,
           departureDate: departure,
-          lookingFor: [],
+          lookingFor: vibeTags,
         });
         trackEvent('trip_added_to_presence', {
           destination: draft.firstTripDestination.trim(),
         }).catch(() => {});
       }
     } catch {
-      // silent
+      Alert.alert('Something went wrong', 'Please try again.');
     } finally {
       setSaving(false);
     }
@@ -938,9 +972,21 @@ export default function PeopleTab() {
       contentContainerStyle={styles.fullScroll}
       showsVerticalScrollIndicator={false}
     >
-      {/* Header */}
+      {/* Header + Edit Profile */}
       <View style={styles.fullHeader}>
-        <Text style={styles.fullTitle}>Who's Going</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <Text style={styles.fullTitle}>Who's Going</Text>
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/social-profile-edit' as never);
+            }}
+            accessibilityLabel="Edit your social profile"
+            style={{ paddingVertical: 4, paddingHorizontal: 10, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border }}
+          >
+            <Text style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.creamMuted, textTransform: 'uppercase', letterSpacing: 0.5 }}>Edit Profile</Text>
+          </Pressable>
+        </View>
         <View style={styles.privacyToggle}>
           <Text style={styles.privacyLabel}>
             {visibleToRoamers ? 'Visible to ROAMers' : 'Hidden'}
@@ -971,8 +1017,8 @@ export default function PeopleTab() {
               key={roamer.id}
               roamer={roamer}
               compatibilityScore={computeCompatibility(
-                draft.travelStyles.length > 0 ? draft.travelStyles : ['solo-explorer'],
-                draft.languages.length > 0 ? draft.languages : ['English'],
+                socialProfile?.vibeTags?.length ? socialProfile.vibeTags : (draft.travelStyles.length > 0 ? draft.travelStyles : ['solo-explorer']),
+                socialProfile?.languages?.length ? socialProfile.languages : (draft.languages.length > 0 ? draft.languages : ['English']),
                 trips.length,
                 roamer.travelStyles,
                 roamer.languages,
