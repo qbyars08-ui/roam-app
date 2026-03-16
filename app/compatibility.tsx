@@ -38,7 +38,6 @@ import {
   ChevronLeft, Share2, Heart, ArrowRight, Check,
   Users, RefreshCw,
 } from 'lucide-react-native';
-import { withComingSoon } from '../lib/with-coming-soon';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -409,10 +408,7 @@ function CompatibilityScreen() {
   );
 }
 
-export default withComingSoon(CompatibilityScreen, {
-  routeName: 'compatibility',
-  title: 'Travel Compatibility',
-});
+export default CompatibilityScreen;
 
 // =============================================================================
 // Styles

@@ -33,7 +33,6 @@ import {
   type LayoverActivity,
 } from '../lib/layover-data';
 import { getDestinationPhoto } from '../lib/photos';
-import { withComingSoon } from '../lib/with-coming-soon';
 
 // ---------------------------------------------------------------------------
 // Lounge intel — curated notes per airport
@@ -746,4 +745,4 @@ const styles = StyleSheet.create({
   } as TextStyle,
 });
 
-export default withComingSoon(LayoverScreen, { routeName: 'layover', title: 'Layover Optimizer' });
+export default LayoverScreen;

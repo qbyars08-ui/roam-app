@@ -37,7 +37,6 @@ import {
   AlertTriangle,
 } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
-import { withComingSoon } from '../lib/with-coming-soon';
 import { useAppStore } from '../lib/store';
 import { getTimezoneByDestination, getTimezoneInfo, getTimeDifference } from '../lib/timezone';
 import { getExchangeRates } from '../lib/exchange-rates';
@@ -821,10 +820,4 @@ const styles = StyleSheet.create({
   } as TextStyle,
 });
 
-// =============================================================================
-// Export with Coming Soon gate
-// =============================================================================
-export default withComingSoon(BeforeYouLandScreen, {
-  routeName: 'before-you-land',
-  title: 'Before You Land',
-});
+export default BeforeYouLandScreen;

@@ -31,6 +31,11 @@ const V1_CORE_ROUTES = new Set([
   'alter-ego', 'globe', 'dream-vault', 'arrival-mode', 'dupe-finder', 'anti-itinerary',
   'chaos-dare', 'language-survival', 'chaos-mode', 'budget-guardian',
   'honest-reviews', 'visited-map', 'airport-guide', 'memory-lane',
+  // All features unlocked
+  'create-group', 'group-trip', 'hype', 'join-group', 'local-lens', 'made-for-you',
+  'main-character', 'people-met', 'roam-for-dates', 'share-card', 'travel-persona',
+  'travel-profile', 'travel-time-machine', 'travel-twin', 'trip-chemistry',
+  'trip-collections', 'trip-dupe', 'trip-receipt', 'trip-trading',
 ]);
 
 /**

@@ -39,7 +39,6 @@ import { getMedicalGuideByDestination, type MedicalGuide } from '../lib/medical-
 import { getHealthBrief, type HealthBrief } from '../lib/health-brief';
 import { track } from '../lib/analytics';
 import { captureEvent } from '../lib/posthog';
-import { withComingSoon } from '../lib/with-coming-soon';
 
 // ---------------------------------------------------------------------------
 // Symptom Categories (inline — no emoji, just icons)
@@ -993,7 +992,4 @@ const styles = StyleSheet.create({
   } as TextStyle,
 });
 
-export default withComingSoon(BodyIntelScreen, {
-  routeName: 'body-intel',
-  title: 'Body Intel',
-});
+export default BodyIntelScreen;

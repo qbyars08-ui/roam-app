@@ -18,7 +18,6 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { withComingSoon } from '../lib/with-coming-soon';
 import type { ComponentType } from 'react';
 import {
   ChevronLeft,
@@ -891,4 +890,4 @@ const styles = StyleSheet.create({
   } as TextStyle,
 });
 
-export default withComingSoon(MemoryLaneScreen, { routeName: 'memory-lane', title: 'Memory Lane' });
+export default MemoryLaneScreen;

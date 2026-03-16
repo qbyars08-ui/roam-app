@@ -79,7 +79,6 @@ import {
 } from '../../lib/visa-intel';
 import { DESTINATIONS } from '../../lib/constants';
 import { parseItinerary, type Itinerary, type ItineraryDay } from '../../lib/types/itinerary';
-import { withComingSoon } from '../../lib/with-coming-soon';
 import { getMedicalGuideByDestination, type MedicalGuide } from '../../lib/medical-abroad';
 import { getTimezoneByDestination } from '../../lib/timezone';
 import { getWeatherForecast, type DailyForecast } from '../../lib/weather-forecast';
@@ -3001,4 +3000,4 @@ const styles = StyleSheet.create({
   } as TextStyle,
 });
 
-export default withComingSoon(PrepScreen, { routeName: 'prep', title: 'Trip Prep' });
+export default PrepScreen;

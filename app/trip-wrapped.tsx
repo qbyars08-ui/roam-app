@@ -25,7 +25,6 @@ import {
   generateYearInReview,
   type YearInReview,
 } from '../lib/travel-year';
-import { withComingSoon } from '../lib/with-coming-soon';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - SPACING.lg * 2;
@@ -903,4 +902,4 @@ const styles = StyleSheet.create({
   } as TextStyle,
 });
 
-export default withComingSoon(TripWrappedScreen, { routeName: 'trip-wrapped', title: 'Trip Wrapped' });
+export default TripWrappedScreen;

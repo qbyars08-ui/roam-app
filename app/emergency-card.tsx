@@ -20,7 +20,6 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from '../lib/haptics';
-import { withComingSoon } from '../lib/with-coming-soon';
 import {
   ChevronLeft,
   Heart,
@@ -1145,10 +1144,4 @@ const styles = StyleSheet.create({
   } as TextStyle,
 });
 
-// -----------------------------------------------------------------------------
-// Export with coming soon gate
-// -----------------------------------------------------------------------------
-export default withComingSoon(EmergencyCardScreen, {
-  routeName: 'emergency-card',
-  title: 'Emergency Card',
-});
+export default EmergencyCardScreen;

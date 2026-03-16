@@ -19,7 +19,6 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from '../lib/haptics';
 
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../lib/constants';
-import { withComingSoon } from '../lib/with-coming-soon';
 import { Share2, BookOpen, MapPin, Lock } from 'lucide-react-native';
 import { EmptyPassport } from '../components/ui/EmptyStateIllustrations';
 import { useAppStore } from '../lib/store';
@@ -461,4 +460,4 @@ const styles = StyleSheet.create({
   } as TextStyle,
 });
 
-export default withComingSoon(PassportScreen, { routeName: 'passport', title: 'Digital Passport' });
+export default PassportScreen;
