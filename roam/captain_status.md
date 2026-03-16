@@ -1,14 +1,14 @@
 # Captain Status Board
 
-Last updated: 2026-03-15 (post-merge deploy)
+Last updated: 2026-03-16 (CAPTAIN session start)
 
 ## Quick Pulse
 - **System:** GREEN
 - **TypeScript:** 0 errors
-- **Site:** LIVE at https://tryroam.netlify.app
+- **Site:** LIVE at https://tryroam.netlify.app (HTTP 200)
 - **Tab Structure:** 5 tabs — Plan, Discover, People, Flights, Prep
-- **PRs:** ALL 14 MERGED (0 open)
-- **Deploy:** Production live with all agent work merged
+- **PRs:** 2 open (both DRAFT) — #38 design/copy, #39 intelligence/strategy
+- **Deploy:** Production live
 - **Blockers:** 4 (all Quinn-only)
 
 ## What Just Happened
@@ -57,6 +57,13 @@ Last updated: 2026-03-15 (post-merge deploy)
 | 13 | DACH Growth | DONE | dach_growth.md, dach_influencers.md | PR #35 |
 | 14 | UGC Engine | DONE | creator_kit.md, ambassador_program.md | PR #31 |
 | CP | Captain | ACTIVE | captain_status.md | — |
+
+## Open PRs (2026-03-16)
+
+| # | Title | Branch | Status |
+|---|-------|--------|--------|
+| 38 | ROAM design copy localization | cursor/roam-design-copy-localization-84e7 | DRAFT |
+| 39 | Roam intelligence and strategy | cursor/roam-intelligence-and-strategy-3e1d | DRAFT |
 
 ## Needs Quinn's Attention
 
