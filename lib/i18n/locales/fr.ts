@@ -191,6 +191,7 @@ const fr: TranslationKeys = {
   people: {
     title: 'Voyageurs',
     headerSub: 'Trouvez des voyageurs qui vont o\u00f9 vous allez',
+    headerSubActive: "Vous \u00eates ouvert \u00e0 rencontrer des voyageurs",
     heroTitle: 'Voyager, c\u2019est mieux ensemble',
     heroSub: 'Nous vous mettons en relation avec des voyageurs qui vont au m\u00eame endroit, au m\u00eame moment, avec la m\u00eame \u00e9nergie.',
     activeTravelers: 'Voyageurs actifs',
@@ -274,6 +275,8 @@ const fr: TranslationKeys = {
     bestValue: 'Meilleur rapport qualit\u00e9-prix',
     noResults: 'Aucun vol trouv\u00e9',
     setHomeAirport: 'D\u00e9finir votre a\u00e9roport',
+    layoverTitle: 'Optimiseur de correspondances',
+    layoverSub: 'Que faire avec X heures dans 8 grands a\u00e9roports',
   },
 
   stays: {
@@ -337,6 +340,8 @@ const fr: TranslationKeys = {
     exploreFeatures: 'Explorer les fonctionnalit\u00e9s',
     yourPlan: 'Votre forfait',
     emergencyContact: 'Contact d\u2019urgence',
+    emergencyCardCtaTitle: 'Carte m\u00e9dicale d\u2019urgence',
+    emergencyCardCtaSub: 'Configurez vos infos m\u00e9dicales pour les urgences en voyage',
     emergencyContactTitle: 'Contact d\u2019urgence',
     emergencyContactSub: 'Entrez un num\u00e9ro de t\u00e9l\u00e9phone pour les alertes SOS.',
     logOut: 'Se d\u00e9connecter',

@@ -23,7 +23,7 @@ export default function ComingSoon({ title, description }: ComingSoonProps) {
 
   return (
     <LinearGradient
-      colors={[COLORS.bg, '#0a1812', COLORS.bg]}
+      colors={[COLORS.bg, COLORS.gradientForestLight, COLORS.bg]}
       style={styles.container}
     >
       <View style={styles.content}>

@@ -301,8 +301,8 @@ export default function ProfileScreen() {
         >
           <Shield size={18} color={COLORS.coral} strokeWidth={2} />
           <View style={{ flex: 1 }}>
-            <Text style={styles.emergencyCardCtaTitle}>Emergency Medical Card</Text>
-            <Text style={styles.emergencyCardCtaSub}>Set up your medical info for travel emergencies</Text>
+            <Text style={styles.emergencyCardCtaTitle}>{t('profile.emergencyCardCtaTitle')}</Text>
+            <Text style={styles.emergencyCardCtaSub}>{t('profile.emergencyCardCtaSub')}</Text>
           </View>
           <ChevronRight size={16} color={COLORS.creamMuted} strokeWidth={2} />
         </Pressable>
