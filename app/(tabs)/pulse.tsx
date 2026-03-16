@@ -24,6 +24,9 @@ import { useAppStore } from '../../lib/store';
 import { track } from '../../lib/analytics';
 import { getDestinationPhoto } from '../../lib/photos';
 import { getTimezoneByDestination } from '../../lib/timezone';
+import LiveFeedTicker from '../../components/features/LiveFeedTicker';
+import SocialProofBanner from '../../components/features/SocialProofBanner';
+import GoNowFeed from '../../components/features/GoNowFeed';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -821,6 +824,16 @@ export default function PulseScreen() {
           ))}
         </ScrollView>
 
+        {/* ── Live Feed Ticker ── */}
+        <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}>
+          <LiveFeedTicker />
+        </View>
+
+        {/* ── Social Proof Banner (active trip) ── */}
+        {trips.length > 0 && (
+          <SocialProofBanner destination={trips[0].destination} />
+        )}
+
         {/* ── Right Now Section ── */}
         <View style={styles.section}>
           <Text style={styles.sectionHeading}>
@@ -855,6 +868,9 @@ export default function PulseScreen() {
             ))}
           </View>
         </View>
+
+        {/* ── Go Now Flight Deals ── */}
+        <GoNowFeed />
 
         {/* ── This Month Section ── */}
         <View style={[styles.section, styles.sectionLast]}>

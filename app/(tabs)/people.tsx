@@ -44,7 +44,12 @@ import { trackEvent } from '../../lib/analytics';
 import { track } from '../../lib/analytics';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS, MAGAZINE } from '../../lib/constants';
-import type { SocialProfile } from '../../lib/types/social';
+import type { SocialProfile, TripPresence as TripPresenceType } from '../../lib/types/social';
+import { calculateChemistryScore, type ChemistryBreakdown } from '../../lib/social-chemistry';
+import ChemistryBadge from '../../components/social/ChemistryBadge';
+import ProfileCard from '../../components/social/ProfileCard';
+import TripPresenceCard from '../../components/social/TripPresenceCard';
+import MatchCard from '../../components/social/MatchCard';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -98,6 +103,46 @@ function resolveProfileFromDraft(styles: string[]): { travelStyle: TravelStyle; 
     if (mapped) mapped.vibeTags.forEach((t) => allTags.add(t));
   }
   return { travelStyle: first.travelStyle, vibeTags: [...allTags] };
+}
+
+// =============================================================================
+// MOCK → SOCIAL TYPE CONVERTERS
+// =============================================================================
+function mockToSocialProfile(roamer: MockRoamer): SocialProfile {
+  const mapped = STYLE_TO_DB[roamer.travelStyles[0]] ?? { travelStyle: 'comfort' as TravelStyle, vibeTags: [] as VibeTag[] };
+  const allTags = new Set<VibeTag>();
+  for (const s of roamer.travelStyles) {
+    const m = STYLE_TO_DB[s];
+    if (m) m.vibeTags.forEach((t) => allTags.add(t));
+  }
+  return {
+    id: roamer.id,
+    userId: roamer.id,
+    displayName: roamer.name,
+    ageRange: '25-30',
+    travelStyle: mapped.travelStyle,
+    vibeTags: [...allTags],
+    bio: roamer.bio,
+    avatarEmoji: '',
+    languages: roamer.languages,
+    verified: false,
+    privacy: {},
+    createdAt: new Date().toISOString(),
+  };
+}
+
+function mockToTripPresence(roamer: MockRoamer): TripPresenceType {
+  const mapped = STYLE_TO_DB[roamer.travelStyles[0]] ?? { vibeTags: [] as VibeTag[] };
+  return {
+    id: roamer.id,
+    userId: roamer.id,
+    destination: roamer.destination,
+    arrivalDate: roamer.arrivalDate,
+    departureDate: roamer.departureDate,
+    lookingFor: mapped.vibeTags,
+    status: 'active',
+    createdAt: new Date().toISOString(),
+  };
 }
 
 // =============================================================================
@@ -1012,23 +1057,25 @@ export default function PeopleTab() {
           <Text style={styles.sectionTitle}>
             Also going to {currentDestination}
           </Text>
-          {alsoGoing.map((roamer) => (
-            <RoamerProfileCard
-              key={roamer.id}
-              roamer={roamer}
-              compatibilityScore={computeCompatibility(
-                socialProfile?.vibeTags?.length ? socialProfile.vibeTags : (draft.travelStyles.length > 0 ? draft.travelStyles : ['solo-explorer']),
-                socialProfile?.languages?.length ? socialProfile.languages : (draft.languages.length > 0 ? draft.languages : ['English']),
-                trips.length,
-                roamer.travelStyles,
-                roamer.languages,
-                roamer.tripCount,
-                true,
-              )}
-              connectionStatus={connections[roamer.id] ?? 'none'}
-              onConnect={handleConnect}
-            />
-          ))}
+          {alsoGoing.map((roamer) => {
+            const roamerProfile = mockToSocialProfile(roamer);
+            const roamerPresence = mockToTripPresence(roamer);
+            const travelProfile = useAppStore.getState().travelProfile;
+            const myVibes: VibeTag[] = socialProfile?.vibeTags ?? [];
+            const chemistry = calculateChemistryScore(travelProfile, roamerProfile, myVibes, 7);
+            return (
+              <View key={roamer.id} style={{ gap: SPACING.sm }}>
+                <ProfileCard
+                  profile={roamerProfile}
+                  chemistryScore={chemistry.score}
+                  chemistryBreakdown={chemistry.breakdown}
+                  showActions
+                  onConnect={() => handleConnect(roamer.id)}
+                />
+                <TripPresenceCard presence={roamerPresence} />
+              </View>
+            );
+          })}
         </View>
       )}
 
@@ -1038,23 +1085,25 @@ export default function PeopleTab() {
           <Text style={styles.sectionTitle}>
             Right now in {currentDestination}
           </Text>
-          {rightNow.map((roamer) => (
-            <RoamerProfileCard
-              key={roamer.id}
-              roamer={roamer}
-              compatibilityScore={computeCompatibility(
-                draft.travelStyles.length > 0 ? draft.travelStyles : ['solo-explorer'],
-                draft.languages.length > 0 ? draft.languages : ['English'],
-                trips.length,
-                roamer.travelStyles,
-                roamer.languages,
-                roamer.tripCount,
-                false,
-              )}
-              connectionStatus={connections[roamer.id] ?? 'none'}
-              onConnect={handleConnect}
-            />
-          ))}
+          {rightNow.map((roamer) => {
+            const roamerProfile = mockToSocialProfile(roamer);
+            const roamerPresence = mockToTripPresence(roamer);
+            const travelProfile = useAppStore.getState().travelProfile;
+            const myVibes: VibeTag[] = socialProfile?.vibeTags ?? [];
+            const chemistry = calculateChemistryScore(travelProfile, roamerProfile, myVibes, 3);
+            return (
+              <View key={roamer.id} style={{ gap: SPACING.sm }}>
+                <ProfileCard
+                  profile={roamerProfile}
+                  chemistryScore={chemistry.score}
+                  chemistryBreakdown={chemistry.breakdown}
+                  showActions
+                  onConnect={() => handleConnect(roamer.id)}
+                />
+                <TripPresenceCard presence={roamerPresence} />
+              </View>
+            );
+          })}
         </View>
       )}
 
@@ -1066,23 +1115,20 @@ export default function PeopleTab() {
       {/* Section 3: Travel Network */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Your travel network</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.networkScroll}
-        >
-          {roamers.map((roamer) => (
-            <View key={roamer.id} style={styles.networkCard}>
-              <View style={styles.networkAvatar}>
-                <Text style={styles.networkAvatarText}>
-                  {roamer.name[0]?.toUpperCase() ?? '?'}
-                </Text>
-              </View>
-              <Text style={styles.networkName} numberOfLines={1}>{roamer.name}</Text>
-              <Text style={styles.networkCity} numberOfLines={1}>{roamer.homeCity}</Text>
-            </View>
-          ))}
-        </ScrollView>
+        {roamers.map((roamer) => {
+          const roamerProfile = mockToSocialProfile(roamer);
+          const travelProfile = useAppStore.getState().travelProfile;
+          const myVibes: VibeTag[] = socialProfile?.vibeTags ?? [];
+          const chemistry = calculateChemistryScore(travelProfile, roamerProfile, myVibes, 5);
+          return (
+            <ProfileCard
+              key={roamer.id}
+              profile={roamerProfile}
+              chemistryScore={chemistry.score}
+              compact
+            />
+          );
+        })}
       </View>
     </ScrollView>
   );

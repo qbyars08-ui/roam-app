@@ -113,6 +113,8 @@ import MockDataBadge from '../components/ui/MockDataBadge';
 import ActivityEditModal from '../components/features/ActivityEditModal';
 import RouteIntelCard from '../components/features/RouteIntelCard';
 import SeasonalIntel from '../components/features/SeasonalIntel';
+import AudioGuideBar from '../components/audio/AudioGuideBar';
+import NarrationToggle from '../components/audio/NarrationToggle';
 
 // =============================================================================
 // Component
@@ -1541,31 +1543,10 @@ export default function ItineraryScreen() {
                       label={`Listen to Day ${currentDay.day}`}
                     />
                     {parsed && parsed.days.length > 1 && (
-                      <Pressable
-                        onPress={handleStartFullNarration}
-                        accessibilityLabel="Listen to full trip audio guide"
-                        style={({ pressed }) => [{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          backgroundColor: narrationController?.isPlaying() ? COLORS.sageLight : COLORS.bgCard,
-                          borderRadius: RADIUS.full,
-                          borderWidth: 1,
-                          borderColor: narrationController?.isPlaying() ? COLORS.sage : COLORS.border,
-                          paddingVertical: SPACING.sm,
-                          paddingHorizontal: SPACING.md,
-                          gap: SPACING.sm,
-                          minHeight: 44,
-                          opacity: pressed ? 0.85 : 1,
-                        }]}
-                      >
-                        <Text style={{
-                          fontFamily: FONTS.bodyMedium,
-                          fontSize: 14,
-                          color: narrationController?.isPlaying() ? COLORS.sage : COLORS.cream,
-                        }}>
-                          {narrationController?.isPlaying() ? '■ Stop Guide' : '▶ Full Trip Guide'}
-                        </Text>
-                      </Pressable>
+                      <NarrationToggle
+                        itinerary={parsed}
+                        onControllerReady={(ctrl) => setNarrationController(ctrl)}
+                      />
                     )}
                   </View>
                 </View>
@@ -1787,6 +1768,17 @@ export default function ItineraryScreen() {
 
       {/* ── Emergency SOS ─────────────────────────────────────────────── */}
       <EmergencySOS />
+
+      {/* ── Audio Guide floating bar ──────────────────────────────── */}
+      <AudioGuideBar
+        controller={narrationController}
+        destination={trip?.destination ?? ''}
+        totalDays={parsed?.days.length ?? 0}
+        onClose={() => {
+          narrationController?.stop();
+          setNarrationController(null);
+        }}
+      />
 
       {/* ── Share modal ────────────────────────────────────────────────── */}
       <Modal
