@@ -3,75 +3,136 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ROAM — War Room</title>
+<title>ROAM — War Room v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,700;1,400;1,700&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  body{background:#080F0A;color:#F5EDD8;font-family:system-ui,-apple-system,sans-serif;font-size:13px;line-height:1.5;overflow-x:hidden}
+  body{background:#080F0A;color:#F5EDD8;font-family:'DM Sans',system-ui,sans-serif;font-size:13px;line-height:1.5;overflow-x:hidden}
   ::-webkit-scrollbar{width:4px;height:4px}
   ::-webkit-scrollbar-track{background:transparent}
   ::-webkit-scrollbar-thumb{background:#1A2B1E;border-radius:2px}
 
-  .war-room{display:grid;grid-template-columns:280px 1fr 320px;grid-template-rows:auto 1fr;height:100vh;overflow:hidden}
+  .war-room{display:grid;grid-template-columns:25% 50% 25%;grid-template-rows:auto 1fr auto;height:100vh;overflow:hidden}
 
-  /* TOP BAR */
-  .top-bar{grid-column:1/-1;background:#0A130C;border-bottom:1px solid #1A2B1E;padding:10px 20px;display:flex;align-items:center;justify-content:space-between}
+  /* ═══ TOP BAR ═══ */
+  .top-bar{grid-column:1/-1;background:#0A130C;border-bottom:1px solid rgba(255,255,255,.06);padding:10px 24px;display:flex;align-items:center;justify-content:space-between}
   .top-bar .brand{display:flex;align-items:center;gap:16px}
-  .top-bar h1{font-size:16px;font-weight:800;color:#7CAF8A;letter-spacing:4px}
+  .top-bar h1{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;font-style:italic;color:#7CAF8A;letter-spacing:3px}
   .top-bar .live-dot{width:8px;height:8px;border-radius:50%;background:#4ADE80;box-shadow:0 0 12px rgba(74,222,128,.6);animation:blink 2s infinite}
   @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+  @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
   .top-bar .meta{display:flex;gap:16px;align-items:center}
-  .top-bar .clock{font-family:monospace;font-size:18px;color:#F5EDD8;letter-spacing:1px}
-  .top-bar .day{font-family:monospace;font-size:11px;color:#C9A84C;background:rgba(201,168,76,.08);padding:3px 10px;border-radius:3px;letter-spacing:1px}
-  .top-bar .motto{font-size:11px;color:#4A6050;font-style:italic;max-width:320px;text-align:right;transition:opacity .4s}
+  .top-bar .clock{font-family:'DM Mono',monospace;font-size:18px;color:#F5EDD8;letter-spacing:1px}
+  .top-bar .day{font-family:'DM Mono',monospace;font-size:11px;color:#C9A84C;background:rgba(201,168,76,.08);padding:3px 10px;border-radius:3px;letter-spacing:1px}
+  .top-bar .motto{font-family:'Cormorant Garamond',serif;font-size:13px;font-style:italic;color:#4A6050;max-width:360px;text-align:right;transition:opacity .4s}
   .top-bar .motto.fade{opacity:0}
-  .gear-btn{background:none;border:1px solid #1A2B1E;border-radius:4px;color:#4A6050;font-size:14px;padding:4px 8px;cursor:pointer;transition:all .15s}
+  .gear-btn{background:none;border:1px solid rgba(255,255,255,.06);border-radius:4px;color:#4A6050;font-size:14px;padding:4px 8px;cursor:pointer;transition:all .15s}
   .gear-btn:hover{border-color:#7CAF8A;color:#7CAF8A}
+  .master-status{font-size:10px;color:#4A6050;letter-spacing:1px;text-transform:uppercase}
 
-  /* LEFT */
-  .left{background:#0A130C;border-right:1px solid #1A2B1E;overflow-y:auto;padding:16px}
-  .panel-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:3px;color:#4A6050;margin:16px 0 8px;padding-left:4px}
+  /* ═══ TOKEN BADGES ═══ */
+  .token-badges{display:flex;gap:6px;align-items:center}
+  .token-badge{font-family:'DM Mono',monospace;font-size:8px;font-weight:500;padding:2px 6px;border-radius:3px;letter-spacing:.5px;text-transform:uppercase}
+  .token-badge.on{background:rgba(74,222,128,.1);color:#4ADE80}
+  .token-badge.off{background:rgba(232,97,74,.08);color:#E8614A;opacity:.5}
+
+  /* ═══ PANELS ═══ */
+  .left{background:#0A130C;border-right:1px solid rgba(255,255,255,.06);overflow-y:auto;padding:16px}
+  .center{overflow-y:auto;padding:24px}
+  .right{background:#0A130C;border-left:1px solid rgba(255,255,255,.06);overflow-y:auto;padding:16px}
+
+  .panel-label{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:3px;color:#4A6050;margin:20px 0 8px;padding-left:4px}
   .panel-label:first-child{margin-top:0}
 
-  /* Health */
-  .health-card{background:#0D1710;border:1px solid #1A2B1E;border-radius:6px;padding:14px;margin-bottom:8px}
+  /* ═══ CARDS (rgba white borders, not sage) ═══ */
+  .card{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:14px;margin-bottom:8px}
+  .card:hover{border-color:rgba(255,255,255,.1)}
+
+  /* ═══ HEALTH ═══ */
+  .health-card{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:14px;margin-bottom:8px}
   .health-card .hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-  .health-card .name{font-size:14px;font-weight:700;letter-spacing:1px}
+  .health-card .name{font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px}
   .status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
   .status-dot.up{background:#4ADE80;box-shadow:0 0 8px rgba(74,222,128,.5)}
   .status-dot.down{background:#E8614A;box-shadow:0 0 8px rgba(232,97,74,.5)}
   .status-dot.checking{background:#C9A84C;animation:blink 1s infinite}
-  .health-card .metrics{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-  .metric{background:rgba(0,0,0,.2);border-radius:4px;padding:6px 8px}
-  .metric .k{font-size:9px;color:#4A6050;text-transform:uppercase;letter-spacing:1px}
-  .metric .v{font-family:monospace;font-size:13px;font-weight:700;color:#7CAF8A}
+  .metrics{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .metric{background:rgba(0,0,0,.25);border-radius:6px;padding:8px 10px}
+  .metric .k{font-family:'DM Mono',monospace;font-size:8px;color:#4A6050;text-transform:uppercase;letter-spacing:1px}
+  .metric .v{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:#7CAF8A;margin-top:2px}
   .metric .v.warn{color:#C9A84C}
   .metric .v.bad{color:#E8614A}
 
-  .gh-stat{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#0D1710;border:1px solid #1A2B1E;border-radius:5px;margin-bottom:4px}
+  /* ═══ GH STATS ═══ */
+  .gh-stat{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:6px;margin-bottom:4px}
   .gh-stat .label{font-size:12px;color:#F5EDD8}
-  .gh-stat .val{font-family:monospace;font-size:14px;font-weight:700;color:#7CAF8A}
+  .gh-stat .val{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:#7CAF8A}
   .gh-stat .val.coral{color:#E8614A}
   .gh-stat .val.gold{color:#C9A84C}
+  .gh-stat a{color:#7CAF8A;text-decoration:none;font-size:11px}
+  .gh-stat a:hover{text-decoration:underline}
 
-  .qa-btn{width:100%;padding:8px 10px;background:#0D1710;border:1px solid #1A2B1E;border-radius:5px;color:#F5EDD8;font-size:11px;font-weight:600;cursor:pointer;text-align:left;margin-bottom:4px;transition:all .15s;display:flex;align-items:center;gap:8px}
-  .qa-btn:hover{border-color:#7CAF8A;color:#7CAF8A}
+  /* ═══ QUICK ACTIONS ═══ */
+  .qa-btn{width:100%;padding:8px 10px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:6px;color:#F5EDD8;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;text-align:left;margin-bottom:4px;transition:all .15s;display:flex;align-items:center;gap:8px}
+  .qa-btn:hover{border-color:rgba(124,175,138,.4);color:#7CAF8A}
   .qa-btn.fl{background:rgba(124,175,138,.1);border-color:#7CAF8A}
   .qa-btn .icon{font-size:14px;width:20px;text-align:center;flex-shrink:0}
 
+  /* ═══ LINKS ═══ */
   .link-row{display:block;padding:5px 10px;text-decoration:none;color:#F5EDD8;font-size:12px;border-radius:3px;transition:all .1s}
   .link-row:hover{color:#7CAF8A;background:rgba(124,175,138,.04)}
   .link-row::before{content:'→ ';color:#3A5040}
   .link-row:hover::before{color:#7CAF8A}
 
-  /* CENTER */
-  .center{overflow-y:auto;padding:20px}
-  .feed-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-  .feed-header h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:3px;color:#7CAF8A}
-  .feed-header .refresh{padding:4px 10px;background:transparent;border:1px solid #1A2B1E;border-radius:4px;color:#4A6050;font-size:10px;cursor:pointer;transition:all .15s}
+  /* ═══ CENTER FEED ═══ */
+  .feed-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .feed-header h2{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;font-style:italic;color:#7CAF8A}
+  .feed-header .refresh{padding:4px 10px;background:transparent;border:1px solid rgba(255,255,255,.06);border-radius:4px;color:#4A6050;font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;transition:all .15s}
   .feed-header .refresh:hover{border-color:#7CAF8A;color:#7CAF8A}
 
-  /* Deploy feed */
-  .deploy-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:#0D1710;border:1px solid #1A2B1E;border-radius:6px;margin-bottom:6px}
+  /* ═══ DAILY FOCUS ═══ */
+  .daily-focus{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:20px;margin-bottom:24px;position:relative}
+  .daily-focus .label{font-family:'DM Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:3px;color:#C9A84C;margin-bottom:8px}
+  .daily-focus textarea{width:100%;background:none;border:none;outline:none;color:#F5EDD8;font-family:'Cormorant Garamond',serif;font-size:28px;font-style:italic;font-weight:400;line-height:1.3;resize:none;min-height:80px}
+  .daily-focus textarea::placeholder{color:#2A3D2E}
+  .daily-focus .focus-meta{display:flex;justify-content:space-between;margin-top:8px;font-family:'DM Mono',monospace;font-size:10px;color:#3A5040}
+
+  /* ═══ ROAM METRICS 2x3 ═══ */
+  .metrics-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:24px}
+  .metrics-grid .m-card{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:14px;text-align:center}
+  .metrics-grid .m-card .m-val{font-family:'DM Mono',monospace;font-size:24px;font-weight:500;color:#7CAF8A;line-height:1}
+  .metrics-grid .m-card .m-val.gold{color:#C9A84C}
+  .metrics-grid .m-card .m-val.coral{color:#E8614A}
+  .metrics-grid .m-card .m-label{font-family:'DM Mono',monospace;font-size:9px;color:#4A6050;text-transform:uppercase;letter-spacing:1px;margin-top:6px}
+  .metrics-grid .m-card .m-sub{font-size:10px;color:#3A5040;margin-top:3px}
+
+  /* ═══ QUICK WINS ═══ */
+  .quick-wins{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px}
+  .qw-col{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:12px}
+  .qw-col .qw-header{font-family:'DM Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:2px;color:#C9A84C;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.04)}
+  .qw-item{display:flex;align-items:center;gap:6px;padding:5px 0;cursor:pointer;user-select:none}
+  .qw-item .qw-box{width:14px;height:14px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0}
+  .qw-item .qw-box.off{border:1.5px solid rgba(255,255,255,.15)}
+  .qw-item .qw-box.on{background:#7CAF8A;color:#080F0A;border:1.5px solid #7CAF8A}
+  .qw-item .qw-text{font-size:11px}
+  .qw-item .qw-text.done{text-decoration:line-through;color:#7CAF8A;opacity:.4}
+  .qw-add{width:100%;background:none;border:1px dashed rgba(255,255,255,.08);border-radius:4px;color:#3A5040;font-size:10px;padding:4px;cursor:pointer;margin-top:6px}
+  .qw-add:hover{border-color:rgba(255,255,255,.15);color:#4A6050}
+
+  /* ═══ BURN RATE ═══ */
+  .burn-rate{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:16px;margin-bottom:24px}
+  .burn-rate .br-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .burn-rate .br-title{font-family:'DM Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:3px;color:#C9A84C}
+  .burn-rate .br-total{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:#E8614A}
+  .burn-rate .br-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+  .burn-rate .br-row .br-name{font-size:12px;color:#4A6050}
+  .burn-rate .br-row .br-amt{font-family:'DM Mono',monospace;font-size:12px;color:#F5EDD8}
+  .burn-rate .br-runway{margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between}
+  .burn-rate .br-runway .br-label{font-size:11px;color:#4A6050}
+  .burn-rate .br-runway .br-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:#7CAF8A}
+
+  /* ═══ DEPLOYS ═══ */
+  .deploy-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:6px;margin-bottom:6px}
   .deploy-item .d-status{width:8px;height:8px;border-radius:50%;flex-shrink:0}
   .deploy-item .d-status.ready{background:#4ADE80}
   .deploy-item .d-status.building{background:#C9A84C;animation:blink 1s infinite}
@@ -79,125 +140,138 @@
   .deploy-item .d-body{flex:1;min-width:0}
   .deploy-item .d-title{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .deploy-item .d-meta{font-size:10px;color:#4A6050;margin-top:1px}
-  .deploy-item .d-time{font-family:monospace;font-size:11px;color:#7CAF8A}
+  .deploy-item .d-time{font-family:'DM Mono',monospace;font-size:11px;color:#7CAF8A}
   .deploy-item a{color:#7CAF8A;text-decoration:none;font-size:10px}
 
-  .commit-item{display:flex;gap:12px;padding:12px 14px;background:#0D1710;border:1px solid #1A2B1E;border-radius:6px;margin-bottom:6px;position:relative;overflow:hidden}
-  .commit-item:hover{border-color:#243B29}
+  /* ═══ COMMITS ═══ */
+  .commit-item{display:flex;gap:12px;padding:12px 14px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:6px;margin-bottom:6px;position:relative;overflow:hidden}
+  .commit-item:hover{border-color:rgba(255,255,255,.1)}
   .commit-item .time-line{position:absolute;left:0;top:0;bottom:0;width:3px}
   .commit-item .time-line.recent{background:#4ADE80}
   .commit-item .time-line.mid{background:#C9A84C}
-  .commit-item .time-line.old{background:#1A2B1E}
-  .commit-item .avatar{width:32px;height:32px;border-radius:50%;background:#1A2B1E;flex-shrink:0;overflow:hidden}
+  .commit-item .time-line.old{background:rgba(255,255,255,.06)}
+  .commit-item .avatar{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.04);flex-shrink:0;overflow:hidden}
   .commit-item .avatar img{width:100%;height:100%}
   .commit-item .body{flex:1;min-width:0}
   .commit-item .msg{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .commit-item .meta-row{font-size:11px;color:#4A6050;margin-top:2px;display:flex;gap:12px}
-  .commit-item .sha{font-family:monospace;color:#7CAF8A;font-size:10px;cursor:pointer}
+  .commit-item .meta-row{font-family:'DM Mono',monospace;font-size:10px;color:#4A6050;margin-top:2px;display:flex;gap:12px}
+  .commit-item .sha{font-family:'DM Mono',monospace;color:#7CAF8A;font-size:10px;cursor:pointer}
   .commit-item .sha:hover{text-decoration:underline}
 
-  .pr-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:#0D1710;border:1px solid #1A2B1E;border-radius:6px;margin-bottom:6px}
+  /* ═══ PR / ISSUE ═══ */
+  .pr-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:6px;margin-bottom:6px}
   .pr-item .pr-status{width:8px;height:8px;border-radius:50%;flex-shrink:0}
   .pr-item .pr-status.open{background:#4ADE80}
   .pr-item .pr-status.draft{background:#C9A84C}
   .pr-item .pr-title{flex:1;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .pr-item .pr-meta{font-size:10px;color:#4A6050}
+  .pr-item .pr-meta{font-family:'DM Mono',monospace;font-size:10px;color:#4A6050}
   .pr-item a{color:#7CAF8A;text-decoration:none;font-size:11px}
 
   .empty-state{text-align:center;padding:30px 20px;color:#3A5040;font-size:13px}
+  .empty-state .es-context{font-size:11px;color:#2A3D2E;margin-top:6px;line-height:1.5}
   .section-gap{margin-top:24px}
 
-  .activity-graph{display:flex;align-items:flex-end;gap:2px;height:60px;padding:12px 14px;background:#0D1710;border:1px solid #1A2B1E;border-radius:6px;margin-bottom:6px}
+  /* ═══ ACTIVITY GRAPH ═══ */
+  .activity-graph{display:flex;align-items:flex-end;gap:2px;height:60px;padding:12px 14px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:6px;margin-bottom:6px}
   .activity-graph .bar{flex:1;background:#7CAF8A;border-radius:2px 2px 0 0;min-height:2px;transition:height .3s;opacity:.6}
   .activity-graph .bar:hover{opacity:1}
   .activity-graph .bar.today{background:#4ADE80;opacity:1}
   .graph-labels{display:flex;justify-content:space-between;padding:0 14px;margin-bottom:16px}
-  .graph-labels span{font-size:9px;color:#3A5040;font-family:monospace}
+  .graph-labels span{font-family:'DM Mono',monospace;font-size:9px;color:#3A5040}
 
-  /* Netlify bandwidth */
-  .bw-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#0D1710;border:1px solid #1A2B1E;border-radius:6px;margin-bottom:6px}
+  /* ═══ BANDWIDTH ═══ */
+  .bw-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:6px;margin-bottom:6px}
   .bw-bar .bw-label{font-size:11px;color:#4A6050;width:80px}
   .bw-bar .bw-track{flex:1;height:6px;background:rgba(255,255,255,.04);border-radius:3px;overflow:hidden}
   .bw-bar .bw-fill{height:100%;border-radius:3px;transition:width .3s}
-  .bw-bar .bw-val{font-family:monospace;font-size:12px;font-weight:700;color:#7CAF8A;width:70px;text-align:right}
+  .bw-bar .bw-val{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:#7CAF8A;width:70px;text-align:right}
 
-  /* RIGHT */
-  .right{background:#0A130C;border-left:1px solid #1A2B1E;overflow-y:auto;padding:16px}
+  /* ═══ COMPOSERS (bigger) ═══ */
+  .comp-card{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:14px;margin-bottom:8px;transition:border-color .15s}
+  .comp-card:hover{border-color:rgba(255,255,255,.1)}
+  .comp-card .comp-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .comp-card .num{font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:#7CAF8A;width:28px;text-align:center}
+  .comp-card .role{font-size:13px;font-weight:600;color:#F5EDD8;flex:1}
+  .comp-card .st{padding:3px 10px;border-radius:10px;font-family:'DM Mono',monospace;font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;user-select:none;flex-shrink:0}
+  .comp-card .st.idle{color:#4A6050;background:rgba(74,96,80,.12)}
+  .comp-card .st.working{color:#7CAF8A;background:rgba(124,175,138,.12)}
+  .comp-card .st.done{color:#4ADE80;background:rgba(74,222,128,.12)}
+  .comp-card .task-input{background:none;border:none;outline:none;color:#F5EDD8;font-size:12px;width:100%;padding:0;font-family:'DM Sans',sans-serif;margin-bottom:6px}
+  .comp-card .task-input::placeholder{color:#2A3D2E}
+  .comp-card .comp-actions{display:flex;gap:6px}
+  .comp-card .cpb{padding:3px 10px;background:transparent;border:1px solid rgba(255,255,255,.06);border-radius:4px;color:#4A6050;font-family:'DM Mono',monospace;font-size:9px;cursor:pointer;flex-shrink:0;transition:all .1s}
+  .comp-card .cpb:hover{border-color:#7CAF8A;color:#7CAF8A}
+  .comp-card .cpb.fl{background:#7CAF8A;color:#080F0A}
+  .comp-card .wake-prompt{font-size:10px;color:#3A5040;font-style:italic;margin-top:4px;line-height:1.4;cursor:pointer;transition:color .1s}
+  .comp-card .wake-prompt:hover{color:#4A6050}
 
-  .comp-mini{background:#0D1710;border:1px solid #1A2B1E;border-radius:6px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px}
-  .comp-mini .num{font-size:16px;font-weight:800;color:#7CAF8A;width:24px;text-align:center}
-  .comp-mini .info{flex:1;min-width:0}
-  .comp-mini .role{font-size:11px;color:#4A6050}
-  .comp-mini .task-input{background:none;border:none;outline:none;color:#F5EDD8;font-size:11px;width:100%;padding:0;font-family:system-ui}
-  .comp-mini .st{padding:2px 8px;border-radius:8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;user-select:none;flex-shrink:0}
-  .comp-mini .st.idle{color:#4A6050;background:rgba(74,96,80,.15)}
-  .comp-mini .st.working{color:#7CAF8A;background:rgba(124,175,138,.15)}
-  .comp-mini .st.done{color:#4ADE80;background:rgba(74,222,128,.15)}
-  .comp-mini .cpb{padding:2px 8px;background:transparent;border:1px solid #1A2B1E;border-radius:4px;color:#4A6050;font-size:9px;cursor:pointer;flex-shrink:0;transition:all .1s}
-  .comp-mini .cpb:hover{border-color:#7CAF8A;color:#7CAF8A}
-  .comp-mini .cpb.fl{background:#7CAF8A;color:#080F0A}
+  /* ═══ AGENT PROMPTS ═══ */
+  .agent-btn{width:100%;padding:8px 10px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:6px;color:#F5EDD8;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;text-align:left;margin-bottom:4px;transition:all .15s;display:flex;align-items:center;gap:8px}
+  .agent-btn:hover{border-color:rgba(124,175,138,.4);color:#7CAF8A}
+  .agent-btn.fl{background:rgba(124,175,138,.1);border-color:#7CAF8A}
 
+  /* ═══ CHECKLIST ═══ */
   .chk{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:4px;cursor:pointer;user-select:none;transition:background .1s}
   .chk:hover{background:rgba(124,175,138,.03)}
   .chk .bx{width:16px;height:16px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
-  .chk .bx.off{border:1.5px solid #E8614A}
+  .chk .bx.off{border:1.5px solid rgba(255,255,255,.15)}
   .chk .bx.on{background:#7CAF8A;color:#080F0A;border:1.5px solid #7CAF8A}
   .chk .tx{font-size:12px;flex:1}
-  .chk .tx.dn{text-decoration:line-through;color:#7CAF8A;opacity:.5}
+  .chk .tx.dn{text-decoration:line-through;color:#7CAF8A;opacity:.4}
   .chk-done{font-size:12px;color:#C9A84C;text-align:center;padding:8px;display:none;font-weight:700}
 
-  .bud-row{display:flex;align-items:center;gap:8px;padding:6px 10px;margin-bottom:3px}
-  .bud-row .nm{font-size:11px;width:100px;color:#4A6050}
-  .bud-row .pr{font-family:monospace;font-size:12px;font-weight:700;color:#C9A84C;width:50px;text-align:right;background:transparent;border:none;outline:none;cursor:pointer;padding:0}
-  .bud-row .pr:focus{color:#F5EDD8}
-  .bud-row .bw-t{flex:1;height:4px;background:rgba(255,255,255,.04);border-radius:2px;overflow:hidden}
-  .bud-row .bf{height:100%;border-radius:2px;transition:width .3s}
+  /* ═══ BOTTOM BUDGET BAR ═══ */
+  .bottom-bar{grid-column:1/-1;background:#0A130C;border-top:1px solid rgba(255,255,255,.06);padding:10px 24px;display:flex;align-items:center;gap:24px;overflow-x:auto}
+  .bb-item{display:flex;align-items:center;gap:8px;flex-shrink:0}
+  .bb-item .bb-name{font-family:'DM Mono',monospace;font-size:10px;color:#4A6050;text-transform:uppercase;letter-spacing:1px}
+  .bb-item .bb-price{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:#F5EDD8;cursor:pointer;background:none;border:none;outline:none;width:50px;text-align:right}
+  .bb-item .bb-price:focus{color:#7CAF8A}
+  .bb-item .bb-bar{width:60px;height:4px;background:rgba(255,255,255,.04);border-radius:2px;overflow:hidden}
+  .bb-item .bb-fill{height:100%;border-radius:2px;transition:width .3s}
   .bf.ok{background:#7CAF8A}.bf.warn{background:#C9A84C}.bf.bad{background:#E8614A}
-  .bud-total-row{display:flex;justify-content:space-between;padding:8px 10px;border-top:1px solid #1A2B1E}
-  .bud-total-row .tl{font-size:11px;color:#4A6050}
-  .bud-total-row .tv{font-family:monospace;font-size:13px;font-weight:700;color:#7CAF8A}
+  .bb-sep{width:1px;height:20px;background:rgba(255,255,255,.06);flex-shrink:0}
+  .bb-total{display:flex;align-items:center;gap:8px;flex-shrink:0}
+  .bb-total .tl{font-family:'DM Mono',monospace;font-size:10px;color:#4A6050;text-transform:uppercase;letter-spacing:1px}
+  .bb-total .tv{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:#E8614A}
+  .bb-total .tv.ok{color:#7CAF8A}
+  .bb-break{font-family:'DM Mono',monospace;font-size:10px;color:#C9A84C}
 
-  /* SETTINGS MODAL */
+  /* ═══ SETTINGS MODAL ═══ */
   .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center}
   .modal-bg.show{display:flex}
-  .modal{background:#0D1710;border:1px solid #1A2B1E;border-radius:10px;padding:28px;width:500px;max-height:80vh;overflow-y:auto}
-  .modal h2{font-size:16px;font-weight:700;color:#7CAF8A;margin-bottom:4px}
+  .modal{background:#0D1710;border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:28px;width:500px;max-height:80vh;overflow-y:auto}
+  .modal h2{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;font-style:italic;color:#7CAF8A;margin-bottom:4px}
   .modal .sub{font-size:12px;color:#4A6050;margin-bottom:20px}
   .modal .field{margin-bottom:16px}
   .modal .field label{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;margin-bottom:4px}
   .modal .field label .dot{width:8px;height:8px;border-radius:50%}
   .modal .field label .dot.set{background:#4ADE80}
   .modal .field label .dot.unset{background:#E8614A}
-  .modal .field input{width:100%;padding:8px 10px;background:rgba(255,255,255,.03);border:1px solid #1A2B1E;border-radius:5px;color:#F5EDD8;font-family:monospace;font-size:12px;outline:none}
+  .modal .field input{width:100%;padding:8px 10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:5px;color:#F5EDD8;font-family:'DM Mono',monospace;font-size:12px;outline:none}
   .modal .field input:focus{border-color:#7CAF8A}
   .modal .field input::placeholder{color:#3A5040}
   .modal .field .hint{font-size:10px;color:#3A5040;margin-top:3px}
-  .modal .save-btn{width:100%;padding:10px;background:#7CAF8A;border:none;border-radius:6px;color:#080F0A;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px;transition:opacity .15s}
+  .modal .save-btn{width:100%;padding:10px;background:#7CAF8A;border:none;border-radius:6px;color:#080F0A;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px;transition:opacity .15s}
   .modal .save-btn:hover{opacity:.9}
   .modal .warn{font-size:10px;color:#E8614A;margin-top:12px;text-align:center}
 
   .loading{color:#3A5040;font-size:12px;padding:20px;text-align:center}
-  #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(8px);background:#7CAF8A;color:#080F0A;font-size:11px;font-weight:700;padding:6px 16px;border-radius:4px;z-index:9999;opacity:0;transition:all .15s;pointer-events:none}
+  #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(8px);background:#7CAF8A;color:#080F0A;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;padding:6px 16px;border-radius:4px;z-index:9999;opacity:0;transition:all .15s;pointer-events:none}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-  /* Token status badges in top bar */
-  .token-badges{display:flex;gap:6px;align-items:center}
-  .token-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:.5px;text-transform:uppercase}
-  .token-badge.on{background:rgba(74,222,128,.1);color:#4ADE80}
-  .token-badge.off{background:rgba(232,97,74,.1);color:#E8614A}
-
-  @media(max-width:1000px){.war-room{grid-template-columns:1fr;grid-template-rows:auto auto auto auto}.left,.right{border:none;border-bottom:1px solid #1A2B1E}}
+  @media(max-width:1100px){.war-room{grid-template-columns:1fr;grid-template-rows:auto auto auto auto auto}.left,.right{border:none;border-bottom:1px solid rgba(255,255,255,.06)}.bottom-bar{flex-wrap:wrap}}
 </style>
 </head>
 <body>
 
 <div class="war-room">
 
+<!-- ═══════════ TOP BAR ═══════════ -->
 <div class="top-bar">
   <div class="brand">
     <h1>ROAM</h1>
     <div class="live-dot" id="master-dot"></div>
-    <span style="font-size:10px;color:#4A6050;letter-spacing:1px;text-transform:uppercase" id="master-label">CONNECTING...</span>
+    <span class="master-status" id="master-label">CONNECTING...</span>
     <div class="token-badges" id="token-badges"></div>
   </div>
   <div class="meta">
@@ -208,11 +282,12 @@
   </div>
 </div>
 
+<!-- ═══════════ LEFT PANEL ═══════════ -->
 <div class="left">
   <div class="panel-label">Site Health</div>
   <div id="health"></div>
 
-  <div class="panel-label">GitHub Stats</div>
+  <div class="panel-label">GitHub</div>
   <div id="gh-stats"></div>
 
   <div class="panel-label">Quick Actions</div>
@@ -222,29 +297,52 @@
   <div id="links"></div>
 </div>
 
+<!-- ═══════════ CENTER PANEL ═══════════ -->
 <div class="center">
   <div class="feed-header">
-    <h2>Live Activity</h2>
+    <h2>War Room</h2>
     <button class="refresh" id="refresh-btn" onclick="refreshAll()">↻ Refresh</button>
   </div>
 
-  <div class="panel-label" style="margin-top:0">Supabase — Live Database</div>
+  <!-- DAILY FOCUS -->
+  <div class="daily-focus">
+    <div class="label">Today's Focus</div>
+    <textarea id="daily-focus" placeholder="What's the one thing that matters today?"></textarea>
+    <div class="focus-meta">
+      <span id="focus-date"></span>
+      <span id="focus-save" style="color:#7CAF8A;opacity:0;transition:opacity .3s">Saved</span>
+    </div>
+  </div>
+
+  <!-- ROAM METRICS 2x3 -->
+  <div class="panel-label" style="margin-top:0">ROAM Metrics</div>
+  <div class="metrics-grid" id="roam-metrics"></div>
+
+  <!-- QUICK WINS -->
+  <div class="panel-label">Quick Wins</div>
+  <div class="quick-wins" id="quick-wins"></div>
+
+  <!-- BURN RATE -->
+  <div class="burn-rate" id="burn-rate"></div>
+
+  <!-- SUPABASE -->
+  <div class="panel-label">Supabase — Live Database</div>
   <div id="sb-stats"><div class="empty-state">Add Supabase URL + key in ⚙ Settings</div></div>
 
   <div class="section-gap"></div>
   <div class="panel-label">Recent Users</div>
-  <div id="sb-users"><div class="empty-state">—</div></div>
+  <div id="sb-users"><div class="empty-state">No users yet<div class="es-context">You're in waitlist mode. First users come from TestFlight + landing page signups.</div></div></div>
 
   <div class="section-gap"></div>
   <div class="panel-label">Recent Trips</div>
-  <div id="sb-trips"><div class="empty-state">—</div></div>
+  <div id="sb-trips"><div class="empty-state">No trips yet<div class="es-context">Trips appear here once users generate itineraries through the app.</div></div></div>
 
   <div class="section-gap"></div>
   <div class="panel-label">PostHog — Analytics</div>
   <div id="ph-stats"><div class="empty-state">Add PostHog key in ⚙ Settings</div></div>
 
   <div class="section-gap"></div>
-  <div class="panel-label">PostHog — Recent Events</div>
+  <div class="panel-label">PostHog — Events</div>
   <div id="ph-events"><div class="empty-state">—</div></div>
 
   <div class="section-gap"></div>
@@ -280,6 +378,7 @@
   <div id="branches-feed"></div>
 </div>
 
+<!-- ═══════════ RIGHT PANEL ═══════════ -->
 <div class="right">
   <div class="panel-label">Composers</div>
   <div id="composers"></div>
@@ -290,57 +389,48 @@
   <div class="panel-label">To-Dos</div>
   <div id="checklist"></div>
   <div class="chk-done" id="chk-done">✦ All done. Ship it.</div>
-
-  <div class="panel-label">Budget</div>
-  <div id="budget"></div>
-  <div class="bud-total-row"><span class="tl">TOTAL</span><span class="tv" id="btotal">$0</span></div>
-  <div class="bud-total-row" style="border:none;padding-top:0"><span class="tl">BREAK EVEN</span><span class="tv" id="bbreak">0 subs</span></div>
 </div>
 
+<!-- ═══════════ BOTTOM BUDGET BAR ═══════════ -->
+<div class="bottom-bar" id="bottom-bar"></div>
+
 </div>
 
-<!-- SETTINGS MODAL -->
+<!-- ═══════════ SETTINGS MODAL ═══════════ -->
 <div class="modal-bg" id="settings-modal">
   <div class="modal">
-    <h2>⚙ API Tokens</h2>
-    <div class="sub">Stored in your browser only. Never committed to git. Never leaves this machine.</div>
-
+    <h2>API Tokens</h2>
+    <div class="sub">Stored in your browser only. Never committed to git.</div>
     <div class="field">
       <label><span class="dot" id="gh-dot"></span> GitHub Personal Access Token</label>
       <input id="gh-token-input" type="password" placeholder="ghp_xxxx or github_pat_xxxx" />
       <div class="hint">github.com/settings/tokens → repo scope → 5,000 req/hr</div>
     </div>
-
     <div class="field">
       <label><span class="dot" id="nf-dot"></span> Netlify Personal Access Token</label>
       <input id="nf-token-input" type="password" placeholder="nfp_xxxx" />
       <div class="hint">app.netlify.com/user/applications → live deploy history + bandwidth</div>
     </div>
-
     <div class="field">
       <label><span class="dot" id="sb-url-dot"></span> Supabase Project URL</label>
       <input id="sb-url-input" type="text" placeholder="https://xxxxx.supabase.co" />
       <div class="hint">Supabase dashboard → Settings → API → Project URL</div>
     </div>
-
     <div class="field">
       <label><span class="dot" id="sb-key-dot"></span> Supabase Service Role Key</label>
       <input id="sb-key-input" type="password" placeholder="eyJhbGciOi..." />
       <div class="hint">Settings → API → service_role key (bypasses RLS for admin reads)</div>
     </div>
-
     <div class="field">
       <label><span class="dot" id="ph-dot"></span> PostHog Personal API Key</label>
       <input id="ph-token-input" type="password" placeholder="phx_xxxx" />
-      <div class="hint">PostHog → Settings → Personal API Keys → live event stream + sessions</div>
+      <div class="hint">PostHog → Settings → Personal API Keys</div>
     </div>
-
     <div class="field">
       <label><span class="dot" id="rc-dot"></span> RevenueCat Secret API Key</label>
       <input id="rc-token-input" type="password" placeholder="sk_xxxx" />
-      <div class="hint">RevenueCat → Project → API Keys → Secret key → subscriber + revenue data</div>
+      <div class="hint">RevenueCat → Project → API Keys → Secret key</div>
     </div>
-
     <button class="save-btn" onclick="saveTokens()">Save & Connect</button>
     <div class="warn">⚠ Never paste tokens into chat or code. Only paste them here.</div>
   </div>
@@ -349,17 +439,63 @@
 <div id="toast">Copied!</div>
 
 <script>
+// ═══════════════════════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════════════════════
 const REPO='qbyars08-ui/roam-app';
-const REPO_PP='qbyars08-ui/pillpal';
 const SITE_URL='https://tryroam.netlify.app';
-const NETLIFY_SITE_ID='tryroam';
 const START=new Date('2026-03-08');
+const APP_STORE_TARGET=new Date('2026-06-01');
 const GH_API='https://api.github.com/repos/';
 const NF_API='https://api.netlify.com/api/v1/';
 
-const MOTTOS=["The generate flow is the entire product.","Real users > more features.","Ship it. Fix it. Ship again.","The best travel app is the one someone actually uses.","Distribution beats perfection.","One more user is worth more than one more feature.","Revenue is the only real metric.","Make it work. Make it fast. Make it beautiful.","Your users don't care about your tech stack.","Don't build what you can't ship."];
-const COMP_ROLES=['Visual + Design','Frontend + UI','Backend + APIs','Tests + QA','Docs + Research'];
-const PASTE_MSG="git pull origin main\nRead AGENT_BOARD.md — your task is there.\nExecute completely. Don't stop until done.";
+const MOTTOS=[
+  "The generate flow is the entire product.",
+  "Real users > more features.",
+  "Ship it. Fix it. Ship again.",
+  "Distribution beats perfection.",
+  "One more user is worth more than one more feature.",
+  "Revenue is the only real metric.",
+  "Make it work. Make it fast. Make it beautiful.",
+  "Your users don't care about your tech stack.",
+  "Don't build what you can't ship.",
+  "The best travel app is the one someone actually uses.",
+  "If you're not embarrassed by v1, you shipped too late.",
+  "Nobody's paying for a feature list. They're paying for a feeling.",
+  "Speed is a feature. Ship today.",
+  "Every hour spent perfecting is an hour not spent distributing.",
+  "The waitlist doesn't fill itself.",
+  "You're not building a travel app. You're building a trip generator.",
+  "First 100 users. Nothing else matters.",
+  "Stop tweaking gradients. Start tweaking copy.",
+  "A shipped bug beats an unshipped feature.",
+  "The product is the prompt. Everything else is UI.",
+];
+
+// ═══ COMPOSERS — 5 roles with specific wake-up prompts ═══
+const COMPOSERS=[
+  {
+    role:'Visual + Design',
+    wake:"You are Composer 1 — Visual. Your job is design polish. Open the app. Screenshot every screen. Find anything that looks off: spacing, fonts, colors, alignment, photos. Fix it. Make it magazine-quality. Don't stop until every pixel is editorial.",
+  },
+  {
+    role:'Frontend + UI',
+    wake:"You are Composer 2 — Frontend. Your job is UI implementation. Read the codebase. Find incomplete screens, broken navigation, missing loading states, or dead buttons. Wire everything up. Make every tap do something. Zero dead ends.",
+  },
+  {
+    role:'Backend + APIs',
+    wake:"You are Composer 3 — Backend. Your job is infrastructure. Check every edge function, every API call, every database query. Fix broken endpoints, add missing error handling, optimize slow queries. Make the backend bulletproof.",
+  },
+  {
+    role:'Tests + QA',
+    wake:"You are Composer 4 — QA. Your job is quality. Run npx tsc --noEmit. Run jest. Find every TypeScript error, every runtime crash, every edge case. Write tests for critical paths. Don't stop until everything passes.",
+  },
+  {
+    role:'Growth + Ship',
+    wake:"You are Composer 5 — Growth. Your job is distribution. Check App Store readiness. Review screenshots, metadata, descriptions. Set up TestFlight. Configure analytics events. Make sure we can measure every user action. Ship it.",
+  },
+];
+
 const CSTATS=['idle','working','done'];
 
 const QA=[
@@ -369,8 +505,8 @@ const QA=[
   {icon:'🧪',label:'Run Tests',cmd:'npx jest'},
   {icon:'📊',label:'Git Status',cmd:'git status'},
   {icon:'🔄',label:'Reset Trips',cmd:"UPDATE profiles SET trips_generated_this_month = 0 WHERE id = auth.uid();"},
-  {icon:'💊',label:'Deploy PillPal',cmd:'cd ~/pillpal && npx expo export --platform web && netlify deploy --prod --dir=dist'},
   {icon:'📦',label:'Commit + Push',cmd:'git add -A && git commit -m "deploy: latest" && git push origin main'},
+  {icon:'🧹',label:'Clean Build',cmd:'rm -rf dist node_modules/.cache && npx expo export --platform web'},
 ];
 
 const AGENT_P=[
@@ -379,27 +515,30 @@ const AGENT_P=[
   {name:'TDD',prompt:'Test-driven development. Write a failing test first for: [FEATURE]. Run it to confirm it fails. Then implement. Then refactor.'},
   {name:'Security',prompt:'Full security audit. Check for hardcoded secrets, SQL injection, XSS, missing validation, exposed errors, auth bypasses. List every issue with file and line.'},
   {name:'Build Fix',prompt:'Run npx tsc --noEmit. Fix every error. Re-run until 0 errors.'},
-  {name:'Director',prompt:'You are the Director. Read AGENT_BOARD.md. Assign tasks to 5 Composers by role:\n1: Visual\n2: Frontend\n3: Backend\n4: Tests\n5: Docs\nUpdate the board.'},
+  {name:'Director',prompt:'You are the Director. Read the full codebase. Identify the 5 highest-impact tasks. Assign each to a Composer by role:\n1: Visual\n2: Frontend\n3: Backend\n4: Tests\n5: Growth\nWrite clear instructions for each.'},
   {name:'Researcher',prompt:'Research this before building: [TOPIC]\n\nSearch GitHub, npm, docs. Find 3 approaches. Recommend the best. Do NOT write code yet.'},
-  {name:'Deploy',prompt:'Full deploy:\n1. npx tsc --noEmit (0 errors)\n2. npx expo export --platform web\n3. netlify deploy --prod --dir=dist\n4. git add -A && commit && push\nStop if anything fails.'},
+  {name:'Deploy',prompt:'Full deploy pipeline:\n1. npx tsc --noEmit (0 errors)\n2. npx expo export --platform web\n3. netlify deploy --prod --dir=dist\n4. git add -A && commit && push\nStop if anything fails.'},
+  {name:'App Store',prompt:'Review App Store submission readiness:\n- Bundle ID, display name, version\n- Screenshots for all required sizes\n- Privacy policy URL\n- App description & keywords\n- TestFlight setup\n- RevenueCat products configured\nList what\'s done and what\'s missing.'},
+  {name:'Performance',prompt:'Profile the app for performance:\n- Check bundle size\n- Find unnecessary re-renders\n- Audit image sizes and loading\n- Check for memory leaks in useEffect\n- Review list virtualization\nFix the top 3 issues.'},
 ];
 
 const TODOS=[
-  {id:'booking',text:'Booking.com affiliate'},
+  {id:'booking',text:'Booking.com affiliate integration'},
   {id:'admin',text:'Test emails → Supabase'},
   {id:'rc',text:'RevenueCat product ($7.99)'},
   {id:'domain',text:'Buy tryroam.com'},
   {id:'posthog',text:'PostHog key → .env'},
-  {id:'pprc',text:'PillPal RevenueCat'},
+  {id:'pprc',text:'PillPal RevenueCat setup'},
   {id:'gemini',text:'Gemini API key'},
-  {id:'insense',text:'Insense DACH UGC'},
+  {id:'insense',text:'Insense DACH UGC campaign'},
 ];
 
 const BUDGET_DEF=[
-  {id:'cursor',name:'Cursor Ultra',cap:200},
-  {id:'claude',name:'Claude Max',cap:250},
+  {id:'cursor',name:'Cursor',cap:200},
+  {id:'claude',name:'Claude',cap:250},
   {id:'netlify',name:'Netlify',cap:50},
-  {id:'misc',name:'On-Demand',cap:50},
+  {id:'supabase',name:'Supabase',cap:25},
+  {id:'misc',name:'Other',cap:100},
 ];
 
 const LINKS=[
@@ -409,18 +548,41 @@ const LINKS=[
   {label:'Netlify',url:'https://app.netlify.com'},
   {label:'PostHog',url:'https://us.posthog.com'},
   {label:'RevenueCat',url:'https://app.revenuecat.com'},
-  {label:'PillPal',url:'https://github.com/'+REPO_PP},
+  {label:'App Store Connect',url:'https://appstoreconnect.apple.com'},
 ];
 
-// ═══ STATE ═══
+// ═══ QUICK WINS data ═══
+const QW_COLS=['today','thisWeek','thisMonth'];
+const QW_LABELS={'today':'Today','thisWeek':'This Week','thisMonth':'This Month'};
+const QW_DEFAULTS={
+  today:[
+    {id:'qw-t1',text:'Fix TypeScript errors'},
+    {id:'qw-t2',text:'Deploy latest to Netlify'},
+  ],
+  thisWeek:[
+    {id:'qw-w1',text:'Wire TripGeneratingLoader'},
+    {id:'qw-w2',text:'Add skeleton loading states'},
+    {id:'qw-w3',text:'TestFlight build'},
+  ],
+  thisMonth:[
+    {id:'qw-m1',text:'App Store submission'},
+    {id:'qw-m2',text:'First 10 beta users'},
+    {id:'qw-m3',text:'RevenueCat paywall live'},
+  ],
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════════════
 const ld=(k,f)=>{try{const r=localStorage.getItem('wr-'+k);return r?JSON.parse(r):f}catch{return f}};
 const sv=(k,v)=>{try{localStorage.setItem('wr-'+k,JSON.stringify(v))}catch{}};
 
-let compSt=ld('comp',COMP_ROLES.map(()=>({status:'idle',task:''})));
+let compSt=ld('comp2',COMPOSERS.map(()=>({status:'idle',task:''})));
 let chkSt=ld('chk',{});
-let budSt=ld('bud',{cursor:200,claude:250,netlify:19,misc:0});
+let budSt=ld('bud2',{cursor:200,claude:250,netlify:19,supabase:0,misc:0});
+let qwSt=ld('qw',QW_DEFAULTS);
+let focusSt=ld('focus',{text:'',date:''});
 
-// Token getters — always from localStorage
 function ghToken(){return localStorage.getItem('wr-gh-token')||''}
 function nfToken(){return localStorage.getItem('wr-nf-token')||''}
 function sbUrl(){return localStorage.getItem('wr-sb-url')||''}
@@ -428,9 +590,11 @@ function sbKey(){return localStorage.getItem('wr-sb-key')||''}
 function phToken(){return localStorage.getItem('wr-ph-token')||''}
 function rcToken(){return localStorage.getItem('wr-rc-token')||''}
 
-// ═══ UTILS ═══
+// ═══════════════════════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════════════════════
 let tt;
-function toast(m='Copied!'){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('show'),1000)}
+function toast(m='Copied!'){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('show'),1200)}
 function cp(text,btn){
   navigator.clipboard.writeText(text).then(()=>{
     if(btn){btn.classList.add('fl');setTimeout(()=>btn.classList.remove('fl'),600)}
@@ -450,8 +614,11 @@ function timeAgo(d){
 function escHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
 function ghHeaders(){const t=ghToken();return t?{Authorization:'Bearer '+t,'Accept':'application/vnd.github+json'}:{'Accept':'application/vnd.github+json'}}
 function nfHeaders(){return{Authorization:'Bearer '+nfToken()}}
+function daysUntil(target){return Math.max(0,Math.ceil((target-Date.now())/864e5))}
 
-// ═══ SETTINGS MODAL ═══
+// ═══════════════════════════════════════════════════════════════════════════
+// SETTINGS MODAL
+// ═══════════════════════════════════════════════════════════════════════════
 function openSettings(){
   document.getElementById('settings-modal').classList.add('show');
   document.getElementById('gh-token-input').value=ghToken();
@@ -464,18 +631,19 @@ function openSettings(){
 }
 function closeSettings(){document.getElementById('settings-modal').classList.remove('show')}
 function saveTokens(){
-  const gh=document.getElementById('gh-token-input').value.trim();
-  const nf=document.getElementById('nf-token-input').value.trim();
-  const su=document.getElementById('sb-url-input').value.trim().replace(/\/$/,'');
-  const sk=document.getElementById('sb-key-input').value.trim();
-  if(gh)localStorage.setItem('wr-gh-token',gh);else localStorage.removeItem('wr-gh-token');
-  if(nf)localStorage.setItem('wr-nf-token',nf);else localStorage.removeItem('wr-nf-token');
-  if(su)localStorage.setItem('wr-sb-url',su);else localStorage.removeItem('wr-sb-url');
-  if(sk)localStorage.setItem('wr-sb-key',sk);else localStorage.removeItem('wr-sb-key');
-  const ph=document.getElementById('ph-token-input').value.trim();
-  const rc=document.getElementById('rc-token-input').value.trim();
-  if(ph)localStorage.setItem('wr-ph-token',ph);else localStorage.removeItem('wr-ph-token');
-  if(rc)localStorage.setItem('wr-rc-token',rc);else localStorage.removeItem('wr-rc-token');
+  const fields=[
+    ['gh-token-input','wr-gh-token'],
+    ['nf-token-input','wr-nf-token'],
+    ['sb-url-input','wr-sb-url'],
+    ['sb-key-input','wr-sb-key'],
+    ['ph-token-input','wr-ph-token'],
+    ['rc-token-input','wr-rc-token'],
+  ];
+  fields.forEach(([inputId,key])=>{
+    let v=document.getElementById(inputId).value.trim();
+    if(key==='wr-sb-url')v=v.replace(/\/$/,'');
+    if(v)localStorage.setItem(key,v);else localStorage.removeItem(key);
+  });
   closeSettings();
   updateTokenBadges();
   toast('Tokens saved — refreshing...');
@@ -491,17 +659,16 @@ function updateTokenDots(){
 }
 function updateTokenBadges(){
   const el=document.getElementById('token-badges');
-  el.innerHTML=`
-    <span class="token-badge ${ghToken()?'on':'off'}">GH ${ghToken()?'✓':'✗'}</span>
-    <span class="token-badge ${nfToken()?'on':'off'}">NF ${nfToken()?'✓':'✗'}</span>
-    <span class="token-badge ${sbKey()?'on':'off'}">SB ${sbKey()?'✓':'✗'}</span>
-    <span class="token-badge ${phToken()?'on':'off'}">PH ${phToken()?'✓':'✗'}</span>
-    <span class="token-badge ${rcToken()?'on':'off'}">RC ${rcToken()?'✓':'✗'}</span>
-  `;
+  const tokens=[
+    ['GH',ghToken()],['NF',nfToken()],['SB',sbKey()],['PH',phToken()],['RC',rcToken()]
+  ];
+  el.innerHTML=tokens.map(([k,v])=>`<span class="token-badge ${v?'on':'off'}">${k} ${v?'✓':'✗'}</span>`).join('');
 }
 document.getElementById('settings-modal').addEventListener('click',function(e){if(e.target===this)closeSettings()});
 
-// ═══ CLOCK ═══
+// ═══════════════════════════════════════════════════════════════════════════
+// CLOCK + MOTTO
+// ═══════════════════════════════════════════════════════════════════════════
 function tick(){
   const n=new Date();
   document.getElementById('clock').textContent=n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
@@ -510,7 +677,134 @@ function tick(){
 let mi=Math.floor(Math.random()*MOTTOS.length);
 function nextMotto(){const e=document.getElementById('motto');e.classList.add('fade');setTimeout(()=>{mi=(mi+1)%MOTTOS.length;e.textContent=MOTTOS[mi];e.classList.remove('fade')},400)}
 
-// ═══ SITE HEALTH ═══
+// ═══════════════════════════════════════════════════════════════════════════
+// DAILY FOCUS
+// ═══════════════════════════════════════════════════════════════════════════
+function initFocus(){
+  const today=new Date().toISOString().split('T')[0];
+  const ta=document.getElementById('daily-focus');
+  document.getElementById('focus-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+  if(focusSt.date===today){ta.value=focusSt.text}else{focusSt={text:'',date:today};sv('focus',focusSt)}
+  ta.addEventListener('input',function(){
+    focusSt={text:this.value,date:today};sv('focus',focusSt);
+    const badge=document.getElementById('focus-save');badge.style.opacity='1';setTimeout(()=>badge.style.opacity='0',1500);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ROAM METRICS 2x3 GRID
+// ═══════════════════════════════════════════════════════════════════════════
+function renderMetrics(){
+  const daysLeft=daysUntil(APP_STORE_TARGET);
+  const el=document.getElementById('roam-metrics');
+  el.innerHTML=`
+    <div class="m-card">
+      <div class="m-val" id="rm-users">${sbCache.totalUsers||0}</div>
+      <div class="m-label">Waitlist</div>
+      <div class="m-sub">${sbCache.totalUsers===0?'Landing page → waitlist':'users signed up'}</div>
+    </div>
+    <div class="m-card">
+      <div class="m-val" id="rm-trips">${sbCache.totalTrips||0}</div>
+      <div class="m-label">Trips Generated</div>
+      <div class="m-sub">${sbCache.tripsThisMonth||0} this month</div>
+    </div>
+    <div class="m-card">
+      <div class="m-val gold">${daysLeft}</div>
+      <div class="m-label">Days to App Store</div>
+      <div class="m-sub">June 1, 2026</div>
+    </div>
+    <div class="m-card">
+      <div class="m-val">${ghCache.commits.length?ghCache.commits.filter(c=>{const d=Date.now()-new Date(c.commit.author.date);return d<7*864e5}).length:0}</div>
+      <div class="m-label">Weekly Commits</div>
+      <div class="m-sub">last 7 days</div>
+    </div>
+    <div class="m-card">
+      <div class="m-val">${sbCache.trips.length?getMostPopularDest():'—'}</div>
+      <div class="m-label">Top Destination</div>
+      <div class="m-sub">most generated</div>
+    </div>
+    <div class="m-card">
+      <div class="m-val">${nfCache.deploys.length?nfCache.deploys.filter(d=>d.state==='ready').length:0}</div>
+      <div class="m-label">Deploys (Recent)</div>
+      <div class="m-sub">${nfCache.deploys[0]?timeAgo(nfCache.deploys[0].created_at):'—'}</div>
+    </div>
+  `;
+}
+function getMostPopularDest(){
+  const counts={};
+  sbCache.trips.forEach(t=>{const d=t.destination||'Unknown';counts[d]=(counts[d]||0)+1});
+  const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  return sorted[0]?sorted[0][0]:'—';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// QUICK WINS TRACKER
+// ═══════════════════════════════════════════════════════════════════════════
+function buildQuickWins(){
+  const el=document.getElementById('quick-wins');
+  el.innerHTML='';
+  QW_COLS.forEach(col=>{
+    const div=document.createElement('div');div.className='qw-col';
+    const items=qwSt[col]||[];
+    let html=`<div class="qw-header">${QW_LABELS[col]}</div>`;
+    items.forEach((item,i)=>{
+      const on=!!item.done;
+      html+=`<div class="qw-item" onclick="toggleQW('${col}',${i})">
+        <div class="qw-box ${on?'on':'off'}">${on?'✓':''}</div>
+        <span class="qw-text ${on?'done':''}">${escHtml(item.text)}</span>
+      </div>`;
+    });
+    html+=`<button class="qw-add" onclick="addQW('${col}')">+ add</button>`;
+    div.innerHTML=html;
+    el.appendChild(div);
+  });
+}
+function toggleQW(col,i){
+  qwSt[col][i]={...qwSt[col][i],done:!qwSt[col][i].done};
+  sv('qw',qwSt);buildQuickWins();
+}
+function addQW(col){
+  const text=prompt('New quick win:');
+  if(!text)return;
+  if(!qwSt[col])qwSt[col]=[];
+  qwSt[col].push({id:'qw-'+Date.now(),text,done:false});
+  sv('qw',qwSt);buildQuickWins();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BURN RATE CALCULATOR
+// ═══════════════════════════════════════════════════════════════════════════
+function renderBurnRate(){
+  const total=Object.values(budSt).reduce((s,v)=>s+(v||0),0);
+  const el=document.getElementById('burn-rate');
+  let html=`
+    <div class="br-header">
+      <div class="br-title">Monthly Burn Rate</div>
+      <div class="br-total">$${total}/mo</div>
+    </div>
+  `;
+  BUDGET_DEF.forEach(b=>{
+    const amt=budSt[b.id]||0;
+    html+=`<div class="br-row"><span class="br-name">${b.name}</span><span class="br-amt">$${amt}</span></div>`;
+  });
+  const subsNeeded=Math.ceil(total/7.99);
+  const revenueNeeded=total;
+  html+=`
+    <div class="br-runway">
+      <span class="br-label">Break even</span>
+      <span class="br-val">${subsNeeded} subs × $7.99 = $${(subsNeeded*7.99).toFixed(0)}/mo</span>
+    </div>
+    <div class="br-runway" style="border-top:none;padding-top:0">
+      <span class="br-label">Annual cost</span>
+      <span class="br-val" style="color:#C9A84C">$${total*12}/yr</span>
+    </div>
+  `;
+  el.innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SITE HEALTH
+// ═══════════════════════════════════════════════════════════════════════════
 let healthData={roam:{up:null,ms:null,lastCheck:null}};
 async function checkSiteHealth(){
   try{
@@ -526,12 +820,12 @@ function renderHealth(){
   const st=r.up===null?'CHECKING':r.up?'UP':'DOWN';
   document.getElementById('health').innerHTML=`
     <div class="health-card">
-      <div class="hdr"><span class="name">ROAM</span><div class="status-dot ${sc}"></div></div>
+      <div class="hdr"><span class="name">tryroam.netlify.app</span><div class="status-dot ${sc}"></div></div>
       <div class="metrics">
         <div class="metric"><div class="k">Status</div><div class="v ${r.up?'':'bad'}">${st}</div></div>
         <div class="metric"><div class="k">Ping</div><div class="v ${r.ms>2000?'warn':''}">${r.ms?r.ms+'ms':'—'}</div></div>
         <div class="metric"><div class="k">Checked</div><div class="v">${r.lastCheck?timeAgo(r.lastCheck):'—'}</div></div>
-        <div class="metric"><div class="k">URL</div><div class="v" style="font-size:10px">tryroam.app</div></div>
+        <div class="metric"><div class="k">SSL</div><div class="v">✓ HTTPS</div></div>
       </div>
     </div>`;
   const dot=document.getElementById('master-dot'),lbl=document.getElementById('master-label');
@@ -539,7 +833,9 @@ function renderHealth(){
   else if(r.up){dot.style.background='#4ADE80';dot.style.boxShadow='0 0 12px rgba(74,222,128,.6)';lbl.textContent='ALL SYSTEMS LIVE';lbl.style.color='#4A6050'}
 }
 
-// ═══ GITHUB (AUTHENTICATED) ═══
+// ═══════════════════════════════════════════════════════════════════════════
+// GITHUB (AUTHENTICATED)
+// ═══════════════════════════════════════════════════════════════════════════
 let ghCache={commits:[],prs:[],issues:[],branches:[],stats:{},rateLimit:{}};
 
 async function fetchGitHub(){
@@ -553,15 +849,13 @@ async function fetchGitHub(){
       fetch(GH_API+REPO+'/branches?per_page=20',{headers:h}),
       fetch('https://api.github.com/rate_limit',{headers:h}),
     ]);
-
     if(commitR.ok)ghCache.commits=await commitR.json();
     if(prR.ok)ghCache.prs=await prR.json();
     if(issueR.ok)ghCache.issues=(await issueR.json()).filter(i=>!i.pull_request);
     if(repoR.ok){const r=await repoR.json();ghCache.stats={stars:r.stargazers_count,forks:r.forks_count,openIssues:r.open_issues_count,size:r.size,branch:r.default_branch,push:r.pushed_at}}
     if(branchR.ok)ghCache.branches=await branchR.json();
     if(rateR.ok){const rl=await rateR.json();ghCache.rateLimit=rl.rate||{}}
-
-    renderGHStats();renderCommits();renderPRs();renderIssues();renderBranches();renderActivityGraph();
+    renderGHStats();renderCommits();renderPRs();renderIssues();renderBranches();renderActivityGraph();renderMetrics();
   }catch(e){
     document.getElementById('commits-feed').innerHTML='<div class="empty-state">GitHub API error — check token in ⚙ Settings</div>';
   }
@@ -569,45 +863,48 @@ async function fetchGitHub(){
 
 function renderGHStats(){
   const s=ghCache.stats,rl=ghCache.rateLimit;
+  const lastCommit=ghCache.commits[0];
+  const lastMsg=lastCommit?lastCommit.commit.message.split('\n')[0]:'—';
+  const lastTime=lastCommit?timeAgo(lastCommit.commit.author.date):'—';
+  const weeklyCommits=ghCache.commits.filter(c=>(Date.now()-new Date(c.commit.author.date))<7*864e5).length;
   document.getElementById('gh-stats').innerHTML=`
-    <div class="gh-stat"><span class="label">Last Push</span><span class="val">${s.push?timeAgo(s.push):'—'}</span></div>
-    <div class="gh-stat"><span class="label">Open Issues</span><span class="val ${(s.openIssues||0)>10?'coral':''}">${s.openIssues??'—'}</span></div>
-    <div class="gh-stat"><span class="label">Open PRs</span><span class="val">${ghCache.prs.length}</span></div>
+    <div class="gh-stat"><span class="label">Last Commit</span><span class="val" style="font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(lastMsg)}">${escHtml(lastMsg.slice(0,25))}</span></div>
+    <div class="gh-stat"><span class="label">Committed</span><span class="val">${lastTime}</span></div>
+    <div class="gh-stat"><span class="label">Weekly Commits</span><span class="val">${weeklyCommits}</span></div>
+    <div class="gh-stat"><span class="label">Open PRs</span><span class="val"><a href="https://github.com/${REPO}/pulls" target="_blank">${ghCache.prs.length} ↗</a></span></div>
     <div class="gh-stat"><span class="label">Branches</span><span class="val">${ghCache.branches.length}</span></div>
-    <div class="gh-stat"><span class="label">Commits (30)</span><span class="val">${ghCache.commits.length}</span></div>
-    <div class="gh-stat"><span class="label">Repo Size</span><span class="val">${s.size?Math.round(s.size/1024)+'MB':'—'}</span></div>
-    <div class="gh-stat"><span class="label">API Calls Left</span><span class="val ${(rl.remaining||0)<100?'coral':''}">${rl.remaining??'?'}/${rl.limit??'?'}</span></div>
+    <div class="gh-stat"><span class="label">API Left</span><span class="val ${(rl.remaining||0)<100?'coral':''}">${rl.remaining??'?'}/${rl.limit??'?'}</span></div>
   `;
 }
 
 function renderCommits(){
   const el=document.getElementById('commits-feed');
   if(!ghCache.commits.length){el.innerHTML='<div class="empty-state">No commits</div>';return}
-  el.innerHTML=ghCache.commits.slice(0,20).map(c=>{
+  el.innerHTML=ghCache.commits.slice(0,15).map(c=>{
     const age=(Date.now()-new Date(c.commit.author.date))/36e5;
     const lc=age<2?'recent':age<24?'mid':'old';
     const av=c.author?.avatar_url||'';
     const sha=c.sha.slice(0,7);
-    return`<div class="commit-item"><div class="time-line ${lc}"></div>${av?`<div class="avatar"><img src="${av}"/></div>`:'<div class="avatar"></div>'}<div class="body"><div class="msg">${escHtml(c.commit.message.split('\n')[0])}</div><div class="meta-row"><span>${c.commit.author.name}</span><span>${timeAgo(c.commit.author.date)}</span><span class="sha" onclick="cp('${sha}',this)">${sha}</span></div></div></div>`;
+    return`<div class="commit-item"><div class="time-line ${lc}"></div>${av?`<div class="avatar"><img src="${av}" loading="lazy"/></div>`:'<div class="avatar"></div>'}<div class="body"><div class="msg">${escHtml(c.commit.message.split('\n')[0])}</div><div class="meta-row"><span>${c.commit.author.name}</span><span>${timeAgo(c.commit.author.date)}</span><span class="sha" onclick="cp('${sha}',this)">${sha}</span></div></div></div>`;
   }).join('');
 }
 
 function renderPRs(){
   const el=document.getElementById('prs-feed');
-  if(!ghCache.prs.length){el.innerHTML='<div class="empty-state">No open PRs</div>';return}
+  if(!ghCache.prs.length){el.innerHTML='<div class="empty-state">No open PRs — shipping straight to main</div>';return}
   el.innerHTML=ghCache.prs.map(p=>`<div class="pr-item"><div class="pr-status ${p.draft?'draft':'open'}"></div><div class="pr-title">${escHtml(p.title)}</div><div class="pr-meta">#${p.number} · ${timeAgo(p.created_at)}</div><a href="${p.html_url}" target="_blank">↗</a></div>`).join('');
 }
 
 function renderIssues(){
   const el=document.getElementById('issues-feed');
-  if(!ghCache.issues.length){el.innerHTML='<div class="empty-state">No issues</div>';return}
+  if(!ghCache.issues.length){el.innerHTML='<div class="empty-state">No issues — clean slate</div>';return}
   el.innerHTML=ghCache.issues.slice(0,10).map(i=>`<div class="pr-item"><div class="pr-status open"></div><div class="pr-title">${escHtml(i.title)}</div><div class="pr-meta">#${i.number} · ${timeAgo(i.updated_at)}</div><a href="${i.html_url}" target="_blank">↗</a></div>`).join('');
 }
 
 function renderBranches(){
   const el=document.getElementById('branches-feed');
   if(!ghCache.branches.length){el.innerHTML='';return}
-  el.innerHTML=ghCache.branches.slice(0,10).map(b=>`<div class="pr-item"><div class="pr-status ${b.name==='main'?'open':'draft'}"></div><div class="pr-title">${escHtml(b.name)}</div><div class="pr-meta">${b.commit.sha.slice(0,7)}</div></div>`).join('');
+  el.innerHTML=ghCache.branches.slice(0,8).map(b=>`<div class="pr-item"><div class="pr-status ${b.name==='main'?'open':'draft'}"></div><div class="pr-title">${escHtml(b.name)}</div><div class="pr-meta">${b.commit.sha.slice(0,7)}</div></div>`).join('');
 }
 
 function renderActivityGraph(){
@@ -616,37 +913,35 @@ function renderActivityGraph(){
   for(let i=13;i>=0;i--){const d=new Date(now);d.setDate(d.getDate()-i);days.push({key:d.toISOString().split('T')[0],label:d.toLocaleDateString('en-US',{weekday:'short'}).slice(0,2),count:0,today:i===0})}
   ghCache.commits.forEach(c=>{const k=c.commit.author.date.split('T')[0];const f=days.find(d=>d.key===k);if(f)f.count++});
   const mx=Math.max(...days.map(d=>d.count),1);
-  el.innerHTML=days.map(d=>`<div class="bar ${d.today?'today':''}" style="height:${Math.max(4,(d.count/mx)*100)}%" title="${d.key}: ${d.count}"></div>`).join('');
+  el.innerHTML=days.map(d=>`<div class="bar ${d.today?'today':''}" style="height:${Math.max(4,(d.count/mx)*100)}%" title="${d.key}: ${d.count} commits"></div>`).join('');
   lb.innerHTML=days.filter((_,i)=>i%2===0).map(d=>`<span>${d.label}</span>`).join('');
 }
 
-// ═══ NETLIFY (AUTHENTICATED) ═══
+// ═══════════════════════════════════════════════════════════════════════════
+// NETLIFY (AUTHENTICATED)
+// ═══════════════════════════════════════════════════════════════════════════
 let nfCache={deploys:[],bandwidth:null,site:null};
 
 async function fetchNetlify(){
   if(!nfToken()){
-    document.getElementById('deploys-feed').innerHTML='<div class="empty-state">Add Netlify token in ⚙ Settings to see live deploys</div>';
+    document.getElementById('deploys-feed').innerHTML='<div class="empty-state">Add Netlify token in ⚙ Settings</div>';
     document.getElementById('netlify-usage').innerHTML='';
     return;
   }
   try{
     const h=nfHeaders();
-    // First get sites to find the site ID
     const sitesR=await fetch(NF_API+'sites?filter=all&per_page=20',{headers:h});
     if(!sitesR.ok)throw new Error('Netlify auth failed');
     const sites=await sitesR.json();
     const roamSite=sites.find(s=>s.name==='tryroam'||s.url?.includes('tryroam'));
-
     if(roamSite){
       nfCache.site=roamSite;
       const deploysR=await fetch(NF_API+'sites/'+roamSite.id+'/deploys?per_page=15',{headers:h});
       if(deploysR.ok)nfCache.deploys=await deploysR.json();
-
-      // bandwidth
       const bwR=await fetch(NF_API+'sites/'+roamSite.id+'/bandwidth',{headers:h}).catch(()=>null);
       if(bwR&&bwR.ok)nfCache.bandwidth=await bwR.json();
     }
-    renderDeploys();renderNetlifyUsage();
+    renderDeploys();renderNetlifyUsage();renderMetrics();
   }catch(e){
     document.getElementById('deploys-feed').innerHTML='<div class="empty-state">Netlify error: '+escHtml(e.message)+'</div>';
   }
@@ -671,42 +966,19 @@ function renderDeploys(){
 function renderNetlifyUsage(){
   const el=document.getElementById('netlify-usage');
   if(!nfCache.site){el.innerHTML='';return}
-  const s=nfCache.site;
-  const bw=nfCache.bandwidth;
-
-  let html=`
-    <div class="bw-bar">
-      <div class="bw-label">Status</div>
-      <div style="flex:1;font-size:12px;font-weight:700;color:#4ADE80">${s.published_deploy?.state==='ready'?'LIVE':'NOT LIVE'}</div>
-      <div class="bw-val">${s.ssl?'SSL ✓':'No SSL'}</div>
-    </div>
-  `;
-
+  const s=nfCache.site;const bw=nfCache.bandwidth;
+  let html=`<div class="bw-bar"><div class="bw-label">Status</div><div style="flex:1;font-size:12px;font-weight:700;color:#4ADE80">${s.published_deploy?.state==='ready'?'LIVE':'NOT LIVE'}</div><div class="bw-val">${s.ssl?'SSL ✓':'No SSL'}</div></div>`;
   if(bw){
-    const usedGB=((bw.used||0)/1e9).toFixed(2);
-    const capGB=((bw.included||100e9)/1e9).toFixed(0);
+    const usedGB=((bw.used||0)/1e9).toFixed(2);const capGB=((bw.included||100e9)/1e9).toFixed(0);
     const pct=Math.min(100,Math.round((bw.used||0)/(bw.included||100e9)*100));
-    html+=`<div class="bw-bar">
-      <div class="bw-label">Bandwidth</div>
-      <div class="bw-track"><div class="bw-fill ${pct>80?'bad':pct>50?'warn':'ok'}" style="width:${pct}%"></div></div>
-      <div class="bw-val">${usedGB}/${capGB}GB</div>
-    </div>`;
+    html+=`<div class="bw-bar"><div class="bw-label">Bandwidth</div><div class="bw-track"><div class="bw-fill ${pct>80?'bad':pct>50?'warn':'ok'}" style="width:${pct}%"></div></div><div class="bw-val">${usedGB}/${capGB}GB</div></div>`;
   }
-
-  const deployCount=nfCache.deploys.length;
-  const lastDeploy=nfCache.deploys[0];
-  if(lastDeploy){
-    html+=`<div class="bw-bar">
-      <div class="bw-label">Last Deploy</div>
-      <div style="flex:1;font-size:12px;color:#F5EDD8">${timeAgo(lastDeploy.created_at)} · ${lastDeploy.deploy_time||'?'}s build</div>
-      <div class="bw-val">${lastDeploy.state}</div>
-    </div>`;
-  }
-
   el.innerHTML=html;
 }
 
-// ═══ SUPABASE (AUTHENTICATED) ═══
+// ═══════════════════════════════════════════════════════════════════════════
+// SUPABASE (AUTHENTICATED)
+// ═══════════════════════════════════════════════════════════════════════════
 let sbCache={profiles:[],trips:[],messages:0,totalUsers:0,totalTrips:0,tripsThisMonth:0};
 
 function sbHeaders(){return{'apikey':sbKey(),'Authorization':'Bearer '+sbKey(),'Content-Type':'application/json','Prefer':'count=exact'}}
@@ -714,92 +986,73 @@ function sbHeaders(){return{'apikey':sbKey(),'Authorization':'Bearer '+sbKey(),'
 async function fetchSupabase(){
   if(!sbUrl()||!sbKey()){
     document.getElementById('sb-stats').innerHTML='<div class="empty-state">Add Supabase URL + key in ⚙ Settings</div>';
-    document.getElementById('sb-users').innerHTML='<div class="empty-state">—</div>';
-    document.getElementById('sb-trips').innerHTML='<div class="empty-state">—</div>';
     return;
   }
-  const base=sbUrl()+'/rest/v1/';
-  const h=sbHeaders();
+  const base=sbUrl()+'/rest/v1/';const h=sbHeaders();
   try{
-    // Parallel fetch: profiles, trips, chat_messages count
     const [profilesR,tripsR,msgsR,recentTripsR]=await Promise.all([
       fetch(base+'profiles?select=id,email,display_name,trips_generated_this_month,created_at&order=created_at.desc&limit=20',{headers:h}),
       fetch(base+'trips?select=id,destination,created_at,status&order=created_at.desc&limit=20',{headers:h}),
       fetch(base+'chat_messages?select=id&limit=1',{headers:{...h,'Prefer':'count=exact','Range':'0-0'}}),
       fetch(base+'trips?select=id&created_at=gte.'+new Date(new Date().getFullYear(),new Date().getMonth(),1).toISOString()+'&limit=1',{headers:{...h,'Prefer':'count=exact','Range':'0-0'}}),
     ]);
-
     if(profilesR.ok){
       sbCache.profiles=await profilesR.json();
-      const countHeader=profilesR.headers.get('content-range');
-      if(countHeader){const parts=countHeader.split('/');sbCache.totalUsers=parseInt(parts[1])||sbCache.profiles.length}
-      else sbCache.totalUsers=sbCache.profiles.length;
+      const cr=profilesR.headers.get('content-range');
+      sbCache.totalUsers=cr?parseInt(cr.split('/')[1])||sbCache.profiles.length:sbCache.profiles.length;
     }
     if(tripsR.ok){
       sbCache.trips=await tripsR.json();
-      const countHeader=tripsR.headers.get('content-range');
-      if(countHeader){const parts=countHeader.split('/');sbCache.totalTrips=parseInt(parts[1])||sbCache.trips.length}
-      else sbCache.totalTrips=sbCache.trips.length;
+      const cr=tripsR.headers.get('content-range');
+      sbCache.totalTrips=cr?parseInt(cr.split('/')[1])||sbCache.trips.length:sbCache.trips.length;
     }
-    if(msgsR.ok){
-      const mc=msgsR.headers.get('content-range');
-      if(mc){const parts=mc.split('/');sbCache.messages=parseInt(parts[1])||0}
-    }
-    if(recentTripsR.ok){
-      const tc=recentTripsR.headers.get('content-range');
-      if(tc){const parts=tc.split('/');sbCache.tripsThisMonth=parseInt(parts[1])||0}
-    }
-
-    renderSBStats();renderSBUsers();renderSBTrips();
+    if(msgsR.ok){const mc=msgsR.headers.get('content-range');if(mc)sbCache.messages=parseInt(mc.split('/')[1])||0}
+    if(recentTripsR.ok){const tc=recentTripsR.headers.get('content-range');if(tc)sbCache.tripsThisMonth=parseInt(tc.split('/')[1])||0}
+    renderSBStats();renderSBUsers();renderSBTrips();renderMetrics();
   }catch(e){
     document.getElementById('sb-stats').innerHTML='<div class="empty-state">Supabase error: '+escHtml(e.message)+'</div>';
   }
 }
 
 function renderSBStats(){
-  const el=document.getElementById('sb-stats');
-  el.innerHTML=`
+  document.getElementById('sb-stats').innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px">
-      <div class="metric"><div class="k">Total Users</div><div class="v">${sbCache.totalUsers}</div></div>
-      <div class="metric"><div class="k">Total Trips</div><div class="v">${sbCache.totalTrips}</div></div>
-      <div class="metric"><div class="k">Trips This Mo</div><div class="v">${sbCache.tripsThisMonth}</div></div>
-      <div class="metric"><div class="k">Chat Messages</div><div class="v">${sbCache.messages}</div></div>
+      <div class="metric"><div class="k">Users</div><div class="v">${sbCache.totalUsers}</div></div>
+      <div class="metric"><div class="k">Trips</div><div class="v">${sbCache.totalTrips}</div></div>
+      <div class="metric"><div class="k">This Month</div><div class="v">${sbCache.tripsThisMonth}</div></div>
+      <div class="metric"><div class="k">Messages</div><div class="v">${sbCache.messages}</div></div>
     </div>
   `;
 }
 
 function renderSBUsers(){
   const el=document.getElementById('sb-users');
-  if(!sbCache.profiles.length){el.innerHTML='<div class="empty-state">No users yet</div>';return}
+  if(!sbCache.profiles.length){
+    el.innerHTML='<div class="empty-state">No users yet<div class="es-context">You\'re in waitlist mode. First users come from TestFlight invites and your landing page. Share tryroam.netlify.app to start collecting signups.</div></div>';
+    return;
+  }
   el.innerHTML=sbCache.profiles.slice(0,10).map(p=>{
     const name=p.display_name||p.email||'anonymous';
     const trips=p.trips_generated_this_month||0;
-    return`<div class="pr-item">
-      <div class="pr-status open"></div>
-      <div class="pr-title">${escHtml(name)}</div>
-      <div class="pr-meta">${trips} trip${trips!==1?'s':''} this mo</div>
-      <div class="pr-meta">${timeAgo(p.created_at)}</div>
-    </div>`;
+    return`<div class="pr-item"><div class="pr-status open"></div><div class="pr-title">${escHtml(name)}</div><div class="pr-meta">${trips} trip${trips!==1?'s':''}/mo</div><div class="pr-meta">${timeAgo(p.created_at)}</div></div>`;
   }).join('');
 }
 
 function renderSBTrips(){
   const el=document.getElementById('sb-trips');
-  if(!sbCache.trips.length){el.innerHTML='<div class="empty-state">No trips yet</div>';return}
+  if(!sbCache.trips.length){
+    el.innerHTML='<div class="empty-state">No trips yet<div class="es-context">Trips appear here once users generate itineraries. Test it yourself: open the app → Plan → pick a destination → generate.</div></div>';
+    return;
+  }
   el.innerHTML=sbCache.trips.slice(0,10).map(t=>{
-    const dest=t.destination||'Unknown';
-    const st=t.status||'generated';
-    const stColor=st==='generating'?'draft':'open';
-    return`<div class="pr-item">
-      <div class="pr-status ${stColor}"></div>
-      <div class="pr-title">${escHtml(dest)}</div>
-      <div class="pr-meta">${st}</div>
-      <div class="pr-meta">${timeAgo(t.created_at)}</div>
-    </div>`;
+    const dest=t.destination||'Unknown';const st=t.status||'generated';
+    return`<div class="pr-item"><div class="pr-status ${st==='generating'?'draft':'open'}"></div><div class="pr-title">${escHtml(dest)}</div><div class="pr-meta">${st}</div><div class="pr-meta">${timeAgo(t.created_at)}</div></div>`;
   }).join('');
 }
 
-// ═══ POSTHOG (AUTHENTICATED) ═══
+// ═══════════════════════════════════════════════════════════════════════════
+// POSTHOG (AUTHENTICATED)
+// ═══════════════════════════════════════════════════════════════════════════
 let phCache={events:[],project:null};
 
 async function fetchPostHog(){
@@ -815,10 +1068,8 @@ async function fetchPostHog(){
       fetch(PH+'projects/@current/',{headers:h}),
       fetch(PH+'projects/@current/events/?limit=15&orderBy=-timestamp',{headers:h}),
     ]);
-
     if(projR.ok)phCache.project=await projR.json();
     if(eventsR.ok){const d=await eventsR.json();phCache.events=d.results||[]}
-
     renderPHStats();renderPHEvents();
   }catch(e){
     document.getElementById('ph-stats').innerHTML='<div class="empty-state">PostHog error: '+escHtml(e.message)+'</div>';
@@ -826,157 +1077,178 @@ async function fetchPostHog(){
 }
 
 function renderPHStats(){
-  const el=document.getElementById('ph-stats');
   const p=phCache.project;
-  if(!p){el.innerHTML='<div class="empty-state">No project data</div>';return}
-  const eventCount=phCache.events.length;
+  if(!p){document.getElementById('ph-stats').innerHTML='<div class="empty-state">No project data</div>';return}
   const uniquePersons=new Set(phCache.events.map(e=>e.distinct_id)).size;
-  el.innerHTML=`
+  document.getElementById('ph-stats').innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
       <div class="metric"><div class="k">Project</div><div class="v" style="font-size:11px">${escHtml(p.name||'ROAM')}</div></div>
-      <div class="metric"><div class="k">Recent Events</div><div class="v">${eventCount}</div></div>
+      <div class="metric"><div class="k">Recent Events</div><div class="v">${phCache.events.length}</div></div>
       <div class="metric"><div class="k">Unique Users</div><div class="v">${uniquePersons}</div></div>
-    </div>
-  `;
+    </div>`;
 }
 
 function renderPHEvents(){
   const el=document.getElementById('ph-events');
   if(!phCache.events.length){el.innerHTML='<div class="empty-state">No recent events</div>';return}
-  el.innerHTML=phCache.events.slice(0,12).map(e=>{
-    const name=e.event||'unknown';
-    const person=e.distinct_id?.slice(0,12)||'?';
-    const isPageview=name==='$pageview';
+  el.innerHTML=phCache.events.slice(0,10).map(e=>{
+    const name=e.event||'unknown';const person=e.distinct_id?.slice(0,12)||'?';
     const isCustom=!name.startsWith('$');
-    const color=isCustom?'open':isPageview?'draft':'draft';
-    const url=e.properties?.$current_url||'';
-    const page=url?new URL(url).pathname:'';
-    return`<div class="pr-item">
-      <div class="pr-status ${color}"></div>
-      <div class="pr-title">${escHtml(name)}${page?' · '+escHtml(page):''}</div>
-      <div class="pr-meta">${person}</div>
-      <div class="pr-meta">${timeAgo(e.timestamp)}</div>
-    </div>`;
+    const url=e.properties?.$current_url||'';const page=url?new URL(url).pathname:'';
+    return`<div class="pr-item"><div class="pr-status ${isCustom?'open':'draft'}"></div><div class="pr-title">${escHtml(name)}${page?' · '+escHtml(page):''}</div><div class="pr-meta">${person}</div><div class="pr-meta">${timeAgo(e.timestamp)}</div></div>`;
   }).join('');
 }
 
-// ═══ REVENUECAT (AUTHENTICATED) ═══
-let rcCache={overview:null};
+// ═══════════════════════════════════════════════════════════════════════════
+// REVENUECAT (AUTHENTICATED)
+// ═══════════════════════════════════════════════════════════════════════════
+let rcCache={projects:[]};
 
 async function fetchRevenueCat(){
-  if(!rcToken()){
-    document.getElementById('rc-stats').innerHTML='<div class="empty-state">Add RevenueCat key in ⚙ Settings</div>';
-    return;
-  }
-  const RC='https://api.revenuecat.com/v2/';
-  const h={Authorization:'Bearer '+rcToken(),'Content-Type':'application/json'};
+  if(!rcToken()){document.getElementById('rc-stats').innerHTML='<div class="empty-state">Add RevenueCat key in ⚙ Settings</div>';return}
   try{
-    // Get project overview
-    const projR=await fetch(RC+'projects',{headers:h});
-    if(projR.ok){
-      const data=await projR.json();
-      rcCache.projects=data.items||[];
-    }
+    const projR=await fetch('https://api.revenuecat.com/v2/projects',{headers:{Authorization:'Bearer '+rcToken(),'Content-Type':'application/json'}});
+    if(projR.ok){const data=await projR.json();rcCache.projects=data.items||[]}
     renderRCStats();
-  }catch(e){
-    // Try v1 API as fallback
-    try{
-      const RC1='https://api.revenuecat.com/v1/';
-      const h1={Authorization:'Bearer '+rcToken(),'Content-Type':'application/json'};
-      const overviewR=await fetch(RC1+'subscribers/$RCAnonymousID:app_overview',{headers:h1});
-      if(overviewR.ok)rcCache.overview=await overviewR.json();
-      renderRCStats();
-    }catch(e2){
-      document.getElementById('rc-stats').innerHTML='<div class="empty-state">RevenueCat connected — use dashboard for detailed metrics<br><a href="https://app.revenuecat.com" target="_blank" style="color:#7CAF8A">Open RevenueCat ↗</a></div>';
-    }
+  }catch{
+    document.getElementById('rc-stats').innerHTML='<div class="empty-state">RevenueCat connected ✓<br><a href="https://app.revenuecat.com" target="_blank" style="color:#7CAF8A;font-size:12px;text-decoration:none">Open Dashboard ↗</a></div>';
   }
 }
 
 function renderRCStats(){
   const el=document.getElementById('rc-stats');
-  if(rcCache.projects&&rcCache.projects.length){
-    el.innerHTML=`
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-        ${rcCache.projects.map(p=>`
-          <div class="metric">
-            <div class="k">${escHtml(p.name||'Project')}</div>
-            <div class="v" style="font-size:11px">${p.id?.slice(0,12)||'—'}</div>
-          </div>
-        `).join('')}
-      </div>
-      <div style="margin-top:8px;text-align:center"><a href="https://app.revenuecat.com" target="_blank" style="color:#7CAF8A;font-size:11px;text-decoration:none">Open full dashboard ↗</a></div>
-    `;
+  if(rcCache.projects.length){
+    el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">${rcCache.projects.map(p=>`<div class="metric"><div class="k">${escHtml(p.name||'Project')}</div><div class="v" style="font-size:11px">${p.id?.slice(0,12)||'—'}</div></div>`).join('')}</div><div style="margin-top:8px;text-align:center"><a href="https://app.revenuecat.com" target="_blank" style="color:#7CAF8A;font-size:11px;text-decoration:none">Full dashboard ↗</a></div>`;
   }else{
-    el.innerHTML='<div class="empty-state">RevenueCat connected ✓<br><a href="https://app.revenuecat.com" target="_blank" style="color:#7CAF8A;font-size:12px;text-decoration:none">Open RevenueCat Dashboard ↗</a></div>';
+    el.innerHTML='<div class="empty-state">RevenueCat connected ✓<br><a href="https://app.revenuecat.com" target="_blank" style="color:#7CAF8A;font-size:12px;text-decoration:none">Open Dashboard ↗</a></div>';
   }
 }
 
-// ═══ REFRESH ═══
+// ═══════════════════════════════════════════════════════════════════════════
+// REFRESH
+// ═══════════════════════════════════════════════════════════════════════════
 function refreshAll(){
-  const btn=document.getElementById('refresh-btn');
-  btn.textContent='↻ Loading...';
+  const btn=document.getElementById('refresh-btn');btn.textContent='↻ Loading...';
   setTimeout(()=>btn.textContent='↻ Refresh',2000);
   checkSiteHealth();fetchGitHub();fetchNetlify();fetchSupabase();fetchPostHog();fetchRevenueCat();
   toast('Refreshing all feeds...');
 }
 
-// ═══ COMPOSERS ═══
+// ═══════════════════════════════════════════════════════════════════════════
+// COMPOSERS (bigger cards with wake-up prompts)
+// ═══════════════════════════════════════════════════════════════════════════
 function buildComps(){
   const el=document.getElementById('composers');el.innerHTML='';
-  COMP_ROLES.forEach((role,i)=>{
+  COMPOSERS.forEach((comp,i)=>{
     const s=compSt[i]||{status:'idle',task:''};
-    const d=document.createElement('div');d.className='comp-mini';
-    d.innerHTML=`<div class="num">${i+1}</div><div class="info"><div class="role">${role}</div><input class="task-input" value="${escHtml(s.task)}" placeholder="task..." id="ct${i}"/></div><div class="st ${s.status}" id="cs${i}" onclick="cycleC(${i})">${s.status}</div><button class="cpb" id="cpb${i}" onclick="cp(PASTE_MSG,this)">⎘</button>`;
+    const d=document.createElement('div');d.className='comp-card';
+    d.innerHTML=`
+      <div class="comp-top">
+        <div class="num">${i+1}</div>
+        <div class="role">${comp.role}</div>
+        <div class="st ${s.status}" id="cs${i}" onclick="cycleC(${i})">${s.status}</div>
+      </div>
+      <input class="task-input" value="${escHtml(s.task)}" placeholder="assign a task..." id="ct${i}"/>
+      <div class="comp-actions">
+        <button class="cpb" id="cpb${i}" onclick="cp(COMPOSERS[${i}].wake,this)" title="Copy wake-up prompt">⎘ wake</button>
+        <button class="cpb" onclick="cp(document.getElementById('ct${i}').value||COMPOSERS[${i}].wake,this)" title="Copy task">⎘ task</button>
+      </div>
+      <div class="wake-prompt" onclick="cp(COMPOSERS[${i}].wake,this)" title="Click to copy">${escHtml(comp.wake.slice(0,90))}...</div>
+    `;
     el.appendChild(d);
-    d.querySelector('#ct'+i).addEventListener('blur',function(){compSt[i]={...compSt[i],task:this.value};sv('comp',compSt)});
+    d.querySelector('#ct'+i).addEventListener('blur',function(){compSt[i]={...compSt[i],task:this.value};sv('comp2',compSt)});
+    d.querySelector('#ct'+i).addEventListener('keydown',function(e){if(e.key==='Enter')this.blur()});
   });
 }
-function cycleC(i){const nx=CSTATS[(CSTATS.indexOf(compSt[i].status)+1)%3];compSt[i]={...compSt[i],status:nx};sv('comp',compSt);const e=document.getElementById('cs'+i);e.className='st '+nx;e.textContent=nx}
+function cycleC(i){const nx=CSTATS[(CSTATS.indexOf(compSt[i].status)+1)%3];compSt[i]={...compSt[i],status:nx};sv('comp2',compSt);const e=document.getElementById('cs'+i);e.className='st '+nx;e.textContent=nx}
 
-// ═══ AGENT PROMPTS ═══
+// ═══════════════════════════════════════════════════════════════════════════
+// AGENT PROMPTS
+// ═══════════════════════════════════════════════════════════════════════════
 function buildAP(){
   const el=document.getElementById('agent-prompts');el.innerHTML='';
-  AGENT_P.forEach((a,i)=>{const b=document.createElement('button');b.className='qa-btn';b.innerHTML=`<span class="icon">🤖</span>${a.name}`;b.addEventListener('click',()=>cp(a.prompt,b));el.appendChild(b)});
+  AGENT_P.forEach(a=>{const b=document.createElement('button');b.className='agent-btn';b.innerHTML=`<span class="icon" style="font-size:14px;width:20px;text-align:center">🤖</span>${a.name}`;b.addEventListener('click',()=>cp(a.prompt,b));el.appendChild(b)});
 }
 
-// ═══ QUICK ACTIONS ═══
+// ═══════════════════════════════════════════════════════════════════════════
+// QUICK ACTIONS
+// ═══════════════════════════════════════════════════════════════════════════
 function buildQA(){
   const el=document.getElementById('qa');el.innerHTML='';
   QA.forEach(a=>{const b=document.createElement('button');b.className='qa-btn';b.innerHTML=`<span class="icon">${a.icon}</span>${a.label}`;b.addEventListener('click',()=>cp(a.cmd,b));el.appendChild(b)});
 }
 
-// ═══ LINKS ═══
+// ═══════════════════════════════════════════════════════════════════════════
+// LINKS
+// ═══════════════════════════════════════════════════════════════════════════
 function buildLinks(){document.getElementById('links').innerHTML=LINKS.map(l=>`<a class="link-row" href="${l.url}" target="_blank">${l.label}</a>`).join('')}
 
-// ═══ CHECKLIST ═══
+// ═══════════════════════════════════════════════════════════════════════════
+// CHECKLIST
+// ═══════════════════════════════════════════════════════════════════════════
 function buildChk(){
   const el=document.getElementById('checklist');el.innerHTML='';
   TODOS.forEach(t=>{
     const on=!!chkSt[t.id];const d=document.createElement('div');d.className='chk';
     d.innerHTML=`<div class="bx ${on?'on':'off'}" id="x${t.id}">${on?'✓':''}</div><span class="tx ${on?'dn':''}" id="xt${t.id}">${t.text}</span>`;
-    d.addEventListener('click',()=>{chkSt={...chkSt,[t.id]:!chkSt[t.id]};sv('chk',chkSt);const o=chkSt[t.id];document.getElementById('x'+t.id).className='bx '+(o?'on':'off');document.getElementById('x'+t.id).textContent=o?'✓':'';document.getElementById('xt'+t.id).className='tx '+(o?'dn':'');document.getElementById('chk-done').style.display=TODOS.every(t=>!!chkSt[t.id])?'block':'none'});
+    d.addEventListener('click',()=>{
+      chkSt={...chkSt,[t.id]:!chkSt[t.id]};sv('chk',chkSt);
+      const o=chkSt[t.id];
+      document.getElementById('x'+t.id).className='bx '+(o?'on':'off');
+      document.getElementById('x'+t.id).textContent=o?'✓':'';
+      document.getElementById('xt'+t.id).className='tx '+(o?'dn':'');
+      document.getElementById('chk-done').style.display=TODOS.every(t=>!!chkSt[t.id])?'block':'none';
+    });
     el.appendChild(d);
   });
   document.getElementById('chk-done').style.display=TODOS.every(t=>!!chkSt[t.id])?'block':'none';
 }
 
-// ═══ BUDGET ═══
-function buildBud(){
-  const el=document.getElementById('budget');el.innerHTML='';
+// ═══════════════════════════════════════════════════════════════════════════
+// BOTTOM BUDGET BAR
+// ═══════════════════════════════════════════════════════════════════════════
+function buildBottomBar(){
+  const el=document.getElementById('bottom-bar');
+  let html='';
   BUDGET_DEF.forEach(b=>{
-    const amt=budSt[b.id]??0;const pct=Math.min(100,Math.round(amt/b.cap*100));
-    const d=document.createElement('div');d.className='bud-row';
-    d.innerHTML=`<div class="nm">${b.name}</div><input class="pr" id="bp${b.id}" value="$${amt}"/><div class="bw-t"><div class="bf ${pct>=90?'bad':pct>=60?'warn':'ok'}" id="bb${b.id}" style="width:${pct}%"></div></div>`;
-    el.appendChild(d);
-    const inp=d.querySelector('#bp'+b.id);
-    inp.addEventListener('focus',function(){this.value=this.value.replace(/[$,]/g,'')});
-    inp.addEventListener('blur',function(){const v=parseFloat(this.value.replace(/[$,]/g,''))||0;budSt={...budSt,[b.id]:v};sv('bud',budSt);this.value='$'+v;const p=Math.min(100,Math.round(v/b.cap*100));const bar=document.getElementById('bb'+b.id);bar.style.width=p+'%';bar.className='bf '+(p>=90?'bad':p>=60?'warn':'ok');updTotals()});
-    inp.addEventListener('keydown',e=>{if(e.key==='Enter')inp.blur()});
-  });updTotals();
-}
-function updTotals(){const t=Object.values(budSt).reduce((s,v)=>s+(v||0),0);document.getElementById('btotal').textContent='$'+t;document.getElementById('bbreak').textContent=Math.ceil(t/7.99)+' subs'}
+    const amt=budSt[b.id]||0;const pct=Math.min(100,Math.round(amt/b.cap*100));
+    html+=`<div class="bb-item">
+      <span class="bb-name">${b.name}</span>
+      <input class="bb-price" id="bp${b.id}" value="$${amt}"/>
+      <div class="bb-bar"><div class="bb-fill bf ${pct>=90?'bad':pct>=60?'warn':'ok'}" id="bb${b.id}" style="width:${pct}%"></div></div>
+    </div>`;
+  });
+  const total=Object.values(budSt).reduce((s,v)=>s+(v||0),0);
+  html+=`<div class="bb-sep"></div>`;
+  html+=`<div class="bb-total"><span class="tl">TOTAL</span><span class="tv ${total>500?'':'ok'}" id="btotal">$${total}/mo</span></div>`;
+  html+=`<div class="bb-sep"></div>`;
+  html+=`<div class="bb-total"><span class="tl">BREAK EVEN</span><span class="bb-break" id="bbreak">${Math.ceil(total/7.99)} subs</span></div>`;
+  el.innerHTML=html;
 
-// ═══ AUTO-REFRESH ═══
+  // Wire up budget inputs
+  BUDGET_DEF.forEach(b=>{
+    const inp=document.getElementById('bp'+b.id);
+    inp.addEventListener('focus',function(){this.value=this.value.replace(/[$,]/g,'')});
+    inp.addEventListener('blur',function(){
+      const v=parseFloat(this.value.replace(/[$,]/g,''))||0;
+      budSt={...budSt,[b.id]:v};sv('bud2',budSt);this.value='$'+v;
+      const p=Math.min(100,Math.round(v/b.cap*100));
+      const bar=document.getElementById('bb'+b.id);bar.style.width=p+'%';bar.className='bb-fill bf '+(p>=90?'bad':p>=60?'warn':'ok');
+      updBottomTotals();renderBurnRate();
+    });
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter')inp.blur()});
+  });
+}
+function updBottomTotals(){
+  const t=Object.values(budSt).reduce((s,v)=>s+(v||0),0);
+  document.getElementById('btotal').textContent='$'+t+'/mo';
+  document.getElementById('btotal').className='tv '+(t>500?'':'ok');
+  document.getElementById('bbreak').textContent=Math.ceil(t/7.99)+' subs';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AUTO-REFRESH
+// ═══════════════════════════════════════════════════════════════════════════
 setInterval(checkSiteHealth,30000);
 setInterval(fetchGitHub,120000);
 setInterval(fetchNetlify,120000);
@@ -984,15 +1256,17 @@ setInterval(fetchSupabase,60000);
 setInterval(fetchPostHog,90000);
 setInterval(fetchRevenueCat,180000);
 
-// ═══ INIT ═══
+// ═══════════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded',()=>{
   tick();setInterval(tick,1000);
   document.getElementById('motto').textContent=MOTTOS[mi];
-  setInterval(nextMotto,30000);
+  setInterval(nextMotto,20000);
   updateTokenBadges();
-  renderHealth();buildComps();buildAP();buildQA();buildLinks();buildChk();buildBud();
+  renderHealth();initFocus();renderMetrics();buildQuickWins();renderBurnRate();
+  buildComps();buildAP();buildQA();buildLinks();buildChk();buildBottomBar();
 
-  // If no tokens, pop settings on first load
   if(!ghToken()&&!nfToken()&&!sbKey()&&!phToken()&&!rcToken()){
     setTimeout(openSettings,500);
   }
