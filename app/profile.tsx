@@ -39,6 +39,7 @@ import { track } from '../lib/analytics';
 import Button from '../components/ui/Button';
 import ExploreHub from '../components/features/ExploreHub';
 import StreakBadge from '../components/features/StreakBadge';
+import TravelStats from '../components/features/TravelStats';
 import SubscriptionCard from '../components/monetization/SubscriptionCard';
 import { SUPPORTED_LANGUAGES, changeLanguage } from '../lib/i18n';
 import type { SupportedLanguage } from '../lib/i18n';
@@ -208,21 +209,8 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* Stats */}
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{trips.length}</Text>
-            <Text style={styles.statLabel}>{t('profile.tripsBuilt')}</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{destinationsCount}</Text>
-            <Text style={styles.statLabel}>DESTINATIONS</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{allPhotos.length}</Text>
-            <Text style={styles.statLabel}>PHOTOS</Text>
-          </View>
-        </View>
+        {/* Stats — rich travel stats component */}
+        <TravelStats trips={trips} />
 
         {/* ── Travel DNA ── */}
         {showDNA && (

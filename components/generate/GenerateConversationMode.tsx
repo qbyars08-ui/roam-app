@@ -26,6 +26,7 @@ import {
   Sparkles,
 } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import VoiceInputButton from '../features/VoiceInputButton';
 import { sendConversationMessage } from '../../lib/claude';
 
 // ---------------------------------------------------------------------------
@@ -270,6 +271,10 @@ export default function GenerateConversationMode({
 
       {/* ── Input bar ── */}
       <View style={styles.inputWrap}>
+        <VoiceInputButton
+          onTranscript={(text) => setInput((prev) => prev ? `${prev} ${text}` : text)}
+          disabled={isLoading || isGenerating}
+        />
         <TextInput
           style={styles.input}
           value={input}
