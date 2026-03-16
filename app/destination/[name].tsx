@@ -294,15 +294,15 @@ export default function DestinationDashboard() {
           <StatCard
             icon={Thermometer}
             label="Right now"
-            value={weatherSummary?.temp ?? '--'}
-            subValue={weatherSummary?.description}
+            value={loading && !weatherSummary ? '...' : (weatherSummary?.temp ?? '--')}
+            subValue={loading && !weatherSummary ? 'Loading' : weatherSummary?.description}
             accentColor={COLORS.gold}
           />
           <StatCard
             icon={Wind}
             label="Air quality"
-            value={data.airQuality?.label ?? '--'}
-            subValue={data.airQuality ? `AQI ${data.airQuality.aqi}` : undefined}
+            value={loading && !data.airQuality ? '...' : (data.airQuality?.label ?? '--')}
+            subValue={loading && !data.airQuality ? 'Loading' : (data.airQuality ? `AQI ${data.airQuality.aqi}` : undefined)}
             accentColor={data.airQuality && data.airQuality.aqi > 100 ? COLORS.coral : COLORS.sage}
           />
           <StatCard
@@ -388,15 +388,30 @@ export default function DestinationDashboard() {
           <Sparkles size={20} color={COLORS.bg} strokeWidth={2} />
           <Text style={styles.ctaText}>Plan a trip to {destination}</Text>
         </Pressable>
-
-        {/* Loading indicator for remaining data */}
         {loading && (
           <View style={styles.loadingRow}>
             <ActivityIndicator size="small" color={COLORS.sage} />
             <Text style={styles.loadingText}>Loading live data...</Text>
           </View>
         )}
+
+        {/* Bottom padding to clear the sticky CTA */}
+        <View style={{ height: 80 }} />
       </ScrollView>
+
+      {/* Sticky "Plan a trip" CTA — visible at any scroll depth */}
+      <View style={[styles.stickyCtaWrap, { paddingBottom: insets.bottom + 12 }]}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.stickyCtaBtn,
+            { opacity: pressed ? 0.88 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
+          ]}
+          onPress={handlePlanTrip}
+        >
+          <Sparkles size={20} color={COLORS.bg} strokeWidth={2} />
+          <Text style={styles.stickyCtaText}>Plan a trip to {destination}</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -562,5 +577,32 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 13,
     color: COLORS.creamMuted,
+  } as TextStyle,
+
+  // Sticky CTA
+  stickyCtaWrap: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.md,
+    backgroundColor: COLORS.bg,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  } as ViewStyle,
+  stickyCtaBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.sage,
+    borderRadius: RADIUS.xl,
+    paddingVertical: SPACING.md + 2,
+  } as ViewStyle,
+  stickyCtaText: {
+    fontFamily: FONTS.header,
+    fontSize: 20,
+    color: COLORS.bg,
   } as TextStyle,
 });

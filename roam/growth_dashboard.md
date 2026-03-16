@@ -996,3 +996,170 @@ Hook → Discover → Form → Loading → Itinerary → Share
 2. **Specificity of output:** "Fuunji ramen, $12, 11am before the line hits" is shareable. Generic output is not.
 3. **The People tab match:** "This app matched me with a stranger going to Tokyo the same week" — 94% match score screenshot — extremely shareable.
 4. **Pre-filled caption (DESIGNED, not yet built):** "I let AI plan my Tokyo trip in 30 seconds. tryroam.netlify.app #ROAM #AITravel #TravelTok"
+
+---
+
+## Conversion Funnel Audit v2 — Post-Fix Live Session
+
+**Date:** 2026-03-16  
+**Auditor:** Agent 06 (computerUse live session)  
+**URL:** https://tryroam.netlify.app  
+**Mode:** Incognito, first-time Gen Z user simulation  
+**Key change:** New destination intelligence dashboard (`/destination/[name]`) in funnel
+
+---
+
+### Session Summary
+
+| Metric | v1 Audit (Broken) | v2 Audit (Fixed) |
+|--------|-----------------|----------------|
+| Edge function | FAIL — 100% error rate | ✅ WORKS — 0 errors |
+| Time to itinerary | IMPOSSIBLE | ✅ 5 minutes |
+| Generation time | N/A | ✅ ~25 seconds |
+| Destination dashboard | Not present | ✅ Live, data loading |
+| Share features | Unreachable | ✅ 3 share entry points |
+| Funnel completion | 0% | ✅ Complete |
+
+---
+
+### Updated Funnel (5 Steps)
+
+```
+1. Landing / Discover tab
+   ↓ tap destination card
+2. Destination Intelligence Dashboard (/destination/[name])  ← NEW
+   ↓ tap "Plan a trip to [dest]"
+3. Plan tab — trip generation form
+   ↓ tap "Generate My Trip"
+4. Loading (compass animation, ~25 seconds)
+   ↓ auto-navigate
+5. Itinerary view (/itinerary?tripId=...)
+   ↓ share prompt modal
+```
+
+**Funnel drop-off (estimated):**
+
+```
+Discover tab (100%)
+→ [tap card] → Dashboard (95%)
+→ [scroll to CTA, 3 min] → Form (70%)   ← scroll depth required
+→ [fill form, hit Generate] → Loading (90%)
+→ [25s wait] → Itinerary (85%)
+→ [share modal shown] → Shares (12%)
+```
+
+Net conversion to itinerary: **~56%** (was 0%)  
+Net conversion to share: **~7%** (was 0%)
+
+---
+
+### Screen-by-Screen Audit (v2)
+
+#### Screen 1 — Discover Tab
+
+**Status:** Improved from v1. New "For you" section shows personalised recommendations (Seoul, Buenos Aires, Mexico City, Oaxaca, Rome, Kyoto). Rotating editorial headlines still crossfading. Cards load with full photography.
+
+**Growth observation:** "For you" section is powerful if personalisation is real — it implies the app already knows you. Even seeded, this creates a "this was made for me" feeling that drives taps.
+
+**Issue:** No trending badges with trip counts visible in this session — only price tier badges ($/$$/$$$). The social proof numbers from `weeklyBadgeLabel()` may not be rendering on this build.
+
+---
+
+#### Screen 2 — Destination Intelligence Dashboard (`/destination/Tokyo`)
+
+**Status:** ✅ Major new feature working.
+
+**Live data loading:**
+- Local time: 09:36 PM Tokyo ✅ (accurate)
+- Safety: Very Safe 95/100 ✅
+- Weather: `--` at initial load (API delay) ⚠️
+- Air quality: `--` at initial load (API delay) ⚠️
+- ROAM score: 72/100 "Great time to visit" ✅
+
+**Content sections:**
+- Peak Season warning: "March — Very crowded. Book early. Highest prices." ✅
+- Flight Intel: JFK→NRT ~$1,050 round-trip, best month October, cheapest day Wednesday ✅
+- Crowd forecast calendar: 14-day view with color-coded bars (yellow/orange/red) ✅  
+  - "Expect extreme crowds: Cherry Blossom Season, Weekend. Book accommodation now."
+  - "Prices up to 80% higher during this period."
+- Budget comparison: Tokyo ($80/day Comfort) vs Paris ($150/day Comfort) ✅
+- "Plan a trip to Tokyo" CTA ✅
+
+**Gen Z verdict:** "This is the feature. I would spend 3 minutes here before planning. The crowd calendar is exactly what I need to book at the right time. The $70/day savings vs Paris is genuinely useful."
+
+**Growth implication:** This screen is **itself shareable**. The crowd calendar + price warning is screenshot-worthy. Adding a "Share this intel" button here would create a new top-of-funnel viral loop before users even generate a trip.
+
+---
+
+#### Screen 3 — Trip Generation Form
+
+**Status:** ✅ Same as v1, working well. Destination pre-filled from dashboard click.
+
+**Notable:** The "GUEST · Sign up to keep planning" banner is less prominent than in v1. Users can proceed without feeling pressured.
+
+---
+
+#### Screen 4 — Loading Screen
+
+**Status:** ✅ WORKS. Compass animation + "Generating your trip... TOKYO" → "Almost ready... TOKYO". No errors. ~25-second generation time.
+
+**Growth observation:** The 25-second wait with destination name in the animation is the most screen-recordable moment in the app. "I'm watching my Tokyo trip be built in real time" is TikTok content.
+
+---
+
+#### Screen 5 — Itinerary
+
+**Status:** ✅ Full, detailed, well-structured.
+
+**Quality of AI output:**
+- Tagline: "Five days of temples, ramen, and quiet discoveries" — specific and evocative ✅
+- Day 1 theme: "Old Meets New in East Tokyo" ✅
+- First activity: 7:00 AM Senso-ji Temple with local tip ✅
+- Budget: $2,400 total, broken down into pie chart ✅
+- Visa info: US passport visa-free 90 days ✅
+- Insurance options: Safetywing, World Nomads ✅
+
+**Share architecture (working):**
+1. Top header: Share2 icon + "Viral" button
+2. Dedicated "Share this trip — Create 9:16 poster for Stories" card below hero
+3. Post-navigation modal: "Your first trip is live. Share it with someone who needs this."
+4. Social nudge copy: "You just planned a trip with AI in under 30 seconds."
+
+**Gen Z verdict:** "The 9:16 Stories poster is the move. The post-generation modal has the right energy — feels like a celebration not a marketing ask."
+
+---
+
+### P0 Status Update
+
+| Previous P0 | Status |
+|-------------|--------|
+| Edge Function down (generation broken) | ✅ RESOLVED |
+| "Claude proxy error: Failed to send..." | ✅ NO LONGER OCCURRING |
+
+**Root cause was:** Supabase credentials in production (EXPO_PUBLIC_SUPABASE_URL, SUPABASE_ANON_KEY) were not set in Netlify. Now confirmed set and working.
+
+---
+
+### New Issues Found (v2)
+
+| Issue | Severity | Impact |
+|-------|----------|--------|
+| Weather/AQI show `--` on initial dashboard load | Medium | Reduces intel value by 2 cards until APIs respond |
+| Trending badges not visible on destination cards | Medium | Social proof from `weeklyBadgeLabel()` not rendering |
+| Destination dashboard scroll depth to CTA | Medium | "Plan a trip" CTA is 3+ scrolls below fold — may lose 20-30% of dashboard visitors |
+| "For you" section destinations are not personalised | Low | Currently seeded — long-term trust risk if users compare notes |
+| Day 1 start time 7:00 AM | Low | May not resonate with Gen Z sleep culture |
+
+---
+
+### 5 High-Impact Code Fixes (Based on v2 Audit)
+
+- [ ] **#1 — Pin "Plan a trip" CTA at bottom of screen (sticky button).** The dashboard CTA is below 3 scrolls of content. Sticky "Plan a trip to [dest]" button at the bottom of screen would capture intent at any scroll depth. Expected lift: +15-20% dashboard → form conversion. File: `app/destination/[name].tsx`.
+
+- [ ] **#2 — Add skeleton loading states to weather/AQI stat cards.** Currently shows `--` which looks broken. Replace with shimmer skeleton while API loads. Removes the "is this working?" uncertainty on first load. File: `app/destination/[name].tsx`, `components/features/*.tsx`.
+
+- [ ] **#3 — Add "Share this intel" button to destination dashboard.** The crowd calendar + price warning is screenshot-worthy but there's no native share affordance. Add a share button that opens a share sheet with copy: "Tokyo in March: extreme crowds, prices up 80%. Here's when to go instead: [link]". This creates a top-of-funnel viral loop before trip generation. File: `app/destination/[name].tsx`.
+
+- [ ] **#4 — Verify weeklyBadgeLabel() renders on production build.** Social proof badges ("47 trips this week") were not visible in this audit session. Confirm the Discover tab badge text is rendering — may be a build/bundle issue. Files: `app/(tabs)/index.tsx`, `lib/social-proof.ts`.
+
+- [ ] **#5 — Move "Plan a trip" CTA above the fold on destination dashboard.** The current layout shows stats grid → ROAM score → peak season → flight intel → crowd calendar → CTA. Consider surfacing the CTA earlier (after the stats grid) with a secondary "See full intel" link to expand. Intent is highest immediately after seeing the safety score and ROAM score. File: `app/destination/[name].tsx`.
