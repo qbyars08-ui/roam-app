@@ -16,7 +16,7 @@ import {
 import * as Haptics from '../../lib/haptics';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MessageSquare, Shield, Plane, Globe, BookOpen, PawPrint, Users, Search, FlaskConical, Image, Wallet, Flag, Star, Map, Receipt, User, Gift, Shuffle, Clock, Building2, Heart, UserPlus, Languages, Repeat, Lock } from 'lucide-react-native';
+import { MessageSquare, Shield, Plane, Globe, BookOpen, PawPrint, Users, Search, FlaskConical, Image, Wallet, Flag, Star, Map, Receipt, User, Gift, Shuffle, Clock, Building2, Heart, UserPlus, Languages, Repeat, Lock, UtensilsCrossed } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useProGate } from '../../lib/pro-gate';
 import { useAppStore } from '../../lib/store';
@@ -25,9 +25,11 @@ import { useAppStore } from '../../lib/store';
 // Feature definitions — 5 visible & functional; rest show "Coming Soon"
 // ---------------------------------------------------------------------------
 const LIVE_FEATURE_IDS = [
-  'budget-guardian', 'flights', 'language-survival', 'prep', 'group-trips',
+  'budget-guardian', 'flights', 'stays', 'food', 'language-survival', 'prep', 'group-trips',
   'compatibility', 'expense-tracker', 'trip-countdown', 'trip-story', 'trip-album',
   'passport', 'trip-wrapped', 'chaos-mode', 'travel-card', 'trip-journal', 'body-intel', 'before-you-land', 'emergency-card',
+  'pets', 'alter-ego', 'globe', 'dream-vault', 'arrival-mode', 'dupe-finder', 'anti-itinerary',
+  'chaos-dare', 'honest-reviews', 'visited-map', 'airport-guide', 'memory-lane',
 ] as const;
 const ICON_MAP = {
   MessageSquare,
@@ -54,6 +56,7 @@ const ICON_MAP = {
   UserPlus,
   Languages,
   Repeat,
+  UtensilsCrossed,
 } as const;
 
 type Feature = {
@@ -78,7 +81,9 @@ const FEATURES: Feature[] = [
   { id: 'trip-album', icon: 'Image', name: 'Photo Albums', description: 'Trip photo journal & gallery', route: '/trip-album' },
   { id: 'chat', icon: 'MessageSquare', name: 'Ask AI', description: 'Chat with your travel assistant', route: '/(tabs)/generate' },
   { id: 'prep', icon: 'Shield', name: 'Trip Prep', description: 'Packing lists, visas & essentials', route: '/(tabs)/prep' },
-  { id: 'flights', icon: 'Plane', name: 'Flights', description: 'Track and manage your flights', route: '/(tabs)/flights' },
+  { id: 'flights', icon: 'Plane', name: 'Flights', description: 'Search Skyscanner for best prices', route: '/(tabs)/flights' },
+  { id: 'stays', icon: 'Building2', name: 'Stays', description: 'Find hotels on Booking.com', route: '/(tabs)/stays' },
+  { id: 'food', icon: 'UtensilsCrossed', name: 'Food', description: 'AI-curated spots, open in Google Maps', route: '/(tabs)/food' },
   { id: 'globe', icon: 'Globe', name: 'Globe', description: 'Explore the interactive map', route: '/globe' },
   { id: 'passport', icon: 'BookOpen', name: 'Passport', description: 'Visa info & travel documents', route: '/passport' },
   { id: 'pets', icon: 'PawPrint', name: 'Pet Travel', description: 'Plan trips with your pet', route: '/pets' },

@@ -1,6 +1,6 @@
 // =============================================================================
 // ROAM — Tab Navigator Layout
-// 5 tabs: Plan / Discover / Health / Flights / Pulse
+// 6 tabs: Plan / Pulse / People / Flights / Pets / Prep
 // =============================================================================
 import React from 'react';
 import { View } from 'react-native';
@@ -26,18 +26,21 @@ export default function TabsLayout() {
         }}
       >
         {/* ── Visible tabs (5) ── */}
-        <Tabs.Screen name="plan" options={{ title: 'Plan' }} />
-        <Tabs.Screen name="index" options={{ title: 'Discover' }} />
-        <Tabs.Screen name="body-intel" options={{ title: 'Health' }} />
-        <Tabs.Screen name="flights" options={{ title: 'Flights' }} />
-        <Tabs.Screen name="pulse" options={{ title: 'Pulse' }} />
+        {/* plan + prep are eager-loaded: they contain the core user flows */}
+        <Tabs.Screen name="plan" options={{ title: 'Plan', lazy: false }} />
+        {/* pulse, people, flights are lazy: data-heavy, deferred until first visit */}
+        <Tabs.Screen name="pulse" options={{ title: 'Pulse', lazy: true }} />
+        <Tabs.Screen name="people" options={{ title: 'People', lazy: true }} />
+        <Tabs.Screen name="flights" options={{ title: 'Flights', lazy: true }} />
+        <Tabs.Screen name="pets" options={{ title: 'Pets', lazy: true }} />
+        <Tabs.Screen name="prep" options={{ title: 'Prep', lazy: false }} />
         {/* ── Hidden screens (still routable, not in tab bar) ── */}
+        <Tabs.Screen name="index" options={{ href: null }} />
+        <Tabs.Screen name="body-intel" options={{ href: null }} />
         <Tabs.Screen name="generate" options={{ href: null }} />
         <Tabs.Screen name="stays" options={{ href: null }} />
         <Tabs.Screen name="food" options={{ href: null }} />
         <Tabs.Screen name="group" options={{ href: null }} />
-        <Tabs.Screen name="people" options={{ href: null }} />
-        <Tabs.Screen name="prep" options={{ href: null }} />
       </Tabs>
       <LiveCompanionFAB />
     </View>

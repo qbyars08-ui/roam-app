@@ -1,34 +1,23 @@
 // =============================================================================
 // ROAM — Social Proof Banner
-// "847 people planned Tokyo this week" — FOMO that drives action
+// Motivational copy that encourages trip planning without showing fake counts.
+// TODO: When live Supabase traveler_profiles data is available, optionally
+// restore real counts here via getDestinationStats().
 // =============================================================================
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, type TextStyle, type ViewStyle } from 'react-native';
 import { COLORS, FONTS, SPACING } from '../../lib/constants';
-import { getDestinationStats, type DestinationStats } from '../../lib/social-proof';
 
 interface SocialProofBannerProps {
   destination: string;
 }
 
 export default function SocialProofBanner({ destination }: SocialProofBannerProps) {
-  const [stats, setStats] = useState<DestinationStats | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    getDestinationStats(destination).then((s: DestinationStats) => {
-      if (!cancelled) setStats(s);
-    });
-    return () => { cancelled = true; };
-  }, [destination]);
-
-  if (!stats || stats.plannedThisWeek < 50) return null;
-
   return (
     <View style={styles.container}>
       <Text style={styles.text}>
-        <Text style={styles.count}>{stats.plannedThisWeek.toLocaleString()}</Text>
-        {' '}people planned {destination} trips this week
+        Travelers are exploring{' '}
+        <Text style={styles.highlight}>{destination}</Text>
       </Text>
     </View>
   );
@@ -45,7 +34,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.creamMuted,
   } as TextStyle,
-  count: {
+  highlight: {
     fontFamily: FONTS.bodySemiBold,
     color: COLORS.sage,
   } as TextStyle,

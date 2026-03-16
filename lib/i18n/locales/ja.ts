@@ -51,6 +51,7 @@ const ja: TranslationKeys = {
     prep: '\u6e96\u5099',
     health: 'u5065u5eb7',
     pulse: 'u30d1u30ebu30b9',
+    pets: '\u30da\u30c3\u30c8',
   },
 
   errorBoundary: {

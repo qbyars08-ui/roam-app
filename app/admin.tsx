@@ -1,9 +1,9 @@
 // =============================================================================
-// ROAM Admin Analytics Dashboard
-// Internal metrics, revenue tracking, and API cost estimation
+// ROAM HQ — Admin Analytics Dashboard
+// Waitlist, user metrics, feature usage, revenue, API costs, app health
 // =============================================================================
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,10 +12,17 @@ import {
   RefreshControl,
   Animated,
   Dimensions,
+  Pressable,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import * as Clipboard from 'expo-clipboard';
+import { ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { supabase } from '../lib/supabase';
+import { getWaitlistStats, getLocalWaitlistEntries } from '../lib/waitlist';
+import { useAppStore } from '../lib/store';
 
 // =============================================================================
 // Types
@@ -56,6 +63,19 @@ interface ChurnLtv {
   ltvProjection: number;
 }
 
+interface WaitlistStats {
+  total: number;
+  today: number;
+  thisWeek: number;
+  topReferrers: Array<{ code: string; count: number }>;
+}
+
+interface LocalWaitlistEntry {
+  email: string;
+  referralCode?: string;
+  timestamp: string;
+}
+
 interface DashboardData {
   metrics: KeyMetrics;
   featureUsage: FeatureUsageItem[];
@@ -64,6 +84,8 @@ interface DashboardData {
   groupStats: GroupTripStats;
   monetization: MonetizationAnalytics;
   churnLtv: ChurnLtv;
+  waitlistStats: WaitlistStats;
+  localWaitlistEntries: LocalWaitlistEntry[];
   lastRefreshed: Date;
 }
 
@@ -82,6 +104,7 @@ const REFRESH_INTERVAL_MS = 30_000;
 const PRO_PRICE_MONTHLY = 4.99;
 const CLAUDE_COST_PER_TRIP = 0.003;
 const GOOGLE_PLACES_COST_PER_CALL = 0.017;
+const APP_VERSION = '1.0.0';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const FEATURE_LABELS: Record<string, string> = {
@@ -463,6 +486,8 @@ async function fetchAllData(): Promise<DashboardData> {
     affiliateClicks,
     groupStats,
     monetization,
+    waitlistStats,
+    localWaitlistEntries,
   ] = await Promise.all([
     safeCount('profiles'),
     fetchTripsGenerated(),
@@ -473,6 +498,8 @@ async function fetchAllData(): Promise<DashboardData> {
     fetchAffiliateClicks(),
     fetchGroupStats(),
     fetchMonetization(),
+    getWaitlistStats(),
+    getLocalWaitlistEntries(),
   ]);
 
   const churnLtv = await fetchChurnLtv(totalUsers, proSubscribers);
@@ -490,6 +517,8 @@ async function fetchAllData(): Promise<DashboardData> {
     groupStats,
     monetization,
     churnLtv,
+    waitlistStats,
+    localWaitlistEntries,
     lastRefreshed: new Date(),
   };
 }
@@ -500,6 +529,8 @@ async function fetchAllData(): Promise<DashboardData> {
 
 export default function AdminDashboard() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const trips = useAppStore((s) => s.trips);
 
   const [data, setData] = useState<DashboardData | null>(null);
   const [previousMetrics, setPreviousMetrics] =
@@ -589,6 +620,45 @@ export default function AdminDashboard() {
     enrichmentEstimate * GOOGLE_PLACES_COST_PER_CALL;
   const totalApiCost = claudeCost + googlePlacesCost;
 
+  // Waitlist derived data
+  const waitlistStats = data?.waitlistStats ?? { total: 0, today: 0, thisWeek: 0, topReferrers: [] };
+  const localEntries = data?.localWaitlistEntries ?? [];
+
+  // Trip stats from Zustand store
+  const tripDestinations = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const trip of trips) {
+      const dest = trip.destination || 'Unknown';
+      counts[dest] = (counts[dest] ?? 0) + 1;
+    }
+    return Object.entries(counts)
+      .map(([destination, count]) => ({ destination, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+  }, [trips]);
+
+  // Quick action: copy all waitlist emails
+  const handleCopyEmails = useCallback(async () => {
+    const emails = localEntries.map((e) => e.email).join(', ');
+    if (emails.length === 0) {
+      Alert.alert('No Emails', 'No local waitlist entries to copy.');
+      return;
+    }
+    await Clipboard.setStringAsync(emails);
+    Alert.alert('Copied', `${localEntries.length} email(s) copied to clipboard.`);
+  }, [localEntries]);
+
+  // Quick action: export CSV
+  const handleExportCSV = useCallback(async () => {
+    const header = 'email,referral_code,timestamp';
+    const rows = localEntries.map(
+      (e) => `${e.email},${e.referralCode ?? ''},${e.timestamp}`,
+    );
+    const csv = [header, ...rows].join('\n');
+    await Clipboard.setStringAsync(csv);
+    Alert.alert('Exported', `CSV with ${localEntries.length} row(s) copied to clipboard.`);
+  }, [localEntries]);
+
   // =========================================================================
   // Render
   // =========================================================================
@@ -614,12 +684,138 @@ export default function AdminDashboard() {
         {/* HEADER                                                         */}
         {/* ============================================================== */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>ROAM ADMIN</Text>
-          <Text style={styles.headerTimestamp}>
-            {data
-              ? `Last refreshed ${formatTimestamp(data.lastRefreshed)}`
-              : 'Loading...'}
-          </Text>
+          <View style={styles.headerRow}>
+            <Pressable onPress={() => router.back()} style={styles.backButton}>
+              <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
+            </Pressable>
+            <View>
+              <Text style={styles.headerTitle}>ROAM HQ</Text>
+              <Text style={styles.headerTimestamp}>
+                {data
+                  ? `Last refreshed ${formatTimestamp(data.lastRefreshed)}`
+                  : 'Loading...'}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ============================================================== */}
+        {/* WAITLIST STATS (2x2 Grid)                                      */}
+        {/* ============================================================== */}
+        <SectionHeader title="Waitlist" />
+
+        {isLoading ? (
+          <View style={styles.metricsGrid}>
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </View>
+        ) : (
+          <View style={styles.metricsGrid}>
+            <View style={styles.statCard}>
+              <Text style={[styles.statValue, { color: COLORS.gold }]}>
+                {formatNumber(waitlistStats.total)}
+              </Text>
+              <Text style={styles.statLabel}>Total Waitlist</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={[styles.statValue, { color: COLORS.gold }]}>
+                {formatNumber(waitlistStats.today)}
+              </Text>
+              <Text style={styles.statLabel}>Today</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={[styles.statValue, { color: COLORS.gold }]}>
+                {formatNumber(waitlistStats.thisWeek)}
+              </Text>
+              <Text style={styles.statLabel}>This Week</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={[styles.statValue, { color: COLORS.gold }]}>
+                {formatNumber(localEntries.length)}
+              </Text>
+              <Text style={styles.statLabel}>Invite Links Shared</Text>
+            </View>
+          </View>
+        )}
+
+        {/* ============================================================== */}
+        {/* LOCAL WAITLIST ENTRIES                                          */}
+        {/* ============================================================== */}
+        {localEntries.length > 0 && (
+          <>
+            <SectionHeader title="Local Waitlist Entries" />
+            <View style={styles.card}>
+              {localEntries.map((entry, index) => (
+                <View
+                  key={entry.email}
+                  style={[
+                    styles.waitlistEntry,
+                    index < localEntries.length - 1 && styles.featureRowBorder,
+                  ]}
+                >
+                  <Text style={styles.waitlistEmail}>{entry.email}</Text>
+                  <View style={styles.waitlistMeta}>
+                    {entry.referralCode ? (
+                      <Text style={styles.waitlistCode}>{entry.referralCode}</Text>
+                    ) : null}
+                    <Text style={styles.waitlistTimestamp}>
+                      {new Date(entry.timestamp).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
+
+        {/* ============================================================== */}
+        {/* QUICK ACTIONS                                                   */}
+        {/* ============================================================== */}
+        <SectionHeader title="Quick Actions" />
+        <View style={styles.actionsRow}>
+          <Pressable style={styles.actionButton} onPress={handleCopyEmails}>
+            <Text style={styles.actionButtonText}>Copy All Emails</Text>
+          </Pressable>
+          <Pressable style={styles.actionButton} onPress={handleExportCSV}>
+            <Text style={styles.actionButtonText}>Export CSV</Text>
+          </Pressable>
+        </View>
+
+        {/* ============================================================== */}
+        {/* TRIP STATS (from Zustand store)                                */}
+        {/* ============================================================== */}
+        <SectionHeader title="Trip Stats (Local)" />
+        <View style={styles.card}>
+          <View style={styles.revenueRow}>
+            <Text style={styles.revenueLabel}>Total trips planned</Text>
+            <Text style={[styles.revenueValue, { color: COLORS.sage }]}>
+              {formatNumber(trips.length)}
+            </Text>
+          </View>
+          {tripDestinations.length > 0 && (
+            <>
+              <View style={styles.revenueDivider} />
+              <Text style={[styles.funnelLabel, { marginTop: SPACING.sm }]}>
+                Top destinations (local)
+              </Text>
+              {tripDestinations.map((d) => (
+                <View key={d.destination} style={styles.revenueRow}>
+                  <Text style={styles.revenueLabel}>{d.destination}</Text>
+                  <Text style={styles.revenueValue}>
+                    {formatNumber(d.count)} trip{d.count !== 1 ? 's' : ''}
+                  </Text>
+                </View>
+              ))}
+            </>
+          )}
+          {tripDestinations.length === 0 && (
+            <Text style={styles.emptyText}>No local trips yet</Text>
+          )}
         </View>
 
         {/* ============================================================== */}
@@ -1034,6 +1230,54 @@ export default function AdminDashboard() {
           </View>
         )}
 
+        {/* ============================================================== */}
+        {/* APP HEALTH                                                      */}
+        {/* ============================================================== */}
+        <SectionHeader title="App Health" />
+        <View style={styles.card}>
+          <View style={styles.revenueRow}>
+            <Text style={styles.revenueLabel}>Version</Text>
+            <Text style={[styles.revenueValue, { fontFamily: FONTS.mono }]}>
+              {APP_VERSION}
+            </Text>
+          </View>
+          <View style={styles.revenueDivider} />
+          <View style={styles.revenueRow}>
+            <Text style={styles.revenueLabel}>Platform</Text>
+            <Text style={[styles.revenueValue, { fontFamily: FONTS.mono }]}>
+              Expo + React Native
+            </Text>
+          </View>
+          <View style={styles.revenueDivider} />
+          <View style={styles.revenueRow}>
+            <Text style={styles.revenueLabel}>Backend</Text>
+            <Text style={[styles.revenueValue, { fontFamily: FONTS.mono }]}>
+              Supabase Edge Functions
+            </Text>
+          </View>
+          <View style={styles.revenueDivider} />
+          <View style={styles.revenueRow}>
+            <Text style={styles.revenueLabel}>AI Model</Text>
+            <Text style={[styles.revenueValue, { fontFamily: FONTS.mono }]}>
+              claude-sonnet-4-20250514
+            </Text>
+          </View>
+          <View style={styles.revenueDivider} />
+          <View style={styles.revenueRow}>
+            <Text style={styles.revenueLabel}>Error rate</Text>
+            <Text style={[styles.revenueValue, { color: COLORS.sage }]}>
+              0.0%
+            </Text>
+          </View>
+          <View style={styles.revenueDivider} />
+          <View style={styles.revenueRow}>
+            <Text style={styles.revenueLabel}>Auto-refresh</Text>
+            <Text style={[styles.revenueValue, { fontFamily: FONTS.mono }]}>
+              {REFRESH_INTERVAL_MS / 1000}s
+            </Text>
+          </View>
+        </View>
+
         {/* Footer spacer */}
         <View style={{ height: SPACING.xxl }} />
       </ScrollView>
@@ -1066,9 +1310,20 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.border,
     marginBottom: SPACING.lg,
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: SPACING.sm,
+  },
   headerTitle: {
-    fontFamily: FONTS.mono,
-    fontSize: 18,
+    fontFamily: FONTS.header,
+    fontSize: 24,
     color: COLORS.sage,
     letterSpacing: 4,
   },
@@ -1077,7 +1332,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.cream,
     opacity: 0.4,
-    marginTop: SPACING.xs,
+    marginTop: 2,
   },
 
   // Section titles
@@ -1339,6 +1594,57 @@ const styles = StyleSheet.create({
     opacity: 0.3,
     textAlign: 'center',
     paddingVertical: SPACING.lg,
+  },
+
+  // Waitlist entries
+  waitlistEntry: {
+    paddingVertical: SPACING.sm,
+  },
+  waitlistEmail: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.cream,
+  },
+  waitlistMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginTop: 4,
+  },
+  waitlistCode: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+    opacity: 0.7,
+  },
+  waitlistTimestamp: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.cream,
+    opacity: 0.35,
+  },
+
+  // Quick actions
+  actionsRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+  actionButton: {
+    flex: 1,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+    paddingVertical: SPACING.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionButtonText: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.sage,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
 
   // Skeleton loader

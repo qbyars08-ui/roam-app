@@ -28,7 +28,6 @@ import {
   getSkyscannerUrl,
   type SavedDestination,
 } from '../lib/flight-deals';
-import { withComingSoon } from '../lib/with-coming-soon';
 import { validateDestination } from '../lib/params-validator';
 import { getHomeAirport } from '../lib/flights';
 
@@ -146,7 +145,7 @@ function DreamVaultScreen() {
           </Text>
           <Pressable
             style={styles.addBtn}
-            onPress={() => router.push('/(tabs)/generate')}
+            onPress={() => router.push('/(tabs)/generate' as never)}
           >
             <Text style={styles.addBtnText}>Plan a trip</Text>
           </Pressable>
@@ -267,4 +266,4 @@ const styles = StyleSheet.create({
   } as TextStyle,
 });
 
-export default withComingSoon(DreamVaultScreen, { routeName: 'dream-vault', title: 'Dream Vault' });
+export default DreamVaultScreen;

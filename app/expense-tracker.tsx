@@ -40,7 +40,6 @@ import {
   ChevronLeft, Plus, Trash2, TrendingUp, TrendingDown,
   Wallet, X, Check, DollarSign,
 } from 'lucide-react-native';
-import { withComingSoon } from '../lib/with-coming-soon';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BAR_MAX_WIDTH = SCREEN_WIDTH - SPACING.lg * 2 - 80;
@@ -472,10 +471,7 @@ function ExpenseTrackerScreen() {
   );
 }
 
-export default withComingSoon(ExpenseTrackerScreen, {
-  routeName: 'expense-tracker',
-  title: 'Expense Tracker',
-});
+export default ExpenseTrackerScreen;
 
 // =============================================================================
 // Styles

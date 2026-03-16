@@ -2,12 +2,13 @@
 // ROAM — Language Survival (essential phrases)
 // Phonetics + categories, tap for TTS
 // =============================================================================
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import * as Speech from 'expo-speech';
-import { Languages } from 'lucide-react-native';
+import { Languages, Volume2 } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { getPhrasesForDestination, type Phrase } from '../../lib/language-survival';
+import { pronounce } from '../../lib/elevenlabs';
+import { impactAsync, ImpactFeedbackStyle } from '../../lib/haptics';
 
 interface LanguageSurvivalSectionProps {
   destination: string;
@@ -26,16 +27,22 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 export default function LanguageSurvivalSection({ destination }: LanguageSurvivalSectionProps) {
   const [expanded, setExpanded] = useState(false);
+  const [speakingIdx, setSpeakingIdx] = useState<number | null>(null);
   const phrases = getPhrasesForDestination(destination);
   const preview = phrases.slice(0, 4);
   const rest = phrases.slice(4);
 
-  const speak = (phrase: Phrase) => {
-    Speech.speak(phrase.native, {
-      language: destination.toLowerCase().includes('japan') ? 'ja-JP' : 'en-US',
-      rate: 0.7,
-    });
-  };
+  const speak = useCallback(async (phrase: Phrase, index: number) => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    setSpeakingIdx(index);
+    try {
+      await pronounce(phrase.native);
+    } catch {
+      // Non-critical — fail silently
+    } finally {
+      setSpeakingIdx(null);
+    }
+  }, []);
 
   const list = expanded ? phrases : preview;
 
@@ -55,13 +62,21 @@ export default function LanguageSurvivalSection({ destination }: LanguageSurviva
         {list.map((p, i) => (
           <Pressable
             key={i}
-            onPress={() => speak(p)}
-            style={({ pressed }) => [styles.row, { opacity: pressed ? 0.9 : 1 }]}
+            onPress={() => speak(p, i)}
+            accessibilityLabel={`Hear ${p.english} in ${destination} language`}
+            style={({ pressed }) => [styles.row, { opacity: pressed ? 0.9 : 1, minHeight: 44 }]}
           >
-            <View style={styles.phraseWrap}>
-              <Text style={styles.native}>{p.native}</Text>
-              <Text style={styles.phonetic}>{p.phonetic}</Text>
-              <Text style={styles.english}>{p.english}</Text>
+            <View style={styles.phraseRow}>
+              <View style={styles.phraseWrap}>
+                <Text style={styles.native}>{p.native}</Text>
+                <Text style={styles.phonetic}>{p.phonetic}</Text>
+                <Text style={styles.english}>{p.english}</Text>
+              </View>
+              <Volume2
+                size={16}
+                color={speakingIdx === i ? COLORS.gold : COLORS.creamMuted}
+                strokeWidth={2}
+              />
             </View>
           </Pressable>
         ))}
@@ -103,6 +118,11 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
+  },
+  phraseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
   },
   phraseWrap: { flex: 1 },
   native: {

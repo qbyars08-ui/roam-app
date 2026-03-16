@@ -322,7 +322,7 @@ export default function SavedScreen() {
   const handleStory = useCallback(
     (trip: Trip) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      router.push({ pathname: '/trip-story', params: { tripId: trip.id } });
+      router.push({ pathname: '/trip-story', params: { tripId: trip.id } } as never);
     },
     [router]
   );
@@ -330,7 +330,7 @@ export default function SavedScreen() {
   const handleCountdown = useCallback(
     (trip: Trip) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      router.push({ pathname: '/trip-countdown', params: { tripId: trip.id, destination: trip.destination } });
+      router.push({ pathname: '/trip-countdown', params: { tripId: trip.id, destination: trip.destination } } as never);
     },
     [router]
   );
@@ -338,7 +338,7 @@ export default function SavedScreen() {
   const handleExpenses = useCallback(
     (trip: Trip) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      router.push({ pathname: '/expense-tracker', params: { tripId: trip.id, destination: trip.destination } });
+      router.push({ pathname: '/expense-tracker', params: { tripId: trip.id, destination: trip.destination } } as never);
     },
     [router]
   );
@@ -346,7 +346,7 @@ export default function SavedScreen() {
   const handlePhotos = useCallback(
     (trip: Trip) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      router.push({ pathname: '/trip-album', params: { tripId: trip.id, destination: trip.destination } });
+      router.push({ pathname: '/trip-album', params: { tripId: trip.id, destination: trip.destination } } as never);
     },
     [router]
   );
@@ -354,13 +354,13 @@ export default function SavedScreen() {
   const handleJournal = useCallback(
     (trip: Trip) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      router.push({ pathname: '/trip-journal', params: { tripId: trip.id, destination: trip.destination } });
+      router.push({ pathname: '/trip-journal', params: { tripId: trip.id, destination: trip.destination } } as never);
     },
     [router]
   );
 
   const handlePlan = useCallback(() => {
-    router.push('/(tabs)/generate');
+    router.push('/(tabs)/generate' as never);
   }, [router]);
 
   const handleCreateGroup = useCallback(() => {

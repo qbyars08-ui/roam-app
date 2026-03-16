@@ -71,7 +71,7 @@ export default function MoodDiscovery({ photoUrls: _photoUrls }: Props) {
       setPlanWizard({ destination: label });
       setShowResults(false);
       setSelectedMood(null);
-      router.push('/(tabs)/generate');
+      router.push('/(tabs)/generate' as never);
     },
     [setPlanWizard, router]
   );

@@ -1,6 +1,81 @@
-# ROAM AGENT BOARD
+# ROAM Agent Board — Updated March 16, 2026
 
-Last updated: 2026-03-15 (evening feature expansion pass)
+---
+
+## Composer 1 — Visual
+
+Full visual pass on onboarding screens. Make the hook screen genuinely beautiful. Dream vault redesign. Profile tab redesign. Use magazine editorial aesthetic (Cormorant Garamond italic headers, DM Sans body, DM Mono data). Dark UI only (#080F0A bg). Colors: sage #7CAF8A, cream #F5EDD8, coral #E8614A, gold #C9A84C.
+
+### Tasks
+
+- Redesign onboarding Screen 1 (the hook) — full bleed, text fades in, no signup
+- Redesign onboarding Screen 2 (magic reveal) — streaming demo trip
+- Design Dream Vault cards — full bleed photo, 350px, saved date, price estimate
+- Redesign Profile tab — travel identity, Travel DNA preview, subscription status
+- Visual pass on paywall screen — annual prominent with gold badge
+
+---
+
+## Composer 2 — Builder
+
+Wire RevenueCat paywall completely. Affiliate link audit and fix. Dream vault price calculation logic. Onboarding flow implementation.
+
+### Tasks
+
+- Verify RevenueCat paywall flow end to end (free limit -> paywall -> purchase -> unlimited)
+- Wire affiliate links: hotels -> Booking.com, flights -> Skyscanner, activities -> GetYourGuide
+- Build Dream Vault price estimate (use what-if-calculator.ts for cost estimation)
+- Implement new onboarding flow: Hook -> Magic Reveal -> One Question -> Where To -> Signup
+- Wire social proof queries (trip counts per destination from Supabase)
+
+---
+
+## Composer 3 — Debug
+
+Run full pre-launch checklist. Fix every console error. Test paywall flow end to end. Test affiliate links.
+
+### Tasks
+
+- Run npx tsc --noEmit — verify 0 errors
+- Test generate flow 5 times with different destinations
+- Test paywall: exhaust free tier, verify paywall appears, test purchase
+- Test auth: Google, Apple, Email, Guest mode
+- Audit all console.error and console.warn in production
+- Verify no placeholder text visible to users
+- Report to system_health.md
+
+---
+
+## Composer 4 — Research/Growth
+
+Write Reddit launch post. Write DACH creator DM templates. Research Product Hunt strategy.
+
+### Tasks
+
+- Draft Reddit post for r/solotravel and r/backpacking (genuine, not spammy)
+- Write 3 DACH creator DM templates (German/Austrian/Swiss travel influencers)
+- Research Product Hunt launch: timing, tagline, first comment strategy
+- Draft email waitlist announcement for launch day
+- Write to growth_dashboard.md with full strategy
+
+---
+
+## Composer 5 — QA/Captain
+
+Test every tab on mobile. Test full onboarding as new user. Test generate flow.
+
+### Tasks
+
+- Test all 5 tabs load correctly with real data
+- Test generate flow: quick mode + conversation mode
+- Test onboarding as brand new user (clear AsyncStorage)
+- Test offline mode (airplane mode -> prep tab should work)
+- Test share card generation and native share sheet
+- Test language switching (EN/ES/FR/JA)
+- Report to test_results.md
+- Update captain_status.md with overall status
+
+---
 
 ## Agent Registry
 
@@ -23,171 +98,6 @@ Last updated: 2026-03-15 (evening feature expansion pass)
 | CP | Captain | claude-sonnet-4-5 | captain.mdc | ROAM — Captain | /captain_status.md | ACTIVE |
 | -- | Orchestrator | claude-opus-4-5 | orchestrator.mdc | (Claude Code) | /AGENT_BOARD.md | ACTIVE |
 
-## Current Sprint — FEATURE EXPANSION PASS (2026-03-15 evening)
-
-### What Just Shipped (Claude Code Orchestrator — this session)
-
-**New Screens (4):**
-- `app/before-you-land.tsx` — 24-hour pre-departure briefing (weather, currency, timezone, emergency, cultural tips, checklist)
-- `app/emergency-card.tsx` — bilingual medical card with allergies, meds, blood type translated to local language
-- `app/layover.tsx` — airport layover optimizer for 8 major airports (JFK, LAX, LHR, NRT, DXB, SIN, CDG, ICN)
-- `lib/layover-data.ts` — curated airport guides with transit info, in-airport perks, timed activities
-
-**New Components (6):**
-- `components/features/FlightPriceCalendar.tsx` — 6-week color-coded departure price grid
-- `components/features/RouteIntelCard.tsx` — flight intel for any route (avg price, best month, tips)
-- `components/features/SeasonalIntel.tsx` — why now is/isn't the right time to visit
-- `components/features/TravelStats.tsx` — compact travel history summary
-- `components/features/TripRecap.tsx` — shareable trip summary card with cost estimate
-- `lib/emergency-card.ts` — medical translations for 10 languages + AsyncStorage persistence
-
-**Integrations Wired (12):**
-- ROAM Score badge on Discover cards (bottom-right)
-- Body Intel CTA in Prep Health section + Emergency Card CTA in Emergency section
-- Before You Land CTA in Prep tab + itinerary
-- Emergency Medical Card CTA in Profile screen
-- FlightPriceCalendar in Flights tab (appears when origin + destination filled)
-- Layover Optimizer banner in Flights tab
-- Route Intelligence + Seasonal Intel in itinerary page
-- ROAM Score (lg) + Seasonal Intel + Route Intel on destination dashboard
-- TravelStats bar at top of Saved Trips list
-- All new screens added to feature flags + ExploreHub
-
-**Previous Session (overnight):**
-- Flights tab rework, polish pass, lazy loading, P0 bug fixes
-- Body Intel, Travel Card, Trip Journal, Go Now Feed, ROAM Score Badge
-- Flight intelligence engine, symptom checker, trip journal data layer
-
-### What's Live
-- **tryroam.netlify.app** — deployed with real Supabase credentials
-- 86 total screens/routes in the app
-- Zero TypeScript errors across entire codebase
-- Flights: hero + routes + price calendar + layover optimizer + Skyscanner links
-- Destination dashboard: ROAM Score + Seasonal Intel + Route Intel + weather + currency + crowds
-- Health: Body Intel + Emergency Card + Before You Land
-
----
-
-## AGENT TASKS (Pick up immediately)
-
-### Agent 01 — TESTER: Post-Deploy Smoke Test
-1. Open tryroam.netlify.app in incognito
-2. Test: Discover tab loads destinations with images
-3. Test: Plan tab — tap "Quick" → enter "Tokyo" → verify form works
-4. Test: Flights tab — verify hero renders, popular routes clickable, Skyscanner links open
-5. Test: People tab — verify cards render, Connect button has haptic
-6. Test: Prep tab — pick a destination, verify safety score + emergency numbers render
-7. Test: Chat mode — type a message → verify response comes back (not "Something went wrong")
-8. Write findings to `/test_results.md`
-
-### Agent 02 — RESEARCHER: Destination Image CDN
-Current: Unsplash source URLs (unreliable, rate limited, no caching).
-Research: Cloudinary free tier vs Imgix vs self-hosted Supabase Storage.
-Goal: Reliable, fast, cached destination images with fallback gradients.
-Evaluate: latency, free tier limits, CDN edge locations, React Native Image compatibility.
-Write to `/research_report.md`.
-
-### Agent 03 — DESIGN ENFORCER: Post-Polish Audit
-The overnight pass improved all screens. Now audit for:
-1. Card height consistency across Discover, People, Flights tabs
-2. Font size hierarchy (headers 28-40pt, body 13-15pt, labels 11-12pt)
-3. Spacing rhythm (all gaps should be SPACING tokens, never magic numbers)
-4. Icon consistency (all lucide, strokeWidth={2}, size={20} default)
-5. Color token usage (grep for any remaining hardcoded hex/rgba)
-6. Button press states (all should have haptic + scale/opacity feedback)
-Write top 15 violations to `/design_audit.md`. Open PR for fixes.
-
-### Agent 04 — BUILDER: Three Builds
-1. **Stays tab rework** — same pattern as new Flights tab: hero + curated stays + Booking.com deep links (no broken APIs)
-2. **Food tab rework** — hero + curated restaurant sections + Google Maps deep links
-3. **Image loading resilience** — add gradient fallbacks when Unsplash fails, retry logic, skeleton during load
-All three are independent. Can run in parallel or sequence.
-
-### Agent 05 — DEBUGGER: TypeScript + Bundle Health
-1. Run `npx tsc --noEmit` — must be 0 errors
-2. Run `npx expo export --platform web` — verify clean build
-3. Check bundle size: `ls -la dist/_expo/static/js/web/` — report entry point size
-4. Verify no `placeholder.supabase.co` in deployed bundle
-5. Check for unused imports across all tab screens
-Write to `/system_health.md`.
-
-### Agent 06 — GROWTH: Conversion Funnel Audit
-Visit tryroam.netlify.app as a first-time user. Document:
-1. Time from landing to first trip generated (target: <60 seconds)
-2. Is the value prop clear within 3 seconds?
-3. Does the Discover tab make you want to tap a destination?
-4. After trip generation, is the share moment obvious?
-5. Is the waitlist/signup friction appropriate?
-6. Screenshot every screen, annotate what works and what doesn't
-Write to `/growth_dashboard.md`.
-
-### Agent 07 — MONETIZATION: Affiliate Link Audit
-1. Verify all Skyscanner links include `associateId=roam`
-2. Check Flights tab popular routes → each "Search" button opens correct Skyscanner URL
-3. Verify FlightCard, FlightPriceCard, FlightDealCard all use `getSkyscannerFlightUrl()`
-4. Check Booking.com links (stays tab) for AID parameter
-5. Audit affiliate click tracking: are PostHog events firing?
-Write to `/monetization_model.md`.
-
-### Agent 08 — SECURITY: Auth + Edge Function Audit
-1. Verify `ensureValidSession()` in `lib/claude.ts` upgrades guests correctly
-2. Test: guest user → chat → verify anonymous auth JWT is created
-3. Check edge function rate limiting still works for non-admin users
-4. Audit RLS policies on trips, chat_messages, waitlist_emails tables
-5. Check for any exposed API keys in client-side code
-6. Add `ADMIN_TEST_EMAILS=qbyars08@gmail.com` to Supabase secrets (if not done)
-Write to `/security_audit.md`.
-
-### Agent 09 — LOCALIZATION: Translation Coverage
-1. Grep for hardcoded English strings in all tab screens (index, plan, people, flights, prep)
-2. Check all i18n keys exist in en.ts, es.ts, fr.ts, ja.ts
-3. Verify new Flights tab copy has i18n keys (hero heading, popular routes, inspiration)
-4. Add missing German (de.ts) translations for DACH launch
-5. Verify prep tab emergency data for top 10 destinations
-Write to `/localization_audit.md`.
-
-### Agent 10 — ANALYTICS: Event Coverage
-1. Verify screen_view events fire on all 5 tabs
-2. Check: trip_generation_completed, flight_search, rate_limit_hit events
-3. Add missing events: flights_popular_route_tapped, flights_skyscanner_opened, flights_inspiration_tapped
-4. Verify PostHog is initialized and capturing events
-5. Draft UTM tracking spec for all external links (Skyscanner, Booking, Google Maps)
-Write to `/analytics_spec.md`.
-
-### Agent 11 — CONTENT: Copy Polish Pass
-All screens got polished overnight. Now do a final copy review:
-1. Every destination hook line in DESTINATIONS array — is it specific, not generic?
-2. Every empty state — does it invite action, not just describe emptiness?
-3. Every error message — is it human, not technical?
-4. Flights tab popular routes — do price estimates feel real?
-5. People tab bios — do they sound like real Gen Z travelers?
-6. Plan tab — does the empty state make a first-time user excited?
-Write to `/copy_library.md`.
-
-### Agent 12 — INVESTOR: Weekly Memo
-Write weekly memo covering:
-1. Overnight quality pass shipped (flights rework, polish, performance)
-2. P0 bugs fixed (chat, auth, deploy pipeline)
-3. User-facing improvements: 6 screens polished, Skyscanner affiliate flow live
-4. Technical wins: lazy loading, bundle optimization, smart rebuild
-5. Next week: stays/food tab rework, image CDN, DACH soft launch
-Write to `/weekly_memo.md`.
-
-### Agent 13 — DACH GROWTH: German Launch Prep
-1. Audit German App Store listing copy (title, subtitle, keywords, description)
-2. Write 5 German TikTok scripts for launch (15-30 seconds each)
-3. Research top 10 German travel micro-influencers (10k-100k followers)
-4. Draft German-language waitlist landing page copy
-5. Identify 3 German travel subreddits/forums for organic seeding
-Write to `/dach_scripts.md` and `/dach_influencers.md`.
-
-### Agent 14 — UGC ENGINE: Creator Outreach
-1. Draft 3 outreach email templates (micro, mid-tier, macro influencers)
-2. Create ambassador program spec (tiers, rewards, tracking)
-3. Design creator content brief template (what to show, brand guidelines, hashtags)
-4. Research competitor creator programs (Hopper, Wanderlog, TripAdvisor)
-Write to `/creator_outreach.md` and `/ambassador_program.md`.
-
 ---
 
 ## File Ownership
@@ -209,13 +119,17 @@ Write to `/creator_outreach.md` and `/ambassador_program.md`.
 | lib/analytics.ts | Agent 10 (Analytics) | Event tracking |
 | lib/i18n/ | Agent 09 (Localization) | Translations |
 
+---
+
 ## Blocked
 
 | Task | Blocker | Owner |
 |------|---------|-------|
 | Booking.com real AID | Quinn needs to sign up at partners.booking.com | Quinn |
-| Waitlist DB writes | Apply migration `20260325000001_waitlist_comprehensive_fix.sql` in Supabase SQL Editor | Quinn |
-| Admin rate limit bypass | Add `ADMIN_TEST_EMAILS=qbyars08@gmail.com` to Supabase secrets | Quinn |
+| Waitlist DB writes | Apply migration 20260325000001_waitlist_comprehensive_fix.sql in Supabase SQL Editor | Quinn |
+| Admin rate limit bypass | Add ADMIN_TEST_EMAILS=qbyars08@gmail.com to Supabase secrets | Quinn |
+
+---
 
 ## Agent Communication Protocol
 

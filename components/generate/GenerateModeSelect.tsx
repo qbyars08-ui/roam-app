@@ -1,7 +1,7 @@
 // =============================================================================
 // ROAM — Generate Mode Selection (first visit only)
 // =============================================================================
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,9 +12,11 @@ import {
   type TextStyle,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from '../../lib/haptics';
 import { Zap, MessageCircle, ChevronRight } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { ONBOARDING_ANSWERS } from '../../lib/storage-keys';
 
 export type GenerateMode = 'quick' | 'conversation';
 
@@ -23,33 +25,90 @@ interface GenerateModeSelectProps {
   firstTime?: boolean;
 }
 
+interface OnboardingAnswers {
+  travelStyle?: string;
+  priority?: string;
+  budget?: string;
+}
+
 const CARD_ACENTS: Record<GenerateMode, string> = {
   quick: COLORS.sage,
   conversation: COLORS.gold,
 };
+
+const STYLE_SUBTITLES: Record<string, string> = {
+  solo: 'Solo trips need good plans.',
+  couple: 'Planning for two.',
+  friends: 'Group trip incoming.',
+  family: 'Family adventure starts here.',
+};
+
+const BUDGET_SUFFIXES: Record<string, string> = {
+  backpacker: 'Keeping it lean.',
+  comfort: 'Comfort over flashy.',
+  'treat-yourself': 'Treating yourself right.',
+  'no-budget': 'No budget limits.',
+};
+
+function buildPersonalizedSubtitle(answers: OnboardingAnswers): string {
+  const styleBase = answers.travelStyle
+    ? (STYLE_SUBTITLES[answers.travelStyle] ?? null)
+    : null;
+  const budgetSuffix = answers.budget
+    ? (BUDGET_SUFFIXES[answers.budget] ?? null)
+    : null;
+
+  if (styleBase && budgetSuffix) {
+    return `${styleBase} ${budgetSuffix} Where to?`;
+  }
+  if (styleBase) {
+    return `${styleBase} Where to?`;
+  }
+  return 'Pick a place. In 30 seconds you\u2019ll have a full trip plan with real restaurants, real directions, and real costs.';
+}
 
 export default function GenerateModeSelect({ onSelect, firstTime = false }: GenerateModeSelectProps) {
   const { t } = useTranslation();
   const fade = useRef(new Animated.Value(0)).current;
   const quickBorder = useRef(new Animated.Value(0)).current;
   const convBorder = useRef(new Animated.Value(0)).current;
+  const [onboardingAnswers, setOnboardingAnswers] = useState<OnboardingAnswers | null>(null);
 
   useEffect(() => {
     Animated.timing(fade, { toValue: 1, duration: 400, useNativeDriver: true }).start();
   }, [fade]);
 
-  const handlePress = (mode: GenerateMode) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const borderAnim = mode === 'quick' ? quickBorder : convBorder;
-    Animated.timing(borderAnim, { toValue: 1, duration: 200, useNativeDriver: false }).start(() => {
-      onSelect(mode);
-    });
-  };
+  useEffect(() => {
+    if (!firstTime) return;
+    AsyncStorage.getItem(ONBOARDING_ANSWERS)
+      .then((raw) => {
+        if (raw) {
+          const parsed = JSON.parse(raw) as OnboardingAnswers;
+          setOnboardingAnswers(parsed);
+        }
+      })
+      .catch(() => {
+        // silent — no onboarding data available
+      });
+  }, [firstTime]);
+
+  const handlePress = useCallback(
+    (mode: GenerateMode) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      const borderAnim = mode === 'quick' ? quickBorder : convBorder;
+      Animated.timing(borderAnim, { toValue: 1, duration: 200, useNativeDriver: false }).start(() => {
+        onSelect(mode);
+      });
+    },
+    [quickBorder, convBorder, onSelect],
+  );
 
   const headline = firstTime ? 'Where are you going?' : t('generate.title');
-  const subtitle = firstTime
-    ? 'Pick a place. In 30 seconds you\u2019ll have a full trip plan with real restaurants, real directions, and real costs.'
-    : 'How do you want to plan?';
+  const subtitle = useMemo(() => {
+    if (!firstTime) return 'How do you want to plan?';
+    if (onboardingAnswers) return buildPersonalizedSubtitle(onboardingAnswers);
+    return 'Pick a place. In 30 seconds you\u2019ll have a full trip plan with real restaurants, real directions, and real costs.';
+  }, [firstTime, onboardingAnswers]);
 
   return (
     <Animated.View style={[styles.container, { opacity: fade }]}>

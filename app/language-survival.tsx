@@ -16,7 +16,6 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Speech from 'expo-speech';
 import * as Haptics from '../lib/haptics';
-import { withComingSoon } from '../lib/with-coming-soon';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ChevronLeft, Volume2 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -419,4 +418,4 @@ const styles = StyleSheet.create({
   } as ViewStyle,
 });
 
-export default withComingSoon(LanguageSurvivalScreen, { routeName: 'language-survival', title: 'Language Survival' });
+export default LanguageSurvivalScreen;

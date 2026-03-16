@@ -50,7 +50,6 @@ import {
 } from '../lib/trip-journal';
 import { track } from '../lib/analytics';
 import { captureEvent } from '../lib/posthog';
-import { withComingSoon } from '../lib/with-coming-soon';
 
 // ---------------------------------------------------------------------------
 // Mood Selector
@@ -763,7 +762,4 @@ const styles = StyleSheet.create({
   } as TextStyle,
 });
 
-export default withComingSoon(TripJournalScreen, {
-  routeName: 'trip-journal',
-  title: 'Trip Journal',
-});
+export default TripJournalScreen;

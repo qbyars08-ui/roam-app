@@ -1,38 +1,32 @@
 // =============================================================================
-// ROAM — Pulse Tab (Local Pulse)
+// ROAM — Pulse Tab (Magazine Editorial Layout)
 // Time-aware recommendations, hyper-local tips, and seasonal intelligence.
+// Full visual reset — editorial, photo-driven, no filled card backgrounds.
 // =============================================================================
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
+  type ImageStyle,
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  Radio,
-  Clock,
-  Coffee,
-  Sun,
-  Sunset,
-  Moon,
-  MapPin,
-  ChevronRight,
-  Star,
-  Flower2,
-  Mountain,
-  TreePine,
-  Waves,
-  ThumbsUp,
-} from 'lucide-react-native';
+import { Radio, Clock } from 'lucide-react-native';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, HIDDEN_DESTINATIONS } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
 import { track } from '../../lib/analytics';
+import { getDestinationPhoto } from '../../lib/photos';
+import { getTimezoneByDestination } from '../../lib/timezone';
+import LiveFeedTicker from '../../components/features/LiveFeedTicker';
+import SocialProofBanner from '../../components/features/SocialProofBanner';
+import GoNowFeed from '../../components/features/GoNowFeed';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -42,8 +36,8 @@ interface TimeRec {
   timeSlot: string;
   label: string;
   description: string;
-  Icon: typeof Coffee;
-  color: string;
+  photo: string;
+  timeContext: string;
 }
 
 interface LocalTip {
@@ -57,8 +51,23 @@ interface SeasonalEvent {
   event: string;
   description: string;
   month: number;
-  Icon: typeof Flower2;
+  heroPhoto: string;
+  dateRange: string;
 }
+
+// ---------------------------------------------------------------------------
+// Destination photo cards config
+// ---------------------------------------------------------------------------
+
+const PULSE_DESTINATIONS = [
+  { label: 'Tokyo',       key: 'tokyo',       photo: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&q=80' },
+  { label: 'Bali',        key: 'bali',        photo: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&q=80' },
+  { label: 'Barcelona',   key: 'barcelona',   photo: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&q=80' },
+  { label: 'Paris',       key: 'paris',       photo: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&q=80' },
+  { label: 'Mexico City', key: 'mexico city', photo: 'https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?w=400&q=80' },
+  { label: 'Bangkok',     key: 'bangkok',     photo: 'https://images.unsplash.com/photo-1563492065599-3520f775eeed?w=400&q=80' },
+  { label: 'Lisbon',      key: 'lisbon',      photo: 'https://images.unsplash.com/photo-1558370781-d6196949e317?w=400&q=80' },
+];
 
 // ---------------------------------------------------------------------------
 // Time-aware recommendations engine
@@ -76,204 +85,447 @@ function getCurrentTimeSlot(): 'morning' | 'midday' | 'afternoon' | 'evening' | 
 const TIME_RECS: Record<string, Record<string, TimeRec[]>> = {
   tokyo: {
     morning: [
-      { timeSlot: '6-8 AM', label: 'Tsukiji Outer Market', description: 'Fresh sushi breakfast and tamagoyaki. Best before 8am when it gets crowded.', Icon: Coffee, color: COLORS.gold },
-      { timeSlot: '7-9 AM', label: 'Meiji Shrine', description: 'Peaceful morning walk through the forested path. Arrive before tour groups.', Icon: TreePine, color: COLORS.sage },
+      {
+        timeSlot: '6–8 AM',
+        label: 'Tsukiji Outer Market',
+        description: 'Fresh sushi breakfast and tamagoyaki. Best before 8am when it gets crowded.',
+        photo: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=800&q=80',
+        timeContext: 'Best now',
+      },
+      {
+        timeSlot: '7–9 AM',
+        label: 'Meiji Shrine',
+        description: 'Peaceful morning walk through the forested path. Arrive before tour groups.',
+        photo: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800&q=80',
+        timeContext: 'Until 9 AM',
+      },
     ],
     midday: [
-      { timeSlot: '11 AM-1 PM', label: 'Ramen Alley in Shinjuku', description: 'Skip the tourist spots. Fuunji for tsukemen, Nagi for niboshi ramen.', Icon: Coffee, color: COLORS.gold },
-      { timeSlot: '12-2 PM', label: 'Yanaka District', description: 'Old Tokyo neighborhood with zero tourists at lunch. Local eateries everywhere.', Icon: MapPin, color: COLORS.sage },
+      {
+        timeSlot: '11 AM–1 PM',
+        label: 'Ramen Alley, Shinjuku',
+        description: 'Skip the tourist spots. Fuunji for tsukemen, Nagi for niboshi ramen.',
+        photo: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800&q=80',
+        timeContext: 'Best now',
+      },
+      {
+        timeSlot: '12–2 PM',
+        label: 'Yanaka District',
+        description: 'Old Tokyo neighborhood with zero tourists at lunch. Local eateries everywhere.',
+        photo: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80',
+        timeContext: 'Until 2 PM',
+      },
     ],
     afternoon: [
-      { timeSlot: '3-5 PM', label: 'Shimokitazawa Vintage Shopping', description: 'Best vintage stores in Tokyo. Less crowded weekday afternoons.', Icon: Star, color: COLORS.coral },
-      { timeSlot: '4-5 PM', label: 'Yanaka Cemetery Sunset', description: 'Peaceful cherry tree-lined paths. Best golden hour light in Tokyo.', Icon: Sunset, color: COLORS.gold },
+      {
+        timeSlot: '3–5 PM',
+        label: 'Shimokitazawa',
+        description: 'Best vintage stores in Tokyo. Less crowded on weekday afternoons.',
+        photo: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=800&q=80',
+        timeContext: 'Best now',
+      },
+      {
+        timeSlot: '4–5 PM',
+        label: 'Yanaka Cemetery',
+        description: 'Peaceful cherry tree-lined paths. Best golden hour light in Tokyo.',
+        photo: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800&q=80',
+        timeContext: 'Golden hour',
+      },
     ],
     evening: [
-      { timeSlot: '6-8 PM', label: 'Golden Gai', description: 'Tiny bars seating 6-8 people. Tuesday-Thursday for fewer tourists. Cash only.', Icon: Moon, color: COLORS.coral },
-      { timeSlot: '7-9 PM', label: 'Omoide Yokocho', description: 'Smoky yakitori alley near Shinjuku. Locals go after 8pm.', Icon: Coffee, color: COLORS.gold },
+      {
+        timeSlot: '6–8 PM',
+        label: 'Golden Gai',
+        description: 'Tiny bars seating 6–8 people. Tuesday–Thursday for fewer tourists. Cash only.',
+        photo: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80',
+        timeContext: 'Until 2 AM',
+      },
+      {
+        timeSlot: '7–9 PM',
+        label: 'Omoide Yokocho',
+        description: 'Smoky yakitori alley near Shinjuku. Locals go after 8pm.',
+        photo: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=800&q=80',
+        timeContext: 'Until midnight',
+      },
     ],
     night: [
-      { timeSlot: '10 PM+', label: 'Konbini Run', description: 'Late-night convenience store food is a Tokyo experience. 7-Eleven onigiri, FamilyMart chicken.', Icon: Moon, color: COLORS.sage },
-      { timeSlot: '11 PM+', label: 'Shibuya Crossing', description: 'The iconic scramble is best experienced late at night with fewer crowds and full neon.', Icon: Star, color: COLORS.coral },
+      {
+        timeSlot: '10 PM+',
+        label: 'Konbini Run',
+        description: 'Late-night convenience store food is a Tokyo experience. 7-Eleven onigiri, FamilyMart chicken.',
+        photo: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=800&q=80',
+        timeContext: '24 hours',
+      },
+      {
+        timeSlot: '11 PM+',
+        label: 'Shibuya Crossing',
+        description: 'The iconic scramble is best late at night with fewer crowds and full neon.',
+        photo: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80',
+        timeContext: 'All night',
+      },
     ],
   },
   bali: {
     morning: [
-      { timeSlot: '6-8 AM', label: 'Tegallalang Rice Terrace', description: 'Arrive at opening. By 9am the Instagram crowds make it unbearable.', Icon: Sun, color: COLORS.gold },
-      { timeSlot: '7-9 AM', label: 'Canggu Beach Surf', description: 'Best waves before 9am. Rent a board from the local shops, not the branded ones.', Icon: Waves, color: COLORS.sage },
+      {
+        timeSlot: '6–8 AM',
+        label: 'Tegallalang Rice Terrace',
+        description: 'Arrive at opening. By 9am the Instagram crowds make it unbearable.',
+        photo: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80',
+        timeContext: 'Best before 9 AM',
+      },
+      {
+        timeSlot: '7–9 AM',
+        label: 'Canggu Beach Surf',
+        description: 'Best waves before 9am. Rent a board from local shops, not branded ones.',
+        photo: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=800&q=80',
+        timeContext: 'Best now',
+      },
     ],
     midday: [
-      { timeSlot: '11 AM-1 PM', label: 'Warung Babi Guling', description: 'Suckling pig is Bali\'s signature dish. Go to Ibu Oka in Ubud, not the tourist version.', Icon: Coffee, color: COLORS.gold },
-      { timeSlot: '12-2 PM', label: 'Tirta Empul Temple', description: 'Purification ritual temple. Quieter during lunch when tour buses leave.', Icon: MapPin, color: COLORS.sage },
+      {
+        timeSlot: '11 AM–1 PM',
+        label: 'Warung Babi Guling',
+        description: "Suckling pig is Bali's signature dish. Go to Ibu Oka in Ubud, not the tourist version.",
+        photo: 'https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=800&q=80',
+        timeContext: 'Lunch rush',
+      },
+      {
+        timeSlot: '12–2 PM',
+        label: 'Tirta Empul Temple',
+        description: 'Purification ritual temple. Quieter during lunch when tour buses leave.',
+        photo: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80',
+        timeContext: 'Until 2 PM',
+      },
     ],
     afternoon: [
-      { timeSlot: '3-5 PM', label: 'Ubud Art Market', description: 'Haggle in the afternoon when vendors are relaxed. Start at 30% of asking price.', Icon: Star, color: COLORS.coral },
-      { timeSlot: '4-6 PM', label: 'Uluwatu Temple Sunset', description: 'Kecak fire dance starts at sunset. Arrive 30 min early for good seats.', Icon: Sunset, color: COLORS.gold },
+      {
+        timeSlot: '4–6 PM',
+        label: 'Uluwatu Temple Sunset',
+        description: 'Kecak fire dance starts at sunset. Arrive 30 min early for good seats.',
+        photo: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80',
+        timeContext: 'Golden hour',
+      },
     ],
     evening: [
-      { timeSlot: '7-9 PM', label: 'Jimbaran Bay Seafood', description: 'Beach-side grilled seafood as the sun sets. Pick your fish from the display.', Icon: Coffee, color: COLORS.gold },
-      { timeSlot: '8 PM+', label: 'La Favela Seminyak', description: 'Bali\'s most iconic nightlife. Wednesday and Saturday are the best nights.', Icon: Moon, color: COLORS.coral },
+      {
+        timeSlot: '7–9 PM',
+        label: 'Jimbaran Bay Seafood',
+        description: 'Beach-side grilled seafood as the sun sets. Pick your fish from the display.',
+        photo: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=800&q=80',
+        timeContext: 'Until 10 PM',
+      },
     ],
     night: [
-      { timeSlot: '10 PM+', label: 'Potato Head Beach Club', description: 'Late-night DJ sets on the beach. The sunset deck is worth the premium.', Icon: Moon, color: COLORS.coral },
+      {
+        timeSlot: '10 PM+',
+        label: 'Potato Head Beach Club',
+        description: 'Late-night DJ sets on the beach. The sunset deck is worth the premium.',
+        photo: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80',
+        timeContext: 'Until 4 AM',
+      },
     ],
   },
   barcelona: {
     morning: [
-      { timeSlot: '8-10 AM', label: 'La Boqueria Market', description: 'Go before 10am. Locals shop early. Fresh fruit juice and jamón ibérico for breakfast.', Icon: Coffee, color: COLORS.gold },
-      { timeSlot: '9-11 AM', label: 'Park Güell', description: 'Book the earliest slot. Gaudi\'s masterpiece without the midday crush.', Icon: TreePine, color: COLORS.sage },
+      {
+        timeSlot: '8–10 AM',
+        label: 'La Boqueria Market',
+        description: 'Go before 10am. Locals shop early. Fresh fruit juice and jamón ibérico for breakfast.',
+        photo: 'https://images.unsplash.com/photo-1543783207-ec64e4d95325?w=800&q=80',
+        timeContext: 'Best before 10 AM',
+      },
+      {
+        timeSlot: '9–11 AM',
+        label: 'Park Güell',
+        description: "Book the earliest slot. Gaudi's masterpiece without the midday crush.",
+        photo: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&q=80',
+        timeContext: 'Until 11 AM',
+      },
     ],
     midday: [
-      { timeSlot: '1-3 PM', label: 'El Born Tapas Crawl', description: 'Skip Las Ramblas restaurants. El Born has the real tapas bars locals love.', Icon: Coffee, color: COLORS.gold },
-      { timeSlot: '2-4 PM', label: 'Barceloneta Beach', description: 'Post-lunch siesta on the beach. Bring your own drinks, beach bars overcharge.', Icon: Waves, color: COLORS.sage },
+      {
+        timeSlot: '1–3 PM',
+        label: 'El Born Tapas Crawl',
+        description: 'Skip Las Ramblas restaurants. El Born has the real tapas bars locals love.',
+        photo: 'https://images.unsplash.com/photo-1569470451072-68314f596aec?w=800&q=80',
+        timeContext: 'Lunch prime',
+      },
     ],
     afternoon: [
-      { timeSlot: '4-6 PM', label: 'Gothic Quarter Wander', description: 'Afternoon light through narrow medieval streets. Best photography time.', Icon: Sun, color: COLORS.gold },
-      { timeSlot: '5-7 PM', label: 'Bunkers del Carmel', description: 'Best free viewpoint in Barcelona. Bring wine and snacks for sunset.', Icon: Sunset, color: COLORS.coral },
+      {
+        timeSlot: '5–7 PM',
+        label: 'Bunkers del Carmel',
+        description: 'Best free viewpoint in Barcelona. Bring wine and snacks for sunset.',
+        photo: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&q=80',
+        timeContext: 'Golden hour',
+      },
     ],
     evening: [
-      { timeSlot: '9-11 PM', label: 'Dinner Time', description: 'Locals eat at 9-10pm. Book ahead. Cal Pep for seafood, Can Culleretes for Catalan classics.', Icon: Coffee, color: COLORS.gold },
-      { timeSlot: '10 PM+', label: 'Raval Bar Hopping', description: 'Start at Bar Marsella (absinthe since 1820), end wherever the night takes you.', Icon: Moon, color: COLORS.coral },
+      {
+        timeSlot: '9–11 PM',
+        label: 'Dinner in Barcelona',
+        description: 'Locals eat at 9-10pm. Cal Pep for seafood, Can Culleretes for Catalan classics.',
+        photo: 'https://images.unsplash.com/photo-1543783207-ec64e4d95325?w=800&q=80',
+        timeContext: 'Best 9–11 PM',
+      },
     ],
     night: [
-      { timeSlot: '12 AM+', label: 'Razzmatazz', description: 'Five rooms of music. Barcelona\'s nightlife doesn\'t peak until 2am.', Icon: Moon, color: COLORS.coral },
+      {
+        timeSlot: '12 AM+',
+        label: 'Razzmatazz',
+        description: "Five rooms of music. Barcelona's nightlife doesn't peak until 2am.",
+        photo: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&q=80',
+        timeContext: 'Until dawn',
+      },
     ],
   },
   paris: {
     morning: [
-      { timeSlot: '7-9 AM', label: 'Rue Cler Market Street', description: 'Morning baguette run like a Parisian. Fresh croissants, cheese, charcuterie.', Icon: Coffee, color: COLORS.gold },
-      { timeSlot: '8-10 AM', label: 'Jardin du Luxembourg', description: 'Morning jog or walk among the fountains before tourists arrive.', Icon: TreePine, color: COLORS.sage },
+      {
+        timeSlot: '7–9 AM',
+        label: 'Rue Cler Market Street',
+        description: 'Morning baguette run like a Parisian. Fresh croissants, cheese, charcuterie.',
+        photo: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80',
+        timeContext: 'Best before 9 AM',
+      },
     ],
     midday: [
-      { timeSlot: '12-2 PM', label: 'Le Marais Falafel', description: 'L\'As du Fallafel on Rue des Rosiers. The line is worth it, trust us.', Icon: Coffee, color: COLORS.gold },
-      { timeSlot: '1-3 PM', label: 'Musée d\'Orsay', description: 'Less crowded than the Louvre. Impressionist collection is world-class.', Icon: Star, color: COLORS.sage },
+      {
+        timeSlot: '12–2 PM',
+        label: 'Le Marais Falafel',
+        description: "L'As du Fallafel on Rue des Rosiers. The line is worth it, trust us.",
+        photo: 'https://images.unsplash.com/photo-1478135467691-82ab4014be5d?w=800&q=80',
+        timeContext: 'Lunch only',
+      },
     ],
     afternoon: [
-      { timeSlot: '3-5 PM', label: 'Canal Saint-Martin', description: 'Parisian hipster neighborhood. Sit by the canal with a book and café crème.', Icon: Sun, color: COLORS.gold },
-      { timeSlot: '4-6 PM', label: 'Sacré-Coeur Steps', description: 'Golden hour from Montmartre. Bring wine (yes, it\'s legal). Best sunset spot.', Icon: Sunset, color: COLORS.coral },
+      {
+        timeSlot: '4–6 PM',
+        label: 'Sacré-Coeur Steps',
+        description: "Golden hour from Montmartre. Bring wine (yes, it's legal). Best sunset spot.",
+        photo: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80',
+        timeContext: 'Golden hour',
+      },
     ],
     evening: [
-      { timeSlot: '7-9 PM', label: 'Apéro on Seine', description: 'Buy wine and cheese from Nicolas, sit on the banks. Pure Paris.', Icon: Moon, color: COLORS.gold },
-      { timeSlot: '8-10 PM', label: 'Dinner in Belleville', description: 'Paris\'s most diverse food neighborhood. Chinese, Vietnamese, Tunisian. Real Paris.', Icon: Coffee, color: COLORS.coral },
+      {
+        timeSlot: '7–9 PM',
+        label: 'Apéro on Seine',
+        description: 'Buy wine and cheese from Nicolas, sit on the banks. Pure Paris.',
+        photo: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=800&q=80',
+        timeContext: 'Until midnight',
+      },
     ],
     night: [
-      { timeSlot: '10 PM+', label: 'Oberkampf Bar Crawl', description: 'Start at Café Charbon, let the night unfold. Paris after midnight is magic.', Icon: Moon, color: COLORS.coral },
+      {
+        timeSlot: '10 PM+',
+        label: 'Oberkampf Bar Crawl',
+        description: 'Start at Café Charbon, let the night unfold. Paris after midnight is magic.',
+        photo: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80',
+        timeContext: 'Until 4 AM',
+      },
     ],
   },
   'mexico city': {
     morning: [
-      { timeSlot: '7-9 AM', label: 'Chilaquiles at a Fondita', description: 'Skip the hotel breakfast. Any fondita (small restaurant) serves perfect chilaquiles.', Icon: Coffee, color: COLORS.gold },
-      { timeSlot: '8-10 AM', label: 'Chapultepec Park', description: 'Morning walk in the largest urban park in the Americas. Free on Sundays.', Icon: TreePine, color: COLORS.sage },
+      {
+        timeSlot: '7–9 AM',
+        label: 'Chilaquiles at a Fondita',
+        description: 'Skip the hotel breakfast. Any fondita serves perfect chilaquiles.',
+        photo: 'https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?w=800&q=80',
+        timeContext: 'Breakfast only',
+      },
     ],
     midday: [
-      { timeSlot: '12-2 PM', label: 'Mercado de la Merced', description: 'Massive local market. Skip the tourist markets, this is where CDMX eats.', Icon: Coffee, color: COLORS.gold },
-      { timeSlot: '1-3 PM', label: 'Roma Norte Café Hop', description: 'Best specialty coffee in Latin America. Buna, Quentin, Blend Station.', Icon: Coffee, color: COLORS.sage },
+      {
+        timeSlot: '1–3 PM',
+        label: 'Roma Norte Café Hop',
+        description: 'Best specialty coffee in Latin America. Buna, Quentin, Blend Station.',
+        photo: 'https://images.unsplash.com/photo-1585464231875-d9ef1f5ad396?w=800&q=80',
+        timeContext: 'Best 1–4 PM',
+      },
     ],
     afternoon: [
-      { timeSlot: '3-5 PM', label: 'Coyoacán', description: 'Frida Kahlo\'s neighborhood. Book Casa Azul tickets in advance.', Icon: Star, color: COLORS.gold },
-      { timeSlot: '4-6 PM', label: 'Terraza Catedral Rooftop', description: 'Mezcal sunset overlooking the Zócalo. Best rooftop view in the city.', Icon: Sunset, color: COLORS.coral },
+      {
+        timeSlot: '4–6 PM',
+        label: 'Terraza Catedral',
+        description: 'Mezcal sunset overlooking the Zócalo. Best rooftop view in the city.',
+        photo: 'https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?w=800&q=80',
+        timeContext: 'Golden hour',
+      },
     ],
     evening: [
-      { timeSlot: '7-9 PM', label: 'Tacos Al Pastor', description: 'El Huequito or Taquería Orinoco. The al pastor here is what taco dreams are made of.', Icon: Coffee, color: COLORS.gold },
-      { timeSlot: '9 PM+', label: 'Lucha Libre Wrestling', description: 'Arena México on Friday nights. Buy mask souvenirs. Pure CDMX culture.', Icon: Star, color: COLORS.coral },
+      {
+        timeSlot: '7–9 PM',
+        label: 'Tacos Al Pastor',
+        description: 'El Huequito or Taquería Orinoco. The al pastor here is what taco dreams are made of.',
+        photo: 'https://images.unsplash.com/photo-1585464231875-d9ef1f5ad396?w=800&q=80',
+        timeContext: 'Until midnight',
+      },
     ],
     night: [
-      { timeSlot: '10 PM+', label: 'Condesa Bar Scene', description: 'Start at Baltra Bar for cocktails, end at Salón Los Ángeles for salsa dancing.', Icon: Moon, color: COLORS.coral },
+      {
+        timeSlot: '10 PM+',
+        label: 'Condesa Bar Scene',
+        description: 'Start at Baltra Bar for cocktails, end at Salón Los Ángeles for salsa dancing.',
+        photo: 'https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?w=800&q=80',
+        timeContext: 'Until 3 AM',
+      },
+    ],
+  },
+  bangkok: {
+    morning: [
+      {
+        timeSlot: '7–9 AM',
+        label: 'Wat Pho at Opening',
+        description: 'The reclining Buddha before tour buses arrive. Worth the early start.',
+        photo: 'https://images.unsplash.com/photo-1563492065599-3520f775eeed?w=800&q=80',
+        timeContext: 'Opens 8 AM',
+      },
+    ],
+    midday: [
+      {
+        timeSlot: '12–2 PM',
+        label: 'Or Tor Kor Market',
+        description: 'The finest fresh market in Bangkok. Better produce, better food, zero tourist pricing.',
+        photo: 'https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=800&q=80',
+        timeContext: 'Until 3 PM',
+      },
+    ],
+    afternoon: [
+      {
+        timeSlot: '3–5 PM',
+        label: 'Chatuchak Weekend Market',
+        description: '15,000+ stalls. Go Saturday morning for best selection, least heat.',
+        photo: 'https://images.unsplash.com/photo-1563492065599-3520f775eeed?w=800&q=80',
+        timeContext: 'Sat & Sun only',
+      },
+    ],
+    evening: [
+      {
+        timeSlot: '7–10 PM',
+        label: 'Chinatown Street Food',
+        description: 'Yaowarat Road at night. Crab omelets, roast duck, mango sticky rice. Arrive hungry.',
+        photo: 'https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=800&q=80',
+        timeContext: 'Best after 7 PM',
+      },
+    ],
+    night: [
+      {
+        timeSlot: '11 PM+',
+        label: 'Khao San Road',
+        description: 'Messy, loud, totally unapologetic. For when you need to switch your brain off.',
+        photo: 'https://images.unsplash.com/photo-1563492065599-3520f775eeed?w=800&q=80',
+        timeContext: 'Until dawn',
+      },
+    ],
+  },
+  lisbon: {
+    morning: [
+      {
+        timeSlot: '8–10 AM',
+        label: 'Pastel de Nata at Manteigaria',
+        description: 'Shorter line than Pastéis de Belém, arguably better. Order two. Eat them warm.',
+        photo: 'https://images.unsplash.com/photo-1558370781-d6196949e317?w=800&q=80',
+        timeContext: 'Fresh until noon',
+      },
+    ],
+    midday: [
+      {
+        timeSlot: '1–3 PM',
+        label: 'LX Factory Sunday Market',
+        description: 'Best brunch, bookshops, and flea market in Lisbon. Go Saturday afternoon.',
+        photo: 'https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=800&q=80',
+        timeContext: 'Sat & Sun only',
+      },
+    ],
+    afternoon: [
+      {
+        timeSlot: '5–7 PM',
+        label: 'Miradouro da Graça',
+        description: 'Best free sunset viewpoint. Bring wine (2 euros at the local shop nearby).',
+        photo: 'https://images.unsplash.com/photo-1558370781-d6196949e317?w=800&q=80',
+        timeContext: 'Golden hour',
+      },
+    ],
+    evening: [
+      {
+        timeSlot: '8–10 PM',
+        label: 'Alfama Fado',
+        description: 'The neighborhood was built for this music. Book a small fado house, not a tourist venue.',
+        photo: 'https://images.unsplash.com/photo-1558370781-d6196949e317?w=800&q=80',
+        timeContext: 'Starts 9 PM',
+      },
+    ],
+    night: [
+      {
+        timeSlot: '11 PM+',
+        label: 'Bairro Alto Bar Hop',
+        description: 'Bars spill onto the streets. Cheap wine, local crowd, zero pretension.',
+        photo: 'https://images.unsplash.com/photo-1558370781-d6196949e317?w=800&q=80',
+        timeContext: 'Until 4 AM',
+      },
     ],
   },
 };
 
 // ---------------------------------------------------------------------------
-// Hyper-local tips (10 per destination)
+// Hyper-local tips (5 per destination, shown max 5)
 // ---------------------------------------------------------------------------
 
 const LOCAL_TIPS: Record<string, LocalTip[]> = {
   tokyo: [
     { text: 'Train station ekiben (boxed lunches) are better and cheaper than any restaurant near tourist spots.', category: 'food', upvotes: 847 },
-    { text: 'The 100-yen stores (Daiso, Seria) have travel essentials, unique souvenirs, and kitchen gadgets. Better than any souvenir shop.', category: 'shopping', upvotes: 612 },
-    { text: 'Coin lockers at major stations cost 300-700 yen. Store bags and explore hands-free instead of going back to your hotel.', category: 'hack', upvotes: 534 },
     { text: 'Suica card works on ALL trains, buses, and most convenience stores. Load it once and forget about buying tickets.', category: 'transport', upvotes: 489 },
-    { text: 'Free WiFi is terrible in Tokyo. Get a pocket WiFi from the airport or an eSIM before you arrive.', category: 'tech', upvotes: 423 },
-    { text: 'Convenience store ATMs (7-Eleven) are the only ones that reliably accept foreign cards. Japan Post Bank also works.', category: 'money', upvotes: 398 },
     { text: 'Tipping is considered rude. Do not tip at restaurants, hotels, or taxis. The price is the price.', category: 'culture', upvotes: 367 },
-    { text: 'Shinjuku Station has 200+ exits. Screenshot your exact exit number or you will get lost. Google Maps works inside stations.', category: 'transport', upvotes: 345 },
-    { text: 'Department store basement floors (depachika) have the best food samples. Isetan and Takashimaya are legendary.', category: 'food', upvotes: 312 },
+    { text: 'Shinjuku Station has 200+ exits. Screenshot your exact exit number or you will get lost.', category: 'transport', upvotes: 345 },
     { text: 'Standing sushi bars near train stations are often better than sit-down tourist restaurants, and half the price.', category: 'food', upvotes: 289 },
   ],
   bali: [
     { text: 'Grab (ride-hailing) is technically banned in many tourist areas. Drivers will ask you to walk to a pickup point outside the zone.', category: 'transport', upvotes: 523 },
-    { text: 'Always negotiate the price BEFORE getting on a motorbike taxi. Or use Grab for a fixed price.', category: 'money', upvotes: 487 },
-    { text: 'Temple dress code is strict: sarong covering legs required. Free rentals available at most temples, but bringing your own is cheaper.', category: 'culture', upvotes: 434 },
+    { text: 'Temple dress code is strict: sarong covering legs required. Free rentals at most temples, but bringing your own is cheaper.', category: 'culture', upvotes: 434 },
     { text: 'The monkeys at Ubud Monkey Forest WILL steal your sunglasses, phone, and water bottle. Secure everything.', category: 'safety', upvotes: 412 },
-    { text: 'Bintang beer is 15k IDR at a warung but 80k IDR at a beach club. Drink at warungs, then go to the club.', category: 'money', upvotes: 389 },
-    { text: 'Canggu is surfer/digital nomad vibe, Seminyak is party, Ubud is spiritual, Uluwatu is cliffs and luxury. Pick based on your vibe.', category: 'planning', upvotes: 356 },
-    { text: 'Do NOT drink tap water or use it to brush teeth. Bali belly is real and will ruin 2-3 days of your trip.', category: 'health', upvotes: 334 },
-    { text: 'Learn "terima kasih" (thank you) and "berapa" (how much). Locals genuinely appreciate any Indonesian.', category: 'culture', upvotes: 312 },
-    { text: 'Rent a scooter only if you have riding experience. Bali traffic is chaotic and medical evacuation is expensive.', category: 'safety', upvotes: 298 },
+    { text: 'Do NOT drink tap water or use it to brush teeth. Bali belly is real and will ruin 2–3 days of your trip.', category: 'health', upvotes: 334 },
     { text: 'The real Balinese food is at warungs (small local restaurants), not the Instagram cafés. Nasi campur for $2 beats any $15 smoothie bowl.', category: 'food', upvotes: 276 },
   ],
   barcelona: [
-    { text: 'Pickpockets are extremely active on Las Ramblas, in the metro, and at beach. Use a crossbody bag and stay alert.', category: 'safety', upvotes: 634 },
-    { text: 'Locals eat dinner at 9-10 PM. If a restaurant is full at 7 PM, it is full of tourists. Wait for the real crowd.', category: 'food', upvotes: 567 },
-    { text: 'The T-Casual metro card gives you 10 rides for about 11 euros. Way cheaper than individual tickets.', category: 'transport', upvotes: 489 },
+    { text: 'Pickpockets are extremely active on Las Ramblas, in the metro, and at the beach. Use a crossbody bag and stay alert.', category: 'safety', upvotes: 634 },
+    { text: 'Locals eat dinner at 9–10 PM. If a restaurant is full at 7 PM, it is full of tourists. Wait for the real crowd.', category: 'food', upvotes: 567 },
     { text: 'Book Sagrada Familia tickets online weeks in advance. Walk-up is nearly impossible and double the price from resellers.', category: 'planning', upvotes: 456 },
-    { text: 'Vermouth (vermut) at 12-2 PM on a terrace is a Barcelona ritual. Order "un vermut" with olives and chips.', category: 'food', upvotes: 412 },
-    { text: 'Free tap water is required by law at all restaurants. Ask for "agua del grifo" instead of paying for bottled.', category: 'money', upvotes: 389 },
-    { text: 'Sunday morning at Barceloneta beach is when locals play. Weekday mornings for swimming, avoid weekend afternoons.', category: 'planning', upvotes: 345 },
-    { text: 'Learn basic Catalan greetings. Barcelona is NOT just Spanish — Catalan identity matters to locals.', category: 'culture', upvotes: 323 },
-    { text: 'The rooftop of the Cathedral of Barcelona is 3 euros and has better views than most paid attractions.', category: 'hack', upvotes: 298 },
-    { text: 'El Born neighborhood has the best tapas, cocktails, and vibe. Skip Las Ramblas entirely for food and nightlife.', category: 'food', upvotes: 276 },
+    { text: 'Vermouth at 12–2 PM on a terrace is a Barcelona ritual. Order "un vermut" with olives and chips.', category: 'food', upvotes: 412 },
+    { text: 'El Born neighborhood has the best tapas, cocktails, and vibe. Skip Las Ramblas entirely for food.', category: 'food', upvotes: 276 },
   ],
   paris: [
     { text: 'Boulangeries with "Artisan Boulanger" on the sign are legally certified. These have the real croissants.', category: 'food', upvotes: 589 },
-    { text: 'The Paris Museum Pass pays for itself in 2 days. Covers 60+ museums including Louvre, Orsay, Versailles.', category: 'money', upvotes: 534 },
     { text: 'Say "Bonjour" when entering ANY shop. Not saying hello is considered extremely rude and will affect service.', category: 'culture', upvotes: 512 },
     { text: 'The Louvre takes 3+ hours minimum. Do NOT try to see everything. Pick one wing and enjoy it.', category: 'planning', upvotes: 478 },
     { text: 'Water is free at restaurants — ask for "une carafe d\'eau" (tap water). Never pay for Evian at a café.', category: 'money', upvotes: 445 },
-    { text: 'Avoid Montmartre restaurants near Sacré-Coeur (tourist traps). Walk 5 minutes in any direction for real food.', category: 'food', upvotes: 423 },
-    { text: 'Navigo Easy card for metro. Load 10 tickets (carnet) for savings. Works on metro, bus, and RER in central Paris.', category: 'transport', upvotes: 398 },
-    { text: 'Parisians have café culture: sitting at a table costs more than standing at the bar. Prices are on a sign.', category: 'money', upvotes: 367 },
-    { text: 'The Seine at night is free and more romantic than any expensive restaurant. Buy wine at a Nicolas shop nearby.', category: 'hack', upvotes: 345 },
-    { text: 'Street crepe stands are a scam near landmarks. Real crêperies are in Montparnasse (Breton quarter). Night and day difference.', category: 'food', upvotes: 312 },
+    { text: 'The Seine at night is free and more romantic than any expensive restaurant. Buy wine at a Nicolas shop.', category: 'hack', upvotes: 345 },
   ],
   'mexico city': [
     { text: 'Uber works perfectly in CDMX and is very cheap. Use it for anything beyond walking distance, especially at night.', category: 'transport', upvotes: 567 },
     { text: 'Street tacos are the best tacos. Look for long lines of locals — that is your quality indicator.', category: 'food', upvotes: 534 },
     { text: 'Altitude is 2,240m (7,350ft). You WILL feel it. Take it easy day one, drink water, avoid alcohol first night.', category: 'health', upvotes: 489 },
     { text: 'Roma Norte and Condesa are the safest, most walkable neighborhoods for tourists. Base yourself here.', category: 'planning', upvotes: 456 },
-    { text: 'Never drink tap water. Use bottled even for brushing teeth your first few days until your stomach adjusts.', category: 'health', upvotes: 423 },
-    { text: 'Chapultepec Castle has the best view in the city and costs 85 pesos ($5). Free on Sundays for Mexican nationals.', category: 'hack', upvotes: 389 },
-    { text: 'Learn "la cuenta, por favor" (check please) and "sin picante" (no spice) — you will use both constantly.', category: 'culture', upvotes: 367 },
-    { text: 'Mezcal bars in Roma Norte have free tastings. Pare de Sufrir and Baltra are legendary.', category: 'food', upvotes: 345 },
-    { text: 'The pink taxis are safe and licensed. Avoid unmarked cars. Better yet, use Uber or DiDi.', category: 'safety', upvotes: 312 },
     { text: 'Sunday in Coyoacán is magic. Markets, street performers, families. This is real CDMX culture.', category: 'culture', upvotes: 289 },
   ],
   bangkok: [
     { text: 'BTS Skytrain and MRT are airconditioned and fast. Use them instead of taxis during rush hour (traffic is brutal).', category: 'transport', upvotes: 545 },
-    { text: 'Street food is safe if the stall has high turnover. Long line = fresh food = safe food.', category: 'food', upvotes: 512 },
-    { text: 'Never disrespect the King or the monarchy. This is a serious criminal offense in Thailand.', category: 'culture', upvotes: 489 },
     { text: 'Tuk-tuks that approach YOU are scams. They will take you to gem shops and suit stores for commission.', category: 'safety', upvotes: 467 },
     { text: 'Wat Pho has the best Thai massage school. 260 baht ($7) for a 30-minute massage. Skip the tourist spas.', category: 'hack', upvotes: 423 },
-    { text: 'Chatuchak Weekend Market has 15,000+ stalls. Go Saturday morning for best selection, least heat.', category: 'shopping', upvotes: 398 },
     { text: '7-Eleven has surprisingly amazing food. Toasties, onigiri, and Thai milk tea for under $2.', category: 'food', upvotes: 367 },
-    { text: 'Dress modestly for temples: cover shoulders and knees. They rent sarongs but it is easier to bring your own.', category: 'culture', upvotes: 345 },
-    { text: 'Grab (ride-hailing) is your best friend. Fixed prices, no haggling, AC. Use it for everything.', category: 'transport', upvotes: 323 },
     { text: 'Khao San Road is a tourist bubble. Locals go to Soi Rambuttri (next street over) for similar vibes, less chaos.', category: 'hack', upvotes: 298 },
   ],
   lisbon: [
     { text: 'Pastel de nata at Manteigaria, not Pastéis de Belém. Shorter line, arguably better pastéis.', category: 'food', upvotes: 478 },
     { text: 'Tram 28 is a pickpocket hotspot. Walk the route instead — it is beautiful and you see more.', category: 'safety', upvotes: 445 },
-    { text: 'LX Factory is a creative hub with the best brunch, bookshops, and weekend market. Go Saturday afternoon.', category: 'shopping', upvotes: 412 },
     { text: 'Portuguese people appreciate "obrigado/obrigada" (thank you, m/f). Basic Portuguese gets better service everywhere.', category: 'culture', upvotes: 389 },
-    { text: 'Wine is incredibly cheap. A great bottle is 5-8 euros at a shop. Order the house wine at restaurants.', category: 'money', upvotes: 367 },
-    { text: 'Alfama is best explored getting lost on purpose. Put your phone away and wander the medieval streets.', category: 'hack', upvotes: 345 },
-    { text: 'Time Out Market is good but overpriced. Cross the river to Almada for the same food at local prices.', category: 'money', upvotes: 323 },
-    { text: 'Miradouros (viewpoints) are free and have the best views. Miradouro da Graça at sunset with wine.', category: 'hack', upvotes: 298 },
-    { text: 'Uber works perfectly and is very affordable. Better than trying to find parking or navigate narrow streets.', category: 'transport', upvotes: 276 },
-    { text: 'Ginjinha (sour cherry liqueur) shots are 1 euro at stands in Rossio. One is enough — it is very sweet.', category: 'food', upvotes: 254 },
+    { text: 'Wine is incredibly cheap. A great bottle is 5–8 euros at a shop. Order the house wine at restaurants.', category: 'money', upvotes: 367 },
+    { text: 'Alfama is best explored by getting lost on purpose. Put your phone away and wander the medieval streets.', category: 'hack', upvotes: 345 },
   ],
 };
 
-// Default tips for destinations without specific data
 const DEFAULT_TIPS: LocalTip[] = [
   { text: 'Visit the local market on the first morning. It tells you everything about the culture in one place.', category: 'food', upvotes: 234 },
   { text: 'Learn "hello", "thank you", and "how much" in the local language. It transforms interactions.', category: 'culture', upvotes: 212 },
@@ -283,90 +535,206 @@ const DEFAULT_TIPS: LocalTip[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// Seasonal intelligence — March 2026
+// Seasonal events — March 2026
 // ---------------------------------------------------------------------------
 
 const SEASONAL_EVENTS: SeasonalEvent[] = [
-  { destination: 'Tokyo', event: 'Cherry Blossom Peak', description: 'Sakura season hits peak bloom in late March. Ueno Park and Meguro River are the top spots. Book 2+ months ahead — hotels sell out.', month: 3, Icon: Flower2 },
-  { destination: 'Amsterdam', event: 'Tulip Season Starting', description: 'Keukenhof Gardens open mid-March through mid-May. 7 million tulips in bloom. Book skip-the-line tickets online.', month: 3, Icon: Flower2 },
-  { destination: 'Iceland', event: 'Northern Lights Last Chance', description: 'March is the last reliable month for aurora borealis. Dark enough at night but warm enough to survive outside.', month: 3, Icon: Star },
-  { destination: 'Patagonia', event: 'Hiking Season Peak', description: 'Late March is autumn in Patagonia — golden landscapes, fewer crowds than January. Torres del Paine permits still available.', month: 3, Icon: Mountain },
-  { destination: 'India', event: 'Holi Festival', description: 'The festival of colors. Usually late March. Jaipur and Mathura have the best celebrations. Wear white clothes you do not mind losing.', month: 3, Icon: Star },
-  { destination: 'Mexico City', event: 'Spring Equinox at Teotihuacán', description: 'Thousands gather at the Pyramid of the Sun to absorb spring energy. Wear white. Go early to beat crowds.', month: 3, Icon: Sun },
-  { destination: 'Barcelona', event: 'Pre-Season Sweet Spot', description: 'March is Barcelona before the summer crowds. 15-18C, sunny, beaches empty, restaurants not packed. Perfect timing.', month: 3, Icon: Sun },
-  { destination: 'Marrakech', event: 'Perfect Weather Window', description: 'March is ideal in Morocco. 20-25C, no summer heat (40C+), flowers blooming in the Atlas Mountains.', month: 3, Icon: Flower2 },
-  { destination: 'New Zealand', event: 'Autumn Colors Begin', description: 'Late March: golden trees around Queenstown and Arrowtown. Wine harvest season in Marlborough. Fewer tourists than summer.', month: 3, Icon: TreePine },
-  { destination: 'Bali', event: 'Nyepi (Day of Silence)', description: 'Bali\'s New Year: the entire island shuts down for 24 hours. No lights, no noise, no travel. Book around it or experience the quiet.', month: 3, Icon: Star },
+  {
+    destination: 'Tokyo',
+    event: 'Cherry Blossom Peak',
+    description: 'Sakura season hits peak bloom in late March. Ueno Park and Meguro River are the top spots. Book 2+ months ahead — hotels sell out.',
+    month: 3,
+    heroPhoto: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800&q=80',
+    dateRange: 'Late March · 2 weeks',
+  },
+  {
+    destination: 'Bali',
+    event: 'Nyepi — Day of Silence',
+    description: "Bali's New Year: the entire island shuts down for 24 hours. No lights, no noise, no travel. Book around it or experience the quiet.",
+    month: 3,
+    heroPhoto: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80',
+    dateRange: 'March 28–29',
+  },
+  {
+    destination: 'Mexico City',
+    event: 'Spring Equinox at Teotihuacán',
+    description: 'Thousands gather at the Pyramid of the Sun to absorb spring energy. Wear white. Go early to beat crowds.',
+    month: 3,
+    heroPhoto: 'https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?w=800&q=80',
+    dateRange: 'March 20–21',
+  },
+  {
+    destination: 'Barcelona',
+    event: 'Pre-Season Sweet Spot',
+    description: 'March is Barcelona before the summer crowds. 15–18°C, sunny, beaches empty, restaurants not packed. Perfect timing.',
+    month: 3,
+    heroPhoto: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&q=80',
+    dateRange: 'All of March',
+  },
+];
+
+const SEASONAL_SMALL_EVENTS = [
+  {
+    name: 'Sakura Train Views',
+    dest: 'Tokyo',
+    date: 'Mar 25–Apr 5',
+    photo: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&q=80',
+  },
+  {
+    name: 'Marrakech Perfect Weather',
+    dest: 'Marrakech',
+    date: 'Mar–Apr',
+    photo: 'https://images.unsplash.com/photo-1597211684565-dca64d72bdfe?w=400&q=80',
+  },
+  {
+    name: 'Lisbon Sunshine Begins',
+    dest: 'Lisbon',
+    date: 'Mid March',
+    photo: 'https://images.unsplash.com/photo-1558370781-d6196949e317?w=400&q=80',
+  },
 ];
 
 // ---------------------------------------------------------------------------
-// Category chip colors
+// Local time display helper
 // ---------------------------------------------------------------------------
 
-const CATEGORY_COLORS: Record<string, string> = {
-  food: COLORS.gold,
-  shopping: COLORS.coral,
-  hack: COLORS.sage,
-  transport: COLORS.cream,
-  culture: COLORS.gold,
-  money: COLORS.sage,
-  safety: COLORS.coral,
-  health: COLORS.coral,
-  tech: COLORS.cream,
-  planning: COLORS.sage,
-};
+function getLocalTimeString(destKey: string): string {
+  const tz = getTimezoneByDestination(destKey);
+  if (!tz) return '';
+  try {
+    const now = new Date();
+    const dayName = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: tz }).format(now);
+    const timeStr = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: tz }).format(now);
+    return `${dayName} ${timeStr}`;
+  } catch {
+    return '';
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
 
-function TimeRecCard({ rec }: { rec: TimeRec }) {
+function DestinationCard({
+  dest,
+  active,
+  onPress,
+}: {
+  dest: typeof PULSE_DESTINATIONS[0];
+  active: boolean;
+  onPress: () => void;
+}) {
   return (
-    <View style={styles.timeRecCard}>
-      <View style={[styles.timeRecIcon, { backgroundColor: rec.color + '15' }]}>
-        <rec.Icon size={16} color={rec.color} strokeWidth={2} />
-      </View>
-      <View style={styles.timeRecContent}>
-        <View style={styles.timeRecHeader}>
-          <Text style={styles.timeRecLabel}>{rec.label}</Text>
-          <Text style={[styles.timeRecSlot, { color: rec.color }]}>{rec.timeSlot}</Text>
+    <Pressable
+      onPress={onPress}
+      accessibilityLabel={`Select ${dest.label}`}
+      accessibilityRole="button"
+      style={[styles.destCard, active && styles.destCardActive]}
+    >
+      <Image
+        source={{ uri: dest.photo }}
+        style={styles.destCardImage as ImageStyle}
+        contentFit="cover"
+        transition={200}
+        accessibilityLabel={`${dest.label} destination photo`}
+      />
+      <LinearGradient
+        colors={['transparent', COLORS.overlay]}
+        style={styles.destCardGradient}
+      />
+      <Text style={[styles.destCardLabel, active && styles.destCardLabelActive]}>
+        {dest.label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function EditorialCard({ rec }: { rec: TimeRec }) {
+  return (
+    <View style={styles.editorialCard}>
+      <Image
+        source={{ uri: rec.photo }}
+        style={styles.editorialCardPhoto as ImageStyle}
+        contentFit="cover"
+        transition={300}
+        accessibilityLabel={`${rec.label} — ${rec.timeSlot}`}
+      />
+      <LinearGradient
+        colors={['transparent', COLORS.overlayDark]}
+        style={styles.editorialCardGradient}
+      />
+      <View style={styles.editorialCardBottom}>
+        <View style={styles.editorialCardTextBlock}>
+          <Text style={styles.editorialCardTitle}>{rec.label}</Text>
+          <Text style={styles.editorialCardDesc}>{rec.description}</Text>
         </View>
-        <Text style={styles.timeRecDesc}>{rec.description}</Text>
+        <View style={styles.timeContextChip}>
+          <Text style={styles.timeContextText}>{rec.timeContext}</Text>
+        </View>
       </View>
     </View>
   );
 }
 
-function TipCard({ tip, index }: { tip: LocalTip; index: number }) {
+function LocalTipRow({ tip }: { tip: LocalTip }) {
   return (
-    <View style={styles.tipCard}>
-      <View style={styles.tipHeader}>
-        <View style={[styles.tipCategoryBadge, { backgroundColor: (CATEGORY_COLORS[tip.category] ?? COLORS.sage) + '15' }]}>
-          <Text style={[styles.tipCategoryText, { color: CATEGORY_COLORS[tip.category] ?? COLORS.sage }]}>
-            {tip.category}
-          </Text>
-        </View>
-        <View style={styles.tipUpvoteRow}>
-          <ThumbsUp size={12} color={COLORS.creamMuted} strokeWidth={2} />
-          <Text style={styles.tipUpvoteText}>{tip.upvotes}</Text>
-        </View>
-      </View>
+    <View style={styles.tipRow}>
       <Text style={styles.tipText}>{tip.text}</Text>
+      <Text style={styles.tipSource}>— Local tip · {tip.upvotes} agree</Text>
     </View>
   );
 }
 
-function SeasonalCard({ event }: { event: SeasonalEvent }) {
+function SeasonalHeroCard({ event }: { event: SeasonalEvent }) {
   return (
-    <View style={styles.seasonalCard}>
-      <View style={styles.seasonalHeader}>
-        <event.Icon size={18} color={COLORS.gold} strokeWidth={2} />
+    <View style={styles.seasonalHeroCard}>
+      <Image
+        source={{ uri: event.heroPhoto }}
+        style={styles.seasonalHeroPhoto as ImageStyle}
+        contentFit="cover"
+        transition={300}
+        accessibilityLabel={`${event.event} in ${event.destination}`}
+      />
+      <LinearGradient
+        colors={['transparent', COLORS.overlayDark]}
+        style={styles.seasonalHeroGradient}
+      />
+      <View style={styles.seasonalHeroBottom}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.seasonalDest}>{event.destination}</Text>
-          <Text style={styles.seasonalEvent}>{event.event}</Text>
+          <Text style={styles.seasonalHeroEvent}>{event.event}</Text>
+          <Text style={styles.seasonalHeroDate}>{event.dateRange}</Text>
         </View>
+        <Pressable
+          onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+          accessibilityLabel={`Learn more about ${event.event}`}
+          accessibilityRole="button"
+          style={styles.learnMoreButton}
+        >
+          <Text style={styles.seasonalLearnMore}>Read the brief →</Text>
+        </Pressable>
       </View>
-      <Text style={styles.seasonalDesc}>{event.description}</Text>
+    </View>
+  );
+}
+
+function SeasonalSmallCard({ item }: { item: typeof SEASONAL_SMALL_EVENTS[0] }) {
+  return (
+    <View style={styles.seasonalSmallCard}>
+      <Image
+        source={{ uri: item.photo }}
+        style={styles.seasonalSmallPhoto as ImageStyle}
+        contentFit="cover"
+        transition={200}
+        accessibilityLabel={`${item.name} — ${item.dest}`}
+      />
+      <LinearGradient
+        colors={['transparent', COLORS.overlayDim]}
+        style={styles.seasonalSmallGradient}
+      />
+      <View style={styles.seasonalSmallBottom}>
+        <Text style={styles.seasonalSmallName}>{item.name}</Text>
+        <Text style={styles.seasonalSmallDate}>{item.date}</Text>
+      </View>
     </View>
   );
 }
@@ -379,193 +747,148 @@ export default function PulseScreen() {
   const insets = useSafeAreaInsets();
   const trips = useAppStore((s) => s.trips);
 
-  const [selectedDest, setSelectedDest] = useState('');
-  const [activeSection, setActiveSection] = useState<'now' | 'tips' | 'seasonal'>('now');
+  const [selectedKey, setSelectedKey] = useState<string>(PULSE_DESTINATIONS[0].key);
 
   useEffect(() => {
     track({ type: 'screen_view', screen: 'pulse' });
   }, []);
 
-  // Auto-set destination from latest trip
+  // Auto-set from latest trip if it matches a pulse destination
   useEffect(() => {
-    if (!selectedDest && trips.length > 0) {
-      setSelectedDest(trips[0].destination);
+    if (trips.length > 0) {
+      const tripKey = trips[0].destination.toLowerCase().trim();
+      const match = PULSE_DESTINATIONS.find((d) => d.key === tripKey);
+      if (match) setSelectedKey(match.key);
     }
-  }, [selectedDest, trips]);
+  }, [trips]);
+
+  const selectedDest = useMemo(
+    () => PULSE_DESTINATIONS.find((d) => d.key === selectedKey) ?? PULSE_DESTINATIONS[0],
+    [selectedKey],
+  );
 
   const timeSlot = useMemo(() => getCurrentTimeSlot(), []);
-  const destKey = useMemo(() => selectedDest.toLowerCase().trim(), [selectedDest]);
 
-  const timeRecs = useMemo(() => {
-    return TIME_RECS[destKey]?.[timeSlot] ?? [];
-  }, [destKey, timeSlot]);
-
-  const localTips = useMemo(() => {
-    return LOCAL_TIPS[destKey] ?? DEFAULT_TIPS;
-  }, [destKey]);
-
-  const savedDests = useMemo(
-    () => [...new Set(trips.map((t) => t.destination))],
-    [trips],
+  const timeRecs = useMemo(
+    () => TIME_RECS[selectedKey]?.[timeSlot] ?? [],
+    [selectedKey, timeSlot],
   );
 
-  const allDests = useMemo(
-    () => Object.keys(TIME_RECS),
-    [],
+  const localTips = useMemo(
+    () => (LOCAL_TIPS[selectedKey] ?? DEFAULT_TIPS).slice(0, 5),
+    [selectedKey],
   );
 
-  const timeLabel = useMemo(() => {
-    const labels: Record<string, string> = {
-      morning: 'This morning',
-      midday: 'Right now',
-      afternoon: 'This afternoon',
-      evening: 'Tonight',
-      night: 'Late night',
-    };
-    return labels[timeSlot] ?? 'Right now';
-  }, [timeSlot]);
+  const localTimeString = useMemo(
+    () => getLocalTimeString(selectedKey),
+    [selectedKey],
+  );
 
-  const TimeIcon = useMemo(() => {
-    const icons: Record<string, typeof Coffee> = {
-      morning: Coffee,
-      midday: Sun,
-      afternoon: Sunset,
-      evening: Moon,
-      night: Moon,
-    };
-    return icons[timeSlot] ?? Clock;
-  }, [timeSlot]);
+  // Seasonal event for selected destination (if any)
+  const heroEvent = useMemo(
+    () => SEASONAL_EVENTS.find((e) => e.destination.toLowerCase() === selectedKey) ?? SEASONAL_EVENTS[0],
+    [selectedKey],
+  );
+
+  const handleSelectDest = useCallback((key: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedKey(key);
+  }, []);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Radio size={22} color={COLORS.coral} strokeWidth={2} />
+        <Radio size={20} color={COLORS.coral} strokeWidth={2} />
         <Text style={styles.headerTitle}>Pulse</Text>
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
       >
-        {/* Destination selector */}
-        <View style={styles.destSection}>
-          <Text style={styles.destLabel}>Destination</Text>
+        {/* ── Destination Photo Card Selector ── */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.destCardRow}
+          style={styles.destCardScroll}
+        >
+          {PULSE_DESTINATIONS.map((dest) => (
+            <DestinationCard
+              key={dest.key}
+              dest={dest}
+              active={dest.key === selectedKey}
+              onPress={() => handleSelectDest(dest.key)}
+            />
+          ))}
+        </ScrollView>
+
+        {/* ── Live Feed Ticker ── */}
+        <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}>
+          <LiveFeedTicker />
+        </View>
+
+        {/* ── Social Proof Banner (active trip) ── */}
+        {trips.length > 0 && (
+          <SocialProofBanner destination={trips[0].destination} />
+        )}
+
+        {/* ── Right Now Section ── */}
+        <View style={styles.section}>
+          <Text style={styles.sectionHeading}>
+            Right now in{'\n'}{selectedDest.label}
+          </Text>
+          {localTimeString ? (
+            <Text style={styles.sectionSubMono}>{localTimeString}</Text>
+          ) : null}
+
+          {timeRecs.length > 0 ? (
+            <View style={styles.editorialStack}>
+              {timeRecs.map((rec, i) => (
+                <EditorialCard key={i} rec={rec} />
+              ))}
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <Clock size={24} color={COLORS.creamDim} strokeWidth={1.5} />
+              <Text style={styles.emptyText}>
+                {`Insider picks for ${selectedDest.label} are on their way.`}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* ── What Locals Know Section ── */}
+        <View style={styles.section}>
+          <Text style={styles.sectionHeading}>What locals won't tell you</Text>
+          <View style={styles.tipsStack}>
+            {localTips.map((tip, i) => (
+              <LocalTipRow key={i} tip={tip} />
+            ))}
+          </View>
+        </View>
+
+        {/* ── Go Now Flight Deals ── */}
+        <GoNowFeed />
+
+        {/* ── This Month Section ── */}
+        <View style={[styles.section, styles.sectionLast]}>
+          <Text style={styles.sectionHeading}>Worth going now</Text>
+
+          <SeasonalHeroCard event={heroEvent} />
+
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.destChipRow}
+            contentContainerStyle={styles.seasonalSmallRow}
+            style={styles.seasonalSmallScroll}
           >
-            {savedDests.length > 0 &&
-              savedDests.map((dest) => {
-                const active = dest.toLowerCase() === destKey;
-                return (
-                  <Pressable
-                    key={dest}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setSelectedDest(dest);
-                    }}
-                    style={[styles.destChip, active && styles.destChipActive]}
-                  >
-                    <Text style={[styles.destChipText, active && styles.destChipTextActive]}>
-                      {dest}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            {allDests
-              .filter((d) => !savedDests.map((s) => s.toLowerCase()).includes(d))
-              .map((dest) => {
-                const active = dest === destKey;
-                const label = dest.charAt(0).toUpperCase() + dest.slice(1);
-                return (
-                  <Pressable
-                    key={dest}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setSelectedDest(label);
-                    }}
-                    style={[styles.destChip, active && styles.destChipActive]}
-                  >
-                    <Text style={[styles.destChipText, active && styles.destChipTextActive]}>
-                      {label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
+            {SEASONAL_SMALL_EVENTS.map((item, i) => (
+              <SeasonalSmallCard key={i} item={item} />
+            ))}
           </ScrollView>
         </View>
-
-        {/* Section tabs */}
-        <View style={styles.sectionTabRow}>
-          {(['now', 'tips', 'seasonal'] as const).map((section) => {
-            const active = section === activeSection;
-            const labels: Record<string, string> = { now: 'Right Now', tips: 'Local Tips', seasonal: 'This Month' };
-            return (
-              <Pressable
-                key={section}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setActiveSection(section);
-                }}
-                style={[styles.sectionTab, active && styles.sectionTabActive]}
-              >
-                <Text style={[styles.sectionTabText, active && styles.sectionTabTextActive]}>
-                  {labels[section]}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        {/* Section: Right Now */}
-        {activeSection === 'now' && (
-          <View style={styles.sectionContent}>
-            <View style={styles.timeHeader}>
-              <TimeIcon size={18} color={COLORS.gold} strokeWidth={2} />
-              <Text style={styles.timeLabel}>{timeLabel} in {selectedDest || 'your destination'}</Text>
-            </View>
-
-            {timeRecs.length > 0 ? (
-              timeRecs.map((rec, i) => <TimeRecCard key={i} rec={rec} />)
-            ) : (
-              <View style={styles.emptySection}>
-                <Clock size={28} color={COLORS.creamDim} strokeWidth={1.5} />
-                <Text style={styles.emptyText}>
-                  {selectedDest
-                    ? `We're building real-time recommendations for ${selectedDest}. Check back soon.`
-                    : 'Select a destination to see what\'s happening right now.'}
-                </Text>
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* Section: Local Tips */}
-        {activeSection === 'tips' && (
-          <View style={styles.sectionContent}>
-            <Text style={styles.sectionTitle}>
-              The things you did not know about {selectedDest || 'traveling'}
-            </Text>
-            {localTips.map((tip, i) => (
-              <TipCard key={i} tip={tip} index={i} />
-            ))}
-          </View>
-        )}
-
-        {/* Section: This Month */}
-        {activeSection === 'seasonal' && (
-          <View style={styles.sectionContent}>
-            <Text style={styles.sectionTitle}>What is happening this month</Text>
-            <Text style={styles.sectionSub}>
-              Seasonal events, natural phenomena, and why certain destinations are special right now.
-            </Text>
-            {SEASONAL_EVENTS.map((event, i) => (
-              <SeasonalCard key={i} event={event} />
-            ))}
-          </View>
-        )}
       </ScrollView>
     </View>
   );
@@ -580,246 +903,336 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.bg,
   } as ViewStyle,
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: 20,
     paddingVertical: SPACING.md,
   } as ViewStyle,
+
   headerTitle: {
     fontFamily: FONTS.header,
     fontSize: 28,
     color: COLORS.cream,
+    fontStyle: 'italic',
   } as TextStyle,
+
   scrollContent: {
-    paddingHorizontal: SPACING.lg,
     paddingBottom: 120,
   } as ViewStyle,
 
-  // Destination selector
-  destSection: {
-    gap: SPACING.sm,
-    marginBottom: SPACING.md,
+  // ── Destination card row ──
+  destCardScroll: {
+    marginBottom: 40,
   } as ViewStyle,
-  destLabel: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.creamMuted,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  } as TextStyle,
-  destChipRow: {
-    gap: SPACING.xs,
+
+  destCardRow: {
+    paddingHorizontal: 20,
+    gap: 12,
   } as ViewStyle,
-  destChip: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.bgElevated,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+
+  destCard: {
+    width: 200,
+    height: 140,
+    borderRadius: 12,
+    overflow: 'hidden',
+    opacity: 0.7,
+    position: 'relative',
   } as ViewStyle,
-  destChipActive: {
-    backgroundColor: COLORS.coral + '20',
-    borderColor: COLORS.coral,
+
+  destCardActive: {
+    opacity: 1,
+    borderWidth: 2,
+    borderColor: COLORS.sage,
   } as ViewStyle,
-  destChipText: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 13,
-    color: COLORS.creamMuted,
-  } as TextStyle,
-  destChipTextActive: {
-    color: COLORS.coral,
+
+  destCardImage: {
+    width: '100%',
+    height: '100%',
+  } as ViewStyle,
+
+  destCardGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 70,
+  } as ViewStyle,
+
+  destCardLabel: {
+    position: 'absolute',
+    bottom: 10,
+    left: 12,
+    fontFamily: FONTS.header,
+    fontSize: 18,
+    color: COLORS.cream,
+    fontStyle: 'italic',
   } as TextStyle,
 
-  // Section tabs
-  sectionTabRow: {
-    flexDirection: 'row',
-    gap: SPACING.xs,
-    marginBottom: SPACING.lg,
+  destCardLabelActive: {
+    color: COLORS.sage,
+  } as TextStyle,
+
+  // ── Sections ──
+  section: {
+    marginBottom: 40,
+    paddingHorizontal: 20,
   } as ViewStyle,
-  sectionTab: {
-    flex: 1,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.bgElevated,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
+
+  sectionLast: {
+    marginBottom: 0,
   } as ViewStyle,
-  sectionTabActive: {
-    backgroundColor: COLORS.coral + '15',
-    borderColor: COLORS.coral + '40',
-  } as ViewStyle,
-  sectionTabText: {
-    fontFamily: FONTS.bodySemiBold,
+
+  sectionHeading: {
+    fontFamily: FONTS.header,
+    fontSize: 32,
+    color: COLORS.cream,
+    fontStyle: 'italic',
+    marginBottom: 4,
+    lineHeight: 38,
+  } as TextStyle,
+
+  sectionSubMono: {
+    fontFamily: FONTS.mono,
     fontSize: 12,
-    color: COLORS.creamMuted,
-  } as TextStyle,
-  sectionTabTextActive: {
-    color: COLORS.coral,
+    color: COLORS.creamSoft,
+    marginBottom: 20,
+    letterSpacing: 0.3,
   } as TextStyle,
 
-  // Section content
-  sectionContent: {
-    gap: SPACING.md,
+  // ── Editorial card stack ──
+  editorialStack: {
+    gap: 16,
+    marginTop: 20,
   } as ViewStyle,
-  sectionTitle: {
+
+  editorialCard: {
+    height: 200,
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+  } as ViewStyle,
+
+  editorialCardPhoto: {
+    width: '100%',
+    height: '100%',
+  } as ViewStyle,
+
+  editorialCardGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 100,
+  } as ViewStyle,
+
+  editorialCardBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    padding: 14,
+  } as ViewStyle,
+
+  editorialCardTextBlock: {
+    flex: 1,
+    paddingRight: 8,
+  } as ViewStyle,
+
+  editorialCardTitle: {
     fontFamily: FONTS.header,
-    fontSize: 20,
+    fontSize: 22,
     color: COLORS.cream,
+    fontStyle: 'italic',
+    lineHeight: 26,
+    marginBottom: 2,
   } as TextStyle,
-  sectionSub: {
+
+  editorialCardDesc: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: COLORS.creamMuted,
+    color: COLORS.creamSoft,
     lineHeight: 18,
   } as TextStyle,
 
-  // Time header
-  timeHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
+  timeContextChip: {
+    backgroundColor: COLORS.sageLight,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    flexShrink: 0,
   } as ViewStyle,
-  timeLabel: {
-    fontFamily: FONTS.header,
-    fontSize: 20,
-    color: COLORS.cream,
-  } as TextStyle,
 
-  // Time rec card
-  timeRecCard: {
-    flexDirection: 'row',
-    gap: SPACING.md,
-    backgroundColor: COLORS.bgElevated,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  } as ViewStyle,
-  timeRecIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  } as ViewStyle,
-  timeRecContent: {
-    flex: 1,
-    gap: 4,
-  } as ViewStyle,
-  timeRecHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  } as ViewStyle,
-  timeRecLabel: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 14,
-    color: COLORS.cream,
-    flex: 1,
-  } as TextStyle,
-  timeRecSlot: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    letterSpacing: 0.5,
-  } as TextStyle,
-  timeRecDesc: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.creamMuted,
-    lineHeight: 18,
-  } as TextStyle,
-
-  // Tip card
-  tipCard: {
-    backgroundColor: COLORS.bgElevated,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    gap: SPACING.sm,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  } as ViewStyle,
-  tipHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  } as ViewStyle,
-  tipCategoryBadge: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
-    borderRadius: RADIUS.full,
-  } as ViewStyle,
-  tipCategoryText: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  } as TextStyle,
-  tipUpvoteRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  } as ViewStyle,
-  tipUpvoteText: {
+  timeContextText: {
     fontFamily: FONTS.mono,
     fontSize: 11,
-    color: COLORS.creamMuted,
+    color: COLORS.sage,
+    letterSpacing: 0.2,
   } as TextStyle,
+
+  // ── Tips ──
+  tipsStack: {
+    marginTop: 20,
+  } as ViewStyle,
+
+  tipRow: {
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.sage,
+    paddingLeft: 20,
+    marginBottom: 20,
+  } as ViewStyle,
+
   tipText: {
     fontFamily: FONTS.body,
-    fontSize: 13,
+    fontSize: 15,
     color: COLORS.cream,
-    lineHeight: 19,
+    lineHeight: 24,
+    marginBottom: 6,
   } as TextStyle,
 
-  // Seasonal card
-  seasonalCard: {
-    backgroundColor: COLORS.bgElevated,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    gap: SPACING.sm,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+  tipSource: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.creamDim,
+    letterSpacing: 0.2,
+  } as TextStyle,
+
+  // ── Seasonal hero ──
+  seasonalHeroCard: {
+    height: 220,
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+    marginTop: 20,
+    marginBottom: 16,
   } as ViewStyle,
-  seasonalHeader: {
+
+  seasonalHeroPhoto: {
+    width: '100%',
+    height: '100%',
+  } as ViewStyle,
+
+  seasonalHeroGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 120,
+  } as ViewStyle,
+
+  seasonalHeroBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
   } as ViewStyle,
-  seasonalDest: {
+
+  seasonalHeroEvent: {
+    fontFamily: FONTS.header,
+    fontSize: 28,
+    color: COLORS.cream,
+    fontStyle: 'italic',
+    lineHeight: 32,
+  } as TextStyle,
+
+  seasonalHeroDate: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.creamSoft,
+    marginTop: 4,
+    letterSpacing: 0.2,
+  } as TextStyle,
+
+  learnMoreButton: {
+    minHeight: 44,
+    minWidth: 44,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    flexShrink: 0,
+  } as ViewStyle,
+
+  seasonalLearnMore: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 13,
+    color: COLORS.sage,
+  } as TextStyle,
+
+  // ── Seasonal small cards ──
+  seasonalSmallScroll: {
+    marginLeft: -20,
+    marginRight: -20,
+  } as ViewStyle,
+
+  seasonalSmallRow: {
+    paddingHorizontal: 20,
+    gap: 12,
+  } as ViewStyle,
+
+  seasonalSmallCard: {
+    width: 160,
+    height: 120,
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+  } as ViewStyle,
+
+  seasonalSmallPhoto: {
+    width: '100%',
+    height: '100%',
+  } as ViewStyle,
+
+  seasonalSmallGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 70,
+  } as ViewStyle,
+
+  seasonalSmallBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 10,
+  } as ViewStyle,
+
+  seasonalSmallName: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 13,
+    color: COLORS.cream,
+    lineHeight: 17,
+  } as TextStyle,
+
+  seasonalSmallDate: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: COLORS.gold,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  } as TextStyle,
-  seasonalEvent: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 14,
-    color: COLORS.cream,
-  } as TextStyle,
-  seasonalDesc: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.creamMuted,
-    lineHeight: 18,
+    color: COLORS.creamSoft,
+    marginTop: 2,
+    letterSpacing: 0.2,
   } as TextStyle,
 
-  // Empty state
-  emptySection: {
+  // ── Empty state ──
+  emptyState: {
     alignItems: 'center',
     gap: SPACING.md,
     paddingVertical: SPACING.xl,
   } as ViewStyle,
+
   emptyText: {
     fontFamily: FONTS.body,
     fontSize: 14,
     color: COLORS.creamMuted,
     textAlign: 'center',
     lineHeight: 20,
-    paddingHorizontal: SPACING.lg,
   } as TextStyle,
 });

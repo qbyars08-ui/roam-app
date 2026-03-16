@@ -19,7 +19,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
 
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, BUDGETS, VIBES, FREE_TRIPS_PER_MONTH } from '../lib/constants';
-import { withComingSoon } from '../lib/with-coming-soon';
 import { useAppStore } from '../lib/store';
 import { generateItinerary, TripLimitReachedError } from '../lib/claude';
 import { isGuestUser } from '../lib/guest';
@@ -556,4 +555,4 @@ const styles = StyleSheet.create({
   } as TextStyle,
 });
 
-export default withComingSoon(GlobeScreen, { routeName: 'globe', title: 'Globe View' });
+export default GlobeScreen;

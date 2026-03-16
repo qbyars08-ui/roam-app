@@ -39,12 +39,13 @@ function getUserId(): string {
 // ---------------------------------------------------------------------------
 export async function getSocialProfile(): Promise<SocialProfile | null> {
   const userId = getUserId();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('social_profiles')
     .select('*')
     .eq('user_id', userId)
     .single();
-  return data as SocialProfile | null;
+  if (error || !data) return null;
+  return fromDbRow(data);
 }
 
 const PROFILE_LIMITS = {
@@ -77,17 +78,67 @@ function validateSocialProfileInput(profile: Partial<SocialProfile>): void {
   }
 }
 
+/** Convert camelCase SocialProfile fields to snake_case DB columns */
+function toDbRow(profile: Partial<SocialProfile>): Record<string, any> {
+  const row: Record<string, any> = {};
+  if (profile.displayName !== undefined) row.display_name = profile.displayName;
+  if (profile.ageRange !== undefined) row.age_range = profile.ageRange;
+  if (profile.travelStyle !== undefined) row.travel_style = profile.travelStyle;
+  if (profile.vibeTags !== undefined) row.vibe_tags = profile.vibeTags;
+  if (profile.bio !== undefined) row.bio = profile.bio;
+  if (profile.avatarEmoji !== undefined) row.avatar_emoji = profile.avatarEmoji;
+  if (profile.languages !== undefined) row.languages = profile.languages;
+  if (profile.verified !== undefined) row.verified = profile.verified;
+  // Flatten nested privacy settings into top-level columns
+  if (profile.privacy) {
+    if (profile.privacy.visibility !== undefined) row.visibility = profile.privacy.visibility;
+    if (profile.privacy.locationPrecision !== undefined) row.location_precision = profile.privacy.locationPrecision;
+    if (profile.privacy.showRealName !== undefined) row.show_real_name = profile.privacy.showRealName;
+    if (profile.privacy.showAge !== undefined) row.show_age = profile.privacy.showAge;
+    if (profile.privacy.openToMeetups !== undefined) row.open_to_meetups = profile.privacy.openToMeetups;
+    if (profile.privacy.autoDeleteChats !== undefined) row.auto_delete_chats = profile.privacy.autoDeleteChats;
+  }
+  return row;
+}
+
+/** Convert snake_case DB row to camelCase SocialProfile */
+function fromDbRow(row: any): SocialProfile {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    displayName: row.display_name ?? 'Traveler',
+    ageRange: row.age_range ?? '25-30',
+    travelStyle: row.travel_style ?? 'comfort',
+    vibeTags: row.vibe_tags ?? [],
+    bio: row.bio ?? '',
+    avatarEmoji: row.avatar_emoji ?? '',
+    languages: row.languages ?? ['English'],
+    verified: row.verified ?? false,
+    privacy: {
+      visibility: row.visibility ?? 'invisible',
+      locationPrecision: row.location_precision ?? 'neighborhood',
+      showRealName: row.show_real_name ?? false,
+      showAge: row.show_age ?? true,
+      openToMeetups: row.open_to_meetups ?? false,
+      autoDeleteChats: row.auto_delete_chats ?? true,
+    },
+    createdAt: row.created_at,
+  };
+}
+
 export async function upsertSocialProfile(
   profile: Partial<SocialProfile>
 ): Promise<SocialProfile | null> {
   validateSocialProfileInput(profile);
   const userId = getUserId();
-  const { data } = await supabase
+  const dbRow = toDbRow(profile);
+  const { data, error } = await supabase
     .from('social_profiles')
-    .upsert({ user_id: userId, ...profile }, { onConflict: 'user_id' })
+    .upsert({ user_id: userId, ...dbRow }, { onConflict: 'user_id' })
     .select()
     .single();
-  return data as SocialProfile | null;
+  if (error || !data) return null;
+  return fromDbRow(data);
 }
 
 export async function setVisibility(visibility: 'visible' | 'invisible' | 'away'): Promise<void> {

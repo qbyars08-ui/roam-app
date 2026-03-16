@@ -32,7 +32,71 @@ export interface WeatherForecast {
 }
 
 // ---------------------------------------------------------------------------
-// Internal helpers
+// Open-Meteo fallback (free, no API key required)
+// ---------------------------------------------------------------------------
+import { geocodeCity } from './geocoding';
+import {
+  getWeatherForecast as getOpenMeteoForecast,
+  type DailyForecast,
+} from './weather-forecast';
+
+const WMO_LABEL_MAP: Record<string, string> = {
+  Sun: 'clear sky', CloudSun: 'partly cloudy', Cloud: 'overcast',
+  CloudFog: 'foggy', CloudDrizzle: 'drizzle', CloudRain: 'rain',
+  CloudRainWind: 'heavy rain', CloudSnow: 'snow', Snowflake: 'snow',
+  CloudLightning: 'thunderstorm',
+};
+
+function openMeteoToWeatherDay(day: DailyForecast): WeatherDay {
+  return {
+    date: day.date,
+    tempMin: Math.round(day.tempMin),
+    tempMax: Math.round(day.tempMax),
+    humidity: 0,
+    description: WMO_LABEL_MAP[day.weatherIcon] ?? day.weatherLabel,
+    icon: '',
+    windSpeed: Math.round((day.windSpeedMax / 3.6) * 10) / 10,
+    pop: day.precipitationChance / 100,
+  };
+}
+
+async function getWeatherViaOpenMeteo(
+  destination: string,
+  options?: WeatherForecastOptions,
+): Promise<WeatherForecast> {
+  const geo = await geocodeCity(destination);
+  if (!geo) throw new Error(`Could not geocode "${destination}"`);
+
+  const forecastDays = options?.days ?? 7;
+  const result = await getOpenMeteoForecast(geo.latitude, geo.longitude, forecastDays);
+  if (!result || result.days.length === 0) {
+    throw new Error('Open-Meteo returned no forecast data');
+  }
+
+  let days = result.days.map(openMeteoToWeatherDay);
+  if (options?.startDate) {
+    const idx = days.findIndex((d) => d.date >= options.startDate!);
+    if (idx > 0) days = days.slice(idx);
+  }
+  if (options?.days != null && options.days > 0) {
+    days = days.slice(0, options.days);
+  }
+
+  return {
+    current: {
+      temp: Math.round(days[0]?.tempMax ?? 20),
+      description: days[0]?.description ?? 'Unknown',
+      icon: '',
+      humidity: 0,
+      windSpeed: days[0]?.windSpeed ?? 0,
+    },
+    days,
+    packingHint: generatePackingHint(days),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Internal helpers (OpenWeatherMap — used when API key is present)
 // ---------------------------------------------------------------------------
 
 const API_KEY = process.env.EXPO_PUBLIC_OPENWEATHER_KEY ?? '';
@@ -104,8 +168,9 @@ export async function getWeatherForecast(
   destination: string,
   options?: WeatherForecastOptions
 ): Promise<WeatherForecast> {
+  // Fall back to Open-Meteo (free, no API key) when OpenWeatherMap key is missing
   if (!API_KEY || API_KEY.trim() === '') {
-    throw new Error('Missing EXPO_PUBLIC_OPENWEATHER_KEY in .env');
+    return getWeatherViaOpenMeteo(destination, options);
   }
 
   const { getCachedForecast, setCachedForecast } = await import('./weather-cache');

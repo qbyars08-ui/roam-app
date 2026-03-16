@@ -59,6 +59,7 @@ const de: TranslationKeys = {
     prep: 'Vorbereitung',
     health: 'Gesundheit',
     pulse: 'Puls',
+    pets: 'Haustiere',
   },
 
   // ---------------------------------------------------------------------------

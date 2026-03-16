@@ -51,6 +51,7 @@ const fr: TranslationKeys = {
     prep: 'Préparer',
     health: 'Santé',
     pulse: 'Pouls',
+    pets: 'Animaux',
   },
 
   errorBoundary: {
