@@ -85,3 +85,23 @@ export function cloudinaryFetch(sourceUrl: string, w = 800): string {
   const params = `f_auto,q_auto,w_${w}`;
   return `https://res.cloudinary.com/${cloud}/image/fetch/${params}/${encodeURIComponent(sourceUrl)}`;
 }
+
+/**
+ * Single entry point for all destination image URLs.
+ *
+ * Decision tree:
+ * 1. EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME set → serve via Cloudinary CDN
+ *    (200+ edge PoPs, WebP auto-conversion, 25GB free/month)
+ * 2. Otherwise → serve directly from images.unsplash.com with optimal params
+ *    (still works, no control over edge locations)
+ *
+ * Never use source.unsplash.com — it died mid-2024.
+ */
+export function getOptimizedImageUrl(url: string, w = 800): string {
+  if (!url) return url;
+  const cloud = process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  if (cloud && url.includes('images.unsplash.com')) {
+    return cloudinaryFetch(url, w);
+  }
+  return optimizeUnsplashUrl(url, w);
+}

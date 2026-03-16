@@ -11,9 +11,11 @@ import {
   Pressable,
   StyleSheet,
   ActivityIndicator,
+  type ImageStyle,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -26,7 +28,9 @@ import {
 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, DESTINATION_THEME_PALETTES } from '../../lib/constants';
+import { getDestinationPhoto } from '../../lib/photos';
+import ImageWithFallback from '../../components/ui/ImageWithFallback';
 import { useAppStore } from '../../lib/store';
 import { getDestinationCoords } from '../../lib/air-quality';
 import { getAirQuality, type AirQuality } from '../../lib/air-quality';
@@ -151,6 +155,81 @@ function useDashboardData(destination: string) {
 
   return { data, loading };
 }
+
+// ---------------------------------------------------------------------------
+// Destination Hero — full-bleed photo with gradient overlay
+// ---------------------------------------------------------------------------
+function DestinationHero({
+  destination,
+  destInfo,
+}: {
+  destination: string;
+  destInfo: ReturnType<typeof DESTINATIONS.find>;
+}) {
+  const photoUrl = destInfo?.unsplashUrl ?? getDestinationPhoto(destination, 800);
+  const theme = DESTINATION_THEME_PALETTES[destination];
+  const gradientColors: [string, string, string] = theme
+    ? [theme.gradient[0], theme.gradient[1], theme.gradient[2]]
+    : ['rgba(124,175,138,0.4)', COLORS.bg, COLORS.bg];
+
+  return (
+    <View style={heroStyles.container}>
+      <ImageWithFallback
+        uri={photoUrl}
+        style={heroStyles.image}
+        containerStyle={heroStyles.imageContainer}
+        width={800}
+        fallbackGradient={gradientColors}
+        skipOptimize={false}
+      />
+      <LinearGradient
+        colors={['transparent', COLORS.bg]}
+        style={heroStyles.fadeOut}
+      />
+      {destInfo && (
+        <View style={heroStyles.hookContainer}>
+          <Text style={heroStyles.hook}>{destInfo.hook}</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+const heroStyles = StyleSheet.create({
+  container: {
+    height: 200,
+    marginHorizontal: -SPACING.lg,
+    marginBottom: SPACING.lg,
+    marginTop: -4,
+  } as ViewStyle,
+  imageContainer: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 0,
+  } as ViewStyle,
+  image: {
+    width: '100%',
+    height: '100%',
+  } as ImageStyle,
+  fadeOut: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 80,
+  } as ViewStyle,
+  hookContainer: {
+    position: 'absolute',
+    bottom: SPACING.md,
+    left: SPACING.lg,
+    right: SPACING.lg,
+  } as ViewStyle,
+  hook: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.creamSoft,
+    lineHeight: 20,
+  } as TextStyle,
+});
 
 // ---------------------------------------------------------------------------
 // Stat Card
@@ -282,6 +361,9 @@ export default function DestinationDashboard() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Destination Hero Photo */}
+        <DestinationHero destination={destination} destInfo={destInfo} />
+
         {/* Live Stats Grid */}
         <View style={styles.statsGrid}>
           <StatCard

@@ -147,10 +147,12 @@ For true reliability, upload curated destination photos (properly licensed, CC0 
 
 ## Recommended Actions
 
-- [x] **[P0] Fix source.unsplash.com in 3 files** — DONE in this PR
-- [x] **[P0] Add lib/image-cache.ts** — DONE in this PR
-- [ ] **[P1] Sign up for Cloudinary free account** — Add `EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME` to .env
-- [ ] **[P1] Add `cloudinaryFetch()` helper to lib/unsplash.ts** — Wrap all destination images through Cloudinary
+- [x] **[P0] Fix source.unsplash.com in 3 files** — DONE
+- [x] **[P0] Add lib/image-cache.ts** — DONE (AsyncStorage + in-memory cache, 30-day TTL)
+- [x] **[P1] Add `cloudinaryFetch()` + `getOptimizedImageUrl()` to lib/unsplash.ts** — DONE
+- [x] **[P1] Wire `getOptimizedImageUrl()` into lib/photos.ts** — DONE (all destination images route through Cloudinary when `EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME` is set)
+- [x] **[P1] Add `ImageWithFallback` component** — DONE (`components/ui/ImageWithFallback.tsx` — skeleton + gradient fallback on error)
+- [x] **[P1] Add destination hero photo to dashboard** — DONE (`app/destination/[name].tsx` now shows destination photo header)
+- [ ] **[Quinn] Sign up for Cloudinary free account** — Set `EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME` in Netlify + Supabase env to activate CDN layer
 - [ ] **[P2] Expand DESTINATIONS to 50+ cities** — Each new destination needs `unsplashUrl` set
-- [ ] **[P2] Audit for any non-direct image URLs** — Confirm zero `source.unsplash.com` remaining
 - [ ] **[P3] Migrate to owned asset library** — Post-launch, after revenue

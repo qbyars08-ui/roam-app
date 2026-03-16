@@ -3,7 +3,7 @@
 // Every destination gets a real photo. No black. No placeholders. Ever.
 // URLs include w=800&q=85&fm=webp for optimal caching.
 // =============================================================================
-import { optimizeUnsplashUrl } from './unsplash';
+import { getOptimizedImageUrl } from './unsplash';
 
 const DESTINATION_PHOTOS: Record<string, string> = {
   'tokyo': 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800',
@@ -139,5 +139,5 @@ export function getDestinationPhoto(destination: string, width = 800): string {
     );
     url = match ? DESTINATION_PHOTOS[match] : GENERIC_TRAVEL_FALLBACK;
   }
-  return optimizeUnsplashUrl(url, width);
+  return getOptimizedImageUrl(url, width);
 }

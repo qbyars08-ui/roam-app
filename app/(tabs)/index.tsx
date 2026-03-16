@@ -284,7 +284,7 @@ export default function DiscoverScreen() {
   const handleDestinationPress = useCallback(
     (dest: Destination) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      router.push(`/destination/${encodeURIComponent(dest.label)}`);
+      router.push(`/destination/${encodeURIComponent(dest.label)}` as never);
     },
     [router]
   );
