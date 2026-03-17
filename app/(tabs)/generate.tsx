@@ -70,6 +70,9 @@ export default function GenerateScreen() {
   }, [setGenerateMode]);
 
   const handleQuickSubmit = useCallback(async (state: QuickModeState) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7616/ingest/63f217f0-eacc-4083-91d1-27bfecce344b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f6988f'},body:JSON.stringify({sessionId:'f6988f',location:'generate.tsx:handleQuickSubmit',message:'Quick submit started',data:{destination:state?.destination,days:state?.duration,budget:state?.budget,hasVibes:!!state?.vibes?.length},timestamp:Date.now(),hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
     if (!isPro && !isGuestUser() && tripsThisMonth >= FREE_TRIPS_PER_MONTH) {
       router.push({ pathname: '/paywall', params: { reason: 'limit', destination: state.destination } });
       return;
@@ -129,8 +132,14 @@ export default function GenerateScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       await new Promise((r) => setTimeout(r, 800));
       if (!isMountedRef.current) return;
+      // #region agent log
+      fetch('http://127.0.0.1:7616/ingest/63f217f0-eacc-4083-91d1-27bfecce344b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f6988f'},body:JSON.stringify({sessionId:'f6988f',location:'generate.tsx:handleQuickSubmit',message:'Quick submit success',data:{tripId:trip.id,destination:state.destination},timestamp:Date.now(),hypothesisId:'success'})}).catch(()=>{});
+      // #endregion
       router.push({ pathname: '/itinerary', params: { tripId: trip.id } });
     } catch (err) {
+      // #region agent log
+      fetch('http://127.0.0.1:7616/ingest/63f217f0-eacc-4083-91d1-27bfecce344b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f6988f'},body:JSON.stringify({sessionId:'f6988f',location:'generate.tsx:handleQuickSubmit:catch',message:'Quick submit error',data:{errName:err instanceof Error ? err.name : 'unknown',errMessage:err instanceof Error ? err.message : String(err),isLimit:err instanceof TripLimitReachedError},timestamp:Date.now(),hypothesisId:'A_B_C_D'})}).catch(()=>{});
+      // #endregion
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       if (err instanceof TripLimitReachedError) {
         captureEvent('rate_limit_hit', { destination: generatingDestRef.current, source: 'quick' });

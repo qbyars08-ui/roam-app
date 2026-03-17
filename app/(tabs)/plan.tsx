@@ -58,6 +58,7 @@ import LiveBadge from '../../components/ui/LiveBadge';
 import SourceCitation from '../../components/ui/SourceCitation';
 import { getCurrentWeather, type CurrentWeather } from '../../lib/apis/openweather';
 import { searchEvents, type EventResult } from '../../lib/apis/eventbrite';
+import TripMapCard from '../../components/features/TripMapCard';
 
 // ---------------------------------------------------------------------------
 // Destination images for trip cards
@@ -848,6 +849,18 @@ export default function PlanScreen() {
                 ))}
               </View>
             )}
+          </View>
+        )}
+
+        {/* Map Preview for active trip */}
+        {sortedTrips.length > 0 && sortedTrips[0].itinerary && (
+          <View style={{ paddingHorizontal: SPACING.md, marginBottom: SPACING.md }}>
+            <TripMapCard
+              tripId={sortedTrips[0].id}
+              destination={sortedTrips[0].destination}
+              itineraryRaw={sortedTrips[0].itinerary}
+              days={sortedTrips[0].days}
+            />
           </View>
         )}
 

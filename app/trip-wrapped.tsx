@@ -1,904 +1,394 @@
 // =============================================================================
-// ROAM — Trip Wrapped: Your Year in Travel
-// Spotify Wrapped for travel. 5-card swipeable stack, shareable as PNG.
+// ROAM — Trip Wrapped: 5-slide full-screen memory experience
 // =============================================================================
-import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import {
   Animated,
   Dimensions,
+  Image,
+  Linking,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
-  type TextStyle,
-  type ViewStyle,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
-import ViewShot, { captureRef } from '../lib/view-shot';
-import * as Sharing from 'expo-sharing';
-import { COLORS, FONTS, SPACING, RADIUS, BUDGETS, VIBES } from '../lib/constants';
-import {
-  generateYearInReview,
-  type YearInReview,
-} from '../lib/travel-year';
+import { COLORS, FONTS, SPACING, RADIUS, DESTINATION_HERO_PHOTOS } from '../lib/constants';
+import { useAppStore } from '../lib/store';
+import { parseItinerary } from '../lib/types/itinerary';
+import type { Itinerary, TimeSlotActivity } from '../lib/types/itinerary';
+import { supabase } from '../lib/supabase';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = SCREEN_WIDTH - SPACING.lg * 2;
+const { width: SW, height: SH } = Dimensions.get('window');
+const S = SPACING;
 
-// =============================================================================
-// Personality Labels
-// =============================================================================
-const PERSONALITY_LABELS: Record<string, { title: string; desc: string }> = {
-  backpacker: {
-    title: 'The Budget Ninja',
-    desc: 'You see the world without breaking the bank. Respect.',
-  },
-  comfort: {
-    title: 'The Smart Spender',
-    desc: 'Nice hotels, real food, zero guilt. You know what matters.',
-  },
-  'treat-yourself': {
-    title: 'The Experience Collector',
-    desc: 'Life is short. You travel accordingly.',
-  },
-  'no-budget': {
-    title: 'The High Roller',
-    desc: 'When you go, you GO. No compromises.',
-  },
+// ---------------------------------------------------------------------------
+// Destination recommendations map
+// ---------------------------------------------------------------------------
+const SIMILAR: Record<string, Array<{ city: string; line: string }>> = {
+  Tokyo: [
+    { city: 'Seoul', line: 'Electric city, deep history, incredible food.' },
+    { city: 'Kyoto', line: 'Temples, wabi-sabi, and bamboo groves.' },
+    { city: 'Bangkok', line: 'Chaotic in the best possible way.' },
+  ],
+  Bali: [
+    { city: 'Chiang Mai', line: 'Slow down. Temples, jungles, good coffee.' },
+    { city: 'Hoi An', line: 'Lanterns, tailor shops, and banh mi.' },
+    { city: 'Cartagena', line: 'Pastel walls and Caribbean soul.' },
+  ],
+  Paris: [
+    { city: 'Lisbon', line: 'Europe before it got expensive.' },
+    { city: 'Porto', line: 'Wine, tiles, and zero pretension.' },
+    { city: 'Amsterdam', line: 'Rent a bike. Skip the tourist traps.' },
+  ],
+  Barcelona: [
+    { city: 'Rome', line: 'Eat carbonara. Walk 10 miles. Repeat.' },
+    { city: 'Lisbon', line: 'The soul of Southern Europe.' },
+    { city: 'Istanbul', line: 'Two continents, one breakfast spread.' },
+  ],
+  'New York': [
+    { city: 'London', line: 'The best city for people who hate tourist stuff.' },
+    { city: 'Tokyo', line: 'More to do per block than most cities total.' },
+    { city: 'Mexico City', line: 'Mezcal, mole, and a city that never stops.' },
+  ],
+  default: [
+    { city: 'Lisbon', line: 'Europe before it got expensive.' },
+    { city: 'Mexico City', line: 'Mezcal, mole, and a city that never stops.' },
+    { city: 'Bangkok', line: 'Chaotic in the best possible way.' },
+  ],
 };
 
-function getPersonality(review: YearInReview): { title: string; desc: string } {
-  const topBudget = review.budgetBreakdown[0]?.tier ?? 'comfort';
-  return PERSONALITY_LABELS[topBudget] ?? PERSONALITY_LABELS.comfort;
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+function getPhotoUrl(destination: string): string {
+  return (
+    DESTINATION_HERO_PHOTOS[destination] ??
+    `https://images.unsplash.com/search/photos/${encodeURIComponent(destination)}?w=800&q=80`
+  );
 }
 
-function getVibeLabel(vibeId: string): string {
-  return VIBES.find((v) => v.id === vibeId)?.label ?? vibeId;
+function collectNeighborhoods(itinerary: Itinerary): string[] {
+  const seen = new Set<string>();
+  for (const day of itinerary.days) {
+    for (const slot of [day.morning, day.afternoon, day.evening] as TimeSlotActivity[]) {
+      if (slot.neighborhood) seen.add(slot.neighborhood);
+    }
+    if (day.accommodation.neighborhood) seen.add(day.accommodation.neighborhood);
+  }
+  return Array.from(seen);
 }
 
-// =============================================================================
-// Card Gradients
-// =============================================================================
-const CARD_GRADIENTS: string[][] = [
-  [COLORS.bg, COLORS.gradientForestDeep, COLORS.gradientForestDarker], // Overview
-  [COLORS.gradientPurple, COLORS.gradientMidnight, COLORS.bg], // Stats
-  [COLORS.gradientMidnight, COLORS.gradientForestDeep, COLORS.bg], // Personality
-  [COLORS.bg, COLORS.gradientPurple, COLORS.gradientMidnight], // Top Vibes
-  [COLORS.gradientForestDeep, COLORS.bg, COLORS.gradientForestDarker], // Next Year
-];
+function collectActivities(itinerary: Itinerary) {
+  const acts: Array<{ name: string; neighborhood: string; detail: string }> = [];
+  for (const day of itinerary.days) {
+    for (const slot of [day.morning, day.afternoon, day.evening] as TimeSlotActivity[]) {
+      acts.push({ name: slot.activity, neighborhood: slot.neighborhood ?? slot.location, detail: slot.tip });
+    }
+  }
+  return acts.slice(0, 5);
+}
 
-// =============================================================================
-// Main Screen
-// =============================================================================
-function TripWrappedScreen() {
-  const { t } = useTranslation();
+function getBehavioralInsight(itinerary: Itinerary): string {
+  const hoods = collectNeighborhoods(itinerary);
+  const restCount = itinerary.days.reduce((n, d) => {
+    const slots = [d.morning, d.afternoon, d.evening] as TimeSlotActivity[];
+    return n + slots.filter((s) => /eat|food|restaurant|cafe|dining|lunch|dinner|breakfast/i.test(s.activity)).length;
+  }, 0);
+  if (hoods.length >= 5) return `You explored ${hoods.length} neighborhoods we didn't put in the plan. You're a wanderer.`;
+  if (restCount >= 4) return `You ate at ${restCount} restaurants. Food is your love language.`;
+  return `You packed ${collectActivities(itinerary).length} experiences into the trip. You make every hour count.`;
+}
+
+// ---------------------------------------------------------------------------
+// Count-up hook
+// ---------------------------------------------------------------------------
+function useCountUp(target: number, duration = 1500): number {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    const anim = new Animated.Value(0);
+    anim.addListener(({ value: v }) => setValue(Math.round(v)));
+    Animated.timing(anim, { toValue: target, duration, useNativeDriver: false }).start();
+    return () => anim.removeAllListeners();
+  }, [target, duration]);
+  return value;
+}
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
+function CountStat({ value, label }: { value: number; label: string }) {
+  const v = useCountUp(value);
+  return (
+    <View style={ss.countStat}>
+      <Text style={ss.countStatValue}>{v}</Text>
+      <Text style={ss.countStatLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function ActivityCard({ name, neighborhood, onPress }: { name: string; neighborhood: string; onPress: () => void }) {
+  return (
+    <Pressable style={ss.activityCard} onPress={onPress}>
+      <Text style={ss.activityName} numberOfLines={2}>{name}</Text>
+      <Text style={ss.activityNeighborhood} numberOfLines={1}>{neighborhood}</Text>
+    </Pressable>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main screen
+// ---------------------------------------------------------------------------
+export default function TripWrappedScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [review, setReview] = useState<YearInReview | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [activeCard, setActiveCard] = useState(0);
-  const cardRefs = useRef<(React.ElementRef<typeof ViewShot> | null)[]>([]);
+  const { trips, activeTripId } = useAppStore((s) => ({ trips: s.trips, activeTripId: s.activeTripId }));
+
+  const trip = useMemo(() => {
+    if (activeTripId) return trips.find((t) => t.id === activeTripId) ?? trips[0] ?? null;
+    return trips[0] ?? null;
+  }, [trips, activeTripId]);
+
+  const itinerary = useMemo<Itinerary | null>(() => {
+    if (!trip?.itinerary) return null;
+    try { return parseItinerary(trip.itinerary); } catch { return null; }
+  }, [trip]);
+
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [moment, setMoment] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<{ name: string; detail: string; neighborhood: string } | null>(null);
   const scrollRef = useRef<ScrollView>(null);
 
-  // Animations
-  const fadeIn = useRef(new Animated.Value(0)).current;
-  const scaleIn = useRef(new Animated.Value(0.9)).current;
-
   useEffect(() => {
-    loadReview();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only
+    if (!trip) return;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('trip_moments')
+          .select('content')
+          .eq('trip_id', trip.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (data?.content) setMoment(data.content as string);
+      } catch { /* fall back to day summary */ }
+    })();
+  }, [trip]);
+
+  const handleSlideChange = useCallback((index: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setActiveSlide(index);
   }, []);
 
-  const loadReview = async () => {
-    setLoading(true);
-    try {
-      const data = await generateYearInReview();
-      setReview(data);
-
-      Animated.parallel([
-        Animated.timing(fadeIn, {
-          toValue: 1,
-          duration: 600,
-          useNativeDriver: true,
-        }),
-        Animated.spring(scaleIn, {
-          toValue: 1,
-          tension: 50,
-          friction: 8,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } catch {
-      // Failed to generate
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleShare = useCallback(async (index: number) => {
-    const ref = cardRefs.current[index];
-    if (!ref) return;
+  const handleShare = useCallback(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    try {
-      const uri = await captureRef(ref, {
-        format: 'png',
-        quality: 1,
-        result: 'tmpfile',
-      });
-      await Sharing.shareAsync(uri, {
-        mimeType: 'image/png',
-        dialogTitle: t('tripWrapped.shareDialogTitle', { defaultValue: 'Share your Trip Wrapped' }),
-      });
-    } catch {
-      // cancelled
-    }
-  }, []);
+    const dest = trip?.destination ?? 'somewhere amazing';
+    const text = `Just planned a trip to ${dest} with ROAM. Next stop: the real thing.`;
+    Linking.openURL(`sms:?body=${encodeURIComponent(text)}`).catch(() => Linking.openURL('https://roam.app'));
+  }, [trip]);
 
-  const handleShareAll = useCallback(async () => {
-    // Share the currently visible card
-    handleShare(activeCard);
-  }, [activeCard, handleShare]);
+  const handlePlanNext = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push('/(tabs)/plan' as never);
+  }, [router]);
 
-  const goToCard = useCallback(
-    (index: number) => {
-      scrollRef.current?.scrollTo({
-        x: index * (CARD_WIDTH + SPACING.md),
-        animated: true,
-      });
-      setActiveCard(index);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    },
-    []
-  );
-
-  if (loading) {
+  if (!trip || !itinerary) {
     return (
-      <View style={[styles.screen, { paddingTop: insets.top }]}>
-        <View style={styles.loadingCenter}>
-          <Text style={styles.loadingText}>{t('tripWrapped.loadingText', { defaultValue: 'Wrapping your year in travel...' })}</Text>
-          <Text style={styles.loadingSubtext}>
-            {t('tripWrapped.loadingSubtext', { defaultValue: 'Crunching the numbers on everywhere you have been' })}
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
-  if (!review) {
-    return (
-      <View style={[styles.screen, { paddingTop: insets.top }]}>
-        <View style={styles.header}>
-          <Pressable onPress={() => router.back()} hitSlop={12}>
-            <Text style={styles.backBtn}>{'\u2190'}</Text>
-          </Pressable>
-          <Text style={styles.headerTitle}>{t('tripWrapped.headerTitle', { defaultValue: 'Trip Wrapped' })}</Text>
-          <View style={{ width: 24 }} />
-        </View>
-        <View style={styles.emptyCenter}>
-          <Text style={styles.emptyTitle}>{t('tripWrapped.emptyTitle', { defaultValue: 'Your year in travel\nstarts with a trip.' })}</Text>
-          <Text style={styles.emptyBody}>
-            {t('tripWrapped.emptyBody', { defaultValue: "Plan a few adventures first. We'll wrap them into something worth sharing." })}
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
-  const personality = getPersonality(review);
-
-  return (
-    <View style={[styles.screen, { paddingTop: insets.top }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Text style={styles.backBtn}>{'\u2190'}</Text>
+      <View style={[ss.emptyScreen, { paddingTop: insets.top }]}>
+        <Pressable style={[ss.closeBtn, { top: insets.top + S.sm }]} onPress={() => router.back()}>
+          <Text style={ss.closeBtnText}>×</Text>
         </Pressable>
-        <View>
-          <Text style={styles.headerEyebrow}>{t('tripWrapped.headerEyebrow', { defaultValue: 'YOUR YEAR IN TRAVEL' })}</Text>
-          <Text style={styles.headerTitle}>{t('tripWrapped.headerTitle', { defaultValue: 'Trip Wrapped' })}</Text>
-        </View>
-        <View style={{ width: 24 }} />
+        <Text style={ss.emptyTitle}>No trip to wrap yet.</Text>
+        <Text style={ss.emptyBody}>Plan your first adventure and come back here.</Text>
       </View>
+    );
+  }
 
-      {/* Dot Indicators */}
-      <View style={styles.dotsRow}>
-        {[0, 1, 2, 3, 4].map((i) => (
-          <Pressable key={i} onPress={() => goToCard(i)}>
-            <View
-              style={[
-                styles.dot,
-                activeCard === i && styles.dotActive,
-              ]}
-            />
-          </Pressable>
+  const neighborhoods = collectNeighborhoods(itinerary);
+  const activities = collectActivities(itinerary);
+  const insight = getBehavioralInsight(itinerary);
+  const similar = SIMILAR[itinerary.destination] ?? SIMILAR.default;
+  const photoUrl = getPhotoUrl(itinerary.destination);
+  const momentText = moment ?? (itinerary.days[0] ? `${itinerary.days[0].theme} — ${itinerary.days[0].morning.activity}` : itinerary.tagline);
+
+  const slides = [
+    // Slide 1 — The Numbers
+    <View key="numbers" style={ss.slide}>
+      <Image source={{ uri: photoUrl }} style={ss.heroBg} resizeMode="cover" />
+      <LinearGradient colors={['transparent', 'rgba(0,0,0,0.5)', COLORS.overlayDeeper]} style={ss.heroGradient} />
+      <View style={ss.slideContent}>
+        <Text style={ss.destinationTitle}>{itinerary.destination}</Text>
+        <View style={ss.statsRow}>
+          <CountStat value={trip.days} label="days" />
+          <View style={ss.statsDivider} />
+          <CountStat value={neighborhoods.length} label="neighborhoods" />
+          <View style={ss.statsDivider} />
+          <CountStat value={activities.length * itinerary.days.length} label="activities" />
+        </View>
+      </View>
+    </View>,
+
+    // Slide 2 — Your Moment
+    <View key="moment" style={[ss.slide, ss.slideDark]}>
+      <View style={ss.centerGroup}>
+        <Text style={ss.eyebrow}>YOUR MOMENT</Text>
+        <Text style={ss.momentText}>{momentText}</Text>
+        <Text style={ss.attribution}>{itinerary.destination} · {trip.days} days</Text>
+      </View>
+    </View>,
+
+    // Slide 3 — What ROAM Learned
+    <View key="learned" style={[ss.slide, ss.slideDark]}>
+      <View style={ss.centerGroup}>
+        <Text style={ss.eyebrow}>WHAT ROAM LEARNED</Text>
+        <Text style={ss.insightText}>{insight}</Text>
+        <View style={ss.pill}>
+          <Text style={ss.pillText}>{itinerary.destination}</Text>
+        </View>
+      </View>
+    </View>,
+
+    // Slide 4 — Highlights
+    <View key="highlights" style={[ss.slide, ss.slideDark]}>
+      <Text style={ss.sectionLabel}>HIGHLIGHTS</Text>
+      <View style={ss.grid}>
+        {activities.map((act, i) => (
+          <ActivityCard
+            key={i}
+            name={act.name}
+            neighborhood={act.neighborhood}
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setExpanded(act); }}
+          />
         ))}
       </View>
+    </View>,
 
-      {/* Cards Carousel */}
-      <Animated.View
-        style={{
-          flex: 1,
-          opacity: fadeIn,
-          transform: [{ scale: scaleIn }],
-        }}
-      >
-        <ScrollView
-          ref={scrollRef}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.carouselContent}
-          snapToInterval={CARD_WIDTH + SPACING.md}
-          decelerationRate="fast"
-          onMomentumScrollEnd={(e) => {
-            const index = Math.round(
-              e.nativeEvent.contentOffset.x / (CARD_WIDTH + SPACING.md)
-            );
-            setActiveCard(index);
-          }}
-        >
-          {/* Card 1: Overview */}
-          <ViewShot
-            ref={(ref: React.ElementRef<typeof ViewShot> | null) => { cardRefs.current[0] = ref; }}
-            options={{ format: 'png', quality: 1 }}
-          >
-            <LinearGradient
-              colors={CARD_GRADIENTS[0] as [string, string, ...string[]]}
-              style={styles.wrappedCard}
-            >
-              <Text style={styles.cardBrand}>ROAM</Text>
-              <Text style={styles.cardYear}>{review.year}</Text>
-              <Text style={styles.cardHeadline}>{review.headline}</Text>
-
-              <View style={styles.bigStatRow}>
-                <BigStat value={`${review.tripsGenerated}`} label={t('tripWrapped.tripsPlanned', { defaultValue: 'Trips Planned' })} />
-                <BigStat value={`${review.totalDaysPlanned}`} label={t('tripWrapped.daysPlanned', { defaultValue: 'Days Planned' })} />
-              </View>
-
-              <View style={styles.destList}>
-                {review.uniqueDestinations.slice(0, 6).map((d) => (
-                  <View key={d} style={styles.destChip}>
-                    <Text style={styles.destChipText}>{d}</Text>
-                  </View>
-                ))}
-              </View>
-
-              <Text style={styles.cardFooter}>
-                {t('tripWrapped.cardFooter', { defaultValue: 'Go somewhere that changes you.' })}
-              </Text>
-            </LinearGradient>
-          </ViewShot>
-
-          {/* Card 2: Stats Deep Dive */}
-          <ViewShot
-            ref={(ref: React.ElementRef<typeof ViewShot> | null) => { cardRefs.current[1] = ref; }}
-            options={{ format: 'png', quality: 1 }}
-          >
-            <LinearGradient
-              colors={CARD_GRADIENTS[1] as [string, string, ...string[]]}
-              style={styles.wrappedCard}
-            >
-              <Text style={styles.cardBrand}>ROAM</Text>
-              <Text style={styles.cardSectionTitle}>{t('tripWrapped.byTheNumbers', { defaultValue: 'By the Numbers' })}</Text>
-
-              <View style={styles.statsGrid}>
-                <StatBlock
-                  value={`${review.uniqueDestinations.length}`}
-                  label={t('tripWrapped.uniqueDestinations', { defaultValue: 'Unique Destinations' })}
-                />
-                <StatBlock
-                  value={`${review.avgTripLength}`}
-                  label={t('tripWrapped.avgTripLength', { defaultValue: 'Avg Trip Length (days)' })}
-                />
-                <StatBlock
-                  value={review.favoriteDestination ?? '—'}
-                  label={t('tripWrapped.mostPlanned', { defaultValue: 'Most Planned' })}
-                  isText
-                />
-                <StatBlock
-                  value={`${review.totalDaysPlanned}`}
-                  label={t('tripWrapped.daysPlanned', { defaultValue: 'Days Planned' })}
-                />
-              </View>
-
-              <Text style={styles.cardFooter}>
-                {t('tripWrapped.cardFooter', { defaultValue: 'Go somewhere that changes you.' })}
-              </Text>
-            </LinearGradient>
-          </ViewShot>
-
-          {/* Card 3: Travel Personality */}
-          <ViewShot
-            ref={(ref: React.ElementRef<typeof ViewShot> | null) => { cardRefs.current[2] = ref; }}
-            options={{ format: 'png', quality: 1 }}
-          >
-            <LinearGradient
-              colors={CARD_GRADIENTS[2] as [string, string, ...string[]]}
-              style={styles.wrappedCard}
-            >
-              <Text style={styles.cardBrand}>ROAM</Text>
-              <Text style={styles.cardSectionTitle}>{t('tripWrapped.yourTravelType', { defaultValue: 'Your Travel Type' })}</Text>
-
-              <Text style={styles.personalityTitle}>{personality.title}</Text>
-              <Text style={styles.personalityDesc}>{personality.desc}</Text>
-
-              {/* Budget Breakdown */}
-              <View style={styles.budgetBreakdown}>
-                {review.budgetBreakdown.map((b) => {
-                  const tier = BUDGETS.find((bt) => bt.id === b.tier);
-                  return (
-                    <View key={b.tier} style={styles.budgetRow}>
-                      <Text style={styles.budgetLabel}>
-                        {tier?.label ?? b.tier}
-                      </Text>
-                      <View style={styles.budgetBar}>
-                        <View
-                          style={[
-                            styles.budgetBarFill,
-                            {
-                              width: `${Math.min(
-                                100,
-                                (b.count / review.tripsGenerated) * 100
-                              )}%`,
-                            },
-                          ]}
-                        />
-                      </View>
-                      <Text style={styles.budgetCount}>{b.count}</Text>
-                    </View>
-                  );
-                })}
-              </View>
-
-              <Text style={styles.personalityShift}>
-                {review.personalityShift}
-              </Text>
-
-              <Text style={styles.cardFooter}>
-                {t('tripWrapped.cardFooter', { defaultValue: 'Go somewhere that changes you.' })}
-              </Text>
-            </LinearGradient>
-          </ViewShot>
-
-          {/* Card 4: Top Vibes */}
-          <ViewShot
-            ref={(ref: React.ElementRef<typeof ViewShot> | null) => { cardRefs.current[3] = ref; }}
-            options={{ format: 'png', quality: 1 }}
-          >
-            <LinearGradient
-              colors={CARD_GRADIENTS[3] as [string, string, ...string[]]}
-              style={styles.wrappedCard}
-            >
-              <Text style={styles.cardBrand}>ROAM</Text>
-              <Text style={styles.cardSectionTitle}>{t('tripWrapped.yourTopVibes', { defaultValue: 'Your Top Vibes' })}</Text>
-
-              {review.topVibes.length > 0 ? (
-                <View style={styles.vibesStack}>
-                  {review.topVibes.map((v, i) => (
-                    <View key={v.vibe} style={styles.vibeRow}>
-                      <Text style={styles.vibeRank}>#{i + 1}</Text>
-                      <View style={styles.vibeInfo}>
-                        <Text style={styles.vibeName}>
-                          {getVibeLabel(v.vibe)}
-                        </Text>
-                        <View style={styles.vibeBarBg}>
-                          <View
-                            style={[
-                              styles.vibeBarFill,
-                              {
-                                width: `${Math.min(
-                                  100,
-                                  (v.count /
-                                    (review.topVibes[0]?.count ?? 1)) *
-                                    100
-                                )}%`,
-                              },
-                            ]}
-                          />
-                        </View>
-                      </View>
-                      <Text style={styles.vibeCount}>{v.count}x</Text>
-                    </View>
-                  ))}
-                </View>
-              ) : (
-                <Text style={styles.noVibesText}>
-                  {t('tripWrapped.noVibes', { defaultValue: 'No vibes recorded yet. Plan more trips!' })}
-                </Text>
-              )}
-
-              <Text style={styles.cardFooter}>
-                {t('tripWrapped.cardFooter', { defaultValue: 'Go somewhere that changes you.' })}
-              </Text>
-            </LinearGradient>
-          </ViewShot>
-
-          {/* Card 5: Next Year CTA */}
-          <ViewShot
-            ref={(ref: React.ElementRef<typeof ViewShot> | null) => { cardRefs.current[4] = ref; }}
-            options={{ format: 'png', quality: 1 }}
-          >
-            <LinearGradient
-              colors={CARD_GRADIENTS[4] as [string, string, ...string[]]}
-              style={styles.wrappedCard}
-            >
-              <Text style={styles.cardBrand}>ROAM</Text>
-              <Text style={styles.cardSectionTitle}>
-                {`${review.year + 1} ${t('tripWrapped.awaits', { defaultValue: 'Awaits' })}`}
-              </Text>
-
-              <Text style={styles.nextYearText}>
-                {review.tripsGenerated === 0
-                  ? t('tripWrapped.nextYearZero', { defaultValue: 'Your first trip is out there. Stop scrolling and start planning.' })
-                  : review.tripsGenerated < 3
-                  ? `${review.tripsGenerated} ${t('tripWrapped.nextYearFew', { defaultValue: 'trips this year. Next year, aim higher.' })}`
-                  : review.tripsGenerated < 6
-                  ? `${review.tripsGenerated} ${t('tripWrapped.nextYearSome', { defaultValue: 'trips and counting. Next year is going to be even bigger.' })}`
-                  : `${review.tripsGenerated} ${t('tripWrapped.nextYearMany', { defaultValue: "trips? You're not slowing down. Keep going." })}`}
-              </Text>
-
-              {review.favoriteDestination && (
-                <Text style={styles.nextSuggestion}>
-                  {`${t('tripWrapped.nextSuggestionPre', { defaultValue: 'You keep coming back to' })} ${review.favoriteDestination}. ${t('tripWrapped.nextSuggestionPost', { defaultValue: 'Maybe it is time to try something completely different.' })}`}
-                </Text>
-              )}
-
-              <View style={styles.ctaWrapper}>
-                <Text style={styles.ctaText}>{t('tripWrapped.ctaText', { defaultValue: 'Plan your next trip' })}</Text>
-              </View>
-
-              <Text style={styles.cardFooter}>
-                {t('tripWrapped.cardFooter', { defaultValue: 'Go somewhere that changes you.' })}
-              </Text>
-            </LinearGradient>
-          </ViewShot>
-        </ScrollView>
-      </Animated.View>
-
-      {/* Bottom Actions */}
-      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + SPACING.md }]}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.shareBtn,
-            { opacity: pressed ? 0.85 : 1 },
-          ]}
-          onPress={handleShareAll}
-        >
-          <LinearGradient
-            colors={[COLORS.sage, COLORS.sageAlpha80]}
-            style={styles.shareBtnGradient}
-          >
-            <Text style={styles.shareBtnText}>
-              {t('tripWrapped.shareThisCard', { defaultValue: 'Share this card' })}
-            </Text>
-          </LinearGradient>
-        </Pressable>
+    // Slide 5 — Already Dreaming
+    <View key="dreaming" style={[ss.slide, ss.slideDark]}>
+      <Text style={ss.dreamTitle}>Where next?</Text>
+      <View style={ss.destCards}>
+        {similar.map((d, i) => (
+          <View key={i} style={ss.destCard}>
+            <Image source={{ uri: getPhotoUrl(d.city) }} style={ss.destPhoto} resizeMode="cover" />
+            <LinearGradient colors={['transparent', COLORS.overlayDeep]} style={ss.destGrad} />
+            <View style={ss.destContent}>
+              <Text style={ss.destCity}>{d.city}</Text>
+              <Text style={ss.destLine}>{d.line}</Text>
+              <Pressable style={ss.planBtn} onPress={handlePlanNext}>
+                <Text style={ss.planBtnText}>Plan this</Text>
+              </Pressable>
+            </View>
+          </View>
+        ))}
       </View>
-    </View>
-  );
-}
+      <Pressable style={({ pressed }) => [ss.shareBtn, { opacity: pressed ? 0.85 : 1 }]} onPress={handleShare}>
+        <LinearGradient colors={[COLORS.sage, COLORS.sageDark]} style={ss.shareBtnInner}>
+          <Text style={ss.shareBtnText}>Share your trip</Text>
+        </LinearGradient>
+      </Pressable>
+    </View>,
+  ];
 
-// =============================================================================
-// Sub-Components
-// =============================================================================
-function BigStat({ value, label }: { value: string; label: string }) {
   return (
-    <View style={styles.bigStat}>
-      <Text style={styles.bigStatValue}>{value}</Text>
-      <Text style={styles.bigStatLabel}>{label}</Text>
+    <View style={ss.screen}>
+      <ScrollView
+        ref={scrollRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        decelerationRate="fast"
+        snapToInterval={SW}
+        onMomentumScrollEnd={(e) => handleSlideChange(Math.round(e.nativeEvent.contentOffset.x / SW))}
+      >
+        {slides}
+      </ScrollView>
+
+      {/* Close — absolute top left */}
+      <Pressable style={[ss.closeBtn, { top: insets.top + S.sm }]} onPress={() => router.back()} hitSlop={12}>
+        <Text style={ss.closeBtnText}>×</Text>
+      </Pressable>
+
+      {/* Page dots */}
+      <View style={[ss.dotsRow, { bottom: insets.bottom + S.lg }]}>
+        {slides.map((_, i) => <View key={i} style={[ss.dot, activeSlide === i && ss.dotActive]} />)}
+      </View>
+
+      {/* Activity detail modal */}
+      <Modal visible={expanded !== null} transparent animationType="fade" onRequestClose={() => setExpanded(null)}>
+        <Pressable style={ss.modalOverlay} onPress={() => setExpanded(null)}>
+          <View style={ss.modalCard}>
+            <Text style={ss.modalTitle}>{expanded?.name}</Text>
+            <Text style={ss.modalHood}>{expanded?.neighborhood}</Text>
+            <Text style={ss.modalDetail}>{expanded?.detail}</Text>
+            <Pressable style={ss.modalCloseBtn} onPress={() => setExpanded(null)}>
+              <Text style={ss.modalCloseTxt}>Close</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
 
-function StatBlock({
-  value,
-  label,
-  isText,
-}: {
-  value: string;
-  label: string;
-  isText?: boolean;
-}) {
-  return (
-    <View style={styles.statBlock}>
-      <Text style={[styles.statBlockValue, isText && styles.statBlockText]}>
-        {value}
-      </Text>
-      <Text style={styles.statBlockLabel}>{label}</Text>
-    </View>
-  );
-}
-
-// =============================================================================
+// ---------------------------------------------------------------------------
 // Styles
-// =============================================================================
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: COLORS.bg,
-  } as ViewStyle,
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-  } as ViewStyle,
-  backBtn: {
-    fontSize: 24,
-    color: COLORS.cream,
-  } as TextStyle,
-  headerEyebrow: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.sage,
-    letterSpacing: 2,
-    textAlign: 'center',
-  } as TextStyle,
-  headerTitle: {
-    fontFamily: FONTS.header,
-    fontSize: 24,
-    color: COLORS.cream,
-    textAlign: 'center',
-  } as TextStyle,
-
-  // Dots
-  dotsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    marginBottom: SPACING.md,
-  } as ViewStyle,
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: COLORS.whiteMuted,
-  } as ViewStyle,
-  dotActive: {
-    backgroundColor: COLORS.sage,
-    width: 24,
-  } as ViewStyle,
-
-  // Loading
-  loadingCenter: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-  } as ViewStyle,
-  loadingText: {
-    fontFamily: FONTS.body,
-    fontSize: 16,
-    color: COLORS.cream,
-    textAlign: 'center',
-  } as TextStyle,
-  loadingSubtext: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.creamMuted,
-    textAlign: 'center',
-  } as TextStyle,
-
-  // Empty
-  emptyCenter: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: SPACING.xl,
-    gap: SPACING.sm,
-  } as ViewStyle,
-  emptyTitle: {
-    fontFamily: FONTS.header,
-    fontSize: 22,
-    color: COLORS.cream,
-    textAlign: 'center',
-  } as TextStyle,
-  emptyBody: {
-    fontFamily: FONTS.body,
-    fontSize: 14,
-    color: COLORS.creamMuted,
-    textAlign: 'center',
-    lineHeight: 22,
-  } as TextStyle,
-
-  // Carousel
-  carouselContent: {
-    paddingHorizontal: SPACING.lg,
-    gap: SPACING.md,
-  } as ViewStyle,
-
-  // Wrapped Card Base
-  wrappedCard: {
-    width: CARD_WIDTH,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.xl,
-    justifyContent: 'space-between',
-    minHeight: 520,
-  } as ViewStyle,
-  cardBrand: {
-    fontFamily: FONTS.mono,
-    fontSize: 12,
-    color: COLORS.sage,
-    letterSpacing: 3,
-    textAlign: 'center',
-    marginBottom: SPACING.sm,
-  } as TextStyle,
-  cardYear: {
-    fontFamily: FONTS.header,
-    fontSize: 64,
-    color: COLORS.cream,
-    textAlign: 'center',
-    marginBottom: 4,
-  } as TextStyle,
-  cardHeadline: {
-    fontFamily: FONTS.body,
-    fontSize: 18,
-    color: COLORS.creamBright,
-    textAlign: 'center',
-    lineHeight: 26,
-    marginBottom: SPACING.xl,
-  } as TextStyle,
-  cardSectionTitle: {
-    fontFamily: FONTS.header,
-    fontSize: 28,
-    color: COLORS.cream,
-    textAlign: 'center',
-    marginBottom: SPACING.lg,
-  } as TextStyle,
-  cardFooter: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.creamFaint,
-    textAlign: 'center',
-    letterSpacing: 1,
-    marginTop: 'auto' as unknown as number,
-    paddingTop: SPACING.lg,
-  } as TextStyle,
-
-  // Big Stats
-  bigStatRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: SPACING.xxl,
-    marginBottom: SPACING.lg,
-  } as ViewStyle,
-  bigStat: {
-    alignItems: 'center',
-    gap: 4,
-  } as ViewStyle,
-  bigStatValue: {
-    fontFamily: FONTS.header,
-    fontSize: 48,
-    color: COLORS.cream,
-  } as TextStyle,
-  bigStatLabel: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.creamMuted,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  } as TextStyle,
-
-  // Destination Chips
-  destList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-  } as ViewStyle,
-  destChip: {
-    backgroundColor: COLORS.sageHighlight,
-    borderRadius: RADIUS.full,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: COLORS.sageStrong,
-  } as ViewStyle,
-  destChipText: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.sage,
-    letterSpacing: 1,
-  } as TextStyle,
-
-  // Stats Grid
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.md,
-    justifyContent: 'center',
-  } as ViewStyle,
-  statBlock: {
-    width: '44%' as unknown as number,
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    alignItems: 'center',
-    gap: 4,
-  } as ViewStyle,
-  statBlockValue: {
-    fontFamily: FONTS.header,
-    fontSize: 32,
-    color: COLORS.cream,
-  } as TextStyle,
-  statBlockText: {
-    fontSize: 18,
-  } as TextStyle,
-  statBlockLabel: {
-    fontFamily: FONTS.mono,
-    fontSize: 9,
-    color: COLORS.creamMuted,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    textAlign: 'center',
-  } as TextStyle,
-
-  // Personality
-  personalityTitle: {
-    fontFamily: FONTS.header,
-    fontSize: 36,
-    color: COLORS.cream,
-    textAlign: 'center',
-    marginBottom: SPACING.sm,
-  } as TextStyle,
-  personalityDesc: {
-    fontFamily: FONTS.body,
-    fontSize: 15,
-    color: COLORS.creamBrightSoft,
-    textAlign: 'center',
-    lineHeight: 23,
-    marginBottom: SPACING.lg,
-  } as TextStyle,
-  personalityShift: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.creamMuted,
-    textAlign: 'center',
-    marginTop: SPACING.md,
-  } as TextStyle,
-
-  // Budget Breakdown
-  budgetBreakdown: {
-    gap: SPACING.sm,
-  } as ViewStyle,
-  budgetRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-  } as ViewStyle,
-  budgetLabel: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.creamMuted,
-    width: 80,
-    letterSpacing: 1,
-  } as TextStyle,
-  budgetBar: {
-    flex: 1,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: COLORS.whiteSoft,
-    overflow: 'hidden',
-  } as ViewStyle,
-  budgetBarFill: {
-    height: '100%',
-    borderRadius: 3,
-    backgroundColor: COLORS.sage,
-  } as ViewStyle,
-  budgetCount: {
-    fontFamily: FONTS.mono,
-    fontSize: 12,
-    color: COLORS.cream,
-    width: 24,
-    textAlign: 'right',
-  } as TextStyle,
-
-  // Vibes
-  vibesStack: {
-    gap: SPACING.md,
-  } as ViewStyle,
-  vibeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-  } as ViewStyle,
-  vibeRank: {
-    fontFamily: FONTS.mono,
-    fontSize: 14,
-    color: COLORS.gold,
-    width: 28,
-  } as TextStyle,
-  vibeInfo: {
-    flex: 1,
-    gap: 4,
-  } as ViewStyle,
-  vibeName: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 15,
-    color: COLORS.cream,
-  } as TextStyle,
-  vibeBarBg: {
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: COLORS.whiteSoft,
-    overflow: 'hidden',
-  } as ViewStyle,
-  vibeBarFill: {
-    height: '100%',
-    borderRadius: 2,
-    backgroundColor: COLORS.gold,
-  } as ViewStyle,
-  vibeCount: {
-    fontFamily: FONTS.mono,
-    fontSize: 12,
-    color: COLORS.creamMuted,
-    width: 28,
-    textAlign: 'right',
-  } as TextStyle,
-  noVibesText: {
-    fontFamily: FONTS.body,
-    fontSize: 14,
-    color: COLORS.creamMuted,
-    textAlign: 'center',
-    lineHeight: 22,
-  } as TextStyle,
-
-  // Next Year
-  nextYearText: {
-    fontFamily: FONTS.body,
-    fontSize: 18,
-    color: COLORS.creamBright,
-    textAlign: 'center',
-    lineHeight: 28,
-    marginBottom: SPACING.lg,
-  } as TextStyle,
-  nextSuggestion: {
-    fontFamily: FONTS.body,
-    fontSize: 14,
-    color: COLORS.creamMuted,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: SPACING.lg,
-  } as TextStyle,
-  ctaWrapper: {
-    alignSelf: 'center',
-    backgroundColor: COLORS.sage,
-    borderRadius: RADIUS.full,
-    paddingHorizontal: SPACING.xl,
-    paddingVertical: 14,
-  } as ViewStyle,
-  ctaText: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 16,
-    color: COLORS.bg,
-  } as TextStyle,
-
-  // Bottom Bar
-  bottomBar: {
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.sm,
-  } as ViewStyle,
-  shareBtn: {
-    borderRadius: RADIUS.lg,
-    overflow: 'hidden',
-  } as ViewStyle,
-  shareBtnGradient: {
-    paddingVertical: SPACING.md,
-    alignItems: 'center',
-    borderRadius: RADIUS.lg,
-  } as ViewStyle,
-  shareBtnText: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 16,
-    color: COLORS.white,
-    letterSpacing: 0.5,
-  } as TextStyle,
+// ---------------------------------------------------------------------------
+const ss = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: COLORS.bg },
+  slide: { width: SW, height: SH },
+  slideDark: { backgroundColor: COLORS.bg, justifyContent: 'center', alignItems: 'center', paddingHorizontal: S.xl, paddingTop: S.xxl },
+  heroBg: { ...StyleSheet.absoluteFillObject, width: SW, height: SH },
+  heroGradient: { ...StyleSheet.absoluteFillObject },
+  slideContent: { flex: 1, justifyContent: 'flex-end', paddingHorizontal: S.xl, paddingBottom: S.xxl + 40 },
+  destinationTitle: { fontFamily: FONTS.header, fontSize: 52, color: COLORS.cream, marginBottom: S.lg, lineHeight: 56 },
+  statsRow: { flexDirection: 'row', alignItems: 'center', gap: S.md },
+  countStat: { alignItems: 'center' },
+  countStatValue: { fontFamily: FONTS.mono, fontSize: 36, color: COLORS.cream },
+  countStatLabel: { fontFamily: FONTS.mono, fontSize: 11, color: COLORS.creamMuted, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 2 },
+  statsDivider: { width: 1, height: 40, backgroundColor: COLORS.whiteMuted },
+  centerGroup: { alignItems: 'center', gap: S.lg, paddingHorizontal: S.sm },
+  eyebrow: { fontFamily: FONTS.mono, fontSize: 10, color: COLORS.sage, letterSpacing: 2.5 },
+  momentText: { fontFamily: FONTS.header, fontSize: 28, color: COLORS.cream, textAlign: 'center', lineHeight: 38 },
+  attribution: { fontFamily: FONTS.mono, fontSize: 11, color: COLORS.creamMuted, letterSpacing: 1 },
+  insightText: { fontFamily: FONTS.header, fontSize: 26, color: COLORS.cream, textAlign: 'center', lineHeight: 36 },
+  pill: { borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLORS.sageBorder, paddingHorizontal: S.md, paddingVertical: S.xs },
+  pillText: { fontFamily: FONTS.mono, fontSize: 11, color: COLORS.sage, letterSpacing: 1 },
+  sectionLabel: { fontFamily: FONTS.mono, fontSize: 10, color: COLORS.sage, letterSpacing: 2.5, marginBottom: S.lg, alignSelf: 'flex-start' },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: S.sm, justifyContent: 'center' },
+  activityCard: { width: (SW - S.xl * 2 - S.sm) / 2 - 1, backgroundColor: COLORS.surface1, borderRadius: RADIUS.md, padding: S.md, gap: 4, borderWidth: 1, borderColor: COLORS.border },
+  activityName: { fontFamily: FONTS.bodyMedium, fontSize: 13, color: COLORS.cream, lineHeight: 18 },
+  activityNeighborhood: { fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, letterSpacing: 0.5 },
+  dreamTitle: { fontFamily: FONTS.header, fontSize: 36, color: COLORS.cream, marginBottom: S.xl, alignSelf: 'flex-start' },
+  destCards: { gap: S.sm, width: '100%' },
+  destCard: { height: 90, borderRadius: RADIUS.md, overflow: 'hidden' },
+  destPhoto: { ...StyleSheet.absoluteFillObject },
+  destGrad: { ...StyleSheet.absoluteFillObject },
+  destContent: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: S.md, gap: S.sm },
+  destCity: { fontFamily: FONTS.header, fontSize: 16, color: COLORS.cream, flex: 1 },
+  destLine: { fontFamily: FONTS.body, fontSize: 11, color: COLORS.creamMuted, flex: 2, lineHeight: 16 },
+  planBtn: { backgroundColor: COLORS.sage, borderRadius: RADIUS.pill, paddingHorizontal: S.sm, paddingVertical: 6 },
+  planBtnText: { fontFamily: FONTS.bodySemiBold, fontSize: 11, color: COLORS.bg },
+  shareBtn: { marginTop: S.xl, borderRadius: RADIUS.pill, overflow: 'hidden', width: '100%' },
+  shareBtnInner: { paddingVertical: S.md, alignItems: 'center', borderRadius: RADIUS.pill },
+  shareBtnText: { fontFamily: FONTS.bodySemiBold, fontSize: 16, color: COLORS.white, letterSpacing: 0.3 },
+  closeBtn: { position: 'absolute', left: S.md, width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.overlayMedium, alignItems: 'center', justifyContent: 'center' },
+  closeBtnText: { fontSize: 22, color: COLORS.cream, lineHeight: 26 },
+  dotsRow: { position: 'absolute', left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: S.xs },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.whiteMuted },
+  dotActive: { width: 20, backgroundColor: COLORS.sage },
+  emptyScreen: { flex: 1, backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center', paddingHorizontal: S.xl, gap: S.md },
+  emptyTitle: { fontFamily: FONTS.header, fontSize: 24, color: COLORS.cream, textAlign: 'center' },
+  emptyBody: { fontFamily: FONTS.body, fontSize: 15, color: COLORS.creamMuted, textAlign: 'center', lineHeight: 22 },
+  modalOverlay: { flex: 1, backgroundColor: COLORS.overlayDark, justifyContent: 'center', alignItems: 'center', paddingHorizontal: S.xl },
+  modalCard: { backgroundColor: COLORS.surface2, borderRadius: RADIUS.xl, padding: S.xl, width: '100%', gap: S.sm, borderWidth: 1, borderColor: COLORS.border },
+  modalTitle: { fontFamily: FONTS.header, fontSize: 20, color: COLORS.cream },
+  modalHood: { fontFamily: FONTS.mono, fontSize: 11, color: COLORS.sage, letterSpacing: 1 },
+  modalDetail: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.creamMuted, lineHeight: 22, marginTop: S.xs },
+  modalCloseBtn: { alignSelf: 'flex-end', marginTop: S.sm, paddingHorizontal: S.md, paddingVertical: S.xs, backgroundColor: COLORS.surface1, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLORS.border },
+  modalCloseTxt: { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: COLORS.cream },
 });
-
-export default TripWrappedScreen;

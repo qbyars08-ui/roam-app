@@ -637,13 +637,46 @@ export default function ItineraryScreen() {
   );
 
   // ---------------------------------------------------------------------------
-  // Venue card renderer
+  // Venue card renderer — enriched card when available, else tappable fallback (Maps / Booking.com)
   // ---------------------------------------------------------------------------
-  const renderVenueCard = (activityKey: string, options?: { isHotel?: boolean }) => {
+  const openMapsForPlace = useCallback((name: string, address?: string) => {
+    const query = [name, address, trip?.destination].filter(Boolean).join(', ');
+    if (!query.trim()) return;
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+    Linking.openURL(url).catch(() => {});
+  }, [trip?.destination]);
+
+  const openBookingForHotel = useCallback((name: string) => {
+    const query = [trip?.destination, name].filter(Boolean).join(' ');
+    const url = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(query)}`;
+    Linking.openURL(url).catch(() => {});
+  }, [trip?.destination]);
+
+  const renderVenueCard = (activityKey: string, options?: { isHotel?: boolean; location?: string; address?: string; name?: string }) => {
     const venue = venueData.get(activityKey);
-    if (!venue) return null;
-    const tips = fsqTipsMap.get(activityKey);
     const isHotel = options?.isHotel ?? activityKey.startsWith('accom::');
+    const fallbackName = options?.name ?? options?.location ?? (isHotel ? activityKey.replace(/^accom::/, '') : '');
+
+    if (!venue) {
+      if (!fallbackName?.trim()) return null;
+      const onPress = isHotel
+        ? () => { Haptics.selectionAsync(); openBookingForHotel(fallbackName); }
+        : () => { Haptics.selectionAsync(); openMapsForPlace(options?.location ?? fallbackName, options?.address); };
+      return (
+        <View style={styles.section}>
+          <Pressable onPress={onPress} style={styles.fallbackVenueCard} accessibilityRole="button" accessibilityLabel={isHotel ? `Find ${fallbackName} on Booking.com` : `Open ${fallbackName} in Maps`}>
+            <MapPin size={20} color={COLORS.sage} strokeWidth={1.5} />
+            <View style={styles.fallbackVenueContent}>
+              <Text style={styles.fallbackVenueName} numberOfLines={2}>{fallbackName}</Text>
+              <Text style={styles.fallbackVenueAction}>{isHotel ? 'Find on Booking.com' : 'Open in Maps'}</Text>
+            </View>
+            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
+          </Pressable>
+        </View>
+      );
+    }
+
+    const tips = fsqTipsMap.get(activityKey);
     const tapTarget = isHotel ? 'hotel' : 'activity';
     const poweredByGoogle = !!(venue.photo_url || (venue.rating != null));
     return (
@@ -786,6 +819,22 @@ export default function ItineraryScreen() {
             ]}
           >
             <Calendar size={20} color={COLORS.cream} strokeWidth={1.5} />
+          </Pressable>
+
+          {/* Explore Map — full interactive map screen */}
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push(`/explore-map?tripId=${trip?.id}` as never);
+            }}
+            hitSlop={8}
+            style={({ pressed }) => [
+              styles.mapExploreBtn,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
+          >
+            <MapPin size={14} color={COLORS.sage} strokeWidth={1.5} />
+            <Text style={styles.mapExploreBtnText}>MAP</Text>
           </Pressable>
 
           {/* List / Map toggle */}
@@ -1546,7 +1595,7 @@ export default function ItineraryScreen() {
                         </View>
                         <View style={styles.draggableContent}>
                           <TimeBlock slot={item.slot} data={item.data} currency={currency} rates={rates} />
-                          {renderVenueCard(item.data.activity)}
+                          {renderVenueCard(item.data.activity, { location: item.data.location, address: item.data.address, name: item.data.location })}
                         </View>
                       </Pressable>
                     )}
@@ -1557,15 +1606,15 @@ export default function ItineraryScreen() {
                   <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setEditingActivity({ slot: 'morning', data: currentDay.morning }); }}>
                     <TimeBlock slot="morning" data={currentDay.morning} currency={currency} rates={rates} />
                   </Pressable>
-                  {renderVenueCard(currentDay.morning.activity)}
+                  {renderVenueCard(currentDay.morning.activity, { location: currentDay.morning.location, address: currentDay.morning.address, name: currentDay.morning.location })}
                   <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setEditingActivity({ slot: 'afternoon', data: currentDay.afternoon }); }}>
                     <TimeBlock slot="afternoon" data={currentDay.afternoon} currency={currency} rates={rates} />
                   </Pressable>
-                  {renderVenueCard(currentDay.afternoon.activity)}
+                  {renderVenueCard(currentDay.afternoon.activity, { location: currentDay.afternoon.location, address: currentDay.afternoon.address, name: currentDay.afternoon.location })}
                   <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setEditingActivity({ slot: 'evening', data: currentDay.evening }); }}>
                     <TimeBlock slot="evening" data={currentDay.evening} currency={currency} rates={rates} />
                   </Pressable>
-                  {renderVenueCard(currentDay.evening.activity)}
+                  {renderVenueCard(currentDay.evening.activity, { location: currentDay.evening.location, address: currentDay.evening.address, name: currentDay.evening.location })}
                 </>
               )}
 
@@ -1584,7 +1633,7 @@ export default function ItineraryScreen() {
                   </Text>
                 </View>
               </View>
-              {renderVenueCard(`accom::${currentDay.accommodation.name}`)}
+              {renderVenueCard(`accom::${currentDay.accommodation.name}`, { isHotel: true, name: currentDay.accommodation.name })}
 
               {/* Daily total */}
               <View style={[styles.glassCard, styles.section]}>
@@ -2544,6 +2593,25 @@ const styles = StyleSheet.create({
     color: COLORS.sage,
   } as TextStyle,
 
+  // ── Explore Map button ──────────────────────────────────────────────────
+  mapExploreBtn: {
+    backgroundColor: COLORS.sageSubtle,
+    borderRadius: RADIUS.pill,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  } as ViewStyle,
+  mapExploreBtnText: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+    letterSpacing: 0.5,
+  } as TextStyle,
+
   // ── Scroll ──────────────────────────────────────────────────────────────
   scrollView: {
     flex: 1,
@@ -2816,6 +2884,29 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
   } as ViewStyle,
+
+  fallbackVenueCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.md,
+  } as ViewStyle,
+  fallbackVenueContent: { flex: 1 } as ViewStyle,
+  fallbackVenueName: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 15,
+    color: COLORS.cream,
+  } as TextStyle,
+  fallbackVenueAction: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.sage,
+    marginTop: SPACING.xs,
+  } as TextStyle,
 
   // ── Tagline + budget summary ────────────────────────────────────────────
   tagline: {

@@ -69,6 +69,12 @@ export interface Itinerary {
  * sometimes wraps around JSON output, then parse and validate.
  */
 export function parseItinerary(raw: string): Itinerary {
+  // #region agent log
+  const logPayload = { sessionId: 'f6988f', location: 'itinerary.ts:parseItinerary', message: 'parseItinerary entry', data: { rawLen: raw?.length ?? 0, rawPreview: raw?.trim().slice(0, 120) }, timestamp: Date.now(), hypothesisId: 'D' };
+  if (typeof fetch !== 'undefined') {
+    fetch('http://127.0.0.1:7616/ingest/63f217f0-eacc-4083-91d1-27bfecce344b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'f6988f' }, body: JSON.stringify(logPayload) }).catch(() => {});
+  }
+  // #endregion
   // 1. Strip markdown code fences if present
   let cleaned = raw.trim();
 
@@ -84,9 +90,11 @@ export function parseItinerary(raw: string): Itinerary {
   try {
     parsed = JSON.parse(cleaned);
   } catch (err) {
-    throw new Error(
-      `Failed to parse itinerary JSON: ${err instanceof Error ? err.message : String(err)}`
-    );
+    const msg = `Failed to parse itinerary JSON: ${err instanceof Error ? err.message : String(err)}`;
+    if (typeof fetch !== 'undefined') {
+      fetch('http://127.0.0.1:7616/ingest/63f217f0-eacc-4083-91d1-27bfecce344b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'f6988f' }, body: JSON.stringify({ sessionId: 'f6988f', location: 'itinerary.ts:parseItinerary', message: 'JSON.parse threw', data: { errMessage: msg }, timestamp: Date.now(), hypothesisId: 'D' }) }).catch(() => {});
+    }
+    throw new Error(msg);
   }
 
   // 3. Validate top-level shape
