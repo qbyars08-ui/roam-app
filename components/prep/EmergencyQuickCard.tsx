@@ -35,15 +35,10 @@ export default function EmergencyQuickCard({ destination }: EmergencyQuickCardPr
     };
   }, [destination]);
 
-  const handleCall = useCallback(() => {
-    if (!data) return;
-
-    const number =
-      data.police[0] ?? data.ambulance[0] ?? data.fire[0] ?? null;
-    if (number) {
-      Linking.openURL(`tel:${number}`);
-    }
-  }, [data]);
+  const dial = useCallback((num: string) => {
+    const cleaned = num.replace(/\s/g, '');
+    if (cleaned) Linking.openURL(`tel:${cleaned}`);
+  }, []);
 
   if (!data) return null;
 
@@ -55,37 +50,55 @@ export default function EmergencyQuickCard({ destination }: EmergencyQuickCardPr
     <View style={styles.container}>
       <Text style={styles.sectionHeader}>{t('emergency.title', { defaultValue: 'Emergency' })}</Text>
 
-      <Pressable onPress={handleCall} style={styles.card}>
+      <View style={styles.card}>
         <View style={styles.row}>
-          <View style={styles.column}>
+          <Pressable
+            style={styles.column}
+            onPress={() => dial(policeNumber)}
+            accessibilityLabel={t('emergency.callPolice', { defaultValue: 'Call police' })}
+            accessibilityRole="button"
+            accessibilityHint={policeNumber !== '--' ? `Dials ${policeNumber}` : undefined}
+          >
             <View style={styles.iconRow}>
               <Shield size={16} color={COLORS.coral} strokeWidth={1.5} />
               <Text style={styles.label}>{t('emergency.police', { defaultValue: 'POLICE' })}</Text>
             </View>
             <Text style={styles.number}>{policeNumber}</Text>
-          </View>
+          </Pressable>
 
-          <View style={styles.column}>
+          <Pressable
+            style={styles.column}
+            onPress={() => dial(ambulanceNumber)}
+            accessibilityLabel={t('emergency.callAmbulance', { defaultValue: 'Call ambulance' })}
+            accessibilityRole="button"
+            accessibilityHint={ambulanceNumber !== '--' ? `Dials ${ambulanceNumber}` : undefined}
+          >
             <View style={styles.iconRow}>
               <Truck size={16} color={COLORS.coral} strokeWidth={1.5} />
               <Text style={styles.label}>{t('emergency.ambulance', { defaultValue: 'AMBULANCE' })}</Text>
             </View>
             <Text style={styles.number}>{ambulanceNumber}</Text>
-          </View>
+          </Pressable>
 
-          <View style={styles.column}>
+          <Pressable
+            style={styles.column}
+            onPress={() => dial(fireNumber)}
+            accessibilityLabel={t('emergency.callFire', { defaultValue: 'Call fire' })}
+            accessibilityRole="button"
+            accessibilityHint={fireNumber !== '--' ? `Dials ${fireNumber}` : undefined}
+          >
             <View style={styles.iconRow}>
               <Flame size={16} color={COLORS.coral} strokeWidth={1.5} />
               <Text style={styles.label}>{t('emergency.fire', { defaultValue: 'FIRE' })}</Text>
             </View>
             <Text style={styles.number}>{fireNumber}</Text>
-          </View>
+          </Pressable>
         </View>
 
         {data.isMember112 && (
           <Text style={styles.note}>{t('emergency.eu112Note', { defaultValue: 'EU 112 works here' })}</Text>
         )}
-      </Pressable>
+      </View>
     </View>
   );
 }

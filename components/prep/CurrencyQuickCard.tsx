@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, TextInput, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import {
@@ -29,6 +29,7 @@ export default function CurrencyQuickCard({ destination }: CurrencyQuickCardProp
   const { t } = useTranslation();
   const [rates, setRates] = useState<ExchangeRateData | null>(null);
   const [localCurrency, setLocalCurrency] = useState<string | null>(null);
+  const [usdInput, setUsdInput] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -72,6 +73,14 @@ export default function CurrencyQuickCard({ destination }: CurrencyQuickCardProp
     });
   }, [rates, localCurrency]);
 
+  const calculatorResult = useMemo(() => {
+    if (!rates || !localCurrency) return null;
+    const amount = parseFloat(usdInput.replace(/[^0-9.]/g, ''));
+    if (Number.isNaN(amount) || amount <= 0) return null;
+    const converted = convertCurrency(amount, 'USD', localCurrency, rates);
+    return converted != null ? formatCurrencyAmount(converted, localCurrency) : null;
+  }, [rates, localCurrency, usdInput]);
+
   if (!rates || !localCurrency || !mainConversion) return null;
 
   return (
@@ -83,6 +92,23 @@ export default function CurrencyQuickCard({ destination }: CurrencyQuickCardProp
         <Text style={styles.convertedValue}>{mainConversion}</Text>
 
         <Text style={styles.lastUpdated}>{t('currency.lastUpdated', { defaultValue: 'Last updated' })} {rates.date}</Text>
+
+        <View style={styles.calculatorRow}>
+          <Text style={styles.calculatorLabel}>{t('currency.calculator', { defaultValue: 'Calculator' })}</Text>
+          <View style={styles.calculatorInputRow}>
+            <Text style={styles.calculatorPrefix}>$</Text>
+            <TextInput
+              style={styles.calculatorInput}
+              value={usdInput}
+              onChangeText={setUsdInput}
+              placeholder="0"
+              placeholderTextColor={COLORS.creamMuted}
+              keyboardType="decimal-pad"
+            />
+            <Text style={styles.calculatorEquals}>=</Text>
+            <Text style={styles.calculatorResult}>{calculatorResult ?? '—'}</Text>
+          </View>
+        </View>
 
         <View style={styles.quickRow}>
           {quickConversions.map((item) => (
@@ -128,6 +154,49 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.mono,
     fontSize: 10,
     color: COLORS.creamMuted,
+  },
+  calculatorRow: {
+    marginTop: SPACING.sm,
+    gap: SPACING.xs,
+  },
+  calculatorLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.creamMuted,
+    letterSpacing: 0.5,
+  },
+  calculatorInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  calculatorPrefix: {
+    fontFamily: FONTS.mono,
+    fontSize: 16,
+    color: COLORS.creamMuted,
+  },
+  calculatorInput: {
+    fontFamily: FONTS.mono,
+    fontSize: 16,
+    color: COLORS.cream,
+    minWidth: 60,
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.sm,
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  calculatorEquals: {
+    fontFamily: FONTS.mono,
+    fontSize: 14,
+    color: COLORS.creamMuted,
+  },
+  calculatorResult: {
+    fontFamily: FONTS.mono,
+    fontSize: 14,
+    color: COLORS.gold,
+    flex: 1,
   },
   quickRow: {
     flexDirection: 'row',

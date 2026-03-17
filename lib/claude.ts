@@ -16,8 +16,14 @@ export const ITINERARY_SYSTEM_PROMPT = `You are a traveler who has lived in ever
 
 CRITICAL: Respond with ONLY valid JSON. No markdown, no explanation, no extra text.
 
-BANNED WORDS — never use these. If you catch yourself writing any of them, delete and rewrite:
+BANNED WORDS — NEVER use these anywhere in your response (tagline, themes, tips, activity names, anything). If you catch yourself writing any, delete and rewrite:
 vibrant, bustling, must-see, hidden gem, local favorite, world-class, iconic, charming, picturesque, unforgettable, breathtaking, stunning, delightful, quaint, unique experience, nestled, boasts, renowned, exquisite, authentic experience, rich history, cultural tapestry
+
+NON-NEGOTIABLE FOR EVERY OUTPUT:
+- Neighborhood-level only: use district/neighborhood names (e.g. Shibuya, Le Marais, Canggu, Hongdae), never the city name for locations.
+- Specific times: every morning/afternoon/evening has "time" like "6:30 AM" or "2:00 PM", never "morning" or "afternoon".
+- Local currency costs: every cost as "$XX (¥X,XXX)" or "$XX (€XX)" or equivalent — both USD and local currency.
+- Real transit directions: every transitToNext has line name, direction, exit, duration, and fare in local currency (skip only for evening slot).
 
 JSON schema:
 
@@ -236,7 +242,7 @@ Voice:
 // ---------------------------------------------------------------------------
 // CRAFT follow-up — refine itinerary through conversation (no JSON)
 // ---------------------------------------------------------------------------
-export const CRAFT_FOLLOW_UP_SYSTEM = `You are ROAM. The user just received a personalized trip itinerary and is giving feedback. They can ask for changes: different hotel, more food experiences, less walking, business class both ways, etc.
+export const CRAFT_FOLLOW_UP_SYSTEM = `You are ROAM. The user has a personalized trip itinerary and is chatting with you. You have FULL context: the full itinerary (destination, days, every activity with times, neighborhoods, costs, transit, tips) plus the planning conversation. They can ask anything: changes, more details, alternatives, flights, hotels, food, timing, or general questions.
 
 Respond in plain language. Be specific and actionable. Do NOT output JSON or markdown code blocks.
 
@@ -244,8 +250,9 @@ Respond in plain language. Be specific and actionable. Do NOT output JSON or mar
 - If they want more food: add specific restaurants or food experiences and where they fit in the day.
 - If they want less walking: suggest transport or different activity order.
 - If they ask about flights/cabin: give a concrete recommendation (airline, route, price range) and where to book.
+- If they ask "what else" or "tell me more": use your full itinerary context to add detail, alternatives, or pro tips.
 
-Keep responses under 200 words. Sound like a travel planner who has the full context. Never use emojis.`;
+Keep responses under 200 words. Sound like a travel planner who has the full context. Never use emojis. Conversation can continue indefinitely — answer each message with full context.`;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -911,6 +918,22 @@ export async function generateItineraryStreaming(params: {
           // #region agent log
           fetch('http://127.0.0.1:7616/ingest/63f217f0-eacc-4083-91d1-27bfecce344b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f6988f'},body:JSON.stringify({sessionId:'f6988f',location:'claude.ts:generateItineraryStreaming:onDone',message:'Before parseItinerary',data:{fullTextLen:fullText?.length ?? 0,fullTextPreview:fullText?.slice(0,150)},timestamp:Date.now(),hypothesisId:'C_D'})}).catch(()=>{});
           // #endregion
+          // Reject clearly when stream returned non-JSON or refusal (log evidence: "Sorry, I cannot help with that.", "not json", etc.)
+          const trimmed = fullText?.trim() ?? '';
+          if (trimmed.length < 200) {
+            reject(new Error('The trip came back too short — try again and we\'ll build a full itinerary.'));
+            return;
+          }
+          const looksLikeRefusal = /^(Sorry|I cannot|I can't|I'm unable)/i.test(trimmed);
+          if (looksLikeRefusal) {
+            reject(new Error('We couldn\'t generate that trip this time. Try again or tweak your destination or dates.'));
+            return;
+          }
+          const afterFence = trimmed.replace(/^```(?:json)?\s*\n?/i, '').trim();
+          if (!afterFence.startsWith('{')) {
+            reject(new Error('The trip didn\'t come back in the right format. One more try usually fixes it.'));
+            return;
+          }
           const itinerary = parseItinerary(fullText);
           resolve({
             itinerary,

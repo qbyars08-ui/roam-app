@@ -85,6 +85,15 @@ export function parseItinerary(raw: string): Itinerary {
     cleaned = match[1].trim();
   }
 
+  // Reject clearly non-JSON input (refusals, truncated, or wrong format)
+  if (cleaned.length < 50) {
+    throw new Error('Itinerary response was too short or empty. Please try again.');
+  }
+  const firstChar = cleaned.charAt(0);
+  if (firstChar !== '{') {
+    throw new Error('AI did not return a valid itinerary. Please try again.');
+  }
+
   // 2. Parse JSON
   let parsed: unknown;
   try {

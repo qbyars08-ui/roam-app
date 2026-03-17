@@ -110,6 +110,51 @@ export async function scheduleTripCountdown(
 }
 
 // ---------------------------------------------------------------------------
+// Trip Wrapped — 7 days after return
+// ---------------------------------------------------------------------------
+
+const TRIP_WRAPPED_DAYS_AFTER_RETURN = 7;
+
+/**
+ * Schedule "Trip Wrapped" notification for 7 days after trip end.
+ * When the user taps it, open /trip-wrapped.
+ *
+ * @param tripId       Unique trip identifier
+ * @param destination  e.g. "Tokyo"
+ * @param endDate      ISO date string of last day of trip (departure date)
+ */
+export async function scheduleTripWrappedNotification(
+  tripId: string,
+  destination: string,
+  endDate: string
+): Promise<string | null> {
+  if (Platform.OS === 'web') return null;
+
+  const end = new Date(endDate);
+  end.setHours(0, 0, 0, 0);
+  const triggerDate = new Date(end);
+  triggerDate.setDate(triggerDate.getDate() + TRIP_WRAPPED_DAYS_AFTER_RETURN);
+  triggerDate.setHours(10, 0, 0, 0);
+
+  const now = new Date();
+  if (triggerDate <= now) return null;
+
+  const id = await Notifications.scheduleNotificationAsync({
+    content: {
+      title: 'Your trip wrapped',
+      body: `See your ${destination} highlights and where to go next.`,
+      data: { tripId, type: 'trip_wrapped', screen: '/trip-wrapped' },
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: triggerDate,
+    },
+  });
+
+  return id;
+}
+
+// ---------------------------------------------------------------------------
 // Daily discovery — rotating destination inspiration
 // ---------------------------------------------------------------------------
 

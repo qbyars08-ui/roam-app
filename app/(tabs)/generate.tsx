@@ -120,6 +120,7 @@ export default function GenerateScreen() {
         vibes: state.vibes,
         itinerary: JSON.stringify(itinerary),
         createdAt: new Date().toISOString(),
+        startDate: state.startDate?.toISOString().split('T')[0],
       };
 
       addTrip(trip);
@@ -205,6 +206,7 @@ export default function GenerateScreen() {
         vibes,
         itinerary: JSON.stringify(itinerary),
         createdAt: new Date().toISOString(),
+        startDate: undefined,
       };
 
       addTrip(trip);

@@ -81,6 +81,7 @@ const CountdownDigit = React.memo(function CountdownDigit({
 }) {
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
+  const pulseScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -98,11 +99,24 @@ const CountdownDigit = React.memo(function CountdownDigit({
     ]).start();
   }, [scaleAnim, opacityAnim]);
 
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseScale, { toValue: 1.02, duration: 1500, useNativeDriver: true }),
+        Animated.timing(pulseScale, { toValue: 1, duration: 1500, useNativeDriver: true }),
+      ])
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [pulseScale]);
+
+  const combinedScale = Animated.multiply(scaleAnim, pulseScale);
+
   return (
     <Animated.View
       style={[
         styles.digitContainer,
-        { transform: [{ scale: scaleAnim }], opacity: opacityAnim },
+        { transform: [{ scale: combinedScale }], opacity: opacityAnim },
       ]}
     >
       <Text style={[styles.digitValue, { color }]}>{value}</Text>

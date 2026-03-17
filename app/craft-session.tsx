@@ -26,6 +26,7 @@ import {
   applyAnswer,
   hasAllRequiredForGeneration,
   buildCraftContextBlock,
+  buildFullItinerarySummary,
   buildFollowUpMessages,
   type CraftState,
   type CraftPreferences,
@@ -209,7 +210,7 @@ export default function CraftSessionScreen() {
       setInput('');
       setError(null);
       setLoading(true);
-      const itinerarySummary = `${parsedItinerary.destination}: ${parsedItinerary.tagline}. ${parsedItinerary.days?.length ?? 0} days. Budget: ${parsedItinerary.totalBudget}.`;
+      const itinerarySummary = buildFullItinerarySummary(parsedItinerary);
       const messages = buildFollowUpMessages(state, itinerarySummary, text);
       callClaudeWithMessages(CRAFT_FOLLOW_UP_SYSTEM, messages, false)
         .then((res) => {
@@ -354,7 +355,7 @@ export default function CraftSessionScreen() {
               <View style={styles.inputRow}>
                 <TextInput
                   style={styles.input}
-                  placeholder="What would you change?"
+                  placeholder="Ask anything about your trip — changes, more details, alternatives..."
                   placeholderTextColor={COLORS.creamDim}
                   value={input}
                   onChangeText={setInput}

@@ -23,6 +23,8 @@ export type Trip = {
   vibes: string[];
   itinerary: string;
   createdAt: string;
+  /** ISO date string (YYYY-MM-DD) when user selected a departure date in quick mode */
+  startDate?: string;
   /** True when itinerary was generated from mock/offline fallback */
   isMockData?: boolean;
 };

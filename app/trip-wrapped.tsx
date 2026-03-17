@@ -8,6 +8,7 @@ import {
   Image,
   Linking,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -17,12 +18,17 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Sharing from 'expo-sharing';
 import * as Haptics from '../lib/haptics';
+import ViewShot, { captureRef } from '../lib/view-shot';
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATION_HERO_PHOTOS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import { parseItinerary } from '../lib/types/itinerary';
 import type { Itinerary, TimeSlotActivity } from '../lib/types/itinerary';
 import { supabase } from '../lib/supabase';
+
+const STORY_WIDTH = 270;
+const STORY_HEIGHT = 480;
 
 const { width: SW, height: SH } = Dimensions.get('window');
 const S = SPACING;
@@ -170,12 +176,12 @@ export default function TripWrappedScreen() {
       try {
         const { data } = await supabase
           .from('trip_moments')
-          .select('content')
+          .select('note')
           .eq('trip_id', trip.id)
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle();
-        if (data?.content) setMoment(data.content as string);
+        if (data?.note) setMoment(data.note as string);
       } catch { /* fall back to day summary */ }
     })();
   }, [trip]);
@@ -185,12 +191,30 @@ export default function TripWrappedScreen() {
     setActiveSlide(index);
   }, []);
 
+  const shareCardRef = useRef<React.ComponentRef<typeof ViewShot> | null>(null);
+
   const handleShare = useCallback(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const dest = trip?.destination ?? 'somewhere amazing';
     const text = `Just planned a trip to ${dest} with ROAM. Next stop: the real thing.`;
     Linking.openURL(`sms:?body=${encodeURIComponent(text)}`).catch(() => Linking.openURL('https://roam.app'));
   }, [trip]);
+
+  const handleShareAsImage = useCallback(async () => {
+    if (!shareCardRef.current || !trip || !itinerary) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    try {
+      const uri = await captureRef(shareCardRef, { format: 'png', quality: 1 });
+      if (uri && Platform.OS !== 'web' && (await Sharing.isAvailableAsync())) {
+        await Sharing.shareAsync(uri, {
+          mimeType: 'image/png',
+          dialogTitle: `My ${trip.destination} trip — ROAM`,
+        });
+      }
+    } catch {
+      handleShare();
+    }
+  }, [trip, itinerary, handleShare]);
 
   const handlePlanNext = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -242,10 +266,10 @@ export default function TripWrappedScreen() {
       </View>
     </View>,
 
-    // Slide 3 — What ROAM Learned
+    // Slide 3 — Travel Mirror (behavioral insight)
     <View key="learned" style={[ss.slide, ss.slideDark]}>
       <View style={ss.centerGroup}>
-        <Text style={ss.eyebrow}>WHAT ROAM LEARNED</Text>
+        <Text style={ss.eyebrow}>TRAVEL MIRROR</Text>
         <Text style={ss.insightText}>{insight}</Text>
         <View style={ss.pill}>
           <Text style={ss.pillText}>{itinerary.destination}</Text>
@@ -291,6 +315,9 @@ export default function TripWrappedScreen() {
           <Text style={ss.shareBtnText}>Share your trip</Text>
         </LinearGradient>
       </Pressable>
+      <Pressable style={({ pressed }) => [ss.shareStoryBtn, { opacity: pressed ? 0.85 : 1 }]} onPress={handleShareAsImage}>
+        <Text style={ss.shareStoryBtnText}>Share as 9:16 image</Text>
+      </Pressable>
     </View>,
   ];
 
@@ -317,6 +344,23 @@ export default function TripWrappedScreen() {
       <View style={[ss.dotsRow, { bottom: insets.bottom + S.lg }]}>
         {slides.map((_, i) => <View key={i} style={[ss.dot, activeSlide === i && ss.dotActive]} />)}
       </View>
+
+      {/* Off-screen 9:16 card for Stories share */}
+      {trip && itinerary ? (
+        <View style={ss.offScreenCard} collapsable={false}>
+          <ViewShot ref={shareCardRef} options={{ format: 'png', quality: 1 }} style={ss.storyCardSize}>
+            <LinearGradient colors={[COLORS.surface2, COLORS.bg]} style={ss.storyCardSize}>
+              <View style={ss.storyCardContent}>
+                <Text style={ss.storyCardDest}>{itinerary.destination}</Text>
+                <Text style={ss.storyCardStats}>
+                  {trip.days} days · {neighborhoods.length} neighborhoods
+                </Text>
+                <Text style={ss.storyCardLabel}>My ROAM trip</Text>
+              </View>
+            </LinearGradient>
+          </ViewShot>
+        </View>
+      ) : null}
 
       {/* Activity detail modal */}
       <Modal visible={expanded !== null} transparent animationType="fade" onRequestClose={() => setExpanded(null)}>
@@ -376,6 +420,14 @@ const ss = StyleSheet.create({
   shareBtn: { marginTop: S.xl, borderRadius: RADIUS.pill, overflow: 'hidden', width: '100%' },
   shareBtnInner: { paddingVertical: S.md, alignItems: 'center', borderRadius: RADIUS.pill },
   shareBtnText: { fontFamily: FONTS.bodySemiBold, fontSize: 16, color: COLORS.white, letterSpacing: 0.3 },
+  shareStoryBtn: { marginTop: S.sm, paddingVertical: S.sm, alignItems: 'center' },
+  shareStoryBtnText: { fontFamily: FONTS.mono, fontSize: 12, color: COLORS.sage, letterSpacing: 0.5 },
+  offScreenCard: { position: 'absolute', left: -STORY_WIDTH - 100, top: 0, width: STORY_WIDTH, height: STORY_HEIGHT },
+  storyCardSize: { width: STORY_WIDTH, height: STORY_HEIGHT, borderRadius: RADIUS.lg },
+  storyCardContent: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: S.xl },
+  storyCardDest: { fontFamily: FONTS.header, fontSize: 32, color: COLORS.cream, marginBottom: S.sm },
+  storyCardStats: { fontFamily: FONTS.mono, fontSize: 12, color: COLORS.creamMuted, letterSpacing: 1, marginBottom: S.lg },
+  storyCardLabel: { fontFamily: FONTS.mono, fontSize: 10, color: COLORS.sage, letterSpacing: 2 },
   closeBtn: { position: 'absolute', left: S.md, width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.overlayMedium, alignItems: 'center', justifyContent: 'center' },
   closeBtnText: { fontSize: 22, color: COLORS.cream, lineHeight: 26 },
   dotsRow: { position: 'absolute', left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: S.xs },

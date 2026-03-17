@@ -27,6 +27,7 @@ const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
 const RATE_LIMIT_PER_MINUTE = 20;
 
 const VALID_QUERY_TYPES = [
+  "urgent",
   "pulse",
   "prep",
   "events",
@@ -51,6 +52,11 @@ function buildQuery(
   const extra = dateCtx + budgetCtx;
 
   const templates: Record<SonarQueryType, { system: string; user: string }> = {
+    urgent: {
+      system:
+        "You are a travel urgency agent. Reply with exactly ONE short sentence (under 15 words) that a traveler to this destination needs to know right now. Examples: 'Cherry blossoms peak this week in Tokyo.' or 'Heavy rain expected Thursday in Barcelona.' No bullet points, no preamble, no quotes.",
+      user: `What is the one most urgent or timely thing a traveler should know about ${destination} right now? Reply with only one short sentence.`,
+    },
     pulse: {
       system:
         "You are a real-time travel intelligence agent. Give current, specific information about what is happening at a destination RIGHT NOW. Include weather, events, crowd levels, and anything a traveler should know today. Be specific with names, dates, and details. Keep it concise — 3-5 bullet points max.",

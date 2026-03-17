@@ -57,7 +57,7 @@ import { generatePackingList } from '../lib/packing-ai';
 import { enrichVenues, enrichVenuesViaPlacesProxy, getTodayHours, type EnrichedVenue } from '../lib/venues';
 import { saveItineraryOffline } from '../lib/offline';
 import { exportCalendar } from '../lib/calendar';
-import { shareTrip, copyShareableLink } from '../lib/sharing';
+import { shareTrip, shareTripAsCard, copyShareableLink } from '../lib/sharing';
 import { recordGrowthEvent } from '../lib/growth-hooks';
 import { evaluateTrigger } from '../lib/smart-triggers';
 import { buildDayNarration, narrateItinerary, type NarrationController } from '../lib/elevenlabs';
@@ -86,6 +86,7 @@ import PostTripUpgradeNudge from '../components/monetization/PostTripUpgradeNudg
 import CarbonFootprintCard from '../components/features/CarbonFootprintCard';
 import PriceOracleCard from '../components/features/PriceOracleCard';
 import LanguageSurvivalSection from '../components/features/LanguageSurvivalSection';
+import RoamersNearSection from '../components/features/RoamersNearSection';
 import TripInsuranceCards from '../components/features/TripInsuranceCards';
 import ReturnTripSection from '../components/features/ReturnTripSection';
 import CurrencyToggle, { useCurrency } from '../components/features/CurrencyToggle';
@@ -95,7 +96,7 @@ import {
   SAFETY_COLORS,
 } from '../lib/neighborhood-safety';
 import { formatDualPrice, formatLocalPrice, type ExchangeRates } from '../lib/currency';
-import { AlertTriangle, X, Pencil, Calendar, Link2, Share2, MapPin, Receipt, Film, Wallet, Train, CreditCard, Plane, Heart, ShieldCheck, Droplets, Globe, Sun, Wind, PartyPopper, Camera, Clock, ChevronRight } from 'lucide-react-native';
+import { AlertTriangle, X, Pencil, Calendar, Link2, Share2, MapPin, Map as LucideMap, Receipt, Film, Wallet, Train, CreditCard, Plane, Heart, ShieldCheck, Droplets, Globe, Sun, Wind, PartyPopper, Camera, Clock, ChevronRight } from 'lucide-react-native';
 import { getTransitGuide, type TransitGuide } from '../lib/transit-data';
 import { getHomeAirport } from '../lib/flights';
 import { getMedicalGuideByDestination, type MedicalGuide } from '../lib/medical-abroad';
@@ -135,7 +136,7 @@ export default function ItineraryScreen() {
   const [parsed, setParsed] = useState<Itinerary | null>(null);
   const [trip, setTrip] = useState<Trip | null>(null);
   const [weather, setWeather] = useState<WeatherForecast | null>(null);
-  const [venueData, setVenueData] = useState<Map<string, EnrichedVenue>>(new Map());
+  const [venueData, setVenueData] = useState<Map<string, EnrichedVenue>>(new Map<string, EnrichedVenue>([]));
   const transitGuide = useMemo(() => trip ? getTransitGuide(trip.destination) : null, [trip]);
   const medicalGuide = useMemo(() => trip ? getMedicalGuideByDestination(trip.destination) : null, [trip]);
   const costOfLiving = useMemo(() => trip ? getCostOfLiving(trip.destination) : null, [trip]);
@@ -160,7 +161,7 @@ export default function ItineraryScreen() {
     data: TimeSlotActivity;
   } | null>(null);
   const [narrationController, setNarrationController] = useState<NarrationController | null>(null);
-  const [fsqTipsMap, setFsqTipsMap] = useState<Map<string, FSQTip[]>>(new Map());
+  const [fsqTipsMap, setFsqTipsMap] = useState<Map<string, FSQTip[]>>(new Map<string, FSQTip[]>([]));
   const [gygActivities, setGygActivities] = useState<GYGActivity[] | null>(null);
   const mapRef = useRef<typeof MapView>(null);
   const dayPagerRef = useRef<ScrollView>(null);
@@ -329,7 +330,7 @@ export default function ItineraryScreen() {
       enrichVenuesViaPlacesProxy(destination, unique),
     ])
       .then(([results, placesMap]) => {
-        const map = new Map<string, EnrichedVenue>();
+        const map = new Map<string, EnrichedVenue>([]);
         unique.forEach((q, i) => {
           const fromEnrich = results[i];
           const fromPlaces = placesMap.get(q.key);
@@ -341,7 +342,7 @@ export default function ItineraryScreen() {
         });
         setVenueData(map);
       })
-      .catch(() => setVenueData(new Map()));
+      .catch(() => setVenueData(new Map<string, EnrichedVenue>([])));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- trip intentionally excluded
   }, [parsed, trip?.destination]);
 
@@ -434,7 +435,7 @@ export default function ItineraryScreen() {
         getPlaceTips(venue.place_id).then((tips) => {
           if (!cancelled && tips?.length) {
             setFsqTipsMap((prev) => {
-              const next = new Map(prev);
+              const next = new Map<string, FSQTip[]>(prev);
               next.set(key, tips.slice(0, 2));
               return next;
             });
@@ -612,6 +613,18 @@ export default function ItineraryScreen() {
     }
   }, [trip]);
 
+  const handleShareAsCard = useCallback(async () => {
+    if (!trip || !parsed) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    captureEvent('itinerary_shared', { destination: trip.destination, tripId: trip.id, method: 'card' });
+    recordGrowthEvent('trip_shared').catch(() => {});
+    try {
+      await shareTripAsCard(trip, parsed);
+    } catch {
+      // user dismissed or share not available
+    }
+  }, [trip, parsed]);
+
   // ---------------------------------------------------------------------------
   // Activity edit — save handler
   // ---------------------------------------------------------------------------
@@ -679,6 +692,10 @@ export default function ItineraryScreen() {
     const tips = fsqTipsMap.get(activityKey);
     const tapTarget = isHotel ? 'hotel' : 'activity';
     const poweredByGoogle = !!(venue.photo_url || (venue.rating != null));
+    const gygMatch = gygActivities?.find(
+      (a) => a.name && venue.name && (venue.name.toLowerCase().includes(a.name.toLowerCase()) || a.name.toLowerCase().includes(venue.name.toLowerCase()))
+    );
+    const bookingUrl = gygMatch?.bookingUrl ?? undefined;
     return (
       <View style={styles.section}>
         <VenueCard
@@ -690,6 +707,7 @@ export default function ItineraryScreen() {
           open_now={venue.opening_hours?.open_now ?? null}
           hours_today={getTodayHours(venue.opening_hours?.weekday_text)}
           maps_url={venue.maps_url}
+          booking_url={bookingUrl}
           city={trip?.destination}
           tapTarget={tapTarget}
           destination={trip?.destination}
@@ -821,6 +839,22 @@ export default function ItineraryScreen() {
             <Calendar size={20} color={COLORS.cream} strokeWidth={1.5} />
           </Pressable>
 
+          {/* Itinerary map toggle — numbered pins + route line, tap pin for activity card */}
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setViewMode('map');
+              setSelectedPin(null);
+            }}
+            hitSlop={8}
+            style={({ pressed }) => [
+              styles.headerBtn,
+              { opacity: pressed ? 0.6 : 1 },
+            ]}
+          >
+            <LucideMap size={20} color={viewMode === 'map' ? COLORS.sage : COLORS.cream} strokeWidth={1.5} />
+          </Pressable>
+
           {/* Explore Map — full interactive map screen */}
           <Pressable
             onPress={() => {
@@ -935,12 +969,12 @@ export default function ItineraryScreen() {
       </View>
 
       {/* ── Share nudge — shown for trips created in the last 5 minutes ── */}
-      {!shareNudgeDismissed && trip && (Date.now() - new Date(trip.createdAt).getTime() < 5 * 60 * 1000) && (
+      {!shareNudgeDismissed && trip && parsed && (Date.now() - new Date(trip.createdAt).getTime() < 5 * 60 * 1000) && (
         <Pressable
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            setShareVisible(true);
             setShareNudgeDismissed(true);
+            handleShareAsCard();
           }}
           style={({ pressed }) => [
             styles.shareNudge,
@@ -950,8 +984,8 @@ export default function ItineraryScreen() {
           <View style={styles.shareNudgeInner}>
             <Share2 size={18} color={COLORS.sage} strokeWidth={1.5} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.shareNudgeTitle}>Your trip is ready</Text>
-              <Text style={styles.shareNudgeSub}>Share it with friends — one tap</Text>
+              <Text style={styles.shareNudgeTitle}>{t('itinerary.shareTrip', { defaultValue: 'Share this trip' })}</Text>
+              <Text style={styles.shareNudgeSub}>{t('itinerary.shareNudgeSub', { defaultValue: 'Tap to open share sheet' })}</Text>
             </View>
             <ChevronRight size={18} color={COLORS.sage} strokeWidth={1.5} />
           </View>
@@ -1223,12 +1257,12 @@ export default function ItineraryScreen() {
             </View>
           )}
 
-          {/* Share poster CTA — screenshot-worthy */}
+          {/* Share this trip — native share sheet with destination + top 3 + roamapp.app */}
           <View style={styles.section}>
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setShareVisible(true);
+                handleShareAsCard();
               }}
               style={({ pressed }) => [
                 styles.shareCtaCard,
@@ -1529,10 +1563,19 @@ export default function ItineraryScreen() {
             <FlightDealCard destination={trip.destination} />
           </View>
 
-          {/* Current day theme — editorial headline */}
+          {/* Current day theme — editorial headline + weather badge */}
           {currentDay && (
             <View style={styles.dayThemeHero}>
-              <Text style={styles.dayThemeNumber}>DAY {currentDay.day}</Text>
+              <View style={styles.dayThemeHeaderRow}>
+                <Text style={styles.dayThemeNumber}>DAY {currentDay.day}</Text>
+                {weather?.days[activeDay] && (
+                  <View style={styles.dayWeatherBadge}>
+                    <Text style={styles.dayWeatherBadgeText}>
+                      {Math.round(weather.days[activeDay].tempMax)}° · {weather.days[activeDay].description}
+                    </Text>
+                  </View>
+                )}
+              </View>
               <Text style={styles.dayThemeTitle}>{currentDay.theme}</Text>
             </View>
           )}
@@ -1838,6 +1881,7 @@ export default function ItineraryScreen() {
           {/* Language Survival — 50 essential phrases, tap for TTS */}
           <View style={styles.section}>
             <LanguageSurvivalSection destination={trip.destination} />
+            <RoamersNearSection destination={trip.destination} />
           </View>
 
           {/* Packing list — AI-personalized from weather + activities + trip length */}
@@ -2848,12 +2892,33 @@ const styles = StyleSheet.create({
     borderTopColor: COLORS.border,
     paddingTop: SPACING.lg,
   } as ViewStyle,
+  dayThemeHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+    marginBottom: SPACING.xs,
+  } as ViewStyle,
   dayThemeNumber: {
     fontFamily: FONTS.mono,
     fontSize: 11,
     color: COLORS.sage,
     letterSpacing: 2,
-    marginBottom: SPACING.xs,
+  } as TextStyle,
+  dayWeatherBadge: {
+    backgroundColor: COLORS.sageSubtle,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+  } as ViewStyle,
+  dayWeatherBadgeText: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+    letterSpacing: 0.3,
   } as TextStyle,
   dayThemeTitle: {
     fontFamily: FONTS.header,

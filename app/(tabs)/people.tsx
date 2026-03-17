@@ -496,22 +496,51 @@ const RoamerProfileCard = React.memo<{
 RoamerProfileCard.displayName = 'RoamerProfileCard';
 
 // =============================================================================
-// SUB-COMPONENT: EmptyMatchState
+// SUB-COMPONENT: EmptyMatchState — "You'd be the first ROAMer in [city]", animated pin, Add your trip CTA
 // =============================================================================
 const EmptyMatchState = React.memo<{ destination: string }>(({ destination }) => {
   const { t } = useTranslation();
+  const router = useRouter();
+  const pinDrop = useRef(new Animated.Value(-72)).current;
+  const pinBounce = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const drop = Animated.timing(pinDrop, {
+      toValue: 0,
+      duration: 1600,
+      useNativeDriver: true,
+    });
+    const bounce = Animated.sequence([
+      Animated.timing(pinBounce, { toValue: 1.15, duration: 100, useNativeDriver: true }),
+      Animated.spring(pinBounce, { toValue: 1, tension: 160, friction: 10, useNativeDriver: true }),
+    ]);
+    Animated.sequence([drop, bounce]).start();
+  }, [pinDrop, pinBounce]);
+
+  const handleAddTrip = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push('/(tabs)/plan' as never);
+  }, [router]);
+
   return (
     <View style={styles.emptyState}>
+      <Animated.View style={[styles.emptyStatePinWrap, { transform: [{ translateY: pinDrop }, { scale: pinBounce }] }]}>
+        <MapPin size={48} color={COLORS.sage} strokeWidth={1.5} />
+      </Animated.View>
       <Text style={styles.emptyText}>
-        {t('people.firstRoamer', { destination, defaultValue: `You'd be the first ROAMer in ${destination}.\nAdd your trip and someone will find you.` })}
+        {t('people.firstRoamer', { destination, defaultValue: `You'd be the first ROAMer in ${destination}.` })}
+      </Text>
+      <Text style={styles.emptySubtext}>
+        {t('people.firstRoamerSub', { defaultValue: 'Add your trip and someone will find you.' })}
       </Text>
       <Pressable
-        accessibilityLabel={t('people.inviteFriend', { defaultValue: 'Invite a friend' })}
-        style={({ pressed }) => [styles.inviteBtn, pressed && styles.pressed]}
+        onPress={handleAddTrip}
+        accessibilityLabel={t('people.addYourTrip', { defaultValue: 'Add your trip' })}
+        accessibilityRole="button"
+        style={({ pressed }) => [styles.addTripCta, pressed && styles.pressed]}
       >
-        <Send size={16} color={COLORS.sage} strokeWidth={1.5} />
-        <Text style={styles.inviteBtnText}>{t('people.inviteFriend', { defaultValue: 'Invite a friend' })}</Text>
-        <ArrowRight size={14} color={COLORS.sage} strokeWidth={1.5} />
+        <Text style={styles.addTripCtaText}>{t('people.addYourTrip', { defaultValue: 'Add your trip' })}</Text>
+        <ArrowRight size={18} color={COLORS.bg} strokeWidth={1.5} />
       </Pressable>
     </View>
   );
@@ -1699,7 +1728,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: MAGAZINE.padding,
     paddingTop: SPACING.xxl,
     alignItems: 'center',
-    gap: SPACING.md,
+    gap: SPACING.lg,
+  },
+  emptyStatePinWrap: {
+    marginBottom: SPACING.sm,
   },
   emptyText: {
     fontFamily: FONTS.body,
@@ -1707,6 +1739,30 @@ const styles = StyleSheet.create({
     color: COLORS.creamMuted,
     textAlign: 'center',
     lineHeight: 22,
+  },
+  emptySubtext: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.muted,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginTop: -SPACING.xs,
+  },
+  addTripCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.sage,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xl,
+    borderRadius: RADIUS.pill,
+    minHeight: 48,
+  },
+  addTripCtaText: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 16,
+    color: COLORS.bg,
   },
   inviteBtn: {
     flexDirection: 'row',

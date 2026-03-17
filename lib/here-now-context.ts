@@ -106,9 +106,12 @@ export function getContextualMessage(params: {
     case 'morning': {
       greeting = `Good morning in ${destination}.`;
       const morningActivity = day?.morning?.activity;
-      suggestion = morningActivity
-        ? `Start your morning: ${morningActivity}`
-        : `Grab a coffee and ease into the morning — the city is just waking up.`;
+      const breakfastHint = day?.morning?.location || day?.morning?.tip;
+      suggestion = breakfastHint
+        ? `Breakfast idea: ${breakfastHint}`
+        : morningActivity
+          ? `Start your morning: ${morningActivity}`
+          : `Start with a good breakfast nearby — ask the front desk for a local spot.`;
       mood = 'calm';
       break;
     }

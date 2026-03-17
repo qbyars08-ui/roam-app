@@ -1895,9 +1895,11 @@ function CurrentWeatherCard({ data, updatedAt }: { data: CurrentWeather; updated
 function IntelligenceCardsGrid({
   destination,
   safety,
+  visaReqs,
 }: {
   destination: string;
   safety: SafetyData | null;
+  visaReqs?: VisaResult | null;
 }) {
   const { t } = useTranslation();
   const [weather, setWeather] = useState<DailyForecast | null>(null);
@@ -1953,9 +1955,10 @@ function IntelligenceCardsGrid({
   const safetyDesc = score == null ? '—' : score > 70 ? t('prep.safeForTravelers', { defaultValue: 'Safe for travelers' }) : score >= 40 ? t('prep.useCaution', { defaultValue: 'Use caution' }) : t('prep.highRiskArea', { defaultValue: 'High risk area' });
 
   const visa = getVisaInfo(destination, 'US');
-  const visaStatus = visa?.info?.status ?? null;
-  const visaLabel = visaStatus === 'visa_free' ? t('prep.noVisaRequired', { defaultValue: 'No visa required' })
-    : visaStatus === 'visa_on_arrival' ? t('prep.visaOnArrivalShort', { defaultValue: 'Visa on arrival' })
+  const sherpaType = visaReqs?.visaType;
+  const visaStatus = sherpaType ?? visa?.info?.status ?? null;
+  const visaLabel = visaStatus === 'visa_free' ? t('prep.noVisaRequired', { defaultValue: 'Visa free' })
+    : visaStatus === 'visa_on_arrival' ? t('prep.visaOnArrivalShort', { defaultValue: 'On arrival' })
     : visaStatus === 'e_visa' ? t('prep.eVisaRequired', { defaultValue: 'e-Visa required' })
     : visaStatus === 'eta' ? t('prep.etaRequired', { defaultValue: 'ETA required' })
     : visaStatus === 'visa_required' ? t('prep.visaRequiredShort', { defaultValue: 'Visa required' })
@@ -1963,6 +1966,7 @@ function IntelligenceCardsGrid({
   const visaColor = visaStatus === 'visa_free' ? COLORS.sage
     : visaStatus === 'visa_on_arrival' ? COLORS.sage
     : COLORS.coral;
+  const stayDays = visaReqs?.maxStay ?? visa?.info?.stayDays;
 
   return (
     <View style={intelGridStyles.container}>
@@ -2016,8 +2020,8 @@ function IntelligenceCardsGrid({
               <Text style={[intelGridStyles.visaStatus, { color: visaColor }]}>
                 {visaLabel}
               </Text>
-              {visa?.info?.stayDays != null && visa.info.stayDays < 999 && (
-                <Text style={intelGridStyles.cardDesc}>{t('prep.upToDays', { defaultValue: 'Up to {{days}} days', days: visa.info.stayDays })}</Text>
+              {stayDays != null && stayDays < 999 && (
+                <Text style={intelGridStyles.cardDesc}>{t('prep.upToDays', { defaultValue: 'Up to {{days}} days', days: stayDays })}</Text>
               )}
             </>
           ) : (
@@ -2140,7 +2144,8 @@ function PrepScreen() {
     }
   }, [trips, activeTrip, selectedDest]);
 
-  // Sonar live intelligence
+  // Sonar live intelligence (urgent = one sentence at top, updates daily)
+  const sonarUrgent = useSonarQuery(selectedDest, 'urgent');
   const sonarPrep = useSonarQuery(selectedDest, 'prep');
   const sonarSafety = useSonarQuery(selectedDest, 'safety');
 
@@ -2234,6 +2239,21 @@ function PrepScreen() {
         showsVerticalScrollIndicator={false}
       >
         {!isConnected && <OfflineBanner />}
+
+        {/* Sonar urgent — one sentence about right now (e.g. "Cherry blossoms peak this week in Tokyo.") */}
+        {selectedDest && sonarUrgent.data?.answer?.trim() && (
+          <View style={styles.urgentBanner}>
+            <Flame size={18} color={COLORS.gold} strokeWidth={1.5} />
+            <Text style={styles.urgentBannerText} numberOfLines={2}>
+              {(() => {
+                const raw = sonarUrgent.data.answer.trim().replace(/^["']|["']$/g, '');
+                const first = raw.split(/[.!?]/)[0]?.trim();
+                return first ? `${first}.` : raw.slice(0, 120);
+              })()}
+            </Text>
+            {sonarUrgent.data.isLive && <LiveBadge />}
+          </View>
+        )}
 
         {hasNoData ? (
           <NoDataState destination={selectedDest} />
@@ -2373,6 +2393,7 @@ function PrepScreen() {
             <IntelligenceCardsGrid
               destination={selectedDest}
               safety={safety}
+              visaReqs={visaReqs}
             />
 
             <View style={{ paddingHorizontal: 20, marginBottom: 40 }}>
@@ -2708,6 +2729,28 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 12,
     color: COLORS.bg,
+  } as TextStyle,
+
+  urgentBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.sageSubtle,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.sage,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    marginHorizontal: 20,
+    marginBottom: SPACING.lg,
+    borderRadius: RADIUS.md,
+  } as ViewStyle,
+  urgentBannerText: {
+    flex: 1,
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 15,
+    color: COLORS.cream,
+    lineHeight: 22,
   } as TextStyle,
 
   heroCard: {

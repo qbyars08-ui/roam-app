@@ -5,21 +5,21 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
+  Image,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
-  type TextStyle,
-  type ViewStyle,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
 
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft, MapPin, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import {
@@ -36,10 +36,12 @@ import {
   removeBucketListPlace,
   lookupDestination,
   getDestinationSuggestions,
+  getDestinationCoords,
   COUNTRIES_PER_CONTINENT,
   ALL_CONTINENTS,
   WORLD_GRID,
 } from '../lib/visited-store';
+import { buildVisitedMapUrl, isMapboxConfigured } from '../lib/mapbox';
 
 // ---------------------------------------------------------------------------
 // Milestone thresholds
@@ -77,6 +79,7 @@ function VisitedMapScreen() {
   const [bucketSuggestions, setBucketSuggestions] = useState<string[]>([]);
   const [expandedCountry, setExpandedCountry] = useState<string | null>(null);
   const [_isBucketMode, _setIsBucketMode] = useState(false);
+  const [selectedCard, setSelectedCard] = useState<VisitedPlace | BucketListPlace | null>(null);
 
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -152,6 +155,18 @@ function VisitedMapScreen() {
     () => ((stats.totalCountries / 195) * 100).toFixed(1),
     [stats.totalCountries]
   );
+
+  // Mapbox static map: visited (sage) + planned (gold) pins, dark-v11
+  const visitedMapUrl = useMemo(() => {
+    if (!isMapboxConfigured()) return null;
+    const visitedCoords = places
+      .map((p) => getDestinationCoords(p.destination))
+      .filter((c): c is { lat: number; lng: number } => c !== null);
+    const plannedCoords = bucketList
+      .map((p) => getDestinationCoords(p.destination))
+      .filter((c): c is { lat: number; lng: number } => c !== null);
+    return buildVisitedMapUrl({ visited: visitedCoords, planned: plannedCoords });
+  }, [places, bucketList]);
 
   // Handlers
   const handleAddPlace = useCallback(async (destination: string) => {
@@ -230,6 +245,16 @@ function VisitedMapScreen() {
     setExpandedCountry((prev) => (prev === country ? null : country));
   }, []);
 
+  const handleTapDestination = useCallback((item: VisitedPlace | BucketListPlace) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedCard(item);
+  }, []);
+
+  const handleCloseCard = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedCard(null);
+  }, []);
+
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
@@ -258,6 +283,19 @@ function VisitedMapScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+
+          {/* ============================================================= */}
+          {/* MAPBOX VISITED MAP — dark-v11, sage (visited) + gold (planned) */}
+          {/* ============================================================= */}
+          {visitedMapUrl && (
+            <View style={styles.mapSection}>
+              <View style={styles.mapLabelRow}>
+                <MapPin size={18} color={COLORS.sage} strokeWidth={1.5} />
+                <Text style={styles.mapLabel}>{t('visitedMap.mapPins', { defaultValue: 'Sage = visited · Gold = planned' })}</Text>
+              </View>
+              <Image source={{ uri: visitedMapUrl }} style={styles.mapImage} resizeMode="cover" />
+            </View>
+          )}
 
           {/* ============================================================= */}
           {/* WORLD STATS */}
@@ -514,7 +552,7 @@ function VisitedMapScreen() {
             )}
             {bucketList.map((item) => (
               <View key={item.id} style={styles.bucketItem}>
-                <View style={styles.bucketItemLeft}>
+                <Pressable style={styles.bucketItemLeft} onPress={() => handleTapDestination(item)}>
                   <Text style={styles.starIcon}>*</Text>
                   <View>
                     <Text style={styles.bucketDestination}>{item.destination}</Text>
@@ -522,7 +560,7 @@ function VisitedMapScreen() {
                       {item.country} / {item.continent}
                     </Text>
                   </View>
-                </View>
+                </Pressable>
                 <View style={styles.bucketActions}>
                   <Pressable
                     style={styles.bucketActionBtn}
@@ -549,7 +587,7 @@ function VisitedMapScreen() {
               <Text style={styles.sectionLabel}>{t('visitedMap.allVisitedPlaces', { defaultValue: '· All visited places' })}</Text>
               {places.map((place) => (
                 <View key={place.id} style={styles.placeRow}>
-                  <View style={{ flex: 1 }}>
+                  <Pressable style={{ flex: 1 }} onPress={() => handleTapDestination(place)}>
                     <Text style={styles.placeDestination}>{place.destination}</Text>
                     <Text style={styles.placeMeta}>
                       {place.country} / {place.continent}
@@ -562,7 +600,7 @@ function VisitedMapScreen() {
                     {place.notes ? (
                       <Text style={styles.placeNotes}>{place.notes}</Text>
                     ) : null}
-                  </View>
+                  </Pressable>
                   <Pressable onPress={() => handleRemovePlace(place.id)}>
                     <Text style={styles.removeBtn}>X</Text>
                   </Pressable>
@@ -572,6 +610,48 @@ function VisitedMapScreen() {
           )}
         </Animated.View>
       </ScrollView>
+
+      {/* Destination card slide-up — tap pin/list item */}
+      <Modal
+        visible={selectedCard !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={handleCloseCard}
+      >
+        <Pressable style={styles.cardOverlay} onPress={handleCloseCard}>
+          <Pressable style={[styles.cardSheet, { paddingBottom: insets.bottom + SPACING.lg }]} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.cardSheetHandle} />
+            <View style={styles.cardSheetHeader}>
+              <Text style={styles.cardSheetTitle}>
+                {selectedCard?.destination ?? ''}
+              </Text>
+              <Pressable onPress={handleCloseCard} style={styles.cardSheetClose} hitSlop={12}>
+                <X size={24} color={COLORS.creamMuted} strokeWidth={1.5} />
+              </Pressable>
+            </View>
+            {selectedCard && (
+              <>
+                <Text style={styles.cardSheetMeta}>
+                  {selectedCard.country} / {selectedCard.continent}
+                </Text>
+                {'visitedAt' in selectedCard && (
+                  <Text style={styles.cardSheetDate}>
+                    {new Date(selectedCard.visitedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                  </Text>
+                )}
+                {'addedAt' in selectedCard && (
+                  <Text style={styles.cardSheetDate}>
+                    {t('visitedMap.bucketList', { defaultValue: '· Bucket list' })}
+                  </Text>
+                )}
+                {'notes' in selectedCard && selectedCard.notes ? (
+                  <Text style={styles.cardSheetNotes}>{selectedCard.notes}</Text>
+                ) : null}
+              </>
+            )}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -595,7 +675,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.bg,
-  } as ViewStyle,
+  },
 
   // Header
   header: {
@@ -604,28 +684,113 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
-  } as ViewStyle,
+  },
   backBtn: {
     width: 40,
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-  } as ViewStyle,
+  },
   headerTitle: {
     fontFamily: FONTS.header,
     fontSize: 28,
     color: COLORS.cream,
     letterSpacing: 0.5,
-  } as TextStyle,
+  },
 
   // Scroll
   scroll: {
     flex: 1,
-  } as ViewStyle,
+  },
   scrollContent: {
     paddingHorizontal: SPACING.lg,
     gap: SPACING.lg,
-  } as ViewStyle,
+  },
+
+  // Mapbox visited map
+  mapSection: {
+    backgroundColor: COLORS.bgGlass,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: 'hidden',
+  },
+  mapLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  mapLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.creamMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  mapImage: {
+    width: '100%',
+    height: 220,
+    backgroundColor: COLORS.bgCard,
+  },
+
+  // Destination card modal
+  cardOverlay: {
+    flex: 1,
+    backgroundColor: COLORS.overlay,
+    justifyContent: 'flex-end',
+  },
+  cardSheet: {
+    backgroundColor: COLORS.bgCard,
+    borderTopLeftRadius: RADIUS.xl,
+    borderTopRightRadius: RADIUS.xl,
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.sm,
+  },
+  cardSheetHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: COLORS.creamMuted,
+    alignSelf: 'center',
+    marginBottom: SPACING.md,
+  },
+  cardSheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.xs,
+  },
+  cardSheetTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 22,
+    color: COLORS.cream,
+    flex: 1,
+  },
+  cardSheetClose: {
+    padding: SPACING.xs,
+  },
+  cardSheetMeta: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+    marginBottom: SPACING.xs,
+  },
+  cardSheetDate: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamDim,
+    marginBottom: SPACING.sm,
+  },
+  cardSheetNotes: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.creamSoft,
+    marginTop: SPACING.sm,
+  },
 
   // World stats
   statsRow: {
@@ -638,22 +803,22 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     paddingVertical: SPACING.xl,
     paddingHorizontal: SPACING.md,
-  } as ViewStyle,
+  },
   statDivider: {
     width: 1,
     height: SPACING.xxl,
     backgroundColor: COLORS.border,
-  } as ViewStyle,
+  },
   statBigContainer: {
     alignItems: 'center',
     flex: 1,
-  } as ViewStyle,
+  },
   statBigValue: {
     fontFamily: FONTS.header,
     fontSize: 42,
     color: COLORS.gold,
     lineHeight: 48,
-  } as TextStyle,
+  },
 
   statBigLabel: {
     fontFamily: FONTS.mono,
@@ -662,7 +827,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1.5,
     marginTop: SPACING.xs,
-  } as TextStyle,
+  },
   milesCard: {
     marginTop: SPACING.md,
     backgroundColor: COLORS.sageSoft,
@@ -671,13 +836,13 @@ const styles = StyleSheet.create({
     borderColor: COLORS.sageBorder,
     padding: SPACING.lg,
     alignItems: 'center',
-  } as ViewStyle,
+  },
   milesValue: {
     fontFamily: FONTS.header,
     fontSize: 36,
     color: COLORS.sage,
     lineHeight: 42,
-  } as TextStyle,
+  },
   milesLabel: {
     fontFamily: FONTS.mono,
     fontSize: 11,
@@ -685,13 +850,13 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1.5,
     marginTop: SPACING.xs,
-  } as TextStyle,
+  },
   milesSub: {
     fontFamily: FONTS.body,
     fontSize: 11,
     color: COLORS.creamMuted,
     marginTop: 2,
-  } as TextStyle,
+  },
 
   // Card
   card: {
@@ -700,7 +865,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     padding: SPACING.lg,
-  } as ViewStyle,
+  },
 
   // Section labels
   sectionLabel: {
@@ -708,14 +873,14 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.creamSoft,
     marginBottom: SPACING.md,
-  } as TextStyle,
+  },
   sectionSubtext: {
     fontFamily: FONTS.body,
     fontSize: 13,
     color: COLORS.creamMuted,
     marginBottom: SPACING.md,
     marginTop: -SPACING.sm,
-  } as TextStyle,
+  },
 
   // Progress bars
   progressRow: {
@@ -723,48 +888,48 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: SPACING.sm,
     gap: SPACING.sm,
-  } as ViewStyle,
+  },
   progressLabel: {
     fontFamily: FONTS.bodyMedium,
     fontSize: 12,
     color: COLORS.cream,
     width: 110,
-  } as TextStyle,
+  },
   progressBarBg: {
     flex: 1,
     height: 6,
     backgroundColor: COLORS.border,
     borderRadius: RADIUS.full,
     overflow: 'hidden',
-  } as ViewStyle,
+  },
   progressBarFill: {
     height: '100%',
     backgroundColor: COLORS.sage,
     borderRadius: RADIUS.full,
-  } as ViewStyle,
+  },
   progressPct: {
     fontFamily: FONTS.mono,
     fontSize: 10,
     color: COLORS.creamMuted,
     width: 36,
     textAlign: 'right',
-  } as TextStyle,
+  },
 
   // World grid
   gridSection: {
     marginBottom: SPACING.lg,
-  } as ViewStyle,
+  },
   continentHeader: {
     fontFamily: FONTS.headerMedium,
     fontSize: 18,
     color: COLORS.cream,
     marginBottom: SPACING.sm,
-  } as TextStyle,
+  },
   pillGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: SPACING.sm,
-  } as ViewStyle,
+  },
   countryPill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -772,31 +937,31 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
     borderRadius: RADIUS.full,
     borderWidth: 1,
-  } as ViewStyle,
+  },
   countryPillVisited: {
     backgroundColor: COLORS.sageHighlight,
     borderColor: COLORS.sage,
-  } as ViewStyle,
+  },
   countryPillDimmed: {
     backgroundColor: COLORS.whiteFaint,
     borderColor: COLORS.border,
-  } as ViewStyle,
+  },
   checkmark: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 12,
     color: COLORS.sage,
     marginRight: SPACING.xs,
-  } as TextStyle,
+  },
   countryPillText: {
     fontFamily: FONTS.bodyMedium,
     fontSize: 13,
-  } as TextStyle,
+  },
   countryPillTextVisited: {
     color: COLORS.sage,
-  } as TextStyle,
+  },
   countryPillTextDimmed: {
     color: COLORS.creamDimLight,
-  } as TextStyle,
+  },
 
   // Expanded cities
   expandedCities: {
@@ -806,30 +971,30 @@ const styles = StyleSheet.create({
     paddingLeft: SPACING.md,
     borderLeftWidth: 1,
     borderLeftColor: COLORS.sage,
-  } as ViewStyle,
+  },
   cityRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: SPACING.xs,
-  } as ViewStyle,
+  },
   cityName: {
     fontFamily: FONTS.bodyMedium,
     fontSize: 13,
     color: COLORS.cream,
-  } as TextStyle,
+  },
   cityDate: {
     fontFamily: FONTS.mono,
     fontSize: 10,
     color: COLORS.creamMuted,
-  } as TextStyle,
+  },
 
   // Input
   inputRow: {
     flexDirection: 'row',
     gap: SPACING.sm,
     marginBottom: SPACING.sm,
-  } as ViewStyle,
+  },
   textInput: {
     flex: 1,
     height: 44,
@@ -841,7 +1006,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 14,
     color: COLORS.cream,
-  } as TextStyle,
+  },
 
   // Suggestions
   suggestionsBox: {
@@ -851,7 +1016,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     marginBottom: SPACING.md,
     overflow: 'hidden',
-  } as ViewStyle,
+  },
   suggestionItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -860,17 +1025,17 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm + 2,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
-  } as ViewStyle,
+  },
   suggestionText: {
     fontFamily: FONTS.bodyMedium,
     fontSize: 14,
     color: COLORS.cream,
-  } as TextStyle,
+  },
   suggestionMeta: {
     fontFamily: FONTS.mono,
     fontSize: 10,
     color: COLORS.creamMuted,
-  } as TextStyle,
+  },
 
   // Sync button
   syncBtn: {
@@ -882,20 +1047,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm + 2,
     marginTop: SPACING.xs,
-  } as ViewStyle,
+  },
   syncBtnText: {
     fontFamily: FONTS.monoMedium,
     fontSize: 12,
     color: COLORS.sage,
     letterSpacing: 1,
-  } as TextStyle,
+  },
 
   // Stat cards
   statCardGrid: {
     flexDirection: 'row',
     gap: SPACING.sm,
     marginBottom: SPACING.md,
-  } as ViewStyle,
+  },
   statCard: {
     flex: 1,
     backgroundColor: COLORS.whiteVeryFaint,
@@ -904,13 +1069,13 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     padding: SPACING.md,
     alignItems: 'center',
-  } as ViewStyle,
+  },
   statCardValue: {
     fontFamily: FONTS.headerMedium,
     fontSize: 16,
     color: COLORS.gold,
     textAlign: 'center',
-  } as TextStyle,
+  },
   statCardLabel: {
     fontFamily: FONTS.mono,
     fontSize: 10,
@@ -918,7 +1083,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginTop: SPACING.xs,
-  } as TextStyle,
+  },
 
   // Milestone
   milestoneCard: {
@@ -928,33 +1093,33 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     padding: SPACING.md,
     marginBottom: SPACING.md,
-  } as ViewStyle,
+  },
   milestoneHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: SPACING.sm,
-  } as ViewStyle,
+  },
   milestoneLabel: {
     fontFamily: FONTS.bodyMedium,
     fontSize: 14,
     color: COLORS.cream,
-  } as TextStyle,
+  },
   milestonePct: {
     fontFamily: FONTS.mono,
     fontSize: 12,
     color: COLORS.gold,
-  } as TextStyle,
+  },
   milestoneBarFill: {
     height: '100%',
     borderRadius: RADIUS.full,
-  } as ViewStyle,
+  },
   milestoneSubtext: {
     fontFamily: FONTS.body,
     fontSize: 12,
     color: COLORS.creamMuted,
     marginTop: SPACING.sm,
-  } as TextStyle,
+  },
 
   // World explored
   worldExploredCard: {
@@ -964,25 +1129,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.goldBorder,
     padding: SPACING.lg,
-  } as ViewStyle,
+  },
   worldExploredValue: {
     fontFamily: FONTS.header,
     fontSize: 48,
     color: COLORS.gold,
     lineHeight: 52,
-  } as TextStyle,
+  },
   worldExploredLabel: {
     fontFamily: FONTS.bodyMedium,
     fontSize: 14,
     color: COLORS.cream,
     marginTop: SPACING.xs,
-  } as TextStyle,
+  },
   worldExploredSub: {
     fontFamily: FONTS.mono,
     fontSize: 11,
     color: COLORS.creamMuted,
     marginTop: SPACING.xs,
-  } as TextStyle,
+  },
 
   // Bucket list
   bucketItem: {
@@ -992,55 +1157,55 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm + 2,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
-  } as ViewStyle,
+  },
   bucketItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
     flex: 1,
-  } as ViewStyle,
+  },
   starIcon: {
     fontFamily: FONTS.header,
     fontSize: 20,
     color: COLORS.gold,
-  } as TextStyle,
+  },
   bucketDestination: {
     fontFamily: FONTS.bodyMedium,
     fontSize: 14,
     color: COLORS.creamDim,
-  } as TextStyle,
+  },
   bucketMeta: {
     fontFamily: FONTS.mono,
     fontSize: 10,
     color: COLORS.creamVeryFaint,
-  } as TextStyle,
+  },
   bucketActions: {
     flexDirection: 'row',
     gap: SPACING.sm,
-  } as ViewStyle,
+  },
   bucketActionBtn: {
     backgroundColor: COLORS.sageMuted,
     borderRadius: RADIUS.sm,
     paddingHorizontal: SPACING.sm + 2,
     paddingVertical: SPACING.xs,
-  } as ViewStyle,
+  },
   bucketActionVisited: {
     fontFamily: FONTS.monoMedium,
     fontSize: 10,
     color: COLORS.sage,
     letterSpacing: 0.5,
-  } as TextStyle,
+  },
   bucketActionBtnRemove: {
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
     alignItems: 'center',
     justifyContent: 'center',
-  } as ViewStyle,
+  },
   bucketActionRemove: {
     fontFamily: FONTS.mono,
     fontSize: 12,
     color: COLORS.coral,
-  } as TextStyle,
+  },
 
   // Empty
   emptyText: {
@@ -1049,7 +1214,7 @@ const styles = StyleSheet.create({
     color: COLORS.creamMuted,
     textAlign: 'center',
     paddingVertical: SPACING.lg,
-  } as TextStyle,
+  },
 
   // Visited places list
   placeRow: {
@@ -1059,30 +1224,30 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     gap: SPACING.md,
-  } as ViewStyle,
+  },
   placeDestination: {
     fontFamily: FONTS.bodyMedium,
     fontSize: 14,
     color: COLORS.cream,
-  } as TextStyle,
+  },
   placeMeta: {
     fontFamily: FONTS.mono,
     fontSize: 10,
     color: COLORS.creamMuted,
     marginTop: 2,
-  } as TextStyle,
+  },
   placeNotes: {
     fontFamily: FONTS.body,
     fontSize: 12,
     color: COLORS.creamMuted,
     marginTop: 2,
-  } as TextStyle,
+  },
   removeBtn: {
     fontFamily: FONTS.mono,
     fontSize: 14,
     color: COLORS.coral,
     padding: SPACING.xs,
-  } as TextStyle,
+  },
 });
 
 export default VisitedMapScreen;

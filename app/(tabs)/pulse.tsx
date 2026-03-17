@@ -19,7 +19,7 @@ import {
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Radio, Clock } from 'lucide-react-native';
+import { Radio, Clock, MapPin } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../../lib/constants';
@@ -958,6 +958,9 @@ export default function PulseScreen() {
   // Foursquare insider tips
   const [fsqTips, setFsqTips] = useState<FSQTip[] | null>(null);
 
+  // Foursquare trending venues (with real photos, tappable to Maps)
+  const [fsqPlaces, setFsqPlaces] = useState<FSQPlace[] | null>(null);
+
   useEffect(() => {
     let cancelled = false;
     setFsqTips(null);
@@ -968,6 +971,17 @@ export default function PulseScreen() {
       const firstId = places[0].fsqId;
       const tips = await getPlaceTips(firstId);
       if (!cancelled) setFsqTips(tips?.slice(0, 4) ?? null);
+    });
+    return () => { cancelled = true; };
+  }, [selectedDest.label]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setFsqPlaces(null);
+    const coords = getDestinationCoords(selectedDest.label);
+    if (!coords) return;
+    searchPlaces(selectedDest.label, coords.lat, coords.lng, undefined, 5000).then((places) => {
+      if (!cancelled && places?.length) setFsqPlaces(places.slice(0, 6));
     });
     return () => { cancelled = true; };
   }, [selectedDest.label]);
@@ -1153,22 +1167,61 @@ export default function PulseScreen() {
           </View>
         ) : null}
 
-        {/* ── TripAdvisor Trending Attractions ── */}
+        {/* ── Foursquare trending venues (real photos, tappable to Maps) ── */}
+        {fsqPlaces && fsqPlaces.length > 0 && (
+          <View style={styles.apiSection}>
+            <Text style={styles.apiSectionLabel}>{t('pulse.trendingVenues.label', { defaultValue: 'TRENDING VENUES' })}</Text>
+            <Text style={styles.apiSectionHeading}>{t('pulse.trendingVenues.heading', { defaultValue: `Popular in ${selectedDest.label}` })}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.fsqPlacesRow}>
+              {fsqPlaces.map((place) => {
+                const mapsUrl = place.location
+                  ? `https://www.google.com/maps/search/?api=1&query=${place.location.lat},${place.location.lng}`
+                  : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name + ' ' + selectedDest.label)}`;
+                return (
+                  <Pressable
+                    key={place.fsqId}
+                    style={styles.fsqPlaceCard}
+                    onPress={() => { Haptics.selectionAsync(); Linking.openURL(mapsUrl).catch(() => {}); }}
+                  >
+                    {place.photoUrl ? (
+                      <Image source={{ uri: place.photoUrl }} style={styles.fsqPlacePhoto as ImageStyle} contentFit="cover" />
+                    ) : (
+                      <View style={[styles.fsqPlacePhoto, styles.fsqPlacePhotoFallback]}>
+                        <MapPin size={24} color={COLORS.creamMuted} strokeWidth={1.5} />
+                      </View>
+                    )}
+                    <LinearGradient colors={['transparent', COLORS.overlayDark]} style={styles.fsqPlaceGradient} />
+                    <View style={styles.fsqPlaceBottom}>
+                      <Text style={styles.fsqPlaceName} numberOfLines={2}>{place.name}</Text>
+                      {place.category ? <Text style={styles.fsqPlaceCategory} numberOfLines={1}>{place.category}</Text> : null}
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* ── TripAdvisor Trending Attractions (tappable to TA search) ── */}
         {taAttractions && taAttractions.length > 0 && (
           <View style={styles.apiSection}>
             <Text style={styles.apiSectionLabel}>{t('pulse.trending.label', { defaultValue: 'TRENDING' })}</Text>
             <Text style={styles.apiSectionHeading}>{t('pulse.trending.heading', { defaultValue: `Top rated in ${selectedDest.label}` })}</Text>
             <View style={styles.apiCardStack}>
-              {taAttractions.map((loc) => (
-                <View
-                  key={loc.locationId}
-                  style={styles.apiCard}
-                >
-                  <Text style={styles.apiCardName}>{loc.name}</Text>
-                  {loc.rating != null && <Text style={styles.apiCardMeta}>{loc.rating} ★ · {loc.numReviews} reviews</Text>}
-                  {loc.address ? <Text style={styles.apiCardSub}>{loc.address}</Text> : null}
-                </View>
-              ))}
+              {taAttractions.map((loc) => {
+                const taUrl = `https://www.tripadvisor.com/Search?q=${encodeURIComponent(loc.name + ' ' + selectedDest.label)}`;
+                return (
+                  <Pressable
+                    key={loc.locationId}
+                    style={styles.apiCard}
+                    onPress={() => { Haptics.selectionAsync(); Linking.openURL(taUrl).catch(() => {}); }}
+                  >
+                    <Text style={styles.apiCardName}>{loc.name}</Text>
+                    {loc.rating != null && <Text style={styles.apiCardMeta}>{loc.rating} ★ · {loc.numReviews} reviews</Text>}
+                    {loc.address ? <Text style={styles.apiCardSub}>{loc.address}</Text> : null}
+                  </Pressable>
+                );
+              })}
             </View>
           </View>
         )}
@@ -1743,5 +1796,52 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 13,
     color: COLORS.creamDim,
+  } as TextStyle,
+
+  fsqPlacesRow: {
+    gap: SPACING.md,
+    paddingRight: SPACING.lg,
+  } as ViewStyle,
+  fsqPlaceCard: {
+    width: 160,
+    height: 140,
+    borderRadius: RADIUS.lg,
+    overflow: 'hidden',
+    position: 'relative',
+  } as ViewStyle,
+  fsqPlacePhoto: {
+    width: '100%',
+    height: '100%',
+  } as ViewStyle,
+  fsqPlacePhotoFallback: {
+    backgroundColor: COLORS.surface1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
+  fsqPlaceGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 70,
+  } as ViewStyle,
+  fsqPlaceBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: SPACING.sm,
+  } as ViewStyle,
+  fsqPlaceName: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 13,
+    color: COLORS.cream,
+    lineHeight: 17,
+  } as TextStyle,
+  fsqPlaceCategory: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.creamMuted,
+    marginTop: 2,
   } as TextStyle,
 });

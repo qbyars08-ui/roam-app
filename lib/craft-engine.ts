@@ -7,6 +7,7 @@ import {
   CRAFT_STEPS,
   getStepQuestion,
 } from './craft-prompts';
+import type { Itinerary } from './types/itinerary';
 
 export interface CraftMessage {
   role: 'user' | 'assistant';
@@ -176,7 +177,25 @@ export function getPreferencesForProfile(state: CraftState): Record<string, unkn
   return out;
 }
 
-/** Build messages array for CRAFT follow-up: context + itinerary summary + thread + new user message */
+/** Build full itinerary text for follow-up context (day-by-day activities, times, neighborhoods, costs). */
+export function buildFullItinerarySummary(itinerary: Itinerary): string {
+  const lines: string[] = [
+    `${itinerary.destination}: ${itinerary.tagline}. ${itinerary.days?.length ?? 0} days. Budget: ${itinerary.totalBudget}.`,
+    '',
+  ];
+  for (const d of itinerary.days ?? []) {
+    lines.push(`Day ${d.day}: ${d.theme}`);
+    lines.push(`  Morning (${d.morning?.time ?? '—'}): ${d.morning?.activity ?? ''} @ ${d.morning?.location ?? ''} (${d.morning?.neighborhood ?? ''}). Cost: ${d.morning?.cost ?? ''}. Transit to next: ${d.morning?.transitToNext ?? '—'}`);
+    lines.push(`  Afternoon (${d.afternoon?.time ?? '—'}): ${d.afternoon?.activity ?? ''} @ ${d.afternoon?.location ?? ''} (${d.afternoon?.neighborhood ?? ''}). Cost: ${d.afternoon?.cost ?? ''}. Transit to next: ${d.afternoon?.transitToNext ?? '—'}`);
+    lines.push(`  Evening (${d.evening?.time ?? '—'}): ${d.evening?.activity ?? ''} @ ${d.evening?.location ?? ''} (${d.evening?.neighborhood ?? ''}). Cost: ${d.evening?.cost ?? ''}.`);
+    lines.push(`  Accommodation: ${d.accommodation?.name ?? ''} (${d.accommodation?.neighborhood ?? ''}), ${d.accommodation?.pricePerNight ?? ''}/night. Daily cost: ${d.dailyCost ?? ''}. Route: ${d.routeSummary ?? '—'}`);
+    lines.push('');
+  }
+  lines.push(`Pro tip: ${itinerary.proTip ?? ''}. Visa: ${itinerary.visaInfo ?? ''}.`);
+  return lines.join('\n');
+}
+
+/** Build messages array for CRAFT follow-up: context + full itinerary + thread + new user message */
 export function buildFollowUpMessages(
   state: CraftState,
   itinerarySummary: string,
@@ -189,7 +208,7 @@ export function buildFollowUpMessages(
   });
   out.push({
     role: 'assistant',
-    content: `Here is the itinerary I generated for them:\n${itinerarySummary}`,
+    content: `Here is the full itinerary I generated for them (use this for every answer):\n${itinerarySummary}`,
   });
   for (const msg of state.followUpMessages) {
     out.push({ role: msg.role, content: msg.content });

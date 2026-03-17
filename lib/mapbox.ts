@@ -226,6 +226,36 @@ export async function buildDayRouteMaps(params: {
 }
 
 // ---------------------------------------------------------------------------
+// Visited map: static world map with sage (visited) and gold (planned) pins
+// Style: mapbox/dark-v11. Auto bounds to fit all pins.
+// ---------------------------------------------------------------------------
+export function buildVisitedMapUrl(params: {
+  visited: Array<{ lat: number; lng: number }>;
+  planned: Array<{ lat: number; lng: number }>;
+  width?: number;
+  height?: number;
+}): string | null {
+  if (!TOKEN) return null;
+
+  const { width = 600, height = 320 } = params;
+  const sageHex = COLORS.sage.replace('#', '');
+  const goldHex = COLORS.gold.replace('#', '');
+
+  const markers: string[] = [];
+  params.visited.forEach((p) => {
+    markers.push(`pin-s+${sageHex}(${p.lng},${p.lat})`);
+  });
+  params.planned.forEach((p) => {
+    markers.push(`pin-s+${goldHex}(${p.lng},${p.lat})`);
+  });
+
+  if (markers.length === 0) return null;
+
+  const overlays = markers.join(',');
+  return `${STATIC_BASE}/${DARK_STYLE}/static/${overlays}/auto/${width}x${height}@2x?access_token=${TOKEN}&padding=40&attribution=false&logo=false`;
+}
+
+// ---------------------------------------------------------------------------
 // Check if Mapbox is configured
 // ---------------------------------------------------------------------------
 export function isMapboxConfigured(): boolean {

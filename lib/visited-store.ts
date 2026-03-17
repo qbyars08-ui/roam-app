@@ -4,6 +4,7 @@
 // =============================================================================
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAppStore } from './store';
+import { DESTINATIONS, HIDDEN_DESTINATIONS } from './constants';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -181,6 +182,22 @@ export function lookupDestination(destination: string): DestinationMeta | null {
     (k) => k.toLowerCase() === destination.toLowerCase()
   );
   if (key) return DESTINATION_TO_COUNTRY_MAP[key];
+  return null;
+}
+
+/** Resolve destination name to lat/lng for map pins. Uses DESTINATIONS, then country centroid. */
+export function getDestinationCoords(destination: string): { lat: number; lng: number } | null {
+  const all = [...DESTINATIONS, ...HIDDEN_DESTINATIONS];
+  const exact = all.find((d) => d.label === destination);
+  if (exact) return { lat: exact.lat, lng: exact.lng };
+  const lower = destination.toLowerCase();
+  const match = all.find((d) => d.label.toLowerCase() === lower);
+  if (match) return { lat: match.lat, lng: match.lng };
+  const meta = lookupDestination(destination);
+  if (meta && COUNTRY_COORDS[meta.country]) {
+    const [lat, lng] = COUNTRY_COORDS[meta.country];
+    return { lat, lng };
+  }
   return null;
 }
 

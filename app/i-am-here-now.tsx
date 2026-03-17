@@ -4,6 +4,7 @@
 // =============================================================================
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
   Linking,
   Modal,
   Pressable,
@@ -24,8 +25,10 @@ import { useAppStore, type Trip } from '../lib/store';
 import * as Haptics from '../lib/haptics';
 import { getCurrentWeather, type CurrentWeather } from '../lib/apis/openweather';
 import { getEmergencyNumbers, type EmergencyNumbers } from '../lib/emergency-numbers';
-import { getTimeOfDay, getContextualMessage, type HereNowContext } from '../lib/here-now-context';
+import { getContextualMessage, type HereNowContext } from '../lib/here-now-context';
+import { getHotelForDriver } from '../lib/local-script';
 import { useSonarQuery } from '../lib/sonar';
+import { parseItinerary } from '../lib/types/itinerary';
 import LiveBadge from '../components/ui/LiveBadge';
 import SourceCitation from '../components/ui/SourceCitation';
 import { supabase } from '../lib/supabase';
@@ -53,6 +56,23 @@ export default function IAmHereNow(): React.JSX.Element {
     [trips, activeTripId],
   );
   const destination = activeTrip?.destination ?? '';
+
+  const itinerary = useMemo(() => {
+    if (!activeTrip?.itinerary) return null;
+    try {
+      return parseItinerary(activeTrip.itinerary);
+    } catch {
+      return null;
+    }
+  }, [activeTrip?.itinerary]);
+
+  const currentDay = useMemo(() => {
+    if (!activeTrip?.createdAt || !activeTrip?.days) return 0;
+    const start = new Date(activeTrip.createdAt).setHours(0, 0, 0, 0);
+    const today = new Date().setHours(0, 0, 0, 0);
+    const elapsed = Math.floor((today - start) / 86400000);
+    return Math.max(0, Math.min(elapsed, activeTrip.days - 1));
+  }, [activeTrip?.createdAt, activeTrip?.days]);
 
   // Context state
   const [now] = useState(() => new Date());
@@ -82,8 +102,8 @@ export default function IAmHereNow(): React.JSX.Element {
           destination,
           weather: w,
           hour: now.getHours(),
-          itinerary: null,
-          currentDay: 0,
+          itinerary,
+          currentDay,
         });
         setContext(ctx);
       })
@@ -92,12 +112,12 @@ export default function IAmHereNow(): React.JSX.Element {
           destination,
           weather: null,
           hour: now.getHours(),
-          itinerary: null,
-          currentDay: 0,
+          itinerary,
+          currentDay,
         });
         setContext(ctx);
       });
-  }, [destination, now]);
+  }, [destination, now, itinerary, currentDay]);
 
   useEffect(() => {
     if (!destination) return;
@@ -141,10 +161,15 @@ export default function IAmHereNow(): React.JSX.Element {
     setEmergencyModalVisible(true);
   }, []);
 
+  const fabScale = useRef(new Animated.Value(1)).current;
   const handleOpenMomentSheet = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    Animated.sequence([
+      Animated.timing(fabScale, { toValue: 1.15, duration: 80, useNativeDriver: true }),
+      Animated.spring(fabScale, { toValue: 1, tension: 200, friction: 12, useNativeDriver: true }),
+    ]).start();
     setMomentSheetVisible(true);
-  }, []);
+  }, [fabScale]);
 
   const handleCloseMomentSheet = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
@@ -185,20 +210,47 @@ export default function IAmHereNow(): React.JSX.Element {
   const fire = emergencyNumbers?.fire?.[0] ?? FALLBACK_EMERGENCY.fire[0];
 
   // ---------------------------------------------------------------------------
-  // Hotel name for driver modal
+  // Hotel name and local-script phrase for driver modal
   // ---------------------------------------------------------------------------
   const hotelName: string = useMemo(() => {
     if (!activeTrip?.itinerary) return destination || t('hereNow.unknownHotel', { defaultValue: 'My Hotel' });
-    // Try to extract hotel name from itinerary text
     const match = activeTrip.itinerary.match(/hotel[:\s]+([^\n,\.]+)/i);
     return match?.[1]?.trim() ?? destination ?? t('hereNow.unknownHotel', { defaultValue: 'My Hotel' });
   }, [activeTrip, destination, t]);
+
+  const hotelForDriver = useMemo(
+    () => getHotelForDriver(destination || 'Unknown', hotelName),
+    [destination, hotelName],
+  );
+
+  const cardEntrance = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.spring(cardEntrance, {
+      toValue: 1,
+      tension: 65,
+      friction: 10,
+      useNativeDriver: true,
+    }).start();
+  }, [cardEntrance]);
+
+  const contextOverlay = useMemo(() => {
+    if (!context) return COLORS.transparent;
+    if (context.weatherOverride && context.weatherOverride.toLowerCase().includes('rain')) return COLORS.blueAccent;
+    if (context.mood === 'adventurous') return COLORS.goldMuted;
+    return COLORS.transparent;
+  }, [context]);
 
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
+      {contextOverlay !== COLORS.transparent ? (
+        <View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, { backgroundColor: contextOverlay, opacity: 0.06 }]}
+        />
+      ) : null}
       {/* Header */}
       <View style={styles.header}>
         <Pressable
@@ -219,23 +271,35 @@ export default function IAmHereNow(): React.JSX.Element {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Greeting */}
-        <View style={styles.greetingSection}>
-          <Text style={styles.greeting}>
-            {context?.greeting ?? t('hereNow.defaultGreeting', { defaultValue: 'You are here.' })}
-          </Text>
-          <Text style={styles.timeInfo}>
-            {context?.timeInfo ?? ''}
-          </Text>
-          {context?.suggestion ? (
-            <Text style={styles.suggestion}>{context.suggestion}</Text>
-          ) : null}
-          {context?.weatherOverride ? (
-            <View style={styles.weatherAlert}>
-              <Text style={styles.weatherAlertText}>{context.weatherOverride}</Text>
-            </View>
-          ) : null}
-        </View>
+        {/* Greeting — spring on appear */}
+        <Animated.View
+          style={[
+            styles.greetingSection,
+            {
+              opacity: cardEntrance,
+              transform: [
+                { translateY: cardEntrance.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) },
+              ],
+            },
+          ]}
+        >
+          <>
+            <Text style={styles.greeting}>
+              {context?.greeting ?? t('hereNow.defaultGreeting', { defaultValue: 'You are here.' })}
+            </Text>
+            <Text style={styles.timeInfo}>
+              {context?.timeInfo ?? ''}
+            </Text>
+            {context?.suggestion ? (
+              <Text style={styles.suggestion}>{context.suggestion}</Text>
+            ) : null}
+            {context?.weatherOverride ? (
+              <View style={styles.weatherAlert}>
+                <Text style={styles.weatherAlertText}>{context.weatherOverride}</Text>
+              </View>
+            ) : null}
+          </>
+        </Animated.View>
 
         {/* Weather row */}
         {weather ? (
@@ -290,12 +354,14 @@ export default function IAmHereNow(): React.JSX.Element {
         ) : null}
       </ScrollView>
 
-      {/* Floating moment capture button */}
+      {/* Floating moment capture button — haptic + brief glow on press */}
       <Pressable
-        style={[styles.fab, { bottom: insets.bottom + SPACING.lg }]}
+        style={[styles.fabWrap, { bottom: insets.bottom + SPACING.lg }]}
         onPress={handleOpenMomentSheet}
       >
-        <Camera size={22} color={COLORS.bg} strokeWidth={1.5} />
+        <Animated.View style={[styles.fab, { transform: [{ scale: fabScale }] }]}>
+          <Camera size={22} color={COLORS.bg} strokeWidth={1.5} />
+        </Animated.View>
       </Pressable>
 
       {/* Hotel Driver Modal */}
@@ -316,10 +382,11 @@ export default function IAmHereNow(): React.JSX.Element {
           >
             <X size={28} color={COLORS.muted} strokeWidth={1.5} />
           </Pressable>
-          <Text style={styles.hotelLabel}>
-            {t('hereNow.takeHereTo', { defaultValue: 'Take me to:' })}
-          </Text>
-          <Text style={styles.hotelName}>{hotelName}</Text>
+          <Text style={styles.hotelPhrase}>{hotelForDriver.phrase}</Text>
+          <Text style={styles.hotelName}>{hotelForDriver.placeName}</Text>
+          {hotelForDriver.secondary ? (
+            <Text style={styles.hotelSecondary}>{hotelForDriver.secondary}</Text>
+          ) : null}
         </View>
       </Modal>
 
@@ -691,18 +758,24 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   } as TextStyle,
 
-  fab: {
+  fabWrap: {
     position: 'absolute',
     right: SPACING.lg,
+    width: 52,
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
+  fab: {
     width: 52,
     height: 52,
     borderRadius: RADIUS.pill,
     backgroundColor: COLORS.sage,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: COLORS.shadowDark,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
+    shadowColor: COLORS.sage,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
     shadowRadius: 12,
     elevation: 6,
   } as ViewStyle,
@@ -721,12 +794,13 @@ const styles = StyleSheet.create({
     right: SPACING.lg,
   } as ViewStyle,
 
-  hotelLabel: {
+  hotelPhrase: {
     fontFamily: FONTS.mono,
-    fontSize: 14,
-    color: COLORS.muted,
-    marginBottom: SPACING.lg,
+    fontSize: 16,
+    color: COLORS.sage,
+    marginBottom: SPACING.sm,
     letterSpacing: 0.5,
+    textAlign: 'center',
   } as TextStyle,
 
   hotelName: {
@@ -735,6 +809,14 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     textAlign: 'center',
     lineHeight: 52,
+  } as TextStyle,
+
+  hotelSecondary: {
+    fontFamily: FONTS.body,
+    fontSize: 18,
+    color: COLORS.creamMuted,
+    textAlign: 'center',
+    marginTop: SPACING.md,
   } as TextStyle,
 
   // Shared modal styles

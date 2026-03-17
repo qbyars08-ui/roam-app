@@ -1,428 +1,296 @@
 // =============================================================================
-// ROAM — Destination Intelligence Dashboard
-// Everything you need to know about a destination in one glanceable view.
-// Live data from 8+ free APIs. No loading states that never resolve.
+// ROAM — Living Destination Page
+// Full-bleed hero + live Sonar intel + Foursquare trending + TripAdvisor picks
 // =============================================================================
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  StyleSheet,
-  type ViewStyle,
-  type TextStyle,
-} from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  ArrowLeft,
-  Globe,
-  Shield,
-  Sparkles,
-  Thermometer,
-  Wind,
-} from 'lucide-react-native';
+import { ChevronLeft, MapPin, Star, Users, Zap } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../../lib/constants';
-import { useAppStore } from '../../lib/store';
-import { resolveDestinationCoords } from '../../lib/air-quality';
-import { getAirQuality, type AirQuality } from '../../lib/air-quality';
-import { getWeatherForecast, type DailyForecast } from '../../lib/weather-forecast';
+import { COLORS, DESTINATION_HERO_PHOTOS, DESTINATIONS, FONTS, RADIUS, SPACING } from '../../lib/constants';
+import { useSonarQuery } from '../../lib/sonar';
+import { getCurrentWeather } from '../../lib/apis/openweather';
+import { searchPlaces, type FSQPlace } from '../../lib/apis/foursquare';
+import { searchLocations, type TALocation } from '../../lib/apis/tripadvisor';
 import { getTimezoneByDestination } from '../../lib/timezone';
-import { getCostOfLiving, type CostOfLiving } from '../../lib/cost-of-living';
-import { getSafetyForDestination, type SafetyData } from '../../lib/prep/safety-data';
-import { getPublicHolidays, getCountryCode, type PublicHoliday } from '../../lib/public-holidays';
-import { track } from '../../lib/analytics';
-import HolidayCrowdCalendar from '../../components/features/HolidayCrowdCalendar';
-import CostComparisonWidget from '../../components/features/CostComparisonWidget';
-import DualClockWidget from '../../components/features/DualClockWidget';
-import { GoldenHourCard } from '../../components/features/GoldenHourCard';
-import { CurrencySparkline } from '../../components/features/CurrencySparkline';
-import { getDestinationCurrency } from '../../lib/currency-history';
-import ROAMScoreBadge from '../../components/features/ROAMScoreBadge';
-import SeasonalIntel from '../../components/features/SeasonalIntel';
-import RouteIntelCard from '../../components/features/RouteIntelCard';
-import GoNowFeed from '../../components/features/GoNowFeed';
-import { SkeletonCard } from '../../components/premium/LoadingStates';
+import { useAppStore } from '../../lib/store';
+import { supabase } from '../../lib/supabase';
+import LiveBadge from '../../components/ui/LiveBadge';
+import SourceCitation from '../../components/ui/SourceCitation';
 
 // ---------------------------------------------------------------------------
-// Data fetching hook
+// Helpers
 // ---------------------------------------------------------------------------
-interface DashboardData {
-  weather: DailyForecast[] | null;
-  airQuality: AirQuality | null;
-  timezone: string | null;
-  localTime: string | null;
-  cost: CostOfLiving | null;
-  safety: SafetyData | null;
-  holidays: PublicHoliday[];
-}
-
-function useDashboardData(destination: string) {
-  const [data, setData] = useState<DashboardData>({
-    weather: null,
-    airQuality: null,
-    timezone: null,
-    localTime: null,
-    cost: null,
-    safety: null,
-    holidays: [],
-  });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-
-    const cost = getCostOfLiving(destination);
-    const safety = getSafetyForDestination(destination);
-
-    const promises: Promise<void>[] = [];
-
-    // Weather & Air Quality — resolve coords (offline lookup + geocoding fallback)
-    promises.push(
-      resolveDestinationCoords(destination)
-        .then((coords) => {
-          if (!coords || cancelled) return;
-
-          return Promise.all([
-            getWeatherForecast(coords.lat, coords.lng)
-              .then((forecast) => {
-                if (!cancelled && forecast) {
-                  setData((prev) => ({ ...prev, weather: forecast.days }));
-                }
-              })
-              .catch(() => {}),
-            getAirQuality(coords.lat, coords.lng)
-              .then((aqi) => {
-                if (!cancelled) {
-                  setData((prev) => ({ ...prev, airQuality: aqi }));
-                }
-              })
-              .catch(() => {}),
-          ]);
-        })
-        .then(() => {})
-        .catch(() => {}),
-    );
-
-    // Timezone (synchronous lookup)
-    const tz = getTimezoneByDestination(destination);
-    if (tz) {
-      const now = new Date();
-      const localTime = now.toLocaleTimeString('en-US', {
-        timeZone: tz,
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true,
-      });
-      if (!cancelled) {
-        setData((prev) => ({ ...prev, timezone: tz, localTime }));
-      }
-    }
-
-    // Holidays
-    const cc = getCountryCode(destination);
-    if (cc) {
-      promises.push(
-        getPublicHolidays(cc)
-          .then((h) => {
-            if (!cancelled) {
-              // Filter to next 30 days
-              const now = new Date();
-              const thirtyDays = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-              const upcoming = h.filter((hol) => {
-                const d = new Date(hol.date);
-                return d >= now && d <= thirtyDays;
-              });
-              setData((prev) => ({ ...prev, holidays: upcoming }));
-            }
-          })
-          .catch(() => {}),
-      );
-    }
-
-    // Static data
-    if (!cancelled) {
-      setData((prev) => ({ ...prev, cost, safety }));
-    }
-
-    Promise.allSettled(promises).finally(() => {
-      if (!cancelled) setLoading(false);
-    });
-
-    return () => { cancelled = true; };
-  }, [destination]);
-
-  return { data, loading };
+function getHeroUrl(destination: string): string {
+  const exact = DESTINATION_HERO_PHOTOS[destination];
+  if (exact) return exact;
+  const slug = encodeURIComponent(destination.replace(/\s+/g, '+'));
+  return `https://source.unsplash.com/800x600/?${slug},travel,city`;
 }
 
 // ---------------------------------------------------------------------------
-// Stat Card
+// Sub-components
 // ---------------------------------------------------------------------------
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  subValue,
-  accentColor,
-  onPress,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string;
-  subValue?: string;
-  accentColor: string;
-  onPress?: () => void;
-}) {
+function SectionHeader({ title, badge }: { title: string; badge?: React.ReactNode }) {
   return (
-    <Pressable
-      style={({ pressed }) => [
-        styles.statCard,
-        onPress && { transform: [{ scale: pressed ? 0.97 : 1 }] },
-      ]}
-      onPress={onPress}
-      disabled={!onPress}
-    >
-      <View style={[styles.statIconWrap, { backgroundColor: `${accentColor}20` }]}>
-        <Icon size={18} color={accentColor} strokeWidth={1.5} />
-      </View>
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue}>{value}</Text>
-      {subValue && <Text style={styles.statSub}>{subValue}</Text>}
-    </Pressable>
+    <View style={s.sectionHeader}>
+      <Text style={s.sectionTitle}>{title}</Text>
+      {badge}
+    </View>
   );
+}
+
+function EventCard({ text }: { text: string }) {
+  const lines = text.split('\n').filter(Boolean);
+  return (
+    <View style={s.card}>
+      <Text style={s.cardHeadline} numberOfLines={2}>{lines[0] ?? text}</Text>
+      {lines.length > 1 && (
+        <Text style={s.cardDetail} numberOfLines={2}>{lines.slice(1).join(' ')}</Text>
+      )}
+    </View>
+  );
+}
+
+function VenueCard({ place }: { place: FSQPlace }) {
+  return (
+    <View style={s.venueCard}>
+      <Text style={s.cardHeadline} numberOfLines={1}>{place.name}</Text>
+      <Text style={s.monoSmall}>{place.category}</Text>
+      {place.rating !== null && (
+        <View style={s.ratingRow}>
+          <Star size={11} color={COLORS.gold} strokeWidth={1.5} fill={COLORS.gold} />
+          <Text style={s.goldMono}>{place.rating.toFixed(1)}</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+function AttractionCard({ location, rank }: { location: TALocation; rank: number }) {
+  return (
+    <View style={[s.card, s.row, { gap: SPACING.md, marginBottom: SPACING.sm }]}>
+      <Text style={s.rankText}>{String(rank).padStart(2, '0')}</Text>
+      <View style={{ flex: 1 }}>
+        <Text style={s.cardHeadline} numberOfLines={1}>{location.name}</Text>
+        <Text style={s.monoSmall}>{location.category}</Text>
+        {location.rating !== null && (
+          <View style={[s.ratingRow, { marginTop: 4 }]}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Star key={star} size={10} strokeWidth={1.5}
+                color={star <= Math.round(location.rating ?? 0) ? COLORS.gold : COLORS.muted}
+                fill={star <= Math.round(location.rating ?? 0) ? COLORS.gold : 'transparent'} />
+            ))}
+            <Text style={[s.monoSmall, { marginLeft: 4 }]}>{location.numReviews.toLocaleString()}</Text>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+}
+
+function Skeleton({ height = 80 }: { height?: number }) {
+  return <View style={[s.skeleton, { height }]} />;
 }
 
 // ---------------------------------------------------------------------------
 // Main Screen
 // ---------------------------------------------------------------------------
-export default function DestinationDashboard() {
+export default function LivingDestinationPage(): React.JSX.Element {
   const { name } = useLocalSearchParams<{ name: string }>();
   const destination = name ?? '';
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const setPlanWizard = useAppStore((s) => s.setPlanWizard);
-  const setGenerateMode = useAppStore((s) => s.setGenerateMode);
+  const setPlanWizard = useAppStore((st) => st.setPlanWizard);
+  const setGenerateMode = useAppStore((st) => st.setGenerateMode);
 
-  const { data, loading } = useDashboardData(destination);
+  const destInfo = useMemo(
+    () => DESTINATIONS.find((d) => d.label.toLowerCase() === destination.toLowerCase()),
+    [destination],
+  );
+  const heroUrl = useMemo(() => getHeroUrl(destination), [destination]);
+  const monthName = useMemo(() => new Date().toLocaleString('en-US', { month: 'long' }), []);
 
+  // -- Weather & time
+  const [weather, setWeather] = useState<{ temp: number } | null>(null);
+  const [localTime, setLocalTime] = useState<string | null>(null);
   useEffect(() => {
-    track({ type: 'screen_view', screen: 'destination_dashboard', payload: { destination } });
+    getCurrentWeather(destination)
+      .then((w) => { if (w) setWeather({ temp: w.temp }); })
+      .catch(() => {});
+    const tz = getTimezoneByDestination(destination);
+    if (tz) {
+      setLocalTime(new Date().toLocaleTimeString('en-US', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: true }));
+    }
   }, [destination]);
 
-  const destInfo = useMemo(() => {
-    return DESTINATIONS.find((d) => d.label.toLowerCase() === destination.toLowerCase());
-  }, [destination]);
+  // -- Sonar events
+  const { data: eventsData, isLoading: eventsLoading, citations: eventsCitations } = useSonarQuery(destination || undefined, 'events');
+  const eventItems = useMemo(() => {
+    if (!eventsData?.answer) return [];
+    return eventsData.answer.split(/\n\n+/).filter((s) => s.trim().length > 10).slice(0, 3);
+  }, [eventsData]);
 
-  const [destCoords, setDestCoords] = useState<{ lat: number; lng: number } | null>(null);
+  // -- Sonar pulse
+  const { data: pulseData, isLoading: pulseLoading, citations: pulseCitations } = useSonarQuery(destination || undefined, 'pulse');
+
+  // -- Foursquare venues
+  const [venues, setVenues] = useState<FSQPlace[] | null>(null);
+  const [venuesLoading, setVenuesLoading] = useState(true);
   useEffect(() => {
-    resolveDestinationCoords(destination).then(setDestCoords).catch(() => {});
+    if (!destInfo) { setVenuesLoading(false); return; }
+    setVenuesLoading(true);
+    searchPlaces(destination, destInfo.lat, destInfo.lng)
+      .then((p) => setVenues(p ? p.slice(0, 6) : null))
+      .catch(() => setVenues(null))
+      .finally(() => setVenuesLoading(false));
+  }, [destination, destInfo]);
+
+  // -- TripAdvisor attractions
+  const [attractions, setAttractions] = useState<TALocation[] | null>(null);
+  const [attractionsLoading, setAttractionsLoading] = useState(true);
+  useEffect(() => {
+    setAttractionsLoading(true);
+    searchLocations(destination, 'attractions')
+      .then((l) => setAttractions(l ? l.slice(0, 5) : null))
+      .catch(() => setAttractions(null))
+      .finally(() => setAttractionsLoading(false));
   }, [destination]);
-  const destCurrency = useMemo(() => getDestinationCurrency(destination), [destination]);
 
-  // Get a comparison destination (different region, similar cost tier)
-  const comparisonDest = useMemo(() => {
-    if (!destInfo) return null;
-    const candidates = DESTINATIONS.filter(
-      (d) => d.label !== destInfo.label && d.category !== destInfo.category,
-    );
-    return candidates.length > 0 ? candidates[0].label : null;
-  }, [destInfo]);
+  // -- ROAMers count
+  const [planningCount, setPlanningCount] = useState<number | null>(null);
+  useEffect(() => {
+    const from = new Date();
+    from.setDate(1);
+    void (async () => {
+      try {
+        const { count } = await supabase
+          .from('trips').select('id', { count: 'exact', head: true })
+          .ilike('destination', destination).gte('created_at', from.toISOString());
+        if (count !== null) setPlanningCount(count);
+      } catch { /* non-fatal */ }
+    })();
+  }, [destination]);
 
-  const handlePlanTrip = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setPlanWizard({ destination });
-    setGenerateMode('quick');
-    router.push('/(tabs)/plan');
+  // -- Handlers
+  const handleBack = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    router.back();
+  }, [router]);
+
+  const handleQuickTrip = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    setPlanWizard({ destination }); setGenerateMode('quick'); router.push('/(tabs)/plan');
   }, [destination, setPlanWizard, setGenerateMode, router]);
 
-  // Weather summary
-  const weatherSummary = useMemo(() => {
-    if (!data.weather || data.weather.length === 0) return null;
-    const today = data.weather[0];
-    return {
-      temp: `${Math.round(today.tempMax)}°`,
-      description: today.precipitationChance > 50 ? t('destination.weather.rainy', { defaultValue: 'Rainy' }) : today.tempMax > 28 ? t('destination.weather.hot', { defaultValue: 'Hot' }) : today.tempMax > 18 ? t('destination.weather.warm', { defaultValue: 'Warm' }) : t('destination.weather.cool', { defaultValue: 'Cool' }),
-      rainChance: `${today.precipitationChance}% rain`,
-    };
-  }, [data.weather]);
+  const handlePlanTogether = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    setPlanWizard({ destination }); setGenerateMode('conversation'); router.push('/(tabs)/plan');
+  }, [destination, setPlanWizard, setGenerateMode, router]);
 
-  // Safety badge
-  const safetyBadge = useMemo(() => {
-    if (!data.safety) return null;
-    const score = data.safety.safetyScore;
-    if (score >= 80) return { label: t('destination.safety.verySafe', { defaultValue: 'Very Safe' }), color: COLORS.sage };
-    if (score >= 60) return { label: t('destination.safety.safe', { defaultValue: 'Safe' }), color: COLORS.sage };
-    if (score >= 40) return { label: t('destination.safety.moderate', { defaultValue: 'Moderate' }), color: COLORS.gold };
-    return { label: t('destination.safety.useCaution', { defaultValue: 'Use Caution' }), color: COLORS.coral };
-  }, [data.safety]);
+  const rightNow = useMemo(() => {
+    const parts: string[] = [];
+    if (localTime) parts.push(localTime);
+    if (weather) parts.push(`${weather.temp}°`);
+    return parts.length > 0 ? parts.join(' · ') : null;
+  }, [localTime, weather]);
 
-  // Dates for crowd calendar (next 14 days)
-  const crowdDates = useMemo(() => {
-    const now = new Date();
-    const start = now.toISOString().split('T')[0];
-    const end = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    return { start, end };
-  }, []);
-
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Pressable
-          style={({ pressed }) => [styles.backBtn, { opacity: pressed ? 0.7 : 1 }]}
-          onPress={() => router.back()}
-        >
-          <ArrowLeft size={22} color={COLORS.cream} strokeWidth={1.5} />
-        </Pressable>
-        <View style={styles.headerText}>
-          <Text style={styles.headerTitle}>{destination}</Text>
-          {destInfo && (
-            <Text style={styles.headerCountry}>{destInfo.country}</Text>
-          )}
-        </View>
-      </View>
+    <View style={s.root}>
+      <ScrollView style={s.scroll}
+        contentContainerStyle={{ paddingBottom: insets.bottom + SPACING.xxxl }}
+        showsVerticalScrollIndicator={false}>
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Live Stats Grid */}
-        <View style={styles.statsGrid}>
-          <StatCard
-            icon={data.localTime ? Globe : Globe}
-            label={t('destination.localTime', { defaultValue: 'Local time' })}
-            value={data.localTime ?? '--:--'}
-            subValue={data.timezone?.split('/')[1]?.replace('_', ' ') ?? undefined}
-            accentColor={COLORS.sage}
-          />
-          <StatCard
-            icon={Thermometer}
-            label={t('destination.rightNow', { defaultValue: 'Right now' })}
-            value={weatherSummary?.temp ?? '--'}
-            subValue={weatherSummary?.description}
-            accentColor={COLORS.gold}
-          />
-          <StatCard
-            icon={Wind}
-            label={t('destination.airQuality', { defaultValue: 'Air quality' })}
-            value={data.airQuality?.label ?? '--'}
-            subValue={data.airQuality ? `AQI ${data.airQuality.aqi}` : undefined}
-            accentColor={data.airQuality && data.airQuality.aqi > 100 ? COLORS.coral : COLORS.sage}
-          />
-          <StatCard
-            icon={Shield}
-            label={t('destination.safety', { defaultValue: 'Safety' })}
-            value={safetyBadge?.label ?? '--'}
-            subValue={data.safety ? `${data.safety.safetyScore}/100` : undefined}
-            accentColor={safetyBadge?.color ?? COLORS.sage}
-          />
-        </View>
-
-        {/* ROAM Score */}
-        <View style={styles.section}>
-          <ROAMScoreBadge destination={destination} size="lg" />
-        </View>
-
-        {/* Seasonal Intelligence */}
-        <View style={styles.section}>
-          <SeasonalIntel destination={destination} />
-        </View>
-
-        {/* Route Intelligence */}
-        <View style={styles.section}>
-          <RouteIntelCard destination={destination} />
-        </View>
-
-        {/* Dual Clock + Jet Lag */}
-        <View style={styles.section}>
-          <DualClockWidget destination={destination} />
-        </View>
-
-        {/* Golden Hour */}
-        {destCoords && (
-          <View style={styles.section}>
-            <GoldenHourCard lat={destCoords.lat} lng={destCoords.lng} />
-          </View>
-        )}
-
-        {/* Upcoming holidays */}
-        {data.holidays.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('destination.upcomingHolidays', { defaultValue: 'Upcoming holidays' })}</Text>
-            {data.holidays.slice(0, 3).map((h) => (
-              <View key={h.date} style={styles.holidayRow}>
-                <View style={styles.holidayDateBadge}>
-                  <Text style={styles.holidayDateText}>
-                    {new Date(h.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  </Text>
-                </View>
-                <View>
-                  <Text style={styles.holidayName}>{h.name}</Text>
-                  {h.localName !== h.name && (
-                    <Text style={styles.holidayLocal}>{h.localName}</Text>
-                  )}
-                </View>
+        {/* HERO */}
+        <View style={s.heroWrap}>
+          <Image source={{ uri: heroUrl }} style={s.heroImg} resizeMode="cover" />
+          <LinearGradient colors={['transparent', 'rgba(0,0,0,0.55)', 'rgba(0,0,0,0.92)']}
+            style={s.heroGrad} />
+          <Pressable style={[s.backBtn, { top: insets.top + SPACING.sm }]} onPress={handleBack} hitSlop={8}>
+            <ChevronLeft size={22} color={COLORS.white} strokeWidth={1.5} />
+          </Pressable>
+          <View style={s.heroText}>
+            <Text style={s.heroTitle}>{destination}</Text>
+            {destInfo && (
+              <View style={s.row}>
+                <MapPin size={12} color={COLORS.creamDim} strokeWidth={1.5} />
+                <Text style={[s.monoSmall, { marginLeft: 4, color: COLORS.creamDim, letterSpacing: 1 }]}>{destInfo.country}</Text>
               </View>
-            ))}
+            )}
+            {rightNow && (
+              <Text style={s.heroRightNow}>
+                {t('destination.rightNow', { defaultValue: 'Right now:' })} {rightNow}
+              </Text>
+            )}
           </View>
-        )}
-
-        {/* Crowd Calendar */}
-        <View style={styles.section}>
-          <HolidayCrowdCalendar
-            destination={destination}
-            startDate={crowdDates.start}
-            endDate={crowdDates.end}
-          />
         </View>
 
-        {/* Cost Comparison */}
-        {comparisonDest && (
-          <View style={styles.section}>
-            <CostComparisonWidget
-              destinations={[destination, comparisonDest]}
-            />
-          </View>
-        )}
-
-        {/* Currency Sparkline */}
-        {destCurrency && destCurrency !== 'USD' && (
-          <View style={styles.section}>
-            <CurrencySparkline
-              baseCurrency="USD"
-              targetCurrency={destCurrency}
-              destinationName={destination}
-            />
-          </View>
-        )}
-
-        {/* Go Now — flight deals */}
-        <View style={styles.section}>
-          <GoNowFeed />
+        {/* THIS WEEK */}
+        <View style={s.section}>
+          <SectionHeader
+            title={t('destination.thisWeek', { defaultValue: `This week in ${destination}`, destination })}
+            badge={<LiveBadge />} />
+          {eventsLoading ? <><Skeleton /><Skeleton /></> : eventItems.length > 0
+            ? eventItems.map((item, i) => <EventCard key={i} text={item} />)
+            : <Text style={s.empty}>{t('destination.noEvents', { defaultValue: 'No event data available.' })}</Text>}
+          {eventsCitations.length > 0 && <View style={{ marginTop: SPACING.sm }}><SourceCitation citations={eventsCitations} max={3} /></View>}
         </View>
 
-        {/* CTA */}
-        <Pressable
-          style={({ pressed }) => [
-            styles.ctaBtn,
-            { transform: [{ scale: pressed ? 0.98 : 1 }] },
-          ]}
-          onPress={handlePlanTrip}
-        >
-          <Sparkles size={20} color={COLORS.bg} strokeWidth={1.5} />
-          <Text style={styles.ctaText}>{t('destination.planTrip', { defaultValue: 'Plan a trip to {{destination}}', destination })}</Text>
-        </Pressable>
+        {/* LOCALS RECOMMEND */}
+        <View style={s.section}>
+          <SectionHeader title={t('destination.localsRecommend', { defaultValue: 'Locals recommend right now' })} />
+          {venuesLoading ? <><Skeleton /><Skeleton /></> : venues && venues.length > 0
+            ? <View style={s.venueGrid}>{venues.map((v) => <VenueCard key={v.fsqId} place={v} />)}</View>
+            : <Text style={s.empty}>{t('destination.noVenues', { defaultValue: 'No venue data available.' })}</Text>}
+        </View>
 
-        {/* Loading indicator for remaining data */}
-        {loading && (
-          <SkeletonCard height={48} style={{ marginTop: SPACING.md }} />
-        )}
+        {/* HONEST TRUTH */}
+        <View style={s.section}>
+          <SectionHeader
+            title={t('destination.honestTruth', { defaultValue: `The honest truth about ${destination} in ${monthName}`, destination, month: monthName })}
+            badge={pulseData?.isLive ? <LiveBadge /> : undefined} />
+          {pulseLoading ? <Skeleton height={120} /> : pulseData?.answer
+            ? <View style={s.card}><Text style={s.pulseText}>{pulseData.answer}</Text></View>
+            : <Text style={s.empty}>{t('destination.noPulse', { defaultValue: 'No pulse data available.' })}</Text>}
+          {pulseCitations.length > 0 && <View style={{ marginTop: SPACING.sm }}><SourceCitation citations={pulseCitations} max={3} /></View>}
+        </View>
+
+        {/* TRAVELERS SAY */}
+        <View style={s.section}>
+          <SectionHeader title={t('destination.travelersSay', { defaultValue: 'What travelers say' })} />
+          {attractionsLoading ? <><Skeleton /><Skeleton /><Skeleton /></> : attractions && attractions.length > 0
+            ? attractions.map((a, i) => <AttractionCard key={a.locationId} location={a} rank={i + 1} />)
+            : <Text style={s.empty}>{t('destination.noAttractions', { defaultValue: 'No attraction data available.' })}</Text>}
+        </View>
+
+        {/* PLAN A TRIP */}
+        <View style={s.section}>
+          <SectionHeader title={t('destination.planHere', { defaultValue: 'Plan a trip here' })} />
+          {planningCount !== null && planningCount > 0 && (
+            <View style={[s.row, { marginBottom: SPACING.md, gap: 6 }]}>
+              <Users size={13} color={COLORS.sage} strokeWidth={1.5} />
+              <Text style={[s.monoSmall, { color: COLORS.sage }]}>
+                {t('destination.roamersPlanning', { defaultValue: `${planningCount} ROAMers planning ${destination} this month`, count: planningCount, destination })}
+              </Text>
+            </View>
+          )}
+          <View style={s.ctaRow}>
+            <Pressable style={({ pressed }) => [s.ctaSage, { transform: [{ scale: pressed ? 0.97 : 1 }] }]} onPress={handleQuickTrip}>
+              <Zap size={16} color={COLORS.bg} strokeWidth={1.5} />
+              <Text style={s.ctaSageText}>{t('destination.quickTrip', { defaultValue: 'Quick Trip' })}</Text>
+            </Pressable>
+            <Pressable style={({ pressed }) => [s.ctaGold, { transform: [{ scale: pressed ? 0.97 : 1 }] }]} onPress={handlePlanTogether}>
+              <Text style={s.ctaGoldText}>{t('destination.planTogether', { defaultValue: 'Plan Together' })}</Text>
+            </Pressable>
+          </View>
+        </View>
       </ScrollView>
     </View>
   );
@@ -431,163 +299,47 @@ export default function DestinationDashboard() {
 // ---------------------------------------------------------------------------
 // Styles
 // ---------------------------------------------------------------------------
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.bg,
-  } as ViewStyle,
-  scroll: {
-    flex: 1,
-  } as ViewStyle,
-  scrollContent: {
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.xxxl + SPACING.xxl,
-  } as ViewStyle,
+const HERO_H = 420;
+const CARD_BASE = { backgroundColor: COLORS.surface1, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, padding: SPACING.md } as const;
 
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-  } as ViewStyle,
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.bgCard,
-    alignItems: 'center',
-    justifyContent: 'center',
-  } as ViewStyle,
-  headerText: {
-    flex: 1,
-  } as ViewStyle,
-  headerTitle: {
-    fontFamily: FONTS.header,
-    fontSize: 32,
-    color: COLORS.cream,
-  } as TextStyle,
-  headerCountry: {
-    fontFamily: FONTS.mono,
-    fontSize: 12,
-    color: COLORS.sage,
-    letterSpacing: 1,
-    marginTop: 2,
-  } as TextStyle,
-
-  // Stats Grid
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
-    marginBottom: SPACING.xl,
-  } as ViewStyle,
-  statCard: {
-    width: '48%' as unknown as number,
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: SPACING.md,
-    gap: SPACING.xs,
-  } as ViewStyle,
-  statIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: RADIUS.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.xs,
-  } as ViewStyle,
-  statLabel: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.creamMuted,
-    letterSpacing: 0.5,
-  } as TextStyle,
-  statValue: {
-    fontFamily: FONTS.header,
-    fontSize: 22,
-    color: COLORS.cream,
-  } as TextStyle,
-  statSub: {
-    fontFamily: FONTS.body,
-    fontSize: 12,
-    color: COLORS.creamMuted,
-  } as TextStyle,
-
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: COLORS.bg },
+  scroll: { flex: 1 },
+  row: { flexDirection: 'row', alignItems: 'center' },
+  // Hero
+  heroWrap: { width: '100%', height: HERO_H, position: 'relative' },
+  heroImg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: HERO_H },
+  heroGrad: { position: 'absolute', left: 0, right: 0, bottom: 0, height: HERO_H * 0.7 },
+  backBtn: { position: 'absolute', left: SPACING.md, width: 40, height: 40, borderRadius: RADIUS.full, backgroundColor: COLORS.overlayDark, alignItems: 'center', justifyContent: 'center' },
+  heroText: { position: 'absolute', bottom: SPACING.xl, left: SPACING.lg, right: SPACING.lg },
+  heroTitle: { fontFamily: FONTS.header, fontSize: 48, color: COLORS.white, lineHeight: 52, marginBottom: SPACING.xs },
+  heroRightNow: { fontFamily: FONTS.mono, fontSize: 13, color: COLORS.creamBrightMuted, marginTop: SPACING.xs },
   // Sections
-  section: {
-    marginBottom: SPACING.xl,
-  } as ViewStyle,
-  sectionTitle: {
-    fontFamily: FONTS.header,
-    fontSize: 20,
-    color: COLORS.cream,
-    marginBottom: SPACING.md,
-  } as TextStyle,
-
-  // Holidays
-  holidayRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-    marginBottom: SPACING.sm,
-  } as ViewStyle,
-  holidayDateBadge: {
-    backgroundColor: COLORS.coralSubtle,
-    borderRadius: RADIUS.sm,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    width: 70,
-    alignItems: 'center',
-  } as ViewStyle,
-  holidayDateText: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.coral,
-  } as TextStyle,
-  holidayName: {
-    fontFamily: FONTS.bodyMedium,
-    fontSize: 14,
-    color: COLORS.cream,
-  } as TextStyle,
-  holidayLocal: {
-    fontFamily: FONTS.body,
-    fontSize: 12,
-    color: COLORS.creamMuted,
-    marginTop: 1,
-  } as TextStyle,
-
+  section: { paddingHorizontal: SPACING.lg, marginTop: SPACING.xl + SPACING.md },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: SPACING.md },
+  sectionTitle: { fontFamily: FONTS.header, fontSize: 20, color: COLORS.cream, flex: 1, marginRight: SPACING.sm },
+  empty: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.muted, fontStyle: 'italic' },
+  // Cards
+  card: { ...CARD_BASE, marginBottom: SPACING.sm },
+  cardHeadline: { fontFamily: FONTS.bodyMedium, fontSize: 14, color: COLORS.cream, lineHeight: 20 },
+  cardDetail: { fontFamily: FONTS.body, fontSize: 12, color: COLORS.muted, marginTop: 4, lineHeight: 17 },
+  // Venue grid
+  venueGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
+  venueCard: { ...CARD_BASE, width: '47%' },
+  // Shared type label
+  monoSmall: { fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, letterSpacing: 0.3 },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: SPACING.xs },
+  goldMono: { fontFamily: FONTS.mono, fontSize: 11, color: COLORS.gold },
+  // Pulse
+  pulseText: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.creamDim, lineHeight: 22 },
+  // Attraction rank
+  rankText: { fontFamily: FONTS.mono, fontSize: 22, color: COLORS.sageMuted, lineHeight: 26, minWidth: 28 },
+  // Skeleton
+  skeleton: { backgroundColor: COLORS.surface2, borderRadius: RADIUS.md, marginBottom: SPACING.sm, opacity: 0.5 },
   // CTA
-  ctaBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    backgroundColor: COLORS.sage,
-    borderRadius: RADIUS.pill,
-    paddingVertical: SPACING.md + 2,
-    marginTop: SPACING.md,
-  } as ViewStyle,
-  ctaText: {
-    fontFamily: FONTS.header,
-    fontSize: 20,
-    color: COLORS.bg,
-  } as TextStyle,
-
-  // Loading
-  loadingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    paddingVertical: SPACING.lg,
-  } as ViewStyle,
-  loadingText: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.creamMuted,
-  } as TextStyle,
+  ctaRow: { flexDirection: 'row', gap: SPACING.sm },
+  ctaSage: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.xs, backgroundColor: COLORS.sage, borderRadius: RADIUS.pill, paddingVertical: SPACING.md },
+  ctaSageText: { fontFamily: FONTS.header, fontSize: 16, color: COLORS.bg },
+  ctaGold: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.gold, borderRadius: RADIUS.pill, paddingVertical: SPACING.md },
+  ctaGoldText: { fontFamily: FONTS.header, fontSize: 16, color: COLORS.bg },
 });

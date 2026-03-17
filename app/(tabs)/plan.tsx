@@ -4,6 +4,7 @@
 // =============================================================================
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import {
+  Animated,
   Image,
   Modal,
   Pressable,
@@ -59,6 +60,9 @@ import SourceCitation from '../../components/ui/SourceCitation';
 import { getCurrentWeather, type CurrentWeather } from '../../lib/apis/openweather';
 import { searchEvents, type EventResult } from '../../lib/apis/eventbrite';
 import TripMapCard from '../../components/features/TripMapCard';
+import CountdownHero from '../../components/features/CountdownHero';
+import { useTravelStage, type TravelStage } from '../../lib/travel-state';
+import { useDailyBrief, getChecklistItems } from '../../lib/daily-brief';
 
 // ---------------------------------------------------------------------------
 // Destination images for trip cards
@@ -445,6 +449,46 @@ export default function PlanScreen() {
   const isPro = useAppStore((s) => s.isPro);
   const trips = useAppStore((s) => s.trips);
 
+  // ── Travel state ──
+  const { stage, activeTrip, daysUntil } = useTravelStage();
+  const { brief, isLive } = useDailyBrief(activeTrip?.destination, daysUntil ?? 0);
+  const checklist = useMemo(() => getChecklistItems(daysUntil ?? 999), [daysUntil]);
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+
+  // ── Typewriter effect for DREAMING state ──
+  const dreamingCities = useMemo(() => ['Tokyo.', 'Bali.', 'Vienna.', 'Lisbon.', 'Seoul.', 'Cartagena.'], []);
+  const [dreamingCityIndex, setDreamingCityIndex] = useState(0);
+  useEffect(() => {
+    if (stage !== 'DREAMING') return;
+    const timer = setInterval(() => {
+      setDreamingCityIndex((i) => (i + 1) % dreamingCities.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [stage, dreamingCities.length]);
+
+  // ── Pulse animation for IMMINENT state ──
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (stage !== 'IMMINENT') { pulseAnim.setValue(1); return; }
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.spring(pulseAnim, { toValue: 1.06, useNativeDriver: true, speed: 2, bounciness: 4 }),
+        Animated.spring(pulseAnim, { toValue: 1, useNativeDriver: true, speed: 2, bounciness: 4 }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [stage, pulseAnim]);
+
+  const handleChecklistToggle = useCallback((id: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setCheckedItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
+      return next;
+    });
+  }, []);
+
   // ── Destination intel (weather, sonar, events) ──
   const planDestination = useAppStore((s) => s.planWizard.destination);
   const sonarDest = useSonarQuery(planDestination || undefined, 'pulse');
@@ -539,6 +583,7 @@ export default function PlanScreen() {
         vibes: state.vibes,
         itinerary: JSON.stringify(itinerary),
         createdAt: new Date().toISOString(),
+        startDate: state.startDate?.toISOString().split('T')[0],
       };
 
       addTrip(trip);
@@ -609,6 +654,7 @@ export default function PlanScreen() {
         vibes,
         itinerary: JSON.stringify(itinerary),
         createdAt: new Date().toISOString(),
+        startDate: undefined,
       };
 
       addTrip(trip);
@@ -772,6 +818,67 @@ export default function PlanScreen() {
           </Text>
         </View>
 
+        {/* ── Travel-state adaptive hero section ── */}
+        {stage === 'DREAMING' && !showGenerator && (
+          <DreamingSection
+            cityLabel={dreamingCities[dreamingCityIndex]}
+            onQuickTrip={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); handleNewTrip(); setGenerateMode('quick'); }}
+            onPlanTogether={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/craft-session' as never); }}
+          />
+        )}
+
+        {(stage === 'PLANNING' || stage === 'IMMINENT') && activeTrip && (
+          <PlanningSection
+            stage={stage}
+            daysUntil={daysUntil ?? 0}
+            activeTrip={activeTrip}
+            brief={brief}
+            isLive={isLive}
+            checklist={checklist}
+            checkedItems={checkedItems}
+            onToggle={handleChecklistToggle}
+            pulseAnim={pulseAnim}
+          />
+        )}
+
+        {stage === 'TRAVELING' && activeTrip && (
+          <TravelingSection
+            activeTrip={activeTrip}
+            onHelpPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/i-am-here-now' as never); }}
+            onCapturePress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/trip-journal' as never); }}
+          />
+        )}
+
+        {stage === 'RETURNED' && activeTrip && (
+          <ReturnedSection
+            activeTrip={activeTrip}
+            onWrappedPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/trip-wrapped' as never); }}
+            onJournalPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/trip-journal' as never); }}
+          />
+        )}
+
+        {/* Countdown — when latest trip has departure date */}
+        {hasTrips && sortedTrips[0].startDate && (() => {
+          const start = new Date(sortedTrips[0].startDate);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          start.setHours(0, 0, 0, 0);
+          const daysUntil = Math.max(0, Math.round((start.getTime() - today.getTime()) / (24 * 60 * 60 * 1000)));
+          const city = sortedTrips[0].destination;
+          const isUrgent = daysUntil > 0 && daysUntil < 7;
+          return (
+            <View style={styles.countdownBanner}>
+              <Text style={[styles.countdownText, isUrgent && styles.countdownTextGold]}>
+                {daysUntil === 0
+                  ? t('plan.countdownToday', { defaultValue: 'Today: {{city}}', city })
+                  : daysUntil === 1
+                    ? t('plan.countdownTomorrow', { defaultValue: '1 day until {{city}}', city })
+                    : t('plan.countdownDays', { defaultValue: '{{count}} days until {{city}}', count: daysUntil, city })}
+              </Text>
+            </View>
+          );
+        })()}
+
         {/* New Trip Button */}
         <Pressable
           onPress={handleNewTrip}
@@ -864,6 +971,11 @@ export default function PlanScreen() {
           </View>
         )}
 
+        {/* Countdown hero — when latest trip has startDate */}
+        {sortedTrips.length > 0 && sortedTrips[0].startDate ? (
+          <CountdownHero trip={sortedTrips[0]} onPress={() => handleTripPress(sortedTrips[0])} />
+        ) : null}
+
         {/* Trip Cards */}
         <Text style={styles.sectionLabel}>{t('plan.sectionYourTrips')}</Text>
         {sortedTrips.map((trip, index) => (
@@ -903,6 +1015,225 @@ export default function PlanScreen() {
         onUpgrade={handleUpgrade}
         onDismiss={() => setRateLimitVisible(false)}
       />
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// DreamingSection — shown when no active trips (DREAMING stage)
+// ---------------------------------------------------------------------------
+function DreamingSection({
+  cityLabel,
+  onQuickTrip,
+  onPlanTogether,
+}: {
+  cityLabel: string;
+  onQuickTrip: () => void;
+  onPlanTogether: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <View style={stageStyles.dreamingContainer}>
+      <Text style={stageStyles.dreamingHeadline}>
+        {t('plan.dreaming.headline', { defaultValue: 'Where are you going?' })}
+      </Text>
+      <Text style={stageStyles.dreamingTypewriter}>{cityLabel}</Text>
+      <View style={stageStyles.dreamingButtons}>
+        <Pressable
+          onPress={onQuickTrip}
+          accessibilityLabel={t('plan.dreaming.quickTrip', { defaultValue: 'Quick Trip' })}
+          accessibilityRole="button"
+          style={({ pressed }) => [stageStyles.dreamingBtn, stageStyles.dreamingBtnSage, { opacity: pressed ? 0.85 : 1 }]}
+        >
+          <Text style={[stageStyles.dreamingBtnText, stageStyles.dreamingBtnTextSage]}>
+            {t('plan.dreaming.quickTrip', { defaultValue: 'Quick Trip' })}
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={onPlanTogether}
+          accessibilityLabel={t('plan.dreaming.planTogether', { defaultValue: 'Plan Together' })}
+          accessibilityRole="button"
+          style={({ pressed }) => [stageStyles.dreamingBtn, stageStyles.dreamingBtnGold, { opacity: pressed ? 0.85 : 1 }]}
+        >
+          <Text style={[stageStyles.dreamingBtnText, stageStyles.dreamingBtnTextGold]}>
+            {t('plan.dreaming.planTogether', { defaultValue: 'Plan Together' })}
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// PlanningSection — countdown, daily brief, checklist (PLANNING + IMMINENT)
+// ---------------------------------------------------------------------------
+function PlanningSection({
+  stage,
+  daysUntil,
+  activeTrip,
+  brief,
+  isLive,
+  checklist,
+  checkedItems,
+  onToggle,
+  pulseAnim,
+}: {
+  stage: TravelStage;
+  daysUntil: number;
+  activeTrip: import('../../lib/store').Trip;
+  brief: import('../../lib/daily-brief').DailyBrief | null;
+  isLive: boolean;
+  checklist: import('../../lib/daily-brief').ChecklistItem[];
+  checkedItems: Set<string>;
+  onToggle: (id: string) => void;
+  pulseAnim: Animated.Value;
+}) {
+  const { t } = useTranslation();
+  const isImminent = stage === 'IMMINENT';
+  const countdownColor = isImminent ? COLORS.gold : COLORS.cream;
+
+  return (
+    <View style={stageStyles.planningContainer}>
+      {/* Countdown number */}
+      <Animated.View style={{ transform: [{ scale: pulseAnim }], alignItems: 'center', marginBottom: SPACING.xs }}>
+        <Text style={[stageStyles.countdownNumber, { color: countdownColor }]}>
+          {daysUntil}
+        </Text>
+        <Text style={stageStyles.countdownSub}>
+          {isImminent
+            ? t('plan.planning.almostTime', { defaultValue: 'Almost time.' })
+            : t('plan.planning.daysUntil', { defaultValue: 'days until {{destination}}', destination: activeTrip.destination })}
+        </Text>
+      </Animated.View>
+
+      {/* Daily brief card */}
+      {brief && (
+        <View style={stageStyles.briefCard}>
+          <View style={stageStyles.briefHeader}>
+            <Text style={stageStyles.briefHeadline}>{brief.headline}</Text>
+            {isLive && <LiveBadge />}
+          </View>
+          <Text style={stageStyles.briefSubtext}>{brief.subtext}</Text>
+        </View>
+      )}
+
+      {/* Pre-trip checklist */}
+      {checklist.length > 0 && (
+        <View style={stageStyles.checklistContainer}>
+          <Text style={stageStyles.checklistTitle}>
+            {t('plan.planning.checklist', { defaultValue: 'Pre-trip checklist' })}
+          </Text>
+          {checklist.map((item) => {
+            const checked = checkedItems.has(item.id);
+            return (
+              <Pressable
+                key={item.id}
+                onPress={() => onToggle(item.id)}
+                accessibilityLabel={`${checked ? 'Uncheck' : 'Check'}: ${item.label}`}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked }}
+                style={({ pressed }) => [stageStyles.checklistRow, checked && stageStyles.checklistRowChecked, { opacity: pressed ? 0.8 : 1 }]}
+              >
+                <View style={[stageStyles.checkbox, checked && stageStyles.checkboxChecked]}>
+                  {checked && <Text style={stageStyles.checkboxMark}>✓</Text>}
+                </View>
+                <Text style={[stageStyles.checklistLabel, checked && stageStyles.checklistLabelChecked]}>
+                  {item.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// TravelingSection — shown when the user is currently on their trip
+// ---------------------------------------------------------------------------
+function TravelingSection({
+  activeTrip,
+  onHelpPress,
+  onCapturePress,
+}: {
+  activeTrip: import('../../lib/store').Trip;
+  onHelpPress: () => void;
+  onCapturePress: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <View style={stageStyles.travelingContainer}>
+      <Text style={stageStyles.travelingHeader}>
+        {t('plan.traveling.youreIn', { defaultValue: "You're in {{destination}}", destination: activeTrip.destination })}
+      </Text>
+      <View style={stageStyles.travelingActions}>
+        <Pressable
+          onPress={onHelpPress}
+          accessibilityLabel={t('plan.traveling.needHelp', { defaultValue: 'Need help?' })}
+          accessibilityRole="button"
+          style={({ pressed }) => [stageStyles.travelingBtn, stageStyles.travelingBtnSage, { opacity: pressed ? 0.85 : 1 }]}
+        >
+          <Text style={stageStyles.travelingBtnText}>
+            {t('plan.traveling.needHelp', { defaultValue: 'Need help?' })}
+            {' \u2192'}
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={onCapturePress}
+          accessibilityLabel={t('plan.traveling.captureBtn', { defaultValue: 'Capture moment' })}
+          accessibilityRole="button"
+          style={({ pressed }) => [stageStyles.travelingBtn, stageStyles.travelingBtnGold, { opacity: pressed ? 0.85 : 1 }]}
+        >
+          <Text style={stageStyles.travelingBtnText}>
+            {t('plan.traveling.captureBtn', { defaultValue: 'Capture moment' })}
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ReturnedSection — shown after returning from a trip
+// ---------------------------------------------------------------------------
+function ReturnedSection({
+  activeTrip,
+  onWrappedPress,
+  onJournalPress,
+}: {
+  activeTrip: import('../../lib/store').Trip;
+  onWrappedPress: () => void;
+  onJournalPress: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <View style={stageStyles.returnedContainer}>
+      <Text style={stageStyles.returnedHeader}>
+        {t('plan.returned.welcome', { defaultValue: 'Welcome back from {{destination}}', destination: activeTrip.destination })}
+      </Text>
+      <Pressable
+        onPress={onWrappedPress}
+        accessibilityLabel={t('plan.returned.wrapped', { defaultValue: 'See your trip wrapped' })}
+        accessibilityRole="button"
+        style={({ pressed }) => [stageStyles.returnedLink, { opacity: pressed ? 0.75 : 1 }]}
+      >
+        <Text style={stageStyles.returnedLinkText}>
+          {t('plan.returned.wrapped', { defaultValue: 'See your trip wrapped' })}
+          {' \u2192'}
+        </Text>
+      </Pressable>
+      <Pressable
+        onPress={onJournalPress}
+        accessibilityLabel={t('plan.returned.journal', { defaultValue: 'Read your story' })}
+        accessibilityRole="button"
+        style={({ pressed }) => [stageStyles.returnedLink, { opacity: pressed ? 0.75 : 1 }]}
+      >
+        <Text style={stageStyles.returnedLinkText}>
+          {t('plan.returned.journal', { defaultValue: 'Read your story' })}
+          {' \u2192'}
+        </Text>
+      </Pressable>
     </View>
   );
 }
@@ -1009,6 +1340,234 @@ function RateLimitModal({
 }
 
 // ---------------------------------------------------------------------------
+// Travel-state stage styles
+// ---------------------------------------------------------------------------
+const stageStyles = StyleSheet.create({
+  // ── DREAMING ──
+  dreamingContainer: {
+    marginBottom: SPACING.lg,
+    paddingTop: SPACING.md,
+    alignItems: 'center',
+  } as ViewStyle,
+  dreamingHeadline: {
+    fontFamily: FONTS.header,
+    fontSize: 32,
+    color: COLORS.cream,
+    textAlign: 'center',
+    letterSpacing: -0.5,
+    marginBottom: SPACING.sm,
+  } as TextStyle,
+  dreamingTypewriter: {
+    fontFamily: FONTS.mono,
+    fontSize: 22,
+    color: COLORS.creamDim,
+    textAlign: 'center',
+    marginBottom: SPACING.lg,
+    letterSpacing: 0.5,
+  } as TextStyle,
+  dreamingButtons: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+    justifyContent: 'center',
+  } as ViewStyle,
+  dreamingBtn: {
+    borderRadius: RADIUS.pill,
+    paddingVertical: 12,
+    paddingHorizontal: SPACING.xl,
+    minWidth: 130,
+    alignItems: 'center',
+  } as ViewStyle,
+  dreamingBtnSage: {
+    backgroundColor: COLORS.sage,
+  } as ViewStyle,
+  dreamingBtnGold: {
+    backgroundColor: COLORS.gold,
+  } as ViewStyle,
+  dreamingBtnText: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 15,
+  } as TextStyle,
+  dreamingBtnTextSage: {
+    color: COLORS.bg,
+  } as TextStyle,
+  dreamingBtnTextGold: {
+    color: COLORS.bg,
+  } as TextStyle,
+
+  // ── PLANNING / IMMINENT ──
+  planningContainer: {
+    marginBottom: SPACING.lg,
+  } as ViewStyle,
+  countdownNumber: {
+    fontFamily: FONTS.mono,
+    fontSize: 72,
+    letterSpacing: -2,
+    lineHeight: 80,
+  } as TextStyle,
+  countdownSub: {
+    fontFamily: FONTS.mono,
+    fontSize: 16,
+    color: COLORS.creamDim,
+    textAlign: 'center',
+    marginTop: 4,
+    marginBottom: SPACING.md,
+  } as TextStyle,
+  briefCard: {
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    gap: SPACING.xs,
+    marginBottom: SPACING.md,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.sage,
+  } as ViewStyle,
+  briefHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    flexWrap: 'wrap',
+  } as ViewStyle,
+  briefHeadline: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.cream,
+    flex: 1,
+    lineHeight: 20,
+  } as TextStyle,
+  briefSubtext: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamMuted,
+    lineHeight: 19,
+  } as TextStyle,
+  checklistContainer: {
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    gap: SPACING.xs,
+  } as ViewStyle,
+  checklistTitle: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    marginBottom: SPACING.xs,
+  } as TextStyle,
+  checklistRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  } as ViewStyle,
+  checklistRowChecked: {
+    opacity: 0.55,
+  } as ViewStyle,
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: COLORS.creamDim,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  } as ViewStyle,
+  checkboxChecked: {
+    backgroundColor: COLORS.sage,
+    borderColor: COLORS.sage,
+  } as ViewStyle,
+  checkboxMark: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.bg,
+  } as TextStyle,
+  checklistLabel: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.cream,
+    flex: 1,
+    lineHeight: 19,
+  } as TextStyle,
+  checklistLabelChecked: {
+    textDecorationLine: 'line-through',
+    color: COLORS.creamDim,
+  } as TextStyle,
+
+  // ── TRAVELING ──
+  travelingContainer: {
+    marginBottom: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.surface1,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.sage,
+    paddingHorizontal: SPACING.md,
+  } as ViewStyle,
+  travelingHeader: {
+    fontFamily: FONTS.header,
+    fontSize: 24,
+    color: COLORS.cream,
+    letterSpacing: -0.3,
+    marginBottom: SPACING.md,
+  } as TextStyle,
+  travelingActions: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  } as ViewStyle,
+  travelingBtn: {
+    borderRadius: RADIUS.pill,
+    paddingVertical: 10,
+    paddingHorizontal: SPACING.md,
+    flex: 1,
+    alignItems: 'center',
+  } as ViewStyle,
+  travelingBtnSage: {
+    backgroundColor: COLORS.sageLight,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+  } as ViewStyle,
+  travelingBtnGold: {
+    backgroundColor: COLORS.goldSubtle,
+    borderWidth: 1,
+    borderColor: COLORS.goldBorder,
+  } as ViewStyle,
+  travelingBtnText: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 13,
+    color: COLORS.cream,
+  } as TextStyle,
+
+  // ── RETURNED ──
+  returnedContainer: {
+    marginBottom: SPACING.lg,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.surface1,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.gold,
+  } as ViewStyle,
+  returnedHeader: {
+    fontFamily: FONTS.header,
+    fontSize: 22,
+    color: COLORS.cream,
+    letterSpacing: -0.3,
+    marginBottom: SPACING.md,
+  } as TextStyle,
+  returnedLink: {
+    paddingVertical: SPACING.sm,
+  } as ViewStyle,
+  returnedLinkText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 15,
+    color: COLORS.gold,
+  } as TextStyle,
+});
+
+// ---------------------------------------------------------------------------
 // Styles
 // ---------------------------------------------------------------------------
 const styles = StyleSheet.create({
@@ -1041,6 +1600,18 @@ const styles = StyleSheet.create({
     color: COLORS.creamDim,
     marginTop: 6,
     letterSpacing: 0.5,
+  } as TextStyle,
+  countdownBanner: {
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.xs,
+  } as ViewStyle,
+  countdownText: {
+    fontFamily: FONTS.mono,
+    fontSize: 18,
+    color: COLORS.cream,
+  } as TextStyle,
+  countdownTextGold: {
+    color: COLORS.gold,
   } as TextStyle,
 
   // ── New Trip Button ──

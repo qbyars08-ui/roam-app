@@ -6,6 +6,7 @@ import { Alert, Share } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { supabase } from './supabase';
 import type { Trip } from './store';
+import type { Itinerary } from './types/itinerary';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -23,6 +24,38 @@ export interface SharedTrip {
 // ---------------------------------------------------------------------------
 // Share a trip — insert into shared_trips + open share sheet
 // ---------------------------------------------------------------------------
+
+const ROAM_APP_URL = 'roamapp.app';
+
+/**
+ * Build top 3 highlights from itinerary (first 3 slot activities across days).
+ */
+function getTopThreeActivities(itinerary: Itinerary): string[] {
+  const out: string[] = [];
+  for (const d of itinerary.days ?? []) {
+    for (const slot of ['morning', 'afternoon', 'evening'] as const) {
+      const s = d[slot];
+      if (s?.activity && out.length < 3) out.push(s.activity);
+    }
+  }
+  return out.slice(0, 3);
+}
+
+/**
+ * Open native share sheet with card-style message: destination + top 3 + roamapp.app.
+ * No sign-in or DB required. Use after generation for quick share.
+ */
+export async function shareTripAsCard(trip: Trip, parsed: Itinerary): Promise<void> {
+  const top3 = getTopThreeActivities(parsed);
+  const top3Line = top3.length > 0
+    ? '\nTop 3: ' + top3.map((a, i) => `${i + 1}. ${a.slice(0, 60)}${a.length > 60 ? '…' : ''}`).join(' ')
+    : '';
+  const message = `My ${trip.days}-day trip to ${trip.destination}${top3Line}\n\n${ROAM_APP_URL}`;
+  await Share.share({
+    title: `My trip to ${trip.destination}`,
+    message,
+  });
+}
 
 /**
  * Publish a trip to the shared_trips table and open the native share sheet
