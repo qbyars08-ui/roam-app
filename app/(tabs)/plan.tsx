@@ -869,7 +869,15 @@ export default function PlanScreen() {
           const city = sortedTrips[0].destination;
           const isUrgent = daysUntil > 0 && daysUntil < 7;
           return (
-            <View style={styles.countdownBanner}>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/itinerary' as never);
+              }}
+              accessibilityLabel={`${daysUntil} days until ${city}. Tap to view itinerary.`}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.countdownBanner, { opacity: pressed ? 0.85 : 1 }]}
+            >
               <Text style={[styles.countdownText, isUrgent && styles.countdownTextGold]}>
                 {daysUntil === 0
                   ? t('plan.countdownToday', { defaultValue: 'Today: {{city}}', city })
@@ -877,7 +885,7 @@ export default function PlanScreen() {
                     ? t('plan.countdownTomorrow', { defaultValue: '1 day until {{city}}', city })
                     : t('plan.countdownDays', { defaultValue: '{{count}} days until {{city}}', count: daysUntil, city })}
               </Text>
-            </View>
+            </Pressable>
           );
         })()}
 
@@ -1102,22 +1110,32 @@ function PlanningSection({
   pulseAnim: Animated.Value;
 }) {
   const { t } = useTranslation();
+  const router = useRouter();
   const isImminent = stage === 'IMMINENT';
   const countdownColor = isImminent ? COLORS.gold : COLORS.cream;
 
   return (
     <View style={stageStyles.planningContainer}>
       {/* Countdown number */}
-      <Animated.View style={{ transform: [{ scale: pulseAnim }], alignItems: 'center', marginBottom: SPACING.xs }}>
-        <Text style={[stageStyles.countdownNumber, { color: countdownColor }]}>
-          {daysUntil}
-        </Text>
-        <Text style={stageStyles.countdownSub}>
-          {isImminent
-            ? t('plan.planning.almostTime', { defaultValue: 'Almost time.' })
-            : t('plan.planning.daysUntil', { defaultValue: 'days until {{destination}}', destination: activeTrip.destination })}
-        </Text>
-      </Animated.View>
+      <Pressable
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          router.push('/itinerary' as never);
+        }}
+        accessibilityLabel={`${daysUntil} days until ${activeTrip.destination}. Tap to view itinerary.`}
+        accessibilityRole="button"
+      >
+        <Animated.View style={{ transform: [{ scale: pulseAnim }], alignItems: 'center', marginBottom: SPACING.xs }}>
+          <Text style={[stageStyles.countdownNumber, { color: countdownColor }]}>
+            {daysUntil}
+          </Text>
+          <Text style={stageStyles.countdownSub}>
+            {isImminent
+              ? t('plan.planning.almostTime', { defaultValue: 'Almost time.' })
+              : t('plan.planning.daysUntil', { defaultValue: 'days until {{destination}}', destination: activeTrip.destination })}
+          </Text>
+        </Animated.View>
+      </Pressable>
 
       {/* Daily brief card */}
       {brief && (

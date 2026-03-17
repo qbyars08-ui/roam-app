@@ -679,6 +679,7 @@ function DestinationCard({
   index: number;
 }) {
   const { t } = useTranslation();
+  const router = useRouter();
   const scale = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = useCallback(() => {
@@ -702,7 +703,11 @@ function DestinationCard({
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
       <Pressable
-        onPress={onPress}
+        onPress={() => {
+          onPress();
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          router.push({ pathname: '/destination/[name]', params: { name: dest.label } } as never);
+        }}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         accessibilityLabel={t('pulse.selectDestination', { defaultValue: `Select ${dest.label}`, destination: dest.label })}
@@ -728,16 +733,24 @@ function DestinationCard({
   );
 }
 
-function EditorialCard({ rec, index }: { rec: TimeRec; index: number }) {
+function EditorialCard({ rec, index, destinationLabel }: { rec: TimeRec; index: number; destinationLabel: string }) {
   const { t } = useTranslation();
+  const router = useRouter();
   return (
-    <View style={[styles.editorialCard, { height: getEditorialCardHeight(index) }]}>
+    <Pressable
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        router.push({ pathname: '/destination/[name]', params: { name: destinationLabel } } as never);
+      }}
+      accessibilityLabel={t('pulse.editorialCardLabel', { defaultValue: `${rec.label} — ${rec.timeSlot}`, label: rec.label, timeSlot: rec.timeSlot })}
+      accessibilityRole="button"
+      style={({ pressed }) => [styles.editorialCard, { height: getEditorialCardHeight(index), opacity: pressed ? 0.9 : 1 }]}
+    >
       <Image
         source={{ uri: rec.photo }}
         style={styles.editorialCardPhoto as ImageStyle}
         contentFit="cover"
         transition={300}
-        accessibilityLabel={t('pulse.editorialCardLabel', { defaultValue: `${rec.label} — ${rec.timeSlot}`, label: rec.label, timeSlot: rec.timeSlot })}
       />
       <LinearGradient
         colors={['transparent', COLORS.overlayDark]}
@@ -752,30 +765,47 @@ function EditorialCard({ rec, index }: { rec: TimeRec; index: number }) {
           <Text style={styles.timeContextText}>{rec.timeContext}</Text>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
-function LocalTipRow({ tip }: { tip: LocalTip }) {
+function LocalTipRow({ tip, destinationLabel }: { tip: LocalTip; destinationLabel: string }) {
   const { t } = useTranslation();
+  const router = useRouter();
   return (
-    <View style={styles.tipRow}>
+    <Pressable
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        router.push({ pathname: '/destination/[name]', params: { name: destinationLabel } } as never);
+      }}
+      accessibilityLabel={`Local tip: ${tip.text}`}
+      accessibilityRole="button"
+      style={({ pressed }) => [styles.tipRow, { opacity: pressed ? 0.85 : 1 }]}
+    >
       <Text style={styles.tipText}>{tip.text}</Text>
       <Text style={styles.tipSource}>{t('pulse.tipSource', { defaultValue: '— Local tip · {{count}} agree', count: tip.upvotes })}</Text>
-    </View>
+    </Pressable>
   );
 }
 
 function SeasonalHeroCard({ event }: { event: SeasonalEvent }) {
   const { t } = useTranslation();
+  const router = useRouter();
   return (
-    <View style={styles.seasonalHeroCard}>
+    <Pressable
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        router.push({ pathname: '/destination/[name]', params: { name: event.destination } } as never);
+      }}
+      accessibilityLabel={t('pulse.seasonalEventLabel', { defaultValue: `${event.event} in ${event.destination}`, event: event.event, destination: event.destination })}
+      accessibilityRole="button"
+      style={({ pressed }) => [styles.seasonalHeroCard, { opacity: pressed ? 0.9 : 1 }]}
+    >
       <Image
         source={{ uri: event.heroPhoto }}
         style={styles.seasonalHeroPhoto as ImageStyle}
         contentFit="cover"
         transition={300}
-        accessibilityLabel={t('pulse.seasonalEventLabel', { defaultValue: `${event.event} in ${event.destination}`, event: event.event, destination: event.destination })}
       />
       <LinearGradient
         colors={['transparent', COLORS.overlayDark]}
@@ -786,29 +816,32 @@ function SeasonalHeroCard({ event }: { event: SeasonalEvent }) {
           <Text style={styles.seasonalHeroEvent}>{event.event}</Text>
           <Text style={styles.seasonalHeroDate}>{event.dateRange}</Text>
         </View>
-        <Pressable
-          onPress={() => Haptics.selectionAsync()}
-          accessibilityLabel={t('pulse.learnMoreAbout', { defaultValue: `Learn more about ${event.event}`, event: event.event })}
-          accessibilityRole="button"
-          style={styles.learnMoreButton}
-        >
+        <View style={styles.learnMoreButton}>
           <Text style={styles.seasonalLearnMore}>{t('pulse.readBrief', { defaultValue: 'Read the brief →' })}</Text>
-        </Pressable>
+        </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
 function SeasonalSmallCard({ item, index }: { item: typeof SEASONAL_SMALL_EVENTS[0]; index: number }) {
   const { t } = useTranslation();
+  const router = useRouter();
   return (
-    <View style={[styles.seasonalSmallCard, { height: getSeasonalSmallHeight(index) }]}>
+    <Pressable
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        router.push({ pathname: '/destination/[name]', params: { name: item.dest } } as never);
+      }}
+      accessibilityLabel={t('pulse.seasonalSmallLabel', { defaultValue: `${item.name} — ${item.dest}`, name: item.name, dest: item.dest })}
+      accessibilityRole="button"
+      style={({ pressed }) => [styles.seasonalSmallCard, { height: getSeasonalSmallHeight(index), opacity: pressed ? 0.9 : 1 }]}
+    >
       <Image
         source={{ uri: item.photo }}
         style={styles.seasonalSmallPhoto as ImageStyle}
         contentFit="cover"
         transition={200}
-        accessibilityLabel={t('pulse.seasonalSmallLabel', { defaultValue: `${item.name} — ${item.dest}`, name: item.name, dest: item.dest })}
       />
       <LinearGradient
         colors={['transparent', COLORS.overlayDim]}
@@ -818,7 +851,7 @@ function SeasonalSmallCard({ item, index }: { item: typeof SEASONAL_SMALL_EVENTS
         <Text style={styles.seasonalSmallName}>{item.name}</Text>
         <Text style={styles.seasonalSmallDate}>{item.date}</Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -1112,7 +1145,7 @@ export default function PulseScreen() {
           {timeRecs.length > 0 ? (
             <View style={styles.editorialStack}>
               {timeRecs.map((rec, i) => (
-                <EditorialCard key={i} rec={rec} index={i} />
+                <EditorialCard key={i} rec={rec} index={i} destinationLabel={selectedDest.label} />
               ))}
             </View>
           ) : !sonarPulse.data && !sonarPulse.isLoading ? (
@@ -1137,20 +1170,26 @@ export default function PulseScreen() {
 
           {/* Live Sonar local intel */}
           {sonarLocal.data ? (
-            <View style={styles.sonarCard}>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push({ pathname: '/destination/[name]', params: { name: selectedDest.label } } as never);
+              }}
+              style={({ pressed }) => [styles.sonarCard, { opacity: pressed ? 0.85 : 1 }]}
+            >
               <Text style={styles.sonarAnswer}>{sonarLocal.data.answer}</Text>
               {sonarLocal.citations.length > 0 && (
                 <View style={{ marginTop: SPACING.sm }}>
                   <SourceCitation citations={sonarLocal.citations} />
                 </View>
               )}
-            </View>
+            </Pressable>
           ) : null}
 
           {/* Hardcoded tips (always shown) */}
           <View style={styles.tipsStack}>
             {localTips.map((tip, i) => (
-              <LocalTipRow key={i} tip={tip} />
+              <LocalTipRow key={i} tip={tip} destinationLabel={selectedDest.label} />
             ))}
           </View>
         </View>
@@ -1286,10 +1325,17 @@ export default function PulseScreen() {
             <Text style={styles.apiSectionHeading}>{t('pulse.insider.heading', { defaultValue: 'Local tips' })}</Text>
             <View style={styles.apiCardStack}>
               {fsqTips.map((tip, i) => (
-                <View key={i} style={styles.apiCard}>
+                <Pressable
+                  key={i}
+                  style={({ pressed }) => [styles.apiCard, { opacity: pressed ? 0.85 : 1 }]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.push({ pathname: '/destination/[name]', params: { name: selectedDest.label } } as never);
+                  }}
+                >
                   <Text style={styles.apiCardName}>{'\u201C'}{tip.text}{'\u201D'}</Text>
                   {tip.createdAt ? <Text style={styles.apiCardSub}>{new Date(tip.createdAt).toLocaleDateString()}</Text> : null}
-                </View>
+                </Pressable>
               ))}
             </View>
           </View>
