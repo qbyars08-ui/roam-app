@@ -1,100 +1,100 @@
-# ROAM Agent Board — Updated March 16, 2026 (Post-3-Features)
+# ROAM Agent Board — Updated March 16, 2026 (Post-Skills Session)
 
 ---
 
-## Status: ALL 3 GROUNDBREAKING FEATURES LIVE
+## Status: PROMPT V3.0 LIVE + 9 COMPONENTS WIRED + ALL TESTS PASSING
 
-| Feature | Status | Screen | Key Components |
-|---------|--------|--------|----------------|
-| ROAM Intelligence Dashboard | LIVE | app/destination/[name].tsx | ROAMScoreBadge, SeasonalIntel, HolidayCrowdCalendar, CurrencySparkline, GoldenHourCard, GoNowFeed, RouteIntelCard, DualClockWidget, CostComparisonWidget |
-| Trip Audio Guide | LIVE | app/itinerary.tsx | AudioGuideBar (floating), NarrationToggle, narrateItinerary(), ElevenLabs voice proxy |
-| Traveler Radar | LIVE | app/(tabs)/people.tsx | TripPresenceCard, MatchCard, ProfileCard, ChemistryBadge, social-feed, social-chemistry, 5 sub-tabs |
-| Prep Tab (IAmHereNow) | LIVE | app/(tabs)/prep.tsx | IAmHereNow at top, IntelligenceCardsGrid, AirQualitySunCard, EmergencyQuickCard, CurrencyQuickCard |
-
-### Merges Completed
-- PR #38 (localization) — MERGED
-- PR #39 (intelligence strategy) — MERGED
-- 0 open PRs
+| Milestone | Status | Details |
+|-----------|--------|---------|
+| System Prompt v3.0 | LIVE | Banned words, budget personality, emotional day arc, travel style voice, crowd intel |
+| Component Wiring | LIVE | 9 unused components wired — PocketConcierge, StreakBadge, MoodDiscovery, VoiceInput, Pronunciation, WanderlustFeed, TravelStats, ChaosMode |
+| 5-Screen Onboarding | LIVE | Hook > Social Proof > Value Preview > Personalization > Signup |
+| ShareCard | BUILT | ViewShot capture, editorial design — not yet wired into itinerary |
+| App Store Listing | WRITTEN | APP_STORE_LISTING.md ready for submission |
+| Reddit Launch Posts | WRITTEN | 3 authentic posts for r/solotravel and r/travel |
+| Generation Quality | VERIFIED | 5 test trips scored >= 8/10 on Specificity/Voice/Usefulness |
+| Tests | 613/613 PASSING | Zero TS errors, 21 test suites |
 
 ---
 
 ## Composer 1 — Visual
 
-Polish the 3 new features visually. Ensure editorial consistency across Intelligence Dashboard, Audio Guide Bar, and Traveler Radar.
+Polish v3.0 prompt output and new component integrations visually.
 
 ### Tasks
 
-- Visual audit of destination/[name].tsx — ensure all 9 widgets flow with proper spacing
-- AudioGuideBar design review — ensure floating bar doesn't obscure content
-- People tab 5-sub-tab design — ensure tab chips are scannable, active states clear
-- IAmHereNow at top of Prep — ensure it's visually prominent, emergency buttons large
-- GoNowFeed horizontal scroll — ensure deal cards are attractive with proper photo treatment
-- Dark mode audit on all 3 features — no light backgrounds leaking
+- Review PocketConcierge floating position — ensure no overlap with AudioGuideBar
+- Review MoodDiscovery card styling on Discover tab — editorial consistency
+- Review WanderlustFeed cards on Pulse tab — photo treatment + spacing
+- ShareCard design audit — ensure it matches editorial aesthetic before wiring
+- Audit StreakBadge + TravelStats on profile — spacing, alignment, dark mode
+- Review chaos mode "Surprise me" link — subtle enough to not distract from main CTAs
 
 ---
 
 ## Composer 2 — Builder
 
-Wire remaining unused components. There are 33 unused components and 65 unused lib modules that could add value.
+Wire ShareCard into itinerary share flow. Continue reducing unused component count.
 
 ### Tasks
 
-- Wire SocialProofBanner into onboarding flow
+- Wire ShareCard into itinerary screen share button
+- Wire SocialProofBanner into onboarding flow (between hook and social-proof screens)
 - Wire LiveFeedTicker into Pulse tab header
-- Wire MoodDiscovery + MoodPrompt into trip generation flow
-- Wire PocketConcierge into itinerary as floating helper
 - Wire VisaRequirementsCard into Prep visa section
 - Wire HealthBriefCard into body-intel screen
-- Wire StreakBadge into profile screen
-- Wire VoiceInputButton into chat/generate screens
+- Wire TripRecap into trip journal completion flow
+- Target: reduce unused components from ~26 to ~15
 
 ---
 
 ## Composer 3 — Debug
 
-Full regression test after 3-feature merge + 2 PR merges. Ensure nothing broke.
+Post-session regression testing + prompt v3.0 validation.
 
 ### Tasks
 
-- Run npx tsc --noEmit — verify 0 errors (CONFIRMED ✅)
-- Test destination dashboard: Tokyo, Bali, Paris — all widgets render
-- Test itinerary audio: generate trip → tap NarrationToggle → AudioGuideBar appears
-- Test People tab: create profile → all 5 sub-tabs functional
-- Test Prep tab: IAmHereNow shows at top, emergency buttons tap-to-call
-- Test offline mode: prep tab works with airplane mode
-- Verify Netlify deploy at https://tryroam.netlify.app
-- Report to system_health.md
+- Generate test trips with v3.0 prompt: Tokyo solo $2000, Paris couple $4000, Bali backpacker $1000
+- Verify banned words absent from all generated output
+- Verify dual currency in all cost fields
+- Verify transit directions include line name, exit, fare
+- Verify Day 1 theme contains arrival language
+- Verify last day references departure
+- Test all 5 onboarding screens end-to-end
+- Run npx tsc --noEmit — confirm 0 errors (CONFIRMED)
+- Run npx jest --forceExit — confirm 613/613 (CONFIRMED)
 
 ---
 
 ## Composer 4 — Research/Growth
 
-Post-feature launch marketing. These 3 features are differentiators — use them in outreach.
+Launch marketing with v3.0 prompt as differentiator.
 
 ### Tasks
 
-- Update Reddit launch post highlighting Intelligence Dashboard + Audio Guide
-- Write Twitter thread: "We built a travel app that talks to you" (audio guide angle)
-- Draft Product Hunt tagline featuring all 3 features
-- Write DACH creator pitch emphasizing Traveler Radar social feature
-- Update waitlist email with feature highlights
-- Research TikTok trend: "my travel app just narrated my Tokyo trip"
+- Post 3 Reddit launch posts from reddit_launch.md
+- Write Twitter thread: "We rewrote our travel AI to sound like a friend, not a blog"
+- Draft Product Hunt launch tagline + description
+- Update waitlist page copy to highlight v3.0 quality
+- Pitch creators: "Generate a trip and share the ShareCard"
+- Research: what travel apps are trending on TikTok right now
 
 ---
 
 ## Composer 5 — QA/Captain
 
-End-to-end testing of all user flows with the 3 new features integrated.
+Full regression + App Store submission prep.
 
 ### Tasks
 
-- Test full flow: plan trip → generate itinerary → listen to audio guide → view destination intel
-- Test social flow: create profile → post trip → see matches → message
-- Test prep flow: select destination → IAmHereNow → emergency numbers → currency calc
-- Test with 4 destinations: Tokyo, Bali, Vienna, New York
-- Test language switching on all new features (EN/ES/FR/DE/JA)
-- Test share card with new features visible
-- Update captain_status.md with overall status
+- Test full flow: onboarding > plan trip > generate > itinerary > share
+- Test VoiceInputButton on generate screen — mic works, transcript appears
+- Test pronunciation on Prep tab — all 4 languages play correctly
+- Test chaos mode — "Surprise me" generates a random trip
+- Validate App Store listing metadata against ASO guidelines
+- Test with 4 destinations: Tokyo, Seoul, Vienna, Bali
+- Test language switching on all wired components
+- Update captain_status.md
 
 ---
 
@@ -125,21 +125,22 @@ End-to-end testing of all user flows with the 3 new features integrated.
 
 | File/Directory | Owner Agent | Notes |
 |----------------|-------------|-------|
-| app/destination/[name].tsx | Orchestrator | Intelligence Dashboard — 9 widgets wired |
-| app/itinerary.tsx | Orchestrator | Audio Guide — AudioGuideBar + NarrationToggle |
-| app/(tabs)/people.tsx | Agent 06 (Growth) | Traveler Radar — 5 sub-tabs, social chemistry |
-| app/(tabs)/prep.tsx | Agent 09 (Localization) | IAmHereNow at top + full intel grid |
+| lib/claude.ts | Orchestrator | P0 critical — v3.0 prompt live |
+| app/destination/[name].tsx | Orchestrator | Intelligence Dashboard — 9 widgets |
+| app/itinerary.tsx | Orchestrator | Audio Guide + PocketConcierge |
+| app/(tabs)/people.tsx | Agent 06 (Growth) | Traveler Radar — 5 sub-tabs |
+| app/(tabs)/prep.tsx | Agent 09 (Localization) | IAmHereNow + pronunciation |
 | app/(tabs)/flights.tsx | Orchestrator | Skyscanner affiliate + i18n |
-| app/(tabs)/plan.tsx | Orchestrator | Generate flow |
-| lib/claude.ts | Orchestrator | P0 critical — generate flow |
+| app/(tabs)/generate.tsx | Orchestrator | TripGeneratingLoader + chaos mode |
+| app/(tabs)/pulse.tsx | Orchestrator | WanderlustFeed wired |
+| app/(tabs)/index.tsx | Orchestrator | MoodDiscovery + trending badges |
+| app/profile.tsx | Orchestrator | StreakBadge + TravelStats |
+| components/ShareCard.tsx | Orchestrator | Built, needs wiring |
 | lib/store.ts | Orchestrator | Shared ownership |
 | lib/elevenlabs.ts | Orchestrator | Audio guide engine |
-| lib/social-chemistry.ts | Agent 06 (Growth) | Traveler compatibility scoring |
-| lib/social-feed.ts | Agent 06 (Growth) | Social feed queries |
 | lib/constants.ts | Agent 03 (Design) | Design tokens |
-| components/audio/ | Orchestrator | AudioGuideBar, NarrationToggle, PronunciationButton |
-| components/social/ | Agent 06 (Growth) | MatchCard, TripPresenceCard, ChemistryBadge, ProfileCard |
-| components/prep/ | Agent 09 (Localization) | IAmHereNow, EmergencyQuickCard, CurrencyQuickCard |
+| components/audio/ | Orchestrator | AudioGuideBar, NarrationToggle, PronunciationButton, VoiceInputButton |
+| components/social/ | Agent 06 (Growth) | MatchCard, TripPresenceCard, ChemistryBadge |
 | supabase/functions/ | Agent 08 (Security) | Edge functions + RLS |
 | lib/analytics.ts | Agent 10 (Analytics) | Event tracking |
 | lib/i18n/ | Agent 09 (Localization) | Translations |
