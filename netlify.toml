@@ -4,7 +4,7 @@
   ignore = "git diff --quiet HEAD~1 HEAD -- app/ components/ lib/ supabase/functions/ package.json"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20"
 
 # Serve waitlist.html directly (not caught by SPA fallback)
 [[redirects]]

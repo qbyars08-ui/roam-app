@@ -240,16 +240,22 @@ async function ensureValidSession(): Promise<void> {
     !session.access_token ||
     String(session.user?.id).startsWith('guest-');
 
+  console.log('[ROAM] ensureValidSession: needsUpgrade=', needsUpgrade, 'hasSession=', !!session, 'hasToken=', !!session?.access_token);
+
   if (!needsUpgrade) return;
 
   try {
+    console.log('[ROAM] Upgrading to anonymous session...');
     const { data, error } = await supabase.auth.signInAnonymously();
+    if (error) {
+      console.error('[ROAM] Anonymous auth error:', error.message);
+    }
     if (!error && data.session) {
+      console.log('[ROAM] Anonymous session created, userId=', data.session.user.id);
       useAppStore.getState().setSession(data.session);
     }
-  } catch {
-    // If anonymous auth fails, the API call will fail with 401 —
-    // that's fine, the caller will show the error
+  } catch (err) {
+    console.error('[ROAM] Anonymous auth threw:', err instanceof Error ? err.message : String(err));
   }
 }
 
@@ -336,6 +342,7 @@ export async function callClaudeWithMessages(
   let error: unknown = null;
 
   try {
+    console.log('[ROAM] callClaudeWithMessages: invoking claude-proxy, msgs=', messages.length, 'isTripGen=', isTripGeneration);
     const result = await Promise.race([
       supabase.functions.invoke('claude-proxy', {
         body: {
@@ -350,25 +357,60 @@ export async function callClaudeWithMessages(
     ]);
     data = result.data;
     error = result.error;
+    console.log('[ROAM] callClaudeWithMessages: result.data type=', typeof data, 'result.error=', error ? String(error) : 'none');
+    if (data && typeof data === 'object') {
+      console.log('[ROAM] callClaudeWithMessages: data keys=', Object.keys(data as Record<string, unknown>));
+    } else if (data) {
+      console.log('[ROAM] callClaudeWithMessages: raw data=', String(data).slice(0, 200));
+    }
+  } catch (invokeErr) {
+    clearTimeout(timeoutId);
+    console.error('[ROAM] callClaudeWithMessages invoke threw:', invokeErr instanceof Error ? invokeErr.message : String(invokeErr));
+    throw invokeErr;
   } finally {
     clearTimeout(timeoutId);
   }
 
   if (error) {
     const msg = typeof error === 'object' && 'message' in error ? (error as { message: string }).message : String(error);
+    console.error('[ROAM] callClaudeWithMessages proxy error:', msg);
     throw new Error(`Claude proxy error: ${msg}`);
   }
   if (data?.code === 'LIMIT_REACHED') {
     throw new TripLimitReachedError((data.tripsUsed as number) ?? 0, (data.limit as number) ?? 1);
   }
-  if (data?.error) throw new Error(String(data.error));
+  if (data?.error) {
+    console.error('[ROAM] callClaudeWithMessages data.error:', String(data.error));
+    throw new Error(String(data.error));
+  }
 
-  if (!data) throw new Error('No response from Claude proxy');
+  // Handle case where data is a string (some SDK versions return unparsed JSON)
+  if (typeof data === 'string') {
+    const rawStr = data as unknown as string;
+    try {
+      data = JSON.parse(rawStr) as Record<string, unknown>;
+      console.log('[ROAM] callClaudeWithMessages: parsed string data, keys=', Object.keys(data));
+    } catch {
+      console.error('[ROAM] callClaudeWithMessages: data is non-JSON string:', rawStr.slice(0, 200));
+      throw new Error('Invalid response format from Claude proxy');
+    }
+  }
+
+  if (!data) {
+    console.error('[ROAM] callClaudeWithMessages: data is null/undefined');
+    throw new Error('No response from Claude proxy');
+  }
+
+  const content = (data as Record<string, unknown>).content;
+  if (!content || typeof content !== 'string') {
+    console.error('[ROAM] callClaudeWithMessages: missing content field. data=', JSON.stringify(data).slice(0, 300));
+    throw new Error('No content in Claude proxy response');
+  }
 
   return {
-    content: data.content as string,
-    tripsUsed: (data.tripsUsed as number) ?? 0,
-    limit: (data.limit as number) ?? 1,
+    content: content as string,
+    tripsUsed: ((data as Record<string, unknown>).tripsUsed as number) ?? 0,
+    limit: ((data as Record<string, unknown>).limit as number) ?? 1,
   };
 }
 

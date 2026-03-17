@@ -74,6 +74,8 @@ export default function GenerateConversationMode({
   onGenerate,
   isGenerating,
 }: GenerateConversationModeProps) {
+  console.log('[ROAM] GenerateConversationMode mounted');
+
   const [messages, setMessages] = useState<ConversationMessage[]>([
     { role: 'assistant', content: FIRST_MESSAGE },
   ]);
@@ -138,7 +140,11 @@ export default function GenerateConversationMode({
       const { content } = await sendConversationMessage(apiMessages);
       processResponse(content, history);
     } catch (err) {
-      console.error('Chat chip error:', err);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      const errStack = err instanceof Error ? err.stack : 'no stack';
+      console.error('[ROAM] Chat chip error:', errMsg);
+      console.error('[ROAM] Chat chip error stack:', errStack);
+      console.error('[ROAM] Chat chip error raw:', JSON.stringify(err, Object.getOwnPropertyNames(err instanceof Error ? err : {})));
       setMessages((prev) => [
         ...prev,
         { role: 'assistant', content: 'Lost connection for a second. Mind sending that again?' },
@@ -167,7 +173,11 @@ export default function GenerateConversationMode({
       const { content } = await sendConversationMessage(apiMessages);
       processResponse(content, history);
     } catch (err) {
-      console.error('Chat send error:', err);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      const errStack = err instanceof Error ? err.stack : 'no stack';
+      console.error('[ROAM] Chat send error:', errMsg);
+      console.error('[ROAM] Chat send error stack:', errStack);
+      console.error('[ROAM] Chat send error raw:', JSON.stringify(err, Object.getOwnPropertyNames(err instanceof Error ? err : {})));
       setMessages((prev) => [
         ...prev,
         { role: 'assistant', content: 'Hmm, connection dropped. Probably just a hiccup — try again?' },
