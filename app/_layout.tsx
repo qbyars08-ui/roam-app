@@ -21,7 +21,7 @@ import { useAppStore, checkActiveTripOnLoad, loadPersistedTrips, loadPersistedPe
 import { initRevenueCat, loginRevenueCat, logoutRevenueCat, isProActive, addCustomerInfoListener } from '../lib/revenue-cat';
 import { syncProStatusToSupabase } from '../lib/sync-pro-status';
 import { ensureReferralCode } from '../lib/referral';
-import { requestNotificationPermission, scheduleDailyDiscovery, registerPushToken } from '../lib/notifications';
+import { requestNotificationPermission, scheduleDailyDiscovery, registerPushToken, registerForPushNotifications } from '../lib/notifications';
 import { recordAppOpen, cancelReengagementNotifications, scheduleReengagementNotifications } from '../lib/reengagement';
 import { COLORS } from '../lib/constants';
 import { getSharedTrip } from '../lib/sharing';
@@ -112,6 +112,8 @@ export default function RootLayout() {
     // Initialize RevenueCat + PostHog on app start
     initRevenueCat().catch(() => {});
     initPostHog().catch(() => {});
+    // Register for push notifications on mount (requests permission + saves token)
+    registerForPushNotifications().catch(() => {});
     checkStorageVersion().catch(() => {});
     captureRefOnLoad().catch(() => {}); // Web: track ?ref= for referral attribution
     // Restore persisted data (trips, pets, travel profile, currency) before session check

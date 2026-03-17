@@ -8,7 +8,7 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, MapPin } from 'lucide-react-native';
+import { ChevronLeft, MapPin, Share2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
 import * as Haptics from '../../lib/haptics';
@@ -24,6 +24,7 @@ import { getVisaRequirements, type VisaResult } from '../../lib/apis/sherpa';
 import { getTimezoneByDestination } from '../../lib/timezone';
 import { useAppStore } from '../../lib/store';
 import { supabase } from '../../lib/supabase';
+import { shareDestination } from '../../lib/share-image';
 import LiveBadge from '../../components/ui/LiveBadge';
 import SourceCitation from '../../components/ui/SourceCitation';
 
@@ -204,7 +205,7 @@ export default function LivingDestinationPage(): React.JSX.Element {
         const { count } = await supabase
           .from('trips')
           .select('id', { count: 'exact', head: true })
-          .ilike('destination', destination)
+          .ilike('destination', `%${destination}%`)
           .gte('created_at', from.toISOString());
         if (count !== null) setPlanningCount(count);
       } catch {
@@ -220,6 +221,15 @@ export default function LivingDestinationPage(): React.JSX.Element {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     router.back();
   }, [router]);
+
+  const handleShareDestination = useCallback(async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    try {
+      await shareDestination(destination);
+    } catch {
+      // User dismissed share sheet
+    }
+  }, [destination]);
 
   const handleQuickTrip = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
@@ -275,6 +285,13 @@ export default function LivingDestinationPage(): React.JSX.Element {
             hitSlop={8}
           >
             <ChevronLeft size={22} color={COLORS.white} strokeWidth={1.5} />
+          </Pressable>
+          <Pressable
+            style={[s.shareHeroBtn, { top: insets.top + SPACING.sm }]}
+            onPress={handleShareDestination}
+            hitSlop={8}
+          >
+            <Share2 size={18} color={COLORS.white} strokeWidth={1.5} />
           </Pressable>
           <View style={s.heroText}>
             <Text style={s.heroTitle}>{destination}</Text>
@@ -377,6 +394,16 @@ const s = StyleSheet.create({
   backBtn: {
     position: 'absolute',
     left: SPACING.md,
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.overlayDark,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shareHeroBtn: {
+    position: 'absolute',
+    right: SPACING.md,
     width: 40,
     height: 40,
     borderRadius: RADIUS.full,

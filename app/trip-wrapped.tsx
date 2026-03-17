@@ -21,11 +21,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Sharing from 'expo-sharing';
 import * as Haptics from '../lib/haptics';
 import ViewShot, { captureRef } from '../lib/view-shot';
+import { Share2 } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATION_HERO_PHOTOS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import { parseItinerary } from '../lib/types/itinerary';
 import type { Itinerary, TimeSlotActivity } from '../lib/types/itinerary';
 import { supabase } from '../lib/supabase';
+import { shareTripWrapped } from '../lib/share-image';
 
 const STORY_WIDTH = 270;
 const STORY_HEIGHT = 480;
@@ -193,12 +195,18 @@ export default function TripWrappedScreen() {
 
   const shareCardRef = useRef<React.ComponentRef<typeof ViewShot> | null>(null);
 
-  const handleShare = useCallback(() => {
+  const handleShare = useCallback(async () => {
+    if (!trip || !itinerary) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    const dest = trip?.destination ?? 'somewhere amazing';
-    const text = `Just planned a trip to ${dest} with ROAM. Next stop: the real thing.`;
-    Linking.openURL(`sms:?body=${encodeURIComponent(text)}`).catch(() => Linking.openURL('https://roam.app'));
-  }, [trip]);
+    try {
+      await shareTripWrapped(trip, itinerary);
+    } catch {
+      // User dismissed share sheet or share not available
+      const dest = trip.destination ?? 'somewhere amazing';
+      const text = `Just planned a trip to ${dest} with ROAM. Next stop: the real thing.`;
+      Linking.openURL(`sms:?body=${encodeURIComponent(text)}`).catch(() => {});
+    }
+  }, [trip, itinerary]);
 
   const handleShareAsImage = useCallback(async () => {
     if (!shareCardRef.current || !trip || !itinerary) return;
@@ -340,6 +348,19 @@ export default function TripWrappedScreen() {
         <Text style={ss.closeBtnText}>×</Text>
       </Pressable>
 
+      {/* Floating share button — bottom right, visible on all slides */}
+      <Pressable
+        style={({ pressed }) => [
+          ss.floatingShareBtn,
+          { bottom: insets.bottom + S.lg + 24, opacity: pressed ? 0.85 : 1 },
+        ]}
+        onPress={handleShare}
+        hitSlop={8}
+      >
+        <Share2 size={18} color={COLORS.bg} strokeWidth={1.5} />
+        <Text style={ss.floatingShareText}>Share</Text>
+      </Pressable>
+
       {/* Page dots */}
       <View style={[ss.dotsRow, { bottom: insets.bottom + S.lg }]}>
         {slides.map((_, i) => <View key={i} style={[ss.dot, activeSlide === i && ss.dotActive]} />)}
@@ -430,6 +451,8 @@ const ss = StyleSheet.create({
   storyCardLabel: { fontFamily: FONTS.mono, fontSize: 10, color: COLORS.sage, letterSpacing: 2 },
   closeBtn: { position: 'absolute', left: S.md, width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.overlayMedium, alignItems: 'center', justifyContent: 'center' },
   closeBtnText: { fontSize: 22, color: COLORS.cream, lineHeight: 26 },
+  floatingShareBtn: { position: 'absolute', right: S.lg, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: COLORS.sage, borderRadius: RADIUS.pill, paddingHorizontal: S.md, paddingVertical: S.sm },
+  floatingShareText: { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: COLORS.bg },
   dotsRow: { position: 'absolute', left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: S.xs },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.whiteMuted },
   dotActive: { width: 20, backgroundColor: COLORS.sage },

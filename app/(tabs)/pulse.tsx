@@ -1152,7 +1152,7 @@ export default function PulseScreen() {
             <View style={styles.emptyState}>
               <Clock size={24} color={COLORS.creamDim} strokeWidth={1.5} />
               <Text style={styles.emptyText}>
-                {t('pulse.emptyState', { defaultValue: `Still digging up the good stuff for ${selectedDest.label}. Check back soon.`, destination: selectedDest.label })}
+                {t('pulse.emptyState', { defaultValue: `Nothing live for ${selectedDest.label} right now. Pick a destination above.`, destination: selectedDest.label })}
               </Text>
             </View>
           ) : null}
@@ -1277,7 +1277,7 @@ export default function PulseScreen() {
         {taAttractions && taAttractions.length > 0 && (
           <View style={styles.apiSection}>
             <Text style={styles.apiSectionLabel}>{t('pulse.trending.label', { defaultValue: 'TRENDING' })}</Text>
-            <Text style={styles.apiSectionHeading}>{t('pulse.trending.heading', { defaultValue: `Top rated in ${selectedDest.label}` })}</Text>
+            <Text style={styles.apiSectionHeading}>{t('pulse.trending.heading', { defaultValue: `Worth your time in ${selectedDest.label}` })}</Text>
             <View style={styles.apiCardStack}>
               {taAttractions.map((loc) => {
                 const taUrl = `https://www.tripadvisor.com/Search?q=${encodeURIComponent(loc.name + ' ' + selectedDest.label)}`;
@@ -1301,7 +1301,7 @@ export default function PulseScreen() {
         {gygActivities && gygActivities.length > 0 && (
           <View style={styles.apiSection}>
             <Text style={styles.apiSectionLabel}>{t('pulse.experiences.label', { defaultValue: 'EXPERIENCES' })}</Text>
-            <Text style={styles.apiSectionHeading}>{t('pulse.experiences.heading', { defaultValue: `Things to do in ${selectedDest.label}` })}</Text>
+            <Text style={styles.apiSectionHeading}>{t('pulse.experiences.heading', { defaultValue: `Bookable in ${selectedDest.label}` })}</Text>
             <View style={styles.apiCardStack}>
               {gygActivities.map((act) => (
                 <Pressable

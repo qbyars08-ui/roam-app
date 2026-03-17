@@ -843,9 +843,20 @@ export default function PeopleTab() {
   }, [step, draft]);
 
   // ---------------------------------------------------------------------------
+  // RENDER: STATE 0 — Loading profile
+  // ---------------------------------------------------------------------------
+  if (profileLoading) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top, justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.creamMuted, letterSpacing: 1 }}>LOADING</Text>
+      </View>
+    );
+  }
+
+  // ---------------------------------------------------------------------------
   // RENDER: STATE 1 — No Profile (ProfileCreation inline flow)
   // ---------------------------------------------------------------------------
-  if (!hasProfile && !profileLoading) {
+  if (!hasProfile) {
     return (
       <KeyboardAvoidingView
         style={[styles.container, { paddingTop: insets.top }]}
@@ -999,7 +1010,7 @@ export default function PeopleTab() {
                   disabled={saving}
                 >
                   <Text style={styles.nextBtnText}>
-                    {saving ? t('people.saving', { defaultValue: 'Saving...' }) : t('people.joinNetwork', { defaultValue: 'Join the network' })}
+                    {saving ? t('people.saving', { defaultValue: 'Saving...' }) : t('people.joinNetwork', { defaultValue: "I'm in" })}
                   </Text>
                   <ArrowRight size={18} color={COLORS.bg} strokeWidth={1.5} />
                 </Pressable>
@@ -1056,7 +1067,7 @@ export default function PeopleTab() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.networkLabel}>{t('people.inNetwork', { defaultValue: "You're in the ROAM network." })}</Text>
+        <Text style={styles.networkLabel}>{t('people.inNetwork', { defaultValue: "You're on the map." })}</Text>
 
         {/* ROAM This Month */}
         <View style={styles.sectionHeader}>
@@ -1180,11 +1191,11 @@ export default function PeopleTab() {
               trackEvent('profile_shared').catch(() => {});
             } catch { /* cancelled */ }
           }}
-          accessibilityLabel={t('people.shareProfile', { defaultValue: 'Share your travel profile' })}
+          accessibilityLabel={t('people.shareProfile', { defaultValue: 'Share profile' })}
           style={({ pressed }) => [styles.shareBtn, pressed && styles.pressed]}
         >
           <Send size={14} color={COLORS.sage} strokeWidth={1.5} />
-          <Text style={styles.shareBtnText}>{t('people.shareProfile', { defaultValue: 'Share your travel profile' })}</Text>
+          <Text style={styles.shareBtnText}>{t('people.shareProfile', { defaultValue: 'Share profile' })}</Text>
           <ArrowRight size={12} color={COLORS.sage} strokeWidth={1.5} />
         </Pressable>
       )}
@@ -1252,7 +1263,7 @@ export default function PeopleTab() {
 
       {/* Section 3: Travel Network */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('people.yourNetwork', { defaultValue: 'Your travel network' })}</Text>
+        <Text style={styles.sectionTitle}>{t('people.yourNetwork', { defaultValue: 'People you know' })}</Text>
         {roamers.map((roamer) => {
           const roamerProfile = mockToSocialProfile(roamer);
           const travelProfile = useAppStore.getState().travelProfile;

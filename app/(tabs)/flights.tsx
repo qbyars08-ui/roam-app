@@ -584,6 +584,8 @@ export default function FlightsScreen() {
 
     let cancelled = false;
 
+    const AMADEUS_TIMEOUT_MS = 8_000;
+
     const fetchFlights = async () => {
       setAmadeusLoading(true);
       setAmadeusFlights(null);
@@ -604,12 +606,22 @@ export default function FlightsScreen() {
         ]),
       ).start();
 
+      // Safety timeout — never show skeleton forever
+      const timeout = setTimeout(() => {
+        if (!cancelled) {
+          setAmadeusLoading(false);
+          skeletonAnim.stopAnimation();
+        }
+      }, AMADEUS_TIMEOUT_MS);
+
       const results = await searchFlights(
         fromCode,
         toCode,
         format(departDate, 'yyyy-MM-dd'),
         passengers,
       );
+
+      clearTimeout(timeout);
 
       if (!cancelled) {
         setAmadeusFlights(results);
@@ -1069,7 +1081,7 @@ export default function FlightsScreen() {
         {/* ── Popular Routes ── */}
         <View style={[styles.sectionHeader, { marginTop: SPACING.xxl }]}>
           <Text style={styles.sectionLabel}>{t('flights.popularRoutesLabel', { defaultValue: 'POPULAR ROUTES' })}</Text>
-          <Text style={styles.sectionTitle}>{t('flights.popularRoutesTitle', { defaultValue: "The flights everyone's booking." })}</Text>
+          <Text style={styles.sectionTitle}>{t('flights.popularRoutesTitle', { defaultValue: "Cheap routes right now." })}</Text>
         </View>
 
         <ScrollView

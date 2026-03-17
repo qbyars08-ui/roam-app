@@ -39,6 +39,7 @@ import { useAppStore, type Trip } from '../../lib/store';
 import { Flame, Sparkle } from 'lucide-react-native';
 import { generateItineraryStreaming, TripLimitReachedError } from '../../lib/claude';
 import { isGuestUser } from '../../lib/guest';
+import { scheduleDailyBrief, scheduleTripWrappedReminder } from '../../lib/notifications';
 import type { QuickModeState } from '../../components/generate/GenerateQuickMode';
 import { BUDGET_TO_BACKEND } from '../../components/generate/GenerateQuickMode';
 import GenerateModeSelect from '../../components/generate/GenerateModeSelect';
@@ -591,6 +592,17 @@ export default function PlanScreen() {
       captureEvent('trip_generation_completed', { destination: state.destination, days: state.duration, budget: BUDGET_TO_BACKEND[state.budget], mode: 'quick' });
       recordGrowthEvent('trip_generated').catch(() => {});
       evaluateTrigger('post_generation').catch(() => {});
+
+      // Schedule daily brief + trip wrapped notifications
+      const daysUntil = state.startDate
+        ? Math.max(0, Math.ceil((state.startDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+        : state.duration;
+      scheduleDailyBrief(state.destination, daysUntil).catch(() => {});
+      const returnDate = state.startDate
+        ? new Date(state.startDate.getTime() + state.duration * 24 * 60 * 60 * 1000).toISOString()
+        : new Date(Date.now() + (daysUntil + state.duration) * 24 * 60 * 60 * 1000).toISOString();
+      scheduleTripWrappedReminder(trip.id, state.destination, returnDate).catch(() => {});
+
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       await new Promise((r) => setTimeout(r, 800));
       if (!isMountedRef.current) return;
@@ -662,6 +674,12 @@ export default function PlanScreen() {
       captureEvent('trip_generation_completed', { destination: dest, days, budget, mode: 'conversation' });
       recordGrowthEvent('trip_generated').catch(() => {});
       evaluateTrigger('post_generation').catch(() => {});
+
+      // Schedule daily brief + trip wrapped notifications
+      scheduleDailyBrief(dest, days).catch(() => {});
+      const returnDate = new Date(Date.now() + days * 2 * 24 * 60 * 60 * 1000).toISOString();
+      scheduleTripWrappedReminder(trip.id, dest, returnDate).catch(() => {});
+
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       await new Promise((r) => setTimeout(r, 800));
       if (!isMountedRef.current) return;

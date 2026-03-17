@@ -56,6 +56,10 @@ import { getWeatherForecast, type WeatherForecast } from '../lib/weather';
 import { generatePackingList } from '../lib/packing-ai';
 import { enrichVenues, enrichVenuesViaPlacesProxy, getTodayHours, type EnrichedVenue } from '../lib/venues';
 import { saveItineraryOffline } from '../lib/offline';
+import {
+  saveItineraryOffline as saveItineraryOfflineEnhanced,
+  loadOfflineItinerary,
+} from '../lib/offline-itinerary';
 import { exportCalendar } from '../lib/calendar';
 import { shareTrip, shareTripAsCard, copyShareableLink } from '../lib/sharing';
 import { recordGrowthEvent } from '../lib/growth-hooks';
@@ -202,8 +206,9 @@ export default function ItineraryScreen() {
       const itinerary = parseItinerary(resolved.itinerary);
       setParsed(itinerary);
 
-      // Save offline
+      // Save offline (both legacy + enhanced with destination + emergency numbers)
       saveItineraryOffline(resolved.id, itinerary).catch(() => {});
+      saveItineraryOfflineEnhanced(resolved.id, itinerary, resolved.destination).catch(() => {});
 
       // Track for rating prompt — ask after first itinerary
       trackItineraryView().then(() => {
@@ -227,9 +232,36 @@ export default function ItineraryScreen() {
       }
 
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Something went sideways loading your trip. Give it another shot.'
-      );
+      // Attempt offline fallback before showing error
+      const offlineTripId = params.tripId ?? '';
+      if (offlineTripId) {
+        loadOfflineItinerary(offlineTripId).then((offlineData) => {
+          if (offlineData) {
+            setParsed(offlineData.itinerary);
+            setTrip({
+              id: offlineTripId,
+              destination: offlineData.destination,
+              days: offlineData.itinerary.days.length,
+              budget: 'comfort',
+              vibes: [],
+              itinerary: JSON.stringify(offlineData.itinerary),
+              createdAt: offlineData.savedAt,
+            });
+          } else {
+            setError(
+              err instanceof Error ? err.message : 'Something went sideways loading your trip. Give it another shot.'
+            );
+          }
+        }).catch(() => {
+          setError(
+            err instanceof Error ? err.message : 'Something went sideways loading your trip. Give it another shot.'
+          );
+        });
+      } else {
+        setError(
+          err instanceof Error ? err.message : 'Something went sideways loading your trip. Give it another shot.'
+        );
+      }
     }
     return () => { if (npsTimer) clearTimeout(npsTimer); };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- trips intentionally excluded

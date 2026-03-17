@@ -312,6 +312,209 @@ export async function cancelPetCheckIns(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Daily Brief — 8 AM local time repeating notification
+// ---------------------------------------------------------------------------
+
+/**
+ * Schedule a daily brief notification at 8:00 AM local time.
+ * Content is sourced from getDailyBrief() in lib/daily-brief.ts.
+ *
+ * @param destination  e.g. "Tokyo"
+ * @param daysUntil    Number of days until trip departure
+ */
+export async function scheduleDailyBrief(
+  destination: string,
+  daysUntil: number
+): Promise<string | null> {
+  if (Platform.OS === 'web') return null;
+
+  // Cancel any existing daily brief first
+  await cancelDailyBriefNotifications();
+
+  // Lazy import to avoid circular deps
+  const { getDailyBrief } = require('./daily-brief');
+  const today = new Date();
+  const startOfYear = new Date(today.getFullYear(), 0, 0);
+  const dayOfYear = Math.floor(
+    (today.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24),
+  );
+  const brief = getDailyBrief(destination, daysUntil, dayOfYear);
+
+  const id = await Notifications.scheduleNotificationAsync({
+    content: {
+      title: `Good morning. ${destination} today.`,
+      body: brief.headline,
+      data: { type: 'daily_brief', destination },
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
+      hour: 8,
+      minute: 0,
+    },
+  });
+
+  return id;
+}
+
+/**
+ * Cancel any previously scheduled daily brief notification.
+ */
+async function cancelDailyBriefNotifications(): Promise<void> {
+  if (Platform.OS === 'web') return;
+
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  for (const notif of scheduled) {
+    if (notif.content.data?.type === 'daily_brief') {
+      await Notifications.cancelScheduledNotificationAsync(notif.identifier);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Trip Wrapped Reminder — 7 days after return
+// ---------------------------------------------------------------------------
+
+/**
+ * Schedule a one-time notification 7 days after the trip return date.
+ * Title: "Your [destination] trip is ready." Body: "Relive it."
+ *
+ * @param tripId       Unique trip identifier
+ * @param destination  e.g. "Tokyo"
+ * @param returnDate   ISO date string of the return date
+ */
+export async function scheduleTripWrappedReminder(
+  tripId: string,
+  destination: string,
+  returnDate: string
+): Promise<string | null> {
+  if (Platform.OS === 'web') return null;
+
+  const end = new Date(returnDate);
+  end.setHours(0, 0, 0, 0);
+  const triggerDate = new Date(end);
+  triggerDate.setDate(triggerDate.getDate() + 7);
+  triggerDate.setHours(10, 0, 0, 0);
+
+  const now = new Date();
+  if (triggerDate <= now) return null;
+
+  const id = await Notifications.scheduleNotificationAsync({
+    content: {
+      title: `Your ${destination} trip is ready.`,
+      body: 'Relive it.',
+      data: { tripId, type: 'trip_wrapped_reminder', screen: '/trip-wrapped' },
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: triggerDate,
+    },
+  });
+
+  return id;
+}
+
+// ---------------------------------------------------------------------------
+// Anniversary — 1 year after return
+// ---------------------------------------------------------------------------
+
+/**
+ * Schedule a notification 1 year after the trip return date.
+ * Title: "One year ago today you were in [destination]."
+ *
+ * @param tripId       Unique trip identifier
+ * @param destination  e.g. "Tokyo"
+ * @param returnDate   ISO date string of the return date
+ */
+export async function scheduleAnniversary(
+  tripId: string,
+  destination: string,
+  returnDate: string
+): Promise<string | null> {
+  if (Platform.OS === 'web') return null;
+
+  const end = new Date(returnDate);
+  end.setHours(0, 0, 0, 0);
+  const triggerDate = new Date(end);
+  triggerDate.setFullYear(triggerDate.getFullYear() + 1);
+  triggerDate.setHours(9, 0, 0, 0);
+
+  const now = new Date();
+  if (triggerDate <= now) return null;
+
+  const id = await Notifications.scheduleNotificationAsync({
+    content: {
+      title: `One year ago today you were in ${destination}.`,
+      body: 'Tap to revisit your trip.',
+      data: { tripId, type: 'trip_anniversary', destination },
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: triggerDate,
+    },
+  });
+
+  return id;
+}
+
+// ---------------------------------------------------------------------------
+// Cancel all notifications for a specific trip
+// ---------------------------------------------------------------------------
+
+/**
+ * Cancel all scheduled notifications associated with a specific trip.
+ * Matches on tripId in notification data.
+ *
+ * @param tripId  The trip whose notifications should be cancelled
+ */
+export async function cancelAllTripNotifications(
+  tripId: string
+): Promise<void> {
+  if (Platform.OS === 'web') return;
+
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  for (const notif of scheduled) {
+    if (notif.content.data?.tripId === tripId) {
+      await Notifications.cancelScheduledNotificationAsync(notif.identifier);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Register for push notifications (convenience wrapper)
+// ---------------------------------------------------------------------------
+
+/**
+ * Request notification permissions and register the Expo push token
+ * with Supabase profiles table. Call on app mount.
+ * Returns the Expo push token string, or null if permissions denied.
+ */
+export async function registerForPushNotifications(): Promise<string | null> {
+  if (Platform.OS === 'web') return null;
+
+  const granted = await requestNotificationPermission();
+  if (!granted) return null;
+
+  const token = await getExpoPushToken(EAS_PROJECT_ID);
+  if (!token) return null;
+
+  // Save token to Supabase profiles table
+  try {
+    const { supabase } = require('./supabase');
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user?.id) {
+      await supabase
+        .from('profiles')
+        .update({ push_token: token, push_token_updated_at: new Date().toISOString() })
+        .eq('id', session.user.id);
+    }
+  } catch (err) {
+    console.warn('[notifications] Failed to save push token to profiles:', err);
+  }
+
+  return token;
+}
+
+// ---------------------------------------------------------------------------
 // Push token (for future server-side notifications)
 // ---------------------------------------------------------------------------
 

@@ -960,7 +960,7 @@ function VisaTab({
       <View style={styles.tabContent}>
         <Text style={styles.noDataText}>{t('prep.visaDataNotAvailable', { defaultValue: 'Visa data not available for this destination.' })}</Text>
         <Text style={styles.visaReminder}>
-          {t('prep.visaIntelContact', { defaultValue: 'Visa intel — know before you go. Contact your embassy for requirements.' })}
+          {t('prep.visaIntelContact', { defaultValue: 'Contact your embassy for visa requirements.' })}
         </Text>
       </View>
     );
@@ -980,7 +980,7 @@ function VisaTab({
 
   return (
     <View style={styles.tabContent}>
-      <Text style={styles.visaReminder}>{t('prep.visaIntel', { defaultValue: 'Visa intel — know before you go' })}</Text>
+      <Text style={styles.visaReminder}>{t('prep.visaIntel', { defaultValue: 'Visa intel — your passport, their rules' })}</Text>
       <View
         style={[
           styles.visaHeroCard,
@@ -1662,7 +1662,7 @@ function NoDataState({ destination }: { destination: string }) {
     <View style={styles.noDataWrap}>
       <Text style={styles.noDataTitle}>{t('prep.dataNotAvailable', { defaultValue: 'Data not available for this destination' })}</Text>
       <Text style={styles.noDataText}>
-        {t('prep.stillBuildingIntel', { defaultValue: "We're still building intel for {{destination}}. Emergency numbers may be available for the country — try selecting a nearby city.", destination })}
+        {t('prep.stillBuildingIntel', { defaultValue: "No intel for {{destination}} yet. Try a nearby major city.", destination })}
       </Text>
     </View>
   );
@@ -2168,11 +2168,17 @@ function PrepScreen() {
     setWeatherLoading(true);
     setWeatherFetchedAt(null);
 
+    // Safety timeout — never show skeleton forever (5s max)
+    const weatherTimeout = setTimeout(() => {
+      if (!cancelled) setWeatherLoading(false);
+    }, 5_000);
+
     Promise.all([
       getEntryRequirements(selectedDest),
       getCurrentWeather(selectedDest),
       getWeatherIntel(selectedDest),
     ]).then(([entry, weather, intel]) => {
+      clearTimeout(weatherTimeout);
       if (cancelled) return;
       if (entry) setEntryRequirements(entry);
       if (weather) setCurrentWeather(weather);
@@ -2182,6 +2188,7 @@ function PrepScreen() {
       }
       setWeatherLoading(false);
     }).catch(() => {
+      clearTimeout(weatherTimeout);
       if (!cancelled) setWeatherLoading(false);
     });
 
