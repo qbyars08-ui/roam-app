@@ -104,11 +104,11 @@ export async function searchLocations(
 
   try {
     const { data, error } = await supabase.functions.invoke('travel-proxy', {
-      body: { provider: 'tripadvisor', action: 'searchLocations', params: { destination, category } },
+      body: { provider: 'tripadvisor', action: 'search_locations', params: { destination, category } },
     });
-    if (error || !data?.locations) return null;
+    if (error || !data?.data) return null;
 
-    const locations = data.locations as TALocation[];
+    const locations = data.data as TALocation[];
     await writeCache(cacheKey, locations);
     return locations;
   } catch {
@@ -127,11 +127,11 @@ export async function getLocationDetails(
 
   try {
     const { data, error } = await supabase.functions.invoke('travel-proxy', {
-      body: { provider: 'tripadvisor', action: 'getLocationDetails', params: { locationId } },
+      body: { provider: 'tripadvisor', action: 'location_details', params: { locationId } },
     });
-    if (error || !data?.details) return null;
+    if (error || !data?.data) return null;
 
-    const details = data.details as TALocationDetails;
+    const details = data.data as TALocationDetails;
     await writeCache(cacheKey, details);
     return details;
   } catch {
@@ -150,11 +150,11 @@ export async function getLocationReviews(
 
   try {
     const { data, error } = await supabase.functions.invoke('travel-proxy', {
-      body: { provider: 'tripadvisor', action: 'getLocationReviews', params: { locationId } },
+      body: { provider: 'tripadvisor', action: 'location_reviews', params: { locationId } },
     });
-    if (error || !data?.reviews) return null;
+    if (error || !data?.data) return null;
 
-    const reviews = data.reviews as TAReview[];
+    const reviews = data.data as TAReview[];
     await writeCache(cacheKey, reviews);
     return reviews;
   } catch {

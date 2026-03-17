@@ -61,13 +61,13 @@ export async function getRoutes(
     const { data, error } = await supabase.functions.invoke('travel-proxy', {
       body: {
         provider: 'rome2rio',
-        action: 'getRoutes',
+        action: 'get_routes',
         params: { origin, destination },
       },
     });
-    if (error || !Array.isArray(data?.routes)) return null;
+    if (error || !data?.data) return null;
 
-    const result: RouteResult[] = data.routes;
+    const result: RouteResult[] = data.data;
     await writeCache(cacheKey, result);
     return result;
   } catch {

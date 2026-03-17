@@ -101,7 +101,7 @@ export async function searchFlights(
 
   try {
     const { data, error } = await supabase.functions.invoke('flights-proxy', {
-      body: { action: 'searchFlights', origin, destination, date, passengers },
+      body: { action: 'search_flights', origin, destination, date, passengers },
     });
     if (error || !data?.offers) return null;
 
@@ -126,7 +126,7 @@ export async function getFlightPriceCalendar(
 
   try {
     const { data, error } = await supabase.functions.invoke('flights-proxy', {
-      body: { action: 'priceCalendar', origin, destination, month },
+      body: { action: 'price_calendar', origin, destination, month },
     });
     if (error || !data?.days) return null;
 
@@ -150,7 +150,7 @@ export async function getCheapestDates(
 
   try {
     const { data, error } = await supabase.functions.invoke('flights-proxy', {
-      body: { action: 'cheapestDates', origin, destination },
+      body: { action: 'cheapest_dates', origin, destination },
     });
     if (error || !data?.dates) return null;
 

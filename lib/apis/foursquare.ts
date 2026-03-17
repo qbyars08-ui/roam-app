@@ -107,13 +107,13 @@ export async function searchPlaces(
     const { data, error } = await supabase.functions.invoke('travel-proxy', {
       body: {
         provider: 'foursquare',
-        action: 'searchPlaces',
+        action: 'search_places',
         params: { query, lat, lng, categories, radius },
       },
     });
-    if (error || !data?.places) return null;
+    if (error || !data?.data) return null;
 
-    const places = data.places as FSQPlace[];
+    const places = data.data as FSQPlace[];
     await writeCache(cacheKey, places);
     return places;
   } catch {
@@ -132,11 +132,11 @@ export async function getPlaceDetails(
 
   try {
     const { data, error } = await supabase.functions.invoke('travel-proxy', {
-      body: { provider: 'foursquare', action: 'getPlaceDetails', params: { fsqId } },
+      body: { provider: 'foursquare', action: 'place_details', params: { fsqId } },
     });
-    if (error || !data?.place) return null;
+    if (error || !data?.data) return null;
 
-    const place = data.place as FSQPlaceDetails;
+    const place = data.data as FSQPlaceDetails;
     await writeCache(cacheKey, place);
     return place;
   } catch {
@@ -155,11 +155,11 @@ export async function getPlaceTips(
 
   try {
     const { data, error } = await supabase.functions.invoke('travel-proxy', {
-      body: { provider: 'foursquare', action: 'getPlaceTips', params: { fsqId } },
+      body: { provider: 'foursquare', action: 'place_tips', params: { fsqId } },
     });
-    if (error || !data?.tips) return null;
+    if (error || !data?.data) return null;
 
-    const tips = data.tips as FSQTip[];
+    const tips = data.data as FSQTip[];
     await writeCache(cacheKey, tips);
     return tips;
   } catch {

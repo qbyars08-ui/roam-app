@@ -111,13 +111,13 @@ export async function searchActivities(
     const { data, error } = await supabase.functions.invoke('travel-proxy', {
       body: {
         provider: 'getyourguide',
-        action: 'searchActivities',
+        action: 'search_activities',
         params: { destination, date, category },
       },
     });
-    if (error || !data?.activities) return null;
+    if (error || !data?.data) return null;
 
-    const activities = (data.activities as GYGActivity[]).map((a) => ({
+    const activities = (data.data as GYGActivity[]).map((a) => ({
       ...a,
       bookingUrl: appendAffiliate(a.bookingUrl),
     }));
@@ -141,15 +141,15 @@ export async function getActivityDetails(
     const { data, error } = await supabase.functions.invoke('travel-proxy', {
       body: {
         provider: 'getyourguide',
-        action: 'getActivityDetails',
+        action: 'activity_details',
         params: { activityId },
       },
     });
-    if (error || !data?.activity) return null;
+    if (error || !data?.data) return null;
 
     const activity: GYGActivityDetails = {
-      ...(data.activity as GYGActivityDetails),
-      bookingUrl: appendAffiliate((data.activity as GYGActivityDetails).bookingUrl),
+      ...(data.data as GYGActivityDetails),
+      bookingUrl: appendAffiliate((data.data as GYGActivityDetails).bookingUrl),
     };
     await writeCache(cacheKey, activity);
     return activity;

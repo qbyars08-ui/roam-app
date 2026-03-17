@@ -90,13 +90,13 @@ export async function getVisaRequirements(
     const { data, error } = await supabase.functions.invoke('travel-proxy', {
       body: {
         provider: 'sherpa',
-        action: 'getVisaRequirements',
+        action: 'visa_requirements',
         params: { passportCountry, destinationCountry },
       },
     });
-    if (error || !data?.visa) return null;
+    if (error || !data?.data) return null;
 
-    const visa = data.visa as VisaResult;
+    const visa = data.data as VisaResult;
     await writeCache(cacheKey, visa);
     return visa;
   } catch {
@@ -117,13 +117,13 @@ export async function getEntryRequirements(
     const { data, error } = await supabase.functions.invoke('travel-proxy', {
       body: {
         provider: 'sherpa',
-        action: 'getEntryRequirements',
+        action: 'entry_requirements',
         params: { destination },
       },
     });
-    if (error || !data?.entry) return null;
+    if (error || !data?.data) return null;
 
-    const entry = data.entry as EntryRequirements;
+    const entry = data.data as EntryRequirements;
     await writeCache(cacheKey, entry);
     return entry;
   } catch {

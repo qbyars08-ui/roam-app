@@ -67,13 +67,13 @@ export async function searchEvents(
     const { data, error } = await supabase.functions.invoke('travel-proxy', {
       body: {
         provider: 'eventbrite',
-        action: 'searchEvents',
+        action: 'search_events',
         params: { destination, startDate, endDate, categories },
       },
     });
-    if (error || !Array.isArray(data?.events)) return null;
+    if (error || !data?.data) return null;
 
-    const result: EventResult[] = data.events;
+    const result: EventResult[] = data.data;
     await writeCache(cacheKey, result);
     return result;
   } catch {
