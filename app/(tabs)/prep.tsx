@@ -2535,15 +2535,22 @@ function PrepScreen() {
             )}
 
             {activeSection === 'language' && (
-              langPack ? (
-                <LanguageTab pack={langPack} />
-              ) : (
-                <View style={styles.tabContent}>
+              <View style={styles.tabContent}>
+                <Pressable
+                  onPress={() => router.push('/language-hub' as never)}
+                  style={({ pressed }) => [styles.languageHubCta, { opacity: pressed ? 0.8 : 1 }]}
+                >
+                  <Text style={styles.languageHubCtaText}>{t('prep.languageHub', { defaultValue: 'Language Hub' })}</Text>
+                  <Text style={styles.languageHubCtaSub}>{t('prep.languageHubSub', { defaultValue: 'Live translation, survival phrases, offline, medical card' })}</Text>
+                </Pressable>
+                {langPack ? (
+                  <LanguageTab pack={langPack} />
+                ) : (
                   <Text style={styles.noDataText}>
                     {t('prep.languageNotAvailable', { defaultValue: 'Language pack not available for {{destination}}. English may be widely spoken.', destination: selectedDest })}
                   </Text>
-                </View>
-              )
+                )}
+              </View>
             )}
 
             {activeSection === 'visa' && (
@@ -3189,6 +3196,25 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   } as TextStyle,
 
+  languageHubCta: {
+    backgroundColor: COLORS.sageSoft,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+    padding: SPACING.md,
+    marginBottom: SPACING.lg,
+  } as ViewStyle,
+  languageHubCtaText: {
+    fontFamily: FONTS.headerMedium,
+    fontSize: 16,
+    color: COLORS.sage,
+  } as TextStyle,
+  languageHubCtaSub: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+    marginTop: SPACING.xs,
+  } as TextStyle,
   languageTitle: {
     fontFamily: FONTS.header,
     fontSize: 22,

@@ -206,6 +206,7 @@ export interface NarrationCallbacks {
 export interface NarrateTextOptions extends NarrationCallbacks {
   language?: string;
   speed?: number;
+  voiceId?: string;
   voiceSettings?: Record<string, unknown>;
 }
 

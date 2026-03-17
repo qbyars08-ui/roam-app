@@ -278,27 +278,27 @@ export default function IAmHereNow(): React.JSX.Element {
             {
               opacity: cardEntrance,
               transform: [
-                { translateY: cardEntrance.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) },
+                {
+                  translateY: cardEntrance.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }),
+                },
               ],
             },
           ]}
         >
-          <>
-            <Text style={styles.greeting}>
-              {context?.greeting ?? t('hereNow.defaultGreeting', { defaultValue: 'You are here.' })}
-            </Text>
-            <Text style={styles.timeInfo}>
-              {context?.timeInfo ?? ''}
-            </Text>
-            {context?.suggestion ? (
-              <Text style={styles.suggestion}>{context.suggestion}</Text>
-            ) : null}
-            {context?.weatherOverride ? (
-              <View style={styles.weatherAlert}>
-                <Text style={styles.weatherAlertText}>{context.weatherOverride}</Text>
-              </View>
-            ) : null}
-          </>
+          <Text style={styles.greeting}>
+            {context?.greeting ?? t('hereNow.defaultGreeting', { defaultValue: 'You are here.' })}
+          </Text>
+          <Text style={styles.timeInfo}>
+            {context?.timeInfo ?? ''}
+          </Text>
+          {context?.suggestion ? (
+            <Text style={styles.suggestion}>{context.suggestion}</Text>
+          ) : null}
+          {context?.weatherOverride ? (
+            <View style={styles.weatherAlert}>
+              <Text style={styles.weatherAlertText}>{context.weatherOverride}</Text>
+            </View>
+          ) : null}
         </Animated.View>
 
         {/* Weather row */}
