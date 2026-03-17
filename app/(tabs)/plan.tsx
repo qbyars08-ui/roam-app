@@ -53,6 +53,7 @@ import { captureEvent } from '../../lib/posthog';
 import { parseItinerary } from '../../lib/types/itinerary';
 import { Users } from 'lucide-react-native';
 import { useSonarQuery } from '../../lib/sonar';
+import { supabase } from '../../lib/supabase';
 import LiveBadge from '../../components/ui/LiveBadge';
 import SourceCitation from '../../components/ui/SourceCitation';
 import { getCurrentWeather, type CurrentWeather } from '../../lib/apis/openweather';
@@ -403,6 +404,7 @@ export default function PlanScreen() {
   const [showGenerator, setShowGenerator] = useState(false);
   const [streamingProgress, setStreamingProgress] = useState<string | null>(null);
   const [peopleBannerDismissed, setPeopleBannerDismissed] = useState(false);
+  const [craftSessions, setCraftSessions] = useState<Array<{ id: string; destination: string | null; updated_at: string }>>([]);
   const generatingDestRef = useRef<string>('');
   const isMountedRef = useRef(true);
 
@@ -411,6 +413,27 @@ export default function PlanScreen() {
     return () => { isMountedRef.current = false; };
   }, []);
 
+  const session = useAppStore((s) => s.session);
+
+  useEffect(() => {
+    if (!session?.user?.id) {
+      setCraftSessions([]);
+      return;
+    }
+    void (async () => {
+      const { data, error } = await supabase
+        .from('craft_sessions')
+        .select('id, destination, updated_at')
+        .eq('user_id', session.user.id)
+        .order('updated_at', { ascending: false })
+        .limit(2);
+      if (error) {
+        setCraftSessions([]);
+        return;
+      }
+      setCraftSessions(data ?? []);
+    })();
+  }, [session?.user?.id]);
   const generateMode = useAppStore((s) => s.generateMode);
   const setGenerateMode = useAppStore((s) => s.setGenerateMode);
   const addTrip = useAppStore((s) => s.addTrip);
@@ -646,6 +669,32 @@ export default function PlanScreen() {
               </Pressable>
             )}
             <GenerateModeSelect onSelect={handleModeSelect} firstTime={!hasTrips} />
+            {craftSessions.length > 0 ? (
+              <View style={styles.continueSection}>
+                <Text style={styles.continueSectionLabel}>Continue a trip you were planning</Text>
+                {craftSessions.map((s) => {
+                  const dateLabel = new Date(s.updated_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                  return (
+                    <Pressable
+                      key={s.id}
+                      style={({ pressed }) => [styles.continueCard, { opacity: pressed ? 0.9 : 1 }]}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        router.push({ pathname: '/craft-session', params: { sessionId: s.id } } as never);
+                      }}
+                      accessibilityLabel={`Continue planning ${s.destination ?? 'trip'} from ${dateLabel}`}
+                      accessibilityRole="button"
+                    >
+                      <Text style={styles.continueCardDest}>{s.destination ?? 'Your trip'}</Text>
+                      <Text style={styles.continueCardDate}>{dateLabel}</Text>
+                      <View style={styles.continueCardArrow}>
+                        <ChevronRight size={18} color={COLORS.gold} strokeWidth={1.5} />
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ) : null}
           </View>
         );
       }
@@ -1332,6 +1381,41 @@ const styles = StyleSheet.create({
     color: COLORS.sage,
   } as TextStyle,
 
+  // ── Continue CRAFT sessions ──
+  continueSection: {
+    marginTop: SPACING.xl,
+    paddingHorizontal: SPACING.lg,
+  } as ViewStyle,
+  continueSectionLabel: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamDim,
+    marginBottom: SPACING.sm,
+  } as TextStyle,
+  continueCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.goldBorder,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    marginBottom: SPACING.sm,
+  } as ViewStyle,
+  continueCardDest: {
+    flex: 1,
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 16,
+    color: COLORS.cream,
+  } as TextStyle,
+  continueCardDate: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.creamDim,
+    marginRight: SPACING.sm,
+  } as TextStyle,
+  continueCardArrow: {},
   // ── Error banner ──
   errorBanner: {
     flexDirection: 'row',

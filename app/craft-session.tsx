@@ -31,8 +31,7 @@ import {
   type CraftPreferences,
 } from '../lib/craft-engine';
 import { CRAFT_BUILDING_MESSAGE, CRAFT_ITINERARY_INTRO, CRAFT_FOLLOW_UP_PROMPT, CRAFT_STEPS } from '../lib/craft-prompts';
-import { generateCraftItineraryStreaming, callClaudeWithMessages, TripLimitReachedError } from '../lib/claude';
-import { CRAFT_FOLLOW_UP_SYSTEM } from '../lib/claude';
+import { generateCraftItineraryStreaming, callClaudeWithMessages, CRAFT_FOLLOW_UP_SYSTEM, TripLimitReachedError } from '../lib/claude';
 import {
   updateProfileFromCraft,
   craftPreferencesToLearned,
@@ -99,8 +98,8 @@ export default function CraftSessionScreen() {
       let currentStepId: CraftState['currentStepId'] =
         conv.length < CRAFT_STEPS.length ? (CRAFT_STEPS[conv.length]?.id ?? null) : null;
       if (conv.length >= CRAFT_STEPS.length && !genJson) {
-        phase = 'building';
         currentStepId = null;
+        phase = 'gathering';
       }
       if (genJson) {
         phase = 'done';
