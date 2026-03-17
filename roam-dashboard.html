@@ -499,7 +499,7 @@ const COMPOSERS=[
 const CSTATS=['idle','working','done'];
 
 const QA=[
-  {icon:'🚀',label:'Deploy ROAM',cmd:'npx expo export --platform web && netlify deploy --prod --dir=dist'},
+  {icon:'🚀',label:'Deploy ROAM',cmd:'npx expo export --platform web && netlify deploy --prod --dir=dist --no-build'},
   {icon:'🔍',label:'TypeScript Check',cmd:'npx tsc --noEmit'},
   {icon:'⬇️',label:'Pull + Install',cmd:'git pull origin main && npm install'},
   {icon:'🧪',label:'Run Tests',cmd:'npx jest'},
@@ -517,7 +517,7 @@ const AGENT_P=[
   {name:'Build Fix',prompt:'Run npx tsc --noEmit. Fix every error. Re-run until 0 errors.'},
   {name:'Director',prompt:'You are the Director. Read the full codebase. Identify the 5 highest-impact tasks. Assign each to a Composer by role:\n1: Visual\n2: Frontend\n3: Backend\n4: Tests\n5: Growth\nWrite clear instructions for each.'},
   {name:'Researcher',prompt:'Research this before building: [TOPIC]\n\nSearch GitHub, npm, docs. Find 3 approaches. Recommend the best. Do NOT write code yet.'},
-  {name:'Deploy',prompt:'Full deploy pipeline:\n1. npx tsc --noEmit (0 errors)\n2. npx expo export --platform web\n3. netlify deploy --prod --dir=dist\n4. git add -A && commit && push\nStop if anything fails.'},
+  {name:'Deploy',prompt:'Full deploy pipeline:\n1. npx tsc --noEmit (0 errors)\n2. npx expo export --platform web\n3. netlify deploy --prod --dir=dist --no-build\n4. git add -A && commit && push\nStop if anything fails.'},
   {name:'App Store',prompt:'Review App Store submission readiness:\n- Bundle ID, display name, version\n- Screenshots for all required sizes\n- Privacy policy URL\n- App description & keywords\n- TestFlight setup\n- RevenueCat products configured\nList what\'s done and what\'s missing.'},
   {name:'Performance',prompt:'Profile the app for performance:\n- Check bundle size\n- Find unnecessary re-renders\n- Audit image sizes and loading\n- Check for memory leaks in useEffect\n- Review list virtualization\nFix the top 3 issues.'},
 ];

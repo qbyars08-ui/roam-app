@@ -95,12 +95,11 @@ export default function GenerateModeSelect({ onSelect, firstTime = false }: Gene
   const handlePress = useCallback(
     (mode: GenerateMode) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      const borderAnim = mode === 'quick' ? quickBorder : convBorder;
-      Animated.timing(borderAnim, { toValue: 1, duration: 200, useNativeDriver: false }).start(() => {
-        onSelect(mode);
-      });
+      // Call onSelect immediately — don't gate it behind an animation callback
+      // which can fail to fire on web builds
+      onSelect(mode);
     },
-    [quickBorder, convBorder, onSelect],
+    [onSelect],
   );
 
   const headline = firstTime ? 'Where are you going?' : t('generate.title');

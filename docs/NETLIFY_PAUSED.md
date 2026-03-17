@@ -24,5 +24,5 @@ The web build and deploy are configured correctly:
 ```bash
 cd roam
 npm run build:web
-netlify deploy --prod --dir=dist
+netlify deploy --prod --dir=dist --no-build
 ```

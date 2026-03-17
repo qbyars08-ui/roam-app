@@ -5,5 +5,5 @@ echo "Exporting web..."
 npx expo export --platform web
 echo "/*    /index.html   200" > dist/_redirects
 echo "Deploying to Netlify..."
-netlify deploy --prod --dir=dist
+netlify deploy --prod --dir=dist --no-build
 echo "Done."

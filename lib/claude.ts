@@ -242,21 +242,49 @@ async function ensureValidSession(): Promise<void> {
 
   console.log('[ROAM] ensureValidSession: needsUpgrade=', needsUpgrade, 'hasSession=', !!session, 'hasToken=', !!session?.access_token);
 
-  if (!needsUpgrade) return;
-
-  try {
-    console.log('[ROAM] Upgrading to anonymous session...');
-    const { data, error } = await supabase.auth.signInAnonymously();
-    if (error) {
-      console.error('[ROAM] Anonymous auth error:', error.message);
+  if (!needsUpgrade) {
+    // Even if we have a token, check if it's expired and refresh
+    const { data: { session: refreshed } } = await supabase.auth.getSession();
+    if (refreshed && refreshed.access_token !== session?.access_token) {
+      console.log('[ROAM] Session refreshed');
+      useAppStore.getState().setSession(refreshed);
     }
-    if (!error && data.session) {
-      console.log('[ROAM] Anonymous session created, userId=', data.session.user.id);
-      useAppStore.getState().setSession(data.session);
-    }
-  } catch (err) {
-    console.error('[ROAM] Anonymous auth threw:', err instanceof Error ? err.message : String(err));
+    return;
   }
+
+  // Try up to 2 times to get a real anonymous session
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      console.log('[ROAM] Upgrading to anonymous session (attempt', attempt, ')...');
+      const { data, error } = await supabase.auth.signInAnonymously();
+      if (!error && data.session) {
+        console.log('[ROAM] Anonymous session created, userId=', data.session.user.id);
+        useAppStore.getState().setSession(data.session);
+        return; // Success
+      }
+      if (error) {
+        console.error('[ROAM] Anonymous auth error (attempt', attempt, '):', error.message);
+      }
+    } catch (err) {
+      console.error('[ROAM] Anonymous auth threw (attempt', attempt, '):', err instanceof Error ? err.message : String(err));
+    }
+
+    // Brief pause before retry
+    if (attempt < 2) {
+      await new Promise((r) => setTimeout(r, 500));
+    }
+  }
+
+  // Both attempts failed — check if Supabase already has a session we can use
+  const { data: { session: existing } } = await supabase.auth.getSession();
+  if (existing?.access_token) {
+    console.log('[ROAM] Found existing Supabase session, using that');
+    useAppStore.getState().setSession(existing);
+    return;
+  }
+
+  // Truly no auth available — throw so the caller shows a real error
+  throw new Error('Unable to authenticate. Check your internet connection and try again.');
 }
 
 // ---------------------------------------------------------------------------

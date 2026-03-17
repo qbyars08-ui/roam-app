@@ -9,7 +9,7 @@
     "build:web": "npx expo export --platform web && echo '/*  /index.html  200' > dist/_redirects",
     "export:web": "npx expo export --platform web",
     "inject-outputs": "node scripts/inject-outputs.js",
-    "deploy:web": "npm run build:web && netlify deploy --prod --dir=dist",
+    "deploy:web": "npm run build:web && netlify deploy --prod --dir=dist --no-build",
     "start:lan": "expo start",
     "start:tunnel": "expo start --tunnel",
     "android": "expo start --android",
