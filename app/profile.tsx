@@ -222,13 +222,13 @@ export default function ProfileScreen() {
             style={({ pressed }) => [styles.dnaCard, { opacity: pressed ? 0.9 : 1 }]}
           >
             <View style={styles.dnaIconWrap}>
-              <Scan size={22} color={COLORS.sage} strokeWidth={2} />
+              <Scan size={22} color={COLORS.sage} strokeWidth={1.5} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.dnaTitle}>Your Travel DNA</Text>
               <Text style={styles.dnaSub}>See how you actually travel</Text>
             </View>
-            <ChevronRight size={18} color={COLORS.creamDim} strokeWidth={2} />
+            <ChevronRight size={18} color={COLORS.creamDim} strokeWidth={1.5} />
           </Pressable>
         )}
 
@@ -272,7 +272,7 @@ export default function ProfileScreen() {
                 { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
               ]}
             >
-              <Sparkles size={14} color={COLORS.bg} strokeWidth={2} />
+              <Sparkles size={14} color={COLORS.bg} strokeWidth={1.5} />
               <Text style={styles.shareCardBtnText}>Share your travel card</Text>
             </Pressable>
           </View>
@@ -289,12 +289,12 @@ export default function ProfileScreen() {
             pressed && { opacity: 0.8 },
           ]}
         >
-          <Shield size={18} color={COLORS.coral} strokeWidth={2} />
+          <Shield size={18} color={COLORS.coral} strokeWidth={1.5} />
           <View style={{ flex: 1 }}>
             <Text style={styles.emergencyCardCtaTitle}>{t('profile.emergencyCardCtaTitle')}</Text>
             <Text style={styles.emergencyCardCtaSub}>{t('profile.emergencyCardCtaSub')}</Text>
           </View>
-          <ChevronRight size={16} color={COLORS.creamMuted} strokeWidth={2} />
+          <ChevronRight size={16} color={COLORS.creamMuted} strokeWidth={1.5} />
         </Pressable>
 
         {/* ── Photo Gallery ── */}
@@ -390,7 +390,7 @@ export default function ProfileScreen() {
                       </Text>
                       {album.isPublic && (
                         <View style={styles.albumPublicBadge}>
-                          <Globe size={10} color={COLORS.sage} strokeWidth={2} />
+                          <Globe size={10} color={COLORS.sage} strokeWidth={1.5} />
                           <Text style={styles.albumPublicText}>Public</Text>
                         </View>
                       )}
@@ -473,13 +473,13 @@ export default function ProfileScreen() {
         >
           <View style={styles.tripWrappedContent}>
             <View style={styles.tripWrappedIconWrap}>
-              <BarChart3 size={24} color={COLORS.gold} strokeWidth={2} />
+              <BarChart3 size={24} color={COLORS.gold} strokeWidth={1.5} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.tripWrappedTitle}>{t('profile.tripWrapped')}</Text>
               <Text style={styles.tripWrappedSub}>{t('profile.tripWrappedSub')}</Text>
             </View>
-            <ChevronRight size={22} color={COLORS.sage} strokeWidth={2} />
+            <ChevronRight size={22} color={COLORS.sage} strokeWidth={1.5} />
           </View>
         </Pressable>
 
@@ -496,13 +496,13 @@ export default function ProfileScreen() {
         >
           <View style={styles.tripWrappedContent}>
             <View style={styles.tripWrappedIconWrap}>
-              <Globe size={24} color={COLORS.sage} strokeWidth={2} />
+              <Globe size={24} color={COLORS.sage} strokeWidth={1.5} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.tripWrappedTitle}>Travel Passport</Text>
               <Text style={styles.tripWrappedSub}>Stamps, badges & world map</Text>
             </View>
-            <ChevronRight size={22} color={COLORS.sage} strokeWidth={2} />
+            <ChevronRight size={22} color={COLORS.sage} strokeWidth={1.5} />
           </View>
         </Pressable>
 
@@ -516,10 +516,10 @@ export default function ProfileScreen() {
               router.push('/compatibility' as never);
             }}
           >
-            <View style={styles.menuIconWrap}><Heart size={18} color={COLORS.coral} strokeWidth={2} /></View>
+            <View style={styles.menuIconWrap}><Heart size={18} color={COLORS.coral} strokeWidth={1.5} /></View>
             <Text style={[styles.menuLabel, { flex: 1 }]}>Travel Compatibility</Text>
             <View style={styles.referralBadge}><Text style={styles.referralBadgeText}>NEW</Text></View>
-            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
+            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
           </Pressable>
 
           <View style={styles.menuDivider} />
@@ -532,10 +532,10 @@ export default function ProfileScreen() {
               router.push({ pathname: '/coming-soon', params: { title: 'Travel Alter-Ego Quiz' } });
             }}
           >
-            <View style={styles.menuIconWrap}><Sparkles size={18} color={COLORS.creamMuted} strokeWidth={2} /></View>
+            <View style={styles.menuIconWrap}><Sparkles size={18} color={COLORS.creamMuted} strokeWidth={1.5} /></View>
             <Text style={[styles.menuLabel, { flex: 1, opacity: 0.85 }]}>{t('profile.travelAlterEgo')}</Text>
             <View style={styles.comingSoonInlineBadge}><Text style={styles.comingSoonInlineText}>{t('common.comingSoon')}</Text></View>
-            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
+            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
           </Pressable>
 
           <View style={styles.menuDivider} />
@@ -547,10 +547,10 @@ export default function ProfileScreen() {
               router.push({ pathname: '/coming-soon', params: { title: 'Trip Dupe Mode' } });
             }}
           >
-            <View style={styles.menuIconWrap}><Repeat size={18} color={COLORS.creamMuted} strokeWidth={2} /></View>
+            <View style={styles.menuIconWrap}><Repeat size={18} color={COLORS.creamMuted} strokeWidth={1.5} /></View>
             <Text style={[styles.menuLabel, { flex: 1, opacity: 0.85 }]}>{t('profile.tripDupeMode')}</Text>
             <View style={styles.comingSoonInlineBadge}><Text style={styles.comingSoonInlineText}>{t('common.comingSoon')}</Text></View>
-            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
+            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
           </Pressable>
 
           <View style={styles.menuDivider} />
@@ -562,10 +562,10 @@ export default function ProfileScreen() {
               router.push('/referral');
             }}
           >
-            <View style={styles.menuIconWrap}><Gift size={18} color={COLORS.sage} strokeWidth={2} /></View>
+            <View style={styles.menuIconWrap}><Gift size={18} color={COLORS.sage} strokeWidth={1.5} /></View>
             <Text style={[styles.menuLabel, { flex: 1 }]}>{t('profile.referFriends')}</Text>
             <View style={styles.referralBadge}><Text style={styles.referralBadgeText}>EARN PRO</Text></View>
-            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
+            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
           </Pressable>
         </View>
 
@@ -584,9 +584,9 @@ export default function ProfileScreen() {
               router.push('/paywall');
             }}
           >
-            <View style={styles.menuIconWrap}><CreditCard size={18} color={COLORS.accentGold} strokeWidth={2} /></View>
+            <View style={styles.menuIconWrap}><CreditCard size={18} color={COLORS.accentGold} strokeWidth={1.5} /></View>
             <Text style={[styles.menuLabel, { flex: 1 }]}>{t('profile.yourPlan')}</Text>
-            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
+            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
           </Pressable>
 
           <View style={styles.menuDivider} />
@@ -598,14 +598,14 @@ export default function ProfileScreen() {
               handleEditEmergencyContact();
             }}
           >
-            <View style={styles.menuIconWrap}><Shield size={18} color={COLORS.accentGold} strokeWidth={2} /></View>
+            <View style={styles.menuIconWrap}><Shield size={18} color={COLORS.accentGold} strokeWidth={1.5} /></View>
             <View style={{ flex: 1 }}>
               <Text style={styles.menuLabel}>{t('profile.emergencyContact')}</Text>
               {emergencyContact ? (
                 <Text style={styles.menuSubtext}>{emergencyContact}</Text>
               ) : null}
             </View>
-            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
+            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
           </Pressable>
 
           <View style={styles.menuDivider} />
@@ -617,14 +617,14 @@ export default function ProfileScreen() {
               setLanguageModalVisible(true);
             }}
           >
-            <View style={styles.menuIconWrap}><Globe size={18} color={COLORS.accentGold} strokeWidth={2} /></View>
+            <View style={styles.menuIconWrap}><Globe size={18} color={COLORS.accentGold} strokeWidth={1.5} /></View>
             <View style={{ flex: 1 }}>
               <Text style={styles.menuLabel}>{t('profile.language')}</Text>
               <Text style={styles.menuSubtext}>
                 {SUPPORTED_LANGUAGES.find((l) => l.code === i18n.language)?.nativeLabel ?? 'English'}
               </Text>
             </View>
-            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
+            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
           </Pressable>
 
           <View style={styles.menuDivider} />
@@ -636,9 +636,9 @@ export default function ProfileScreen() {
               handleSignOut();
             }}
           >
-            <View style={styles.menuIconWrap}><LogOut size={18} color={COLORS.coral} strokeWidth={2} /></View>
+            <View style={styles.menuIconWrap}><LogOut size={18} color={COLORS.coral} strokeWidth={1.5} /></View>
             <Text style={[styles.menuLabel, { flex: 1, color: COLORS.coral }]}>{t('profile.logOut')}</Text>
-            <ChevronRight size={18} color={COLORS.coral} strokeWidth={2} />
+            <ChevronRight size={18} color={COLORS.coral} strokeWidth={1.5} />
           </Pressable>
         </View>
 
@@ -836,7 +836,7 @@ const styles = StyleSheet.create({
   avatarCircle: {
     width: 64,
     height: 64,
-    borderRadius: 32,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.sageLight,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1110,7 +1110,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 14,
     color: COLORS.sage,
-    fontStyle: 'italic',
   } as TextStyle,
   personalityDesc: {
     fontFamily: FONTS.body,
@@ -1216,14 +1215,14 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: COLORS.overlayLight,
     paddingHorizontal: 4,
     paddingVertical: 2,
   } as ViewStyle,
   galleryPhotoLocation: {
     fontFamily: FONTS.mono,
     fontSize: 8,
-    color: '#fff',
+    color: COLORS.white,
     letterSpacing: 0.5,
   } as TextStyle,
   // Albums
@@ -1373,7 +1372,7 @@ const styles = StyleSheet.create({
   dnaIconWrap: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.sageLight,
     alignItems: 'center',
     justifyContent: 'center',

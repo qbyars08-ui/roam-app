@@ -57,6 +57,7 @@ export const CACHE_TRAVEL_ADVISORIES = 'roam_travel_advisories';
 export const CACHE_WEATHER_PREFIX = 'roam_weather_';
 export const CACHE_VISA_PREFIX = 'roam_visa_';
 export const CACHE_EVENTS_PREFIX = 'roam_events_';
+export const CACHE_SONAR_PREFIX = 'roam_sonar_';
 
 // ---------------------------------------------------------------------------
 // Feature-specific

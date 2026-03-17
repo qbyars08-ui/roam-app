@@ -22,6 +22,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
 import ViewShot, { captureRef } from '../lib/view-shot';
 import * as Sharing from 'expo-sharing';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../lib/constants';
 import { getDestinationPhoto } from '../lib/photos';
 import ShimmerOverlay from '../components/ui/ShimmerOverlay';
@@ -108,6 +109,7 @@ const SUGGESTED_SEARCHES = [
 // Main Screen
 // =============================================================================
 function DupeFinderScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [dreamDest, setDreamDest] = useState('');
@@ -177,7 +179,7 @@ function DupeFinderScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } catch {
         setError(
-          "Couldn't find dupes for that destination. Try a different city."
+          t('dupeFinder.errorMessage', { defaultValue: "Couldn't find dupes for that destination. Try a different city." })
         );
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       } finally {
@@ -198,7 +200,7 @@ function DupeFinderScreen() {
       });
       await Sharing.shareAsync(uri, {
         mimeType: 'image/png',
-        dialogTitle: 'Share Destination Dupes',
+        dialogTitle: t('dupeFinder.shareDialogTitle', { defaultValue: 'Share Destination Dupes' }),
       });
     } catch {
       // cancelled
@@ -213,8 +215,8 @@ function DupeFinderScreen() {
           <Text style={styles.backBtn}>{'\u2190'}</Text>
         </Pressable>
         <View>
-          <Text style={styles.headerEyebrow}>DESTINATION DUPES</Text>
-          <Text style={styles.headerTitle}>Dupe Finder</Text>
+          <Text style={styles.headerEyebrow}>{t('dupeFinder.eyebrow', { defaultValue: 'DESTINATION DUPES' })}</Text>
+          <Text style={styles.headerTitle}>{t('dupeFinder.headerTitle', { defaultValue: 'Dupe Finder' })}</Text>
         </View>
         <View style={{ width: 24 }} />
       </View>
@@ -228,7 +230,7 @@ function DupeFinderScreen() {
         {/* Search */}
         <View style={styles.searchCard}>
           <Text style={styles.searchLabel}>
-            Where do you dream of going?
+            {t('dupeFinder.searchLabel', { defaultValue: 'Where do you dream of going?' })}
           </Text>
           <View style={styles.inputRow}>
             <TextInput
@@ -251,7 +253,7 @@ function DupeFinderScreen() {
               disabled={loading}
             >
               <Text style={styles.searchBtnText}>
-                {loading ? 'Finding...' : 'Find Dupes'}
+                {loading ? t('dupeFinder.finding', { defaultValue: 'Finding...' }) : t('dupeFinder.findDupes', { defaultValue: 'Find Dupes' })}
               </Text>
             </Pressable>
           </View>
@@ -260,7 +262,7 @@ function DupeFinderScreen() {
         {/* Suggested Searches */}
         {!result && !loading && (
           <View style={styles.suggestedSection}>
-            <Text style={styles.suggestedTitle}>Try these</Text>
+            <Text style={styles.suggestedTitle}>{t('dupeFinder.tryThese', { defaultValue: 'Try these' })}</Text>
             <View style={styles.suggestedGrid}>
               {SUGGESTED_SEARCHES.map((s) => (
                 <Pressable
@@ -286,10 +288,10 @@ function DupeFinderScreen() {
         {loading && (
           <View style={styles.loadingCenter}>
             <Text style={styles.loadingText}>
-              Scanning the globe for cheaper vibes...
+              {t('dupeFinder.loadingText', { defaultValue: 'Scanning the globe for cheaper vibes...' })}
             </Text>
             <Text style={styles.loadingSubtext}>
-              Comparing costs, crowds, and experiences
+              {t('dupeFinder.loadingSubtext', { defaultValue: 'Comparing costs, crowds, and experiences' })}
             </Text>
           </View>
         )}
@@ -306,7 +308,7 @@ function DupeFinderScreen() {
           <>
             {/* Original Destination */}
             <Animated.View style={[styles.originalCard, { opacity: fadeIn }]}>
-              <Text style={styles.originalEyebrow}>YOUR DREAM</Text>
+              <Text style={styles.originalEyebrow}>{t('dupeFinder.yourDream', { defaultValue: 'YOUR DREAM' })}</Text>
               <Text style={styles.originalDest}>
                 {result.original.destination}
               </Text>
@@ -324,7 +326,7 @@ function DupeFinderScreen() {
                 <View style={styles.dupeCardsHeader}>
                   <Text style={styles.dupeCardsHeaderBrand}>ROAM</Text>
                   <Text style={styles.dupeCardsHeaderTitle}>
-                    {result.original.destination} Dupes
+                    {t('dupeFinder.dupeCardsTitle', { defaultValue: '{{destination}} Dupes', destination: result.original.destination })}
                   </Text>
                 </View>
                 {result.dupes.map((dupe, i) => (
@@ -351,7 +353,7 @@ function DupeFinderScreen() {
                 ))}
                 <View style={styles.dupeCardsFooter}>
                   <Text style={styles.dupeCardsFooterText}>
-                    Go somewhere that changes you.
+                    {t('dupeFinder.footerText', { defaultValue: 'Go somewhere that changes you.' })}
                   </Text>
                 </View>
               </View>
@@ -370,7 +372,7 @@ function DupeFinderScreen() {
                 style={styles.shareBtnGradient}
               >
                 <Text style={styles.shareBtnText}>
-                  Share the Dupes
+                  {t('dupeFinder.shareButton', { defaultValue: 'Share the Dupes' })}
                 </Text>
               </LinearGradient>
             </Pressable>
@@ -391,7 +393,7 @@ function DupeFinderScreen() {
               }}
             >
               <Text style={styles.planBtnText}>
-                Plan a trip to {result.dupes[0]?.destination ?? 'the top dupe'}
+                {t('dupeFinder.planTrip', { defaultValue: 'Plan a trip to {{destination}}', destination: result.dupes[0]?.destination ?? t('dupeFinder.theTopDupe', { defaultValue: 'the top dupe' }) })}
               </Text>
             </Pressable>
           </>
@@ -415,6 +417,7 @@ function DupeCard({
   rank: number;
   original: DupeResult['original'];
 }) {
+  const { t } = useTranslation();
   const [loaded, setLoaded] = React.useState(false);
   const photoUrl = getDestinationPhoto(dupe.destination);
   return (
@@ -453,10 +456,10 @@ function DupeCard({
 
       {/* Comparison Row */}
       <View style={styles.compRow}>
-        <CompStat label="Daily Cost" value={`$${dupe.dailyCost}`} />
-        <CompStat label="You Save" value={`$${dupe.savings}/day`} accent />
-        <CompStat label="Vibe Match" value={`${dupe.vibeMatch}%`} />
-        <CompStat label="Crowds" value={dupe.crowdLevel} />
+        <CompStat label={t('dupeFinder.dailyCost', { defaultValue: 'Daily Cost' })} value={`$${dupe.dailyCost}`} />
+        <CompStat label={t('dupeFinder.youSave', { defaultValue: 'You Save' })} value={`$${dupe.savings}/day`} accent />
+        <CompStat label={t('dupeFinder.vibeMatch', { defaultValue: 'Vibe Match' })} value={`${dupe.vibeMatch}%`} />
+        <CompStat label={t('dupeFinder.crowds', { defaultValue: 'Crowds' })} value={dupe.crowdLevel} />
       </View>
 
       {/* Why */}
@@ -464,13 +467,13 @@ function DupeCard({
 
       {/* Best For */}
       <View style={styles.bestForRow}>
-        <Text style={styles.bestForLabel}>Best for:</Text>
+        <Text style={styles.bestForLabel}>{t('dupeFinder.bestFor', { defaultValue: 'Best for:' })}</Text>
         <Text style={styles.bestForValue}>{dupe.bestFor}</Text>
       </View>
 
       {/* Pro Tip */}
       <View style={styles.tipRow}>
-        <Text style={styles.tipLabel}>Tip</Text>
+        <Text style={styles.tipLabel}>{t('dupeFinder.tip', { defaultValue: 'Tip' })}</Text>
         <Text style={styles.tipText}>{dupe.proTip}</Text>
       </View>
         </LinearGradient>
@@ -862,7 +865,7 @@ const styles = StyleSheet.create({
   // Pro Tip
   tipRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: SPACING.sm,
     backgroundColor: COLORS.sageSubtle,
     borderRadius: RADIUS.sm,
     padding: SPACING.sm,

@@ -4,6 +4,7 @@
 // Knows your full trip, profile, budget. Answers in 2 sentences max.
 // =============================================================================
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -58,6 +59,7 @@ You have access to:
 Give answers that feel like insider knowledge, not Google results.`;
 
 export default function PocketConcierge() {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -177,12 +179,12 @@ export default function PocketConcierge() {
             <View style={styles.headerLeft}>
               <Luggage size={24} color={COLORS.cream} strokeWidth={1.5} />
               <View>
-                <Text style={styles.headerTitle}>Pocket Concierge</Text>
-                <Text style={styles.headerSubtitle}>Ask me anything about your trip</Text>
+                <Text style={styles.headerTitle}>{t('concierge.title', { defaultValue: 'Pocket Concierge' })}</Text>
+                <Text style={styles.headerSubtitle}>{t('concierge.subtitle', { defaultValue: 'Ask me anything about your trip' })}</Text>
               </View>
             </View>
             <Pressable onPress={() => setIsOpen(false)}>
-              <Text style={styles.closeButton}>Done</Text>
+              <Text style={styles.closeButton}>{t('concierge.done', { defaultValue: 'Done' })}</Text>
             </Pressable>
           </View>
 
@@ -195,9 +197,9 @@ export default function PocketConcierge() {
           >
             {messages.length === 0 && (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyTitle}>How can I help?</Text>
+                <Text style={styles.emptyTitle}>{t('concierge.emptyTitle', { defaultValue: 'How can I help?' })}</Text>
                 <Text style={styles.emptySubtitle}>
-                  I know your trip, your budget, and your style. Ask me anything.
+                  {t('concierge.emptySubtitle', { defaultValue: 'I know your trip, your budget, and your style. Ask me anything.' })}
                 </Text>
                 <View style={styles.quickAsks}>
                   {QUICK_ASKS.map((q) => (
@@ -237,7 +239,7 @@ export default function PocketConcierge() {
 
             {loading && (
               <View style={[styles.messageBubble, styles.assistantBubble]}>
-                <Text style={[styles.messageText, styles.assistantText]}>Checking my notes...</Text>
+                <Text style={[styles.messageText, styles.assistantText]}>{t('concierge.checkingNotes', { defaultValue: 'Checking my notes...' })}</Text>
               </View>
             )}
           </ScrollView>
@@ -248,7 +250,7 @@ export default function PocketConcierge() {
               style={styles.input}
               value={input}
               onChangeText={setInput}
-              placeholder="Ask me anything..."
+              placeholder={t('concierge.inputPlaceholder', { defaultValue: 'Ask me anything...' })}
               placeholderTextColor={COLORS.creamMuted}
               onSubmitEditing={() => handleSend()}
               returnKeyType="send"
@@ -282,7 +284,7 @@ const styles = StyleSheet.create({
   fabInner: {
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.coral,
     alignItems: 'center',
     justifyContent: 'center',
@@ -440,7 +442,7 @@ const styles = StyleSheet.create({
   sendButton: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.sage,
     alignItems: 'center',
     justifyContent: 'center',

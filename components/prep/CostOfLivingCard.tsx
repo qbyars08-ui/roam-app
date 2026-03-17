@@ -5,6 +5,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Wallet, TrendingDown, TrendingUp } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { getCostOfLiving, type CostOfLiving } from '../../lib/cost-of-living';
 
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function CostOfLivingCard({ destination }: Props) {
+  const { t } = useTranslation();
   const data: CostOfLiving | null = useMemo(
     () => getCostOfLiving(destination),
     [destination],
@@ -21,18 +23,18 @@ export default function CostOfLivingCard({ destination }: Props) {
   if (!data) return null;
 
   const tiers = [
-    { label: 'Budget', total: data.budget.dailyTotal, icon: TrendingDown, color: COLORS.sage },
-    { label: 'Comfort', total: data.comfort.dailyTotal, icon: Wallet, color: COLORS.gold },
-    { label: 'Luxury', total: data.luxury.dailyTotal, icon: TrendingUp, color: COLORS.coral },
+    { label: t('costOfLiving.budget', { defaultValue: 'Budget' }), total: data.budget.dailyTotal, icon: TrendingDown, color: COLORS.sage },
+    { label: t('costOfLiving.comfort', { defaultValue: 'Comfort' }), total: data.comfort.dailyTotal, icon: Wallet, color: COLORS.gold },
+    { label: t('costOfLiving.luxury', { defaultValue: 'Luxury' }), total: data.luxury.dailyTotal, icon: TrendingUp, color: COLORS.coral },
   ] as const;
 
   return (
     <View style={s.container}>
-      <Text style={s.sectionTitle}>Daily Budget</Text>
+      <Text style={s.sectionTitle}>{t('costOfLiving.dailyBudget', { defaultValue: 'Daily Budget' })}</Text>
       <View style={s.row}>
         {tiers.map((tier) => (
           <View key={tier.label} style={s.card}>
-            <tier.icon size={16} color={tier.color} strokeWidth={2} />
+            <tier.icon size={16} color={tier.color} strokeWidth={1.5} />
             <Text style={s.tierTotal}>{tier.total}</Text>
             <Text style={s.tierLabel}>{tier.label}</Text>
           </View>

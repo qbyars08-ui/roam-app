@@ -17,6 +17,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../lib/haptics';
@@ -87,6 +88,7 @@ const CategoryBar = React.memo(function CategoryBar({
 // Main Screen
 // =============================================================================
 function ExpenseTrackerScreen() {
+  const { t } = useTranslation();
   const { tripId } = useLocalSearchParams<{ tripId?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -162,7 +164,7 @@ function ExpenseTrackerScreen() {
   const handleAddExpense = useCallback(async () => {
     const amount = parseFloat(newAmount);
     if (isNaN(amount) || amount <= 0) {
-      Alert.alert('Invalid amount', 'Please enter a valid amount.');
+      Alert.alert(t('expenses.invalidAmountTitle', { defaultValue: 'Invalid amount' }), t('expenses.invalidAmountBody', { defaultValue: 'Please enter a valid amount.' }));
       return;
     }
     if (!tripId) return;
@@ -187,10 +189,10 @@ function ExpenseTrackerScreen() {
   // Handle delete expense
   const handleDeleteExpense = useCallback(
     async (expenseId: string) => {
-      Alert.alert('Delete expense?', 'This can\'t be undone.', [
-        { text: 'Cancel', style: 'cancel' },
+      Alert.alert(t('expenses.deleteTitle', { defaultValue: 'Delete expense?' }), t('expenses.deleteBody', { defaultValue: "This can't be undone." }), [
+        { text: t('expenses.cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
         {
-          text: 'Delete',
+          text: t('expenses.delete', { defaultValue: 'Delete' }),
           style: 'destructive',
           onPress: async () => {
             await removeExpense(expenseId);
@@ -207,9 +209,9 @@ function ExpenseTrackerScreen() {
     return (
       <View style={[styles.screen, { paddingTop: insets.top }]}>
         <View style={styles.emptyCenter}>
-          <Text style={styles.emptyTitle}>No trip found</Text>
+          <Text style={styles.emptyTitle}>{t('expenses.noTripTitle', { defaultValue: 'No trip, no tab.' })}</Text>
           <Pressable onPress={() => router.back()} style={styles.backPill}>
-            <Text style={styles.backPillText}>Go back</Text>
+            <Text style={styles.backPillText}>{t('expenses.goBack', { defaultValue: 'Go back' })}</Text>
           </Pressable>
         </View>
       </View>
@@ -221,10 +223,10 @@ function ExpenseTrackerScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <ChevronLeft size={28} color={COLORS.cream} strokeWidth={2} />
+          <ChevronLeft size={28} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Expenses</Text>
+          <Text style={styles.headerTitle}>{t('expenses.headerTitle', { defaultValue: 'Expenses' })}</Text>
           <Text style={styles.headerSub}>{trip.destination}</Text>
         </View>
         <Pressable
@@ -234,7 +236,7 @@ function ExpenseTrackerScreen() {
           }}
           hitSlop={12}
         >
-          <Plus size={24} color={COLORS.sage} strokeWidth={2} />
+          <Plus size={24} color={COLORS.sage} strokeWidth={1.5} />
         </Pressable>
       </View>
 
@@ -244,28 +246,28 @@ function ExpenseTrackerScreen() {
       >
         {/* Total spending card */}
         <View style={[styles.totalCard, { borderColor: theme.primary }]}>
-          <Text style={styles.totalLabel}>TOTAL SPENT</Text>
+          <Text style={styles.totalLabel}>{t('expenses.totalSpent', { defaultValue: 'TOTAL SPENT' })}</Text>
           <Text style={[styles.totalAmount, { color: theme.primary }]}>
             {formatCurrency(summary?.totalSpent ?? 0, currency)}
           </Text>
           <Text style={styles.totalExpenseCount}>
-            {summary?.expenseCount ?? 0} expense{(summary?.expenseCount ?? 0) !== 1 ? 's' : ''}
+            {`${summary?.expenseCount ?? 0} ${(summary?.expenseCount ?? 0) !== 1 ? t('expenses.expenses', { defaultValue: 'expenses' }) : t('expenses.expense', { defaultValue: 'expense' })}`}
           </Text>
 
           {/* Budget comparison */}
           {aiBudgetEstimate && budgetDiff && (
             <View style={styles.budgetComparison}>
               <View style={styles.budgetCompRow}>
-                <Wallet size={14} color={COLORS.creamMuted} strokeWidth={2} />
+                <Wallet size={14} color={COLORS.creamMuted} strokeWidth={1.5} />
                 <Text style={styles.budgetCompLabel}>
-                  AI Estimate: {formatCurrency(aiBudgetEstimate, currency)}
+                  {`${t('expenses.aiEstimate', { defaultValue: 'AI Estimate' })}: ${formatCurrency(aiBudgetEstimate, currency)}`}
                 </Text>
               </View>
               <View style={styles.budgetCompRow}>
                 {budgetDiff.over ? (
-                  <TrendingUp size={14} color={COLORS.coral} strokeWidth={2} />
+                  <TrendingUp size={14} color={COLORS.coral} strokeWidth={1.5} />
                 ) : (
-                  <TrendingDown size={14} color={COLORS.sage} strokeWidth={2} />
+                  <TrendingDown size={14} color={COLORS.sage} strokeWidth={1.5} />
                 )}
                 <Text
                   style={[
@@ -284,7 +286,7 @@ function ExpenseTrackerScreen() {
         {/* Category breakdown */}
         {summary && summary.totalSpent > 0 && (
           <View style={styles.breakdownCard}>
-            <Text style={styles.breakdownTitle}>By Category</Text>
+            <Text style={styles.breakdownTitle}>{t('expenses.byCategory', { defaultValue: 'By Category' })}</Text>
             {EXPENSE_CATEGORIES.map((cat) => (
               <CategoryBar
                 key={cat.id}
@@ -299,13 +301,13 @@ function ExpenseTrackerScreen() {
 
         {/* Recent expenses */}
         <View style={styles.recentSection}>
-          <Text style={styles.recentTitle}>Recent Expenses</Text>
+          <Text style={styles.recentTitle}>{t('expenses.recentExpenses', { defaultValue: 'Recent Expenses' })}</Text>
           {expenses.length === 0 ? (
             <View style={styles.emptyExpenses}>
               <DollarSign size={32} color={COLORS.creamMuted} strokeWidth={1.5} />
-              <Text style={styles.emptyExpensesTitle}>No expenses yet</Text>
+              <Text style={styles.emptyExpensesTitle}>{t('expenses.emptyTitle', { defaultValue: 'Clean slate.' })}</Text>
               <Text style={styles.emptyExpensesSub}>
-                Tap + to start tracking your spending on this trip.
+                {t('expenses.emptySub', { defaultValue: "Start logging and we'll do the math." })}
               </Text>
             </View>
           ) : (
@@ -326,7 +328,7 @@ function ExpenseTrackerScreen() {
                       {expense.note || cat?.label || expense.category}
                     </Text>
                     <Text style={styles.expenseDay}>
-                      Day {expense.dayNumber} · {new Date(expense.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      {`${t('expenses.day', { defaultValue: 'Day' })} ${expense.dayNumber} · ${new Date(expense.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
                     </Text>
                   </View>
                   <Text style={styles.expenseAmount}>
@@ -354,7 +356,7 @@ function ExpenseTrackerScreen() {
           },
         ]}
       >
-        <Plus size={28} color="#000" strokeWidth={2.5} />
+        <Plus size={28} color="#000" strokeWidth={1.5} />
       </Pressable>
 
       {/* Add expense modal */}
@@ -370,9 +372,9 @@ function ExpenseTrackerScreen() {
             onPress={(e) => e.stopPropagation()}
           >
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add Expense</Text>
+              <Text style={styles.modalTitle}>{t('expenses.addExpenseTitle', { defaultValue: 'Add Expense' })}</Text>
               <Pressable onPress={() => setShowAddModal(false)} hitSlop={12}>
-                <X size={24} color={COLORS.cream} strokeWidth={2} />
+                <X size={24} color={COLORS.cream} strokeWidth={1.5} />
               </Pressable>
             </View>
 
@@ -391,7 +393,7 @@ function ExpenseTrackerScreen() {
             </View>
 
             {/* Category selector */}
-            <Text style={styles.modalFieldLabel}>Category</Text>
+            <Text style={styles.modalFieldLabel}>{t('expenses.categoryLabel', { defaultValue: 'Category' })}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -418,17 +420,17 @@ function ExpenseTrackerScreen() {
             </ScrollView>
 
             {/* Note */}
-            <Text style={styles.modalFieldLabel}>Note (optional)</Text>
+            <Text style={styles.modalFieldLabel}>{t('expenses.noteLabel', { defaultValue: 'Note (optional)' })}</Text>
             <TextInput
               style={styles.noteInput}
               value={newNote}
               onChangeText={setNewNote}
-              placeholder="What was this for?"
+              placeholder={t('expenses.notePlaceholder', { defaultValue: 'What was this for?' })}
               placeholderTextColor={COLORS.creamMuted}
             />
 
             {/* Day selector */}
-            <Text style={styles.modalFieldLabel}>Day</Text>
+            <Text style={styles.modalFieldLabel}>{t('expenses.dayLabel', { defaultValue: 'Day' })}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -445,7 +447,7 @@ function ExpenseTrackerScreen() {
                     }}
                     style={[styles.dayChip, active && { backgroundColor: theme.primary, borderColor: theme.primary }]}
                   >
-                    <Text style={[styles.dayChipText, active && { color: '#000' }]}>
+                    <Text style={[styles.dayChipText, active && { color: COLORS.black }]}>
                       {day}
                     </Text>
                   </Pressable>
@@ -461,8 +463,8 @@ function ExpenseTrackerScreen() {
                 { backgroundColor: theme.primary, opacity: pressed ? 0.85 : 1 },
               ]}
             >
-              <Check size={20} color="#000" strokeWidth={2.5} />
-              <Text style={styles.submitBtnText}>Add Expense</Text>
+              <Check size={20} color="#000" strokeWidth={1.5} />
+              <Text style={styles.submitBtnText}>{t('expenses.addExpenseButton', { defaultValue: 'Add Expense' })}</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -670,11 +672,11 @@ const styles = StyleSheet.create({
     right: SPACING.lg,
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: RADIUS.pill,
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 6,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -683,7 +685,7 @@ const styles = StyleSheet.create({
   // Modal
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: COLORS.overlayDark,
     justifyContent: 'flex-end',
   } as ViewStyle,
   modalContent: {
@@ -749,7 +751,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     paddingHorizontal: SPACING.md,
-    paddingVertical: 8,
+    paddingVertical: SPACING.sm,
   } as ViewStyle,
   catPillActive: {
     backgroundColor: COLORS.sageLight,
@@ -772,7 +774,7 @@ const styles = StyleSheet.create({
   dayChip: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.bgGlass,
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -796,7 +798,7 @@ const styles = StyleSheet.create({
   submitBtnText: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 16,
-    color: '#000',
+    color: COLORS.black,
   } as TextStyle,
 
   // Empty state

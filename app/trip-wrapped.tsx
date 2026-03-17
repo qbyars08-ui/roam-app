@@ -3,6 +3,7 @@
 // Spotify Wrapped for travel. 5-card swipeable stack, shareable as PNG.
 // =============================================================================
 import React, { useRef, useState, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Animated,
   Dimensions,
@@ -75,6 +76,7 @@ const CARD_GRADIENTS: string[][] = [
 // Main Screen
 // =============================================================================
 function TripWrappedScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [review, setReview] = useState<YearInReview | null>(null);
@@ -130,7 +132,7 @@ function TripWrappedScreen() {
       });
       await Sharing.shareAsync(uri, {
         mimeType: 'image/png',
-        dialogTitle: 'Share your Trip Wrapped',
+        dialogTitle: t('tripWrapped.shareDialogTitle', { defaultValue: 'Share your Trip Wrapped' }),
       });
     } catch {
       // cancelled
@@ -158,9 +160,9 @@ function TripWrappedScreen() {
     return (
       <View style={[styles.screen, { paddingTop: insets.top }]}>
         <View style={styles.loadingCenter}>
-          <Text style={styles.loadingText}>Wrapping your year in travel...</Text>
+          <Text style={styles.loadingText}>{t('tripWrapped.loadingText', { defaultValue: 'Wrapping your year in travel...' })}</Text>
           <Text style={styles.loadingSubtext}>
-            Crunching the numbers on everywhere you have been
+            {t('tripWrapped.loadingSubtext', { defaultValue: 'Crunching the numbers on everywhere you have been' })}
           </Text>
         </View>
       </View>
@@ -174,13 +176,13 @@ function TripWrappedScreen() {
           <Pressable onPress={() => router.back()} hitSlop={12}>
             <Text style={styles.backBtn}>{'\u2190'}</Text>
           </Pressable>
-          <Text style={styles.headerTitle}>Trip Wrapped</Text>
+          <Text style={styles.headerTitle}>{t('tripWrapped.headerTitle', { defaultValue: 'Trip Wrapped' })}</Text>
           <View style={{ width: 24 }} />
         </View>
         <View style={styles.emptyCenter}>
-          <Text style={styles.emptyTitle}>Nothing to wrap yet</Text>
+          <Text style={styles.emptyTitle}>{t('tripWrapped.emptyTitle', { defaultValue: 'Your year in travel\nstarts with a trip.' })}</Text>
           <Text style={styles.emptyBody}>
-            Plan some trips and come back at the end of the year. We will have your recap ready.
+            {t('tripWrapped.emptyBody', { defaultValue: "Plan a few adventures first. We'll wrap them into something worth sharing." })}
           </Text>
         </View>
       </View>
@@ -197,8 +199,8 @@ function TripWrappedScreen() {
           <Text style={styles.backBtn}>{'\u2190'}</Text>
         </Pressable>
         <View>
-          <Text style={styles.headerEyebrow}>YOUR YEAR IN TRAVEL</Text>
-          <Text style={styles.headerTitle}>Trip Wrapped</Text>
+          <Text style={styles.headerEyebrow}>{t('tripWrapped.headerEyebrow', { defaultValue: 'YOUR YEAR IN TRAVEL' })}</Text>
+          <Text style={styles.headerTitle}>{t('tripWrapped.headerTitle', { defaultValue: 'Trip Wrapped' })}</Text>
         </View>
         <View style={{ width: 24 }} />
       </View>
@@ -254,8 +256,8 @@ function TripWrappedScreen() {
               <Text style={styles.cardHeadline}>{review.headline}</Text>
 
               <View style={styles.bigStatRow}>
-                <BigStat value={`${review.tripsGenerated}`} label="Trips Planned" />
-                <BigStat value={`${review.totalDaysPlanned}`} label="Days Planned" />
+                <BigStat value={`${review.tripsGenerated}`} label={t('tripWrapped.tripsPlanned', { defaultValue: 'Trips Planned' })} />
+                <BigStat value={`${review.totalDaysPlanned}`} label={t('tripWrapped.daysPlanned', { defaultValue: 'Days Planned' })} />
               </View>
 
               <View style={styles.destList}>
@@ -267,7 +269,7 @@ function TripWrappedScreen() {
               </View>
 
               <Text style={styles.cardFooter}>
-                Go somewhere that changes you.
+                {t('tripWrapped.cardFooter', { defaultValue: 'Go somewhere that changes you.' })}
               </Text>
             </LinearGradient>
           </ViewShot>
@@ -282,30 +284,30 @@ function TripWrappedScreen() {
               style={styles.wrappedCard}
             >
               <Text style={styles.cardBrand}>ROAM</Text>
-              <Text style={styles.cardSectionTitle}>By the Numbers</Text>
+              <Text style={styles.cardSectionTitle}>{t('tripWrapped.byTheNumbers', { defaultValue: 'By the Numbers' })}</Text>
 
               <View style={styles.statsGrid}>
                 <StatBlock
                   value={`${review.uniqueDestinations.length}`}
-                  label="Unique Destinations"
+                  label={t('tripWrapped.uniqueDestinations', { defaultValue: 'Unique Destinations' })}
                 />
                 <StatBlock
                   value={`${review.avgTripLength}`}
-                  label="Avg Trip Length (days)"
+                  label={t('tripWrapped.avgTripLength', { defaultValue: 'Avg Trip Length (days)' })}
                 />
                 <StatBlock
                   value={review.favoriteDestination ?? '—'}
-                  label="Most Planned"
+                  label={t('tripWrapped.mostPlanned', { defaultValue: 'Most Planned' })}
                   isText
                 />
                 <StatBlock
                   value={`${review.totalDaysPlanned}`}
-                  label="Days Planned"
+                  label={t('tripWrapped.daysPlanned', { defaultValue: 'Days Planned' })}
                 />
               </View>
 
               <Text style={styles.cardFooter}>
-                Go somewhere that changes you.
+                {t('tripWrapped.cardFooter', { defaultValue: 'Go somewhere that changes you.' })}
               </Text>
             </LinearGradient>
           </ViewShot>
@@ -320,7 +322,7 @@ function TripWrappedScreen() {
               style={styles.wrappedCard}
             >
               <Text style={styles.cardBrand}>ROAM</Text>
-              <Text style={styles.cardSectionTitle}>Your Travel Type</Text>
+              <Text style={styles.cardSectionTitle}>{t('tripWrapped.yourTravelType', { defaultValue: 'Your Travel Type' })}</Text>
 
               <Text style={styles.personalityTitle}>{personality.title}</Text>
               <Text style={styles.personalityDesc}>{personality.desc}</Text>
@@ -358,7 +360,7 @@ function TripWrappedScreen() {
               </Text>
 
               <Text style={styles.cardFooter}>
-                Go somewhere that changes you.
+                {t('tripWrapped.cardFooter', { defaultValue: 'Go somewhere that changes you.' })}
               </Text>
             </LinearGradient>
           </ViewShot>
@@ -373,7 +375,7 @@ function TripWrappedScreen() {
               style={styles.wrappedCard}
             >
               <Text style={styles.cardBrand}>ROAM</Text>
-              <Text style={styles.cardSectionTitle}>Your Top Vibes</Text>
+              <Text style={styles.cardSectionTitle}>{t('tripWrapped.yourTopVibes', { defaultValue: 'Your Top Vibes' })}</Text>
 
               {review.topVibes.length > 0 ? (
                 <View style={styles.vibesStack}>
@@ -406,12 +408,12 @@ function TripWrappedScreen() {
                 </View>
               ) : (
                 <Text style={styles.noVibesText}>
-                  No vibes recorded yet. Plan more trips!
+                  {t('tripWrapped.noVibes', { defaultValue: 'No vibes recorded yet. Plan more trips!' })}
                 </Text>
               )}
 
               <Text style={styles.cardFooter}>
-                Go somewhere that changes you.
+                {t('tripWrapped.cardFooter', { defaultValue: 'Go somewhere that changes you.' })}
               </Text>
             </LinearGradient>
           </ViewShot>
@@ -427,32 +429,31 @@ function TripWrappedScreen() {
             >
               <Text style={styles.cardBrand}>ROAM</Text>
               <Text style={styles.cardSectionTitle}>
-                {review.year + 1} Awaits
+                {`${review.year + 1} ${t('tripWrapped.awaits', { defaultValue: 'Awaits' })}`}
               </Text>
 
               <Text style={styles.nextYearText}>
                 {review.tripsGenerated === 0
-                  ? 'Your first trip is out there. Stop scrolling and start planning.'
+                  ? t('tripWrapped.nextYearZero', { defaultValue: 'Your first trip is out there. Stop scrolling and start planning.' })
                   : review.tripsGenerated < 3
-                  ? `You planned ${review.tripsGenerated} trips this year. Next year, aim higher.`
+                  ? `${review.tripsGenerated} ${t('tripWrapped.nextYearFew', { defaultValue: 'trips this year. Next year, aim higher.' })}`
                   : review.tripsGenerated < 6
-                  ? `${review.tripsGenerated} trips and counting. Next year is going to be even bigger.`
-                  : `${review.tripsGenerated} trips? You're not slowing down. Keep going.`}
+                  ? `${review.tripsGenerated} ${t('tripWrapped.nextYearSome', { defaultValue: 'trips and counting. Next year is going to be even bigger.' })}`
+                  : `${review.tripsGenerated} ${t('tripWrapped.nextYearMany', { defaultValue: "trips? You're not slowing down. Keep going." })}`}
               </Text>
 
               {review.favoriteDestination && (
                 <Text style={styles.nextSuggestion}>
-                  You keep coming back to {review.favoriteDestination}. Maybe it
-                  is time to try something completely different.
+                  {`${t('tripWrapped.nextSuggestionPre', { defaultValue: 'You keep coming back to' })} ${review.favoriteDestination}. ${t('tripWrapped.nextSuggestionPost', { defaultValue: 'Maybe it is time to try something completely different.' })}`}
                 </Text>
               )}
 
               <View style={styles.ctaWrapper}>
-                <Text style={styles.ctaText}>Plan your next trip</Text>
+                <Text style={styles.ctaText}>{t('tripWrapped.ctaText', { defaultValue: 'Plan your next trip' })}</Text>
               </View>
 
               <Text style={styles.cardFooter}>
-                Go somewhere that changes you.
+                {t('tripWrapped.cardFooter', { defaultValue: 'Go somewhere that changes you.' })}
               </Text>
             </LinearGradient>
           </ViewShot>
@@ -473,7 +474,7 @@ function TripWrappedScreen() {
             style={styles.shareBtnGradient}
           >
             <Text style={styles.shareBtnText}>
-              Share this card
+              {t('tripWrapped.shareThisCard', { defaultValue: 'Share this card' })}
             </Text>
           </LinearGradient>
         </Pressable>
@@ -759,7 +760,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.creamMuted,
     textAlign: 'center',
-    fontStyle: 'italic',
     marginTop: SPACING.md,
   } as TextStyle,
 
@@ -864,7 +864,6 @@ const styles = StyleSheet.create({
     color: COLORS.creamMuted,
     textAlign: 'center',
     lineHeight: 22,
-    fontStyle: 'italic',
     marginBottom: SPACING.lg,
   } as TextStyle,
   ctaWrapper: {

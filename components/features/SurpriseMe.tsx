@@ -1,9 +1,10 @@
 // =============================================================================
 // ROAM — "Surprise Me" card + Reveal Modal
-// Full-width 100px card, rotating destination photos, Cormorant Garamond
+// Full-width 100px card, rotating destination photos, Space Grotesk
 // Never black. Real photos only.
 // =============================================================================
 import React, { memo, useState, useCallback, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -36,7 +37,7 @@ const ROTATING_PHOTOS = [...DESTINATIONS, ...HIDDEN_DESTINATIONS]
 
 function ArrowIcon({ size = 20, color = COLORS.cream }: { size?: number; color?: string }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M5 12h14M12 5l7 7-7 7" />
     </Svg>
   );
@@ -47,6 +48,7 @@ interface Props {
 }
 
 export default function SurpriseMe({ photoUrls: _photoUrls }: Props) {
+  const { t } = useTranslation();
   const router = useRouter();
   const setPlanWizard = useAppStore((s) => s.setPlanWizard);
   const travelProfile = useAppStore((s) => s.travelProfile);
@@ -156,8 +158,8 @@ export default function SurpriseMe({ photoUrls: _photoUrls }: Props) {
           />
           <View style={styles.surpriseContent}>
             <View style={styles.surpriseTextCol}>
-              <Text style={styles.surpriseLabel}>Surprise me</Text>
-              <Text style={styles.surpriseDesc}>We'll pick something perfect for you</Text>
+              <Text style={styles.surpriseLabel}>{t('surprise.surpriseMe', { defaultValue: 'Surprise me' })}</Text>
+              <Text style={styles.surpriseDesc}>{t('surprise.pickSomething', { defaultValue: "We'll pick something perfect for you" })}</Text>
             </View>
             <ArrowIcon size={22} color={COLORS.cream} />
           </View>
@@ -177,8 +179,8 @@ export default function SurpriseMe({ photoUrls: _photoUrls }: Props) {
 
           {loading ? (
             <View style={styles.loadingCard}>
-              <Text style={styles.loadingText}>Finding your perfect match</Text>
-              <Text style={styles.loadingSubtext}>Checking 40+ destinations for you</Text>
+              <Text style={styles.loadingText}>{t('surprise.findingMatch', { defaultValue: 'Finding your perfect match' })}</Text>
+              <Text style={styles.loadingSubtext}>{t('surprise.checkingDestinations', { defaultValue: 'Checking 40+ destinations for you' })}</Text>
             </View>
           ) : result ? (
             <Animated.View
@@ -213,31 +215,31 @@ export default function SurpriseMe({ photoUrls: _photoUrls }: Props) {
                       <Text style={styles.revealHook}>{dest.hook}</Text>
 
                       <View style={styles.whyCard}>
-                        <Text style={styles.whyLabel}>WHY WE PICKED THIS</Text>
+                        <Text style={styles.whyLabel}>{t('surprise.whyWePickedThis', { defaultValue: 'WHY WE PICKED THIS' })}</Text>
                         <Text style={styles.whyText}>{reason}</Text>
                       </View>
 
                       <View style={styles.revealMeta}>
                         <View style={styles.metaItem}>
-                          <Text style={styles.metaLabel}>Daily cost</Text>
+                          <Text style={styles.metaLabel}>{t('surprise.dailyCost', { defaultValue: 'Daily cost' })}</Text>
                           <Text style={styles.metaValue}>{rates && currency !== 'USD' ? formatUSD(dest.dailyCost, currency, rates) : `$${dest.dailyCost}`}</Text>
                         </View>
                         <View style={styles.metaItem}>
-                          <Text style={styles.metaLabel}>Crowds</Text>
+                          <Text style={styles.metaLabel}>{t('surprise.crowds', { defaultValue: 'Crowds' })}</Text>
                           <Text style={styles.metaValue}>{vibeCheck.crowdLevel}</Text>
                         </View>
                         <View style={styles.metaItem}>
-                          <Text style={styles.metaLabel}>Best time</Text>
+                          <Text style={styles.metaLabel}>{t('surprise.bestTime', { defaultValue: 'Best time' })}</Text>
                           <Text style={styles.metaValue}>{vibeCheck.bestTimeToGo.split(', ').slice(0, 2).join(', ')}</Text>
                         </View>
                       </View>
 
                       <Pressable style={styles.planButton} onPress={handlePlanTrip}>
-                        <Text style={styles.planButtonText}>Plan this trip</Text>
+                        <Text style={styles.planButtonText}>{t('surprise.planThisTrip', { defaultValue: 'Plan this trip' })}</Text>
                       </Pressable>
 
                       <Pressable style={styles.tryAgainButton} onPress={handleTryAgain}>
-                        <Text style={styles.tryAgainText}>Try again</Text>
+                        <Text style={styles.tryAgainText}>{t('surprise.tryAgain', { defaultValue: 'Try again' })}</Text>
                       </Pressable>
                     </View>
                   </>

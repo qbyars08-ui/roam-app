@@ -124,7 +124,7 @@ export default function ForecastStrip({ destination }: ForecastStripProps) {
               <WeatherIcon
                 size={ICON_SIZE}
                 color={iconColor}
-                strokeWidth={2}
+                strokeWidth={1.5}
               />
 
               <Text style={styles.tempHigh}>
@@ -140,7 +140,7 @@ export default function ForecastStrip({ destination }: ForecastStripProps) {
                   <Droplets
                     size={PRECIP_ICON_SIZE}
                     color={COLORS.sage}
-                    strokeWidth={2}
+                    strokeWidth={1.5}
                   />
                   <Text style={styles.precipText}>
                     {day.precipitationChance}%

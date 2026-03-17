@@ -13,6 +13,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Lock, Sparkles, ArrowRight } from 'lucide-react-native';
 import * as Haptics from '../../lib/haptics';
@@ -41,9 +42,11 @@ export default function ProGate({
   description,
   children,
   mode = 'replace',
-  ctaLabel = 'Unlock with Pro',
+  ctaLabel,
 }: ProGateProps) {
+  const { t } = useTranslation();
   const router = useRouter();
+  const resolvedCtaLabel = ctaLabel ?? t('proGate.unlockWithPro', { defaultValue: 'Unlock with Pro' });
   const isPro = useAppStore((s) => s.isPro);
 
   const handleUpgrade = useCallback(() => {
@@ -64,9 +67,9 @@ export default function ProGate({
         </View>
         <View style={styles.overlayGate}>
           <View style={styles.gateCard}>
-            <Lock size={24} color={COLORS.gold} strokeWidth={2} />
+            <Lock size={24} color={COLORS.gold} strokeWidth={1.5} />
             <Text style={styles.gateTitle}>
-              {title ?? 'Pro Feature'}
+              {title ?? t('proGate.proFeature', { defaultValue: 'Pro Feature' })}
             </Text>
             {description ? (
               <Text style={styles.gateDesc}>{description}</Text>
@@ -84,8 +87,8 @@ export default function ProGate({
                 end={{ x: 1, y: 0 }}
                 style={styles.gateCta}
               >
-                <Sparkles size={16} color={COLORS.bg} strokeWidth={2} />
-                <Text style={styles.gateCtaText}>{ctaLabel}</Text>
+                <Sparkles size={16} color={COLORS.bg} strokeWidth={1.5} />
+                <Text style={styles.gateCtaText}>{resolvedCtaLabel}</Text>
               </LinearGradient>
             </Pressable>
           </View>
@@ -98,11 +101,11 @@ export default function ProGate({
   return (
     <View style={styles.replaceCard}>
       <View style={styles.replaceIconRow}>
-        <Lock size={22} color={COLORS.gold} strokeWidth={2} />
-        <Sparkles size={16} color={COLORS.goldMuted} strokeWidth={2} />
+        <Lock size={22} color={COLORS.gold} strokeWidth={1.5} />
+        <Sparkles size={16} color={COLORS.goldMuted} strokeWidth={1.5} />
       </View>
       <Text style={styles.replaceTitle}>
-        {title ?? 'Unlock This Feature'}
+        {title ?? t('proGate.unlockFeature', { defaultValue: 'Unlock This Feature' })}
       </Text>
       {description ? (
         <Text style={styles.replaceDesc}>{description}</Text>
@@ -120,8 +123,8 @@ export default function ProGate({
           end={{ x: 1, y: 0 }}
           style={styles.replaceCta}
         >
-          <Text style={styles.replaceCtaText}>{ctaLabel}</Text>
-          <ArrowRight size={16} color={COLORS.bg} strokeWidth={2.5} />
+          <Text style={styles.replaceCtaText}>{resolvedCtaLabel}</Text>
+          <ArrowRight size={16} color={COLORS.bg} strokeWidth={1.5} />
         </LinearGradient>
       </Pressable>
     </View>
@@ -166,7 +169,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   } as TextStyle,
   gateCtaWrap: {
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
     overflow: 'hidden',
     marginTop: SPACING.sm,
   } as ViewStyle,
@@ -176,7 +179,7 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
     paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.sm + 2,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
   } as ViewStyle,
   gateCtaText: {
     fontFamily: FONTS.bodySemiBold,
@@ -213,7 +216,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   } as TextStyle,
   replaceCtaWrap: {
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
     overflow: 'hidden',
     marginTop: SPACING.xs,
   } as ViewStyle,
@@ -223,7 +226,7 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
     paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.sm + 2,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
   } as ViewStyle,
   replaceCtaText: {
     fontFamily: FONTS.bodySemiBold,

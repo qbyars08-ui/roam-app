@@ -5,6 +5,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { MessageCircle } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import * as Haptics from '../../lib/haptics';
 import type { SquadMatch, SocialProfile } from '../../lib/types/social';
@@ -32,6 +33,8 @@ function formatOverlapDates(startISO: string, endISO: string): string {
 // Component
 // ---------------------------------------------------------------------------
 const MatchCard = React.memo<MatchCardProps>(({ match, profile, onMessage, unread = false }) => {
+  const { t } = useTranslation();
+
   const overlapLabel = useMemo(
     () => formatOverlapDates(match.overlapStart, match.overlapEnd),
     [match.overlapStart, match.overlapEnd],
@@ -79,8 +82,8 @@ const MatchCard = React.memo<MatchCardProps>(({ match, profile, onMessage, unrea
         onPress={handleMessage}
         style={({ pressed }) => [styles.messageBtn, pressed && styles.messageBtnPressed]}
       >
-        <MessageCircle size={16} color={COLORS.bg} strokeWidth={2} />
-        <Text style={styles.messageBtnText}>Message</Text>
+        <MessageCircle size={16} color={COLORS.bg} strokeWidth={1.5} />
+        <Text style={styles.messageBtnText}>{t('social.message', { defaultValue: 'Message' })}</Text>
       </Pressable>
     </View>
   );

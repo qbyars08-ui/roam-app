@@ -4,6 +4,7 @@
 // streaming responses, offline emergency fallback.
 // =============================================================================
 import React, { useCallback, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   View,
@@ -84,6 +85,7 @@ const QUICK_PROMPTS = [
 // Component
 // ---------------------------------------------------------------------------
 export default function LiveCompanionFAB() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const activeTripId = useAppStore((s) => s.activeTripId);
   const trips = useAppStore((s) => s.trips);
@@ -209,7 +211,7 @@ export default function LiveCompanionFAB() {
         ]}
       >
         <View style={styles.fabInner}>
-          <MessageCircle size={24} color={COLORS.bg} strokeWidth={2.5} />
+          <MessageCircle size={24} color={COLORS.bg} strokeWidth={1.5} />
         </View>
       </Pressable>
 
@@ -227,18 +229,18 @@ export default function LiveCompanionFAB() {
             {/* Header */}
             <View style={styles.modalHeader}>
               <View style={styles.headerRow}>
-                <Zap size={16} color={COLORS.sage} strokeWidth={2} />
-                <Text style={styles.modalTitle}>Travel Companion</Text>
+                <Zap size={16} color={COLORS.sage} strokeWidth={1.5} />
+                <Text style={styles.modalTitle}>{t('companion.travelCompanion', { defaultValue: 'Travel Companion' })}</Text>
               </View>
               <Text style={styles.modalSubtitle}>
-                {activeTrip.destination} · {activeTrip.days} days · AI-powered
+                {activeTrip.destination} · {activeTrip.days} {t('companion.days', { defaultValue: 'days' })} · {t('companion.aiPowered', { defaultValue: 'AI-powered' })}
               </Text>
               <Pressable
                 onPress={handleClose}
                 hitSlop={12}
                 style={styles.closeBtn}
               >
-                <X size={20} color={COLORS.cream} strokeWidth={2} />
+                <X size={20} color={COLORS.cream} strokeWidth={1.5} />
               </Pressable>
             </View>
 
@@ -253,10 +255,10 @@ export default function LiveCompanionFAB() {
               {messages.length === 0 ? (
                 <View style={styles.emptyState}>
                   <Text style={styles.emptyTitle}>
-                    Ask anything about your trip
+                    {t('companion.askAnything', { defaultValue: 'Ask anything about your trip' })}
                   </Text>
                   <Text style={styles.emptyHint}>
-                    I know your full itinerary. Ask me about restaurants, directions, local tips, or type HELP for emergency numbers.
+                    {t('companion.emptyHint', { defaultValue: 'I know your full itinerary. Ask me about restaurants, directions, local tips, or type HELP for emergency numbers.' })}
                   </Text>
 
                   {/* Quick prompt pills */}
@@ -309,7 +311,7 @@ export default function LiveCompanionFAB() {
                 style={styles.input}
                 value={input}
                 onChangeText={setInput}
-                placeholder="Ask about your trip..."
+                placeholder={t('companion.inputPlaceholder', { defaultValue: 'Ask about your trip...' })}
                 placeholderTextColor={COLORS.creamFaint}
                 onSubmitEditing={() => handleSend()}
                 returnKeyType="send"
@@ -323,7 +325,7 @@ export default function LiveCompanionFAB() {
                 ]}
                 disabled={isLoading}
               >
-                <Send size={18} color={COLORS.bg} strokeWidth={2} />
+                <Send size={18} color={COLORS.bg} strokeWidth={1.5} />
               </Pressable>
             </View>
           </View>
@@ -342,7 +344,7 @@ const styles = StyleSheet.create({
     right: SPACING.lg,
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.sage,
     alignItems: 'center',
     justifyContent: 'center',
@@ -396,7 +398,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: 0,
-    padding: 8,
+    padding: SPACING.sm,
   } as ViewStyle,
 
   // ── Chat area ──
@@ -505,7 +507,7 @@ const styles = StyleSheet.create({
   sendBtn: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.sage,
     alignItems: 'center',
     justifyContent: 'center',

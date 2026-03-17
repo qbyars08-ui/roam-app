@@ -32,6 +32,7 @@ import { getHeroPhotoUrl } from '../lib/heroPhotos';
 import { getDestinationPhoto } from '../lib/photos';
 import { getCostOfLiving } from '../lib/cost-of-living';
 import { ChevronLeft, Share2, MapPin, Clock, Wallet, Sparkles } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const PROGRESS_BAR_HEIGHT = 3;
@@ -80,6 +81,7 @@ function getDayTagline(dayIndex: number): string {
 // Main Screen
 // =============================================================================
 function TripStoryScreen() {
+  const { t } = useTranslation();
   const { tripId } = useLocalSearchParams<{ tripId?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -274,9 +276,9 @@ function TripStoryScreen() {
     return (
       <View style={[styles.screen, { paddingTop: insets.top }]}>
         <View style={styles.emptyCenter}>
-          <Text style={styles.emptyTitle}>No trip to preview</Text>
+          <Text style={styles.emptyTitle}>{t('tripStory.noStory', { defaultValue: 'No story to tell yet.' })}</Text>
           <Pressable onPress={() => router.back()} style={styles.emptyBtn}>
-            <Text style={styles.emptyBtnText}>Go back</Text>
+            <Text style={styles.emptyBtnText}>{t('common.goBack', { defaultValue: 'Go back' })}</Text>
           </Pressable>
         </View>
       </View>
@@ -323,7 +325,7 @@ function TripStoryScreen() {
               resizeMode="cover"
             >
               <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.85)']}
+                colors={['transparent', COLORS.overlaySoft, COLORS.overlayStrong]}
                 style={StyleSheet.absoluteFill}
               />
             </ImageBackground>
@@ -411,11 +413,11 @@ function TripStoryScreen() {
       {/* Top controls */}
       <View style={[styles.topControls, { top: insets.top + 24 }]}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <ChevronLeft size={28} color="#fff" strokeWidth={2} />
+          <ChevronLeft size={28} color={COLORS.white} strokeWidth={1.5} />
         </Pressable>
 
         <Pressable onPress={handleShare} hitSlop={12}>
-          <Share2 size={22} color="#fff" strokeWidth={2} />
+          <Share2 size={22} color={COLORS.white} strokeWidth={1.5} />
         </Pressable>
       </View>
 
@@ -453,6 +455,7 @@ function IntroCard({
   subtitleSlide: Animated.Value;
   detailsFade: Animated.Value;
 }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.introContent}>
       <Animated.Text
@@ -490,15 +493,15 @@ function IntroCard({
 
       <Animated.View style={[styles.introPills, { opacity: detailsFade }]}>
         <View style={[styles.introPill, { borderColor: theme.primary }]}>
-          <Clock size={12} color={theme.primary} strokeWidth={2} />
+          <Clock size={12} color={theme.primary} strokeWidth={1.5} />
           <Text style={[styles.introPillText, { color: theme.primary }]}>
-            {days} {days === 1 ? 'day' : 'days'}
+            {t('tripStory.daysCount', { defaultValue: '{{count}} days', count: days })}
           </Text>
         </View>
         <View style={[styles.introPill, { borderColor: theme.primary }]}>
-          <MapPin size={12} color={theme.primary} strokeWidth={2} />
+          <MapPin size={12} color={theme.primary} strokeWidth={1.5} />
           <Text style={[styles.introPillText, { color: theme.primary }]}>
-            Your trip
+            {t('tripStory.yourTrip', { defaultValue: 'Your trip' })}
           </Text>
         </View>
       </Animated.View>
@@ -506,7 +509,7 @@ function IntroCard({
       <Animated.Text
         style={[styles.introSwipe, { opacity: detailsFade }]}
       >
-        tap to continue →
+        {t('tripStory.tapContinue', { defaultValue: 'tap to continue →' })}
       </Animated.Text>
     </View>
   );
@@ -601,7 +604,7 @@ function DayCard({
       {/* Daily cost + route */}
       <Animated.View style={[styles.dayFooter, { opacity: detailsFade }]}>
         <View style={styles.dayFooterRow}>
-          <Wallet size={14} color={theme.primary} strokeWidth={2} />
+          <Wallet size={14} color={theme.primary} strokeWidth={1.5} />
           <Text style={styles.dayCost}>{day.dailyCost}</Text>
         </View>
         {day.routeSummary ? (
@@ -634,7 +637,7 @@ function ActivityRow({
         {activity}
       </Text>
       <View style={styles.activityMeta}>
-        <MapPin size={10} color={COLORS.creamMuted} strokeWidth={2} />
+        <MapPin size={10} color={COLORS.creamMuted} strokeWidth={1.5} />
         <Text style={styles.activityLocation} numberOfLines={1}>
           {location}
         </Text>
@@ -664,13 +667,14 @@ function BudgetCard({
   titleSlide: Animated.Value;
   detailsFade: Animated.Value;
 }) {
+  const { t } = useTranslation();
   const breakdown = itinerary.budgetBreakdown;
   const items = [
-    { label: 'Accommodation', value: breakdown.accommodation },
-    { label: 'Food', value: breakdown.food },
-    { label: 'Activities', value: breakdown.activities },
-    { label: 'Transport', value: breakdown.transportation },
-    { label: 'Misc', value: breakdown.miscellaneous },
+    { label: t('tripStory.accommodation', { defaultValue: 'Accommodation' }), value: breakdown.accommodation },
+    { label: t('tripStory.food', { defaultValue: 'Food' }), value: breakdown.food },
+    { label: t('tripStory.activities', { defaultValue: 'Activities' }), value: breakdown.activities },
+    { label: t('tripStory.transport', { defaultValue: 'Transport' }), value: breakdown.transportation },
+    { label: t('tripStory.misc', { defaultValue: 'Misc' }), value: breakdown.miscellaneous },
   ];
 
   return (
@@ -710,7 +714,7 @@ function BudgetCard({
 
       {costData ? (
         <Animated.View style={[styles.tippingNote, { opacity: detailsFade }]}>
-          <Sparkles size={12} color={COLORS.gold} strokeWidth={2} />
+          <Sparkles size={12} color={COLORS.gold} strokeWidth={1.5} />
           <Text style={styles.tippingText}>{costData.tipping}</Text>
         </Animated.View>
       ) : null}
@@ -738,6 +742,7 @@ function OutroCard({
   subtitleSlide: Animated.Value;
   onPlanYours: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.outroContent}>
       <Animated.Text
@@ -746,7 +751,7 @@ function OutroCard({
           { opacity: titleFade, transform: [{ translateY: titleSlide }] },
         ]}
       >
-        That's {destination}.
+        {t('tripStory.outroHeadline', { defaultValue: "That's {{destination}}.", destination })}
       </Animated.Text>
 
       <Animated.Text
@@ -755,7 +760,7 @@ function OutroCard({
           { opacity: subtitleFade, transform: [{ translateY: subtitleSlide }] },
         ]}
       >
-        Built by AI in 30 seconds.{'\n'}Where are you going?
+        {t('tripStory.outroSubtext', { defaultValue: 'Built by AI in 30 seconds.\nWhere are you going?' })}
       </Animated.Text>
 
       <Animated.View style={{ opacity: subtitleFade }}>
@@ -766,14 +771,14 @@ function OutroCard({
             { backgroundColor: theme.primary, opacity: pressed ? 0.85 : 1 },
           ]}
         >
-          <Text style={styles.outroCtaText}>Plan yours</Text>
+          <Text style={styles.outroCtaText}>{t('tripStory.planYours', { defaultValue: 'Plan yours' })}</Text>
         </Pressable>
       </Animated.View>
 
       <Animated.Text
         style={[styles.outroFooter, { opacity: subtitleFade }]}
       >
-        roam — go somewhere that changes you.
+        {t('tripStory.outroFooter', { defaultValue: 'roam — go somewhere that changes you.' })}
       </Animated.Text>
     </View>
   );
@@ -785,7 +790,7 @@ function OutroCard({
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: COLORS.black,
   } as ViewStyle,
 
   // --- Progress bars ---
@@ -794,20 +799,20 @@ const styles = StyleSheet.create({
     left: SPACING.md,
     right: SPACING.md,
     flexDirection: 'row',
-    gap: 4,
+    gap: SPACING.xs,
     zIndex: 20,
   } as ViewStyle,
   progressBarBg: {
     flex: 1,
     height: PROGRESS_BAR_HEIGHT,
     borderRadius: PROGRESS_BAR_HEIGHT / 2,
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: COLORS.whiteDim,
     overflow: 'hidden',
   } as ViewStyle,
   progressBarFill: {
     height: '100%',
     borderRadius: PROGRESS_BAR_HEIGHT / 2,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.white,
   } as ViewStyle,
 
   // --- Top controls ---
@@ -826,7 +831,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: SPACING.xl,
-    paddingBottom: 80,
+    paddingBottom: SPACING.xxl + SPACING.xl,
   } as ViewStyle,
 
   // --- Intro card ---
@@ -843,14 +848,14 @@ const styles = StyleSheet.create({
   introDestination: {
     fontFamily: FONTS.header,
     fontSize: 52,
-    color: '#fff',
+    color: COLORS.white,
     textAlign: 'center',
     lineHeight: 58,
   } as TextStyle,
   introTagline: {
     fontFamily: FONTS.body,
     fontSize: 18,
-    color: 'rgba(255,255,255,0.8)',
+    color: COLORS.whiteBright,
     textAlign: 'center',
     lineHeight: 26,
     maxWidth: 280,
@@ -863,11 +868,11 @@ const styles = StyleSheet.create({
   introPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: SPACING.sm,
     borderWidth: 1,
     borderRadius: RADIUS.full,
     paddingHorizontal: SPACING.md,
-    paddingVertical: 6,
+    paddingVertical: SPACING.sm,
   } as ViewStyle,
   introPillText: {
     fontFamily: FONTS.mono,
@@ -877,7 +882,7 @@ const styles = StyleSheet.create({
   introSwipe: {
     fontFamily: FONTS.mono,
     fontSize: 11,
-    color: 'rgba(255,255,255,0.4)',
+    color: COLORS.whiteDim,
     letterSpacing: 1,
     marginTop: SPACING.xl,
   } as TextStyle,
@@ -894,25 +899,24 @@ const styles = StyleSheet.create({
   dayTheme: {
     fontFamily: FONTS.header,
     fontSize: 36,
-    color: '#fff',
+    color: COLORS.white,
     lineHeight: 42,
   } as TextStyle,
   dayTagline: {
     fontFamily: FONTS.body,
     fontSize: 16,
-    color: 'rgba(255,255,255,0.6)',
-    fontStyle: 'italic',
+    color: COLORS.creamSoft,
     marginBottom: SPACING.sm,
   } as TextStyle,
 
   activitiesWrap: {
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: COLORS.overlaySoft,
     borderRadius: RADIUS.lg,
     padding: SPACING.lg,
     gap: SPACING.md,
   } as ViewStyle,
   activityRow: {
-    gap: 4,
+    gap: SPACING.xs,
   } as ViewStyle,
   activityLabel: {
     fontFamily: FONTS.mono,
@@ -922,13 +926,13 @@ const styles = StyleSheet.create({
   activityName: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 16,
-    color: '#fff',
+    color: COLORS.white,
     lineHeight: 22,
   } as TextStyle,
   activityMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: SPACING.xs,
   } as ViewStyle,
   activityLocation: {
     fontFamily: FONTS.body,
@@ -946,23 +950,23 @@ const styles = StyleSheet.create({
   } as ViewStyle,
 
   dayFooter: {
-    gap: 4,
+    gap: SPACING.xs,
     marginTop: SPACING.sm,
   } as ViewStyle,
   dayFooterRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: SPACING.sm,
   } as ViewStyle,
   dayCost: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 18,
-    color: '#fff',
+    color: COLORS.white,
   } as TextStyle,
   dayRoute: {
     fontFamily: FONTS.mono,
     fontSize: 11,
-    color: 'rgba(255,255,255,0.5)',
+    color: COLORS.creamMuted,
     letterSpacing: 0.5,
   } as TextStyle,
 
@@ -979,13 +983,13 @@ const styles = StyleSheet.create({
   budgetTotal: {
     fontFamily: FONTS.header,
     fontSize: 56,
-    color: '#fff',
+    color: COLORS.white,
     textAlign: 'center',
   } as TextStyle,
   budgetSubtitle: {
     fontFamily: FONTS.body,
     fontSize: 14,
-    color: 'rgba(255,255,255,0.6)',
+    color: COLORS.creamSoft,
     marginBottom: SPACING.md,
   } as TextStyle,
   budgetBreakdown: {
@@ -1000,13 +1004,13 @@ const styles = StyleSheet.create({
   budgetLabel: {
     fontFamily: FONTS.body,
     fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
+    color: COLORS.creamHighlight,
     width: 120,
   } as TextStyle,
   budgetDots: {
     flex: 1,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.15)',
+    borderBottomColor: COLORS.whiteMuted,
     borderStyle: 'dotted',
   } as ViewStyle,
   budgetValue: {
@@ -1018,8 +1022,8 @@ const styles = StyleSheet.create({
   tippingNote: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.whiteFaintBorder,
     borderRadius: RADIUS.md,
     padding: SPACING.md,
     marginTop: SPACING.md,
@@ -1027,7 +1031,7 @@ const styles = StyleSheet.create({
   tippingText: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: 'rgba(255,255,255,0.6)',
+    color: COLORS.creamSoft,
     flex: 1,
     lineHeight: 18,
   } as TextStyle,
@@ -1040,32 +1044,32 @@ const styles = StyleSheet.create({
   outroHeadline: {
     fontFamily: FONTS.header,
     fontSize: 42,
-    color: '#fff',
+    color: COLORS.white,
     textAlign: 'center',
   } as TextStyle,
   outroSubtext: {
     fontFamily: FONTS.body,
     fontSize: 18,
-    color: 'rgba(255,255,255,0.7)',
+    color: COLORS.creamHighlight,
     textAlign: 'center',
     lineHeight: 28,
   } as TextStyle,
   outroCta: {
     borderRadius: RADIUS.full,
     paddingHorizontal: SPACING.xxl,
-    paddingVertical: 16,
+    paddingVertical: SPACING.md,
     marginTop: SPACING.md,
   } as ViewStyle,
   outroCtaText: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 18,
-    color: '#000',
+    color: COLORS.black,
     letterSpacing: 0.5,
   } as TextStyle,
   outroFooter: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: 'rgba(255,255,255,0.3)',
+    color: COLORS.whiteMuted,
     letterSpacing: 2,
     textTransform: 'lowercase',
     marginTop: SPACING.xxl,
@@ -1082,7 +1086,7 @@ const styles = StyleSheet.create({
   watermarkText: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    color: 'rgba(255,255,255,0.15)',
+    color: COLORS.whiteMuted,
     letterSpacing: 4,
   } as TextStyle,
 
@@ -1098,7 +1102,7 @@ const styles = StyleSheet.create({
   pausedText: {
     fontFamily: FONTS.mono,
     fontSize: 14,
-    color: 'rgba(255,255,255,0.5)',
+    color: COLORS.creamMuted,
     letterSpacing: 4,
   } as TextStyle,
 
@@ -1116,9 +1120,9 @@ const styles = StyleSheet.create({
   } as TextStyle,
   emptyBtn: {
     backgroundColor: COLORS.sage,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
     paddingHorizontal: SPACING.xl,
-    paddingVertical: 12,
+    paddingVertical: SPACING.md,
   } as ViewStyle,
   emptyBtnText: {
     fontFamily: FONTS.bodySemiBold,

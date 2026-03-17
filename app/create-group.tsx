@@ -3,6 +3,7 @@
 // Pick existing trip, name it, share invite link
 // =============================================================================
 import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -30,6 +31,7 @@ import GroupInviteCard from '../components/features/GroupInviteCard';
 import { withComingSoon } from '../lib/with-coming-soon';
 
 function CreateGroupScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ tripId?: string }>();
@@ -98,13 +100,13 @@ function CreateGroupScreen() {
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.backBtn}>
-            <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
+            <ChevronLeft size={24} color={COLORS.cream} strokeWidth={1.5} />
           </Pressable>
-          <Text style={styles.headerTitle}>Create group trip</Text>
+          <Text style={styles.headerTitle}>{t('createGroup.title', { defaultValue: 'Create group trip' })}</Text>
         </View>
         <View style={[styles.scrollInner, { flex: 1, justifyContent: 'center' }]}>
-          <Text style={styles.emptyMessage}>Plan a trip first, then come back to invite friends.</Text>
-          <Button label="Plan my trip" variant="sage" onPress={() => router.replace('/(tabs)/generate' as never)} />
+          <Text style={styles.emptyMessage}>{t('createGroup.emptyMessage', { defaultValue: 'Plan a trip first, then come back to invite friends.' })}</Text>
+          <Button label={t('createGroup.planMyTrip', { defaultValue: 'Plan my trip' })} variant="sage" onPress={() => router.replace('/(tabs)/generate' as never)} />
         </View>
       </View>
     );
@@ -117,8 +119,8 @@ function CreateGroupScreen() {
           contentContainerStyle={styles.successScroll}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.successTitle}>Group created</Text>
-          <Text style={styles.successSub}>Share the invite so friends can join</Text>
+          <Text style={styles.successTitle}>{t('createGroup.successTitle', { defaultValue: 'Group created' })}</Text>
+          <Text style={styles.successSub}>{t('createGroup.successSub', { defaultValue: 'Share the invite so friends can join' })}</Text>
           <GroupInviteCard
             groupName={createdGroupName || `${selectedTrip.destination} ${new Date().getFullYear()}`}
             destination={selectedTrip.destination}
@@ -127,7 +129,7 @@ function CreateGroupScreen() {
             ownerName={undefined}
           />
           <Pressable onPress={handleGoToGroup} style={styles.linkBtn}>
-            <Text style={styles.linkBtnText}>Open group trip</Text>
+            <Text style={styles.linkBtnText}>{t('createGroup.openGroupTrip', { defaultValue: 'Open group trip' })}</Text>
           </Pressable>
         </ScrollView>
       </View>
@@ -138,9 +140,9 @@ function CreateGroupScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
+          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
-        <Text style={styles.headerTitle}>Create group trip</Text>
+        <Text style={styles.headerTitle}>{t('createGroup.title', { defaultValue: 'Create group trip' })}</Text>
       </View>
 
       <ScrollView
@@ -166,7 +168,7 @@ function CreateGroupScreen() {
           </Pressable>
         )}
 
-        <Text style={styles.label}>Group name</Text>
+        <Text style={styles.label}>{t('createGroup.groupName', { defaultValue: 'Group name' })}</Text>
         <TextInput
           style={styles.input}
           value={groupName}
@@ -178,7 +180,7 @@ function CreateGroupScreen() {
         {error && <Text style={styles.errorText}>{error}</Text>}
 
         <Button
-          label={creating ? 'Creating...' : 'Create group'}
+          label={creating ? t('createGroup.creating', { defaultValue: 'Creating...' }) : t('createGroup.createGroup', { defaultValue: 'Create group' })}
           variant="sage"
           onPress={handleCreate}
           disabled={creating || !selectedTrip}

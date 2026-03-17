@@ -5,7 +5,7 @@
 
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, StyleSheet, View, type DimensionValue, type ViewStyle } from 'react-native';
-import { COLORS, FONTS, SPACING } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { getDestinationTheme } from '../../lib/destination-themes';
 import i18n from '../../lib/i18n';
 
@@ -395,12 +395,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 140,
     height: 140,
-    borderRadius: 70,
+    borderRadius: RADIUS.pill,
   },
   compass: {
     width: 72,
     height: 72,
-    borderRadius: 36,
+    borderRadius: RADIUS.pill,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',

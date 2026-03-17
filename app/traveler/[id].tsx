@@ -24,6 +24,7 @@ import {
   Shield,
 } from 'lucide-react-native';
 import { COLORS, FONTS, RADIUS, SPACING } from '../../lib/constants';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { useAppStore } from '../../lib/store';
 import type { SocialProfile, SquadMatch, VibeTag } from '../../lib/types/social';
@@ -125,6 +126,7 @@ function DimensionBar({ dimension }: DimensionBarProps) {
 // Main screen
 // ---------------------------------------------------------------------------
 export default function TravelerProfileScreen() {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -143,7 +145,7 @@ export default function TravelerProfileScreen() {
   // ---------------------------------------------------------------------------
   useEffect(() => {
     if (!id) {
-      setError('No traveler ID provided.');
+      setError(t('travelerProfile.noIdError', { defaultValue: 'No traveler ID provided.' }));
       setLoading(false);
       return;
     }
@@ -160,7 +162,7 @@ export default function TravelerProfileScreen() {
         if (cancelled) return;
 
         if (!fetchedProfile) {
-          setError('Traveler profile not found.');
+          setError(t('travelerProfile.notFoundError', { defaultValue: 'Traveler profile not found.' }));
           setLoading(false);
           return;
         }
@@ -184,7 +186,7 @@ export default function TravelerProfileScreen() {
         }
       } catch (err: unknown) {
         if (cancelled) return;
-        const message = err instanceof Error ? err.message : 'Failed to load profile.';
+        const message = err instanceof Error ? err.message : t('travelerProfile.loadError', { defaultValue: 'Failed to load profile.' });
         setError(message);
       } finally {
         if (!cancelled) setLoading(false);
@@ -255,10 +257,10 @@ export default function TravelerProfileScreen() {
     return (
       <View style={[styles.centerFill, { paddingTop: insets.top }]}>
         <Shield size={40} color={COLORS.coral} strokeWidth={1.5} />
-        <Text style={styles.errorTitle}>Profile unavailable</Text>
-        <Text style={styles.errorBody}>{error ?? 'This traveler could not be found.'}</Text>
+        <Text style={styles.errorTitle}>{t('travelerProfile.unavailable', { defaultValue: 'Profile unavailable' })}</Text>
+        <Text style={styles.errorBody}>{error ?? t('travelerProfile.couldNotFind', { defaultValue: 'This traveler could not be found.' })}</Text>
         <Pressable onPress={handleBack} style={styles.errorBackBtn}>
-          <Text style={styles.errorBackText}>Go Back</Text>
+          <Text style={styles.errorBackText}>{t('common.goBack', { defaultValue: 'Go Back' })}</Text>
         </Pressable>
       </View>
     );
@@ -272,9 +274,9 @@ export default function TravelerProfileScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={handleBack} style={styles.backBtn} hitSlop={8}>
-          <ArrowLeft size={22} color={COLORS.creamBright} strokeWidth={2} />
+          <ArrowLeft size={22} color={COLORS.creamBright} strokeWidth={1.5} />
         </Pressable>
-        <Text style={styles.headerTitle}>Traveler Profile</Text>
+        <Text style={styles.headerTitle}>{t('travelerProfile.title', { defaultValue: 'Traveler Profile' })}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -299,7 +301,7 @@ export default function TravelerProfileScreen() {
               <CheckCircle
                 size={20}
                 color={COLORS.sage}
-                strokeWidth={2}
+                strokeWidth={1.5}
                 style={styles.verifiedIcon}
               />
             )}
@@ -308,11 +310,11 @@ export default function TravelerProfileScreen() {
           {/* Age range + travel style pills */}
           <View style={styles.pillRow}>
             <View style={styles.pill}>
-              <MapPin size={12} color={COLORS.creamMuted} strokeWidth={2} />
+              <MapPin size={12} color={COLORS.creamMuted} strokeWidth={1.5} />
               <Text style={styles.pillText}>{profile.ageRange}</Text>
             </View>
             <View style={styles.pill}>
-              <Globe size={12} color={COLORS.creamMuted} strokeWidth={2} />
+              <Globe size={12} color={COLORS.creamMuted} strokeWidth={1.5} />
               <Text style={styles.pillText}>
                 {TRAVEL_STYLE_LABELS[profile.travelStyle] ?? profile.travelStyle}
               </Text>
@@ -324,12 +326,12 @@ export default function TravelerProfileScreen() {
         {chemistryScore && (
           <View style={styles.section}>
             <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionTitle}>Your Chemistry</Text>
+              <Text style={styles.sectionTitle}>{t('travelerProfile.yourChemistry', { defaultValue: 'Your Chemistry' })}</Text>
               <View style={[styles.chemistryBadge, { borderColor: chemistryColor }]}>
                 <Text style={[styles.chemistryBadgeScore, { color: chemistryColor }]}>
                   {chemistryScore.overall}%
                 </Text>
-                <Text style={styles.chemistryBadgeLabel}>match</Text>
+                <Text style={styles.chemistryBadgeLabel}>{t('travelerProfile.match', { defaultValue: 'match' })}</Text>
               </View>
             </View>
 
@@ -344,7 +346,7 @@ export default function TravelerProfileScreen() {
         {/* Bio */}
         {profile.bio ? (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>About</Text>
+            <Text style={styles.sectionTitle}>{t('travelerProfile.about', { defaultValue: 'About' })}</Text>
             <Text style={styles.bioText}>{profile.bio}</Text>
           </View>
         ) : null}
@@ -352,7 +354,7 @@ export default function TravelerProfileScreen() {
         {/* Vibe tags */}
         {profile.vibeTags.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Travel Vibes</Text>
+            <Text style={styles.sectionTitle}>{t('travelerProfile.travelVibes', { defaultValue: 'Travel Vibes' })}</Text>
             <View style={styles.tagWrap}>
               {profile.vibeTags.map((tag) => {
                 const isShared = sharedVibes.has(tag);
@@ -378,7 +380,7 @@ export default function TravelerProfileScreen() {
             </View>
             {sharedVibes.size > 0 && (
               <Text style={styles.sharedVibesNote}>
-                {sharedVibes.size} shared vibe{sharedVibes.size !== 1 ? 's' : ''} with you
+                {t('travelerProfile.sharedVibes', { defaultValue: '{{count}} shared vibe(s) with you', count: sharedVibes.size })}
               </Text>
             )}
           </View>
@@ -387,7 +389,7 @@ export default function TravelerProfileScreen() {
         {/* Languages */}
         {profile.languages.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Languages</Text>
+            <Text style={styles.sectionTitle}>{t('travelerProfile.languages', { defaultValue: 'Languages' })}</Text>
             <View style={styles.tagWrap}>
               {profile.languages.map((lang) => (
                 <View key={lang} style={styles.langTag}>
@@ -400,9 +402,9 @@ export default function TravelerProfileScreen() {
 
         {/* Privacy note */}
         <View style={styles.privacyNote}>
-          <Shield size={14} color={COLORS.creamFaint} strokeWidth={2} />
+          <Shield size={14} color={COLORS.creamFaint} strokeWidth={1.5} />
           <Text style={styles.privacyNoteText}>
-            Real names and photos are only revealed after a mutual match.
+            {t('travelerProfile.privacyNote', { defaultValue: 'Real names and photos are only revealed after a mutual match.' })}
           </Text>
         </View>
 
@@ -417,8 +419,8 @@ export default function TravelerProfileScreen() {
               onPress={handleMessage}
               style={({ pressed }) => [styles.primaryBtn, pressed && styles.btnPressed]}
             >
-              <MessageCircle size={18} color={COLORS.bg} strokeWidth={2.5} />
-              <Text style={styles.primaryBtnText}>Message</Text>
+              <MessageCircle size={18} color={COLORS.bg} strokeWidth={1.5} />
+              <Text style={styles.primaryBtnText}>{t('common.message', { defaultValue: 'Message' })}</Text>
             </Pressable>
           ) : (
             /* Not matched — connect + save */
@@ -431,7 +433,7 @@ export default function TravelerProfileScreen() {
                   pressed && styles.btnPressed,
                 ]}
               >
-                <Text style={styles.primaryBtnText}>Connect</Text>
+                <Text style={styles.primaryBtnText}>{t('common.connect', { defaultValue: 'Connect' })}</Text>
               </Pressable>
 
               <Pressable
@@ -445,7 +447,7 @@ export default function TravelerProfileScreen() {
                 <Heart
                   size={20}
                   color={saved ? COLORS.coral : COLORS.creamBright}
-                  strokeWidth={2}
+                  strokeWidth={1.5}
                   fill={saved ? COLORS.coral : 'none'}
                 />
               </Pressable>
@@ -517,7 +519,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
     backgroundColor: COLORS.bgElevated,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
   },
   errorBackText: {
     fontFamily: FONTS.bodyMedium,
@@ -542,7 +544,7 @@ const styles = StyleSheet.create({
   avatarCircle: {
     width: 120,
     height: 120,
-    borderRadius: 60,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.bgCard,
     borderWidth: 2,
     borderColor: COLORS.sageBorder,
@@ -574,9 +576,9 @@ const styles = StyleSheet.create({
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: SPACING.xs,
     paddingHorizontal: SPACING.sm,
-    paddingVertical: 5,
+    paddingVertical: SPACING.xs,
     backgroundColor: COLORS.bgElevated,
     borderRadius: RADIUS.full,
     borderWidth: StyleSheet.hairlineWidth,
@@ -598,7 +600,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.creamDim,
     letterSpacing: 0.8,
-    textTransform: 'uppercase',
     marginBottom: SPACING.sm,
   },
   sectionHeaderRow: {
@@ -613,7 +614,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
+    paddingVertical: SPACING.xs,
     alignItems: 'center',
   },
   chemistryBadgeScore: {
@@ -634,7 +635,7 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.xs,
   },
   dimensionRow: {
-    gap: 4,
+    gap: SPACING.xs,
   },
   dimensionLabelRow: {
     flexDirection: 'row',
@@ -683,7 +684,7 @@ const styles = StyleSheet.create({
   },
   vibeTag: {
     paddingHorizontal: SPACING.sm,
-    paddingVertical: 6,
+    paddingVertical: SPACING.sm,
     borderRadius: RADIUS.md,
     borderWidth: StyleSheet.hairlineWidth,
   },
@@ -714,7 +715,7 @@ const styles = StyleSheet.create({
   // Language tags
   langTag: {
     paddingHorizontal: SPACING.sm,
-    paddingVertical: 6,
+    paddingVertical: SPACING.sm,
     borderRadius: RADIUS.md,
     backgroundColor: COLORS.bgElevated,
     borderWidth: StyleSheet.hairlineWidth,
@@ -764,7 +765,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: SPACING.xs,
     backgroundColor: COLORS.sage,
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.pill,
     paddingVertical: SPACING.md,
   },
   connectBtn: {
@@ -780,7 +781,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: COLORS.bgGlass,
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.pill,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: COLORS.border,
   },

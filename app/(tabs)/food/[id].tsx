@@ -17,7 +17,7 @@ export default function FoodDetailScreen() {
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <Pressable onPress={() => router.back()} style={styles.backBtn}>
-        <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
+        <ChevronLeft size={24} color={COLORS.cream} strokeWidth={1.5} />
       </Pressable>
       <Text style={styles.title}>Restaurant detail</Text>
       <Text style={styles.id}>{id}</Text>

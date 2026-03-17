@@ -142,7 +142,7 @@ export default function ContextBanner({
         hitSlop={12}
         style={styles.dismissBtn}
       >
-        <X size={14} color={COLORS.creamDim} strokeWidth={2} />
+        <X size={14} color={COLORS.creamDim} strokeWidth={1.5} />
       </Pressable>
     </Animated.View>
   );

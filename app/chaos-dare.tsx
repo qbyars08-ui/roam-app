@@ -24,10 +24,12 @@ import { getChaosDare, type ChaosDare } from '../lib/chaos-dare';
 import { getDestinationPhoto } from '../lib/photos';
 import { BUDGETS, VIBES } from '../lib/constants';
 import { withComingSoon } from '../lib/with-coming-soon';
+import { useTranslation } from 'react-i18next';
 
 function ChaosDareScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const params = useLocalSearchParams<{ id?: string }>();
   const [dare, setDare] = useState<ChaosDare | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,9 +65,9 @@ function ChaosDareScreen() {
   if (!dare) {
     return (
       <View style={[styles.container, styles.center, { paddingTop: insets.top }]}>
-        <Text style={styles.errorText}>Dare not found</Text>
+        <Text style={styles.errorText}>{t('chaosDare.notFound', { defaultValue: 'Dare not found' })}</Text>
         <Pressable onPress={() => router.back()} style={styles.ctaBtn}>
-          <Text style={styles.ctaBtnText}>Go back</Text>
+          <Text style={styles.ctaBtnText}>{t('common.goBack', { defaultValue: 'Go back' })}</Text>
         </Pressable>
       </View>
     );
@@ -85,12 +87,12 @@ function ChaosDareScreen() {
           colors={[COLORS.overlaySoft, COLORS.overlayStrong]}
           style={styles.grad}
         >
-          <Text style={styles.eyebrow}>SOMEONE DARED YOU</Text>
+          <Text style={styles.eyebrow}>{t('chaosDare.eyebrow', { defaultValue: 'SOMEONE DARED YOU' })}</Text>
           <Text style={styles.title}>{dare.destination}</Text>
           <Text style={styles.meta}>
             {dare.days} days · {budgetLabel} · {vibeLabels.join(', ')}
           </Text>
-          <Text style={styles.dare}>Dare you to do this trip.</Text>
+          <Text style={styles.dare}>{t('chaosDare.dareText', { defaultValue: 'Dare you to do this trip.' })}</Text>
           <Pressable
             onPress={handleOpenROAM}
             style={({ pressed }) => [styles.ctaBtn, { opacity: pressed ? 0.9 : 1 }]}
@@ -99,7 +101,7 @@ function ChaosDareScreen() {
               colors={[COLORS.gold, COLORS.goldAlpha80]}
               style={styles.ctaGrad}
             >
-              <Text style={styles.ctaBtnText}>Open ROAM to claim it</Text>
+              <Text style={styles.ctaBtnText}>{t('chaosDare.claim', { defaultValue: 'Open ROAM to claim it' })}</Text>
             </LinearGradient>
           </Pressable>
         </LinearGradient>
@@ -145,7 +147,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xl,
   } as TextStyle,
   ctaBtn: {
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.pill,
     overflow: 'hidden',
   } as ViewStyle,
   ctaGrad: {

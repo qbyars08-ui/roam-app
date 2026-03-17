@@ -14,6 +14,7 @@ import {
   type TextStyle,
   type ImageStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Compass } from 'lucide-react-native';
 import { captureRef } from '../../lib/view-shot';
@@ -63,6 +64,7 @@ export default function ShareCard({
   dayThemes = [],
   onDismiss,
 }: ShareCardProps) {
+  const { t } = useTranslation();
   const cardRef = useRef<View>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -129,13 +131,13 @@ export default function ShareCard({
         {heroPhoto ? (
           <ImageBackground source={{ uri: heroPhoto }} style={styles.heroBg} resizeMode="cover">
             <LinearGradient
-              colors={['rgba(8,15,10,0.15)', 'transparent', COLORS.overlayDarkDim, COLORS.bgDark1515Overlay, COLORS.bgDark1515End]}
+              colors={['rgba(10,10,10,0.15)', 'transparent', COLORS.overlayDarkDim, COLORS.bgDark1515Overlay, COLORS.bgDark1515End]}
               locations={[0, 0.25, 0.5, 0.75, 1]}
               style={styles.overlay}
             >
               {/* Top left: ROAM compass logo */}
               <View style={styles.logoRow}>
-                <Compass size={16} color={COLORS.sage} strokeWidth={2} />
+                <Compass size={16} color={COLORS.sage} strokeWidth={1.5} />
                 <Text style={styles.logo}>ROAM</Text>
               </View>
 
@@ -185,7 +187,7 @@ export default function ShareCard({
             style={styles.gradientFallback}
           >
             <View style={styles.logoRow}>
-              <Compass size={16} color={COLORS.sage} strokeWidth={2} />
+              <Compass size={16} color={COLORS.sage} strokeWidth={1.5} />
               <Text style={styles.logo}>ROAM</Text>
             </View>
             <View style={styles.spacer} />
@@ -234,21 +236,21 @@ export default function ShareCard({
             ) : null}
             <Text style={styles.generateText}>
               {isGenerating
-                ? 'Generating...'
+                ? t('share.generating', { defaultValue: 'Generating...' })
                 : Platform.OS === 'web'
-                ? 'Open card in new tab'
-                : 'Save & Share'}
+                ? t('share.openCardInNewTab', { defaultValue: 'Open card in new tab' })
+                : t('share.saveAndShare', { defaultValue: 'Save & Share' })}
             </Text>
           </LinearGradient>
         </Pressable>
 
         {Platform.OS === 'web' && (
-          <Text style={styles.webHint}>Screenshot or download from the new tab</Text>
+          <Text style={styles.webHint}>{t('share.webHint', { defaultValue: 'Screenshot or download from the new tab' })}</Text>
         )}
 
         {onDismiss && (
           <Pressable onPress={onDismiss} style={({ pressed }) => [styles.dismissBtn, { opacity: pressed ? 0.7 : 1 }]}>
-            <Text style={styles.dismissText}>Close</Text>
+            <Text style={styles.dismissText}>{t('share.close', { defaultValue: 'Close' })}</Text>
           </Pressable>
         )}
       </View>
@@ -319,7 +321,6 @@ const styles = StyleSheet.create({
   destination: {
     fontFamily: FONTS.header,
     fontSize: 52,
-    fontStyle: 'italic',
     color: COLORS.cream,
     lineHeight: 56,
     letterSpacing: -0.5,
@@ -340,14 +341,13 @@ const styles = StyleSheet.create({
     color: COLORS.cream,
     opacity: 0.85,
     lineHeight: 24,
-    fontStyle: 'italic',
     marginBottom: SPACING.md,
   } as TextStyle,
 
   pills: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: SPACING.sm,
     marginBottom: SPACING.lg,
   } as ViewStyle,
 
@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.full,
     borderWidth: 1,
     borderColor: COLORS.sage,
-    backgroundColor: 'rgba(124,175,138,0.12)',
+    backgroundColor: COLORS.sageLight,
   } as ViewStyle,
 
   pillText: {

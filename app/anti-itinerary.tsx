@@ -12,22 +12,24 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { withComingSoon } from '../lib/with-coming-soon';
 
-const QUESTIONS = [
-  { q: 'Morning, afternoon, or evening?', options: ['Morning', 'Afternoon', 'Evening'] },
-  { q: 'Hungry, exploring, or resting?', options: ['Hungry', 'Exploring', 'Resting'] },
-  { q: "What's your budget for right now?", options: ['Cheap', 'Mid', 'Splurge'] },
-  { q: 'Indoors or outdoors?', options: ['Indoors', 'Outdoors'] },
-  { q: 'Solo or with people?', options: ['Solo', 'With people'] },
-];
-
 function AntiItineraryScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { t } = useTranslation();
   const { width } = useWindowDimensions();
+
+  const QUESTIONS = [
+    { q: t('antiItinerary.q1', { defaultValue: 'Morning, afternoon, or evening?' }), options: [t('antiItinerary.morning', { defaultValue: 'Morning' }), t('antiItinerary.afternoon', { defaultValue: 'Afternoon' }), t('antiItinerary.evening', { defaultValue: 'Evening' })] },
+    { q: t('antiItinerary.q2', { defaultValue: 'Hungry, exploring, or resting?' }), options: [t('antiItinerary.hungry', { defaultValue: 'Hungry' }), t('antiItinerary.exploring', { defaultValue: 'Exploring' }), t('antiItinerary.resting', { defaultValue: 'Resting' })] },
+    { q: t('antiItinerary.q3', { defaultValue: "What's your budget for right now?" }), options: [t('antiItinerary.cheap', { defaultValue: 'Cheap' }), t('antiItinerary.mid', { defaultValue: 'Mid' }), t('antiItinerary.splurge', { defaultValue: 'Splurge' })] },
+    { q: t('antiItinerary.q4', { defaultValue: 'Indoors or outdoors?' }), options: [t('antiItinerary.indoors', { defaultValue: 'Indoors' }), t('antiItinerary.outdoors', { defaultValue: 'Outdoors' })] },
+    { q: t('antiItinerary.q5', { defaultValue: 'Solo or with people?' }), options: [t('antiItinerary.solo', { defaultValue: 'Solo' }), t('antiItinerary.withPeople', { defaultValue: 'With people' })] },
+  ];
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const current = QUESTIONS[step];
@@ -48,9 +50,9 @@ function AntiItineraryScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Text style={styles.badge}>ANTI-ITINERARY</Text>
-        <Text style={styles.title}>One decision at a time</Text>
-        <Text style={styles.subtitle}>No planning ahead. Spontaneous mode.</Text>
+        <Text style={styles.badge}>{t('antiItinerary.badge', { defaultValue: 'ANTI-ITINERARY' })}</Text>
+        <Text style={styles.title}>{t('antiItinerary.title', { defaultValue: 'One decision at a time' })}</Text>
+        <Text style={styles.subtitle}>{t('antiItinerary.subtitle', { defaultValue: 'No planning ahead. Spontaneous mode.' })}</Text>
       </View>
 
       <View style={styles.questionWrap}>
@@ -159,7 +161,7 @@ const styles = StyleSheet.create({
   progress: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 8,
+    gap: SPACING.sm,
     paddingBottom: SPACING.lg,
   },
   dot: {

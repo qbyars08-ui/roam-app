@@ -6,9 +6,9 @@
 
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, Linking, type ViewStyle } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Plane } from 'lucide-react-native';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
-import { AFFILIATES } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, AFFILIATES } from '../../lib/constants';
 import { buildAffiliateUrl, trackAffiliateClick } from '../../lib/affiliate-tracking';
 import { captureEvent } from '../../lib/posthog';
 import { EVENTS } from '../../lib/posthog-events';
@@ -24,6 +24,7 @@ export default function FlightPriceCard({
   destination,
   placement = 'itinerary',
 }: FlightPriceCardProps) {
+  const { t } = useTranslation();
   const skyscannerUrl = buildAffiliateUrl({
     partner: 'skyscanner',
     baseUrl: AFFILIATES.skyscanner,
@@ -56,12 +57,12 @@ export default function FlightPriceCard({
       ]}
     >
       <View style={styles.row}>
-        <Plane size={20} color={COLORS.sage} strokeWidth={2} />
+        <Plane size={20} color={COLORS.sage} strokeWidth={1.5} />
         <View style={styles.content}>
           <Text style={styles.route}>
-            {origin} to {destination}
+            {origin} {t('flights.to', { defaultValue: 'to' })} {destination}
           </Text>
-          <Text style={styles.cta}>See flights</Text>
+          <Text style={styles.cta}>{t('flights.seeFlights', { defaultValue: 'See flights' })}</Text>
         </View>
       </View>
     </Pressable>

@@ -18,6 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
 import * as Clipboard from 'expo-clipboard';
 import { X, Gift, Copy, Check, Share2 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import {
@@ -31,16 +32,17 @@ import {
 // ---------------------------------------------------------------------------
 // How-it-works steps
 // ---------------------------------------------------------------------------
-const STEPS = [
-  { num: '1', title: 'Share your link', desc: 'Send it to friends who love to travel' },
-  { num: '2', title: 'They join the waitlist', desc: 'Your friend signs up with your link' },
-  { num: '3', title: 'You earn Pro', desc: '3 friends = 1 month free. 10 friends = 1 year free.' },
+const STEPS_DATA = [
+  { num: '1', titleKey: 'referral.step1Title', titleDefault: 'Share your link', descKey: 'referral.step1Desc', descDefault: 'Send it to friends who love to travel' },
+  { num: '2', titleKey: 'referral.step2Title', titleDefault: 'They join the waitlist', descKey: 'referral.step2Desc', descDefault: 'Your friend signs up with your link' },
+  { num: '3', titleKey: 'referral.step3Title', titleDefault: 'You earn Pro', descKey: 'referral.step3Desc', descDefault: '3 friends = 1 month free. 10 friends = 1 year free.' },
 ];
 
 const MILESTONE_1_MONTH = 3;
 const MILESTONE_1_YEAR = 10;
 
 export default function ReferralScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -99,7 +101,7 @@ export default function ReferralScreen() {
             { opacity: pressed ? 0.6 : 1 },
           ]}
         >
-          <X size={22} color={COLORS.cream} strokeWidth={2} />
+          <X size={22} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
       </View>
 
@@ -111,14 +113,14 @@ export default function ReferralScreen() {
         <View style={styles.heroIconWrap}>
           <Gift size={48} color={COLORS.gold} strokeWidth={1.5} />
         </View>
-        <Text style={styles.heroTitle}>Give a trip, get a trip</Text>
+        <Text style={styles.heroTitle}>{t('referral.heroTitle', { defaultValue: 'Give a trip, get a trip' })}</Text>
         <Text style={styles.heroSubtitle}>
-          Share your link. 3 friends = 1 month Pro free. 10 friends = 1 year Pro free.
+          {t('referral.heroSubtitle', { defaultValue: 'Share your link. 3 friends = 1 month Pro free. 10 friends = 1 year Pro free.' })}
         </Text>
 
         {/* Referral link card */}
         <View style={styles.codeCard}>
-          <Text style={styles.codeLabel}>YOUR REFERRAL LINK</Text>
+          <Text style={styles.codeLabel}>{t('referral.yourReferralLink', { defaultValue: 'YOUR REFERRAL LINK' })}</Text>
           <Text style={[styles.codeText, { fontSize: 14, letterSpacing: 0 }]} numberOfLines={2}>{referralUrl}</Text>
           <Pressable
             onPress={handleCopy}
@@ -132,13 +134,13 @@ export default function ReferralScreen() {
             <View style={styles.copyBtnInner}>
               {copied ? (
                 <>
-                  <Check size={18} color={COLORS.cream} strokeWidth={2} />
-                  <Text style={styles.copyBtnText}>Copied!</Text>
+                  <Check size={18} color={COLORS.cream} strokeWidth={1.5} />
+                  <Text style={styles.copyBtnText}>{t('referral.copied', { defaultValue: 'Copied!' })}</Text>
                 </>
               ) : (
                 <>
-                  <Copy size={18} color={COLORS.cream} strokeWidth={2} />
-                  <Text style={styles.copyBtnText}>Copy Link</Text>
+                  <Copy size={18} color={COLORS.cream} strokeWidth={1.5} />
+                  <Text style={styles.copyBtnText}>{t('referral.copyLink', { defaultValue: 'Copy Link' })}</Text>
                 </>
               )}
             </View>
@@ -158,8 +160,8 @@ export default function ReferralScreen() {
             style={styles.shareGradient}
           >
             <View style={styles.shareBtnInner}>
-              <Share2 size={20} color={COLORS.bg} strokeWidth={2} />
-              <Text style={styles.shareButtonText}>Share with friends</Text>
+              <Share2 size={20} color={COLORS.bg} strokeWidth={1.5} />
+              <Text style={styles.shareButtonText}>{t('referral.shareWithFriends', { defaultValue: 'Share with friends' })}</Text>
             </View>
           </LinearGradient>
         </Pressable>
@@ -167,14 +169,14 @@ export default function ReferralScreen() {
         {/* Progress tracker */}
         <View style={styles.progressSection}>
           <Text style={styles.progressTitle}>
-            {stats.referralsCount} referral{stats.referralsCount !== 1 ? 's' : ''}
+            {t('referral.referralsCount', { defaultValue: '{{count}} referral', defaultValue_plural: '{{count}} referrals', count: stats.referralsCount })}
           </Text>
           <Text style={styles.progressSubtitle}>
             {stats.referralsCount >= MILESTONE_1_YEAR
-              ? 'You unlocked 1 year of Pro'
+              ? t('referral.unlockedYear', { defaultValue: 'You unlocked 1 year of Pro' })
               : stats.referralsCount >= MILESTONE_1_MONTH
-              ? `${stats.proMonthsEarned} month${stats.proMonthsEarned !== 1 ? 's' : ''} Pro earned`
-              : stats.nextMilestoneMessage ?? 'Share your link to get started'}
+              ? t('referral.proMonthsEarned', { defaultValue: '{{count}} month Pro earned', defaultValue_plural: '{{count}} months Pro earned', count: stats.proMonthsEarned })
+              : stats.nextMilestoneMessage ?? t('referral.getStarted', { defaultValue: 'Share your link to get started' })}
           </Text>
           {/* Progress bar: 0→3 (first month) or 3→10 (year) */}
           {stats.referralsCount < MILESTONE_1_YEAR && (
@@ -197,8 +199,8 @@ export default function ReferralScreen() {
               <View style={styles.progressLabels}>
                 <Text style={styles.progressLabel}>
                   {stats.referralsCount < MILESTONE_1_MONTH
-                    ? `${stats.referralsCount}/${MILESTONE_1_MONTH} to first month`
-                    : `${stats.referralsCount}/${MILESTONE_1_YEAR} to 1 year`}
+                    ? t('referral.progressToMonth', { defaultValue: '{{count}}/{{goal}} to first month', count: stats.referralsCount, goal: MILESTONE_1_MONTH })
+                    : t('referral.progressToYear', { defaultValue: '{{count}}/{{goal}} to 1 year', count: stats.referralsCount, goal: MILESTONE_1_YEAR })}
                 </Text>
               </View>
             </View>
@@ -209,25 +211,25 @@ export default function ReferralScreen() {
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
             <Text style={styles.statValue}>{stats.referralsCount}</Text>
-            <Text style={styles.statLabel}>TOTAL REFERRALS</Text>
+            <Text style={styles.statLabel}>{t('referral.totalReferrals', { defaultValue: 'TOTAL REFERRALS' })}</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statValue}>{stats.proMonthsEarned}</Text>
-            <Text style={styles.statLabel}>PRO MONTHS EARNED</Text>
+            <Text style={styles.statLabel}>{t('referral.proMonthsEarnedLabel', { defaultValue: 'PRO MONTHS EARNED' })}</Text>
           </View>
         </View>
 
         {/* How it works */}
         <View style={styles.howSection}>
-          <Text style={styles.howTitle}>How it works</Text>
-          {STEPS.map((step, i) => (
+          <Text style={styles.howTitle}>{t('referral.howItWorks', { defaultValue: 'How it works' })}</Text>
+          {STEPS_DATA.map((step, i) => (
             <View key={i} style={styles.stepRow}>
               <View style={styles.stepBadge}>
                 <Text style={styles.stepNum}>{step.num}</Text>
               </View>
               <View style={styles.stepContent}>
-                <Text style={styles.stepTitle}>{step.title}</Text>
-                <Text style={styles.stepDesc}>{step.desc}</Text>
+                <Text style={styles.stepTitle}>{t(step.titleKey, { defaultValue: step.titleDefault })}</Text>
+                <Text style={styles.stepDesc}>{t(step.descKey, { defaultValue: step.descDefault })}</Text>
               </View>
             </View>
           ))}

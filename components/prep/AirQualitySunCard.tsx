@@ -9,7 +9,7 @@ import { Sunrise, Sunset, Wind } from 'lucide-react-native';
 import { COLORS, FONTS, RADIUS, SPACING } from '../../lib/constants';
 import {
   getAirQuality,
-  getDestinationCoords,
+  resolveDestinationCoords,
   type AirQuality,
 } from '../../lib/air-quality';
 import { getSunTimes, type SunTimes } from '../../lib/sun-times';
@@ -23,7 +23,7 @@ export default function AirQualitySunCard({ destination }: AirQualitySunCardProp
   const [sunTimes, setSunTimes] = useState<SunTimes | null>(null);
 
   const fetchData = useCallback(async (cancelled: { current: boolean }) => {
-    const coords = getDestinationCoords(destination);
+    const coords = await resolveDestinationCoords(destination);
     if (!coords) return;
 
     const [aqiResult, sunResult] = await Promise.all([
@@ -51,7 +51,7 @@ export default function AirQualitySunCard({ destination }: AirQualitySunCardProp
     <View style={styles.container}>
       {aqi && (
         <View style={styles.card}>
-          <Wind size={16} color={aqi.color} strokeWidth={2} />
+          <Wind size={16} color={aqi.color} strokeWidth={1.5} />
           <Text style={styles.aqiValue}>{aqi.aqi}</Text>
           <Text style={styles.aqiLabel}>{aqi.label}</Text>
           <Text style={styles.aqiAdvice} numberOfLines={2}>
@@ -62,15 +62,15 @@ export default function AirQualitySunCard({ destination }: AirQualitySunCardProp
 
       {sunTimes && (
         <View style={styles.card}>
-          <Sunrise size={16} color={COLORS.gold} strokeWidth={2} />
+          <Sunrise size={16} color={COLORS.gold} strokeWidth={1.5} />
 
           <View style={styles.sunRow}>
-            <Sunrise size={10} color={COLORS.gold} strokeWidth={2} />
+            <Sunrise size={10} color={COLORS.gold} strokeWidth={1.5} />
             <Text style={styles.sunTime}>{sunTimes.sunrise}</Text>
           </View>
 
           <View style={styles.sunRow}>
-            <Sunset size={10} color={COLORS.gold} strokeWidth={2} />
+            <Sunset size={10} color={COLORS.gold} strokeWidth={1.5} />
             <Text style={styles.sunTime}>{sunTimes.sunset}</Text>
           </View>
 

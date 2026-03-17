@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../lib/haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Repeat, ChevronRight } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { SkeletonCard } from '../components/premium/LoadingStates';
 import { useAppStore } from '../lib/store';
@@ -33,6 +34,7 @@ import { getDestinationPhoto } from '../lib/photos';
 import { withComingSoon } from '../lib/with-coming-soon';
 
 function TripTradingScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const addTrip = useAppStore((s) => s.addTrip);
@@ -61,18 +63,24 @@ function TripTradingScreen() {
   }, [load]);
 
   const handleClaim = useCallback(
-    async (t: TradableTrip) => {
+    async (tradableTrip: TradableTrip) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      const trip = await claimTrip(t.id, t);
+      const trip = await claimTrip(tradableTrip.id, tradableTrip);
       if (trip) {
         addTrip(trip);
-        Alert.alert('Claimed!', `Your ${t.destination} trip is in your trips.`);
+        Alert.alert(
+          t('tripTrading.claimedTitle', { defaultValue: 'Claimed!' }),
+          t('tripTrading.claimedBody', { defaultValue: 'Your {{destination}} trip is in your trips.', destination: tradableTrip.destination })
+        );
         router.push('/(tabs)/generate' as never);
       } else {
-        Alert.alert('Oops', 'Couldn\'t claim this trip. Sign in and try again.');
+        Alert.alert(
+          t('tripTrading.oopsTitle', { defaultValue: 'Oops' }),
+          t('tripTrading.oopsBody', { defaultValue: "Couldn't claim this trip. Sign in and try again." })
+        );
       }
     },
-    [addTrip, router]
+    [addTrip, router, t]
   );
 
   return (
@@ -81,8 +89,8 @@ function TripTradingScreen() {
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Text style={styles.back}>{'←'}</Text>
         </Pressable>
-        <Text style={styles.title}>Trip Trading</Text>
-        <Text style={styles.subtitle}>Browse trips others shared. One tap to claim.</Text>
+        <Text style={styles.title}>{t('tripTrading.title', { defaultValue: 'Trip Trading' })}</Text>
+        <Text style={styles.subtitle}>{t('tripTrading.subtitle', { defaultValue: 'Browse trips others shared. One tap to claim.' })}</Text>
       </View>
 
       {loading ? (
@@ -103,18 +111,18 @@ function TripTradingScreen() {
           {trips.length === 0 ? (
             <View style={styles.empty}>
               <Repeat size={48} color={COLORS.creamMuted} />
-              <Text style={styles.emptyTitle}>No trips for trading yet</Text>
+              <Text style={styles.emptyTitle}>{t('tripTrading.emptyTitle', { defaultValue: 'Nothing on the market yet.' })}</Text>
               <Text style={styles.emptyText}>
-                Share one of your trips and tick "List for trading" — or check back later.
+                {t('tripTrading.emptyText', { defaultValue: 'List one of your trips for trade, or check back when someone else does.' })}
               </Text>
             </View>
           ) : (
-            trips.map((t) => {
-              const photo = getDestinationPhoto(t.destination);
+            trips.map((trip) => {
+              const photo = getDestinationPhoto(trip.destination);
               return (
                 <Pressable
-                  key={t.id}
-                  onPress={() => handleClaim(t)}
+                  key={trip.id}
+                  onPress={() => handleClaim(trip)}
                   style={({ pressed }) => [styles.card, { opacity: pressed ? 0.9 : 1 }]}
                 >
                   <ImageBackground
@@ -127,12 +135,12 @@ function TripTradingScreen() {
                       style={styles.cardGrad}
                     >
                       <View style={styles.cardContent}>
-                        <Text style={styles.cardDestination}>{t.destination}</Text>
+                        <Text style={styles.cardDestination}>{trip.destination}</Text>
                         <Text style={styles.cardMeta}>
-                          {t.days} days · {t.budget} · {t.claim_count ?? 0} claims
+                          {t('tripTrading.cardMeta', { defaultValue: '{{days}} days · {{budget}} · {{claims}} claims', days: trip.days, budget: trip.budget, claims: trip.claim_count ?? 0 })}
                         </Text>
                         <View style={styles.claimRow}>
-                          <Text style={styles.claimBtn}>Claim this trip</Text>
+                          <Text style={styles.claimBtn}>{t('tripTrading.claimThisTrip', { defaultValue: 'Claim this trip' })}</Text>
                           <ChevronRight size={18} color={COLORS.gold} />
                         </View>
                       </View>

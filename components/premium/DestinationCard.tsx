@@ -12,10 +12,9 @@ import {
   Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, type Destination } from '../../lib/constants';
 import { DESTINATION_META } from '../../lib/destination-meta';
 import { getDestinationPhoto } from '../../lib/photos';
-import type { Destination } from '../../lib/constants';
 
 const CARD_GAP = 12;
 const getCardWidth = () => {

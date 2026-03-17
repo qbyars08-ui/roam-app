@@ -177,7 +177,7 @@ export default function VoiceInputButton({
           <Mic
             size={22}
             color={listening ? COLORS.white : COLORS.cream}
-            strokeWidth={2}
+            strokeWidth={1.5}
           />
         </Pressable>
       </Animated.View>

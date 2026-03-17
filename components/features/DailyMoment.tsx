@@ -5,6 +5,7 @@
 // =============================================================================
 
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Animated,
   Dimensions,
@@ -43,6 +44,7 @@ const FADE_OUT_DURATION = 400;
 // Component
 // ---------------------------------------------------------------------------
 export default function DailyMoment({ onComplete, enabled = true }: DailyMomentProps): React.JSX.Element | null {
+  const { t } = useTranslation();
   const opacity = useRef(new Animated.Value(0)).current;
 
   const moment = useMemo<DailyMomentType>(() => getDailyMoment(), []);
@@ -103,7 +105,7 @@ export default function DailyMoment({ onComplete, enabled = true }: DailyMomentP
       <View style={styles.textBlock}>
         {/* "Right now in [Destination]" label */}
         <Text style={styles.label}>
-          {`RIGHT NOW IN ${moment.destination.toUpperCase()}`}
+          {`${t('dailyMoment.rightNowIn', { defaultValue: 'RIGHT NOW IN' })} ${moment.destination.toUpperCase()}`}
         </Text>
 
         {/* Local time */}

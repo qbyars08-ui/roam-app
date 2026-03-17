@@ -34,6 +34,7 @@ import {
   Sun, Cloud, Umbrella, ShoppingBag, Camera,
   Heart, MapPin, Star, Zap, Coffee,
 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -41,16 +42,16 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 // Countdown tips — daily inspiration that rotates
 // =============================================================================
 const COUNTDOWN_TIPS: { icon: React.ReactNode; text: string; category: string }[] = [
-  { icon: <ShoppingBag size={16} color={COLORS.sage} strokeWidth={2} />, text: 'Start your packing list today. You\'ll thank yourself later.', category: 'packing' },
-  { icon: <Camera size={16} color={COLORS.coral} strokeWidth={2} />, text: 'Download offline maps for your destination. No WiFi needed.', category: 'prep' },
-  { icon: <Coffee size={16} color={COLORS.gold} strokeWidth={2} />, text: 'Research local breakfast spots. The best meals happen early.', category: 'food' },
-  { icon: <Heart size={16} color={COLORS.coral} strokeWidth={2} />, text: 'Tell someone you\'re excited. Anticipation is half the joy.', category: 'vibes' },
-  { icon: <MapPin size={16} color={COLORS.sage} strokeWidth={2} />, text: 'Save your hotel address in your phone\'s notes — works offline.', category: 'prep' },
-  { icon: <Star size={16} color={COLORS.gold} strokeWidth={2} />, text: 'Learn 3 phrases in the local language. Locals will love it.', category: 'culture' },
-  { icon: <Zap size={16} color={COLORS.sage} strokeWidth={2} />, text: 'Check if you need a travel adapter. Different plugs, different world.', category: 'packing' },
-  { icon: <Sun size={16} color={COLORS.gold} strokeWidth={2} />, text: 'Check the sunset time. The golden hour won\'t wait for you.', category: 'vibes' },
-  { icon: <Plane size={16} color={COLORS.cream} strokeWidth={2} />, text: 'Screenshot your boarding pass. Screenshots never lose WiFi.', category: 'prep' },
-  { icon: <Camera size={16} color={COLORS.coral} strokeWidth={2} />, text: 'Clear your camera roll. You\'re gonna need the space.', category: 'prep' },
+  { icon: <ShoppingBag size={16} color={COLORS.sage} strokeWidth={1.5} />, text: 'Start your packing list today. You\'ll thank yourself later.', category: 'packing' },
+  { icon: <Camera size={16} color={COLORS.coral} strokeWidth={1.5} />, text: 'Download offline maps for your destination. No WiFi needed.', category: 'prep' },
+  { icon: <Coffee size={16} color={COLORS.gold} strokeWidth={1.5} />, text: 'Research local breakfast spots. The best meals happen early.', category: 'food' },
+  { icon: <Heart size={16} color={COLORS.coral} strokeWidth={1.5} />, text: 'Tell someone you\'re excited. Anticipation is half the joy.', category: 'vibes' },
+  { icon: <MapPin size={16} color={COLORS.sage} strokeWidth={1.5} />, text: 'Save your hotel address in your phone\'s notes — works offline.', category: 'prep' },
+  { icon: <Star size={16} color={COLORS.gold} strokeWidth={1.5} />, text: 'Learn 3 phrases in the local language. Locals will love it.', category: 'culture' },
+  { icon: <Zap size={16} color={COLORS.sage} strokeWidth={1.5} />, text: 'Check if you need a travel adapter. Different plugs, different world.', category: 'packing' },
+  { icon: <Sun size={16} color={COLORS.gold} strokeWidth={1.5} />, text: 'Check the sunset time. The golden hour won\'t wait for you.', category: 'vibes' },
+  { icon: <Plane size={16} color={COLORS.cream} strokeWidth={1.5} />, text: 'Screenshot your boarding pass. Screenshots never lose WiFi.', category: 'prep' },
+  { icon: <Camera size={16} color={COLORS.coral} strokeWidth={1.5} />, text: 'Clear your camera roll. You\'re gonna need the space.', category: 'prep' },
 ];
 
 // =============================================================================
@@ -163,6 +164,7 @@ const PulsingRing = React.memo(function PulsingRing({ color }: { color: string }
 // Main Screen
 // =============================================================================
 function TripCountdownScreen() {
+  const { t } = useTranslation();
   const { tripId, departureDate: departureDateParam } = useLocalSearchParams<{
     tripId?: string;
     departureDate?: string;
@@ -264,9 +266,9 @@ function TripCountdownScreen() {
     return (
       <View style={[styles.screen, { paddingTop: insets.top }]}>
         <View style={styles.emptyCenter}>
-          <Text style={styles.emptyTitle}>No trip found</Text>
+          <Text style={styles.emptyTitle}>{t('tripCountdown.noTripFound', { defaultValue: 'No trip found' })}</Text>
           <Pressable onPress={() => router.back()} style={styles.backPill}>
-            <Text style={styles.backPillText}>Go back</Text>
+            <Text style={styles.backPillText}>{t('common.goBack', { defaultValue: 'Go back' })}</Text>
           </Pressable>
         </View>
       </View>
@@ -278,11 +280,11 @@ function TripCountdownScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <ChevronLeft size={28} color={COLORS.cream} strokeWidth={2} />
+          <ChevronLeft size={28} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
-        <Text style={styles.headerTitle}>Countdown</Text>
+        <Text style={styles.headerTitle}>{t('tripCountdown.title', { defaultValue: 'Countdown' })}</Text>
         <Pressable onPress={handleShare} hitSlop={12}>
-          <Share2 size={22} color={COLORS.cream} strokeWidth={2} />
+          <Share2 size={22} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
       </View>
 
@@ -313,7 +315,7 @@ function TripCountdownScreen() {
                   {countdown.days}
                 </Text>
                 <Text style={styles.bigCountdownLabel}>
-                  {countdown.days === 1 ? 'day to go' : 'days to go'}
+                  {t('tripCountdown.daysToGo', { defaultValue: 'days to go', count: countdown.days })}
                 </Text>
               </View>
 
@@ -329,11 +331,11 @@ function TripCountdownScreen() {
               {/* Trip meta */}
               <View style={styles.metaRow}>
                 <View style={styles.metaPill}>
-                  <Clock size={12} color={COLORS.creamMuted} strokeWidth={2} />
-                  <Text style={styles.metaText}>{trip.days} days</Text>
+                  <Clock size={12} color={COLORS.creamMuted} strokeWidth={1.5} />
+                  <Text style={styles.metaText}>{t('tripCountdown.daysCount', { defaultValue: '{{count}} days', count: trip.days })}</Text>
                 </View>
                 <View style={styles.metaPill}>
-                  <Plane size={12} color={COLORS.creamMuted} strokeWidth={2} />
+                  <Plane size={12} color={COLORS.creamMuted} strokeWidth={1.5} />
                   <Text style={styles.metaText}>
                     {departureDate.toLocaleDateString('en-US', {
                       month: 'short',
@@ -351,7 +353,7 @@ function TripCountdownScreen() {
           {/* Milestone alert */}
           {milestone && (
             <View style={[styles.milestoneCard, { borderColor: theme.primary }]}>
-              <Sparkles size={20} color={theme.primary} strokeWidth={2} />
+              <Sparkles size={20} color={theme.primary} strokeWidth={1.5} />
               <Text style={styles.milestoneText}>{milestone}</Text>
             </View>
           )}
@@ -359,8 +361,8 @@ function TripCountdownScreen() {
           {/* Daily tip */}
           <View style={styles.tipCard}>
             <View style={styles.tipHeader}>
-              <Sparkles size={14} color={COLORS.gold} strokeWidth={2} />
-              <Text style={styles.tipHeaderText}>Daily Travel Tip</Text>
+              <Sparkles size={14} color={COLORS.gold} strokeWidth={1.5} />
+              <Text style={styles.tipHeaderText}>{t('tripCountdown.dailyTip', { defaultValue: 'Daily Travel Tip' })}</Text>
             </View>
             <View style={styles.tipContent}>
               {dailyTip.icon}
@@ -380,8 +382,8 @@ function TripCountdownScreen() {
                 { opacity: pressed ? 0.85 : 1 },
               ]}
             >
-              <Sparkles size={24} color={COLORS.sage} strokeWidth={2} />
-              <Text style={styles.actionLabel}>View Story</Text>
+              <Sparkles size={24} color={COLORS.sage} strokeWidth={1.5} />
+              <Text style={styles.actionLabel}>{t('tripCountdown.viewStory', { defaultValue: 'View Story' })}</Text>
             </Pressable>
 
             <Pressable
@@ -394,8 +396,8 @@ function TripCountdownScreen() {
                 { opacity: pressed ? 0.85 : 1 },
               ]}
             >
-              <Camera size={24} color={COLORS.coral} strokeWidth={2} />
-              <Text style={styles.actionLabel}>Photo Album</Text>
+              <Camera size={24} color={COLORS.coral} strokeWidth={1.5} />
+              <Text style={styles.actionLabel}>{t('tripCountdown.photoAlbum', { defaultValue: 'Photo Album' })}</Text>
             </Pressable>
 
             <Pressable
@@ -405,8 +407,8 @@ function TripCountdownScreen() {
                 { opacity: pressed ? 0.85 : 1 },
               ]}
             >
-              <Share2 size={24} color={COLORS.gold} strokeWidth={2} />
-              <Text style={styles.actionLabel}>Share</Text>
+              <Share2 size={24} color={COLORS.gold} strokeWidth={1.5} />
+              <Text style={styles.actionLabel}>{t('common.share', { defaultValue: 'Share' })}</Text>
             </Pressable>
           </View>
 
@@ -414,8 +416,8 @@ function TripCountdownScreen() {
           {itinerary?.packingEssentials && itinerary.packingEssentials.length > 0 && (
             <View style={styles.packingCard}>
               <View style={styles.packingHeader}>
-                <ShoppingBag size={18} color={COLORS.sage} strokeWidth={2} />
-                <Text style={styles.packingTitle}>Packing Essentials</Text>
+                <ShoppingBag size={18} color={COLORS.sage} strokeWidth={1.5} />
+                <Text style={styles.packingTitle}>{t('tripCountdown.packingEssentials', { defaultValue: 'Packing Essentials' })}</Text>
               </View>
               {itinerary.packingEssentials.slice(0, 6).map((item, i) => (
                 <View key={item} style={styles.packingItem}>
@@ -425,7 +427,7 @@ function TripCountdownScreen() {
               ))}
               {itinerary.packingEssentials.length > 6 && (
                 <Text style={styles.packingMore}>
-                  +{itinerary.packingEssentials.length - 6} more items
+                  {t('tripCountdown.moreItems', { defaultValue: '+{{count}} more items', count: itinerary.packingEssentials.length - 6 })}
                 </Text>
               )}
             </View>
@@ -498,7 +500,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 120,
     height: 120,
-    borderRadius: 60,
+    borderRadius: RADIUS.pill,
     borderWidth: 2,
   } as ViewStyle,
   countdownEmoji: {
@@ -558,10 +560,10 @@ const styles = StyleSheet.create({
   metaPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    gap: SPACING.xs,
+    backgroundColor: COLORS.overlaySoft,
     paddingHorizontal: SPACING.md,
-    paddingVertical: 6,
+    paddingVertical: SPACING.sm,
     borderRadius: RADIUS.full,
   } as ViewStyle,
   metaText: {
@@ -677,12 +679,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    paddingVertical: 4,
+    paddingVertical: SPACING.xs,
   } as ViewStyle,
   packingCheckbox: {
     width: 18,
     height: 18,
-    borderRadius: 4,
+    borderRadius: RADIUS.sm,
     borderWidth: 1.5,
     borderColor: COLORS.sageBorder,
     backgroundColor: COLORS.bgGlass,
@@ -697,8 +699,8 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.mono,
     fontSize: 12,
     color: COLORS.creamMuted,
-    marginTop: 4,
-    paddingLeft: 26,
+    marginTop: SPACING.xs,
+    paddingLeft: SPACING.lg,
   } as TextStyle,
 
   // Pro tip
@@ -739,7 +741,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.sage,
     paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
   } as ViewStyle,
   backPillText: {
     fontFamily: FONTS.bodySemiBold,

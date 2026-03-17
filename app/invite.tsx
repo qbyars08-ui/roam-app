@@ -35,6 +35,7 @@ import {
   Check,
 } from 'lucide-react-native';
 import * as Haptics from '../lib/haptics';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import {
   getReferralCode,
@@ -49,6 +50,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 void SCREEN_WIDTH;
 
 export default function InviteScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [referralCode, setReferralCode] = useState('');
@@ -79,7 +81,7 @@ export default function InviteScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       await Share.share({
-        message: `I'm using ROAM to plan my trips with AI — it's insane. Join the waitlist: ${shareLink}`,
+        message: t('invite.shareMessage', { defaultValue: "I'm using ROAM to plan my trips with AI — it's insane. Join the waitlist: {{link}}", link: shareLink }),
         url: shareLink,
       });
       const count = await incrementInviteCount();
@@ -107,7 +109,10 @@ export default function InviteScreen() {
       setWaitlistPosition(result.position ?? null);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } else {
-      Alert.alert('Heads up', result.error ?? 'Something went wrong');
+      Alert.alert(
+        t('invite.headsUp', { defaultValue: 'Heads up' }),
+        result.error ?? t('invite.somethingWentWrong', { defaultValue: 'Something went wrong' })
+      );
     }
   }, [email, referralCode]);
 
@@ -120,9 +125,9 @@ export default function InviteScreen() {
           style={({ pressed }) => [styles.backBtn, { opacity: pressed ? 0.7 : 1 }]}
           accessibilityLabel="Go back"
         >
-          <ArrowLeft size={22} color={COLORS.cream} strokeWidth={2} />
+          <ArrowLeft size={22} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
-        <Text style={styles.headerTitle}>Invite Friends</Text>
+        <Text style={styles.headerTitle}>{t('invite.headerTitle', { defaultValue: 'Invite Friends' })}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -138,9 +143,9 @@ export default function InviteScreen() {
               <Text style={styles.heroEmoji}>✈️</Text>
               <Text style={styles.heroEmoji}>🗺️</Text>
             </View>
-            <Text style={styles.heroTitle}>Travel is better{'\n'}with friends</Text>
+            <Text style={styles.heroTitle}>{t('invite.heroTitle', { defaultValue: 'Travel is better\nwith friends' })}</Text>
             <Text style={styles.heroSub}>
-              Share ROAM with your crew. They join the waitlist, you get early access perks.
+              {t('invite.heroSub', { defaultValue: 'Share ROAM with your crew. They join the waitlist, you get early access perks.' })}
             </Text>
           </View>
 
@@ -148,30 +153,30 @@ export default function InviteScreen() {
           <View style={styles.statsRow}>
             <View style={styles.statCard}>
               <Text style={styles.statNumber}>{inviteCount}</Text>
-              <Text style={styles.statLabel}>Friends invited</Text>
+              <Text style={styles.statLabel}>{t('invite.friendsInvited', { defaultValue: 'Friends invited' })}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statCard}>
               <Text style={styles.statNumber}>{referralCode}</Text>
-              <Text style={styles.statLabel}>Your code</Text>
+              <Text style={styles.statLabel}>{t('invite.yourCode', { defaultValue: 'Your code' })}</Text>
             </View>
           </View>
 
           {/* Share buttons */}
           <View style={styles.shareSection}>
-            <Text style={styles.sectionTitle}>Share your link</Text>
+            <Text style={styles.sectionTitle}>{t('invite.shareYourLink', { defaultValue: 'Share your link' })}</Text>
 
             {/* Link preview */}
             <Pressable
               onPress={handleCopyLink}
               style={({ pressed }) => [styles.linkPreview, { opacity: pressed ? 0.85 : 1 }]}
             >
-              <Link2 size={16} color={COLORS.sage} strokeWidth={2} />
+              <Link2 size={16} color={COLORS.sage} strokeWidth={1.5} />
               <Text style={styles.linkText} numberOfLines={1}>{shareLink}</Text>
               {copied ? (
-                <Check size={16} color={COLORS.sage} strokeWidth={2} />
+                <Check size={16} color={COLORS.sage} strokeWidth={1.5} />
               ) : (
-                <Copy size={16} color={COLORS.creamDim} strokeWidth={2} />
+                <Copy size={16} color={COLORS.creamDim} strokeWidth={1.5} />
               )}
             </Pressable>
 
@@ -186,42 +191,42 @@ export default function InviteScreen() {
                 end={{ x: 1, y: 0 }}
                 style={styles.shareCta}
               >
-                <Share2 size={18} color={COLORS.bg} strokeWidth={2} />
-                <Text style={styles.shareCtaText}>Share with friends</Text>
+                <Share2 size={18} color={COLORS.bg} strokeWidth={1.5} />
+                <Text style={styles.shareCtaText}>{t('invite.shareWithFriends', { defaultValue: 'Share with friends' })}</Text>
               </LinearGradient>
             </Pressable>
 
             {/* Quick share row */}
             <View style={styles.quickShareRow}>
               <Pressable onPress={handleShare} style={styles.quickShareBtn}>
-                <MessageCircle size={20} color={COLORS.cream} strokeWidth={2} />
-                <Text style={styles.quickShareLabel}>iMessage</Text>
+                <MessageCircle size={20} color={COLORS.cream} strokeWidth={1.5} />
+                <Text style={styles.quickShareLabel}>{t('invite.iMessage', { defaultValue: 'iMessage' })}</Text>
               </Pressable>
               <Pressable onPress={handleShare} style={styles.quickShareBtn}>
-                <Send size={20} color={COLORS.cream} strokeWidth={2} />
-                <Text style={styles.quickShareLabel}>WhatsApp</Text>
+                <Send size={20} color={COLORS.cream} strokeWidth={1.5} />
+                <Text style={styles.quickShareLabel}>{t('invite.whatsApp', { defaultValue: 'WhatsApp' })}</Text>
               </Pressable>
               <Pressable onPress={handleCopyLink} style={styles.quickShareBtn}>
-                <Copy size={20} color={COLORS.cream} strokeWidth={2} />
-                <Text style={styles.quickShareLabel}>Copy</Text>
+                <Copy size={20} color={COLORS.cream} strokeWidth={1.5} />
+                <Text style={styles.quickShareLabel}>{t('invite.copy', { defaultValue: 'Copy' })}</Text>
               </Pressable>
             </View>
           </View>
 
           {/* Direct email invite */}
           <View style={styles.emailSection}>
-            <Text style={styles.sectionTitle}>Or add them directly</Text>
+            <Text style={styles.sectionTitle}>{t('invite.orAddDirectly', { defaultValue: 'Or add them directly' })}</Text>
             {submitted ? (
               <View style={styles.successCard}>
-                <Sparkles size={24} color={COLORS.gold} strokeWidth={2} />
-                <Text style={styles.successTitle}>You're in! 🎉</Text>
+                <Sparkles size={24} color={COLORS.gold} strokeWidth={1.5} />
+                <Text style={styles.successTitle}>{t('invite.successTitle', { defaultValue: "You're in!" })}</Text>
                 {waitlistPosition != null && (
                   <Text style={styles.successSub}>
-                    Position #{waitlistPosition} on the waitlist
+                    {t('invite.waitlistPosition', { defaultValue: 'Position #{{position}} on the waitlist', position: waitlistPosition })}
                   </Text>
                 )}
                 <Text style={styles.successDetail}>
-                  We'll send early access as soon as spots open up.
+                  {t('invite.successDetail', { defaultValue: "We'll send early access as soon as spots open up." })}
                 </Text>
               </View>
             ) : (
@@ -245,7 +250,7 @@ export default function InviteScreen() {
                     { opacity: pressed ? 0.8 : 1 },
                   ]}
                 >
-                  <Mail size={18} color={COLORS.bg} strokeWidth={2} />
+                  <Mail size={18} color={COLORS.bg} strokeWidth={1.5} />
                 </Pressable>
               </View>
             )}
@@ -253,15 +258,15 @@ export default function InviteScreen() {
 
           {/* Perks */}
           <View style={styles.perksSection}>
-            <Text style={styles.sectionTitle}>Why share ROAM?</Text>
+            <Text style={styles.sectionTitle}>{t('invite.whyShareRoam', { defaultValue: 'Why share ROAM?' })}</Text>
             {[
-              { icon: Gift, text: 'Earn free Pro months for every friend who joins' },
-              { icon: Users, text: 'Plan group trips together seamlessly' },
-              { icon: Heart, text: 'Help your friends travel smarter' },
-              { icon: Sparkles, text: 'Get early access to new features' },
+              { icon: Gift, text: t('invite.perk1', { defaultValue: 'Earn free Pro months for every friend who joins' }) },
+              { icon: Users, text: t('invite.perk2', { defaultValue: 'Plan group trips together seamlessly' }) },
+              { icon: Heart, text: t('invite.perk3', { defaultValue: 'Help your friends travel smarter' }) },
+              { icon: Sparkles, text: t('invite.perk4', { defaultValue: 'Get early access to new features' }) },
             ].map((perk, i) => (
               <View key={i} style={styles.perkRow}>
-                <perk.icon size={18} color={COLORS.sage} strokeWidth={2} />
+                <perk.icon size={18} color={COLORS.sage} strokeWidth={1.5} />
                 <Text style={styles.perkText}>{perk.text}</Text>
               </View>
             ))}
@@ -368,7 +373,6 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   sectionTitle: {
     fontFamily: FONTS.header,
-    fontStyle: 'italic',
     fontSize: 22,
     color: COLORS.cream,
     marginBottom: SPACING.md,

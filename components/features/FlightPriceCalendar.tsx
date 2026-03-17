@@ -12,6 +12,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { Calendar, TrendingDown, TrendingUp, Minus } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { getFlightCalendar, type FlightCalendarDay } from '../../lib/flight-intelligence';
 import * as Haptics from '../../lib/haptics';
@@ -101,6 +102,7 @@ function EmptyCell() {
 // Main Component
 // ---------------------------------------------------------------------------
 function FlightPriceCalendar({ origin, destination, startDate }: FlightPriceCalendarProps) {
+  const { t } = useTranslation();
   const start = useMemo(() => startDate ?? new Date(), [startDate]);
   const [selectedDay, setSelectedDay] = useState<FlightCalendarDay | null>(null);
 
@@ -171,24 +173,24 @@ function FlightPriceCalendar({ origin, destination, startDate }: FlightPriceCale
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Calendar size={18} color={COLORS.sage} strokeWidth={2} />
-        <Text style={styles.headerTitle}>Price Calendar</Text>
-        <Text style={styles.headerSubtitle}>6-week outlook</Text>
+        <Calendar size={18} color={COLORS.sage} strokeWidth={1.5} />
+        <Text style={styles.headerTitle}>{t('flightCalendar.title', { defaultValue: 'Price Calendar' })}</Text>
+        <Text style={styles.headerSubtitle}>{t('flightCalendar.subtitle', { defaultValue: '6-week outlook' })}</Text>
       </View>
 
       {/* Legend */}
       <View style={styles.legend}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: COLORS.sage }]} />
-          <Text style={styles.legendText}>Low</Text>
+          <Text style={styles.legendText}>{t('flightCalendar.low', { defaultValue: 'Low' })}</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: COLORS.gold }]} />
-          <Text style={styles.legendText}>Average</Text>
+          <Text style={styles.legendText}>{t('flightCalendar.average', { defaultValue: 'Average' })}</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: COLORS.coral }]} />
-          <Text style={styles.legendText}>High</Text>
+          <Text style={styles.legendText}>{t('flightCalendar.high', { defaultValue: 'High' })}</Text>
         </View>
       </View>
 
@@ -226,22 +228,22 @@ function FlightPriceCalendar({ origin, destination, startDate }: FlightPriceCale
           <Text style={styles.detailPrice}>${selectedDay.estimatedPrice}</Text>
           {selectedDay.savingsVsAvg > 0 ? (
             <View style={styles.detailRow}>
-              <TrendingDown size={14} color={COLORS.sage} strokeWidth={2} />
+              <TrendingDown size={14} color={COLORS.sage} strokeWidth={1.5} />
               <Text style={[styles.detailSavings, { color: COLORS.sage }]}>
-                ${selectedDay.savingsVsAvg} below average
+                ${selectedDay.savingsVsAvg} {t('flightCalendar.belowAverage', { defaultValue: 'below average' })}
               </Text>
             </View>
           ) : selectedDay.savingsVsAvg < 0 ? (
             <View style={styles.detailRow}>
-              <TrendingUp size={14} color={COLORS.coral} strokeWidth={2} />
+              <TrendingUp size={14} color={COLORS.coral} strokeWidth={1.5} />
               <Text style={[styles.detailSavings, { color: COLORS.coral }]}>
-                ${Math.abs(selectedDay.savingsVsAvg)} above average
+                ${Math.abs(selectedDay.savingsVsAvg)} {t('flightCalendar.aboveAverage', { defaultValue: 'above average' })}
               </Text>
             </View>
           ) : (
             <View style={styles.detailRow}>
-              <Minus size={14} color={COLORS.gold} strokeWidth={2} />
-              <Text style={[styles.detailSavings, { color: COLORS.gold }]}>At average price</Text>
+              <Minus size={14} color={COLORS.gold} strokeWidth={1.5} />
+              <Text style={[styles.detailSavings, { color: COLORS.gold }]}>{t('flightCalendar.atAverage', { defaultValue: 'At average price' })}</Text>
             </View>
           )}
         </View>
@@ -250,19 +252,19 @@ function FlightPriceCalendar({ origin, destination, startDate }: FlightPriceCale
       {/* Summary stats */}
       <View style={styles.statsRow}>
         <View style={styles.statCell}>
-          <Text style={styles.statLabel}>Cheapest</Text>
+          <Text style={styles.statLabel}>{t('flightCalendar.cheapest', { defaultValue: 'Cheapest' })}</Text>
           <Text style={[styles.statValue, { color: COLORS.sage }]}>
             ${cheapestDay.estimatedPrice}
           </Text>
           <Text style={styles.statMeta}>{formatDate(cheapestDay.date)}</Text>
         </View>
         <View style={[styles.statCell, styles.statCellCenter]}>
-          <Text style={styles.statLabel}>Average</Text>
+          <Text style={styles.statLabel}>{t('flightCalendar.average', { defaultValue: 'Average' })}</Text>
           <Text style={[styles.statValue, { color: COLORS.gold }]}>${avgPrice}</Text>
-          <Text style={styles.statMeta}>42-day avg</Text>
+          <Text style={styles.statMeta}>{t('flightCalendar.dayAvg', { defaultValue: '42-day avg' })}</Text>
         </View>
         <View style={styles.statCell}>
-          <Text style={styles.statLabel}>Priciest</Text>
+          <Text style={styles.statLabel}>{t('flightCalendar.priciest', { defaultValue: 'Priciest' })}</Text>
           <Text style={[styles.statValue, { color: COLORS.coral }]}>
             ${priciest.estimatedPrice}
           </Text>
@@ -307,12 +309,12 @@ const styles = StyleSheet.create({
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: SPACING.xs,
   } as ViewStyle,
   legendDot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: RADIUS.sm,
   } as ViewStyle,
   legendText: {
     fontFamily: FONTS.mono,
@@ -322,12 +324,12 @@ const styles = StyleSheet.create({
   } as TextStyle,
   weekRow: {
     flexDirection: 'row',
-    gap: 3,
+    gap: SPACING.xs,
   } as ViewStyle,
   dayHeaderCell: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 4,
+    paddingVertical: SPACING.xs,
   } as ViewStyle,
   dayHeaderText: {
     fontFamily: FONTS.mono,
@@ -339,7 +341,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
+    paddingVertical: SPACING.sm,
     borderRadius: RADIUS.sm,
     minHeight: 44,
   } as ViewStyle,
@@ -358,7 +360,7 @@ const styles = StyleSheet.create({
   dayPrice: {
     fontFamily: FONTS.mono,
     fontSize: 8,
-    marginTop: 1,
+    marginTop: SPACING.xs,
     letterSpacing: 0.3,
   } as TextStyle,
   detailCard: {
@@ -383,7 +385,7 @@ const styles = StyleSheet.create({
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: SPACING.xs,
     marginLeft: 'auto',
   } as ViewStyle,
   detailSavings: {
@@ -393,7 +395,7 @@ const styles = StyleSheet.create({
   } as TextStyle,
   statsRow: {
     flexDirection: 'row',
-    gap: 3,
+    gap: SPACING.xs,
     marginTop: SPACING.xs,
   } as ViewStyle,
   statCell: {
@@ -418,7 +420,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.mono,
     fontSize: 18,
     letterSpacing: 0.5,
-    marginVertical: 2,
+    marginVertical: SPACING.xs,
   } as TextStyle,
   statMeta: {
     fontFamily: FONTS.body,

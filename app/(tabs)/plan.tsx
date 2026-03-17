@@ -33,17 +33,17 @@ import {
 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, type Destination } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, FREE_TRIPS_PER_MONTH, type Destination } from '../../lib/constants';
 import { useAppStore, type Trip } from '../../lib/store';
 import { Flame, Sparkle } from 'lucide-react-native';
 import { generateItineraryStreaming, TripLimitReachedError } from '../../lib/claude';
-import { FREE_TRIPS_PER_MONTH } from '../../lib/constants';
 import { isGuestUser } from '../../lib/guest';
 import type { QuickModeState } from '../../components/generate/GenerateQuickMode';
 import { BUDGET_TO_BACKEND } from '../../components/generate/GenerateQuickMode';
 import GenerateModeSelect from '../../components/generate/GenerateModeSelect';
 import GenerateQuickMode from '../../components/generate/GenerateQuickMode';
 import GenerateConversationMode from '../../components/generate/GenerateConversationMode';
+import GoNowFeed from '../../components/features/GoNowFeed';
 import { TripGeneratingLoader } from '../../components/premium/LoadingStates';
 import { recordGrowthEvent } from '../../lib/growth-hooks';
 import { evaluateTrigger } from '../../lib/smart-triggers';
@@ -168,13 +168,13 @@ const TripCard = React.memo(function TripCard({
       <View style={styles.trendBadgeRow}>
         {isTrending && (
           <View style={styles.trendBadge}>
-            <Flame size={10} color={COLORS.coral} strokeWidth={2} />
+            <Flame size={10} color={COLORS.coral} strokeWidth={1.5} />
             <Text style={styles.trendBadgeText}>Trending</Text>
           </View>
         )}
         {perfectTiming && (
           <View style={styles.timingBadge}>
-            <Sparkle size={10} color={COLORS.gold} strokeWidth={2} />
+            <Sparkle size={10} color={COLORS.gold} strokeWidth={1.5} />
             <Text style={styles.timingBadgeText}>Perfect timing</Text>
           </View>
         )}
@@ -183,21 +183,21 @@ const TripCard = React.memo(function TripCard({
         <Text style={styles.tripCardDest}>{trip.destination}</Text>
         <View style={styles.tripCardMeta}>
           <View style={styles.tripCardChip}>
-            <Calendar size={12} color={COLORS.creamSoft} strokeWidth={2} />
+            <Calendar size={12} color={COLORS.creamSoft} strokeWidth={1.5} />
             <Text style={styles.tripCardChipText}>{t('common.days', { count: dayCount })}</Text>
           </View>
           <View style={styles.tripCardChip}>
-            <Wallet size={12} color={COLORS.creamSoft} strokeWidth={2} />
+            <Wallet size={12} color={COLORS.creamSoft} strokeWidth={1.5} />
             <Text style={styles.tripCardChipText}>{trip.budget}</Text>
           </View>
           <View style={styles.tripCardChip}>
-            <Clock size={12} color={COLORS.creamSoft} strokeWidth={2} />
+            <Clock size={12} color={COLORS.creamSoft} strokeWidth={1.5} />
             <Text style={styles.tripCardChipText}>{dateLabel}</Text>
           </View>
         </View>
       </View>
       <View style={styles.tripCardArrow}>
-        <ChevronRight size={20} color={COLORS.cream} strokeWidth={2} />
+        <ChevronRight size={20} color={COLORS.cream} strokeWidth={1.5} />
       </View>
     </Pressable>
   );
@@ -270,13 +270,13 @@ const NextTripHero = React.memo(function NextTripHero({
       <View style={styles.heroTrendRow}>
         {isTrending && (
           <View style={styles.trendBadge}>
-            <Flame size={10} color={COLORS.coral} strokeWidth={2} />
+            <Flame size={10} color={COLORS.coral} strokeWidth={1.5} />
             <Text style={styles.trendBadgeText}>Trending</Text>
           </View>
         )}
         {perfectTiming && (
           <View style={styles.timingBadge}>
-            <Sparkle size={10} color={COLORS.gold} strokeWidth={2} />
+            <Sparkle size={10} color={COLORS.gold} strokeWidth={1.5} />
             <Text style={styles.timingBadgeText}>Perfect timing</Text>
           </View>
         )}
@@ -302,7 +302,7 @@ const NextTripHero = React.memo(function NextTripHero({
             ]}
             hitSlop={8}
           >
-            <Plane size={12} color={COLORS.gold} strokeWidth={2} />
+            <Plane size={12} color={COLORS.gold} strokeWidth={1.5} />
             <Text style={[styles.heroPillText, styles.heroPillTextGold]}>Before You Land</Text>
           </Pressable>
 
@@ -317,7 +317,7 @@ const NextTripHero = React.memo(function NextTripHero({
             ]}
             hitSlop={8}
           >
-            <ShieldCheck size={12} color={COLORS.sage} strokeWidth={2} />
+            <ShieldCheck size={12} color={COLORS.sage} strokeWidth={1.5} />
             <Text style={[styles.heroPillText, styles.heroPillTextSage]}>Health Brief</Text>
           </Pressable>
 
@@ -332,7 +332,7 @@ const NextTripHero = React.memo(function NextTripHero({
             ]}
             hitSlop={8}
           >
-            <Heart size={12} color={COLORS.coral} strokeWidth={2} />
+            <Heart size={12} color={COLORS.coral} strokeWidth={1.5} />
             <Text style={[styles.heroPillText, styles.heroPillTextCoral]}>Emergency Card</Text>
           </Pressable>
         </View>
@@ -340,7 +340,7 @@ const NextTripHero = React.memo(function NextTripHero({
 
       {/* Tap-to-open arrow */}
       <View style={styles.heroArrow}>
-        <ChevronRight size={20} color={COLORS.cream} strokeWidth={2} />
+        <ChevronRight size={20} color={COLORS.cream} strokeWidth={1.5} />
       </View>
     </Pressable>
   );
@@ -710,7 +710,7 @@ export default function PlanScreen() {
             colors={[COLORS.sage, COLORS.sageStrong]}
             style={styles.newTripGradient}
           >
-            <Plus size={22} color={COLORS.bg} strokeWidth={2.5} />
+            <Plus size={22} color={COLORS.bg} strokeWidth={1.5} />
             <Text style={styles.newTripText}>{t('plan.planNewTrip')}</Text>
           </LinearGradient>
         </Pressable>
@@ -735,7 +735,7 @@ export default function PlanScreen() {
               accessibilityRole="button"
             >
               <View style={[styles.quickActionIcon, { backgroundColor: action.iconBg }]}>
-                <action.icon size={18} color={action.color} strokeWidth={2} />
+                <action.icon size={18} color={action.color} strokeWidth={1.5} />
               </View>
               <Text style={styles.quickActionLabel}>{t(action.labelKey)}</Text>
               <Text style={styles.quickActionSub}>{t(action.subKey)}</Text>
@@ -750,6 +750,26 @@ export default function PlanScreen() {
             ? <NextTripHero key={trip.id} trip={trip} onPress={() => handleTripPress(trip)} />
             : <TripCard key={trip.id} trip={trip} onPress={() => handleTripPress(trip)} isLatest={false} />
         ))}
+
+        {/* Flights Section */}
+        <View style={styles.flightsSectionHeader}>
+          <Text style={styles.sectionLabel}>Flights</Text>
+          <Text style={styles.flightsSectionSub}>Deals and search</Text>
+        </View>
+        <GoNowFeed />
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push('/(tabs)/flights' as never);
+          }}
+          accessibilityLabel="Search all flights"
+          accessibilityRole="button"
+          style={({ pressed }) => [styles.searchFlightsBtn, { opacity: pressed ? 0.85 : 1 }]}
+        >
+          <Plane size={16} color={COLORS.bg} strokeWidth={1.5} />
+          <Text style={styles.searchFlightsBtnText}>Search all flights</Text>
+          <ChevronRight size={16} color={COLORS.bg} strokeWidth={1.5} />
+        </Pressable>
       </ScrollView>
 
       {isGenerating && (
@@ -789,7 +809,7 @@ function PeopleNudgeBanner({
       style={({ pressed }) => [styles.peopleBanner, { opacity: pressed ? 0.85 : 1 }]}
     >
       <View style={styles.peopleBannerLeft}>
-        <Users size={16} color={COLORS.sage} strokeWidth={2} />
+        <Users size={16} color={COLORS.sage} strokeWidth={1.5} />
         <Text style={styles.peopleBannerText}>
           See who else is heading to{' '}
           <Text style={styles.peopleBannerBold}>{destination}</Text>
@@ -891,7 +911,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: FONTS.header,
     fontSize: 36,
-    fontStyle: 'italic',
     color: COLORS.cream,
     letterSpacing: -0.5,
   } as TextStyle,
@@ -905,22 +924,21 @@ const styles = StyleSheet.create({
 
   // ── New Trip Button ──
   newTripBtn: {
-    marginBottom: 32,
-    borderRadius: 8,
+    marginBottom: SPACING.lg,
+    borderRadius: RADIUS.pill,
     overflow: 'hidden',
   } as ViewStyle,
   newTripGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    borderRadius: 8,
+    gap: SPACING.sm,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.pill,
   } as ViewStyle,
   newTripText: {
     fontFamily: FONTS.header,
     fontSize: 18,
-    fontStyle: 'italic',
     color: COLORS.bg,
   } as TextStyle,
 
@@ -930,12 +948,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: COLORS.bgMagazine,
-    borderRadius: 12,
+    borderRadius: RADIUS.lg,
     borderLeftWidth: 3,
     borderLeftColor: COLORS.sage,
     paddingHorizontal: 20,
     paddingVertical: 14,
-    marginBottom: 20,
+    marginBottom: SPACING.lg,
   } as ViewStyle,
   peopleBannerLeft: {
     flexDirection: 'row',
@@ -965,16 +983,16 @@ const styles = StyleSheet.create({
   // ── Quick Actions ──
   quickActions: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 40,
+    gap: SPACING.md,
+    marginBottom: SPACING.xxxl,
   } as ViewStyle,
   quickAction: {
     flex: 1,
     backgroundColor: COLORS.bgMagazine,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
     alignItems: 'center',
-    gap: 4,
+    gap: SPACING.xs,
   } as ViewStyle,
   quickActionIcon: {
     width: 40,
@@ -1001,18 +1019,50 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontFamily: FONTS.header,
     fontSize: 22,
-    fontStyle: 'italic',
     color: COLORS.cream,
     letterSpacing: -0.3,
     marginBottom: SPACING.md,
   } as TextStyle,
 
+  // ── Flights Section ──
+  flightsSectionHeader: {
+    marginTop: SPACING.xxl,
+    marginBottom: 0,
+  } as ViewStyle,
+  flightsSectionSub: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.creamDim,
+    letterSpacing: 0.5,
+    marginTop: 2,
+    marginBottom: SPACING.md,
+  } as TextStyle,
+  searchFlightsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.action,
+    borderRadius: RADIUS.pill,
+    paddingVertical: 14,
+    paddingHorizontal: SPACING.lg,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.lg,
+  } as ViewStyle,
+  searchFlightsBtnText: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 15,
+    color: COLORS.bg,
+    flex: 1,
+    textAlign: 'center',
+  } as TextStyle,
+
   // ── Trip Cards ──
   tripCard: {
     height: 180,
-    borderRadius: 12,
+    borderRadius: RADIUS.lg,
     overflow: 'hidden',
-    marginBottom: 16,
+    marginBottom: SPACING.md,
   } as ViewStyle,
   tripCardLatest: {
     height: 220,
@@ -1032,12 +1082,11 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 20,
+    padding: SPACING.lg,
   } as ViewStyle,
   tripCardDest: {
     fontFamily: FONTS.header,
     fontSize: 28,
-    fontStyle: 'italic',
     color: COLORS.cream,
     letterSpacing: -0.5,
     marginBottom: 6,
@@ -1093,10 +1142,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: 'rgba(232, 97, 74, 0.15)',
+    backgroundColor: COLORS.coralSubtle,
     borderWidth: 1,
-    borderColor: 'rgba(232, 97, 74, 0.3)',
-    borderRadius: 10,
+    borderColor: COLORS.coralBorder,
+    borderRadius: RADIUS.md,
     paddingHorizontal: 7,
     paddingVertical: 3,
   } as ViewStyle,
@@ -1111,10 +1160,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: 'rgba(201, 168, 76, 0.15)',
+    backgroundColor: COLORS.goldSubtle,
     borderWidth: 1,
-    borderColor: 'rgba(201, 168, 76, 0.3)',
-    borderRadius: 10,
+    borderColor: COLORS.goldBorderStrong,
+    borderRadius: RADIUS.md,
     paddingHorizontal: 7,
     paddingVertical: 3,
   } as ViewStyle,
@@ -1129,9 +1178,9 @@ const styles = StyleSheet.create({
   // ── Next Trip Hero ──
   heroCard: {
     height: 280,
-    borderRadius: 12,
+    borderRadius: RADIUS.xl,
     overflow: 'hidden',
-    marginBottom: 20,
+    marginBottom: SPACING.lg,
   } as ViewStyle,
   heroImage: {
     ...StyleSheet.absoluteFillObject,
@@ -1287,7 +1336,7 @@ const styles = StyleSheet.create({
   rateLimitDot: {
     width: 10,
     height: 10,
-    borderRadius: 5,
+    borderRadius: RADIUS.sm,
     backgroundColor: COLORS.gold,
     marginBottom: SPACING.md,
   } as ViewStyle,

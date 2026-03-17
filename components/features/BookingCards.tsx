@@ -11,6 +11,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
@@ -38,6 +39,7 @@ export default function BookingCards({
   budget,
   tripId,
 }: BookingCardsProps) {
+  const { t } = useTranslation();
   const { currency, rates } = useCurrency();
   const safeCurrency = currency ?? 'USD';
   const safeRates = rates ?? null;
@@ -60,9 +62,9 @@ export default function BookingCards({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Book your trip</Text>
+      <Text style={styles.sectionTitle}>{t('booking.sectionTitle', { defaultValue: 'Book your trip' })}</Text>
       <Text style={styles.sectionSub}>
-        Everything you need, one tap away
+        {t('booking.sectionSub', { defaultValue: 'Everything you need, one tap away' })}
       </Text>
 
       <View style={styles.grid}>
@@ -84,10 +86,10 @@ export default function BookingCards({
             <View style={styles.cardContent}>
               <View style={styles.cardHeader}>
                 <View style={styles.categoryIconWrap}>
-                  {partner.category === 'flights' && <Plane size={16} color={partner.color} strokeWidth={2} />}
-                  {partner.category === 'hotels' && <Hotel size={16} color={partner.color} strokeWidth={2} />}
-                  {partner.category === 'experiences' && <Ticket size={16} color={partner.color} strokeWidth={2} />}
-                  {partner.category === 'car-rental' && <Car size={16} color={partner.color} strokeWidth={2} />}
+                  {partner.category === 'flights' && <Plane size={16} color={partner.color} strokeWidth={1.5} />}
+                  {partner.category === 'hotels' && <Hotel size={16} color={partner.color} strokeWidth={1.5} />}
+                  {partner.category === 'experiences' && <Ticket size={16} color={partner.color} strokeWidth={1.5} />}
+                  {partner.category === 'car-rental' && <Car size={16} color={partner.color} strokeWidth={1.5} />}
                 </View>
                 <Text style={styles.partnerName}>{partner.name}</Text>
               </View>
@@ -99,7 +101,7 @@ export default function BookingCards({
               </Text>
 
               <View style={styles.ctaRow}>
-                <Text style={styles.ctaText}>Book now</Text>
+                <Text style={styles.ctaText}>{t('booking.bookNow', { defaultValue: 'Book now' })}</Text>
                 <Text style={styles.ctaArrow}>{'\u2192'}</Text>
               </View>
             </View>
@@ -108,7 +110,7 @@ export default function BookingCards({
       </View>
 
       <Text style={styles.disclaimer}>
-        Affiliate links help keep ROAM free
+        {t('booking.disclaimer', { defaultValue: 'Affiliate links help keep ROAM free' })}
       </Text>
     </View>
   );

@@ -37,15 +37,14 @@ export default function ComingSoon({ title, description }: ComingSoonProps) {
           <Text style={styles.description}>{description}</Text>
         ) : (
           <Text style={styles.description}>
-            We're putting the finishing touches on this feature.
-            {'\n'}It'll be worth the wait.
+            {t('comingSoon.description', { defaultValue: "We're putting the finishing touches on this feature.\nIt'll be worth the wait." })}
           </Text>
         )}
 
         <View style={styles.divider} />
 
         <Text style={styles.hint}>
-          Upgrade to Pro to get early access when it launches
+          {t('comingSoon.hint', { defaultValue: 'Upgrade to Pro to get early access when it launches' })}
         </Text>
 
         <Pressable
@@ -114,7 +113,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.sageLight,
     paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.sm + 4,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
     borderWidth: 1,
     borderColor: COLORS.sageBorder,
   },

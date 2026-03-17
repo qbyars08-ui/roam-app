@@ -13,6 +13,7 @@ import {
   type TextStyle,
   type ImageStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import type { WeatherForecast, WeatherDay } from '../../lib/weather';
 
@@ -73,6 +74,7 @@ function DailyForecastItem({ item }: { item: WeatherDay }) {
 // ---------------------------------------------------------------------------
 
 export default function WeatherCard({ forecast }: WeatherCardProps) {
+  const { t } = useTranslation();
   const renderDailyItem = ({ item }: ListRenderItemInfo<WeatherDay>) => (
     <DailyForecastItem item={item} />
   );
@@ -81,7 +83,7 @@ export default function WeatherCard({ forecast }: WeatherCardProps) {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerLabel}>WEATHER FORECAST</Text>
+        <Text style={styles.headerLabel}>{t('weather.forecast', { defaultValue: 'WEATHER FORECAST' })}</Text>
       </View>
 
       {/* Packing Hint */}
@@ -105,7 +107,7 @@ export default function WeatherCard({ forecast }: WeatherCardProps) {
           <Text style={styles.currentTemp}>{forecast.current.temp}°C</Text>
           <Text style={styles.currentDesc}>{forecast.current.description}</Text>
           <Text style={styles.feelsLike}>
-            Humidity {forecast.current.humidity}% · Wind{' '}
+            {t('weather.humidity', { defaultValue: 'Humidity' })} {forecast.current.humidity}% · {t('weather.wind', { defaultValue: 'Wind' })}{' '}
             {forecast.current.windSpeed} m/s
           </Text>
         </View>

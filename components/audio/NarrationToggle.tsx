@@ -123,9 +123,9 @@ export default function NarrationToggle({
     >
       <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
         {playing ? (
-          <AudioLines size={20} color={COLORS.sage} strokeWidth={2} />
+          <AudioLines size={20} color={COLORS.sage} strokeWidth={1.5} />
         ) : (
-          <Headphones size={20} color={COLORS.sage} strokeWidth={2} />
+          <Headphones size={20} color={COLORS.sage} strokeWidth={1.5} />
         )}
       </Animated.View>
       <Text style={[styles.label, playing && styles.labelActive]}>

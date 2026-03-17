@@ -7,7 +7,7 @@ import { Pressable, StyleSheet, type ViewStyle } from 'react-native';
 import { Platform } from 'react-native';
 import * as Haptics from '../../lib/haptics';
 import { Mic } from 'lucide-react-native';
-import { COLORS } from '../../lib/constants';
+import { COLORS, RADIUS } from '../../lib/constants';
 
 interface VoiceInputButtonProps {
   onTranscript: (text: string) => void;
@@ -104,7 +104,7 @@ export default function VoiceInputButton({
       <Mic
         size={22}
         color={isListening ? COLORS.sage : COLORS.creamMuted}
-        strokeWidth={2}
+        strokeWidth={1.5}
       />
     </Pressable>
   );
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
   button: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: RADIUS.pill,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: COLORS.bgGlass,

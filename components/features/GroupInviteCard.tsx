@@ -13,6 +13,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import ViewShot, { captureRef } from '../../lib/view-shot';
 import * as Sharing from 'expo-sharing';
@@ -53,6 +54,7 @@ export default function GroupInviteCard({
   ownerName,
   onDismiss,
 }: GroupInviteCardProps) {
+  const { t } = useTranslation();
   const cardRef = useRef<React.ElementRef<typeof ViewShot> | null>(null);
   const inviteUrl = `https://roamtravel.app/join/${inviteCode}`;
 
@@ -105,10 +107,10 @@ export default function GroupInviteCard({
           style={styles.card}
         >
           {/* Brand */}
-          <Text style={styles.brand}>ROAM</Text>
+          <Text style={styles.brand}>{t('groupInvite.brand', { defaultValue: 'ROAM' })}</Text>
 
           {/* Invite text */}
-          <Text style={styles.inviteLabel}>YOU'RE INVITED TO</Text>
+          <Text style={styles.inviteLabel}>{t('groupInvite.inviteLabel', { defaultValue: "YOU'RE INVITED TO" })}</Text>
 
           {/* Destination — big editorial */}
           <Text style={styles.destination}>{destination.toUpperCase()}</Text>
@@ -123,16 +125,16 @@ export default function GroupInviteCard({
 
           {/* Members */}
           <View style={styles.membersRow}>
-            <Users size={14} color={COLORS.sage} strokeWidth={2} />
+            <Users size={14} color={COLORS.sage} strokeWidth={1.5} />
             <Text style={styles.memberCount}>
-              {memberCount} {memberCount === 1 ? 'traveler' : 'travelers'} so far
+              {`${memberCount} ${memberCount === 1 ? t('groupInvite.travelerSingular', { defaultValue: 'traveler' }) : t('groupInvite.travelerPlural', { defaultValue: 'travelers' })} ${t('groupInvite.soFar', { defaultValue: 'so far' })}`}
             </Text>
           </View>
 
           {/* Invite message */}
           {ownerName && (
             <Text style={styles.inviteMessage}>
-              {ownerName} is planning a trip and wants you to join.
+              {`${ownerName} ${t('groupInvite.inviteMessage', { defaultValue: 'is planning a trip and wants you to join.' })}`}
             </Text>
           )}
 
@@ -140,12 +142,12 @@ export default function GroupInviteCard({
           <View style={styles.divider} />
 
           {/* Link */}
-          <Text style={styles.openLabel}>Open in ROAM</Text>
+          <Text style={styles.openLabel}>{t('groupInvite.openLabel', { defaultValue: 'Open in ROAM' })}</Text>
           <Text style={styles.linkText}>{inviteUrl}</Text>
 
           {/* Code */}
           <View style={styles.codeRow}>
-            <Text style={styles.codeLabel}>CODE</Text>
+            <Text style={styles.codeLabel}>{t('groupInvite.codeLabel', { defaultValue: 'CODE' })}</Text>
             <Text style={styles.codeValue}>{inviteCode.toUpperCase()}</Text>
           </View>
         </LinearGradient>
@@ -161,8 +163,8 @@ export default function GroupInviteCard({
             { opacity: pressed ? 0.85 : 1 },
           ]}
         >
-          <Share2 size={18} color={COLORS.bg} strokeWidth={2} />
-          <Text style={styles.actionBtnPrimaryText}>Share invite</Text>
+          <Share2 size={18} color={COLORS.bg} strokeWidth={1.5} />
+          <Text style={styles.actionBtnPrimaryText}>{t('groupInvite.shareInvite', { defaultValue: 'Share invite' })}</Text>
         </Pressable>
 
         <View style={styles.actionSecondaryRow}>
@@ -174,8 +176,8 @@ export default function GroupInviteCard({
               { opacity: pressed ? 0.85 : 1, flex: 1 },
             ]}
           >
-            <Link size={16} color={COLORS.cream} strokeWidth={2} />
-            <Text style={styles.actionBtnSecondaryText}>Share link</Text>
+            <Link size={16} color={COLORS.cream} strokeWidth={1.5} />
+            <Text style={styles.actionBtnSecondaryText}>{t('groupInvite.shareLink', { defaultValue: 'Share link' })}</Text>
           </Pressable>
 
           <Pressable
@@ -186,14 +188,14 @@ export default function GroupInviteCard({
               { opacity: pressed ? 0.85 : 1, flex: 1 },
             ]}
           >
-            <Copy size={16} color={COLORS.cream} strokeWidth={2} />
-            <Text style={styles.actionBtnSecondaryText}>Copy link</Text>
+            <Copy size={16} color={COLORS.cream} strokeWidth={1.5} />
+            <Text style={styles.actionBtnSecondaryText}>{t('groupInvite.copyLink', { defaultValue: 'Copy link' })}</Text>
           </Pressable>
         </View>
 
         {onDismiss && (
           <Pressable onPress={onDismiss} style={styles.dismissBtn}>
-            <Text style={styles.dismissText}>Done</Text>
+            <Text style={styles.dismissText}>{t('groupInvite.done', { defaultValue: 'Done' })}</Text>
           </Pressable>
         )}
       </View>
@@ -265,7 +267,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.creamHighlight,
     textAlign: 'center',
-    fontStyle: 'italic',
     lineHeight: 20,
     marginBottom: SPACING.md,
   } as TextStyle,
@@ -290,7 +291,7 @@ const styles = StyleSheet.create({
   codeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: SPACING.sm,
     backgroundColor: COLORS.sageSoft,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
@@ -317,7 +318,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: SPACING.sm,
     paddingVertical: SPACING.sm + 4,
     borderRadius: RADIUS.lg,
   } as ViewStyle,

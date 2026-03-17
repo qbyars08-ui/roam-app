@@ -34,12 +34,16 @@ npx eslint . --ext .ts,.tsx
 
 ### Design System (lib/constants.ts)
 - Dark-only UI. Never add light mode.
-- Colors: bg=#080F0A, sage=#7CAF8A, cream=#F5EDD8, coral=#E8614A, gold=#C9A84C
-- Headers: Cormorant Garamond Bold (`FONTS.header`)
-- Body: DM Sans (`FONTS.body`, `FONTS.bodySemiBold`, `FONTS.bodyMedium`)
+- Colors: bg=#0A0A0A, surface1=#141414, surface2=#1C1C1C, accent=#E8F5E1, action=#5B9E6F, muted=#8A8A8A
+- Keep coral=#E8614A (alerts only), gold=#C9A84C (premium badges only)
+- Headlines: Space Grotesk Bold/Medium (`FONTS.header`, `FONTS.headerMedium`)
+- Body: Inter Regular/Medium/Bold (`FONTS.body`, `FONTS.bodyMedium`, `FONTS.bodySemiBold`)
 - Data/labels: DM Mono (`FONTS.mono`)
 - Use COLORS tokens, never hardcode rgba() values
-- Icons: lucide-react-native only, strokeWidth={2}, size={20} default
+- Icons: lucide-react-native only, strokeWidth={1.5}, size={20} default
+- No italic headers. No textTransform uppercase on non-data labels.
+- Buttons: pill-shaped (borderRadius: RADIUS.pill) where appropriate
+- Cards: two types only — photo (full-bleed) and data (#141414 bg)
 
 ### Architecture
 - State: Zustand (`lib/store.ts`). Persist important state to AsyncStorage.
@@ -162,15 +166,36 @@ npx eslint . --ext .ts,.tsx
 - Preview: use preview tools (preview_start, preview_snapshot, preview_screenshot) to verify UI
 - Check console logs for errors (ignore RN web `collapsable` deprecation warnings — not a real issue)
 
-## Visual Design (Magazine Editorial Reset — March 2026)
-- All tabs redesigned with editorial/magazine aesthetic
-- Full-bleed photos via expo-image with blurhash placeholders
-- No colored card backgrounds — dark only, rgba(255,255,255,.02-.06) borders
-- Generous spacing (20px minimum padding)
-- Cormorant Garamond italic for all section headlines
-- 5 visible tabs: Plan / Pulse / People / Flights / Prep
-- Tab layout in `app/(tabs)/_layout.tsx`, custom tab bar in `components/ui/ROAMTabBar.tsx`
-- Hidden but routable: index, body-intel, generate, stays, food, group
+### Deploy Rules
+**DEPLOY ONLY WHEN:**
+- A complete feature is finished
+- A P0 bug is fixed
+- Quinn explicitly says "deploy"
+
+**NEVER deploy for:**
+- Doc changes
+- Small copy fixes
+- Single file edits
+- Agent output files
+
+**Always use:**
+```bash
+npx expo export --platform web && npx netlify deploy --prod --dir=dist --no-build
+```
+This saves Netlify credits.
+
+## Visual Design (Clean Spatial Redesign — March 2026)
+- Linear/Notion/Arc inspired — clean, spatial, confident
+- Space Grotesk Bold headlines, Inter Regular body, DM Mono labels
+- Pure near-black bg (#0A0A0A), no green tint
+- Two card types: photo (full-bleed) and data (#141414 bg)
+- Pill-shaped buttons (borderRadius: 9999)
+- Lucide icons at strokeWidth={1.5}
+- No italic headers, no uppercase on non-data labels
+- Floating pill navigation — 5 visible tabs: Plan / Pulse / Flights / People / Prep
+- Tab layout in `app/(tabs)/_layout.tsx`, nav in `components/ui/FloatingPillNav.tsx`
+- Hidden but routable: pets, index, body-intel, generate, stays, food, group
+- Flights has its own tab, Health Intel accessible from Prep tab
 
 ## Ops Dashboard (`roam-dashboard.html`)
 - Single-file HTML/CSS/JS war room — zero dependencies

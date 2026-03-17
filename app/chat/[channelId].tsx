@@ -23,6 +23,8 @@ import { COLORS, FONTS, RADIUS, SPACING } from '../../lib/constants';
 import { impactAsync, ImpactFeedbackStyle } from '../../lib/haptics';
 import { useChat } from '../../lib/hooks/useChat';
 import { useAppStore } from '../../lib/store';
+import { useTranslation } from 'react-i18next';
+import i18n from '../../lib/i18n';
 import type { ChatMessage } from '../../lib/types/social';
 
 // ---------------------------------------------------------------------------
@@ -50,8 +52,8 @@ function formatDateLabel(iso: string): string {
       a.getMonth() === b.getMonth() &&
       a.getDate() === b.getDate();
 
-    if (isSameDay(d, today)) return 'Today';
-    if (isSameDay(d, yesterday)) return 'Yesterday';
+    if (isSameDay(d, today)) return i18n.t('chat.today', { defaultValue: 'Today' });
+    if (isSameDay(d, yesterday)) return i18n.t('chat.yesterday', { defaultValue: 'Yesterday' });
 
     return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
   } catch {
@@ -141,8 +143,9 @@ export default function ChatScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ channelId: string; channelName?: string }>();
+  const { t } = useTranslation();
   const channelId = params.channelId ?? '';
-  const channelName = params.channelName ?? 'Chat';
+  const channelName = params.channelName ?? t('chat.defaultName', { defaultValue: 'Chat' });
 
   const { messages, send } = useChat(channelId);
   const session = useAppStore((s) => s.session);
@@ -214,11 +217,11 @@ export default function ChatScreen() {
           onPress={() => router.back()}
           hitSlop={12}
         >
-          <ArrowLeft size={22} color={COLORS.cream} strokeWidth={2} />
+          <ArrowLeft size={22} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
 
         <View style={styles.headerCenter}>
-          <MapPin size={14} color={COLORS.sage} strokeWidth={2} style={styles.headerIcon} />
+          <MapPin size={14} color={COLORS.sage} strokeWidth={1.5} style={styles.headerIcon} />
           <Text style={styles.headerTitle} numberOfLines={1}>
             {channelName}
           </Text>
@@ -257,7 +260,7 @@ export default function ChatScreen() {
             style={styles.textInput}
             value={inputText}
             onChangeText={setInputText}
-            placeholder="Message..."
+            placeholder={t('chat.placeholder', { defaultValue: 'Message...' })}
             placeholderTextColor={COLORS.creamFaint}
             multiline
             maxLength={1000}
@@ -268,7 +271,7 @@ export default function ChatScreen() {
             onPress={handleSend}
             disabled={!inputText.trim()}
           >
-            <Send size={18} color={inputText.trim() ? COLORS.bg : COLORS.creamFaint} strokeWidth={2} />
+            <Send size={18} color={inputText.trim() ? COLORS.bg : COLORS.creamFaint} strokeWidth={1.5} />
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -363,7 +366,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.mono,
     fontSize: 11,
     color: COLORS.creamMuted,
-    fontStyle: 'italic',
     textAlign: 'center',
   } as const,
 

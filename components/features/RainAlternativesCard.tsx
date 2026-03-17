@@ -56,7 +56,7 @@ export default function RainAlternativesCard({
   return (
     <View style={[styles.card, { borderColor: `${accentColor}30` }]}>
       <View style={styles.header}>
-        <CloudRain size={20} color={accentColor} strokeWidth={2} />
+        <CloudRain size={20} color={accentColor} strokeWidth={1.5} />
         <Text style={[styles.title, { color: accentColor }]}>
           Rain expected ({rainChance}%) — Indoor backup for Day {itineraryDay.day}
         </Text>

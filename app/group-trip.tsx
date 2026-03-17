@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../lib/haptics';
 import { ChevronLeft, Share2, MapPin, DollarSign, MessageCircle, Package } from 'lucide-react-native';
 
@@ -54,6 +55,7 @@ type TabId = 'itinerary' | 'expenses' | 'chat' | 'packing';
 function GroupTripScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const params = useLocalSearchParams<{ groupId: string }>();
   const groupId = params.groupId ?? '';
 
@@ -73,7 +75,7 @@ function GroupTripScreen() {
       setGroup(g);
       setMembers(m);
     } catch {
-      setError('Could not load group');
+      setError(t('groupTrip.errorLoadGroup', { defaultValue: 'Could not load group' }));
     }
   }, [groupId]);
 
@@ -102,14 +104,14 @@ function GroupTripScreen() {
     if (!group) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const url = generateInviteLink(group.inviteCode);
-    await Share.share({ message: `Join my trip to ${group.destination} on ROAM: ${url}`, url });
+    await Share.share({ message: t('groupTrip.shareMessage', { defaultValue: 'Join my trip to {{destination}} on ROAM: {{url}}', destination: group.destination, url }), url });
   }, [group]);
 
   if (error) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
+          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
         <Text style={styles.errorText}>{error}</Text>
       </View>
@@ -121,7 +123,7 @@ function GroupTripScreen() {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
+          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
         <View style={styles.loadingSkeleton}>
           <SkeletonCard />
@@ -134,13 +136,13 @@ function GroupTripScreen() {
   const dateRange =
     group.startDate && group.endDate
       ? `${group.startDate} - ${group.endDate}`
-      : 'Dates TBD';
+      : t('groupTrip.datesTBD', { defaultValue: 'Dates TBD' });
 
   const TABS: { id: TabId; label: string; icon: typeof MapPin }[] = [
-    { id: 'itinerary', label: 'Itinerary', icon: MapPin },
-    { id: 'expenses', label: 'Expenses', icon: DollarSign },
-    { id: 'chat', label: 'Chat', icon: MessageCircle },
-    { id: 'packing', label: 'Packing', icon: Package },
+    { id: 'itinerary', label: t('groupTrip.tabItinerary', { defaultValue: 'Itinerary' }), icon: MapPin },
+    { id: 'expenses', label: t('groupTrip.tabExpenses', { defaultValue: 'Expenses' }), icon: DollarSign },
+    { id: 'chat', label: t('groupTrip.tabChat', { defaultValue: 'Chat' }), icon: MessageCircle },
+    { id: 'packing', label: t('groupTrip.tabPacking', { defaultValue: 'Packing' }), icon: Package },
   ];
 
   return (
@@ -148,14 +150,14 @@ function GroupTripScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
+          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>{group.name}</Text>
           <Text style={styles.headerSub}>{group.destination} - {dateRange}</Text>
         </View>
         <Pressable onPress={handleShare} style={styles.shareBtn}>
-          <Share2 size={20} color={COLORS.sage} strokeWidth={2} />
+          <Share2 size={20} color={COLORS.sage} strokeWidth={1.5} />
         </Pressable>
       </View>
 
@@ -175,20 +177,20 @@ function GroupTripScreen() {
 
       {/* Tabs */}
       <View style={styles.tabs}>
-        {TABS.map((t) => {
-          const Icon = t.icon;
-          const active = activeTab === t.id;
+        {TABS.map((tab) => {
+          const Icon = tab.icon;
+          const active = activeTab === tab.id;
           return (
             <Pressable
-              key={t.id}
+              key={tab.id}
               style={[styles.tab, active && styles.tabActive]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setActiveTab(t.id);
+                setActiveTab(tab.id);
               }}
             >
-              <Icon size={16} color={active ? COLORS.sage : COLORS.creamMuted} strokeWidth={2} />
-              <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>{t.label}</Text>
+              <Icon size={16} color={active ? COLORS.sage : COLORS.creamMuted} strokeWidth={1.5} />
+              <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>{tab.label}</Text>
             </Pressable>
           );
         })}
@@ -230,6 +232,7 @@ function GroupTripScreen() {
 // Itinerary Tab
 // ---------------------------------------------------------------------------
 function ItineraryTab({ group, members }: { group: TripGroup; members: GroupMember[] }) {
+  const { t } = useTranslation();
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
 
   useEffect(() => {
@@ -248,8 +251,8 @@ function ItineraryTab({ group, members }: { group: TripGroup; members: GroupMemb
   if (!itinerary?.days?.length) {
     return (
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Itinerary</Text>
-        <Text style={styles.emptyText}>No itinerary yet. Add one from your trip.</Text>
+        <Text style={styles.cardTitle}>{t('groupTrip.itineraryTitle', { defaultValue: 'Itinerary' })}</Text>
+        <Text style={styles.emptyText}>{t('groupTrip.noItinerary', { defaultValue: 'No itinerary yet. Add one from your trip.' })}</Text>
       </View>
     );
   }
@@ -272,11 +275,12 @@ function DayVoteCard({
   groupId: string;
   members: GroupMember[];
 }) {
+  const { t } = useTranslation();
   const slots: ('morning' | 'afternoon' | 'evening')[] = ['morning', 'afternoon', 'evening'];
 
   return (
     <View style={styles.dayCard}>
-      <Text style={styles.dayTitle}>Day {day.day}</Text>
+      <Text style={styles.dayTitle}>{t('groupTrip.dayNumber', { defaultValue: 'Day {{number}}', number: day.day })}</Text>
       {slots.map((slot) => (
         <ActivityVoteRow
           key={slot}
@@ -304,6 +308,7 @@ function ActivityVoteRow({
   activity: string;
   members: GroupMember[];
 }) {
+  const { t } = useTranslation();
   const session = useAppStore((s) => s.session);
   const [votes, setVotes] = useState<{ keep: number; swap: number }>({ keep: 0, swap: 0 });
   const [myVote, setMyVote] = useState<'keep' | 'swap' | null>(null);
@@ -344,13 +349,13 @@ function ActivityVoteRow({
           style={[styles.voteBtn, myVote === 'keep' && styles.voteBtnActive]}
           onPress={() => handleVote('keep')}
         >
-          <Text style={styles.voteBtnText}>Keep ({votes.keep})</Text>
+          <Text style={styles.voteBtnText}>{t('groupTrip.keep', { defaultValue: 'Keep' })} ({votes.keep})</Text>
         </Pressable>
         <Pressable
           style={[styles.voteBtn, myVote === 'swap' && styles.voteBtnActive]}
           onPress={() => handleVote('swap')}
         >
-          <Text style={styles.voteBtnText}>Swap ({votes.swap})</Text>
+          <Text style={styles.voteBtnText}>{t('groupTrip.swap', { defaultValue: 'Swap' })} ({votes.swap})</Text>
         </Pressable>
       </View>
     </View>
@@ -371,6 +376,7 @@ function ExpensesTab({
   members: GroupMember[];
   onRefresh: () => void;
 }) {
+  const { t } = useTranslation();
   const [showAdd, setShowAdd] = useState(false);
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<TripExpense['category']>('food');
@@ -395,7 +401,7 @@ function ExpensesTab({
       setShowAdd(false);
       onRefresh();
     } catch {
-      setAddError('Could not add expense');
+      setAddError(t('groupTrip.errorAddExpense', { defaultValue: 'Could not add expense' }));
     } finally {
       setAdding(false);
     }
@@ -405,12 +411,12 @@ function ExpensesTab({
     <View style={styles.tabSection}>
       {myBalance && (
         <View style={styles.balanceCard}>
-          <Text style={styles.balanceTitle}>Your balance</Text>
+          <Text style={styles.balanceTitle}>{t('groupTrip.yourBalance', { defaultValue: 'Your balance' })}</Text>
           <Text style={[styles.balanceValue, myBalance.netBalance >= 0 ? styles.positive : styles.negative]}>
             {myBalance.netBalance >= 0 ? '+' : ''}${myBalance.netBalance.toFixed(0)}
           </Text>
           <Text style={styles.balanceSub}>
-            Paid ${myBalance.totalPaid.toFixed(0)} / Owed ${myBalance.totalOwed.toFixed(0)}
+            {t('groupTrip.paidOwed', { defaultValue: 'Paid ${{paid}} / Owed ${{owed}}', paid: myBalance.totalPaid.toFixed(0), owed: myBalance.totalOwed.toFixed(0) })}
           </Text>
         </View>
       )}
@@ -419,7 +425,7 @@ function ExpensesTab({
         style={styles.addExpenseBtn}
         onPress={() => setShowAdd(true)}
       >
-        <Text style={styles.addExpenseBtnText}>Add expense</Text>
+        <Text style={styles.addExpenseBtnText}>{t('groupTrip.addExpense', { defaultValue: 'Add expense' })}</Text>
       </Pressable>
 
       {expenses.map((e) => (
@@ -435,12 +441,12 @@ function ExpensesTab({
 
       {showAdd && (
         <View style={styles.modalCard}>
-          <Text style={styles.modalTitle}>Add expense</Text>
+          <Text style={styles.modalTitle}>{t('groupTrip.addExpense', { defaultValue: 'Add expense' })}</Text>
           <TextInput
             style={styles.input}
             value={amount}
             onChangeText={setAmount}
-            placeholder="Amount"
+            placeholder={t('groupTrip.amountPlaceholder', { defaultValue: 'Amount' })}
             placeholderTextColor={COLORS.creamMuted}
             keyboardType="decimal-pad"
           />
@@ -448,7 +454,7 @@ function ExpensesTab({
             style={styles.input}
             value={description}
             onChangeText={setDescription}
-            placeholder="Description"
+            placeholder={t('groupTrip.descriptionPlaceholder', { defaultValue: 'Description' })}
             placeholderTextColor={COLORS.creamMuted}
           />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catRow}>
@@ -464,10 +470,10 @@ function ExpensesTab({
           </ScrollView>
           <View style={styles.modalActions}>
             <Pressable onPress={() => { setShowAdd(false); setAddError(null); }}>
-              <Text style={styles.cancelText}>Cancel</Text>
+              <Text style={styles.cancelText}>{t('groupTrip.cancel', { defaultValue: 'Cancel' })}</Text>
             </Pressable>
             <Pressable style={styles.saveBtn} onPress={handleAdd} disabled={adding}>
-              <Text style={styles.saveBtnText}>{adding ? 'Adding...' : 'Add'}</Text>
+              <Text style={styles.saveBtnText}>{adding ? t('groupTrip.adding', { defaultValue: 'Adding...' }) : t('groupTrip.add', { defaultValue: 'Add' })}</Text>
             </Pressable>
           </View>
         </View>
@@ -488,24 +494,25 @@ function ChatTab({
   messages: GroupMessage[];
   members: GroupMember[];
 }) {
+  const { t } = useTranslation();
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const session = useAppStore((s) => s.session);
 
   const handleSend = useCallback(async () => {
-    const t = input.trim();
-    if (!t || sending) return;
+    const txt = input.trim();
+    if (!txt || sending) return;
     setSending(true);
     setInput('');
     try {
-      await sendMessage({ groupId, content: t });
+      await sendMessage({ groupId, content: txt });
     } finally {
       setSending(false);
     }
   }, [groupId, input, sending]);
 
   const getName = (userId: string) =>
-    members.find((m) => m.userId === userId)?.displayName ?? 'Traveler';
+    members.find((m) => m.userId === userId)?.displayName ?? t('groupTrip.defaultMemberName', { defaultValue: 'Traveler' });
 
   return (
     <View style={styles.chatSection}>
@@ -524,7 +531,7 @@ function ChatTab({
           </View>
         )}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>No messages yet. Say something.</Text>
+          <Text style={styles.emptyText}>{t('groupTrip.noMessages', { defaultValue: 'No messages yet. Say something.' })}</Text>
         }
         style={styles.msgList}
       />
@@ -533,12 +540,12 @@ function ChatTab({
           style={styles.chatInput}
           value={input}
           onChangeText={setInput}
-          placeholder="Message..."
+          placeholder={t('groupTrip.messagePlaceholder', { defaultValue: 'Message...' })}
           placeholderTextColor={COLORS.creamMuted}
           onSubmitEditing={handleSend}
         />
         <Pressable style={styles.sendBtn} onPress={handleSend} disabled={sending}>
-          <Text style={styles.sendBtnText}>{sending ? '...' : 'Send'}</Text>
+          <Text style={styles.sendBtnText}>{sending ? '...' : t('groupTrip.send', { defaultValue: 'Send' })}</Text>
         </Pressable>
       </View>
     </View>
@@ -557,21 +564,22 @@ function PackingTab({
   items: PackingItem[];
   onRefresh: () => void;
 }) {
+  const { t } = useTranslation();
   const [newItem, setNewItem] = useState('');
   const [addError, setAddError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
 
   const handleAdd = useCallback(async () => {
-    const t = newItem.trim();
-    if (!t) return;
+    const txt = newItem.trim();
+    if (!txt) return;
     setAddError(null);
     setAdding(true);
     try {
-      await addPackingItem({ groupId, itemName: t });
+      await addPackingItem({ groupId, itemName: txt });
       setNewItem('');
       onRefresh();
     } catch {
-      setAddError('Could not add item');
+      setAddError(t('groupTrip.errorAddItem', { defaultValue: 'Could not add item' }));
     } finally {
       setAdding(false);
     }
@@ -592,13 +600,13 @@ function PackingTab({
           style={styles.packingInput}
           value={newItem}
           onChangeText={(v) => { setNewItem(v); setAddError(null); }}
-          placeholder="Add item..."
+          placeholder={t('groupTrip.addItemPlaceholder', { defaultValue: 'Add item...' })}
           placeholderTextColor={COLORS.creamMuted}
           onSubmitEditing={handleAdd}
           editable={!adding}
         />
         <Pressable style={styles.addPackingBtn} onPress={handleAdd} disabled={adding}>
-          <Text style={styles.addPackingBtnText}>{adding ? '...' : 'Add'}</Text>
+          <Text style={styles.addPackingBtnText}>{adding ? '...' : t('groupTrip.add', { defaultValue: 'Add' })}</Text>
         </Pressable>
       </View>
       {addError ? <Text style={[styles.emptyText, { color: COLORS.coral }]}>{addError}</Text> : null}
@@ -615,7 +623,7 @@ function PackingTab({
         </Pressable>
       ))}
       {items.length === 0 && (
-        <Text style={styles.emptyText}>No items yet. Add something to bring.</Text>
+        <Text style={styles.emptyText}>{t('groupTrip.noPacking', { defaultValue: "Nobody's claimed anything yet. Be the hero." })}</Text>
       )}
     </View>
   );
@@ -656,7 +664,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.bgGlass,
     borderWidth: 1,
     borderColor: COLORS.border,

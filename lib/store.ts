@@ -82,6 +82,8 @@ type AppState = {
   unreadChatCount: number;
   openToMeet: boolean;
   activePeopleTab: 'feed' | 'squad' | 'groups' | 'meetups' | 'matches';
+  /** Last destination the user tapped in the Discover grid */
+  lastViewedDestination: string | null;
 
   // Actions
   setSession: (session: Session | null) => void;
@@ -122,6 +124,7 @@ type AppState = {
   setUnreadChatCount: (count: number) => void;
   setOpenToMeet: (open: boolean) => void;
   setActivePeopleTab: (tab: 'feed' | 'squad' | 'groups' | 'meetups' | 'matches') => void;
+  setLastViewedDestination: (dest: string | null) => void;
 };
 
 const defaultPlanWizard: PlanWizardState = {
@@ -141,27 +144,28 @@ const TRAVEL_PROFILE_KEY = 'roam_travel_profile';
 const PROFILE_COMPLETED_KEY = 'roam_profile_completed';
 const BOOKMARKED_RESTAURANTS_KEY = 'roam_bookmarked_restaurants';
 const SOCIAL_PROFILE_KEY = 'roam_social_profile';
+const LAST_VIEWED_DESTINATION_KEY = 'roam_last_viewed_destination';
 
 function persistBookmarkedRestaurants(ids: string[]) {
-  AsyncStorage.setItem(BOOKMARKED_RESTAURANTS_KEY, JSON.stringify(ids)).catch(() => {});
+  AsyncStorage.setItem(BOOKMARKED_RESTAURANTS_KEY, JSON.stringify(ids)).catch((err: unknown) => { console.warn('[ROAM] Persist failed:', err instanceof Error ? err.message : String(err)); });
 }
 
 function persistTravelProfile(profile: TravelProfile) {
-  AsyncStorage.setItem(TRAVEL_PROFILE_KEY, JSON.stringify(profile)).catch(() => {});
+  AsyncStorage.setItem(TRAVEL_PROFILE_KEY, JSON.stringify(profile)).catch((err: unknown) => { console.warn('[ROAM] Persist failed:', err instanceof Error ? err.message : String(err)); });
 }
 
 function persistTrips(trips: Trip[]) {
-  AsyncStorage.setItem(TRIPS_STORAGE_KEY, JSON.stringify(trips)).catch(() => {});
+  AsyncStorage.setItem(TRIPS_STORAGE_KEY, JSON.stringify(trips)).catch((err: unknown) => { console.warn('[ROAM] Persist failed:', err instanceof Error ? err.message : String(err)); });
 }
 
 function persistChat(messages: ChatMessage[]) {
   // Only persist last 100 messages to avoid storage bloat
   const toSave = messages.slice(-100);
-  AsyncStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(toSave)).catch(() => {});
+  AsyncStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(toSave)).catch((err: unknown) => { console.warn('[ROAM] Persist failed:', err instanceof Error ? err.message : String(err)); });
 }
 
 function persistPets(pets: Pet[]) {
-  AsyncStorage.setItem(PETS_STORAGE_KEY, JSON.stringify(pets)).catch(() => {});
+  AsyncStorage.setItem(PETS_STORAGE_KEY, JSON.stringify(pets)).catch((err: unknown) => { console.warn('[ROAM] Persist failed:', err instanceof Error ? err.message : String(err)); });
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -191,6 +195,7 @@ export const useAppStore = create<AppState>((set) => ({
   unreadChatCount: 0,
   openToMeet: false,
   activePeopleTab: 'feed',
+  lastViewedDestination: null,
 
   setSession: (session) => set({ session }),
   addTrip: (trip) =>
@@ -229,7 +234,7 @@ export const useAppStore = create<AppState>((set) => ({
   },
   setIsPro: (isPro) => set({ isPro }),
   setTripsThisMonth: (tripsThisMonth) => {
-    AsyncStorage.setItem(TRIPS_MONTH_KEY, JSON.stringify(tripsThisMonth)).catch(() => {});
+    AsyncStorage.setItem(TRIPS_MONTH_KEY, JSON.stringify(tripsThisMonth)).catch((err: unknown) => { console.warn('[ROAM] Persist failed:', err instanceof Error ? err.message : String(err)); });
     set({ tripsThisMonth });
   },
   setChatMessages: (chatMessages) => {
@@ -261,7 +266,7 @@ export const useAppStore = create<AppState>((set) => ({
     }),
   setPets: (pets) => set({ pets }),
   setPetRemindersEnabled: (val) => {
-    AsyncStorage.setItem(PET_REMINDERS_KEY, JSON.stringify(val)).catch(() => {});
+    AsyncStorage.setItem(PET_REMINDERS_KEY, JSON.stringify(val)).catch((err: unknown) => { console.warn('[ROAM] Persist failed:', err instanceof Error ? err.message : String(err)); });
     set({ petRemindersEnabled: val });
   },
   setActiveTripId: (id) => set({ activeTripId: id }),
@@ -276,7 +281,7 @@ export const useAppStore = create<AppState>((set) => ({
       return { travelProfile: updated };
     }),
   setHasCompletedProfile: (val) => {
-    AsyncStorage.setItem(PROFILE_COMPLETED_KEY, JSON.stringify(val)).catch(() => {});
+    AsyncStorage.setItem(PROFILE_COMPLETED_KEY, JSON.stringify(val)).catch((err: unknown) => { console.warn('[ROAM] Persist failed:', err instanceof Error ? err.message : String(err)); });
     set({ hasCompletedProfile: val });
   },
   setPendingOnboardDestination: (dest) => set({ pendingOnboardDestination: dest }),
@@ -300,7 +305,7 @@ export const useAppStore = create<AppState>((set) => ({
   },
   setGenerateMode: (mode) => {
     if (mode !== null) {
-      AsyncStorage.setItem(GENERATE_MODE_KEY, mode).catch(() => {});
+      AsyncStorage.setItem(GENERATE_MODE_KEY, mode).catch((err: unknown) => { console.warn('[ROAM] Persist failed:', err instanceof Error ? err.message : String(err)); });
     }
     set({ generateMode: mode });
   },
@@ -339,7 +344,7 @@ export const useAppStore = create<AppState>((set) => ({
   // Social layer
   setSocialProfile: (profile) => {
     if (profile) {
-      AsyncStorage.setItem(SOCIAL_PROFILE_KEY, JSON.stringify(profile)).catch(() => {});
+      AsyncStorage.setItem(SOCIAL_PROFILE_KEY, JSON.stringify(profile)).catch((err: unknown) => { console.warn('[ROAM] Persist failed:', err instanceof Error ? err.message : String(err)); });
     }
     set({ socialProfile: profile, socialProfileLoaded: true });
   },
@@ -349,6 +354,12 @@ export const useAppStore = create<AppState>((set) => ({
   setUnreadChatCount: (count) => set({ unreadChatCount: count }),
   setOpenToMeet: (open) => set({ openToMeet: open }),
   setActivePeopleTab: (tab) => set({ activePeopleTab: tab }),
+  setLastViewedDestination: (dest) => {
+    if (dest !== null) {
+      AsyncStorage.setItem(LAST_VIEWED_DESTINATION_KEY, dest).catch((err: unknown) => { console.warn('[ROAM] Persist failed:', err instanceof Error ? err.message : String(err)); });
+    }
+    set({ lastViewedDestination: dest });
+  },
 }));
 
 // ---------------------------------------------------------------------------
@@ -489,6 +500,20 @@ export async function loadPersistedTravelProfile(): Promise<void> {
     }
     if (completedRaw) {
       useAppStore.getState().setHasCompletedProfile(JSON.parse(completedRaw));
+    }
+  } catch {
+    // silent — first launch or corrupt data
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Load persisted last viewed destination on app start
+// ---------------------------------------------------------------------------
+export async function loadPersistedLastViewedDestination(): Promise<void> {
+  try {
+    const raw = await AsyncStorage.getItem(LAST_VIEWED_DESTINATION_KEY);
+    if (raw) {
+      useAppStore.setState({ lastViewedDestination: raw });
     }
   } catch {
     // silent — first launch or corrupt data

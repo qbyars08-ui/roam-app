@@ -1,8 +1,9 @@
 // =============================================================================
-// ROAM — Custom tab bar: frosted glass (dark), gold active, label only when focused
+// ROAM — Custom tab bar: frosted glass (dark), gold active pill, haptic feedback
+// Spring-animated active indicator + label reveal
 // =============================================================================
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Platform, Animated } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { IconPlan, IconDiscover, IconPeople, IconFlights, IconPrep, IconHealth, IconPulse, IconPets } from './TabIcons';
 import { captureEvent } from '../../lib/posthog';
+import * as Haptics from '../../lib/haptics';
 
 const TAB_ORDER = ['plan', 'pulse', 'people', 'flights', 'pets', 'prep'] as const;
 type TabIconComponent = React.ComponentType<{ size?: number; color?: string; focused?: boolean }>;
@@ -22,6 +24,108 @@ const TAB_ICONS: Record<string, { i18nKey: string; Icon: TabIconComponent }> = {
   prep: { i18nKey: 'tabs.prep', Icon: IconPrep },
 };
 
+// ---------------------------------------------------------------------------
+// Animated Tab Item — each tab manages its own scale + opacity animations
+// ---------------------------------------------------------------------------
+function AnimatedTabItem({
+  route,
+  isFocused,
+  options,
+  label,
+  config,
+  onPress,
+}: {
+  route: { key: string; name: string };
+  isFocused: boolean;
+  options: { tabBarAccessibilityLabel?: string };
+  label: string;
+  config: { Icon: TabIconComponent };
+  onPress: () => void;
+}) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const labelOpacity = useRef(new Animated.Value(isFocused ? 1 : 0)).current;
+  const iconTranslate = useRef(new Animated.Value(isFocused ? -2 : 0)).current;
+  const pillOpacity = useRef(new Animated.Value(isFocused ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(labelOpacity, {
+        toValue: isFocused ? 1 : 0,
+        useNativeDriver: true,
+        tension: 120,
+        friction: 14,
+      }),
+      Animated.spring(iconTranslate, {
+        toValue: isFocused ? -2 : 0,
+        useNativeDriver: true,
+        tension: 120,
+        friction: 14,
+      }),
+      Animated.spring(pillOpacity, {
+        toValue: isFocused ? 1 : 0,
+        useNativeDriver: true,
+        tension: 100,
+        friction: 12,
+      }),
+    ]).start();
+  }, [isFocused, labelOpacity, iconTranslate, pillOpacity]);
+
+  const handlePressIn = () => {
+    Animated.spring(scale, {
+      toValue: 0.88,
+      useNativeDriver: true,
+      tension: 300,
+      friction: 10,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scale, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 200,
+      friction: 12,
+    }).start();
+  };
+
+  const color = isFocused ? COLORS.accent : COLORS.muted;
+
+  return (
+    <Pressable
+      key={route.key}
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={styles.tab}
+      accessibilityRole="button"
+      accessibilityState={isFocused ? { selected: true } : {}}
+      accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
+    >
+      <Animated.View style={[styles.tabContent, { transform: [{ scale }] }]}>
+        {/* Active pill background */}
+        <Animated.View
+          style={[
+            styles.activePill,
+            { opacity: pillOpacity },
+          ]}
+        />
+        <Animated.View style={[styles.iconWrap, { transform: [{ translateY: iconTranslate }] }]}>
+          <config.Icon size={22} color={color} focused={isFocused} />
+        </Animated.View>
+        <Animated.Text
+          style={[styles.label, { color, opacity: labelOpacity }]}
+          numberOfLines={1}
+        >
+          {label}
+        </Animated.Text>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main Tab Bar
+// ---------------------------------------------------------------------------
 export default function ROAMTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
@@ -52,6 +156,9 @@ export default function ROAMTabBar({ state, descriptors, navigation }: BottomTab
             canPreventDefault: true,
           });
           if (!isFocused && !event.defaultPrevented) {
+            // Haptic feedback on tab switch
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
             const now = Date.now();
             const prev = tabEntryRef.current;
             if (prev) {
@@ -65,26 +172,16 @@ export default function ROAMTabBar({ state, descriptors, navigation }: BottomTab
           }
         };
 
-        const color = isFocused ? COLORS.gold : COLORS.creamDim;
-
         return (
-          <Pressable
+          <AnimatedTabItem
             key={route.key}
+            route={route}
+            isFocused={isFocused}
+            options={options}
+            label={label}
+            config={config}
             onPress={onPress}
-            style={({ pressed }) => [styles.tab, pressed && styles.tabPressed]}
-            accessibilityRole="button"
-            accessibilityState={isFocused ? { selected: true } : {}}
-            accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
-          >
-            <View style={styles.iconWrap}>
-              <config.Icon size={24} color={color} focused={isFocused} />
-            </View>
-            {isFocused && (
-              <Text style={[styles.label, { color }]} numberOfLines={1}>
-                {label}
-              </Text>
-            )}
-          </Pressable>
+          />
         );
       })}
     </View>
@@ -93,7 +190,7 @@ export default function ROAMTabBar({ state, descriptors, navigation }: BottomTab
   if (Platform.OS === 'ios') {
     return (
       <View style={styles.wrapper}>
-        <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
+        <BlurView intensity={90} tint="dark" style={StyleSheet.absoluteFill} />
         <View style={[styles.barOverlay, StyleSheet.absoluteFill]} />
         {barContent}
       </View>
@@ -110,7 +207,7 @@ export default function ROAMTabBar({ state, descriptors, navigation }: BottomTab
 const styles = StyleSheet.create({
   wrapper: {
     marginHorizontal: 12,
-    marginBottom: 8,
+    marginBottom: SPACING.sm,
     borderRadius: RADIUS.xl,
     overflow: 'hidden',
     borderWidth: 1,
@@ -120,13 +217,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.bgDarkGreenMedium,
   },
   barOverlay: {
-    backgroundColor: COLORS.creamMuted,
+    backgroundColor: COLORS.bgGlass,
   },
   bar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    paddingHorizontal: SPACING.sm,
+    paddingHorizontal: SPACING.xs,
   },
   tab: {
     flex: 1,
@@ -135,8 +232,19 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.xs,
     minHeight: 52,
   },
-  tabPressed: {
-    opacity: 0.7,
+  tabContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  activePill: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: COLORS.sageLight,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
   },
   iconWrap: {
     position: 'relative',
@@ -144,7 +252,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: FONTS.mono,
-    fontSize: 10,
-    letterSpacing: 0.15,
+    fontSize: 9,
+    letterSpacing: 0.5,
   },
 });

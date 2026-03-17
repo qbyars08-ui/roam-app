@@ -142,7 +142,7 @@ function DatePickerInline({
           setExpanded(!expanded);
         }}
       >
-        <Calendar size={18} color={COLORS.creamMuted} strokeWidth={2} />
+        <Calendar size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
         <View>
           <Text style={dateStyles.label}>{label}</Text>
           <Text style={dateStyles.value}>{format(value, 'EEE, MMM d')}</Text>
@@ -431,7 +431,7 @@ export default function StaysScreen() {
         {/* Search Form */}
         <View style={styles.searchCard}>
           <View style={styles.inputWrap}>
-            <MapPin size={18} color={COLORS.sage} strokeWidth={2} />
+            <MapPin size={18} color={COLORS.sage} strokeWidth={1.5} />
             <TextInput
               style={styles.input}
               value={destinationText}
@@ -471,7 +471,7 @@ export default function StaysScreen() {
                 <Minus
                   size={16}
                   color={guests <= 1 ? COLORS.creamDim : COLORS.cream}
-                  strokeWidth={2}
+                  strokeWidth={1.5}
                 />
               </Pressable>
               <Text style={styles.counterValue}>{guests}</Text>
@@ -482,7 +482,7 @@ export default function StaysScreen() {
                   setGuests(guests + 1);
                 }}
               >
-                <Plus size={16} color={COLORS.cream} strokeWidth={2} />
+                <Plus size={16} color={COLORS.cream} strokeWidth={1.5} />
               </Pressable>
             </View>
           </View>
@@ -491,7 +491,7 @@ export default function StaysScreen() {
             style={({ pressed }) => [styles.searchBtn, { transform: [{ scale: pressed ? 0.98 : 1 }] }]}
             onPress={handleSearch}
           >
-            <ExternalLink size={18} color={COLORS.bg} strokeWidth={2} />
+            <ExternalLink size={18} color={COLORS.bg} strokeWidth={1.5} />
             <Text style={styles.searchBtnText}>Search on Booking.com</Text>
           </Pressable>
         </View>
@@ -502,7 +502,7 @@ export default function StaysScreen() {
             onPress={handlePlanTrip}
             style={({ pressed }) => [styles.planCta, pressed && { opacity: 0.8 }]}
           >
-            <Building2 size={20} color={COLORS.gold} strokeWidth={2} />
+            <Building2 size={20} color={COLORS.gold} strokeWidth={1.5} />
             <Text style={styles.planCtaText}>Plan a trip first to get personalized stays</Text>
           </Pressable>
         )}

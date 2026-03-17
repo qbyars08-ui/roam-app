@@ -50,6 +50,7 @@ import {
   Lock,
   X,
 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PHOTO_GAP = 4;
@@ -60,6 +61,7 @@ const PHOTO_SIZE = (SCREEN_WIDTH - SPACING.lg * 2 - PHOTO_GAP * (PHOTO_COLS - 1)
 // Main Screen
 // =============================================================================
 export default function TripAlbumScreen() {
+  const { t } = useTranslation();
   const { tripId } = useLocalSearchParams<{ tripId?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -115,7 +117,7 @@ export default function TripAlbumScreen() {
 
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Permission needed', 'Allow ROAM to access your photos to add trip memories.');
+      Alert.alert(t('tripAlbum.permissionNeeded', { defaultValue: 'Permission needed' }), t('tripAlbum.permissionMessage', { defaultValue: 'Allow ROAM to access your photos to add trip memories.' }));
       return;
     }
 
@@ -168,10 +170,10 @@ export default function TripAlbumScreen() {
 
   const handleDeletePhoto = useCallback(
     async (photoId: string) => {
-      Alert.alert('Delete photo?', 'This can\'t be undone.', [
-        { text: 'Cancel', style: 'cancel' },
+      Alert.alert(t('tripAlbum.deletePhoto', { defaultValue: 'Delete photo?' }), t('tripAlbum.cantUndo', { defaultValue: "This can't be undone." }), [
+        { text: t('common.cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
         {
-          text: 'Delete',
+          text: t('common.delete', { defaultValue: 'Delete' }),
           style: 'destructive',
           onPress: async () => {
             await removePhoto(photoId);
@@ -200,9 +202,9 @@ export default function TripAlbumScreen() {
     return (
       <View style={[styles.screen, { paddingTop: insets.top }]}>
         <View style={styles.emptyCenter}>
-          <Text style={styles.emptyTitle}>No trip found</Text>
+          <Text style={styles.emptyTitle}>{t('tripAlbum.noTripFound', { defaultValue: 'No trip found' })}</Text>
           <Pressable onPress={() => router.back()} style={styles.emptyBtn}>
-            <Text style={styles.emptyBtnText}>Go back</Text>
+            <Text style={styles.emptyBtnText}>{t('common.goBack', { defaultValue: 'Go back' })}</Text>
           </Pressable>
         </View>
       </View>
@@ -214,17 +216,17 @@ export default function TripAlbumScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <ChevronLeft size={28} color={COLORS.cream} strokeWidth={2} />
+          <ChevronLeft size={28} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>{trip.destination}</Text>
-          <Text style={styles.headerSub}>{photos.length} photos</Text>
+          <Text style={styles.headerSub}>{t('tripAlbum.photoCount', { defaultValue: '{{count}} photos', count: photos.length })}</Text>
         </View>
         <Pressable onPress={handleTogglePublic} hitSlop={12}>
           {isPublic ? (
-            <Globe size={22} color={COLORS.sage} strokeWidth={2} />
+            <Globe size={22} color={COLORS.sage} strokeWidth={1.5} />
           ) : (
-            <Lock size={22} color={COLORS.creamMuted} strokeWidth={2} />
+            <Lock size={22} color={COLORS.creamMuted} strokeWidth={1.5} />
           )}
         </Pressable>
       </View>
@@ -241,12 +243,12 @@ export default function TripAlbumScreen() {
           <Text style={styles.heroEmoji}>{theme.emoji}</Text>
           <Text style={styles.heroDestination}>{trip.destination}</Text>
           <Text style={styles.heroDays}>
-            {trip.days} days · {photos.length} memories
+            {t('tripAlbum.heroMeta', { defaultValue: '{{days}} days · {{count}} memories', days: trip.days, count: photos.length })}
           </Text>
           {isPublic && (
             <View style={styles.publicBadge}>
-              <Globe size={12} color={COLORS.sage} strokeWidth={2} />
-              <Text style={styles.publicBadgeText}>Visible on profile</Text>
+              <Globe size={12} color={COLORS.sage} strokeWidth={1.5} />
+              <Text style={styles.publicBadgeText}>{t('tripAlbum.visibleOnProfile', { defaultValue: 'Visible on profile' })}</Text>
             </View>
           )}
         </LinearGradient>
@@ -272,11 +274,11 @@ export default function TripAlbumScreen() {
                   isActive && { backgroundColor: theme.primary, borderColor: theme.primary },
                 ]}
               >
-                <Text style={[styles.dayPillText, isActive && { color: '#000' }]}>
+                <Text style={[styles.dayPillText, isActive && { color: COLORS.black }]}>
                   Day {day.day}
                 </Text>
                 {dayPhotos.length > 0 && (
-                  <View style={[styles.dayPillBadge, isActive && { backgroundColor: '#000' }]}>
+                  <View style={[styles.dayPillBadge, isActive && { backgroundColor: COLORS.black }]}>
                     <Text style={[styles.dayPillBadgeText, isActive && { color: theme.primary }]}>
                       {dayPhotos.length}
                     </Text>
@@ -334,10 +336,9 @@ export default function TripAlbumScreen() {
         {photos.length === 0 && (
           <View style={styles.emptyPhotos}>
             <Camera size={48} color={COLORS.creamMuted} strokeWidth={1.5} />
-            <Text style={styles.emptyPhotosTitle}>No memories yet</Text>
+            <Text style={styles.emptyPhotosTitle}>{t('tripAlbum.noMemories', { defaultValue: 'No memories yet' })}</Text>
             <Text style={styles.emptyPhotosSub}>
-              Add photos from your camera roll to build your trip album.
-              Share it on your profile for other travelers to see.
+              {t('tripAlbum.addPhotosHint', { defaultValue: 'Add photos from your camera roll to build your trip album. Share it on your profile for other travelers to see.' })}
             </Text>
           </View>
         )}
@@ -356,7 +357,7 @@ export default function TripAlbumScreen() {
           },
         ]}
       >
-        <Plus size={28} color="#000" strokeWidth={2.5} />
+        <Plus size={28} color={COLORS.black} strokeWidth={1.5} />
       </Pressable>
 
       {/* Photo detail modal */}
@@ -368,13 +369,13 @@ export default function TripAlbumScreen() {
           <View style={[styles.photoModalContent, { paddingTop: insets.top + 20 }]}>
             <View style={styles.photoModalHeader}>
               <Pressable onPress={() => setSelectedPhoto(null)} hitSlop={12}>
-                <X size={24} color="#fff" strokeWidth={2} />
+                <X size={24} color={COLORS.white} strokeWidth={1.5} />
               </Pressable>
               <Pressable
                 onPress={() => handleDeletePhoto(selectedPhoto.id)}
                 hitSlop={12}
               >
-                <Trash2 size={22} color={COLORS.coral} strokeWidth={2} />
+                <Trash2 size={22} color={COLORS.coral} strokeWidth={1.5} />
               </Pressable>
             </View>
 
@@ -468,11 +469,11 @@ const styles = StyleSheet.create({
   publicBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: SPACING.sm,
     backgroundColor: COLORS.bgCard,
     borderRadius: RADIUS.full,
     paddingHorizontal: SPACING.md,
-    paddingVertical: 4,
+    paddingVertical: SPACING.xs,
     marginTop: SPACING.xs,
   } as ViewStyle,
   publicBadgeText: {
@@ -491,13 +492,13 @@ const styles = StyleSheet.create({
   dayPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: SPACING.sm,
     backgroundColor: COLORS.bgCard,
     borderRadius: RADIUS.full,
     borderWidth: 1,
     borderColor: COLORS.border,
     paddingHorizontal: SPACING.md,
-    paddingVertical: 8,
+    paddingVertical: SPACING.sm,
   } as ViewStyle,
   dayPillText: {
     fontFamily: FONTS.bodySemiBold,
@@ -535,7 +536,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.header,
     fontSize: 18,
     color: COLORS.cream,
-    marginTop: 2,
+    marginTop: SPACING.xs,
   } as TextStyle,
 
   // Photo grid
@@ -560,14 +561,14 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingHorizontal: 6,
-    paddingVertical: 3,
+    backgroundColor: COLORS.overlay,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
   } as ViewStyle,
   photoCaptionText: {
     fontFamily: FONTS.body,
     fontSize: 10,
-    color: '#fff',
+    color: COLORS.white,
   } as TextStyle,
 
   // Empty photos
@@ -596,11 +597,11 @@ const styles = StyleSheet.create({
     right: SPACING.lg,
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: RADIUS.pill,
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 6,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -609,7 +610,7 @@ const styles = StyleSheet.create({
   // Photo modal
   photoModalOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.95)',
+    backgroundColor: COLORS.overlayDarkest,
     zIndex: 100,
     justifyContent: 'center',
   } as ViewStyle,
@@ -628,7 +629,7 @@ const styles = StyleSheet.create({
   } as ImageStyle,
   photoModalInfo: {
     padding: SPACING.lg,
-    gap: 4,
+    gap: SPACING.xs,
   } as ViewStyle,
   photoModalDay: {
     fontFamily: FONTS.mono,
@@ -639,14 +640,14 @@ const styles = StyleSheet.create({
   photoModalCaption: {
     fontFamily: FONTS.body,
     fontSize: 16,
-    color: '#fff',
+    color: COLORS.white,
     lineHeight: 24,
   } as TextStyle,
   photoModalDate: {
     fontFamily: FONTS.mono,
     fontSize: 10,
     color: COLORS.creamMuted,
-    marginTop: 4,
+    marginTop: SPACING.xs,
   } as TextStyle,
 
   // Empty state
@@ -663,9 +664,9 @@ const styles = StyleSheet.create({
   } as TextStyle,
   emptyBtn: {
     backgroundColor: COLORS.sage,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
     paddingHorizontal: SPACING.xl,
-    paddingVertical: 12,
+    paddingVertical: SPACING.md,
   } as ViewStyle,
   emptyBtnText: {
     fontFamily: FONTS.bodySemiBold,

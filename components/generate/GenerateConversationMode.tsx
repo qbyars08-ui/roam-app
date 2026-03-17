@@ -2,7 +2,7 @@
 // ROAM — Generate Conversation Mode (chat-based trip planning)
 // Context-aware chips, live trip brief, premium conversational UX
 // =============================================================================
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Animated,
   ActivityIndicator,
   type ViewStyle,
   type TextStyle,
@@ -25,15 +26,23 @@ import {
   Users,
   Sparkles,
 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import VoiceInputButton from '../features/VoiceInputButton';
+import TypingIndicator from '../ui/TypingIndicator';
 import { sendConversationMessage } from '../../lib/claude';
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-const FIRST_MESSAGE = 'Where are you thinking? Somewhere specific, or do you want ideas?';
-const FIRST_CHIPS = ['I have somewhere in mind', 'Surprise me', 'Southeast Asia maybe', 'Europe this summer'];
+const FIRST_MESSAGE_KEY = 'generate.conversation.firstMessage';
+const FIRST_MESSAGE_DEFAULT = 'Where are you thinking? Somewhere specific, or do you want ideas?';
+const FIRST_CHIP_KEYS = [
+  { key: 'generate.conversation.chip.havePlace', defaultValue: 'I have somewhere in mind' },
+  { key: 'generate.conversation.chip.surpriseMe', defaultValue: 'Surprise me' },
+  { key: 'generate.conversation.chip.southeastAsia', defaultValue: 'Southeast Asia maybe' },
+  { key: 'generate.conversation.chip.europeSummer', defaultValue: 'Europe this summer' },
+];
 const GENERATE_PHRASE = 'Ready to build your trip?';
 
 // Context-aware chip pools based on what the AI is asking about
@@ -68,19 +77,68 @@ interface GenerateConversationModeProps {
 }
 
 // ---------------------------------------------------------------------------
+// AnimatedChip — staggered entrance + spring press
+// ---------------------------------------------------------------------------
+function AnimatedChip({ label, delay, onPress }: { label: string; delay: number; onPress: () => void }) {
+  const entrance = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.timing(entrance, {
+      toValue: 1,
+      duration: 350,
+      delay,
+      useNativeDriver: true,
+    }).start();
+  }, [entrance, delay]);
+
+  return (
+    <Animated.View
+      style={{
+        opacity: entrance,
+        transform: [
+          { scale },
+          {
+            translateY: entrance.interpolate({
+              inputRange: [0, 1],
+              outputRange: [12, 0],
+            }),
+          },
+        ],
+      }}
+    >
+      <Pressable
+        onPress={onPress}
+        onPressIn={() => {
+          Haptics.selectionAsync();
+          Animated.spring(scale, { toValue: 0.93, useNativeDriver: true, tension: 300, friction: 10 }).start();
+        }}
+        onPressOut={() => {
+          Animated.spring(scale, { toValue: 1, useNativeDriver: true, tension: 200, friction: 12 }).start();
+        }}
+        style={styles.suggestionChip}
+      >
+        <Text style={styles.suggestionText}>{label}</Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 export default function GenerateConversationMode({
   onGenerate,
   isGenerating,
 }: GenerateConversationModeProps) {
-  console.log('[ROAM] GenerateConversationMode mounted');
-
+  const { t } = useTranslation();
+  const firstMessage = t(FIRST_MESSAGE_KEY, { defaultValue: FIRST_MESSAGE_DEFAULT });
+  const firstChips = FIRST_CHIP_KEYS.map((c) => t(c.key, { defaultValue: c.defaultValue }));
   const [messages, setMessages] = useState<ConversationMessage[]>([
-    { role: 'assistant', content: FIRST_MESSAGE },
+    { role: 'assistant', content: firstMessage },
   ]);
   const [input, setInput] = useState('');
-  const [suggestions, setSuggestions] = useState<string[]>(FIRST_CHIPS);
+  const [suggestions, setSuggestions] = useState<string[]>(firstChips);
   const [isLoading, setIsLoading] = useState(false);
   const [showGenerateBtn, setShowGenerateBtn] = useState(false);
   const [tripBrief, setTripBrief] = useState<TripBrief>({ vibes: [] });
@@ -129,12 +187,13 @@ export default function GenerateConversationMode({
     Haptics.selectionAsync();
     setSuggestions([]);
     const userMsg: ConversationMessage = { role: 'user', content: chip };
-    setMessages((prev) => [...prev, userMsg]);
+    // Build history BEFORE setMessages to avoid stale closure
+    const history = [...messages, userMsg];
+    setMessages(history);
     setInput('');
 
     setIsLoading(true);
     try {
-      const history = [...messages, userMsg];
       // Anthropic API requires first message to be role:'user' — filter out leading assistant messages
       const apiMessages = history.filter((m, i) => !(i === 0 && m.role === 'assistant'));
       const { content } = await sendConversationMessage(apiMessages);
@@ -145,19 +204,19 @@ export default function GenerateConversationMode({
       const isAuthError = errMsg.includes('authenticate') || errMsg.includes('401') || errMsg.includes('token');
       const isTimeout = errMsg.includes('timed out');
       const userMessage = isAuthError
-        ? 'Having trouble connecting. Try refreshing the page.'
+        ? t('generate.conversation.errorAuth', { defaultValue: 'Having trouble connecting. Try refreshing the page.' })
         : isTimeout
-          ? 'That took too long. Want to try again?'
-          : 'Lost connection for a second. Mind sending that again?';
+          ? t('generate.conversation.errorTimeout', { defaultValue: 'That took too long. Want to try again?' })
+          : t('generate.conversation.errorGeneral', { defaultValue: 'Lost connection for a second. Mind sending that again?' });
       setMessages((prev) => [
         ...prev,
         { role: 'assistant', content: userMessage },
       ]);
-      setSuggestions(['Try again', 'Start over']);
+      setSuggestions([t('generate.conversation.tryAgain', { defaultValue: 'Try again' }), t('generate.conversation.startOver', { defaultValue: 'Start over' })]);
     } finally {
       setIsLoading(false);
     }
-  }, [messages, processResponse]);
+  }, [messages, processResponse, t]);
 
   const handleSend = useCallback(async () => {
     const text = input.trim();
@@ -165,13 +224,14 @@ export default function GenerateConversationMode({
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const userMsg: ConversationMessage = { role: 'user', content: text };
-    setMessages((prev) => [...prev, userMsg]);
+    // Build history BEFORE setMessages to avoid stale closure
+    const history = [...messages, userMsg];
+    setMessages(history);
     setInput('');
     setSuggestions([]);
 
     setIsLoading(true);
     try {
-      const history = [...messages, userMsg];
       // Anthropic API requires first message to be role:'user' — filter out leading assistant messages
       const apiMessages = history.filter((m, i) => !(i === 0 && m.role === 'assistant'));
       const { content } = await sendConversationMessage(apiMessages);
@@ -182,19 +242,19 @@ export default function GenerateConversationMode({
       const isAuthError = errMsg.includes('authenticate') || errMsg.includes('401') || errMsg.includes('token');
       const isTimeout = errMsg.includes('timed out');
       const userMessage = isAuthError
-        ? 'Having trouble connecting. Try refreshing the page.'
+        ? t('generate.conversation.errorAuth', { defaultValue: 'Having trouble connecting. Try refreshing the page.' })
         : isTimeout
-          ? 'That took too long. Want to try again?'
-          : 'Hmm, connection dropped. Probably just a hiccup — try again?';
+          ? t('generate.conversation.errorTimeout', { defaultValue: 'That took too long. Want to try again?' })
+          : t('generate.conversation.errorDropped', { defaultValue: 'Hmm, connection dropped. Probably just a hiccup — try again?' });
       setMessages((prev) => [
         ...prev,
         { role: 'assistant', content: userMessage },
       ]);
-      setSuggestions(['Retry']);
+      setSuggestions([t('generate.conversation.retry', { defaultValue: 'Retry' })]);
     } finally {
       setIsLoading(false);
     }
-  }, [input, isLoading, messages, processResponse]);
+  }, [input, isLoading, messages, processResponse, t]);
 
   const handleGeneratePress = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -226,7 +286,7 @@ export default function GenerateConversationMode({
         >
           {briefFields.map((field, i) => (
             <View key={i} style={styles.briefPill}>
-              <field.icon size={12} color={field.color} strokeWidth={2} />
+              <field.icon size={12} color={field.color} strokeWidth={1.5} />
               <Text style={[styles.briefPillText, { color: field.color }]}>{field.label}</Text>
             </View>
           ))}
@@ -242,25 +302,20 @@ export default function GenerateConversationMode({
         {/* Context-aware suggestion chips */}
         {isAssistant && suggestions.length > 0 && !isLoading && (
           <View style={styles.chipRow}>
-            {suggestions.map((chip) => (
-              <Pressable
+            {suggestions.map((chip, idx) => (
+              <AnimatedChip
                 key={chip}
+                label={chip}
+                delay={idx * 80}
                 onPress={() => handleChipPress(chip)}
-                style={({ pressed }) => [
-                  styles.suggestionChip,
-                  pressed && styles.suggestionChipPressed,
-                ]}
-              >
-                <Text style={styles.suggestionText}>{chip}</Text>
-              </Pressable>
+              />
             ))}
           </View>
         )}
 
         {isLoading && (
           <View style={styles.loadingWrap}>
-            <ActivityIndicator size="small" color={COLORS.sage} />
-            <Text style={styles.loadingText}>thinking...</Text>
+            <TypingIndicator color={COLORS.sage} size={7} />
           </View>
         )}
       </View>
@@ -280,8 +335,8 @@ export default function GenerateConversationMode({
             <ActivityIndicator size="small" color={COLORS.bg} />
           ) : (
             <>
-              <Sparkles size={20} color={COLORS.bg} strokeWidth={2} />
-              <Text style={styles.generateBtnText}>{tripBrief.destination ? `See My ${tripBrief.destination} Trip` : 'See My Trip'}</Text>
+              <Sparkles size={20} color={COLORS.bg} strokeWidth={1.5} />
+              <Text style={styles.generateBtnText}>{tripBrief.destination ? t('generate.conversation.seeMyTripDest', { defaultValue: `See My ${tripBrief.destination} Trip`, destination: tripBrief.destination }) : t('generate.conversation.seeMyTrip', { defaultValue: 'See My Trip' })}</Text>
             </>
           )}
         </Pressable>
@@ -297,7 +352,7 @@ export default function GenerateConversationMode({
           style={styles.input}
           value={input}
           onChangeText={setInput}
-          placeholder="Type anything..."
+          placeholder={t('generate.conversation.inputPlaceholder', { defaultValue: 'Type anything...' })}
           placeholderTextColor={COLORS.creamDim}
           editable={!isLoading && !isGenerating}
           onSubmitEditing={handleSend}
@@ -312,7 +367,7 @@ export default function GenerateConversationMode({
             pressed && { opacity: 0.8 },
           ]}
         >
-          <ArrowUp size={20} color={COLORS.bg} strokeWidth={2} />
+          <ArrowUp size={20} color={COLORS.bg} strokeWidth={1.5} />
         </Pressable>
       </View>
     </KeyboardAvoidingView>
@@ -347,8 +402,13 @@ function generateContextChips(content: string): string[] {
 }
 
 function pickRandom(arr: string[], count: number): string[] {
-  const shuffled = [...arr].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
+  // Fisher-Yates shuffle for unbiased selection
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, count);
 }
 
 // ---------------------------------------------------------------------------
@@ -448,18 +508,18 @@ const styles = StyleSheet.create({
   briefBar: {
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    gap: 8,
+    gap: SPACING.sm,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
   briefPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: SPACING.xs,
     backgroundColor: COLORS.bgCard,
     borderRadius: RADIUS.full,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.sm,
     borderWidth: 1,
     borderColor: COLORS.border,
   },
@@ -478,10 +538,11 @@ const styles = StyleSheet.create({
   },
   messageText: {
     fontFamily: FONTS.header,
-    fontSize: 28,
+    fontSize: 26,
     color: COLORS.cream,
-    textAlign: 'center',
-    maxWidth: '85%',
+    textAlign: 'left',
+    maxWidth: '90%',
+    letterSpacing: -0.3,
     lineHeight: 36,
   },
 
@@ -499,12 +560,9 @@ const styles = StyleSheet.create({
     borderColor: COLORS.sage,
     borderRadius: RADIUS.full,
     paddingHorizontal: SPACING.md,
-    paddingVertical: 10,
+    paddingVertical: SPACING.sm,
   },
-  suggestionChipPressed: {
-    opacity: 0.7,
-    backgroundColor: COLORS.sageLight,
-  },
+  // press state handled by AnimatedChip spring scale
   suggestionText: {
     fontFamily: FONTS.body,
     fontSize: 14,
@@ -515,24 +573,19 @@ const styles = StyleSheet.create({
   loadingWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: SPACING.sm,
     marginTop: SPACING.lg,
   },
-  loadingText: {
-    fontFamily: FONTS.mono,
-    fontSize: 12,
-    color: COLORS.creamDim,
-    fontStyle: 'italic',
-  },
+  // loadingText removed — using TypingIndicator component instead
 
   // ── Generate button ──
   generateBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: SPACING.sm,
     backgroundColor: COLORS.sage,
-    borderRadius: RADIUS.xl,
+    borderRadius: RADIUS.pill,
     height: 56,
     marginHorizontal: SPACING.md,
     marginBottom: SPACING.sm,

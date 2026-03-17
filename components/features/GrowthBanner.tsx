@@ -161,12 +161,12 @@ export default function GrowthBanner({ variant, onDismiss }: GrowthBannerProps) 
         accessibilityLabel="Dismiss"
         style={styles.closeBtn}
       >
-        <X size={14} color={COLORS.creamMuted} strokeWidth={2} />
+        <X size={14} color={COLORS.creamMuted} strokeWidth={1.5} />
       </Pressable>
 
       <View style={styles.content}>
         <View style={[styles.iconWrap, { backgroundColor: config.bgColor }]}>
-          <config.Icon size={18} color={config.accentColor} strokeWidth={2} />
+          <config.Icon size={18} color={config.accentColor} strokeWidth={1.5} />
         </View>
 
         <View style={styles.textWrap}>
@@ -182,7 +182,7 @@ export default function GrowthBanner({ variant, onDismiss }: GrowthBannerProps) 
           ]}
         >
           <Text style={styles.ctaText}>{config.ctaLabel}</Text>
-          <ArrowRight size={14} color={COLORS.bg} strokeWidth={2} />
+          <ArrowRight size={14} color={COLORS.bg} strokeWidth={1.5} />
         </Pressable>
       </View>
     </Animated.View>

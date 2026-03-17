@@ -40,7 +40,7 @@ export default function OfflineBanner() {
       pointerEvents="none"
     >
       <View style={styles.pill}>
-        <WifiOff size={14} color={COLORS.white} strokeWidth={2.5} />
+        <WifiOff size={14} color={COLORS.white} strokeWidth={1.5} />
         <Text style={styles.text}>{t('common.offline')}</Text>
       </View>
     </Animated.View>

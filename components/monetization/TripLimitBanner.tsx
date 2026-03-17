@@ -5,6 +5,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Sparkles, Zap } from 'lucide-react-native';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS, FREE_TRIPS_PER_MONTH } from '../../lib/constants';
@@ -12,6 +13,7 @@ import { useCanGenerateTrip } from '../../lib/pro-gate';
 import { isGuestUser } from '../../lib/guest';
 
 export default function TripLimitBanner() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { canGenerate, remaining, isPro } = useCanGenerateTrip();
   const isGuest = isGuestUser();
@@ -25,8 +27,8 @@ export default function TripLimitBanner() {
     if (isPro) {
       return {
         icon: 'sparkles' as const,
-        label: 'PRO',
-        message: 'Unlimited trips',
+        label: t('tripLimit.pro', { defaultValue: 'PRO' }),
+        message: t('tripLimit.unlimitedTrips', { defaultValue: 'Unlimited trips' }),
         color: COLORS.gold,
         showUpgrade: false,
       };
@@ -35,8 +37,8 @@ export default function TripLimitBanner() {
     if (isGuest) {
       return {
         icon: 'zap' as const,
-        label: 'GUEST',
-        message: 'Sign up to keep planning',
+        label: t('tripLimit.guest', { defaultValue: 'GUEST' }),
+        message: t('tripLimit.signUpToKeepPlanning', { defaultValue: 'Sign up to keep planning' }),
         color: COLORS.sage,
         showUpgrade: true,
       };
@@ -45,8 +47,8 @@ export default function TripLimitBanner() {
     if (!canGenerate) {
       return {
         icon: 'zap' as const,
-        label: 'LIMIT REACHED',
-        message: 'Upgrade for unlimited trips',
+        label: t('tripLimit.limitReached', { defaultValue: 'LIMIT REACHED' }),
+        message: t('tripLimit.upgradeForUnlimited', { defaultValue: 'Upgrade for unlimited trips' }),
         color: COLORS.coral,
         showUpgrade: true,
       };
@@ -55,11 +57,13 @@ export default function TripLimitBanner() {
     return {
       icon: 'zap' as const,
       label: `${remaining}/${FREE_TRIPS_PER_MONTH}`,
-      message: remaining === 1 ? 'Last free trip this month' : `${remaining} free trip${remaining !== 1 ? 's' : ''} left`,
+      message: remaining === 1
+        ? t('tripLimit.lastFreeTrip', { defaultValue: 'Last free trip this month' })
+        : t('tripLimit.freeTripsLeft', { defaultValue: '{{count}} free trips left', count: remaining }),
       color: remaining === 1 ? COLORS.coral : COLORS.sage,
       showUpgrade: true,
     };
-  }, [isPro, isGuest, canGenerate, remaining]);
+  }, [isPro, isGuest, canGenerate, remaining, t]);
 
   if (isPro) return null;
 
@@ -73,9 +77,9 @@ export default function TripLimitBanner() {
     >
       <View style={styles.leftSection}>
         {bannerContent.icon === 'sparkles' ? (
-          <Sparkles size={16} color={bannerContent.color} strokeWidth={2} />
+          <Sparkles size={16} color={bannerContent.color} strokeWidth={1.5} />
         ) : (
-          <Zap size={16} color={bannerContent.color} strokeWidth={2} />
+          <Zap size={16} color={bannerContent.color} strokeWidth={1.5} />
         )}
         <View style={[styles.labelBadge, { backgroundColor: bannerContent.color + '20' }]}>
           <Text style={[styles.labelText, { color: bannerContent.color }]}>
@@ -85,7 +89,7 @@ export default function TripLimitBanner() {
         <Text style={styles.message}>{bannerContent.message}</Text>
       </View>
       {bannerContent.showUpgrade && (
-        <Text style={[styles.upgradeText, { color: bannerContent.color }]}>Upgrade</Text>
+        <Text style={[styles.upgradeText, { color: bannerContent.color }]}>{t('tripLimit.upgrade', { defaultValue: 'Upgrade' })}</Text>
       )}
     </Pressable>
   );

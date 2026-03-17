@@ -26,8 +26,8 @@ import { Users } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS, BUDGETS } from '../lib/constants';
 import { getDestinationPhoto, BACKUP_FALLBACK } from '../lib/photos';
 import ShimmerOverlay from '../components/ui/ShimmerOverlay';
+import { useTranslation } from 'react-i18next';
 import { useAppStore, type Trip } from '../lib/store';
-import i18n from '../lib/i18n';
 import { isGuestUser } from '../lib/guest';
 import { getMyGroups, type TripGroup } from '../lib/group-trips';
 import { trackItineraryOutcome } from '../lib/ai-improvement';
@@ -63,6 +63,7 @@ function TripCard({
   onPhotos: (t: Trip) => void;
   onJournal: (t: Trip) => void;
 }) {
+  const { t } = useTranslation();
   const [loaded, setLoaded] = useState(false);
   const [useFallback, setUseFallback] = useState(false);
   const budgetLabel = BUDGETS.find((b) => b.id === trip.budget)?.label ?? trip.budget;
@@ -130,7 +131,7 @@ function TripCard({
               { opacity: pressed ? 0.6 : 1, transform: [{ scale: pressed ? 0.9 : 1 }] },
             ]}
           >
-            <Text style={styles.hypeBtnText}>Invite</Text>
+            <Text style={styles.hypeBtnText}>{t('saved.invite', { defaultValue: 'Invite' })}</Text>
           </Pressable>
           <Pressable
             onPress={(e) => {
@@ -146,7 +147,7 @@ function TripCard({
               { opacity: pressed ? 0.6 : 1, transform: [{ scale: pressed ? 0.9 : 1 }] },
             ]}
           >
-            <Text style={styles.hypeBtnText}>Hype</Text>
+            <Text style={styles.hypeBtnText}>{t('saved.hype', { defaultValue: 'Hype' })}</Text>
           </Pressable>
           <Text style={styles.cardDate}>{dateStr}</Text>
         </View>
@@ -154,7 +155,7 @@ function TripCard({
 
       <View style={styles.cardDetails}>
         <View style={styles.detailChip}>
-          <Text style={styles.detailText}>{trip.days} days</Text>
+          <Text style={styles.detailText}>{t('saved.daysChip', { defaultValue: '{{count}} days', count: trip.days })}</Text>
         </View>
         <View style={styles.detailChip}>
           <Text style={styles.detailText}>{budgetLabel}</Text>
@@ -185,8 +186,8 @@ function TripCard({
             { opacity: pressed ? 0.6 : 1, transform: [{ scale: pressed ? 0.9 : 1 }] },
           ]}
         >
-          <Clock size={14} color={COLORS.sage} strokeWidth={2} />
-          <Text style={styles.quickActionLabel}>Countdown</Text>
+          <Clock size={14} color={COLORS.sage} strokeWidth={1.5} />
+          <Text style={styles.quickActionLabel}>{t('saved.countdown', { defaultValue: 'Countdown' })}</Text>
         </Pressable>
         <Pressable
           onPress={(e) => {
@@ -200,8 +201,8 @@ function TripCard({
             { opacity: pressed ? 0.6 : 1, transform: [{ scale: pressed ? 0.9 : 1 }] },
           ]}
         >
-          <Wallet size={14} color={COLORS.gold} strokeWidth={2} />
-          <Text style={styles.quickActionLabel}>Expenses</Text>
+          <Wallet size={14} color={COLORS.gold} strokeWidth={1.5} />
+          <Text style={styles.quickActionLabel}>{t('saved.expenses', { defaultValue: 'Expenses' })}</Text>
         </Pressable>
         <Pressable
           onPress={(e) => {
@@ -215,8 +216,8 @@ function TripCard({
             { opacity: pressed ? 0.6 : 1, transform: [{ scale: pressed ? 0.9 : 1 }] },
           ]}
         >
-          <Camera size={14} color={COLORS.coral} strokeWidth={2} />
-          <Text style={styles.quickActionLabel}>Photos</Text>
+          <Camera size={14} color={COLORS.coral} strokeWidth={1.5} />
+          <Text style={styles.quickActionLabel}>{t('saved.photos', { defaultValue: 'Photos' })}</Text>
         </Pressable>
         <Pressable
           onPress={(e) => {
@@ -230,8 +231,8 @@ function TripCard({
             { opacity: pressed ? 0.6 : 1, transform: [{ scale: pressed ? 0.9 : 1 }] },
           ]}
         >
-          <PenLine size={14} color={COLORS.cream} strokeWidth={2} />
-          <Text style={styles.quickActionLabel}>Journal</Text>
+          <PenLine size={14} color={COLORS.cream} strokeWidth={1.5} />
+          <Text style={styles.quickActionLabel}>{t('saved.journal', { defaultValue: 'Journal' })}</Text>
         </Pressable>
       </View>
         </LinearGradient>
@@ -245,17 +246,18 @@ function TripCard({
 // Empty state
 // ---------------------------------------------------------------------------
 function EmptyState({ onPlan }: { onPlan: () => void }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.emptyContainer}>
       <View style={styles.emptyIconWrap}>
         <EmptySuitcase size={120} />
       </View>
-      <Text style={styles.emptyTitle}>Your trips will show up here</Text>
+      <Text style={styles.emptyTitle}>{t('saved.emptyTitle', { defaultValue: 'Your trips will show up here' })}</Text>
       <Text style={styles.emptySubtitle}>
-        Plan your first adventure and we'll save it right here. Ready when you are.
+        {t('saved.emptySubtitle', { defaultValue: "Plan your first adventure and we'll save it right here. Ready when you are." })}
       </Text>
       <View style={styles.emptyButtonContainer}>
-        <Button label="Plan my first trip" variant="sage" onPress={onPlan} />
+        <Button label={t('saved.planFirstTrip', { defaultValue: 'Plan my first trip' })} variant="sage" onPress={onPlan} />
       </View>
     </View>
   );
@@ -265,6 +267,7 @@ function EmptyState({ onPlan }: { onPlan: () => void }) {
 // Main Screen
 // ---------------------------------------------------------------------------
 export default function SavedScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const trips = useAppStore((s) => s.trips);
@@ -291,12 +294,12 @@ export default function SavedScreen() {
   const handleDelete = useCallback(
     (trip: Trip) => {
       Alert.alert(
-        'Remove this trip?',
-        `Your ${trip.destination} trip will be removed. You can always plan it again.`,
+        t('saved.removeTitle', { defaultValue: 'Remove this trip?' }),
+        t('saved.removeBody', { defaultValue: 'Your {{destination}} trip will be removed. You can always plan it again.', destination: trip.destination }),
         [
-          { text: 'Cancel', style: 'cancel' },
+          { text: t('saved.cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
           {
-            text: 'Delete',
+            text: t('saved.delete', { defaultValue: 'Delete' }),
             style: 'destructive',
             onPress: () => {
               trackItineraryOutcome(trip.id, trip.destination, false);
@@ -400,8 +403,8 @@ export default function SavedScreen() {
             ]}
             onPress={() => router.push('/(auth)/signup')}
           >
-            <Text style={styles.guestBannerText}>Sign up to sync your trips across devices</Text>
-            <Text style={styles.guestBannerCta}>Create account</Text>
+            <Text style={styles.guestBannerText}>{t('saved.guestBannerText', { defaultValue: 'Sign up to sync your trips across devices' })}</Text>
+            <Text style={styles.guestBannerCta}>{t('saved.guestBannerCta', { defaultValue: 'Create account' })}</Text>
           </Pressable>
         )}
         {trips.length > 0 && <TravelStats trips={trips} />}
@@ -410,20 +413,20 @@ export default function SavedScreen() {
             style={({ pressed }) => [styles.groupTripCard, { opacity: pressed ? 0.9 : 1 }]}
             onPress={handleCreateGroup}
           >
-            <Text style={styles.groupTripTitle}>Plan a trip with friends</Text>
-            <Text style={styles.groupTripSub}>Invite people you love — plan, vote, and split costs together.</Text>
+            <Text style={styles.groupTripTitle}>{t('saved.groupTripTitle', { defaultValue: 'Plan a trip with friends' })}</Text>
+            <Text style={styles.groupTripSub}>{t('saved.groupTripSub', { defaultValue: 'Invite people you love — plan, vote, and split costs together.' })}</Text>
           </Pressable>
         )}
         {groups.length > 0 && (
           <View style={styles.groupSection}>
-            <Text style={styles.groupSectionTitle}>Group trips</Text>
+            <Text style={styles.groupSectionTitle}>{t('saved.groupTrips', { defaultValue: 'Group trips' })}</Text>
             {groups.map((g) => (
               <Pressable
                 key={g.id}
                 style={({ pressed }) => [styles.groupCard, { opacity: pressed ? 0.9 : 1 }]}
                 onPress={() => handleOpenGroup(g)}
               >
-                <Users size={18} color={COLORS.sage} strokeWidth={2} />
+                <Users size={18} color={COLORS.sage} strokeWidth={1.5} />
                 <View style={styles.groupCardContent}>
                   <Text style={styles.groupCardName}>{g.name}</Text>
                   <Text style={styles.groupCardDest}>{g.destination}</Text>
@@ -442,8 +445,8 @@ export default function SavedScreen() {
                 router.push('/passport');
               }}
             >
-              <BookOpen size={20} color={COLORS.gold} strokeWidth={2} />
-              <Text style={styles.quickAccessLabel}>Passport</Text>
+              <BookOpen size={20} color={COLORS.gold} strokeWidth={1.5} />
+              <Text style={styles.quickAccessLabel}>{t('saved.passport', { defaultValue: 'Passport' })}</Text>
             </Pressable>
             <Pressable
               style={({ pressed }) => [styles.quickAccessCard, { opacity: pressed ? 0.85 : 1 }]}
@@ -452,16 +455,16 @@ export default function SavedScreen() {
                 router.push('/trip-wrapped');
               }}
             >
-              <BarChart3 size={20} color={COLORS.sage} strokeWidth={2} />
-              <Text style={styles.quickAccessLabel}>Wrapped</Text>
+              <BarChart3 size={20} color={COLORS.sage} strokeWidth={1.5} />
+              <Text style={styles.quickAccessLabel}>{t('saved.wrapped', { defaultValue: 'Wrapped' })}</Text>
             </Pressable>
           </View>
         )}
 
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>{i18n.t('saved.title')}</Text>
+          <Text style={styles.headerTitle}>{t('saved.title', { defaultValue: 'My Trips' })}</Text>
           <Text style={styles.headerCount}>
-            {trips.length} {trips.length === 1 ? 'trip' : 'trips'}
+            {t('saved.tripCount', { defaultValue: '{{count}} trip', defaultValue_plural: '{{count}} trips', count: trips.length })}
           </Text>
         </View>
       </>

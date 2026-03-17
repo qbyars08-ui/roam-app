@@ -2,6 +2,7 @@
 // ROAM — Mood section: cinematic photo cards, no emojis
 // =============================================================================
 import React, { memo, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -14,7 +15,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../../lib/haptics';
 import { useRouter } from 'expo-router';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, type Destination } from '../../lib/constants';
 import BreathingLine from '../ui/BreathingLine';
 import { useAppStore } from '../../lib/store';
 import {
@@ -25,7 +26,6 @@ import {
 } from '../../lib/recommendations';
 import { MOOD_PHOTOS } from '../../lib/mood-photos';
 import { getDestinationPhoto } from '../../lib/photos';
-import type { Destination } from '../../lib/constants';
 import { useCurrency } from './CurrencyToggle';
 import { formatUSD } from '../../lib/currency';
 
@@ -34,6 +34,7 @@ interface Props {
 }
 
 function MoodSectionInner({ onDestinationPick }: Props) {
+  const { t } = useTranslation();
   const router = useRouter();
   const setPlanWizard = useAppStore((s) => s.setPlanWizard);
   const travelProfile = useAppStore((s) => s.travelProfile);
@@ -75,14 +76,14 @@ function MoodSectionInner({ onDestinationPick }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionLabel}>What kind of trip are you craving?</Text>
+      <Text style={styles.sectionLabel}>{t('mood.whatKindOfTrip', { defaultValue: 'What kind of trip are you craving?' })}</Text>
 
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.row}
       >
-        {MOODS.map((mood) => {
+        {MOODS.map((mood, index) => {
           const isSelected = selectedMood?.id === mood.id;
           const photoUrl = MOOD_PHOTOS[mood.id] ?? MOOD_PHOTOS.disappear;
 
@@ -91,6 +92,7 @@ function MoodSectionInner({ onDestinationPick }: Props) {
               key={mood.id}
               style={({ pressed }) => [
                 styles.card,
+                { height: getCardHeight(index) },
                 isSelected && styles.cardSelected,
                 {
                   opacity: pressed ? 0.95 : 1,
@@ -131,7 +133,7 @@ function MoodSectionInner({ onDestinationPick }: Props) {
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <Pressable onPress={() => setShowResults(false)}>
-              <Text style={styles.modalClose}>Close</Text>
+              <Text style={styles.modalClose}>{t('mood.close', { defaultValue: 'Close' })}</Text>
             </Pressable>
           </View>
 
@@ -145,7 +147,7 @@ function MoodSectionInner({ onDestinationPick }: Props) {
           {loading ? (
             <View style={styles.loadingContainer}>
               <BreathingLine width={100} height={4} color={COLORS.sage} />
-              <Text style={styles.loadingText}>Finding your perfect match</Text>
+              <Text style={styles.loadingText}>{t('mood.findingMatch', { defaultValue: 'Finding your perfect match' })}</Text>
             </View>
           ) : (
             <ScrollView contentContainerStyle={styles.resultsContainer}>
@@ -181,7 +183,7 @@ function MoodSectionInner({ onDestinationPick }: Props) {
                       >
                         {i === 0 && (
                           <View style={styles.topPickBadge}>
-                            <Text style={styles.topPickText}>Top pick</Text>
+                            <Text style={styles.topPickText}>{t('mood.topPick', { defaultValue: 'Top pick' })}</Text>
                           </View>
                         )}
                         <View style={styles.resultContent}>
@@ -190,7 +192,7 @@ function MoodSectionInner({ onDestinationPick }: Props) {
                           <Text style={styles.resultReason}>{reason}</Text>
                           <View style={styles.resultMeta}>
                             <Text style={styles.resultPrice}>
-                              from {rates && currency !== 'USD' ? formatUSD(dest.dailyCost, currency, rates) : `$${dest.dailyCost}`}/day
+                              {t('mood.from', { defaultValue: 'from' })} {rates && currency !== 'USD' ? formatUSD(dest.dailyCost, currency, rates) : `$${dest.dailyCost}`}/{t('mood.day', { defaultValue: 'day' })}
                             </Text>
                           </View>
                         </View>
@@ -208,7 +210,8 @@ function MoodSectionInner({ onDestinationPick }: Props) {
 }
 
 const CARD_WIDTH = 160;
-const CARD_HEIGHT = 220;
+const CARD_HEIGHTS = [240, 200, 260, 210, 230, 190, 250];
+const getCardHeight = (index: number) => CARD_HEIGHTS[index % CARD_HEIGHTS.length];
 
 const styles = StyleSheet.create({
   container: {
@@ -227,7 +230,6 @@ const styles = StyleSheet.create({
   },
   card: {
     width: CARD_WIDTH,
-    height: CARD_HEIGHT,
     borderRadius: RADIUS.lg,
     overflow: 'hidden',
     borderWidth: 1,
@@ -257,7 +259,6 @@ const styles = StyleSheet.create({
   cardLabel: {
     fontFamily: FONTS.headerMedium,
     fontSize: 16,
-    fontStyle: 'italic',
     color: COLORS.cream,
   },
 
@@ -355,7 +356,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.sage,
     marginTop: SPACING.xs,
-    fontStyle: 'italic',
   },
   resultMeta: {
     marginTop: SPACING.sm,

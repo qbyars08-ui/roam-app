@@ -42,10 +42,10 @@ import { captureEvent } from '../lib/posthog';
 // Pro features list (shared between both plans)
 // =============================================================================
 const PRO_FEATURES = [
-  { icon: Zap, text: 'Unlimited AI trips' },
-  { icon: Shield, text: 'Offline PREP mode' },
-  { icon: Sparkles, text: 'Priority AI responses' },
-  { icon: Users, text: 'Travel Twin & Trip Chemistry' },
+  { icon: Zap, i18nKey: 'paywall.featureUnlimitedTrips', text: 'Unlimited AI trips' },
+  { icon: Shield, i18nKey: 'paywall.featureOfflinePrep', text: 'Offline PREP mode' },
+  { icon: Sparkles, i18nKey: 'paywall.featurePriorityAI', text: 'Priority AI responses' },
+  { icon: Users, i18nKey: 'paywall.featureTravelTwin', text: 'Travel Twin & Trip Chemistry' },
 ] as const;
 
 // =============================================================================
@@ -166,20 +166,20 @@ export default function PaywallScreen() {
     switch (params.reason) {
       case 'limit':
         return params.destination
-          ? `You just planned ${params.destination}.\nUnlock unlimited trips.`
+          ? t('paywall.headlineLimit', { defaultValue: 'You just planned {{destination}}.\nUnlock unlimited trips.', destination: params.destination })
           : upgradeMsg.headline;
       case 'feature':
         return params.feature
-          ? `${params.feature} is a Pro feature.\nUpgrade to unlock everything.`
+          ? t('paywall.headlineFeature', { defaultValue: '{{feature}} is a Pro feature.\nUpgrade to unlock everything.', feature: params.feature })
           : upgradeMsg.headline;
       case 'chaos':
-        return 'Chaos Mode needs fuel.\nGo Pro for unlimited random trips.';
+        return t('paywall.headlineChaos', { defaultValue: 'Chaos Mode needs fuel.\nGo Pro for unlimited random trips.' });
       case 'group':
-        return 'Group planning unlocked with Pro.\nPlan trips together, split the fun.';
+        return t('paywall.headlineGroup', { defaultValue: 'Group planning unlocked with Pro.\nPlan trips together, split the fun.' });
       default:
         return upgradeMsg.headline;
     }
-  }, [params.reason, params.destination, params.feature, upgradeMsg.headline]);
+  }, [params.reason, params.destination, params.feature, upgradeMsg.headline, t]);
 
   useEffect(() => {
     track({ type: 'screen_view', screen: 'paywall', payload: { reason: params.reason ?? 'default' } }).catch(() => {});
@@ -213,7 +213,7 @@ export default function PaywallScreen() {
         handleClose();
       }
     } catch {
-      Alert.alert('Purchase didn\u2019t go through', 'Check your connection and try again. We\u2019ll be here.');
+      Alert.alert(t('paywall.purchaseFailedTitle', { defaultValue: 'Purchase didn\u2019t go through' }), t('paywall.purchaseFailedBody', { defaultValue: 'Check your connection and try again. We\u2019ll be here.' }));
     } finally {
       setLoading(false);
     }
@@ -229,14 +229,14 @@ export default function PaywallScreen() {
         if (session?.user?.id && !String(session.user.id).startsWith('guest-')) {
           syncProStatusToSupabase(session.user.id, true).catch(() => {});
         }
-        Alert.alert('Restored', 'Your Pro subscription has been restored.', [
-          { text: 'OK', onPress: handleClose },
+        Alert.alert(t('paywall.restoredTitle', { defaultValue: 'Restored' }), t('paywall.restoredBody', { defaultValue: 'Your Pro subscription has been restored.' }), [
+          { text: t('common.ok', { defaultValue: 'OK' }), onPress: handleClose },
         ]);
       } else {
-        Alert.alert('Nothing to restore', 'We didn\u2019t find an active subscription. Try with the email you subscribed with.');
+        Alert.alert(t('paywall.nothingToRestore', { defaultValue: 'Nothing to restore' }), t('paywall.nothingToRestoreBody', { defaultValue: 'We didn\u2019t find an active subscription. Try with the email you subscribed with.' }));
       }
     } catch {
-      Alert.alert('Couldn\u2019t restore', 'Check your connection and try again.');
+      Alert.alert(t('paywall.restoreFailedTitle', { defaultValue: 'Couldn\u2019t restore' }), t('paywall.restoreFailedBody', { defaultValue: 'Check your connection and try again.' }));
     } finally {
       setRestoring(false);
     }
@@ -253,13 +253,13 @@ export default function PaywallScreen() {
           accessibilityLabel={t('common.close')}
           style={({ pressed }) => [styles.closeBtn, { top: insets.top + SPACING.xs, opacity: pressed ? 0.6 : 1 }]}
         >
-          <X size={20} color={COLORS.cream} strokeWidth={2} />
+          <X size={20} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
         <WaitlistCaptureModal
           visible
           destination={params.destination ?? ''}
           onViewTrip={handleClose}
-          skipLabel="Maybe later"
+          skipLabel={t('common.maybeLater', { defaultValue: 'Maybe later' })}
         />
       </View>
     );
@@ -285,7 +285,7 @@ export default function PaywallScreen() {
         accessibilityLabel={t('common.close')}
         style={({ pressed }) => [styles.closeBtn, { top: insets.top + SPACING.xs, opacity: pressed ? 0.6 : 1 }]}
       >
-        <X size={20} color={COLORS.cream} strokeWidth={2} />
+        <X size={20} color={COLORS.cream} strokeWidth={1.5} />
       </Pressable>
 
       <ScrollView
@@ -312,7 +312,7 @@ export default function PaywallScreen() {
             <View style={styles.socialProofLive}>
               <View style={styles.liveDot} />
               <Text style={styles.socialProofCount}>
-                {liveCount.toLocaleString()} travelers upgraded this month
+                {`${liveCount.toLocaleString()} ${t('paywall.travelersUpgraded', { defaultValue: 'travelers upgraded this month' })}`}
               </Text>
             </View>
             <Text style={styles.socialProofRecent}>{recentActivity}</Text>
@@ -336,7 +336,7 @@ export default function PaywallScreen() {
                   styles.toggleLabel,
                   billingCycle === 'annual' && styles.toggleLabelActive,
                 ]}>
-                  Annual
+                  {t('paywall.annual', { defaultValue: 'Annual' })}
                 </Text>
                 {savingsPercent > 0 && (
                   <View style={styles.savingsBadge}>
@@ -353,7 +353,7 @@ export default function PaywallScreen() {
                   styles.toggleLabel,
                   billingCycle === 'monthly' && styles.toggleLabelActive,
                 ]}>
-                  Monthly
+                  {t('paywall.monthly', { defaultValue: 'Monthly' })}
                 </Text>
               </Pressable>
             </View>
@@ -363,7 +363,7 @@ export default function PaywallScreen() {
           <View style={styles.planCard}>
             <View style={styles.planHeader}>
               <Text style={styles.planName}>
-                {billingCycle === 'annual' ? 'Global Pass' : 'ROAM Pro'}
+                {billingCycle === 'annual' ? t('paywall.globalPass', { defaultValue: 'Global Pass' }) : t('paywall.roamPro', { defaultValue: 'ROAM Pro' })}
               </Text>
               {billingCycle === 'annual' && (
                 <View style={styles.bestValueTag}>
@@ -383,7 +383,7 @@ export default function PaywallScreen() {
 
             {billingCycle === 'annual' && (
               <Text style={styles.monthlyEquivalent}>
-                Just {monthlyEquivalent}/month
+                {t('paywall.justPerMonth', { defaultValue: 'Just {{price}}/month', price: monthlyEquivalent })}
               </Text>
             )}
 
@@ -391,27 +391,27 @@ export default function PaywallScreen() {
               {PRO_FEATURES.map((feat, i) => (
                 <View key={i} style={styles.featureRow}>
                   <View style={styles.featureIconWrap}>
-                    <feat.icon size={16} color={COLORS.sage} strokeWidth={2} />
+                    <feat.icon size={16} color={COLORS.sage} strokeWidth={1.5} />
                   </View>
-                  <Text style={styles.featureText}>{feat.text}</Text>
+                  <Text style={styles.featureText}>{t(feat.i18nKey, { defaultValue: feat.text })}</Text>
                 </View>
               ))}
               {billingCycle === 'annual' && (
                 <>
                   <View style={styles.featureRow}>
                     <View style={styles.featureIconWrap}>
-                      <Check size={16} color={COLORS.gold} strokeWidth={2.5} />
+                      <Check size={16} color={COLORS.gold} strokeWidth={1.5} />
                     </View>
                     <Text style={[styles.featureText, { color: COLORS.gold }]}>
-                      Founding Member badge
+                      {t('paywall.foundingMember', { defaultValue: 'Founding Member badge' })}
                     </Text>
                   </View>
                   <View style={styles.featureRow}>
                     <View style={styles.featureIconWrap}>
-                      <Check size={16} color={COLORS.gold} strokeWidth={2.5} />
+                      <Check size={16} color={COLORS.gold} strokeWidth={1.5} />
                     </View>
                     <Text style={[styles.featureText, { color: COLORS.gold }]}>
-                      Early access to new features
+                      {t('paywall.earlyAccess', { defaultValue: 'Early access to new features' })}
                     </Text>
                   </View>
                 </>
@@ -436,24 +436,24 @@ export default function PaywallScreen() {
             >
               <Text style={styles.trialCtaTitle}>
                 {loading
-                  ? 'Unlocking your trips...'
-                  : 'Start your 3-day free trial'}
+                  ? t('paywall.unlocking', { defaultValue: 'Unlocking your trips...' })
+                  : t('paywall.startTrial', { defaultValue: 'Start your 3-day free trial' })}
               </Text>
               <Text style={styles.trialCtaSub}>
                 {billingCycle === 'annual'
-                  ? `Then ${annualPrice}/year. Cancel anytime.`
-                  : `Then ${monthlyPrice}/month. Cancel anytime.`}
+                  ? t('paywall.thenAnnual', { defaultValue: 'Then {{price}}/year. Cancel anytime.', price: annualPrice })
+                  : t('paywall.thenMonthly', { defaultValue: 'Then {{price}}/month. Cancel anytime.', price: monthlyPrice })}
               </Text>
             </LinearGradient>
           </Pressable>
 
           <Text style={styles.trialNote}>
-            No charge for 3 days. Cancel before trial ends and pay nothing.
+            {t('paywall.trialNote', { defaultValue: 'No charge for 3 days. Cancel before trial ends and pay nothing.' })}
           </Text>
 
           {/* ── Compare plans ── */}
           <View style={styles.compareSection}>
-            <Text style={styles.compareTitle}>Free vs Pro</Text>
+            <Text style={styles.compareTitle}>{t('paywall.freeVsPro', { defaultValue: 'Free vs Pro' })}</Text>
             <View style={styles.compareRow}>
               <Text style={styles.compareLabel}>AI trips per month</Text>
               <Text style={styles.compareFree}>1</Text>
@@ -462,32 +462,32 @@ export default function PaywallScreen() {
             <View style={styles.compareDivider} />
             <View style={styles.compareRow}>
               <Text style={styles.compareLabel}>Offline prep</Text>
-              <View style={styles.compareXWrap}><X size={12} color={COLORS.creamVeryFaint} strokeWidth={2} /></View>
-              <View style={styles.compareCheckWrap}><Check size={12} color={COLORS.sage} strokeWidth={2.5} /></View>
+              <View style={styles.compareXWrap}><X size={12} color={COLORS.creamVeryFaint} strokeWidth={1.5} /></View>
+              <View style={styles.compareCheckWrap}><Check size={12} color={COLORS.sage} strokeWidth={1.5} /></View>
             </View>
             <View style={styles.compareDivider} />
             <View style={styles.compareRow}>
               <Text style={styles.compareLabel}>Priority AI</Text>
-              <View style={styles.compareXWrap}><X size={12} color={COLORS.creamVeryFaint} strokeWidth={2} /></View>
-              <View style={styles.compareCheckWrap}><Check size={12} color={COLORS.sage} strokeWidth={2.5} /></View>
+              <View style={styles.compareXWrap}><X size={12} color={COLORS.creamVeryFaint} strokeWidth={1.5} /></View>
+              <View style={styles.compareCheckWrap}><Check size={12} color={COLORS.sage} strokeWidth={1.5} /></View>
             </View>
             <View style={styles.compareDivider} />
             <View style={styles.compareRow}>
               <Text style={styles.compareLabel}>Travel Twin</Text>
-              <View style={styles.compareXWrap}><X size={12} color={COLORS.creamVeryFaint} strokeWidth={2} /></View>
-              <View style={styles.compareCheckWrap}><Check size={12} color={COLORS.sage} strokeWidth={2.5} /></View>
+              <View style={styles.compareXWrap}><X size={12} color={COLORS.creamVeryFaint} strokeWidth={1.5} /></View>
+              <View style={styles.compareCheckWrap}><Check size={12} color={COLORS.sage} strokeWidth={1.5} /></View>
             </View>
             <View style={styles.compareDivider} />
             <View style={styles.compareRow}>
               <Text style={styles.compareLabel}>Trip Chemistry</Text>
-              <View style={styles.compareXWrap}><X size={12} color={COLORS.creamVeryFaint} strokeWidth={2} /></View>
-              <View style={styles.compareCheckWrap}><Check size={12} color={COLORS.sage} strokeWidth={2.5} /></View>
+              <View style={styles.compareXWrap}><X size={12} color={COLORS.creamVeryFaint} strokeWidth={1.5} /></View>
+              <View style={styles.compareCheckWrap}><Check size={12} color={COLORS.sage} strokeWidth={1.5} /></View>
             </View>
             <View style={styles.compareDivider} />
             <View style={styles.compareRow}>
               <Text style={styles.compareLabel}>Memory Lane</Text>
-              <View style={styles.compareXWrap}><X size={12} color={COLORS.creamVeryFaint} strokeWidth={2} /></View>
-              <View style={styles.compareCheckWrap}><Check size={12} color={COLORS.sage} strokeWidth={2.5} /></View>
+              <View style={styles.compareXWrap}><X size={12} color={COLORS.creamVeryFaint} strokeWidth={1.5} /></View>
+              <View style={styles.compareCheckWrap}><Check size={12} color={COLORS.sage} strokeWidth={1.5} /></View>
             </View>
           </View>
 
@@ -498,13 +498,13 @@ export default function PaywallScreen() {
             style={({ pressed }) => [styles.restoreBtn, { opacity: restoring ? 0.4 : pressed ? 0.6 : 1 }]}
           >
             <Text style={styles.restoreText}>
-              {restoring ? 'Looking for your subscription...' : t('paywall.restore')}
+              {restoring ? t('paywall.lookingForSub', { defaultValue: 'Looking for your subscription...' }) : t('paywall.restore')}
             </Text>
           </Pressable>
 
           {/* Maybe later */}
           <Pressable onPress={handleClose} hitSlop={12}>
-            <Text style={styles.maybeLater}>Maybe later</Text>
+            <Text style={styles.maybeLater}>{t('common.maybeLater', { defaultValue: 'Maybe later' })}</Text>
           </Pressable>
         </Animated.View>
       </ScrollView>
@@ -580,12 +580,12 @@ const styles = StyleSheet.create({
   socialProofLive: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: SPACING.sm,
   } as ViewStyle,
   liveDot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.sage,
   } as ViewStyle,
   socialProofCount: {
@@ -663,7 +663,7 @@ const styles = StyleSheet.create({
   planCard: {
     backgroundColor: COLORS.bgCard,
     borderRadius: RADIUS.lg,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: COLORS.gold,
     padding: SPACING.xl,
     marginBottom: SPACING.lg,
@@ -738,7 +738,7 @@ const styles = StyleSheet.create({
 
   // Trial CTA
   trialCtaWrapper: {
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.pill,
     overflow: 'hidden',
     marginBottom: SPACING.sm,
   } as ViewStyle,
@@ -746,7 +746,7 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md + 2,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.pill,
     gap: 2,
   } as ViewStyle,
   trialCtaTitle: {

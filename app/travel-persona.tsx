@@ -19,6 +19,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
 import ViewShot, { captureRef } from '../lib/view-shot';
 import * as Sharing from 'expo-sharing';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import {
   analyzePersona,
@@ -32,6 +33,7 @@ import { withComingSoon } from '../lib/with-coming-soon';
 // Main Screen
 // =============================================================================
 function TravelPersonaScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [persona, setPersona] = useState<TravelPersona | null>(null);
@@ -129,7 +131,7 @@ function TravelPersonaScreen() {
       });
       await Sharing.shareAsync(uri, {
         mimeType: 'image/png',
-        dialogTitle: 'Share your Travel Persona',
+        dialogTitle: t('persona.shareDialogTitle', { defaultValue: 'Share your Travel Persona' }),
       });
     } catch {
       // Sharing cancelled or failed silently
@@ -141,7 +143,7 @@ function TravelPersonaScreen() {
       <View style={[styles.screen, { paddingTop: insets.top }]}>
         <View style={styles.loadingCenter}>
           <View style={styles.loadingDot} />
-          <Text style={styles.loadingText}>Analyzing your Travel DNA...</Text>
+          <Text style={styles.loadingText}>{t('persona.loading', { defaultValue: 'Analyzing your Travel DNA...' })}</Text>
         </View>
       </View>
     );
@@ -155,8 +157,8 @@ function TravelPersonaScreen() {
           <Text style={styles.backBtn}>{'\u2190'}</Text>
         </Pressable>
         <View>
-          <Text style={styles.eyebrow}>YOUR TRAVEL DNA</Text>
-          <Text style={styles.title}>Travel Persona</Text>
+          <Text style={styles.eyebrow}>{t('persona.eyebrow', { defaultValue: 'YOUR TRAVEL DNA' })}</Text>
+          <Text style={styles.title}>{t('persona.title', { defaultValue: 'Travel Persona' })}</Text>
         </View>
         <Pressable onPress={handleRefresh} hitSlop={12}>
           <Text style={styles.refreshBtn}>{'\u21BB'}</Text>
@@ -205,19 +207,19 @@ function TravelPersonaScreen() {
               <View style={styles.statsRow}>
                 <StatBadge
                   value={`${persona.stats.tripsGenerated}`}
-                  label="Trips"
+                  label={t('persona.statTrips', { defaultValue: 'Trips' })}
                 />
                 <StatBadge
                   value={`${persona.stats.uniqueCountries}`}
-                  label="Places"
+                  label={t('persona.statPlaces', { defaultValue: 'Places' })}
                 />
                 <StatBadge
                   value={`${persona.stats.avgTripLength}d`}
-                  label="Avg Length"
+                  label={t('persona.statAvgLength', { defaultValue: 'Avg Length' })}
                 />
                 <StatBadge
-                  value={persona.stats.planningStyle === 'spontaneous' ? 'Spontaneous' : persona.stats.planningStyle === 'planner' ? 'Planner' : 'Balanced'}
-                  label="Style"
+                  value={persona.stats.planningStyle === 'spontaneous' ? t('persona.spontaneous', { defaultValue: 'Spontaneous' }) : persona.stats.planningStyle === 'planner' ? t('persona.planner', { defaultValue: 'Planner' }) : t('persona.balanced', { defaultValue: 'Balanced' })}
+                  label={t('persona.statStyle', { defaultValue: 'Style' })}
                 />
               </View>
 
@@ -244,13 +246,13 @@ function TravelPersonaScreen() {
             colors={[persona.color, `${persona.color}CC`]}
             style={styles.shareBtnGradient}
           >
-            <Text style={styles.shareBtnText}>Share your Travel DNA</Text>
+            <Text style={styles.shareBtnText}>{t('persona.share', { defaultValue: 'Share your Travel DNA' })}</Text>
           </LinearGradient>
         </Pressable>
 
         {/* Persona Details */}
         <View style={styles.detailsCard}>
-          <Text style={styles.detailsTitle}>What this means</Text>
+          <Text style={styles.detailsTitle}>{t('persona.whatThisMeans', { defaultValue: 'What this means' })}</Text>
           <Text style={styles.detailsBody}>
             {getPersonaDescription(persona)}
           </Text>
@@ -259,14 +261,14 @@ function TravelPersonaScreen() {
         {/* Top Vibes */}
         {persona.stats.mostUsedVibe && (
           <View style={styles.detailsCard}>
-            <Text style={styles.detailsTitle}>Your signature vibe</Text>
+            <Text style={styles.detailsTitle}>{t('persona.signatureVibe', { defaultValue: 'Your signature vibe' })}</Text>
             <View style={styles.vibeChip}>
               <Text style={styles.vibeChipText}>
                 {persona.stats.mostUsedVibe}
               </Text>
             </View>
             <Text style={styles.detailsHint}>
-              This vibe shows up most in your trip choices
+              {t('persona.vibeHint', { defaultValue: 'This vibe shows up most in your trip choices' })}
             </Text>
           </View>
         )}
@@ -372,7 +374,7 @@ const styles = StyleSheet.create({
   loadingDot: {
     width: 12,
     height: 12,
-    borderRadius: 6,
+    borderRadius: RADIUS.sm,
     backgroundColor: COLORS.sage,
     opacity: 0.8,
   } as ViewStyle,
@@ -440,6 +442,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 4,
   } as TextStyle,
+
   personaSubtitle: {
     fontFamily: FONTS.body,
     fontSize: 15,
@@ -518,7 +521,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 13,
     color: COLORS.creamMuted,
-    fontStyle: 'italic',
     textAlign: 'center',
   } as TextStyle,
 
@@ -608,7 +610,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 14,
     color: COLORS.creamMuted,
-    fontStyle: 'italic',
   } as TextStyle,
 });
 

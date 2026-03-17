@@ -5,6 +5,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
 import { Shield } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { getHealthBrief } from '../../lib/health-brief';
 
@@ -13,12 +14,13 @@ interface HealthBriefCardProps {
 }
 
 export default function HealthBriefCard({ destination }: HealthBriefCardProps) {
+  const { t } = useTranslation();
   const brief = getHealthBrief(destination);
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Shield size={16} color={COLORS.sage} strokeWidth={2} />
-        <Text style={styles.title}>TRAVEL HEALTH</Text>
+        <Shield size={16} color={COLORS.sage} strokeWidth={1.5} />
+        <Text style={styles.title}>{t('health.title', { defaultValue: 'TRAVEL HEALTH' })}</Text>
       </View>
       <Text style={styles.vax}>{brief.vaccinations}</Text>
       <Text style={styles.tap}>{brief.tapWaterNote}</Text>

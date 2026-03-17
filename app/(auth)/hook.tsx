@@ -18,7 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../../lib/haptics';
 import { supabase } from '../../lib/supabase';
 import { useAppStore } from '../../lib/store';
 import { enterGuestMode } from '../../lib/guest';
@@ -145,12 +145,11 @@ export default function HookScreen() {
             },
           ]}
         >
-          Travel like you{'\n'}know someone there
+          {t('onboarding.hookHeadline', { defaultValue: 'Travel like you\nknow someone there' })}
         </Animated.Text>
 
         <Animated.Text style={[styles.sub, { opacity: subOpacity }]}>
-          AI-powered itineraries that feel like they came{'\n'}
-          from a well-traveled friend, not a search engine.
+          {t('onboarding.hookSub', { defaultValue: 'AI-powered itineraries that feel like they came\nfrom a well-traveled friend, not a search engine.' })}
         </Animated.Text>
 
         <Animated.View
@@ -166,7 +165,7 @@ export default function HookScreen() {
               { opacity: pressed || browsing ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
             ]}
           >
-            <Text style={styles.btnText}>Build my first trip</Text>
+            <Text style={styles.btnText}>{t('onboarding.hookCta', { defaultValue: 'Build my first trip' })}</Text>
           </Pressable>
           <Pressable
             onPress={handleBrowseFirst}
@@ -217,7 +216,7 @@ const styles = StyleSheet.create({
   btn: {
     backgroundColor: COLORS.gold,
     height: 56,
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.pill,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: SPACING.md,

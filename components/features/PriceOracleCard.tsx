@@ -3,6 +3,7 @@
 // "Your $150/day in Tokyo buys: ..."
 // =============================================================================
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, StyleSheet } from 'react-native';
 import { Receipt } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
@@ -14,13 +15,14 @@ interface PriceOracleCardProps {
 }
 
 export default function PriceOracleCard({ destination, dailyBudget }: PriceOracleCardProps) {
+  const { t } = useTranslation();
   const data: CostBreakdown = getCostBreakdown(destination, dailyBudget);
 
   return (
     <View style={styles.card}>
-      <Receipt size={20} color={COLORS.gold} strokeWidth={2} />
+      <Receipt size={20} color={COLORS.gold} strokeWidth={1.5} />
       <View style={styles.content}>
-        <Text style={styles.title}>Cost of living</Text>
+        <Text style={styles.title}>{t('price.costOfLiving', { defaultValue: 'Cost of living' })}</Text>
         <Text style={styles.breakdown}>{data.breakdown}</Text>
         {data.trend ? (
           <Text style={styles.trend}>{data.trend}</Text>

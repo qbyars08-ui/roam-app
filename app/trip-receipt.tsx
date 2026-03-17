@@ -19,6 +19,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
 import ViewShot, { captureRef } from '../lib/view-shot';
 import * as Sharing from 'expo-sharing';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS, BUDGETS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import { parseItinerary, type Itinerary, type ItineraryDay } from '../lib/types/itinerary';
@@ -117,6 +118,7 @@ function calculateBreakdown(itinerary: Itinerary) {
 // Main Screen
 // =============================================================================
 function TripReceiptScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
@@ -176,7 +178,7 @@ function TripReceiptScreen() {
       });
       await Sharing.shareAsync(uri, {
         mimeType: 'image/png',
-        dialogTitle: 'Share your Trip Receipt',
+        dialogTitle: t('tripReceipt.shareDialogTitle', { defaultValue: 'Share your Trip Receipt' }),
       });
     } catch {
       // Sharing cancelled or failed silently
@@ -191,13 +193,13 @@ function TripReceiptScreen() {
           <Pressable onPress={() => router.back()} hitSlop={12}>
             <Text style={styles.backBtn}>{'\u2190'}</Text>
           </Pressable>
-          <Text style={styles.headerTitle}>The Receipt</Text>
+          <Text style={styles.headerTitle}>{t('tripReceipt.headerTitle', { defaultValue: 'The Receipt' })}</Text>
           <View style={{ width: 24 }} />
         </View>
         <View style={styles.emptyCenter}>
-          <Text style={styles.emptyTitle}>No trip to receipt-ify</Text>
+          <Text style={styles.emptyTitle}>{t('tripReceipt.emptyTitle', { defaultValue: 'No trip to receipt-ify' })}</Text>
           <Text style={styles.emptyBody}>
-            Open one of your trips first, then come back to see what it costs.
+            {t('tripReceipt.emptyBody', { defaultValue: 'Open one of your trips first, then come back to see what it costs.' })}
           </Text>
         </View>
       </View>
@@ -223,8 +225,8 @@ function TripReceiptScreen() {
           <Text style={styles.backBtn}>{'\u2190'}</Text>
         </Pressable>
         <View>
-          <Text style={styles.headerEyebrow}>TRIP COST BREAKDOWN</Text>
-          <Text style={styles.headerTitle}>The Receipt</Text>
+          <Text style={styles.headerEyebrow}>{t('tripReceipt.eyebrow', { defaultValue: 'TRIP COST BREAKDOWN' })}</Text>
+          <Text style={styles.headerTitle}>{t('tripReceipt.headerTitle', { defaultValue: 'The Receipt' })}</Text>
         </View>
         <View style={{ width: 24 }} />
       </View>
@@ -258,11 +260,11 @@ function TripReceiptScreen() {
 
               {/* Trip Info */}
               <View style={styles.receiptMeta}>
-                <ReceiptRow label="DESTINATION" value={itinerary.destination} />
-                <ReceiptRow label="DURATION" value={`${trip.days} days`} />
-                <ReceiptRow label="STYLE" value={getBudgetLabel(trip.budget)} />
-                <ReceiptRow label="DATE" value={dateStr} />
-                <ReceiptRow label="TIME" value={timeStr} />
+                <ReceiptRow label={t('tripReceipt.destination', { defaultValue: 'DESTINATION' })} value={itinerary.destination} />
+                <ReceiptRow label={t('tripReceipt.duration', { defaultValue: 'DURATION' })} value={t('tripReceipt.daysValue', { defaultValue: '{{count}} days', count: trip.days })} />
+                <ReceiptRow label={t('tripReceipt.style', { defaultValue: 'STYLE' })} value={getBudgetLabel(trip.budget)} />
+                <ReceiptRow label={t('tripReceipt.date', { defaultValue: 'DATE' })} value={dateStr} />
+                <ReceiptRow label={t('tripReceipt.time', { defaultValue: 'TIME' })} value={timeStr} />
               </View>
 
               {/* Divider */}
@@ -272,7 +274,7 @@ function TripReceiptScreen() {
 
               {/* Daily Breakdown */}
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>DAY-BY-DAY</Text>
+                <Text style={styles.sectionTitle}>{t('tripReceipt.dayByDay', { defaultValue: 'DAY-BY-DAY' })}</Text>
                 {breakdown.days.map((d: { day: number; theme: string; cost: number }) => (
                   <ReceiptRow
                     key={d.day}
@@ -290,21 +292,21 @@ function TripReceiptScreen() {
 
               {/* Category Breakdown */}
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>BREAKDOWN</Text>
+                <Text style={styles.sectionTitle}>{t('tripReceipt.breakdown', { defaultValue: 'BREAKDOWN' })}</Text>
                 <ReceiptRow
-                  label="Accommodation"
+                  label={t('tripReceipt.accommodation', { defaultValue: 'Accommodation' })}
                   value={formatCost(breakdown.accommodation)}
                 />
-                <ReceiptRow label="Food" value={formatCost(breakdown.food)} />
+                <ReceiptRow label={t('tripReceipt.food', { defaultValue: 'Food' })} value={formatCost(breakdown.food)} />
                 <ReceiptRow
-                  label="Activities"
+                  label={t('tripReceipt.activities', { defaultValue: 'Activities' })}
                   value={formatCost(breakdown.activities)}
                 />
                 <ReceiptRow
-                  label="Transportation"
+                  label={t('tripReceipt.transportation', { defaultValue: 'Transportation' })}
                   value={formatCost(breakdown.transportation)}
                 />
-                <ReceiptRow label="Misc" value={formatCost(breakdown.misc)} />
+                <ReceiptRow label={t('tripReceipt.misc', { defaultValue: 'Misc' })} value={formatCost(breakdown.misc)} />
               </View>
 
               {/* Double Divider */}
@@ -314,14 +316,14 @@ function TripReceiptScreen() {
 
               {/* Total */}
               <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>TOTAL</Text>
+                <Text style={styles.totalLabel}>{t('tripReceipt.total', { defaultValue: 'TOTAL' })}</Text>
                 <Text style={styles.totalValue}>
                   {formatCost(breakdown.total)}
                 </Text>
               </View>
               <View style={styles.perDayRow}>
                 <Text style={styles.perDayText}>
-                  {formatCost(breakdown.perDay)}/day avg
+                  {t('tripReceipt.perDayAvg', { defaultValue: '{{amount}}/day avg', amount: formatCost(breakdown.perDay) })}
                 </Text>
               </View>
 
@@ -332,16 +334,16 @@ function TripReceiptScreen() {
 
               {/* Fun Stats */}
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>THE FINE PRINT</Text>
+                <Text style={styles.sectionTitle}>{t('tripReceipt.finePrint', { defaultValue: 'THE FINE PRINT' })}</Text>
                 <Text style={styles.finePrintLine}>
-                  Most expensive day: Day {breakdown.maxDayNum} ({formatCost(breakdown.maxDayCost)})
+                  {t('tripReceipt.mostExpensiveDay', { defaultValue: 'Most expensive day: Day {{dayNum}} ({{cost}})', dayNum: breakdown.maxDayNum, cost: formatCost(breakdown.maxDayCost) })}
                 </Text>
                 <Text style={styles.finePrintLine}>
-                  Cheapest day: Day {breakdown.minDayNum} ({formatCost(breakdown.minDayCost)})
+                  {t('tripReceipt.cheapestDay', { defaultValue: 'Cheapest day: Day {{dayNum}} ({{cost}})', dayNum: breakdown.minDayNum, cost: formatCost(breakdown.minDayCost) })}
                 </Text>
                 {trip.vibes.length > 0 && (
                   <Text style={styles.finePrintLine}>
-                    Vibes: {trip.vibes.join(', ')}
+                    {t('tripReceipt.vibes', { defaultValue: 'Vibes: {{vibes}}', vibes: trip.vibes.join(', ') })}
                   </Text>
                 )}
               </View>
@@ -349,10 +351,10 @@ function TripReceiptScreen() {
               {/* Footer */}
               <View style={styles.receiptFooter}>
                 <Text style={styles.receiptFooterText}>
-                  Go somewhere worth it
+                  {t('tripReceipt.footerLine1', { defaultValue: 'Go somewhere worth it' })}
                 </Text>
                 <Text style={styles.receiptFooterText}>
-                  Go somewhere that changes you.
+                  {t('tripReceipt.footerLine2', { defaultValue: 'Go somewhere that changes you.' })}
                 </Text>
                 <Text style={styles.barcode}>
                   {'||||| |||| ||||| ||| |||| ||||| |||| |||'}
@@ -374,21 +376,21 @@ function TripReceiptScreen() {
             colors={[COLORS.sage, COLORS.sageAlpha80]}
             style={styles.shareBtnGradient}
           >
-            <Text style={styles.shareBtnText}>Share the Receipt</Text>
+            <Text style={styles.shareBtnText}>{t('tripReceipt.shareButton', { defaultValue: 'Share the Receipt' })}</Text>
           </LinearGradient>
         </Pressable>
 
         {/* Budget Tier Toggle */}
         <View style={styles.tierCard}>
-          <Text style={styles.tierTitle}>How this stacks up</Text>
+          <Text style={styles.tierTitle}>{t('tripReceipt.tierTitle', { defaultValue: 'How this stacks up' })}</Text>
           <Text style={styles.tierBody}>
             {breakdown.perDay <= 75
-              ? "Backpacker territory. You're spending less per day than most people spend on dinner."
+              ? t('tripReceipt.tierBackpacker', { defaultValue: "Backpacker territory. You're spending less per day than most people spend on dinner." })
               : breakdown.perDay <= 200
-              ? 'Comfortable range. Good hotels, real restaurants, zero guilt.'
+              ? t('tripReceipt.tierComfortable', { defaultValue: 'Comfortable range. Good hotels, real restaurants, zero guilt.' })
               : breakdown.perDay <= 500
-              ? "Treat yourself tier. You're living well and the trip will prove it."
-              : "All out. This is the trip people save screenshots of."}
+              ? t('tripReceipt.tierTreatYourself', { defaultValue: "Treat yourself tier. You're living well and the trip will prove it." })
+              : t('tripReceipt.tierAllOut', { defaultValue: "All out. This is the trip people save screenshots of." })}
           </Text>
         </View>
 

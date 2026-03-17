@@ -13,6 +13,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -135,13 +136,14 @@ function PillMultiSelect<T extends string>({
   selected: T[];
   onToggle: (id: T) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <GlassCard>
       <View style={styles.sliderHeader}>
         <View style={styles.sliderIconWrap}>{icon}</View>
         <Text style={styles.sliderTitle}>{title}</Text>
       </View>
-      <Text style={styles.pillHint}>Select all that apply</Text>
+      <Text style={styles.pillHint}>{t('travelProfile.selectAllThatApply', { defaultValue: 'Select all that apply' })}</Text>
       <View style={styles.pillGrid}>
         {options.map((opt) => {
           const isSelected = selected.includes(opt.id);
@@ -182,13 +184,14 @@ function PillSingleSelect<T extends string>({
   selected: T;
   onSelect: (id: T) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <GlassCard>
       <View style={styles.sliderHeader}>
         <View style={styles.sliderIconWrap}>{icon}</View>
         <Text style={styles.sliderTitle}>{title}</Text>
       </View>
-      <Text style={styles.pillHint}>Pick one</Text>
+      <Text style={styles.pillHint}>{t('travelProfile.pickOne', { defaultValue: 'Pick one' })}</Text>
       <View style={styles.pillGrid}>
         {options.map((opt) => {
           const isSelected = selected === opt.id;
@@ -222,6 +225,7 @@ import { withComingSoon } from '../lib/with-coming-soon';
 // Main Screen
 // ---------------------------------------------------------------------------
 function TravelProfileScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const travelProfile = useAppStore((s) => s.travelProfile);
@@ -297,9 +301,9 @@ function TravelProfileScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>How do you travel?</Text>
+        <Text style={styles.headerTitle}>{t('travelProfile.title', { defaultValue: 'How do you travel?' })}</Text>
         <Text style={styles.headerSubtitle}>
-          This makes every trip feel like it was built just for you.
+          {t('travelProfile.subtitle', { defaultValue: 'This makes every trip feel like it was built just for you.' })}
         </Text>
       </View>
 
@@ -311,11 +315,11 @@ function TravelProfileScreen() {
         <GlassCard>
           <View style={styles.sliderHeader}>
             <View style={styles.sliderIconWrap}>
-              <Compass size={20} color={COLORS.sage} strokeWidth={2} />
+              <Compass size={20} color={COLORS.sage} strokeWidth={1.5} />
             </View>
-            <Text style={styles.sliderTitle}>How often do you travel?</Text>
+            <Text style={styles.sliderTitle}>{t('travelProfile.frequencyTitle', { defaultValue: 'How often do you travel?' })}</Text>
           </View>
-          <Text style={styles.pillHint}>This shapes how much guidance we give you</Text>
+          <Text style={styles.pillHint}>{t('travelProfile.frequencyHint', { defaultValue: 'This shapes how much guidance we give you' })}</Text>
           <View style={styles.pillGrid}>
             {TRAVEL_FREQUENCY_OPTIONS.map((opt) => {
               const isSelected = profile.travelFrequency === opt.id;
@@ -344,11 +348,11 @@ function TravelProfileScreen() {
         <GlassCard>
           <View style={styles.sliderHeader}>
             <View style={styles.sliderIconWrap}>
-              <BookOpen size={20} color={COLORS.sage} strokeWidth={2} />
+              <BookOpen size={20} color={COLORS.sage} strokeWidth={1.5} />
             </View>
-            <Text style={styles.sliderTitle}>Passport</Text>
+            <Text style={styles.sliderTitle}>{t('travelProfile.passportTitle', { defaultValue: 'Passport' })}</Text>
           </View>
-          <Text style={styles.pillHint}>For visa & entry requirements</Text>
+          <Text style={styles.pillHint}>{t('travelProfile.passportHint', { defaultValue: 'For visa & entry requirements' })}</Text>
           <View style={styles.pillGrid}>
             <Pressable
               style={[styles.pill, styles.pillWide, profile.passportNationality === 'US' && styles.pillSelected]}
@@ -358,7 +362,7 @@ function TravelProfileScreen() {
               }}
             >
               <Text style={[styles.pillLabel, profile.passportNationality === 'US' && styles.pillLabelSelected]}>
-                US Passport
+                {t('travelProfile.passportUS', { defaultValue: 'US Passport' })}
               </Text>
             </Pressable>
             <Pressable
@@ -369,7 +373,7 @@ function TravelProfileScreen() {
               }}
             >
               <Text style={[styles.pillLabel, profile.passportNationality === 'AT' && styles.pillLabelSelected]}>
-                Austrian Passport
+                {t('travelProfile.passportAT', { defaultValue: 'Austrian Passport' })}
               </Text>
             </Pressable>
           </View>
@@ -377,8 +381,8 @@ function TravelProfileScreen() {
 
         {/* PACE */}
         <ProfileSlider
-          title="Pace"
-          icon={<Zap size={20} color={COLORS.sage} strokeWidth={2} />}
+          title={t('travelProfile.paceTitle', { defaultValue: 'Pace' })}
+          icon={<Zap size={20} color={COLORS.sage} strokeWidth={1.5} />}
           value={profile.pace}
           onChange={(v) => updateLocal({ pace: v })}
           labels={PACE_LABELS}
@@ -387,8 +391,8 @@ function TravelProfileScreen() {
 
         {/* BUDGET STYLE */}
         <ProfileSlider
-          title="Budget Style"
-          icon={<DollarSign size={20} color={COLORS.sage} strokeWidth={2} />}
+          title={t('travelProfile.budgetStyleTitle', { defaultValue: 'Budget Style' })}
+          icon={<DollarSign size={20} color={COLORS.sage} strokeWidth={1.5} />}
           value={profile.budgetStyle}
           onChange={(v) => updateLocal({ budgetStyle: v })}
           labels={BUDGET_STYLE_LABELS}
@@ -397,8 +401,8 @@ function TravelProfileScreen() {
 
         {/* CROWD TOLERANCE */}
         <ProfileSlider
-          title="Crowd Tolerance"
-          icon={<Users size={20} color={COLORS.sage} strokeWidth={2} />}
+          title={t('travelProfile.crowdToleranceTitle', { defaultValue: 'Crowd Tolerance' })}
+          icon={<Users size={20} color={COLORS.sage} strokeWidth={1.5} />}
           value={profile.crowdTolerance}
           onChange={(v) => updateLocal({ crowdTolerance: v })}
           labels={CROWD_LABELS}
@@ -407,8 +411,8 @@ function TravelProfileScreen() {
 
         {/* FOOD ADVENTUROUSNESS */}
         <ProfileSlider
-          title="Food Adventurousness"
-          icon={<UtensilsCrossed size={20} color={COLORS.sage} strokeWidth={2} />}
+          title={t('travelProfile.foodAdventurousnessTitle', { defaultValue: 'Food Adventurousness' })}
+          icon={<UtensilsCrossed size={20} color={COLORS.sage} strokeWidth={1.5} />}
           value={profile.foodAdventurousness}
           onChange={(v) => updateLocal({ foodAdventurousness: v })}
           labels={FOOD_LABELS}
@@ -417,8 +421,8 @@ function TravelProfileScreen() {
 
         {/* TRANSPORT */}
         <PillMultiSelect
-          title="Transport"
-          icon={<Rocket size={20} color={COLORS.sage} strokeWidth={2} />}
+          title={t('travelProfile.transportTitle', { defaultValue: 'Transport' })}
+          icon={<Rocket size={20} color={COLORS.sage} strokeWidth={1.5} />}
           options={TRANSPORT_OPTIONS}
           selected={profile.transport}
           onToggle={toggleTransport as (id: string) => void}
@@ -426,8 +430,8 @@ function TravelProfileScreen() {
 
         {/* ACCOMMODATION */}
         <PillSingleSelect
-          title="Accommodation"
-          icon={<Building2 size={20} color={COLORS.sage} strokeWidth={2} />}
+          title={t('travelProfile.accommodationTitle', { defaultValue: 'Accommodation' })}
+          icon={<Building2 size={20} color={COLORS.sage} strokeWidth={1.5} />}
           options={ACCOMMODATION_OPTIONS}
           selected={profile.accommodation}
           onSelect={(id) => updateLocal({ accommodation: id })}
@@ -435,8 +439,8 @@ function TravelProfileScreen() {
 
         {/* TRIP PURPOSE */}
         <PillMultiSelect
-          title="What do you travel for?"
-          icon={<Compass size={20} color={COLORS.sage} strokeWidth={2} />}
+          title={t('travelProfile.tripPurposeTitle', { defaultValue: 'What do you travel for?' })}
+          icon={<Compass size={20} color={COLORS.sage} strokeWidth={1.5} />}
           options={TRIP_PURPOSE_OPTIONS}
           selected={profile.tripPurposes}
           onToggle={togglePurpose}
@@ -449,12 +453,12 @@ function TravelProfileScreen() {
           disabled={!canSave}
         >
           <Text style={styles.saveButtonText}>
-            {canSave ? 'Save My Travel DNA' : 'Select transport & trip purposes to continue'}
+            {canSave ? t('travelProfile.saveButton', { defaultValue: 'Save My Travel DNA' }) : t('travelProfile.saveButtonDisabled', { defaultValue: 'Select transport & trip purposes to continue' })}
           </Text>
         </Pressable>
 
         <Text style={styles.editLaterHint}>
-          You can always update this in your profile settings.
+          {t('travelProfile.editLaterHint', { defaultValue: 'You can always update this in your profile settings.' })}
         </Text>
       </ScrollView>
     </View>
@@ -517,7 +521,7 @@ const styles = StyleSheet.create({
   sliderIconWrap: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.sageLight,
     alignItems: 'center',
     justifyContent: 'center',

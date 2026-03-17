@@ -3,6 +3,7 @@
 // Uses CSS sphere as fallback; full Three.js requires createPortal for web
 // =============================================================================
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, StyleSheet, Dimensions, Platform } from 'react-native';
 import { COLORS, FONTS } from '../../lib/constants';
 
@@ -10,6 +11,7 @@ const { width: W } = Dimensions.get('window');
 const GLOBE_SIZE = Math.min(W * 0.6, 240);
 
 export default function InteractiveGlobe() {
+  const { t } = useTranslation();
   if (Platform.OS !== 'web') {
     return null;
   }
@@ -19,7 +21,7 @@ export default function InteractiveGlobe() {
       {/* Placeholder: styled sphere-looking element; full Three.js in separate PR */}
       <View style={styles.globe}>
         <View style={styles.globeInner} />
-        <Text style={styles.hint}>Spin to explore</Text>
+        <Text style={styles.hint}>{t('globe.spinHint', { defaultValue: 'Spin to explore' })}</Text>
       </View>
     </View>
   );

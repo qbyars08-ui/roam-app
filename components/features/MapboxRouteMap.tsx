@@ -2,6 +2,7 @@
 // ROAM — Mapbox Route Map: Dark-styled day route with connected paths
 // =============================================================================
 import React, { useEffect, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Image,
   Pressable,
@@ -38,6 +39,7 @@ export default function MapboxRouteMap({
   city,
   onLocationPress,
 }: MapboxRouteMapProps) {
+  const { t } = useTranslation();
   const [routeMap, setRouteMap] = useState<DayRouteMap | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -90,7 +92,7 @@ export default function MapboxRouteMap({
     return (
       <View style={styles.card}>
         <View style={styles.mapPlaceholder}>
-          <Text style={styles.loadingText}>Loading route map...</Text>
+          <Text style={styles.loadingText}>{t('map.loading', { defaultValue: 'Loading route map...' })}</Text>
         </View>
       </View>
     );
@@ -102,9 +104,9 @@ export default function MapboxRouteMap({
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.eyebrow}>DAY {day.day} ROUTE</Text>
+        <Text style={styles.eyebrow}>{`${t('map.dayLabel', { defaultValue: 'DAY' })} ${day.day} ${t('map.routeLabel', { defaultValue: 'ROUTE' })}`}</Text>
         <Text style={styles.locationCount}>
-          {routeMap.locations.length} stops
+          {`${routeMap.locations.length} ${t('map.stops', { defaultValue: 'stops' })}`}
         </Text>
       </View>
 
@@ -120,7 +122,7 @@ export default function MapboxRouteMap({
       {/* Location Legend */}
       <View style={styles.legend}>
         {routeMap.locations.map((loc, i) => {
-          const slotLabel = i === 0 ? 'Morning' : i === 1 ? 'Afternoon' : 'Evening';
+          const slotLabel = i === 0 ? t('map.morning', { defaultValue: 'Morning' }) : i === 1 ? t('map.afternoon', { defaultValue: 'Afternoon' }) : t('map.evening', { defaultValue: 'Evening' });
           const dotColor =
             i === 0 ? COLORS.sage : i === 1 ? COLORS.gold : COLORS.coral;
 
@@ -254,7 +256,7 @@ const styles = StyleSheet.create({
   legendDot: {
     width: 22,
     height: 22,
-    borderRadius: 11,
+    borderRadius: RADIUS.pill,
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,

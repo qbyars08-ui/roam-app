@@ -37,6 +37,7 @@ import ErrorBoundary from '../components/ui/ErrorBoundary';
 import OfflineBanner from '../components/ui/OfflineBanner';
 import PhoneFrame from '../components/ui/PhoneFrame';
 import DestinationThemeOverlay from '../components/ui/DestinationThemeOverlay';
+import GrainOverlay from '../components/ui/GrainOverlay';
 import MilestoneModal from '../components/features/MilestoneModal';
 import DailyMoment from '../components/features/DailyMoment';
 import { PostHogProvider } from 'posthog-react-native';
@@ -97,11 +98,11 @@ export default function RootLayout() {
 
   // Load fonts
   const [fontsLoaded] = useFonts({
-    CormorantGaramond_700Bold: require('../assets/fonts/CormorantGaramond_700Bold.ttf'),
-    CormorantGaramond_600SemiBold: require('../assets/fonts/CormorantGaramond_600SemiBold.ttf'),
-    DMSans_400Regular: require('../assets/fonts/DMSans_400Regular.ttf'),
-    DMSans_500Medium: require('../assets/fonts/DMSans_500Medium.ttf'),
-    DMSans_700Bold: require('../assets/fonts/DMSans_700Bold.ttf'),
+    SpaceGrotesk_700Bold: require('../assets/fonts/SpaceGrotesk_700Bold.ttf'),
+    SpaceGrotesk_500Medium: require('../assets/fonts/SpaceGrotesk_500Medium.ttf'),
+    Inter_400Regular: require('../assets/fonts/Inter_400Regular.ttf'),
+    Inter_500Medium: require('../assets/fonts/Inter_500Medium.ttf'),
+    Inter_700Bold: require('../assets/fonts/Inter_700Bold.ttf'),
     DMMono_400Regular: require('../assets/fonts/DMMono_400Regular.ttf'),
     DMMono_500Medium: require('../assets/fonts/DMMono_500Medium.ttf'),
   });
@@ -325,6 +326,7 @@ export default function RootLayout() {
 
   const appContent = (
       <GestureHandlerRootView style={{ flex: 1 }}>
+        <GrainOverlay />
         <DestinationThemeOverlay destination={activeDestination} />
         <PhoneFrame>
           <OfflineBanner />

@@ -2,9 +2,10 @@
 // ROAM — Budget Breakdown Donut Chart (luxury magazine style)
 // =============================================================================
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { COLORS, FONTS, SPACING } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { formatUSD, type ExchangeRates } from '../../lib/currency';
 
 const CHART_COLORS = [
@@ -49,12 +50,13 @@ function arcPath(cx: number, cy: number, r: number, startDeg: number, endDeg: nu
 }
 
 export default function BudgetChart({ breakdown, totalBudget, currency = 'USD', rates }: BudgetChartProps) {
+  const { t } = useTranslation();
   const items: BudgetSlice[] = [
-    { label: 'Stay', value: parseBudget(breakdown.accommodation) },
-    { label: 'Food', value: parseBudget(breakdown.food) },
-    { label: 'Activities', value: parseBudget(breakdown.activities) },
-    { label: 'Transport', value: parseBudget(breakdown.transportation) },
-    { label: 'Extras', value: parseBudget(breakdown.miscellaneous) },
+    { label: t('budgetChart.stay', { defaultValue: 'Stay' }), value: parseBudget(breakdown.accommodation) },
+    { label: t('budgetChart.food', { defaultValue: 'Food' }), value: parseBudget(breakdown.food) },
+    { label: t('budgetChart.activities', { defaultValue: 'Activities' }), value: parseBudget(breakdown.activities) },
+    { label: t('budgetChart.transport', { defaultValue: 'Transport' }), value: parseBudget(breakdown.transportation) },
+    { label: t('budgetChart.extras', { defaultValue: 'Extras' }), value: parseBudget(breakdown.miscellaneous) },
   ];
 
   const total = items.reduce((s, i) => s + i.value, 0) || 1;
@@ -93,7 +95,7 @@ export default function BudgetChart({ breakdown, totalBudget, currency = 'USD', 
             <Text style={styles.chartTotal}>
               {currency !== 'USD' && rates ? formatUSD(items.reduce((s, i) => s + i.value, 0), currency, rates) : totalBudget}
             </Text>
-            <Text style={styles.chartLabel}>TOTAL</Text>
+            <Text style={styles.chartLabel}>{t('budgetChart.total', { defaultValue: 'TOTAL' })}</Text>
           </View>
         </View>
         <View style={styles.legend}>
@@ -159,7 +161,7 @@ const styles = StyleSheet.create({
   legendDot: {
     width: 10,
     height: 10,
-    borderRadius: 5,
+    borderRadius: RADIUS.sm,
   } as ViewStyle,
   legendLabel: {
     fontFamily: FONTS.body,

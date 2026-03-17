@@ -3,6 +3,7 @@
 // Tap any activity in the itinerary → full edit sheet with AI-powered shortcuts
 // =============================================================================
 import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dimensions,
   KeyboardAvoidingView,
@@ -101,6 +102,7 @@ export default function ActivityEditModal({
   onSave,
   onClose,
 }: ActivityEditModalProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
   // Editable fields — local state copies
@@ -235,7 +237,7 @@ export default function ActivityEditModal({
         {/* ── Header ── */}
         <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
           <Pressable onPress={onClose} hitSlop={12} style={styles.closeBtn}>
-            <X size={20} color={COLORS.cream} strokeWidth={2} />
+            <X size={20} color={COLORS.cream} strokeWidth={1.5} />
           </Pressable>
           <View style={styles.headerCenter}>
             <Text style={styles.headerLabel}>DAY {dayNumber} · {slotLabel.toUpperCase()}</Text>
@@ -246,7 +248,7 @@ export default function ActivityEditModal({
             hitSlop={12}
             style={({ pressed }) => [styles.resetBtn, { opacity: pressed ? 0.6 : 1 }]}
           >
-            <RotateCcw size={18} color={COLORS.creamDim} strokeWidth={2} />
+            <RotateCcw size={18} color={COLORS.creamDim} strokeWidth={1.5} />
           </Pressable>
         </View>
 
@@ -259,7 +261,7 @@ export default function ActivityEditModal({
           {/* ── AI Refine Shortcuts ── */}
           <View style={styles.aiSection}>
             <View style={styles.aiHeader}>
-              <Sparkles size={16} color={COLORS.gold} strokeWidth={2} />
+              <Sparkles size={16} color={COLORS.gold} strokeWidth={1.5} />
               <Text style={styles.aiTitle}>AI Refine</Text>
             </View>
             <ScrollView
@@ -277,7 +279,7 @@ export default function ActivityEditModal({
                     { borderColor: action.color, opacity: pressed ? 0.7 : isRefining ? 0.5 : 1 },
                   ]}
                 >
-                  <action.icon size={14} color={action.color} strokeWidth={2} />
+                  <action.icon size={14} color={action.color} strokeWidth={1.5} />
                   <Text style={[styles.aiChipText, { color: action.color }]}>{action.label}</Text>
                 </Pressable>
               ))}
@@ -285,7 +287,7 @@ export default function ActivityEditModal({
             {isRefining && (
               <View style={styles.refiningRow}>
                 <ActivityIndicator size="small" color={COLORS.gold} />
-                <Text style={styles.refiningText}>Finding something better...</Text>
+                <Text style={styles.refiningText}>{t('activity.findingSomethingBetter', { defaultValue: 'Finding something better...' })}</Text>
               </View>
             )}
             {refineError && (
@@ -296,24 +298,24 @@ export default function ActivityEditModal({
           {/* ── Editable Fields ── */}
           <View style={styles.fieldsSection}>
             <EditField
-              icon={<Zap size={16} color={COLORS.sage} strokeWidth={2} />}
-              label="Activity"
+              icon={<Zap size={16} color={COLORS.sage} strokeWidth={1.5} />}
+              label={t('activity.activityLabel', { defaultValue: 'Activity' })}
               value={activityName}
               onChangeText={setActivityName}
-              placeholder="What are you doing?"
+              placeholder={t('activity.activityPlaceholder', { defaultValue: 'What are you doing?' })}
             />
             <EditField
-              icon={<MapPin size={16} color={COLORS.sage} strokeWidth={2} />}
-              label="Location"
+              icon={<MapPin size={16} color={COLORS.sage} strokeWidth={1.5} />}
+              label={t('activity.locationLabel', { defaultValue: 'Location' })}
               value={location}
               onChangeText={setLocation}
-              placeholder="Place name"
+              placeholder={t('activity.locationPlaceholder', { defaultValue: 'Place name' })}
             />
             <View style={styles.fieldRow}>
               <View style={styles.fieldHalf}>
                 <EditField
-                  icon={<Clock size={16} color={COLORS.sage} strokeWidth={2} />}
-                  label="Time"
+                  icon={<Clock size={16} color={COLORS.sage} strokeWidth={1.5} />}
+                  label={t('activity.timeLabel', { defaultValue: 'Time' })}
                   value={time}
                   onChangeText={setTime}
                   placeholder="9:00 AM"
@@ -321,8 +323,8 @@ export default function ActivityEditModal({
               </View>
               <View style={styles.fieldHalf}>
                 <EditField
-                  icon={<Clock size={16} color={COLORS.sage} strokeWidth={2} />}
-                  label="Duration (min)"
+                  icon={<Clock size={16} color={COLORS.sage} strokeWidth={1.5} />}
+                  label={t('activity.durationLabel', { defaultValue: 'Duration (min)' })}
                   value={duration}
                   onChangeText={setDuration}
                   placeholder="90"
@@ -333,8 +335,8 @@ export default function ActivityEditModal({
             <View style={styles.fieldRow}>
               <View style={styles.fieldHalf}>
                 <EditField
-                  icon={<DollarSign size={16} color={COLORS.sage} strokeWidth={2} />}
-                  label="Cost"
+                  icon={<DollarSign size={16} color={COLORS.sage} strokeWidth={1.5} />}
+                  label={t('activity.costLabel', { defaultValue: 'Cost' })}
                   value={cost}
                   onChangeText={setCost}
                   placeholder="$25"
@@ -342,8 +344,8 @@ export default function ActivityEditModal({
               </View>
               <View style={styles.fieldHalf}>
                 <EditField
-                  icon={<MapPin size={16} color={COLORS.sage} strokeWidth={2} />}
-                  label="Neighborhood"
+                  icon={<MapPin size={16} color={COLORS.sage} strokeWidth={1.5} />}
+                  label={t('activity.neighborhoodLabel', { defaultValue: 'Neighborhood' })}
                   value={neighborhood}
                   onChangeText={setNeighborhood}
                   placeholder="Shibuya"
@@ -351,18 +353,18 @@ export default function ActivityEditModal({
               </View>
             </View>
             <EditField
-              icon={<MapPin size={16} color={COLORS.sage} strokeWidth={2} />}
-              label="Address"
+              icon={<MapPin size={16} color={COLORS.sage} strokeWidth={1.5} />}
+              label={t('activity.addressLabel', { defaultValue: 'Address' })}
               value={address}
               onChangeText={setAddress}
-              placeholder="Full address for navigation"
+              placeholder={t('activity.addressPlaceholder', { defaultValue: 'Full address for navigation' })}
             />
             <EditField
-              icon={<Lightbulb size={16} color={COLORS.gold} strokeWidth={2} />}
-              label="Local Tip"
+              icon={<Lightbulb size={16} color={COLORS.gold} strokeWidth={1.5} />}
+              label={t('activity.localTipLabel', { defaultValue: 'Local Tip' })}
               value={tip}
               onChangeText={setTip}
-              placeholder="Insider tip..."
+              placeholder={t('activity.localTipPlaceholder', { defaultValue: 'Insider tip...' })}
               multiline
             />
           </View>
@@ -383,7 +385,7 @@ export default function ActivityEditModal({
               styles.saveBtnText,
               hasChanges && !isRefining ? styles.saveBtnTextActive : undefined,
             ]}>
-              {hasChanges ? 'Save Changes' : 'No Changes'}
+              {hasChanges ? t('activity.saveChanges', { defaultValue: 'Save Changes' }) : t('activity.noChanges', { defaultValue: 'No Changes' })}
             </Text>
           </Pressable>
         </View>
@@ -527,14 +529,13 @@ const styles = StyleSheet.create({
   refiningRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: SPACING.sm,
     marginTop: SPACING.sm,
   },
   refiningText: {
     fontFamily: FONTS.body,
     fontSize: 13,
     color: COLORS.gold,
-    fontStyle: 'italic',
   },
   refineError: {
     fontFamily: FONTS.body,

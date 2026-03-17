@@ -33,6 +33,7 @@ import {
   Info,
 } from 'lucide-react-native';
 import * as Haptics from '../lib/haptics';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import { getMedicalGuideByDestination, type MedicalGuide } from '../lib/medical-abroad';
@@ -309,14 +310,15 @@ function RiskBadge({ level }: { level: 'low' | 'moderate' | 'high' }) {
 // Water safety indicator
 // ---------------------------------------------------------------------------
 function WaterSafetyCard({ guide }: { guide: MedicalGuide | null; }) {
+  const { t } = useTranslation();
   if (!guide) return null;
   const safe = guide.tapWaterSafe;
   return (
     <View style={[styles.waterCard, { borderColor: safe ? COLORS.sage + '30' : COLORS.coral + '30' }]}>
-      <Droplets size={16} color={safe ? COLORS.sage : COLORS.coral} strokeWidth={2} />
+      <Droplets size={16} color={safe ? COLORS.sage : COLORS.coral} strokeWidth={1.5} />
       <View style={{ flex: 1 }}>
         <Text style={[styles.waterLabel, { color: safe ? COLORS.sage : COLORS.coral }]}>
-          {safe ? 'Tap water is safe' : 'Use bottled water only'}
+          {safe ? t('bodyIntel.tapWaterSafe', { defaultValue: 'Tap water is safe' }) : t('bodyIntel.bottledWaterOnly', { defaultValue: 'Use bottled water only' })}
         </Text>
         <Text style={styles.waterNote}>{guide.waterNote}</Text>
       </View>
@@ -330,6 +332,7 @@ function WaterSafetyCard({ guide }: { guide: MedicalGuide | null; }) {
 function BodyIntelScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const params = useLocalSearchParams<{ destination?: string }>();
   const trips = useAppStore((s) => s.trips);
 
@@ -390,22 +393,22 @@ function BodyIntelScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={handleBack} hitSlop={12}>
-          <ArrowLeft size={24} color={COLORS.cream} strokeWidth={2} />
+          <ArrowLeft size={24} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Body Intel</Text>
+          <Text style={styles.headerTitle}>{t('bodyIntel.title', { defaultValue: 'Body Intel' })}</Text>
           {destination ? (
             <Text style={styles.headerSub}>{destination}</Text>
           ) : null}
         </View>
-        <Activity size={20} color={COLORS.sage} strokeWidth={2} />
+        <Activity size={20} color={COLORS.sage} strokeWidth={1.5} />
       </View>
 
       {/* Disclaimer */}
       <View style={styles.disclaimer}>
-        <Info size={12} color={COLORS.creamMuted} strokeWidth={2} />
+        <Info size={12} color={COLORS.creamMuted} strokeWidth={1.5} />
         <Text style={styles.disclaimerText}>
-          Travel health information only. Not a substitute for professional medical advice.
+          {t('bodyIntel.disclaimer', { defaultValue: 'Travel health information only. Not a substitute for professional medical advice.' })}
         </Text>
       </View>
 
@@ -416,14 +419,14 @@ function BodyIntelScreen() {
         {/* Destination selector if none set */}
         {!destination && (
           <View style={styles.destSelector}>
-            <Text style={styles.sectionTitle}>Select your destination</Text>
+            <Text style={styles.sectionTitle}>{t('bodyIntel.selectDestination', { defaultValue: 'Select your destination' })}</Text>
             <View style={styles.destInputWrap}>
-              <Search size={16} color={COLORS.creamMuted} strokeWidth={2} />
+              <Search size={16} color={COLORS.creamMuted} strokeWidth={1.5} />
               <TextInput
                 style={styles.destInput}
                 value={destination}
                 onChangeText={setDestination}
-                placeholder="Where are you going?"
+                placeholder={t('bodyIntel.wherePlaceholder', { defaultValue: 'Where are you going?' })}
                 placeholderTextColor={COLORS.creamDim}
               />
             </View>
@@ -434,7 +437,7 @@ function BodyIntelScreen() {
           <>
             {/* Health Brief */}
             <View style={styles.briefSection}>
-              <Text style={styles.sectionTitle}>Health Brief</Text>
+              <Text style={styles.sectionTitle}>{t('bodyIntel.healthBrief', { defaultValue: 'Health Brief' })}</Text>
 
               {/* Water safety */}
               <WaterSafetyCard guide={medicalGuide} />
@@ -442,9 +445,9 @@ function BodyIntelScreen() {
               {/* Vaccinations */}
               {healthBrief && (
                 <View style={styles.briefCard}>
-                  <Shield size={16} color={COLORS.sage} strokeWidth={2} />
+                  <Shield size={16} color={COLORS.sage} strokeWidth={1.5} />
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.briefLabel}>Vaccinations</Text>
+                    <Text style={styles.briefLabel}>{t('bodyIntel.vaccinations', { defaultValue: 'Vaccinations' })}</Text>
                     <Text style={styles.briefValue}>{healthBrief.vaccinations}</Text>
                   </View>
                 </View>
@@ -456,9 +459,9 @@ function BodyIntelScreen() {
                   onPress={() => toggleSection('risks')}
                   style={styles.briefCard}
                 >
-                  <AlertTriangle size={16} color={COLORS.gold} strokeWidth={2} />
+                  <AlertTriangle size={16} color={COLORS.gold} strokeWidth={1.5} />
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.briefLabel}>Health Risks</Text>
+                    <Text style={styles.briefLabel}>{t('bodyIntel.healthRisks', { defaultValue: 'Health Risks' })}</Text>
                     {expandedSection === 'risks' ? (
                       medicalGuide.healthRisks.map((risk, i) => (
                         <Text key={i} style={styles.riskItem}>{risk}</Text>
@@ -472,7 +475,7 @@ function BodyIntelScreen() {
                   <ChevronDown
                     size={16}
                     color={COLORS.creamMuted}
-                    strokeWidth={2}
+                    strokeWidth={1.5}
                     style={{ transform: [{ rotate: expandedSection === 'risks' ? '180deg' : '0deg' }] }}
                   />
                 </Pressable>
@@ -481,9 +484,9 @@ function BodyIntelScreen() {
               {/* Emergency numbers */}
               {medicalGuide && (
                 <View style={styles.emergencyCard}>
-                  <Phone size={16} color={COLORS.coral} strokeWidth={2} />
+                  <Phone size={16} color={COLORS.coral} strokeWidth={1.5} />
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.emergencyLabel}>Emergency Numbers</Text>
+                    <Text style={styles.emergencyLabel}>{t('bodyIntel.emergencyNumbers', { defaultValue: 'Emergency Numbers' })}</Text>
                     <Text style={styles.emergencyNumber}>
                       Emergency: {medicalGuide.emergencyNumber}  |  Ambulance: {medicalGuide.ambulanceNumber}  |  Police: {medicalGuide.policeNumber}
                     </Text>
@@ -503,9 +506,9 @@ function BodyIntelScreen() {
 
             {/* Symptom Checker */}
             <View style={styles.symptomSection}>
-              <Text style={styles.sectionTitle}>What are you experiencing?</Text>
+              <Text style={styles.sectionTitle}>{t('bodyIntel.whatExperiencing', { defaultValue: 'What are you experiencing?' })}</Text>
               <Text style={styles.sectionSub}>
-                Select a symptom category for destination-specific guidance
+                {t('bodyIntel.symptomSub', { defaultValue: 'Select a symptom category for destination-specific guidance' })}
               </Text>
 
               <View style={styles.symptomGrid}>
@@ -519,7 +522,7 @@ function BodyIntelScreen() {
                     ]}
                   >
                     <Text style={styles.symptomCardLabel}>{cat.label}</Text>
-                    <ChevronRight size={14} color={COLORS.creamMuted} strokeWidth={2} />
+                    <ChevronRight size={14} color={COLORS.creamMuted} strokeWidth={1.5} />
                   </Pressable>
                 ))}
               </View>
@@ -528,7 +531,7 @@ function BodyIntelScreen() {
             {/* Where to go */}
             {medicalGuide && (
               <View style={styles.whereSection}>
-                <Text style={styles.sectionTitle}>Where to go for help</Text>
+                <Text style={styles.sectionTitle}>{t('bodyIntel.whereToGo', { defaultValue: 'Where to go for help' })}</Text>
                 {medicalGuide.whereToGo.map((item, i) => (
                   <View key={i} style={styles.whereCard}>
                     <Text style={styles.whereCondition}>{item.condition}</Text>
@@ -536,7 +539,7 @@ function BodyIntelScreen() {
                   </View>
                 ))}
                 <View style={styles.insuranceCard}>
-                  <Shield size={14} color={COLORS.gold} strokeWidth={2} />
+                  <Shield size={14} color={COLORS.gold} strokeWidth={1.5} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.insuranceLabel}>
                       Travel Insurance: {medicalGuide.insurancePriority === 'critical' ? 'Essential' : medicalGuide.insurancePriority === 'recommended' ? 'Recommended' : 'Nice to have'}
@@ -561,7 +564,7 @@ function BodyIntelScreen() {
 
             {/* Common causes */}
             <View style={styles.detailSection}>
-              <Text style={styles.detailSectionTitle}>Most likely causes here</Text>
+              <Text style={styles.detailSectionTitle}>{t('bodyIntel.likelyCauses', { defaultValue: 'Most likely causes here' })}</Text>
               {symptomIntel.commonCauses.map((cause, i) => (
                 <View key={i} style={styles.detailItem}>
                   <View style={styles.detailBullet} />
@@ -572,7 +575,7 @@ function BodyIntelScreen() {
 
             {/* What to do */}
             <View style={styles.detailSection}>
-              <Text style={styles.detailSectionTitle}>What to do right now</Text>
+              <Text style={styles.detailSectionTitle}>{t('bodyIntel.whatToDo', { defaultValue: 'What to do right now' })}</Text>
               {symptomIntel.whatToDo.map((step, i) => (
                 <View key={i} style={styles.detailItem}>
                   <Text style={styles.detailStepNum}>{i + 1}</Text>
@@ -583,15 +586,15 @@ function BodyIntelScreen() {
 
             {/* When to see a doctor */}
             <View style={[styles.detailSection, styles.doctorSection]}>
-              <Text style={styles.detailSectionTitle}>See a doctor if</Text>
+              <Text style={styles.detailSectionTitle}>{t('bodyIntel.seeDoctor', { defaultValue: 'See a doctor if' })}</Text>
               <Text style={styles.doctorText}>{symptomIntel.seeDoctor}</Text>
             </View>
 
             {/* Local medication */}
             <View style={styles.medSection}>
-              <Pill size={16} color={COLORS.sage} strokeWidth={2} />
+              <Pill size={16} color={COLORS.sage} strokeWidth={1.5} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.medLabel}>At the pharmacy</Text>
+                <Text style={styles.medLabel}>{t('bodyIntel.atPharmacy', { defaultValue: 'At the pharmacy' })}</Text>
                 <Text style={styles.medText}>{symptomIntel.localMedication}</Text>
               </View>
             </View>
@@ -599,7 +602,7 @@ function BodyIntelScreen() {
             {/* Emergency numbers quick access */}
             {medicalGuide && (
               <View style={styles.quickEmergency}>
-                <Phone size={14} color={COLORS.coral} strokeWidth={2} />
+                <Phone size={14} color={COLORS.coral} strokeWidth={1.5} />
                 <Text style={styles.quickEmergencyText}>
                   Emergency: {medicalGuide.emergencyNumber}  |  Ambulance: {medicalGuide.ambulanceNumber}
                 </Text>
@@ -644,7 +647,7 @@ const styles = StyleSheet.create({
   disclaimer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: SPACING.sm,
     marginHorizontal: SPACING.lg,
     paddingVertical: SPACING.xs,
     paddingHorizontal: SPACING.sm,
@@ -725,7 +728,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.creamMuted,
     lineHeight: 18,
-    marginTop: 4,
+    marginTop: SPACING.xs,
   } as TextStyle,
   // Water safety
   waterCard: {
@@ -774,7 +777,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 11,
     color: COLORS.creamMuted,
-    marginTop: 4,
+    marginTop: SPACING.xs,
     lineHeight: 16,
   } as TextStyle,
   // Phrase
@@ -830,7 +833,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodySemiBold,
     fontSize: 13,
     color: COLORS.cream,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   } as TextStyle,
   whereGo: {
     fontFamily: FONTS.body,
@@ -866,7 +869,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    gap: 6,
+    gap: SPACING.sm,
     paddingHorizontal: SPACING.sm + 2,
     paddingVertical: SPACING.xs + 1,
     borderRadius: RADIUS.full,

@@ -62,9 +62,9 @@ const TABS = ['symptoms', 'brief', 'meds'] as const;
 type TabId = (typeof TABS)[number];
 
 const TAB_CONFIG: Record<TabId, { label: string; icon: React.ReactNode }> = {
-  symptoms: { label: 'Symptoms', icon: <Activity size={16} color={COLORS.cream} strokeWidth={2} /> },
-  brief: { label: 'Health Brief', icon: <Shield size={16} color={COLORS.cream} strokeWidth={2} /> },
-  meds: { label: 'Medications', icon: <Pill size={16} color={COLORS.cream} strokeWidth={2} /> },
+  symptoms: { label: 'Symptoms', icon: <Activity size={16} color={COLORS.cream} strokeWidth={1.5} /> },
+  brief: { label: 'Health Brief', icon: <Shield size={16} color={COLORS.cream} strokeWidth={1.5} /> },
+  meds: { label: 'Medications', icon: <Pill size={16} color={COLORS.cream} strokeWidth={1.5} /> },
 };
 
 const SYMPTOM_CATEGORIES = [
@@ -1156,7 +1156,7 @@ function getSymptomIntel(destination: string, categoryId: string): SymptomIntel 
 function Disclaimer() {
   return (
     <View style={styles.disclaimer}>
-      <Info size={12} color={COLORS.creamMuted} strokeWidth={2} />
+      <Info size={12} color={COLORS.creamMuted} strokeWidth={1.5} />
       <Text style={styles.disclaimerText}>
         For informational purposes only. Always consult a doctor for medical advice.
       </Text>
@@ -1188,7 +1188,7 @@ function StatusBadge({ status }: { status: LegalStatus }) {
   const c = config[status];
   return (
     <View style={[styles.riskBadge, { backgroundColor: c.color + '15', borderColor: c.color + '30' }]}>
-      <c.Icon size={12} color={c.color} strokeWidth={2} />
+      <c.Icon size={12} color={c.color} strokeWidth={1.5} />
       <Text style={[styles.riskLabel, { color: c.color }]}>{c.label}</Text>
     </View>
   );
@@ -1265,7 +1265,7 @@ function SymptomSection({ destination }: { destination: string }) {
           <ChevronRight
             size={16}
             color={COLORS.creamMuted}
-            strokeWidth={2}
+            strokeWidth={1.5}
             style={{ transform: [{ rotate: '180deg' }] }}
           />
           <Text style={styles.backText}>Back to symptoms</Text>
@@ -1315,7 +1315,7 @@ function SymptomSection({ destination }: { destination: string }) {
 
         {/* Local medication */}
         <View style={styles.intelCard}>
-          <Pill size={16} color={COLORS.sage} strokeWidth={2} />
+          <Pill size={16} color={COLORS.sage} strokeWidth={1.5} />
           <Text style={[styles.intelCardTitle, { marginTop: SPACING.xs }]}>Local medication</Text>
           <Text style={styles.bulletText}>{symptomIntel.localMedication}</Text>
         </View>
@@ -1338,7 +1338,7 @@ function SymptomSection({ destination }: { destination: string }) {
             onPress={() => handleCategorySelect(cat.id)}
             style={({ pressed }) => [styles.categoryCard, pressed && { opacity: 0.7 }]}
           >
-            <cat.Icon size={20} color={COLORS.sage} strokeWidth={2} />
+            <cat.Icon size={20} color={COLORS.sage} strokeWidth={1.5} />
             <Text style={styles.categoryLabel}>{cat.label}</Text>
           </Pressable>
         ))}
@@ -1369,7 +1369,7 @@ function HealthBriefSection({ destination }: { destination: string }) {
 
       {/* Vaccinations */}
       <View style={styles.briefCard}>
-        <Shield size={16} color={COLORS.sage} strokeWidth={2} />
+        <Shield size={16} color={COLORS.sage} strokeWidth={1.5} />
         <View style={{ flex: 1 }}>
           <Text style={styles.briefLabel}>Vaccinations</Text>
           <Text style={styles.briefValue}>{healthBrief.vaccinations}</Text>
@@ -1384,7 +1384,7 @@ function HealthBriefSection({ destination }: { destination: string }) {
             { borderColor: medicalGuide.tapWaterSafe ? COLORS.sage + '30' : COLORS.coral + '30' },
           ]}
         >
-          <Droplets size={16} color={medicalGuide.tapWaterSafe ? COLORS.sage : COLORS.coral} strokeWidth={2} />
+          <Droplets size={16} color={medicalGuide.tapWaterSafe ? COLORS.sage : COLORS.coral} strokeWidth={1.5} />
           <View style={{ flex: 1 }}>
             <Text
               style={[styles.briefLabel, { color: medicalGuide.tapWaterSafe ? COLORS.sage : COLORS.coral }]}
@@ -1398,7 +1398,7 @@ function HealthBriefSection({ destination }: { destination: string }) {
 
       {/* Food safety */}
       <View style={styles.briefCard}>
-        <AlertTriangle size={16} color={COLORS.gold} strokeWidth={2} />
+        <AlertTriangle size={16} color={COLORS.gold} strokeWidth={1.5} />
         <View style={{ flex: 1 }}>
           <Text style={styles.briefLabel}>Food Safety</Text>
           <Text style={styles.briefValue}>
@@ -1410,7 +1410,7 @@ function HealthBriefSection({ destination }: { destination: string }) {
       {/* Health risks */}
       {medicalGuide && medicalGuide.healthRisks.length > 0 && (
         <Pressable onPress={() => toggleSection('risks')} style={styles.briefCard}>
-          <AlertTriangle size={16} color={COLORS.coral} strokeWidth={2} />
+          <AlertTriangle size={16} color={COLORS.coral} strokeWidth={1.5} />
           <View style={{ flex: 1 }}>
             <Text style={styles.briefLabel}>Health Risks</Text>
             {expandedSection === 'risks' ? (
@@ -1428,7 +1428,7 @@ function HealthBriefSection({ destination }: { destination: string }) {
           <ChevronDown
             size={16}
             color={COLORS.creamMuted}
-            strokeWidth={2}
+            strokeWidth={1.5}
             style={{ transform: [{ rotate: expandedSection === 'risks' ? '180deg' : '0deg' }] }}
           />
         </Pressable>
@@ -1437,7 +1437,7 @@ function HealthBriefSection({ destination }: { destination: string }) {
       {/* Hospital quality */}
       {medicalGuide && (
         <View style={styles.briefCard}>
-          <Heart size={16} color={COLORS.sage} strokeWidth={2} />
+          <Heart size={16} color={COLORS.sage} strokeWidth={1.5} />
           <View style={{ flex: 1 }}>
             <Text style={styles.briefLabel}>
               Hospital Quality: {medicalGuide.hospitalQuality.toUpperCase()}
@@ -1453,14 +1453,14 @@ function HealthBriefSection({ destination }: { destination: string }) {
       {/* Emergency numbers */}
       {medicalGuide && (
         <View style={[styles.briefCard, { borderColor: COLORS.coral + '30' }]}>
-          <Phone size={16} color={COLORS.coral} strokeWidth={2} />
+          <Phone size={16} color={COLORS.coral} strokeWidth={1.5} />
           <View style={{ flex: 1 }}>
             <Text style={[styles.briefLabel, { color: COLORS.coral }]}>Emergency Numbers</Text>
             <Text style={styles.briefValue}>
               Emergency: {medicalGuide.emergencyNumber} | Ambulance: {medicalGuide.ambulanceNumber} |
               Police: {medicalGuide.policeNumber}
             </Text>
-            <Text style={[styles.briefValue, { marginTop: 4, fontStyle: 'italic' }]}>
+            <Text style={[styles.briefValue, { marginTop: 4 }]}>
               {medicalGuide.englishNote}
             </Text>
           </View>
@@ -1470,7 +1470,7 @@ function HealthBriefSection({ destination }: { destination: string }) {
       {/* Insurance priority */}
       {medicalGuide && (
         <View style={styles.briefCard}>
-          <Shield size={16} color={COLORS.gold} strokeWidth={2} />
+          <Shield size={16} color={COLORS.gold} strokeWidth={1.5} />
           <View style={{ flex: 1 }}>
             <Text style={styles.briefLabel}>
               Travel Insurance: {medicalGuide.insurancePriority.toUpperCase()}
@@ -1523,7 +1523,7 @@ function MedicationSection({ destination }: { destination: string }) {
 
       {/* Search input */}
       <View style={styles.searchRow}>
-        <Search size={16} color={COLORS.creamMuted} strokeWidth={2} />
+        <Search size={16} color={COLORS.creamMuted} strokeWidth={1.5} />
         <TextInput
           style={styles.searchInput}
           value={query}
@@ -1546,7 +1546,7 @@ function MedicationSection({ destination }: { destination: string }) {
             }}
             hitSlop={8}
           >
-            <X size={16} color={COLORS.creamMuted} strokeWidth={2} />
+            <X size={16} color={COLORS.creamMuted} strokeWidth={1.5} />
           </Pressable>
         )}
       </View>
@@ -1563,7 +1563,7 @@ function MedicationSection({ destination }: { destination: string }) {
               }}
               style={({ pressed }) => [styles.suggestionChip, pressed && { opacity: 0.7 }]}
             >
-              <Pill size={12} color={COLORS.sage} strokeWidth={2} />
+              <Pill size={12} color={COLORS.sage} strokeWidth={1.5} />
               <Text style={styles.suggestionText}>{s.brands[0] ?? s.name}</Text>
               <Text style={styles.suggestionClass}>{s.drugClass}</Text>
             </Pressable>
@@ -1581,7 +1581,7 @@ function MedicationSection({ destination }: { destination: string }) {
           <Text style={styles.resultNote}>{result.note}</Text>
           {result.localEquivalent && (
             <View style={styles.equivalentRow}>
-              <Pill size={14} color={COLORS.sage} strokeWidth={2} />
+              <Pill size={14} color={COLORS.sage} strokeWidth={1.5} />
               <Text style={styles.equivalentText}>
                 Local equivalent: {result.localEquivalent}
               </Text>
@@ -1589,7 +1589,7 @@ function MedicationSection({ destination }: { destination: string }) {
           )}
           {result.isControlled && (
             <View style={[styles.warningBanner, { backgroundColor: COLORS.coral + '10' }]}>
-              <AlertTriangle size={14} color={COLORS.coral} strokeWidth={2} />
+              <AlertTriangle size={14} color={COLORS.coral} strokeWidth={1.5} />
               <Text style={[styles.warningText, { color: COLORS.coral }]}>
                 This medication has special restrictions in {destination}. Verify with the local
                 embassy before traveling.
@@ -1602,7 +1602,7 @@ function MedicationSection({ destination }: { destination: string }) {
       {/* Not found */}
       {notFound && query.length > 2 && (
         <View style={styles.notFoundCard}>
-          <HelpCircle size={20} color={COLORS.creamMuted} strokeWidth={2} />
+          <HelpCircle size={20} color={COLORS.creamMuted} strokeWidth={1.5} />
           <Text style={styles.notFoundText}>
             Medication not in our database. Contact the embassy of your destination country for
             specific regulations.
@@ -1676,7 +1676,7 @@ function DestinationPicker({
         </ScrollView>
       )}
       <View style={styles.searchRow}>
-        <Search size={16} color={COLORS.creamMuted} strokeWidth={2} />
+        <Search size={16} color={COLORS.creamMuted} strokeWidth={1.5} />
         <TextInput
           style={styles.searchInput}
           value={value}
@@ -1715,7 +1715,7 @@ export default function HealthTabScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Activity size={22} color={COLORS.sage} strokeWidth={2} />
+        <Activity size={22} color={COLORS.sage} strokeWidth={1.5} />
         <Text style={styles.headerTitle}>Health</Text>
       </View>
 
@@ -2016,7 +2016,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 12,
     color: COLORS.creamMuted,
-    fontStyle: 'italic',
   } as TextStyle,
 
   // Brief cards

@@ -26,8 +26,13 @@ import * as Linking from 'expo-linking';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore, getActiveTrip } from '../../lib/store';
 import { SkeletonCard } from '../../components/premium/LoadingStates';
+import { searchPlaces, type FSQPlace } from '../../lib/apis/foursquare';
+import { geocode } from '../../lib/apis/mapbox';
 import { track } from '../../lib/analytics';
 import { captureEvent } from '../../lib/posthog';
+import { useSonarQuery } from '../../lib/sonar';
+import LiveBadge from '../../components/ui/LiveBadge';
+import SourceCitation from '../../components/ui/SourceCitation';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -261,8 +266,15 @@ export default function FoodScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
+  // Foursquare nearby restaurants
+  const [fsqPlaces, setFsqPlaces] = useState<FSQPlace[]>([]);
+  const [fsqLoading, setFsqLoading] = useState(false);
+
   const destination =
     activeTrip?.destination ?? planWizard.destination ?? null;
+
+  // Sonar food intelligence
+  const sonarFood = useSonarQuery(destination ?? undefined, 'food');
 
   useEffect(() => {
     track({ type: 'screen_view', screen: 'food' });
@@ -274,6 +286,32 @@ export default function FoodScreen() {
     setIsLoading(true);
     const timer = setTimeout(() => setIsLoading(false), 500);
     return () => clearTimeout(timer);
+  }, [destination]);
+
+  // Foursquare: geocode destination then fetch nearby restaurants
+  useEffect(() => {
+    if (!destination) {
+      setFsqPlaces([]);
+      return;
+    }
+    let cancelled = false;
+    async function fetchNearbyRestaurants() {
+      setFsqLoading(true);
+      try {
+        const geo = await geocode(destination as string);
+        if (cancelled || !geo) return;
+        const places = await searchPlaces('restaurants', geo.lat, geo.lng, undefined, 2000);
+        if (!cancelled) {
+          setFsqPlaces(places ?? []);
+        }
+      } catch {
+        // non-fatal — section simply won't render
+      } finally {
+        if (!cancelled) setFsqLoading(false);
+      }
+    }
+    fetchNearbyRestaurants();
+    return () => { cancelled = true; };
   }, [destination]);
 
   const cityRestaurants = useMemo(
@@ -355,6 +393,27 @@ export default function FoodScreen() {
     router.push('/(tabs)/plan' as never);
   }, [router, setPlanWizard]);
 
+  const handleFsqPlacePress = useCallback((place: FSQPlace) => {
+    hapticImpact();
+    captureEvent('food_fsq_place_opened', {
+      name: place.name,
+      category: place.category,
+      destination,
+    });
+    const query = encodeURIComponent(`${place.name} ${destination}`);
+    Linking.openURL(`https://www.google.com/maps/search/${query}`);
+  }, [destination]);
+
+  const priceLabel = useCallback((price: number | null): string => {
+    if (!price) return '';
+    return '$'.repeat(Math.min(price, 4));
+  }, []);
+
+  const distanceLabel = useCallback((meters: number): string => {
+    if (meters < 1000) return `${meters}m`;
+    return `${(meters / 1000).toFixed(1)}km`;
+  }, []);
+
   if (!destination) {
     return (
       <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -426,9 +485,27 @@ export default function FoodScreen() {
           </Text>
         </View>
 
+        {/* ── Sonar Live Food Intel ── */}
+        {sonarFood.data && (
+          <View style={styles.sonarSection}>
+            <View style={styles.sonarHeader}>
+              <Text style={styles.sonarLabel}>{t('food.livePicks', { defaultValue: 'LIVE PICKS' })}</Text>
+              <LiveBadge />
+            </View>
+            <View style={styles.sonarCard}>
+              <Text style={styles.sonarAnswer}>{sonarFood.data.answer}</Text>
+              {sonarFood.citations.length > 0 && (
+                <View style={{ marginTop: SPACING.sm }}>
+                  <SourceCitation citations={sonarFood.citations} />
+                </View>
+              )}
+            </View>
+          </View>
+        )}
+
         {isLoading ? (
           <View style={styles.skeletonWrap}>
-            <SkeletonCard height={200} borderRadius={16} style={{ marginBottom: 16 }} />
+            <SkeletonCard height={200} borderRadius={16} style={{ marginBottom: SPACING.md }} />
             {[1, 2, 3].map((i) => (
               <SkeletonCard key={i} height={90} borderRadius={14} style={{ marginBottom: 10 }} />
             ))}
@@ -466,6 +543,74 @@ export default function FoodScreen() {
               );
             })}
           </ScrollView>
+        )}
+
+        {/* ── Foursquare: Nearby Restaurants ── */}
+        {(fsqLoading || fsqPlaces.length > 0) && (
+          <View style={styles.fsqSection}>
+            <View style={styles.fsqSectionHeader}>
+              <Text style={styles.fsqSectionLabel}>
+                {t('food.nearbyRestaurants', { defaultValue: 'NEARBY RESTAURANTS' })}
+              </Text>
+              {fsqLoading && (
+                <Text style={styles.fsqLoadingText}>
+                  {t('food.loading', { defaultValue: 'Loading...' })}
+                </Text>
+              )}
+            </View>
+
+            {fsqLoading && fsqPlaces.length === 0 ? (
+              <View style={styles.fsqSkeletonWrap}>
+                {[1, 2, 3].map((i) => (
+                  <SkeletonCard key={i} height={72} borderRadius={RADIUS.md} style={{ marginBottom: 8 }} />
+                ))}
+              </View>
+            ) : (
+              fsqPlaces.map((place) => (
+                <Pressable
+                  key={place.fsqId}
+                  onPress={() => handleFsqPlacePress(place)}
+                  style={({ pressed }) => [
+                    styles.fsqCard,
+                    { opacity: pressed ? 0.9 : 1 },
+                  ]}
+                >
+                  <View style={styles.fsqCardAccent} />
+                  <View style={styles.fsqCardContent}>
+                    <View style={styles.fsqCardTopRow}>
+                      <Text style={styles.fsqCardName} numberOfLines={1}>
+                        {place.name}
+                      </Text>
+                      <View style={styles.fsqCardMeta}>
+                        {place.price !== null && (
+                          <Text style={styles.fsqCardPrice}>{priceLabel(place.price)}</Text>
+                        )}
+                        {place.rating !== null && (
+                          <View style={styles.fsqRatingBadge}>
+                            <Text style={styles.fsqRatingText}>
+                              {place.rating.toFixed(1)}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                    <Text style={styles.fsqCardCategory} numberOfLines={1}>
+                      {place.category}
+                    </Text>
+                    <Text style={styles.fsqCardDistance}>
+                      {distanceLabel(place.distance)} away
+                    </Text>
+                  </View>
+                  <ExternalLink
+                    size={14}
+                    color={COLORS.creamVeryFaint}
+                    strokeWidth={1.5}
+                    style={styles.fsqExternalIcon}
+                  />
+                </Pressable>
+              ))
+            )}
+          </View>
         )}
 
         {!isLoading && <Animated.View style={{ opacity: fadeAnim }}>
@@ -609,7 +754,7 @@ export default function FoodScreen() {
                         </Text>
                       </View>
                       <View style={styles.cardActionsRow}>
-                        <ExternalLink size={14} color={COLORS.creamVeryFaint} strokeWidth={2} />
+                        <ExternalLink size={14} color={COLORS.creamVeryFaint} strokeWidth={1.5} />
                         <Pressable
                           onPress={(e) => handleBookmark(r.id, e as { stopPropagation?: () => void })}
                           hitSlop={12}
@@ -619,7 +764,7 @@ export default function FoodScreen() {
                             size={18}
                             color={COLORS.creamDim}
                             fill={isBookmarked ? COLORS.sage : 'transparent'}
-                            strokeWidth={2}
+                            strokeWidth={1.5}
                           />
                         </Pressable>
                       </View>
@@ -823,7 +968,6 @@ const styles = StyleSheet.create({
   insiderTip: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    fontStyle: 'italic',
     color: COLORS.creamSoft,
     marginBottom: SPACING.md,
     maxWidth: '95%',
@@ -1044,7 +1188,7 @@ const styles = StyleSheet.create({
 
   // ── Skeleton loaders ──
   skeletonWrap: {
-    gap: 16,
+    gap: SPACING.md,
     marginTop: SPACING.md,
   } as ViewStyle,
 
@@ -1052,6 +1196,135 @@ const styles = StyleSheet.create({
   cardActionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: SPACING.sm,
+  } as ViewStyle,
+
+  // Sonar live food intel
+  sonarSection: {
+    paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.lg,
+  } as ViewStyle,
+  sonarHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
+  } as ViewStyle,
+  sonarLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+    letterSpacing: 1,
+  } as TextStyle,
+  sonarCard: {
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.md,
+  } as ViewStyle,
+  sonarAnswer: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.cream,
+    lineHeight: 21,
+  } as TextStyle,
+
+  // ── Foursquare nearby restaurants ──
+  fsqSection: {
+    marginBottom: SPACING.lg,
+  } as ViewStyle,
+  fsqSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.sm,
+  } as ViewStyle,
+  fsqSectionLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+    letterSpacing: 1,
+  } as TextStyle,
+  fsqLoadingText: {
+    fontFamily: FONTS.body,
+    fontSize: 11,
+    color: COLORS.creamDim,
+  } as TextStyle,
+  fsqSkeletonWrap: {
+    gap: 8,
+  } as ViewStyle,
+  fsqCard: {
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.md,
+    padding: SPACING.sm + 4,
+    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+    overflow: 'hidden',
+  } as ViewStyle,
+  fsqCardAccent: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+    backgroundColor: COLORS.sage,
+    borderTopLeftRadius: RADIUS.md,
+    borderBottomLeftRadius: RADIUS.md,
+  } as ViewStyle,
+  fsqCardContent: {
+    flex: 1,
+    marginLeft: SPACING.sm + 4,
+  } as ViewStyle,
+  fsqCardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: SPACING.sm,
+    marginBottom: 2,
+  } as ViewStyle,
+  fsqCardName: {
+    fontFamily: FONTS.header,
+    fontSize: 16,
+    color: COLORS.cream,
+    flex: 1,
+  } as TextStyle,
+  fsqCardMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  } as ViewStyle,
+  fsqCardPrice: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.creamDim,
+  } as TextStyle,
+  fsqRatingBadge: {
+    backgroundColor: COLORS.sageLight,
+    borderRadius: RADIUS.sm,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  } as ViewStyle,
+  fsqRatingText: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+  } as TextStyle,
+  fsqCardCategory: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+    marginBottom: 2,
+  } as TextStyle,
+  fsqCardDistance: {
+    fontFamily: FONTS.body,
+    fontSize: 11,
+    color: COLORS.creamDim,
+  } as TextStyle,
+  fsqExternalIcon: {
+    marginLeft: SPACING.xs,
+    flexShrink: 0,
   } as ViewStyle,
 });

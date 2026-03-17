@@ -20,6 +20,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { useTranslation } from 'react-i18next';
 import { narrateText, stopNarration } from '../../lib/elevenlabs';
 import { trackEvent } from '../../lib/analytics';
 
@@ -44,6 +45,7 @@ export default function VoiceGuide({
   text,
   label = 'Listen to Guide',
 }: VoiceGuideProps) {
+  const { t } = useTranslation();
   const [state, setState] = useState<VoiceState>('idle');
   const pulseScale = useSharedValue(1);
   const pulseOpacity = useSharedValue(0);
@@ -148,7 +150,7 @@ export default function VoiceGuide({
         style={[styles.label, isActive && styles.labelActive]}
         numberOfLines={1}
       >
-        {state === 'loading' ? 'Loading...' : state === 'playing' ? 'Stop' : label}
+        {state === 'loading' ? t('common.loading') : state === 'playing' ? t('common.stop', { defaultValue: 'Stop' }) : label}
       </Text>
 
       {/* AI Badge (only in idle state) */}

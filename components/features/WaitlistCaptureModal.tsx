@@ -16,6 +16,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import * as Clipboard from 'expo-clipboard';
 import { Check } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
@@ -35,6 +36,7 @@ export default function WaitlistCaptureModal({
   onViewTrip,
   skipLabel = 'View my trip first',
 }: WaitlistCaptureModalProps) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [wasReferred, setWasReferred] = useState(false);
@@ -50,7 +52,7 @@ export default function WaitlistCaptureModal({
   const handleSubmit = async () => {
     const trimmed = email.trim();
     if (!trimmed) {
-      setError('Enter your email');
+      setError(t('waitlist.errorEmptyEmail', { defaultValue: 'Enter your email' }));
       return;
     }
     setError(null);
@@ -59,7 +61,7 @@ export default function WaitlistCaptureModal({
       const r = await joinWaitlist(trimmed);
       setResult(r);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Couldn\u2019t join the waitlist. Check your connection and try again.');
+      setError(e instanceof Error ? e.message : t('waitlist.errorNetwork', { defaultValue: "Couldn\u2019t join the waitlist. Check your connection and try again." }));
     } finally {
       setLoading(false);
     }
@@ -109,14 +111,14 @@ export default function WaitlistCaptureModal({
           >
             {!result ? (
               <>
-                <Text style={styles.title}>Save this trip and get early access</Text>
+                <Text style={styles.title}>{t('waitlist.title', { defaultValue: 'Save this trip and get early access' })}</Text>
                 {wasReferred && (
                   <Text style={styles.referredBanner}>
-                    A friend invited you — you both get 1 extra free trip when you share
+                    {t('waitlist.referredBanner', { defaultValue: 'A friend invited you — you both get 1 extra free trip when you share' })}
                   </Text>
                 )}
                 <Text style={styles.sub}>
-                  Join the waitlist — we'll give you a referral link to share. 3 friends = 1 month Pro free.
+                  {t('waitlist.sub', { defaultValue: "Join the waitlist — we'll give you a referral link to share. 3 friends = 1 month Pro free." })}
                 </Text>
                 <TextInput
                   style={styles.input}
@@ -138,7 +140,7 @@ export default function WaitlistCaptureModal({
                     { opacity: pressed || loading ? 0.85 : 1 },
                   ]}
                 >
-                  <Text style={styles.submitText}>{loading ? 'Joining...' : 'Join waitlist'}</Text>
+                  <Text style={styles.submitText}>{loading ? t('waitlist.joining', { defaultValue: 'Joining...' }) : t('waitlist.joinBtn', { defaultValue: 'Join waitlist' })}</Text>
                 </Pressable>
                 <Pressable onPress={onViewTrip} style={styles.skipBtn}>
                   <Text style={styles.skipText}>{skipLabel}</Text>
@@ -147,38 +149,38 @@ export default function WaitlistCaptureModal({
             ) : (
               <>
                 <View style={styles.checkWrap}>
-                  <Check size={28} color={COLORS.sage} strokeWidth={2.5} />
+                  <Check size={28} color={COLORS.sage} strokeWidth={1.5} />
                 </View>
-                <Text style={styles.successTitle}>You're #{result.position} on the waitlist</Text>
-                <Text style={styles.successSub}>Share your link to move up — 3 friends = 1 month Pro free</Text>
+                <Text style={styles.successTitle}>{`${t('waitlist.successTitlePrefix', { defaultValue: "You're #" })}${result.position}${t('waitlist.successTitleSuffix', { defaultValue: ' on the waitlist' })}`}</Text>
+                <Text style={styles.successSub}>{t('waitlist.successSub', { defaultValue: 'Share your link to move up — 3 friends = 1 month Pro free' })}</Text>
 
                 <View style={[styles.shareCard, { borderColor: COLORS.border }]}>
-                  <Text style={styles.shareLabel}>Your referral link</Text>
+                  <Text style={styles.shareLabel}>{t('waitlist.shareLabel', { defaultValue: 'Your referral link' })}</Text>
                   <Text style={styles.shareUrl} numberOfLines={2} selectable>{referralUrl}</Text>
                   <View style={styles.shareRow}>
                     <Pressable
                       onPress={handleCopy}
                       style={({ pressed }) => [styles.shareBtn, styles.copyBtn, { opacity: pressed ? 0.85 : 1 }]}
                     >
-                      <Text style={styles.shareBtnText}>Copy</Text>
+                      <Text style={styles.shareBtnText}>{t('waitlist.copy', { defaultValue: 'Copy' })}</Text>
                     </Pressable>
                     <Pressable
                       onPress={handleShare}
                       style={({ pressed }) => [styles.shareBtn, styles.shareBtnPrimary, { opacity: pressed ? 0.85 : 1 }]}
                     >
-                      <Text style={[styles.shareBtnText, { color: COLORS.bg }]}>Share</Text>
+                      <Text style={[styles.shareBtnText, { color: COLORS.bg }]}>{t('waitlist.share', { defaultValue: 'Share' })}</Text>
                     </Pressable>
                   </View>
                 </View>
 
-                <Text style={styles.ctaText}>Share this with 3 friends → unlock Pro free for 1 month</Text>
+                <Text style={styles.ctaText}>{t('waitlist.ctaText', { defaultValue: 'Share this with 3 friends → unlock Pro free for 1 month' })}</Text>
 
                 <Pressable
                   onPress={onViewTrip}
                   style={({ pressed }) => [styles.viewTripBtn, { opacity: pressed ? 0.9 : 1 }]}
                 >
                   <Text style={styles.viewTripText}>
-                    {destination.trim() ? `View my ${destination} trip` : 'Go back'}
+                    {destination.trim() ? `${t('waitlist.viewTripPrefix', { defaultValue: 'View my' })} ${destination} ${t('waitlist.viewTripSuffix', { defaultValue: 'trip' })}` : t('waitlist.goBack', { defaultValue: 'Go back' })}
                   </Text>
                 </Pressable>
               </>
@@ -275,7 +277,7 @@ const styles = StyleSheet.create({
   checkWrap: {
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.sageLight,
     borderWidth: 2,
     borderColor: COLORS.sage,

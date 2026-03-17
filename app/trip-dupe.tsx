@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
 
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { getDestinationPhoto } from '../lib/photos';
 import { useAppStore } from '../lib/store';
@@ -108,6 +109,7 @@ const DREAM_DESTINATIONS = [
 ];
 
 function TripDupeScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [phase, setPhase] = useState<Phase>('pick');
@@ -243,16 +245,16 @@ function TripDupeScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Trip Dupe</Text>
+          <Text style={styles.title}>{t('tripDupe.title', { defaultValue: 'Trip Dupe' })}</Text>
           <Text style={styles.subtitle}>
-            Dream big, spend small. We'll find the budget alternative.
+            {t('tripDupe.subtitle', { defaultValue: "Dream big, spend small. We'll find the budget alternative." })}
           </Text>
         </View>
 
         {/* Pick phase */}
         {phase === 'pick' && (
           <View style={styles.pickSection}>
-            <Text style={styles.sectionLabel}>PICK YOUR DREAM DESTINATION</Text>
+            <Text style={styles.sectionLabel}>{t('tripDupe.pickDreamDestination', { defaultValue: 'PICK YOUR DREAM DESTINATION' })}</Text>
             <View style={styles.dreamGrid}>
               {DREAM_DESTINATIONS.map((dest) => (
                 <Pressable
@@ -290,10 +292,10 @@ function TripDupeScreen() {
           <View style={styles.searchingContainer}>
             <Text style={styles.searchingEmoji}>{'\uD83D\uDD0D'}</Text>
             <Text style={styles.searchingTitle}>
-              Finding your {selectedDream} dupe...
+              {t('tripDupe.searchingTitle', { defaultValue: 'Finding your {{destination}} dupe...', destination: selectedDream })}
             </Text>
             <Text style={styles.searchingSubtitle}>
-              AI is scouring the world for the perfect alternative
+              {t('tripDupe.searchingSubtitle', { defaultValue: 'AI is scouring the world for the perfect alternative' })}
             </Text>
           </View>
         )}
@@ -312,7 +314,7 @@ function TripDupeScreen() {
             {/* Comparison header */}
             <View style={styles.comparisonHeader}>
               <View style={styles.comparisonSide}>
-                <Text style={styles.comparisonLabel}>DREAM</Text>
+                <Text style={styles.comparisonLabel}>{t('tripDupe.dream', { defaultValue: 'DREAM' })}</Text>
                 <Text style={styles.comparisonCity}>
                   {dupeResult.dream}
                 </Text>
@@ -327,7 +329,7 @@ function TripDupeScreen() {
 
               <View style={styles.comparisonSide}>
                 <Text style={[styles.comparisonLabel, { color: COLORS.sage }]}>
-                  DUPE
+                  {t('tripDupe.dupe', { defaultValue: 'DUPE' })}
                 </Text>
                 <Text style={styles.comparisonCity}>
                   {dupeResult.dupeEmoji} {dupeResult.dupe}
@@ -341,13 +343,13 @@ function TripDupeScreen() {
             {/* Savings badge */}
             <View style={styles.savingsBadge}>
               <Text style={styles.savingsText}>
-                Save {dupeResult.costComparison.savings}
+                {t('tripDupe.save', { defaultValue: 'Save {{savings}}', savings: dupeResult.costComparison.savings })}
               </Text>
             </View>
 
             {/* Why it works */}
             <View style={styles.whyCard}>
-              <Text style={styles.whyLabel}>WHY IT WORKS</Text>
+              <Text style={styles.whyLabel}>{t('tripDupe.whyItWorks', { defaultValue: 'WHY IT WORKS' })}</Text>
               <Text style={styles.whyText}>{dupeResult.whyItWorks}</Text>
             </View>
 
@@ -362,7 +364,7 @@ function TripDupeScreen() {
 
             {/* Top picks */}
             <View style={styles.picksSection}>
-              <Text style={styles.picksLabel}>TOP PICKS</Text>
+              <Text style={styles.picksLabel}>{t('tripDupe.topPicks', { defaultValue: 'TOP PICKS' })}</Text>
               {dupeResult.topPicks.map((pick, i) => (
                 <View key={i} style={styles.pickRow}>
                   <View style={styles.pickCategoryBadge}>
@@ -378,7 +380,7 @@ function TripDupeScreen() {
 
             {/* Best month */}
             <View style={styles.bestMonthCard}>
-              <Text style={styles.bestMonthLabel}>BEST TIME TO GO</Text>
+              <Text style={styles.bestMonthLabel}>{t('tripDupe.bestTimeToGo', { defaultValue: 'BEST TIME TO GO' })}</Text>
               <Text style={styles.bestMonthText}>{dupeResult.bestMonth}</Text>
             </View>
 
@@ -396,7 +398,7 @@ function TripDupeScreen() {
                   style={styles.buildGradient}
                 >
                   <Text style={styles.buildButtonText}>
-                    {'\u2728'} Build this trip
+                    {'\u2728'} {t('tripDupe.buildThisTrip', { defaultValue: 'Build this trip' })}
                   </Text>
                 </LinearGradient>
               </Pressable>
@@ -404,11 +406,11 @@ function TripDupeScreen() {
               <View style={styles.secondaryActions}>
                 <Pressable onPress={handleShare} style={styles.secondaryBtn}>
                   <Text style={styles.secondaryBtnText}>
-                    {'\uD83D\uDCE4'} Share
+                    {'\uD83D\uDCE4'} {t('tripDupe.share', { defaultValue: 'Share' })}
                   </Text>
                 </Pressable>
                 <Pressable onPress={handleReset} style={styles.secondaryBtn}>
-                  <Text style={styles.secondaryBtnText}>Try another</Text>
+                  <Text style={styles.secondaryBtnText}>{t('tripDupe.tryAnother', { defaultValue: 'Try another' })}</Text>
                 </Pressable>
               </View>
             </View>
@@ -580,7 +582,7 @@ const styles = StyleSheet.create({
   vsCircle: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.bgElevated,
     alignItems: 'center',
     justifyContent: 'center',

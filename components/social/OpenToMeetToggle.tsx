@@ -4,7 +4,8 @@
 // =============================================================================
 import React, { useCallback } from 'react';
 import { StyleSheet, Switch, Text, View } from 'react-native';
-import { COLORS, FONTS, SPACING } from '../../lib/constants';
+import { useTranslation } from 'react-i18next';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import * as Haptics from '../../lib/haptics';
 
 // ---------------------------------------------------------------------------
@@ -19,6 +20,8 @@ interface OpenToMeetToggleProps {
 // Component
 // ---------------------------------------------------------------------------
 const OpenToMeetToggle = React.memo<OpenToMeetToggleProps>(({ value, onToggle }) => {
+  const { t } = useTranslation();
+
   const handleToggle = useCallback(
     async (next: boolean) => {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -30,9 +33,9 @@ const OpenToMeetToggle = React.memo<OpenToMeetToggleProps>(({ value, onToggle })
   return (
     <View style={styles.row}>
       <View style={styles.labelGroup}>
-        <Text style={styles.label}>Open to meeting people</Text>
+        <Text style={styles.label}>{t('social.openToMeet.label', { defaultValue: 'Open to meeting people' })}</Text>
         <Text style={styles.sublabel}>
-          {value ? 'Visible to travelers at your destination' : 'Hidden from other travelers'}
+          {value ? t('social.openToMeet.visible', { defaultValue: 'Visible to travelers at your destination' }) : t('social.openToMeet.hidden', { defaultValue: 'Hidden from other travelers' })}
         </Text>
       </View>
       <Switch
@@ -59,7 +62,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,
     backgroundColor: COLORS.bgCard,
-    borderRadius: 10,
+    borderRadius: RADIUS.md,
     borderWidth: 1,
     borderColor: COLORS.border,
   },

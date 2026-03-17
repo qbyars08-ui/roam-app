@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, Linking } from 'react-native';
 import { Shield, Truck, Flame } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { getEmergencyNumbers } from '../../lib/emergency-numbers';
 import type { EmergencyNumbers } from '../../lib/emergency-numbers';
@@ -11,6 +12,7 @@ interface EmergencyQuickCardProps {
 }
 
 export default function EmergencyQuickCard({ destination }: EmergencyQuickCardProps) {
+  const { t } = useTranslation();
   const [data, setData] = useState<EmergencyNumbers | null>(null);
 
   useEffect(() => {
@@ -51,37 +53,37 @@ export default function EmergencyQuickCard({ destination }: EmergencyQuickCardPr
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionHeader}>Emergency</Text>
+      <Text style={styles.sectionHeader}>{t('emergency.title', { defaultValue: 'Emergency' })}</Text>
 
       <Pressable onPress={handleCall} style={styles.card}>
         <View style={styles.row}>
           <View style={styles.column}>
             <View style={styles.iconRow}>
-              <Shield size={16} color={COLORS.coral} strokeWidth={2} />
-              <Text style={styles.label}>POLICE</Text>
+              <Shield size={16} color={COLORS.coral} strokeWidth={1.5} />
+              <Text style={styles.label}>{t('emergency.police', { defaultValue: 'POLICE' })}</Text>
             </View>
             <Text style={styles.number}>{policeNumber}</Text>
           </View>
 
           <View style={styles.column}>
             <View style={styles.iconRow}>
-              <Truck size={16} color={COLORS.coral} strokeWidth={2} />
-              <Text style={styles.label}>AMBULANCE</Text>
+              <Truck size={16} color={COLORS.coral} strokeWidth={1.5} />
+              <Text style={styles.label}>{t('emergency.ambulance', { defaultValue: 'AMBULANCE' })}</Text>
             </View>
             <Text style={styles.number}>{ambulanceNumber}</Text>
           </View>
 
           <View style={styles.column}>
             <View style={styles.iconRow}>
-              <Flame size={16} color={COLORS.coral} strokeWidth={2} />
-              <Text style={styles.label}>FIRE</Text>
+              <Flame size={16} color={COLORS.coral} strokeWidth={1.5} />
+              <Text style={styles.label}>{t('emergency.fire', { defaultValue: 'FIRE' })}</Text>
             </View>
             <Text style={styles.number}>{fireNumber}</Text>
           </View>
         </View>
 
         {data.isMember112 && (
-          <Text style={styles.note}>EU 112 works here</Text>
+          <Text style={styles.note}>{t('emergency.eu112Note', { defaultValue: 'EU 112 works here' })}</Text>
         )}
       </Pressable>
     </View>

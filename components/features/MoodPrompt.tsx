@@ -3,6 +3,7 @@
 // Weekly Sunday-evening mood check-in. Slides up from bottom as a modal overlay.
 // =============================================================================
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Animated,
   Modal,
@@ -109,7 +110,7 @@ function MoodCard({
       <Icon
         size={20}
         color={selected ? iconColor : COLORS.creamDim}
-        strokeWidth={2}
+        strokeWidth={1.5}
       />
       <Text style={[styles.moodLabel, { color: selected ? COLORS.cream : COLORS.creamSoft }]}>
         {label}
@@ -125,6 +126,7 @@ function MoodCard({
 // MoodPrompt
 // ---------------------------------------------------------------------------
 export default function MoodPrompt({ visible, onDismiss, onMoodSelected }: MoodPromptProps) {
+  const { t } = useTranslation();
   const [selectedMood, setSelectedMood] = useState<UserMood>(null);
   const [confirmed, setConfirmed] = useState(false);
   const translateY = useRef(new Animated.Value(400)).current;
@@ -229,12 +231,12 @@ export default function MoodPrompt({ visible, onDismiss, onMoodSelected }: MoodP
           <View style={styles.handle} />
 
           {/* Header */}
-          <Text style={styles.title}>How are you feeling{'\n'}about travel right now?</Text>
+          <Text style={styles.title}>{t('mood.travelFeelingTitle', { defaultValue: 'How are you feeling\nabout travel right now?' })}</Text>
 
           {confirmed && selectedMood ? (
             <View style={styles.confirmRow}>
               <Text style={styles.confirmText}>
-                Got it. We'll shape your feed around that.
+                {t('mood.gotIt', { defaultValue: "Got it. We'll shape your feed around that." })}
               </Text>
             </View>
           ) : (
@@ -253,7 +255,7 @@ export default function MoodPrompt({ visible, onDismiss, onMoodSelected }: MoodP
 
               {/* Not now */}
               <Pressable onPress={handleNotNow} style={styles.notNowBtn} hitSlop={8}>
-                <Text style={styles.notNowText}>Not now</Text>
+                <Text style={styles.notNowText}>{t('mood.notNow', { defaultValue: 'Not now' })}</Text>
               </Pressable>
             </>
           )}

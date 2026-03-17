@@ -50,6 +50,7 @@ import {
 } from '../lib/trip-journal';
 import { track } from '../lib/analytics';
 import { captureEvent } from '../lib/posthog';
+import { useTranslation } from 'react-i18next';
 
 // ---------------------------------------------------------------------------
 // Mood Selector
@@ -142,6 +143,7 @@ function DayCard({
   date: string;
   onPress: () => void;
 }) {
+  const { t } = useTranslation();
   const dateStr = format(parseISO(date), 'EEE, MMM d');
 
   if (!entry) {
@@ -162,8 +164,8 @@ function DayCard({
           <Text style={styles.dayCardDate}>{dateStr}</Text>
         </View>
         <View style={styles.dayCardEmptyBody}>
-          <Plus size={18} color={COLORS.creamMuted} strokeWidth={2} />
-          <Text style={styles.dayCardEmptyText}>Add journal entry</Text>
+          <Plus size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
+          <Text style={styles.dayCardEmptyText}>{t('tripJournal.addEntry', { defaultValue: 'Add journal entry' })}</Text>
         </View>
       </Pressable>
     );
@@ -209,7 +211,7 @@ function DayCard({
       <ChevronRight
         size={16}
         color={COLORS.creamMuted}
-        strokeWidth={2}
+        strokeWidth={1.5}
         style={styles.dayCardChevron}
       />
     </Pressable>
@@ -220,6 +222,7 @@ function DayCard({
 // Main Screen
 // ---------------------------------------------------------------------------
 function TripJournalScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ tripId?: string; destination?: string }>();
@@ -331,25 +334,25 @@ function TripJournalScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={handleBack} hitSlop={12}>
-          <ArrowLeft size={24} color={COLORS.cream} strokeWidth={2} />
+          <ArrowLeft size={24} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Trip Journal</Text>
+          <Text style={styles.headerTitle}>{t('tripJournal.title', { defaultValue: 'Trip Journal' })}</Text>
           <Text style={styles.headerSub}>{destination}</Text>
         </View>
-        <BookOpen size={20} color={COLORS.sage} strokeWidth={2} />
+        <BookOpen size={20} color={COLORS.sage} strokeWidth={1.5} />
       </View>
 
       {/* Stats bar */}
       <View style={styles.statsBar}>
         <View style={styles.statItem}>
           <Text style={styles.statValue}>{entriesCount}/{totalDays}</Text>
-          <Text style={styles.statLabel}>entries</Text>
+          <Text style={styles.statLabel}>{t('tripJournal.entries', { defaultValue: 'entries' })}</Text>
         </View>
         {vibeScore > 0 && (
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{vibeScore.toFixed(1)}</Text>
-            <Text style={styles.statLabel}>vibe score</Text>
+            <Text style={styles.statLabel}>{t('tripJournal.vibeScore', { defaultValue: 'vibe score' })}</Text>
           </View>
         )}
         {entries.length > 0 && (
@@ -357,7 +360,7 @@ function TripJournalScreen() {
             <Text style={styles.statValue}>
               {entries.reduce((acc, e) => acc + e.tags.length, 0)}
             </Text>
-            <Text style={styles.statLabel}>moments</Text>
+            <Text style={styles.statLabel}>{t('tripJournal.moments', { defaultValue: 'moments' })}</Text>
           </View>
         )}
       </View>
@@ -379,9 +382,9 @@ function TripJournalScreen() {
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <BookOpen size={40} color={COLORS.creamMuted} strokeWidth={1.5} />
-            <Text style={styles.emptyTitle}>No trip selected</Text>
+            <Text style={styles.emptyTitle}>{t('tripJournal.noTrip', { defaultValue: 'No trip selected' })}</Text>
             <Text style={styles.emptySubtitle}>
-              Open this from a saved trip to start journaling.
+              {t('tripJournal.openFromTrip', { defaultValue: 'Open this from a saved trip to start journaling.' })}
             </Text>
           </View>
         }
@@ -402,7 +405,7 @@ function TripJournalScreen() {
             {/* Modal header */}
             <View style={styles.modalHeader}>
               <Pressable onPress={() => setEditModal(false)} hitSlop={12}>
-                <X size={24} color={COLORS.cream} strokeWidth={2} />
+                <X size={24} color={COLORS.cream} strokeWidth={1.5} />
               </Pressable>
               <Text style={styles.modalTitle}>Day {editDay}</Text>
               <Pressable
@@ -411,7 +414,7 @@ function TripJournalScreen() {
                 disabled={!editMood}
                 style={({ pressed }) => [{ opacity: editMood ? (pressed ? 0.7 : 1) : 0.3 }]}
               >
-                <Check size={24} color={COLORS.sage} strokeWidth={2} />
+                <Check size={24} color={COLORS.sage} strokeWidth={1.5} />
               </Pressable>
             </View>
 
@@ -421,38 +424,38 @@ function TripJournalScreen() {
             >
               {/* Date */}
               <View style={styles.modalDateRow}>
-                <Calendar size={14} color={COLORS.creamMuted} strokeWidth={2} />
+                <Calendar size={14} color={COLORS.creamMuted} strokeWidth={1.5} />
                 <Text style={styles.modalDate}>
                   {editDate ? format(parseISO(editDate), 'EEEE, MMMM d, yyyy') : ''}
                 </Text>
               </View>
 
               {/* Mood */}
-              <Text style={styles.sectionLabel}>How was today?</Text>
+              <Text style={styles.sectionLabel}>{t('tripJournal.howWasToday', { defaultValue: 'How was today?' })}</Text>
               <MoodSelector selected={editMood} onSelect={setEditMood} />
 
               {/* Highlight */}
-              <Text style={styles.sectionLabel}>Best moment</Text>
+              <Text style={styles.sectionLabel}>{t('tripJournal.bestMoment', { defaultValue: 'Best moment' })}</Text>
               <TextInput
                 style={styles.highlightInput}
                 value={editHighlight}
                 onChangeText={setEditHighlight}
-                placeholder="The one thing you want to remember..."
+                placeholder={t('tripJournal.highlightPlaceholder', { defaultValue: 'The one thing you want to remember...' })}
                 placeholderTextColor={COLORS.creamDim}
                 maxLength={150}
               />
 
               {/* Tags */}
-              <Text style={styles.sectionLabel}>Quick tags</Text>
+              <Text style={styles.sectionLabel}>{t('tripJournal.quickTags', { defaultValue: 'Quick tags' })}</Text>
               <TagPicker selected={editTags} onToggle={handleToggleTag} />
 
               {/* Notes */}
-              <Text style={styles.sectionLabel}>Notes</Text>
+              <Text style={styles.sectionLabel}>{t('tripJournal.notes', { defaultValue: 'Notes' })}</Text>
               <TextInput
                 style={styles.notesInput}
                 value={editNotes}
                 onChangeText={setEditNotes}
-                placeholder="Write about your day..."
+                placeholder={t('tripJournal.notesPlaceholder', { defaultValue: 'Write about your day...' })}
                 placeholderTextColor={COLORS.creamDim}
                 multiline
                 textAlignVertical="top"
@@ -495,7 +498,7 @@ const styles = StyleSheet.create({
     color: COLORS.sage,
     letterSpacing: 1,
     textTransform: 'uppercase',
-    marginTop: 2,
+    marginTop: SPACING.xs,
   } as TextStyle,
   // Stats
   statsBar: {
@@ -522,7 +525,7 @@ const styles = StyleSheet.create({
     color: COLORS.creamMuted,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
-    marginTop: 2,
+    marginTop: SPACING.xs,
   } as TextStyle,
   // List
   listContent: {
@@ -556,7 +559,7 @@ const styles = StyleSheet.create({
   moodIndicator: {
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: RADIUS.pill,
   } as ViewStyle,
   dayCardNumber: {
     fontFamily: FONTS.bodySemiBold,
@@ -591,13 +594,13 @@ const styles = StyleSheet.create({
   dayCardTags: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 4,
+    gap: SPACING.xs,
   } as ViewStyle,
   dayCardTag: {
     backgroundColor: COLORS.bgGlass,
     borderRadius: RADIUS.full,
     paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
+    paddingVertical: SPACING.xs,
   } as ViewStyle,
   dayCardTagText: {
     fontFamily: FONTS.mono,
@@ -690,7 +693,7 @@ const styles = StyleSheet.create({
   moodBtn: {
     flex: 1,
     alignItems: 'center',
-    gap: 4,
+    gap: SPACING.xs,
     paddingVertical: SPACING.sm,
     borderRadius: RADIUS.md,
     borderWidth: 1,
@@ -700,7 +703,7 @@ const styles = StyleSheet.create({
   moodDot: {
     width: 10,
     height: 10,
-    borderRadius: 5,
+    borderRadius: RADIUS.pill,
   } as ViewStyle,
   moodLabel: {
     fontFamily: FONTS.mono,

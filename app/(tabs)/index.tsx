@@ -8,8 +8,10 @@ import {
   Dimensions,
   FlatList,
   Image,
+  Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -18,6 +20,7 @@ import {
   type TextStyle,
   type ImageStyle,
 } from 'react-native';
+import { Accelerometer } from 'expo-sensors';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -53,11 +56,11 @@ import { getContext, buildStrategy, type ContentStrategy } from '../../lib/conte
 // Layout
 // ---------------------------------------------------------------------------
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const GRID_GAP = 12;
+const GRID_GAP = 10;
 const GRID_PADDING = 20;
 const CARD_WIDTH = (SCREEN_WIDTH - GRID_PADDING * 2 - GRID_GAP) / 2;
-const CARD_HEIGHT_TALL = 280;
-const CARD_HEIGHT_SHORT = 240;
+// Dramatic height variation — magazine layout, not a uniform grid
+const CARD_HEIGHTS = [320, 200, 260, 240, 190, 300] as const;
 
 // ---------------------------------------------------------------------------
 // Unsplash fallback — zero API key needed
@@ -102,6 +105,13 @@ const DestinationPhotoCard = React.memo(function DestinationPhotoCard({
     onPress(destination);
   }, [destination, onPress]);
 
+  const handleLongPress = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    Share.share({
+      message: `Check out ${destination.label}, ${destination.country} on ROAM — ${destination.hook}`,
+    }).catch(() => {});
+  }, [destination]);
+
   // Gradient — subtle bottom 40% only
   const gradientLocations: [number, number, number] = [0.6, 0.8, 1];
 
@@ -118,12 +128,14 @@ const DestinationPhotoCard = React.memo(function DestinationPhotoCard({
   const currentMonth = new Date().getMonth() + 1;
   const isPerfectTiming = destination.bestMonths.includes(currentMonth);
 
-  const cardHeight = index % 3 === 0 ? CARD_HEIGHT_TALL : CARD_HEIGHT_SHORT;
+  const cardHeight = CARD_HEIGHTS[index % CARD_HEIGHTS.length];
 
   return (
     <Animated.View style={[styles.cardWrapper, { opacity: fadeAnim, height: cardHeight }]}>
       <Pressable
         onPress={handlePress}
+        onLongPress={handleLongPress}
+        delayLongPress={500}
         style={({ pressed }) => [
           styles.card,
           { height: cardHeight },
@@ -132,13 +144,18 @@ const DestinationPhotoCard = React.memo(function DestinationPhotoCard({
         accessibilityRole="button"
         accessibilityLabel={`${destination.label}, ${destination.country}`}
       >
-        <ResilientImage
-          uri={imageUrl}
-          style={styles.cardImage}
-          containerStyle={StyleSheet.absoluteFill}
-          fallbackColors={[COLORS.bgElevated, COLORS.bgCard, COLORS.bg]}
-          resizeMode="cover"
-        />
+        <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ scale: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [1.15, 1.05] }) }] }]}>
+          <ResilientImage
+            uri={imageUrl}
+            style={styles.cardImage}
+            containerStyle={StyleSheet.absoluteFill}
+            fallbackColors={[COLORS.bgElevated, COLORS.bgCard, COLORS.bg]}
+            resizeMode="cover"
+          />
+        </Animated.View>
+
+        {/* Color grade — makes every photo feel like it belongs to ROAM's world */}
+        <View style={styles.cardColorGrade} />
 
         {/* Dark gradient overlay */}
         <LinearGradient
@@ -153,7 +170,7 @@ const DestinationPhotoCard = React.memo(function DestinationPhotoCard({
         {/* Trending + timing badges (top-right) — no pill backgrounds */}
         <View style={styles.badgeStack}>
           {isTrending && (
-            <Flame size={14} color={COLORS.coral} strokeWidth={2} />
+            <Flame size={14} color={COLORS.coral} strokeWidth={1.5} />
           )}
           {isPerfectTiming && (
             <Text style={styles.timingText}>{i18n.t('discover.perfectTiming')}</Text>
@@ -239,6 +256,9 @@ export default function DiscoverScreen() {
   const [contextStrategy, setContextStrategy] = useState<ContentStrategy | null>(null);
   const [showBanner, setShowBanner] = useState(true);
   const trips = useAppStore((s) => s.trips);
+  const tripsThisMonth = useAppStore((s) => s.tripsThisMonth);
+  const lastViewedDestination = useAppStore((s) => s.lastViewedDestination);
+  const setLastViewedDestination = useAppStore((s) => s.setLastViewedDestination);
 
   useEffect(() => {
     track({ type: 'screen_view', screen: 'discover' });
@@ -271,6 +291,25 @@ export default function DiscoverScreen() {
     return () => clearInterval(interval);
   }, [headerFade]);
 
+  // Shake-to-random-destination easter egg
+  const lastShakeRef = useRef<number>(0);
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    Accelerometer.setUpdateInterval(400);
+    const subscription = Accelerometer.addListener(({ x, y, z }: { x: number; y: number; z: number }) => {
+      const totalAcceleration = Math.sqrt(x * x + y * y + z * z);
+      if (totalAcceleration > 1.8) {
+        const now = Date.now();
+        if (now - lastShakeRef.current < 3000) return;
+        lastShakeRef.current = now;
+        const dest = DESTINATIONS[Math.floor(Math.random() * DESTINATIONS.length)];
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+        router.push(('/destination/' + encodeURIComponent(dest.label)) as never);
+      }
+    });
+    return () => subscription.remove();
+  }, [router]);
+
   // Filter destinations by category + search
   const filteredDestinations = useMemo(() => {
     let filtered = DESTINATIONS;
@@ -294,9 +333,10 @@ export default function DiscoverScreen() {
     (dest: Destination) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       trackBehavior({ type: 'destination_opened', timestamp: new Date().toISOString(), data: { destination: dest.label, category: dest.category } }).catch(() => {});
+      setLastViewedDestination(dest.label);
       router.push(`/destination/${encodeURIComponent(dest.label)}` as never);
     },
-    [router]
+    [router, setLastViewedDestination]
   );
 
   const handleCategoryPress = useCallback((id: string) => {
@@ -330,6 +370,11 @@ export default function DiscoverScreen() {
         {/* Brand header */}
         <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <Text style={styles.brandMark}>ROAM</Text>
+          {tripsThisMonth > 0 && (
+            <Text style={styles.streakCounter}>
+              {tripsThisMonth} trip{tripsThisMonth === 1 ? '' : 's'} this month
+            </Text>
+          )}
           <Animated.Text style={[styles.editorialSubtitle, { opacity: headerFade }]}>
             {(t('discover.editorialHeaders', { returnObjects: true }) as string[])[headerIndex] ?? DISCOVER_HEADERS[headerIndex]}
           </Animated.Text>
@@ -338,7 +383,7 @@ export default function DiscoverScreen() {
         {/* Search bar — bottom border only, no filled background */}
         <View style={styles.searchContainer}>
           <View style={styles.searchBar}>
-            <Search size={18} color={COLORS.creamMuted} strokeWidth={2} />
+            <Search size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
             <View style={styles.searchInputWrap}>
               <Pressable
                 onPress={() => router.push('/(tabs)/generate' as never)}
@@ -383,7 +428,7 @@ export default function DiscoverScreen() {
               }}
               style={({ pressed }) => [styles.quickLink, { opacity: pressed ? 0.7 : 1 }]}
             >
-              <Heart size={14} color={COLORS.coral} strokeWidth={2} />
+              <Heart size={14} color={COLORS.coral} strokeWidth={1.5} />
               <Text style={styles.quickLinkText}>Compatibility</Text>
             </Pressable>
             <Text style={styles.quickLinkDivider}>·</Text>
@@ -394,7 +439,7 @@ export default function DiscoverScreen() {
               }}
               style={({ pressed }) => [styles.quickLink, { opacity: pressed ? 0.7 : 1 }]}
             >
-              <BookOpen size={14} color={COLORS.gold} strokeWidth={2} />
+              <BookOpen size={14} color={COLORS.gold} strokeWidth={1.5} />
               <Text style={styles.quickLinkText}>Passport</Text>
             </Pressable>
             <Text style={styles.quickLinkDivider}>·</Text>
@@ -405,7 +450,7 @@ export default function DiscoverScreen() {
               }}
               style={({ pressed }) => [styles.quickLink, { opacity: pressed ? 0.7 : 1 }]}
             >
-              <Sparkles size={14} color={COLORS.sage} strokeWidth={2} />
+              <Sparkles size={14} color={COLORS.sage} strokeWidth={1.5} />
               <Text style={styles.quickLinkText}>Wrapped</Text>
             </Pressable>
             <Text style={styles.quickLinkDivider}>·</Text>
@@ -416,7 +461,7 @@ export default function DiscoverScreen() {
               }}
               style={({ pressed }) => [styles.quickLink, { opacity: pressed ? 0.7 : 1 }]}
             >
-              <Compass size={14} color={COLORS.cream} strokeWidth={2} />
+              <Compass size={14} color={COLORS.cream} strokeWidth={1.5} />
               <Text style={styles.quickLinkText}>What if?</Text>
             </Pressable>
           </ScrollView>
@@ -445,7 +490,7 @@ export default function DiscoverScreen() {
                 ]}
               >
                 <View style={styles.nextTripLeft}>
-                  <Clock size={20} color={COLORS.sage} strokeWidth={2} />
+                  <Clock size={20} color={COLORS.sage} strokeWidth={1.5} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.nextTripTitle}>
@@ -473,32 +518,61 @@ export default function DiscoverScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.forYouScroll}
             >
-              {forYouPicks.map((dest) => (
-                <Pressable
-                  key={dest.label}
-                  onPress={() => handleDestinationPress(dest)}
-                  style={({ pressed }) => [
-                    styles.forYouCard,
-                    { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
-                  ]}
-                >
-                  <Image
-                    source={{ uri: dest.unsplashUrl ?? getDestinationPhoto(dest.photoQuery) }}
-                    style={styles.forYouImage}
-                    resizeMode="cover"
-                  />
-                  <LinearGradient
-                    colors={['transparent', 'rgba(0,0,0,0.7)']}
-                    style={styles.forYouGradient}
-                  />
-                  <View style={styles.forYouContent}>
-                    <Text style={styles.forYouName}>{dest.label}</Text>
-                    <Text style={styles.forYouHook} numberOfLines={1}>{dest.hook}</Text>
-                  </View>
-                </Pressable>
-              ))}
+              {forYouPicks.map((dest, i) => {
+                // Dramatic size variation — hero card dominates, others recede
+                const isHero = i === 0;
+                const cardW = isHero ? 260 : i % 3 === 1 ? 140 : 160;
+                const cardH = isHero ? 180 : i % 3 === 1 ? 100 : 120;
+                const currentMo = new Date().getMonth() + 1;
+                const isGoodNow = dest.bestMonths.includes(currentMo);
+                return (
+                  <Pressable
+                    key={dest.label}
+                    onPress={() => handleDestinationPress(dest)}
+                    style={({ pressed }) => [
+                      styles.forYouCard,
+                      { width: cardW, height: cardH, opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
+                    ]}
+                  >
+                    <Image
+                      source={{ uri: dest.unsplashUrl ?? getDestinationPhoto(dest.photoQuery) }}
+                      style={styles.forYouImage}
+                      resizeMode="cover"
+                    />
+                    <View style={styles.cardColorGrade} />
+                    <LinearGradient
+                      colors={['transparent', 'rgba(0,0,0,0.7)']}
+                      style={styles.forYouGradient}
+                    />
+                    {isGoodNow && (
+                      <View style={styles.forYouTimingBadge}>
+                        <Text style={styles.forYouTimingText}>GO NOW</Text>
+                      </View>
+                    )}
+                    <View style={styles.forYouContent}>
+                      <Text style={[styles.forYouName, isHero && { fontSize: 22 }]}>{dest.label}</Text>
+                      <Text style={styles.forYouHook} numberOfLines={1}>{dest.hook}</Text>
+                    </View>
+                  </Pressable>
+                );
+              })}
             </ScrollView>
           </View>
+        )}
+
+        {/* Resume intent — continue exploring last destination */}
+        {trips.length === 0 && lastViewedDestination && (
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push(`/destination/${encodeURIComponent(lastViewedDestination)}` as never);
+            }}
+            style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1, paddingHorizontal: GRID_PADDING, marginBottom: SPACING.sm }]}
+          >
+            <Text style={{ fontFamily: FONTS.body, fontSize: 13, color: COLORS.sage }}>
+              Continue exploring {lastViewedDestination} →
+            </Text>
+          </Pressable>
         )}
 
         {/* What if — text only, no card background */}
@@ -583,23 +657,27 @@ export default function DiscoverScreen() {
       t,
       showBanner,
       contextStrategy,
+      tripsThisMonth,
+      lastViewedDestination,
     ]
   );
 
   const ListEmpty = useMemo(
     () => (
       <View style={styles.emptyContainer}>
-        <MapPin size={40} color={COLORS.creamMuted} strokeWidth={1.5} />
-        <Text style={styles.emptyTitle}>No destinations match</Text>
-        <Text style={styles.emptySubtitle}>Try a different category or search term</Text>
+        <Text style={styles.emptyWatermark}>ROAM</Text>
+        <HelpCircle size={28} color={COLORS.creamMuted} strokeWidth={1.5} />
+        <Text style={styles.emptyTitle}>Nothing here yet.</Text>
+        <Text style={styles.emptySubtitle}>Either your filter is too picky{'\n'}or the world got smaller.</Text>
         <Pressable
           onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             setActiveCategory('all');
             setSearchQuery('');
           }}
           style={styles.emptyButton}
         >
-          <Text style={styles.emptyButtonText}>Show all</Text>
+          <Text style={styles.emptyButtonText}>Reset filters</Text>
         </Pressable>
       </View>
     ),
@@ -702,25 +780,24 @@ const styles = StyleSheet.create({
 
   // For You section
   forYouSection: {
-    marginBottom: 40,
+    marginBottom: 36,
   } as ViewStyle,
   forYouHeader: {
     paddingHorizontal: GRID_PADDING,
-    marginBottom: SPACING.md,
+    marginBottom: 10,
   } as ViewStyle,
   forYouTitle: {
-    fontFamily: FONTS.header,
-    fontSize: 24,
-    fontStyle: 'italic',
-    color: COLORS.cream,
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.creamDim,
+    letterSpacing: 3,
+    textTransform: 'uppercase',
   } as TextStyle,
   forYouScroll: {
     paddingHorizontal: GRID_PADDING,
-    gap: 12,
+    gap: SPACING.md,
   } as ViewStyle,
   forYouCard: {
-    width: 180,
-    height: 120,
     borderRadius: RADIUS.lg,
     overflow: 'hidden',
   } as ViewStyle,
@@ -741,34 +818,53 @@ const styles = StyleSheet.create({
   forYouName: {
     fontFamily: FONTS.header,
     fontSize: 18,
-    fontStyle: 'italic',
-    color: '#fff',
+    color: COLORS.white,
   } as TextStyle,
   forYouHook: {
     fontFamily: FONTS.body,
     fontSize: 12,
-    color: 'rgba(245,237,216,0.75)',
+    color: COLORS.creamBrightSoft,
     marginTop: 2,
   } as TextStyle,
+  forYouTimingBadge: {
+    position: 'absolute',
+    top: SPACING.sm,
+    left: SPACING.sm,
+  } as ViewStyle,
+  forYouTimingText: {
+    fontFamily: FONTS.mono,
+    fontSize: 9,
+    color: COLORS.sage,
+    letterSpacing: 1.5,
+  } as TextStyle,
 
-  // Header
+  // Header — editorial rhythm with tighter brand/headline gap
   header: {
     paddingHorizontal: GRID_PADDING,
-    marginBottom: 24,
+    marginBottom: 28,
   } as ViewStyle,
   brandMark: {
     fontFamily: FONTS.mono,
-    fontSize: 14,
+    fontSize: 11,
     color: COLORS.sage,
-    letterSpacing: 4,
+    letterSpacing: 6,
+    textTransform: 'uppercase',
+    marginBottom: 12,
+    opacity: 0.7,
+  } as TextStyle,
+  streakCounter: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.gold,
+    letterSpacing: 1,
     marginBottom: SPACING.sm,
   } as TextStyle,
   editorialSubtitle: {
     fontFamily: FONTS.header,
-    fontSize: 36,
-    fontStyle: 'italic',
+    fontSize: 44,
     color: COLORS.cream,
-    lineHeight: 44,
+    lineHeight: 48,
+    letterSpacing: -1.5,
   } as TextStyle,
 
   // Search — bottom border only
@@ -802,7 +898,7 @@ const styles = StyleSheet.create({
   chipsContainer: {
     paddingHorizontal: GRID_PADDING,
     paddingBottom: SPACING.md,
-    gap: 16,
+    gap: SPACING.md,
   } as ViewStyle,
   chip: {
     paddingHorizontal: 0,
@@ -822,48 +918,57 @@ const styles = StyleSheet.create({
     color: COLORS.sage,
   } as TextStyle,
 
-  // What if — text only, no card
+  // What if — editorial provocation, not a quiet link
   whatIfCard: {
     marginHorizontal: GRID_PADDING,
-    marginBottom: 40,
+    marginBottom: SPACING.xxl,
+    paddingTop: 24,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.sageBorder,
   } as ViewStyle,
   whatIfTitle: {
     fontFamily: FONTS.header,
-    fontSize: 22,
-    fontStyle: 'italic',
+    fontSize: 36,
     color: COLORS.sage,
+    letterSpacing: -1,
+    lineHeight: 40,
   } as TextStyle,
   whatIfSub: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.creamSoft,
-    marginTop: 4,
-  } as TextStyle,
-
-  // Truth section
-  truthSection: {
-    marginHorizontal: GRID_PADDING,
-    marginVertical: 32,
-  } as ViewStyle,
-
-  // Section heading — Cormorant italic, count below
-  sectionHeader: {
-    paddingHorizontal: GRID_PADDING,
-    marginBottom: SPACING.lg,
-    marginTop: SPACING.xs,
-  } as ViewStyle,
-  sectionTitle: {
-    fontFamily: FONTS.header,
-    fontSize: 24,
-    fontStyle: 'italic',
-    color: COLORS.cream,
-    lineHeight: 30,
-  } as TextStyle,
-  sectionCount: {
     fontFamily: FONTS.mono,
     fontSize: 11,
     color: COLORS.creamDim,
-    marginTop: 4,
+    marginTop: SPACING.sm,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  } as TextStyle,
+
+  // Truth section — intentionally asymmetric vertical spacing
+  truthSection: {
+    marginHorizontal: GRID_PADDING,
+    marginTop: 28,
+    marginBottom: 36,
+  } as ViewStyle,
+
+  // Section heading — editorial scale with dramatic hierarchy
+  sectionHeader: {
+    paddingHorizontal: GRID_PADDING,
+    marginBottom: SPACING.lg,
+    marginTop: SPACING.sm,
+  } as ViewStyle,
+  sectionTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 28,
+    color: COLORS.cream,
+    lineHeight: 32,
+    letterSpacing: -0.8,
+  } as TextStyle,
+  sectionCount: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.creamDim,
+    marginTop: SPACING.sm,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
   } as TextStyle,
 
   // Cards — no border, more photo impact
@@ -875,7 +980,7 @@ const styles = StyleSheet.create({
     width: '100%',
     borderRadius: RADIUS.lg,
     overflow: 'hidden',
-    backgroundColor: '#0D1710',
+    backgroundColor: COLORS.bg,
   } as ViewStyle,
   cardImage: {
     ...StyleSheet.absoluteFillObject,
@@ -884,6 +989,10 @@ const styles = StyleSheet.create({
   } as ImageStyle,
   cardGradient: {
     ...StyleSheet.absoluteFillObject,
+  } as ViewStyle,
+  cardColorGrade: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(10,10,10,0.12)',
   } as ViewStyle,
   badgeStack: {
     position: 'absolute',
@@ -916,21 +1025,22 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   cardLabel: {
     fontFamily: FONTS.header,
-    fontSize: 18,
-    fontStyle: 'italic',
+    fontSize: 22,
     color: COLORS.white,
-    marginBottom: 2,
+    marginBottom: 4,
+    letterSpacing: -0.5,
   } as TextStyle,
   cardMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
   } as ViewStyle,
   cardCountry: {
     fontFamily: FONTS.mono,
-    fontSize: 11,
+    fontSize: 10,
     color: COLORS.creamSoft,
-    letterSpacing: 1,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   } as TextStyle,
   cardDot: {
     width: 3,
@@ -953,18 +1063,29 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.xxl,
     paddingHorizontal: GRID_PADDING,
     gap: SPACING.sm,
+    overflow: 'hidden',
   } as ViewStyle,
+  emptyWatermark: {
+    position: 'absolute',
+    fontFamily: FONTS.header,
+    fontSize: 120,
+    color: COLORS.whiteFaint,
+    letterSpacing: 20,
+    transform: [{ rotate: '-12deg' }],
+  } as TextStyle,
   emptyTitle: {
     fontFamily: FONTS.header,
-    fontSize: 24,
+    fontSize: 26,
     color: COLORS.cream,
     textAlign: 'center',
+    letterSpacing: -0.5,
   } as TextStyle,
   emptySubtitle: {
     fontFamily: FONTS.body,
     fontSize: 14,
     color: COLORS.creamMuted,
     textAlign: 'center',
+    lineHeight: 22,
   } as TextStyle,
   emptyButton: {
     marginTop: SPACING.sm,

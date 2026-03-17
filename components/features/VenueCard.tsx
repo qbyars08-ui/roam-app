@@ -12,6 +12,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MapPin } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS, AFFILIATES } from '../../lib/constants';
@@ -70,6 +71,7 @@ function VenueCardInner({
   booking_url,
   city,
 }: VenueCardProps) {
+  const { t } = useTranslation();
   const handleOpenMaps = useCallback(() => {
     Linking.openURL(maps_url).catch(() => {});
   }, [maps_url]);
@@ -136,7 +138,7 @@ function VenueCardInner({
           <View style={styles.statusRow}>
             <View style={open_now ? styles.openBadge : styles.closedBadge}>
               <Text style={open_now ? styles.openText : styles.closedText}>
-                {open_now ? 'OPEN' : 'CLOSED'}
+                {open_now ? t('venue.open', { defaultValue: 'OPEN' }) : t('venue.closed', { defaultValue: 'CLOSED' })}
               </Text>
             </View>
             {hours_today && (
@@ -148,10 +150,10 @@ function VenueCardInner({
         {/* Action buttons */}
         <View style={styles.buttonRow}>
           <View style={styles.buttonWrapper}>
-            <Button label="Maps" variant="ghost" onPress={handleOpenMaps} />
+            <Button label={t('venue.maps', { defaultValue: 'Maps' })} variant="ghost" onPress={handleOpenMaps} />
           </View>
           <View style={styles.buttonWrapper}>
-            <Button label="Book" variant="coral" onPress={handleBook} />
+            <Button label={t('venue.book', { defaultValue: 'Book' })} variant="coral" onPress={handleBook} />
           </View>
         </View>
       </View>

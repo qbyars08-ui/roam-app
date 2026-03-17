@@ -6,6 +6,7 @@
 // All export as PNG via react-native-view-shot + expo-sharing
 // =============================================================================
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Animated,
   Dimensions,
@@ -74,12 +75,14 @@ function useExportCard(cardRef: React.RefObject<View>, filename: string) {
 function ExportButton({
   onPress,
   loading,
-  label = 'Save & Share',
+  label,
 }: {
   onPress: () => void;
   loading: boolean;
   label?: string;
 }) {
+  const { t } = useTranslation();
+  const defaultLabel = label ?? t('viral.saveAndShare', { defaultValue: 'Save & Share' });
   return (
     <Pressable
       onPress={onPress}
@@ -95,7 +98,7 @@ function ExportButton({
         end={{ x: 1, y: 0 }}
         style={exportStyles.gradient}
       >
-        <Text style={exportStyles.text}>{loading ? 'Exporting...' : label}</Text>
+        <Text style={exportStyles.text}>{loading ? t('viral.exporting', { defaultValue: 'Exporting...' }) : defaultLabel}</Text>
       </LinearGradient>
     </Pressable>
   );
@@ -120,6 +123,7 @@ interface TripRevealCardProps {
 }
 
 export function TripRevealCard({ itinerary, destination, heroPhotoUrl }: TripRevealCardProps) {
+  const { t } = useTranslation();
   const cardRef = useRef<View>(null);
   const { exporting, exportCard } = useExportCard(cardRef, `ROAM-${destination}-reveal`);
 
@@ -214,25 +218,25 @@ export function TripRevealCard({ itinerary, destination, heroPhotoUrl }: TripRev
                 { opacity: fadeAnim, transform: [{ scale: scaleAnim }] },
               ]}
             >
-              <Text style={revealStyles.dayLabel}>DAY {day.day}</Text>
+              <Text style={revealStyles.dayLabel}>{t('viral.day', { defaultValue: 'DAY' })} {day.day}</Text>
               <Text style={revealStyles.dayTheme}>{day.theme}</Text>
               <View style={revealStyles.divider} />
-              <Text style={revealStyles.topActivityLabel}>TOP PICK</Text>
+              <Text style={revealStyles.topActivityLabel}>{t('viral.topPick', { defaultValue: 'TOP PICK' })}</Text>
               <Text style={revealStyles.topActivity}>{topActivity}</Text>
               <Text style={revealStyles.topActivityLocation}>{day.morning.location}</Text>
 
               {/* Time slots preview */}
               <View style={revealStyles.slotsRow}>
                 <View style={revealStyles.slotChip}>
-                  <Text style={revealStyles.slotTime}>AM</Text>
+                  <Text style={revealStyles.slotTime}>{t('viral.am', { defaultValue: 'AM' })}</Text>
                   <Text style={revealStyles.slotName} numberOfLines={1}>{day.morning.activity}</Text>
                 </View>
                 <View style={revealStyles.slotChip}>
-                  <Text style={revealStyles.slotTime}>PM</Text>
+                  <Text style={revealStyles.slotTime}>{t('viral.pm', { defaultValue: 'PM' })}</Text>
                   <Text style={revealStyles.slotName} numberOfLines={1}>{day.afternoon.activity}</Text>
                 </View>
                 <View style={revealStyles.slotChip}>
-                  <Text style={revealStyles.slotTime}>EVE</Text>
+                  <Text style={revealStyles.slotTime}>{t('viral.eve', { defaultValue: 'EVE' })}</Text>
                   <Text style={revealStyles.slotName} numberOfLines={1}>{day.evening.activity}</Text>
                 </View>
               </View>
@@ -254,9 +258,9 @@ export function TripRevealCard({ itinerary, destination, heroPhotoUrl }: TripRev
           onPress={() => setIsPlaying(!isPlaying)}
           style={({ pressed }) => [revealStyles.playBtn, { opacity: pressed ? 0.7 : 1 }]}
         >
-          <Text style={revealStyles.playBtnText}>{isPlaying ? '\u23F8  Pause' : '\u25B6  Play'}</Text>
+          <Text style={revealStyles.playBtnText}>{isPlaying ? `\u23F8  ${t('viral.pause', { defaultValue: 'Pause' })}` : `\u25B6  ${t('viral.play', { defaultValue: 'Play' })}`}</Text>
         </Pressable>
-        <ExportButton onPress={exportCard} loading={exporting} label="Export for TikTok" />
+        <ExportButton onPress={exportCard} loading={exporting} label={t('viral.exportForTikTok', { defaultValue: 'Export for TikTok' })} />
       </View>
     </View>
   );
@@ -281,6 +285,7 @@ export function CostBreakdownCard({
   breakdown,
   heroPhotoUrl,
 }: CostBreakdownCardProps) {
+  const { t } = useTranslation();
   const cardRef = useRef<View>(null);
   const { exporting, exportCard } = useExportCard(cardRef, `ROAM-${destination}-budget`);
 
@@ -296,11 +301,11 @@ export function CostBreakdownCard({
   const buffer = Math.round(totalNum * 0.1);
 
   const categories = [
-    { label: 'Accommodation', value: breakdown.accommodation, color: COLORS.gold },
-    { label: 'Food', value: breakdown.food, color: COLORS.sage },
-    { label: 'Activities', value: breakdown.activities, color: COLORS.coral },
-    { label: 'Transport', value: breakdown.transportation, color: COLORS.blueAccent },
-    { label: 'Buffer (10%)', value: `$${buffer}`, color: COLORS.creamDimLight },
+    { label: t('viral.accommodation', { defaultValue: 'Accommodation' }), value: breakdown.accommodation, color: COLORS.gold },
+    { label: t('viral.food', { defaultValue: 'Food' }), value: breakdown.food, color: COLORS.sage },
+    { label: t('viral.activities', { defaultValue: 'Activities' }), value: breakdown.activities, color: COLORS.coral },
+    { label: t('viral.transport', { defaultValue: 'Transport' }), value: breakdown.transportation, color: COLORS.blueAccent },
+    { label: t('viral.buffer', { defaultValue: 'Buffer (10%)' }), value: `$${buffer}`, color: COLORS.creamDimLight },
   ];
 
   const maxVal = Math.max(...categories.map((c) => parseDollar(c.value)), 1);
@@ -319,10 +324,10 @@ export function CostBreakdownCard({
           >
             {/* Header */}
             <View style={costStyles.header}>
-              <Text style={costStyles.eyebrow}>TRIP BUDGET</Text>
+              <Text style={costStyles.eyebrow}>{t('viral.tripBudget', { defaultValue: 'TRIP BUDGET' })}</Text>
               <Text style={costStyles.dest}>{destination}</Text>
               <Text style={costStyles.meta}>
-                {days} days \u00B7 {totalBudget} total
+                {days} {t('viral.days', { defaultValue: 'days' })} \u00B7 {totalBudget} {t('viral.total', { defaultValue: 'total' })}
               </Text>
             </View>
 
@@ -352,9 +357,9 @@ export function CostBreakdownCard({
 
             {/* Daily average */}
             <View style={costStyles.dailyAvg}>
-              <Text style={costStyles.dailyLabel}>DAILY AVERAGE</Text>
+              <Text style={costStyles.dailyLabel}>{t('viral.dailyAverage', { defaultValue: 'DAILY AVERAGE' })}</Text>
               <Text style={costStyles.dailyValue}>
-                ${totalNum > 0 ? Math.round(totalNum / days) : '--'}/day
+                ${totalNum > 0 ? Math.round(totalNum / days) : '--'}/{t('viral.dayAbbr', { defaultValue: 'day' })}
               </Text>
             </View>
 
@@ -430,6 +435,7 @@ export function AiVsRealityCard({
   items,
   heroPhotoUrl,
 }: AiVsRealityCardProps) {
+  const { t } = useTranslation();
   const cardRef = useRef<View>(null);
   const { exporting, exportCard } = useExportCard(cardRef, `ROAM-${destination}-vs-reality`);
 
@@ -449,15 +455,15 @@ export function AiVsRealityCard({
           >
             {/* Header */}
             <Text style={vsStyles.eyebrow}>{destination.toUpperCase()}</Text>
-            <Text style={vsStyles.title}>Tourist Guide vs ROAM</Text>
+            <Text style={vsStyles.title}>{t('viral.touristGuideVsRoam', { defaultValue: 'Tourist Guide vs ROAM' })}</Text>
 
             {/* Column headers */}
             <View style={vsStyles.colHeaders}>
               <View style={vsStyles.colHeaderLeft}>
-                <Text style={vsStyles.colLabel}>WHAT TOURISTS DO</Text>
+                <Text style={vsStyles.colLabel}>{t('viral.whatTouristsDo', { defaultValue: 'WHAT TOURISTS DO' })}</Text>
               </View>
               <View style={vsStyles.colHeaderRight}>
-                <Text style={vsStyles.colLabelGold}>WHAT ROAM FOUND</Text>
+                <Text style={vsStyles.colLabelGold}>{t('viral.whatRoamFound', { defaultValue: 'WHAT ROAM FOUND' })}</Text>
               </View>
             </View>
 
@@ -489,8 +495,8 @@ export function AiVsRealityCard({
 
             {/* Bottom tagline */}
             <View style={vsStyles.bottomBar}>
-              <Text style={vsStyles.tagline}>Skip the tourist traps.</Text>
-              <Text style={vsStyles.taglineSub}>Built with ROAM</Text>
+              <Text style={vsStyles.tagline}>{t('viral.skipTouristTraps', { defaultValue: 'Skip the tourist traps.' })}</Text>
+              <Text style={vsStyles.taglineSub}>{t('viral.builtWithRoam', { defaultValue: 'Built with ROAM' })}</Text>
             </View>
 
             <Watermark />

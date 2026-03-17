@@ -38,6 +38,7 @@ import {
 } from 'lucide-react-native';
 import { Share } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAppStore } from '../../lib/store';
 import { useSocialProfile } from '../../lib/hooks/useSocialProfile';
@@ -66,14 +67,14 @@ type TravelStyleOption = {
 };
 
 const TRAVEL_STYLES: TravelStyleOption[] = [
-  { id: 'solo-explorer', label: 'Solo explorer', icon: <Compass size={20} color={COLORS.creamSoft} strokeWidth={2} /> },
-  { id: 'cultural-deep-dive', label: 'Cultural deep-dive', icon: <Globe size={20} color={COLORS.creamSoft} strokeWidth={2} /> },
-  { id: 'adventure-seeker', label: 'Adventure seeker', icon: <Mountain size={20} color={COLORS.creamSoft} strokeWidth={2} /> },
-  { id: 'food-obsessed', label: 'Food obsessed', icon: <Utensils size={20} color={COLORS.creamSoft} strokeWidth={2} /> },
-  { id: 'slow-traveler', label: 'Slow traveler', icon: <Heart size={20} color={COLORS.creamSoft} strokeWidth={2} /> },
-  { id: 'night-owl', label: 'Night owl', icon: <Moon size={20} color={COLORS.creamSoft} strokeWidth={2} /> },
-  { id: 'budget-master', label: 'Budget master', icon: <Wallet size={20} color={COLORS.creamSoft} strokeWidth={2} /> },
-  { id: 'no-compromises', label: 'No compromises', icon: <Star size={20} color={COLORS.creamSoft} strokeWidth={2} /> },
+  { id: 'solo-explorer', label: 'Solo explorer', icon: <Compass size={20} color={COLORS.creamSoft} strokeWidth={1.5} /> },
+  { id: 'cultural-deep-dive', label: 'Cultural deep-dive', icon: <Globe size={20} color={COLORS.creamSoft} strokeWidth={1.5} /> },
+  { id: 'adventure-seeker', label: 'Adventure seeker', icon: <Mountain size={20} color={COLORS.creamSoft} strokeWidth={1.5} /> },
+  { id: 'food-obsessed', label: 'Food obsessed', icon: <Utensils size={20} color={COLORS.creamSoft} strokeWidth={1.5} /> },
+  { id: 'slow-traveler', label: 'Slow traveler', icon: <Heart size={20} color={COLORS.creamSoft} strokeWidth={1.5} /> },
+  { id: 'night-owl', label: 'Night owl', icon: <Moon size={20} color={COLORS.creamSoft} strokeWidth={1.5} /> },
+  { id: 'budget-master', label: 'Budget master', icon: <Wallet size={20} color={COLORS.creamSoft} strokeWidth={1.5} /> },
+  { id: 'no-compromises', label: 'No compromises', icon: <Star size={20} color={COLORS.creamSoft} strokeWidth={1.5} /> },
 ];
 
 const LANGUAGE_OPTIONS = [
@@ -311,7 +312,7 @@ const TravelStyleCard = React.memo<{
   onToggle: (id: string) => void;
 }>(({ item, selected, onToggle }) => {
   const handlePress = useCallback(async () => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await Haptics.selectionAsync();
     onToggle(item.id);
   }, [item.id, onToggle]);
 
@@ -336,7 +337,7 @@ const TravelStyleCard = React.memo<{
       </Text>
       {selected && (
         <View style={styles.styleCardCheck}>
-          <Check size={14} color={COLORS.sage} strokeWidth={2} />
+          <Check size={14} color={COLORS.sage} strokeWidth={1.5} />
         </View>
       )}
     </Pressable>
@@ -353,7 +354,7 @@ const LanguageChip = React.memo<{
   onToggle: (lang: string) => void;
 }>(({ label, selected, onToggle }) => {
   const handlePress = useCallback(async () => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await Haptics.selectionAsync();
     onToggle(label);
   }, [label, onToggle]);
 
@@ -395,7 +396,7 @@ const DestinationChip = React.memo<{
       accessibilityLabel={`${destination}, ${count} ROAMers`}
       style={({ pressed }) => [styles.destChip, pressed && styles.pressed]}
     >
-      <MapPin size={14} color={COLORS.sage} strokeWidth={2} />
+      <MapPin size={14} color={COLORS.sage} strokeWidth={1.5} />
       <Text style={styles.destChipText}>{destination}</Text>
       <Text style={styles.destChipCount}>{count}</Text>
     </Pressable>
@@ -406,11 +407,14 @@ DestinationChip.displayName = 'DestinationChip';
 // =============================================================================
 // SUB-COMPONENT: RoamerProfileCard
 // =============================================================================
-const DemoBadge = () => (
-  <View style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, backgroundColor: COLORS.bgElevated, borderWidth: 1, borderColor: COLORS.border }}>
-    <Text style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.creamMuted, letterSpacing: 1, textTransform: 'uppercase' }}>Demo</Text>
-  </View>
-);
+const DemoBadge = () => {
+  const { t } = useTranslation();
+  return (
+    <View style={{ paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs, borderRadius: RADIUS.sm, backgroundColor: COLORS.bgElevated, borderWidth: 1, borderColor: COLORS.border }}>
+      <Text style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.creamMuted, letterSpacing: 1, textTransform: 'uppercase' }}>{t('people.demo', { defaultValue: 'Demo' })}</Text>
+    </View>
+  );
+};
 
 const RoamerProfileCard = React.memo<{
   roamer: MockRoamer;
@@ -418,16 +422,17 @@ const RoamerProfileCard = React.memo<{
   connectionStatus: ConnectionStatus;
   onConnect: (id: string) => void;
 }>(({ roamer, compatibilityScore, connectionStatus, onConnect }) => {
+  const { t } = useTranslation();
   const handleConnect = useCallback(async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onConnect(roamer.id);
   }, [roamer.id, onConnect]);
 
   const buttonLabel = useMemo(() => {
-    if (connectionStatus === 'connected') return 'Connected';
-    if (connectionStatus === 'requested') return 'Requested';
-    return 'Connect';
-  }, [connectionStatus]);
+    if (connectionStatus === 'connected') return t('people.connected', { defaultValue: 'Connected' });
+    if (connectionStatus === 'requested') return t('people.requested', { defaultValue: 'Requested' });
+    return t('people.connect', { defaultValue: 'Connect' });
+  }, [connectionStatus, t]);
 
   const buttonStyle = useMemo(() => {
     if (connectionStatus === 'connected') return styles.connectBtnConnected;
@@ -450,11 +455,11 @@ const RoamerProfileCard = React.memo<{
           <Text style={styles.roamerScore}>{compatibilityScore}%</Text>
         </View>
         <View style={styles.roamerMeta}>
-          <MapPin size={12} color={COLORS.creamMuted} strokeWidth={2} />
+          <MapPin size={12} color={COLORS.creamMuted} strokeWidth={1.5} />
           <Text style={styles.roamerCity}>{roamer.homeCity}</Text>
           {roamer.languages.length > 0 && (
             <>
-              <Globe size={12} color={COLORS.creamMuted} strokeWidth={2} />
+              <Globe size={12} color={COLORS.creamMuted} strokeWidth={1.5} />
               <Text style={styles.roamerLangs} numberOfLines={1}>
                 {roamer.languages.slice(0, 2).join(', ')}
               </Text>
@@ -480,7 +485,7 @@ const RoamerProfileCard = React.memo<{
           disabled={connectionStatus === 'connected'}
         >
           {connectionStatus === 'none' && (
-            <UserPlus size={14} color={COLORS.bg} strokeWidth={2} />
+            <UserPlus size={14} color={COLORS.bg} strokeWidth={1.5} />
           )}
           <Text style={[styles.connectBtnText, buttonTextStyle]}>{buttonLabel}</Text>
         </Pressable>
@@ -493,27 +498,31 @@ RoamerProfileCard.displayName = 'RoamerProfileCard';
 // =============================================================================
 // SUB-COMPONENT: EmptyMatchState
 // =============================================================================
-const EmptyMatchState = React.memo<{ destination: string }>(({ destination }) => (
-  <View style={styles.emptyState}>
-    <Text style={styles.emptyText}>
-      You'd be the first ROAMer in {destination}.{'\n'}Add your trip and someone will find you.
-    </Text>
-    <Pressable
-      accessibilityLabel="Invite a friend"
-      style={({ pressed }) => [styles.inviteBtn, pressed && styles.pressed]}
-    >
-      <Send size={16} color={COLORS.sage} strokeWidth={2} />
-      <Text style={styles.inviteBtnText}>Invite a friend</Text>
-      <ArrowRight size={14} color={COLORS.sage} strokeWidth={2} />
-    </Pressable>
-  </View>
-));
+const EmptyMatchState = React.memo<{ destination: string }>(({ destination }) => {
+  const { t } = useTranslation();
+  return (
+    <View style={styles.emptyState}>
+      <Text style={styles.emptyText}>
+        {t('people.firstRoamer', { destination, defaultValue: `You'd be the first ROAMer in ${destination}.\nAdd your trip and someone will find you.` })}
+      </Text>
+      <Pressable
+        accessibilityLabel={t('people.inviteFriend', { defaultValue: 'Invite a friend' })}
+        style={({ pressed }) => [styles.inviteBtn, pressed && styles.pressed]}
+      >
+        <Send size={16} color={COLORS.sage} strokeWidth={1.5} />
+        <Text style={styles.inviteBtnText}>{t('people.inviteFriend', { defaultValue: 'Invite a friend' })}</Text>
+        <ArrowRight size={14} color={COLORS.sage} strokeWidth={1.5} />
+      </Pressable>
+    </View>
+  );
+});
 EmptyMatchState.displayName = 'EmptyMatchState';
 
 // =============================================================================
 // MAIN COMPONENT
 // =============================================================================
 export default function PeopleTab() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { profile: socialProfile, loading: profileLoading, upsert } = useSocialProfile();
@@ -638,7 +647,7 @@ export default function PeopleTab() {
   }, []);
 
   const handleNextStep = useCallback(async () => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (step < 5) {
       animateStep(step + 1);
     }
@@ -703,7 +712,7 @@ export default function PeopleTab() {
       }
 
       if (!result) {
-        Alert.alert('Couldn\u2019t save profile', 'Check your connection and try again.');
+        Alert.alert(t('people.alertSaveFailed', { defaultValue: 'Couldn\u2019t save profile' }), t('people.alertCheckConnection', { defaultValue: 'Check your connection and try again.' }));
         return;
       }
 
@@ -740,7 +749,7 @@ export default function PeopleTab() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error('[People] Profile creation error:', msg);
-      Alert.alert('Something went wrong', msg);
+      Alert.alert(t('people.alertError', { defaultValue: 'Something went wrong' }), msg);
     } finally {
       setSaving(false);
     }
@@ -750,7 +759,7 @@ export default function PeopleTab() {
   // Full experience handlers
   // ---------------------------------------------------------------------------
   const handleToggleVisibility = useCallback(async (value: boolean) => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await Haptics.selectionAsync();
     setVisibleToRoamers(value);
   }, []);
 
@@ -824,12 +833,12 @@ export default function PeopleTab() {
             {/* Step 0: Name */}
             {step === 0 && (
               <View style={styles.stepContent}>
-                <Text style={styles.stepQuestion}>What do you go by?</Text>
+                <Text style={styles.stepQuestion}>{t('people.whatName', { defaultValue: 'What do you go by?' })}</Text>
                 <TextInput
                   style={styles.textInput}
                   value={draft.name}
-                  onChangeText={(t) => updateDraft({ name: t })}
-                  placeholder="Your name or alias"
+                  onChangeText={(v) => updateDraft({ name: v })}
+                  placeholder={t('people.namePlaceholder', { defaultValue: 'Your name or alias' })}
                   placeholderTextColor={COLORS.creamDimLight}
                   autoFocus
                   autoCapitalize="words"
@@ -842,12 +851,12 @@ export default function PeopleTab() {
             {/* Step 1: Home */}
             {step === 1 && (
               <View style={styles.stepContent}>
-                <Text style={styles.stepQuestion}>Where are you based?</Text>
+                <Text style={styles.stepQuestion}>{t('people.whereBased', { defaultValue: 'Where are you based?' })}</Text>
                 <TextInput
                   style={styles.textInput}
                   value={draft.homeCity}
-                  onChangeText={(t) => updateDraft({ homeCity: t })}
-                  placeholder="City, Country"
+                  onChangeText={(v) => updateDraft({ homeCity: v })}
+                  placeholder={t('people.cityPlaceholder', { defaultValue: 'City, Country' })}
                   placeholderTextColor={COLORS.creamDimLight}
                   autoFocus
                   autoCapitalize="words"
@@ -860,8 +869,8 @@ export default function PeopleTab() {
             {/* Step 2: Travel Style */}
             {step === 2 && (
               <View style={styles.stepContent}>
-                <Text style={styles.stepQuestion}>How do you travel?</Text>
-                <Text style={styles.stepHint}>Select up to 3</Text>
+                <Text style={styles.stepQuestion}>{t('people.howTravel', { defaultValue: 'How do you travel?' })}</Text>
+                <Text style={styles.stepHint}>{t('people.selectUpTo3', { defaultValue: 'Select up to 3' })}</Text>
                 <View style={styles.styleGrid}>
                   {TRAVEL_STYLES.map((ts) => (
                     <TravelStyleCard
@@ -878,7 +887,7 @@ export default function PeopleTab() {
             {/* Step 3: Languages */}
             {step === 3 && (
               <View style={styles.stepContent}>
-                <Text style={styles.stepQuestion}>What languages do you speak?</Text>
+                <Text style={styles.stepQuestion}>{t('people.whatLanguages', { defaultValue: 'What languages do you speak?' })}</Text>
                 <View style={styles.langGrid}>
                   {LANGUAGE_OPTIONS.map((lang) => (
                     <LanguageChip
@@ -895,14 +904,14 @@ export default function PeopleTab() {
             {/* Step 4: Bio */}
             {step === 4 && (
               <View style={styles.stepContent}>
-                <Text style={styles.stepQuestion}>Anything else travelers should know?</Text>
+                <Text style={styles.stepQuestion}>{t('people.anythingElse', { defaultValue: 'Anything else travelers should know?' })}</Text>
                 <TextInput
                   style={[styles.textInput, styles.textArea]}
                   value={draft.bio}
-                  onChangeText={(t) => {
-                    if (t.length <= 160) updateDraft({ bio: t });
+                  onChangeText={(v) => {
+                    if (v.length <= 160) updateDraft({ bio: v });
                   }}
-                  placeholder="Optional. 160 characters."
+                  placeholder={t('people.bioPlaceholder', { defaultValue: 'Optional. 160 characters.' })}
                   placeholderTextColor={COLORS.creamDimLight}
                   multiline
                   maxLength={160}
@@ -915,12 +924,12 @@ export default function PeopleTab() {
             {/* Step 5: First Trip */}
             {step === 5 && (
               <View style={styles.stepContent}>
-                <Text style={styles.stepQuestion}>Where are you heading?</Text>
+                <Text style={styles.stepQuestion}>{t('people.whereHeading', { defaultValue: 'Where are you heading?' })}</Text>
                 <TextInput
                   style={styles.textInput}
                   value={draft.firstTripDestination}
-                  onChangeText={(t) => updateDraft({ firstTripDestination: t })}
-                  placeholder="Destination"
+                  onChangeText={(v) => updateDraft({ firstTripDestination: v })}
+                  placeholder={t('people.destinationPlaceholder', { defaultValue: 'Destination' })}
                   placeholderTextColor={COLORS.creamDimLight}
                   autoFocus
                   autoCapitalize="words"
@@ -929,15 +938,15 @@ export default function PeopleTab() {
                   <TextInput
                     style={[styles.textInput, styles.dateInput]}
                     value={draft.firstTripStartDate}
-                    onChangeText={(t) => updateDraft({ firstTripStartDate: t })}
-                    placeholder="Start (YYYY-MM-DD)"
+                    onChangeText={(v) => updateDraft({ firstTripStartDate: v })}
+                    placeholder={t('people.startDatePlaceholder', { defaultValue: 'Start (YYYY-MM-DD)' })}
                     placeholderTextColor={COLORS.creamDimLight}
                   />
                   <TextInput
                     style={[styles.textInput, styles.dateInput]}
                     value={draft.firstTripEndDate}
-                    onChangeText={(t) => updateDraft({ firstTripEndDate: t })}
-                    placeholder="End (YYYY-MM-DD)"
+                    onChangeText={(v) => updateDraft({ firstTripEndDate: v })}
+                    placeholder={t('people.endDatePlaceholder', { defaultValue: 'End (YYYY-MM-DD)' })}
                     placeholderTextColor={COLORS.creamDimLight}
                   />
                 </View>
@@ -951,7 +960,7 @@ export default function PeopleTab() {
               <>
                 <Pressable
                   onPress={handleCompleteProfile}
-                  accessibilityLabel="Complete profile"
+                  accessibilityLabel={t('people.completeProfile', { defaultValue: 'Complete profile' })}
                   style={({ pressed }) => [
                     styles.nextBtn,
                     styles.nextBtnFinal,
@@ -961,17 +970,17 @@ export default function PeopleTab() {
                   disabled={saving}
                 >
                   <Text style={styles.nextBtnText}>
-                    {saving ? 'Saving...' : 'Join the network'}
+                    {saving ? t('people.saving', { defaultValue: 'Saving...' }) : t('people.joinNetwork', { defaultValue: 'Join the network' })}
                   </Text>
-                  <ArrowRight size={18} color={COLORS.bg} strokeWidth={2} />
+                  <ArrowRight size={18} color={COLORS.bg} strokeWidth={1.5} />
                 </Pressable>
                 {!draft.firstTripDestination.trim() && (
                   <Pressable
                     onPress={handleCompleteProfile}
-                    accessibilityLabel="Skip and complete profile"
+                    accessibilityLabel={t('people.skipAndComplete', { defaultValue: 'Skip and complete profile' })}
                     style={({ pressed }) => [styles.skipBtn, pressed && styles.pressed]}
                   >
-                    <Text style={styles.skipBtnText}>Skip for now</Text>
+                    <Text style={styles.skipBtnText}>{t('people.skipForNow', { defaultValue: 'Skip for now' })}</Text>
                   </Pressable>
                 )}
               </>
@@ -979,7 +988,7 @@ export default function PeopleTab() {
               <>
                 <Pressable
                   onPress={handleNextStep}
-                  accessibilityLabel="Continue to next step"
+                  accessibilityLabel={t('people.continueStep', { defaultValue: 'Continue to next step' })}
                   style={({ pressed }) => [
                     styles.nextBtn,
                     pressed && styles.pressed,
@@ -987,16 +996,16 @@ export default function PeopleTab() {
                   ]}
                   disabled={!canProceed}
                 >
-                  <Text style={styles.nextBtnText}>Continue</Text>
-                  <ArrowRight size={18} color={COLORS.bg} strokeWidth={2} />
+                  <Text style={styles.nextBtnText}>{t('people.continue', { defaultValue: 'Continue' })}</Text>
+                  <ArrowRight size={18} color={COLORS.bg} strokeWidth={1.5} />
                 </Pressable>
                 {step === 4 && (
                   <Pressable
                     onPress={handleSkipStep}
-                    accessibilityLabel="Skip this step"
+                    accessibilityLabel={t('people.skipStep', { defaultValue: 'Skip this step' })}
                     style={({ pressed }) => [styles.skipBtn, pressed && styles.pressed]}
                   >
-                    <Text style={styles.skipBtnText}>Skip</Text>
+                    <Text style={styles.skipBtnText}>{t('people.skip', { defaultValue: 'Skip' })}</Text>
                   </Pressable>
                 )}
               </>
@@ -1018,11 +1027,11 @@ export default function PeopleTab() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.networkLabel}>You're in the ROAM network.</Text>
+        <Text style={styles.networkLabel}>{t('people.inNetwork', { defaultValue: "You're in the ROAM network." })}</Text>
 
         {/* ROAM This Month */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>ROAM This Month</Text>
+          <Text style={styles.sectionTitle}>{t('people.roamingThisMonth', { defaultValue: 'Roaming this month' })}</Text>
         </View>
         <ScrollView
           horizontal
@@ -1041,12 +1050,12 @@ export default function PeopleTab() {
 
         {/* Add Trip CTA */}
         <View style={styles.addTripCard}>
-          <Text style={styles.addTripTitle}>Where are you going next?</Text>
+          <Text style={styles.addTripTitle}>{t('people.whereNext', { defaultValue: 'Where are you going next?' })}</Text>
           <TextInput
             style={styles.textInput}
             value={tripDestInput}
             onChangeText={setTripDestInput}
-            placeholder="Destination"
+            placeholder={t('people.destinationPlaceholder', { defaultValue: 'Destination' })}
             placeholderTextColor={COLORS.creamDimLight}
             autoCapitalize="words"
           />
@@ -1055,20 +1064,20 @@ export default function PeopleTab() {
               style={[styles.textInput, styles.dateInput]}
               value={tripStartDate}
               onChangeText={setTripStartDate}
-              placeholder="Start (YYYY-MM-DD)"
+              placeholder={t('people.startDatePlaceholder', { defaultValue: 'Start (YYYY-MM-DD)' })}
               placeholderTextColor={COLORS.creamDimLight}
             />
             <TextInput
               style={[styles.textInput, styles.dateInput]}
               value={tripEndDate}
               onChangeText={setTripEndDate}
-              placeholder="End (YYYY-MM-DD)"
+              placeholder={t('people.endDatePlaceholder', { defaultValue: 'End (YYYY-MM-DD)' })}
               placeholderTextColor={COLORS.creamDimLight}
             />
           </View>
           <Pressable
             onPress={handleAddTrip}
-            accessibilityLabel="Add trip to ROAM network"
+            accessibilityLabel={t('people.addTripLabel', { defaultValue: 'Add trip to ROAM network' })}
             style={({ pressed }) => [
               styles.nextBtn,
               pressed && styles.pressed,
@@ -1076,8 +1085,8 @@ export default function PeopleTab() {
             ]}
             disabled={!tripDestInput.trim()}
           >
-            <Calendar size={16} color={COLORS.bg} strokeWidth={2} />
-            <Text style={styles.nextBtnText}>Add Trip</Text>
+            <Calendar size={16} color={COLORS.bg} strokeWidth={1.5} />
+            <Text style={styles.nextBtnText}>{t('people.addTrip', { defaultValue: 'Add Trip' })}</Text>
           </Pressable>
         </View>
       </ScrollView>
@@ -1095,34 +1104,34 @@ export default function PeopleTab() {
     >
       {/* Header + Edit Profile */}
       <View style={styles.fullHeader}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <Text style={styles.fullTitle}>Who's Going</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.md }}>
+          <Text style={styles.fullTitle}>{t('people.whosGoing', { defaultValue: "Who's Going" })}</Text>
           <Pressable
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               router.push('/social-profile-edit' as never);
             }}
-            accessibilityLabel="Edit your social profile"
-            style={{ paddingVertical: 4, paddingHorizontal: 10, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border }}
+            accessibilityLabel={t('people.editProfile', { defaultValue: 'Edit your social profile' })}
+            style={{ paddingVertical: SPACING.xs, paddingHorizontal: SPACING.sm, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLORS.border }}
           >
-            <Text style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.creamMuted, textTransform: 'uppercase', letterSpacing: 0.5 }}>Edit Profile</Text>
+            <Text style={{ fontFamily: FONTS.mono, fontSize: 10, color: COLORS.creamMuted, letterSpacing: 0.5 }}>{t('people.editProfileLabel', { defaultValue: 'Edit Profile' })}</Text>
           </Pressable>
         </View>
         <View style={styles.privacyToggle}>
           <Text style={styles.privacyLabel}>
-            {visibleToRoamers ? 'Visible to ROAMers' : 'Hidden'}
+            {visibleToRoamers ? t('people.visible', { defaultValue: 'Visible to ROAMers' }) : t('people.hidden', { defaultValue: 'Hidden' })}
           </Text>
           {visibleToRoamers ? (
-            <Eye size={16} color={COLORS.sage} strokeWidth={2} />
+            <Eye size={16} color={COLORS.sage} strokeWidth={1.5} />
           ) : (
-            <EyeOff size={16} color={COLORS.creamMuted} strokeWidth={2} />
+            <EyeOff size={16} color={COLORS.creamMuted} strokeWidth={1.5} />
           )}
           <Switch
             value={visibleToRoamers}
             onValueChange={handleToggleVisibility}
             trackColor={{ false: COLORS.bgElevated, true: COLORS.sageLight }}
             thumbColor={visibleToRoamers ? COLORS.sage : COLORS.creamMuted}
-            accessibilityLabel="Toggle visibility to other ROAMers"
+            accessibilityLabel={t('people.toggleVisibility', { defaultValue: 'Toggle visibility to other ROAMers' })}
           />
         </View>
       </View>
@@ -1131,23 +1140,23 @@ export default function PeopleTab() {
       {socialProfile && (
         <Pressable
           onPress={async () => {
-            await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             const userId = socialProfile.userId ?? socialProfile.id;
             const url = `https://roamapp.app/profile/${userId}`;
             try {
               await Share.share({
-                message: `Check out my travel profile on ROAM: ${url}`,
+                message: t('people.shareMessage', { url, defaultValue: `Check out my travel profile on ROAM: ${url}` }),
                 url,
               });
               trackEvent('profile_shared').catch(() => {});
             } catch { /* cancelled */ }
           }}
-          accessibilityLabel="Share your travel profile"
+          accessibilityLabel={t('people.shareProfile', { defaultValue: 'Share your travel profile' })}
           style={({ pressed }) => [styles.shareBtn, pressed && styles.pressed]}
         >
-          <Send size={14} color={COLORS.sage} strokeWidth={2} />
-          <Text style={styles.shareBtnText}>Share your travel profile</Text>
-          <ArrowRight size={12} color={COLORS.sage} strokeWidth={2} />
+          <Send size={14} color={COLORS.sage} strokeWidth={1.5} />
+          <Text style={styles.shareBtnText}>{t('people.shareProfile', { defaultValue: 'Share your travel profile' })}</Text>
+          <ArrowRight size={12} color={COLORS.sage} strokeWidth={1.5} />
         </Pressable>
       )}
 
@@ -1155,7 +1164,7 @@ export default function PeopleTab() {
       {alsoGoing.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>
-            Also going to {currentDestination}
+            {t('people.alsoGoing', { destination: currentDestination, defaultValue: `Also going to ${currentDestination}` })}
           </Text>
           {alsoGoing.map((roamer) => {
             const roamerProfile = mockToSocialProfile(roamer);
@@ -1183,7 +1192,7 @@ export default function PeopleTab() {
       {rightNow.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>
-            Right now in {currentDestination}
+            {t('people.rightNow', { destination: currentDestination, defaultValue: `Right now in ${currentDestination}` })}
           </Text>
           {rightNow.map((roamer) => {
             const roamerProfile = mockToSocialProfile(roamer);
@@ -1214,7 +1223,7 @@ export default function PeopleTab() {
 
       {/* Section 3: Travel Network */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Your travel network</Text>
+        <Text style={styles.sectionTitle}>{t('people.yourNetwork', { defaultValue: 'Your travel network' })}</Text>
         {roamers.map((roamer) => {
           const roamerProfile = mockToSocialProfile(roamer);
           const travelProfile = useAppStore.getState().travelProfile;
@@ -1291,10 +1300,10 @@ const styles = StyleSheet.create({
   },
   stepQuestion: {
     fontFamily: FONTS.header,
-    fontSize: 32,
-    fontStyle: 'italic',
+    fontSize: 34,
     color: COLORS.cream,
     lineHeight: 40,
+    letterSpacing: -0.8,
   },
   stepHint: {
     fontFamily: FONTS.mono,
@@ -1426,7 +1435,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: SPACING.sm,
     paddingVertical: SPACING.md,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.sage,
     minHeight: 52,
   },
@@ -1471,8 +1480,8 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: FONTS.header,
     fontSize: 24,
-    fontStyle: 'italic',
     color: COLORS.cream,
+    letterSpacing: -0.4,
   },
   destChipsRow: {
     paddingHorizontal: MAGAZINE.padding,
@@ -1514,8 +1523,8 @@ const styles = StyleSheet.create({
   addTripTitle: {
     fontFamily: FONTS.header,
     fontSize: 28,
-    fontStyle: 'italic',
     color: COLORS.cream,
+    letterSpacing: -0.6,
   },
 
   // Share button
@@ -1527,7 +1536,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
     borderWidth: 1,
     borderColor: COLORS.sageBorder,
     backgroundColor: COLORS.sageVeryFaint,
@@ -1556,8 +1565,8 @@ const styles = StyleSheet.create({
   fullTitle: {
     fontFamily: FONTS.header,
     fontSize: 32,
-    fontStyle: 'italic',
     color: COLORS.cream,
+    letterSpacing: -0.8,
   },
   privacyToggle: {
     flexDirection: 'row',
@@ -1587,7 +1596,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   roamerCardHeader: {
-    gap: 2,
+    gap: SPACING.xs,
   },
   roamerNameRow: {
     flexDirection: 'row',
@@ -1628,7 +1637,7 @@ const styles = StyleSheet.create({
   },
   roamerTag: {
     paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
+    paddingVertical: SPACING.xs,
     borderRadius: RADIUS.full,
     backgroundColor: COLORS.coralSubtle,
   },
@@ -1655,7 +1664,7 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
     minHeight: 44,
   },
   connectBtnDefault: {
@@ -1725,7 +1734,7 @@ const styles = StyleSheet.create({
   networkAvatar: {
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.bgElevated,
     borderWidth: 1,
     borderColor: COLORS.sageBorder,

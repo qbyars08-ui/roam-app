@@ -17,6 +17,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Coffee, Heart, Home, Map, Plane, Tv, Utensils, X } from 'lucide-react-native';
 import { calculateWhatIf, type WhatIfResult } from '../lib/what-if-calculator';
+import { useTranslation } from 'react-i18next';
 import { COLORS, DESTINATIONS, FONTS, RADIUS, SPACING } from '../lib/constants';
 import * as Haptics from '../lib/haptics';
 
@@ -42,7 +43,7 @@ function CloseButton({ onPress }: { onPress: () => void }) {
       accessibilityRole="button"
       accessibilityLabel="Close"
     >
-      <X color={COLORS.creamMuted} size={22} strokeWidth={2} />
+      <X color={COLORS.creamMuted} size={22} strokeWidth={1.5} />
     </Pressable>
   );
 }
@@ -149,6 +150,7 @@ function DestinationChip({
 // ---------------------------------------------------------------------------
 
 export default function WhatIfScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -243,8 +245,8 @@ export default function WhatIfScreen() {
       {/* Header row */}
       <View style={styles.headerRow}>
         <View style={styles.headerTextBlock}>
-          <Text style={styles.headerTitle}>What if I just went?</Text>
-          <Text style={styles.headerSubtitle}>No commitment. Just the math.</Text>
+          <Text style={styles.headerTitle}>{t('whatIf.headerTitle', { defaultValue: 'What if I just went?' })}</Text>
+          <Text style={styles.headerSubtitle}>{t('whatIf.headerSubtitle', { defaultValue: 'No commitment. Just the math.' })}</Text>
         </View>
         <CloseButton onPress={handleClose} />
       </View>
@@ -262,13 +264,13 @@ export default function WhatIfScreen() {
         {/* Input section                                                        */}
         {/* ------------------------------------------------------------------ */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>DESTINATION</Text>
+          <Text style={styles.sectionLabel}>{t('whatIf.destination', { defaultValue: 'DESTINATION' })}</Text>
           <View style={styles.inputWrapper}>
             <TextInput
               style={styles.textInput}
               value={query}
               onChangeText={handleQueryChange}
-              placeholder="Search destinations..."
+              placeholder={t('whatIf.searchPlaceholder', { defaultValue: 'Search destinations...' })}
               placeholderTextColor={COLORS.creamMuted}
               autoCorrect={false}
               autoCapitalize="words"
@@ -277,7 +279,7 @@ export default function WhatIfScreen() {
             />
             {selectedDest ? (
               <Pressable onPress={handleClearDest} hitSlop={8}>
-                <X color={COLORS.creamMuted} size={18} strokeWidth={2} />
+                <X color={COLORS.creamMuted} size={18} strokeWidth={1.5} />
               </Pressable>
             ) : null}
           </View>
@@ -298,7 +300,7 @@ export default function WhatIfScreen() {
 
         {/* Days selector */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>HOW LONG?</Text>
+          <Text style={styles.sectionLabel}>{t('whatIf.howLong', { defaultValue: 'HOW LONG?' })}</Text>
           <View style={styles.dayRow}>
             {DAY_OPTIONS.map((days) => (
               <DayPill
@@ -322,32 +324,32 @@ export default function WhatIfScreen() {
                 ${result.totalCost.toLocaleString()}
               </Text>
               <Text style={styles.totalSubtitle}>
-                for {result.days} days in {result.destination}
+                {t('whatIf.totalSubtitle', { defaultValue: 'for {{days}} days in {{destination}}', days: result.days, destination: result.destination })}
               </Text>
             </View>
 
             {/* Breakdown 2x2 grid */}
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>BREAKDOWN</Text>
+              <Text style={styles.sectionLabel}>{t('whatIf.breakdown', { defaultValue: 'BREAKDOWN' })}</Text>
               <View style={styles.breakdownGrid}>
                 <BreakdownCard
-                  icon={<Plane color={COLORS.sage} size={18} strokeWidth={2} />}
-                  label="Flights"
+                  icon={<Plane color={COLORS.sage} size={18} strokeWidth={1.5} />}
+                  label={t('whatIf.flights', { defaultValue: 'Flights' })}
                   amount={result.breakdown.flights}
                 />
                 <BreakdownCard
-                  icon={<Home color={COLORS.sage} size={18} strokeWidth={2} />}
-                  label="Accommodation"
+                  icon={<Home color={COLORS.sage} size={18} strokeWidth={1.5} />}
+                  label={t('whatIf.accommodation', { defaultValue: 'Accommodation' })}
                   amount={result.breakdown.accommodation}
                 />
                 <BreakdownCard
-                  icon={<Utensils color={COLORS.sage} size={18} strokeWidth={2} />}
-                  label="Food"
+                  icon={<Utensils color={COLORS.sage} size={18} strokeWidth={1.5} />}
+                  label={t('whatIf.food', { defaultValue: 'Food' })}
                   amount={result.breakdown.food}
                 />
                 <BreakdownCard
-                  icon={<Map color={COLORS.sage} size={18} strokeWidth={2} />}
-                  label="Activities"
+                  icon={<Map color={COLORS.sage} size={18} strokeWidth={1.5} />}
+                  label={t('whatIf.activities', { defaultValue: 'Activities' })}
                   amount={result.breakdown.activities}
                 />
               </View>
@@ -355,26 +357,26 @@ export default function WhatIfScreen() {
 
             {/* Fun comparisons */}
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>PERSPECTIVE</Text>
+              <Text style={styles.sectionLabel}>{t('whatIf.perspective', { defaultValue: 'PERSPECTIVE' })}</Text>
               <View style={styles.comparisonsCard}>
                 <ComparisonRow
-                  icon={<Coffee color={COLORS.gold} size={18} strokeWidth={2} />}
-                  label={`That's ${result.lattes.toLocaleString()} lattes you won't drink`}
+                  icon={<Coffee color={COLORS.gold} size={18} strokeWidth={1.5} />}
+                  label={`${t('whatIf.thats', { defaultValue: "That's" })} ${result.lattes.toLocaleString()} ${t('whatIf.lattesWontDrink', { defaultValue: "lattes you won't drink" })}`}
                 />
                 <View style={styles.divider} />
                 <ComparisonRow
-                  icon={<Tv color={COLORS.gold} size={18} strokeWidth={2} />}
-                  label={`That's ${result.streamingMonths} months of streaming services`}
+                  icon={<Tv color={COLORS.gold} size={18} strokeWidth={1.5} />}
+                  label={`${t('whatIf.thats', { defaultValue: "That's" })} ${result.streamingMonths} ${t('whatIf.monthsStreaming', { defaultValue: "months of streaming services" })}`}
                 />
               </View>
             </View>
 
             {/* Savings calculator */}
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>SAVINGS CALCULATOR</Text>
+              <Text style={styles.sectionLabel}>{t('whatIf.savingsCalculator', { defaultValue: 'SAVINGS CALCULATOR' })}</Text>
               <View style={styles.savingsCard}>
                 <Text style={styles.savingsQuestion}>
-                  How much could you save per day?
+                  {t('whatIf.savingsQuestion', { defaultValue: 'How much could you save per day?' })}
                 </Text>
                 <View style={styles.savingsChipRow}>
                   {SAVINGS_PRESETS.map((amount) => (
@@ -391,12 +393,12 @@ export default function WhatIfScreen() {
                     <>
                       <Text style={styles.savingsMonthsBig}>{savingMonths}</Text>
                       <Text style={styles.savingsMonthsLabel}>
-                        {savingMonths === 1 ? 'month' : 'months'} saving ${savingsPerDay}/day
+                        {t('whatIf.savingsMonthsLabel', { defaultValue: '{{count}} month saving ${{amount}}/day', defaultValue_plural: '{{count}} months saving ${{amount}}/day', count: savingMonths, amount: savingsPerDay })}
                       </Text>
                     </>
                   ) : (
                     <Text style={styles.savingsMutedLabel}>
-                      Enter a daily savings amount above
+                      {t('whatIf.savingsMutedLabel', { defaultValue: 'Enter a daily savings amount above' })}
                     </Text>
                   )}
                 </View>
@@ -422,7 +424,7 @@ export default function WhatIfScreen() {
               <Heart
                 color={bookmarked ? COLORS.coral : COLORS.cream}
                 size={20}
-                strokeWidth={2}
+                strokeWidth={1.5}
                 fill={bookmarked ? COLORS.coral : 'none'}
               />
               <Text
@@ -431,7 +433,7 @@ export default function WhatIfScreen() {
                   bookmarked && styles.dreamButtonTextBookmarked,
                 ]}
               >
-                {bookmarked ? 'Saved to dreams' : 'Dream about this →'}
+                {bookmarked ? t('whatIf.savedToDreams', { defaultValue: 'Saved to dreams' }) : t('whatIf.dreamAboutThis', { defaultValue: 'Dream about this →' })}
               </Text>
             </Pressable>
           </>
@@ -440,7 +442,7 @@ export default function WhatIfScreen() {
           <View style={styles.emptyState}>
             <Plane color={COLORS.sageMuted} size={40} strokeWidth={1.5} />
             <Text style={styles.emptyStateText}>
-              Pick a destination to see what it would actually cost.
+              {t('whatIf.emptyStateText', { defaultValue: 'Pick a destination to see what it would actually cost.' })}
             </Text>
           </View>
         )}
@@ -482,7 +484,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: FONTS.header,
     fontSize: 34,
-    fontStyle: 'italic',
     color: COLORS.cream,
     lineHeight: 40,
   },
@@ -725,14 +726,12 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 13,
     color: COLORS.creamMuted,
-    fontStyle: 'italic',
   },
 
   // Encouragement
   encouragement: {
     fontFamily: FONTS.header,
     fontSize: 20,
-    fontStyle: 'italic',
     color: COLORS.creamSoft,
     textAlign: 'center',
     lineHeight: 28,

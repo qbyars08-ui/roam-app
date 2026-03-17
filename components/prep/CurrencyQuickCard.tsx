@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import {
   getExchangeRates,
@@ -25,6 +26,7 @@ interface CurrencyQuickCardProps {
 }
 
 export default function CurrencyQuickCard({ destination }: CurrencyQuickCardProps) {
+  const { t } = useTranslation();
   const [rates, setRates] = useState<ExchangeRateData | null>(null);
   const [localCurrency, setLocalCurrency] = useState<string | null>(null);
 
@@ -74,13 +76,13 @@ export default function CurrencyQuickCard({ destination }: CurrencyQuickCardProp
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionHeader}>Currency</Text>
+      <Text style={styles.sectionHeader}>{t('currency.title', { defaultValue: 'Currency' })}</Text>
 
       <View style={styles.card}>
-        <Text style={styles.usdLabel}>$100 USD =</Text>
+        <Text style={styles.usdLabel}>{t('currency.usdLabel', { defaultValue: '$100 USD =' })}</Text>
         <Text style={styles.convertedValue}>{mainConversion}</Text>
 
-        <Text style={styles.lastUpdated}>Last updated {rates.date}</Text>
+        <Text style={styles.lastUpdated}>{t('currency.lastUpdated', { defaultValue: 'Last updated' })} {rates.date}</Text>
 
         <View style={styles.quickRow}>
           {quickConversions.map((item) => (

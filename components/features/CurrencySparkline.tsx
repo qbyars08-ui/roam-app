@@ -1,9 +1,11 @@
 import React, { useCallback, useMemo, useState, useEffect } from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text } from 'react-native';
 import { Svg, Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { TrendingUp, TrendingDown } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { getExchangeRates } from '../../lib/exchange-rates';
+import { getCurrencyHistory } from '../../lib/currency-history';
+import { SkeletonCard } from '../premium/LoadingStates';
 
 interface CurrencySparklineProps {
   baseCurrency: string;
@@ -21,12 +23,17 @@ export const CurrencySparkline: React.FC<CurrencySparklineProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  // Fetch current exchange rate and generate mock historical data
+  // Fetch current exchange rate and real 30-day historical data
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const ratesData = await getExchangeRates(baseCurrency);
+
+        // Fetch current rate and history in parallel
+        const [ratesData, history] = await Promise.all([
+          getExchangeRates(baseCurrency),
+          getCurrencyHistory(baseCurrency, targetCurrency),
+        ]);
 
         if (!ratesData || !ratesData.rates[targetCurrency]) {
           setError(true);
@@ -36,15 +43,12 @@ export const CurrencySparkline: React.FC<CurrencySparklineProps> = ({
         const rate = ratesData.rates[targetCurrency];
         setCurrentRate(rate);
 
-        // TODO: Replace with getCurrencyHistory() when available
-        // For now, generate mock 30-day sparkline with current rate +/- random variation
-        const mockData: number[] = [];
-        const variance = rate * 0.03; // 3% variance
-        for (let i = 0; i < 30; i++) {
-          const randomVariation = (Math.random() - 0.5) * variance * 2;
-          mockData.push(Math.max(rate - variance, rate + randomVariation));
+        if (history && history.points.length >= 2) {
+          setSparklineData(history.points.map((p) => p.rate));
+        } else {
+          // Fallback: single-point sparkline from current rate
+          setSparklineData([rate, rate]);
         }
-        setSparklineData(mockData);
         setError(false);
       } catch {
         setError(true);
@@ -106,22 +110,7 @@ export const CurrencySparkline: React.FC<CurrencySparklineProps> = ({
 
   // Handle loading state
   if (loading) {
-    return (
-      <View
-        style={{
-          backgroundColor: COLORS.bgCard,
-          borderColor: COLORS.border,
-          borderWidth: 1,
-          borderRadius: RADIUS.md,
-          padding: SPACING.md,
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: 140,
-        }}
-      >
-        <ActivityIndicator size="small" color={COLORS.sage} />
-      </View>
-    );
+    return <SkeletonCard height={140} />;
   }
 
   // Handle error state - return null as per spec
@@ -220,7 +209,7 @@ export const CurrencySparkline: React.FC<CurrencySparklineProps> = ({
                 fill="url(#sparklineGradient)"
               />
               {/* Line stroke */}
-              <Path d={sparklinePathData} stroke={trendColor} strokeWidth={2} fill="none" />
+              <Path d={sparklinePathData} stroke={trendColor} strokeWidth={1.5} fill="none" />
             </>
           )}
         </Svg>
@@ -230,9 +219,9 @@ export const CurrencySparkline: React.FC<CurrencySparklineProps> = ({
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           {percentChange >= 0 ? (
-            <TrendingUp size={16} color={COLORS.sage} strokeWidth={2} />
+            <TrendingUp size={16} color={COLORS.sage} strokeWidth={1.5} />
           ) : (
-            <TrendingDown size={16} color={COLORS.coral} strokeWidth={2} />
+            <TrendingDown size={16} color={COLORS.coral} strokeWidth={1.5} />
           )}
         </View>
 

@@ -35,7 +35,7 @@ import { addDays, format, isSameDay, startOfDay } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, MAGAZINE } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
 import { track } from '../../lib/analytics';
 import { captureEvent } from '../../lib/posthog';
@@ -44,8 +44,12 @@ import {
   getDestinationAirport,
   getSkyscannerFlightUrl,
 } from '../../lib/flights';
+import { searchFlights, type FlightOffer } from '../../lib/apis/amadeus';
 import GoNowFeed from '../../components/features/GoNowFeed';
 import FlightPriceCalendar from '../../components/features/FlightPriceCalendar';
+import { useSonarQuery } from '../../lib/sonar';
+import LiveBadge from '../../components/ui/LiveBadge';
+import SourceCitation from '../../components/ui/SourceCitation';
 
 // ---------------------------------------------------------------------------
 // Data
@@ -190,7 +194,7 @@ function AirportDropdown({
             { opacity: pressed ? 0.7 : 1 },
           ]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            Haptics.selectionAsync();
             onSelect(airport);
           }}
         >
@@ -272,11 +276,11 @@ function DatePickerInline({
           { opacity: pressed ? 0.8 : 1 },
         ]}
         onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          Haptics.selectionAsync();
           setExpanded(!expanded);
         }}
       >
-        <Calendar size={18} color={COLORS.creamMuted} strokeWidth={2} />
+        <Calendar size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
         <View>
           <Text style={dateStyles.label}>{label}</Text>
           <Text style={dateStyles.value}>{format(value, 'EEE, MMM d')}</Text>
@@ -302,7 +306,7 @@ function DatePickerInline({
                   isSelected && dateStyles.dateChipSelected,
                 ]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  Haptics.selectionAsync();
                   onSelect(d);
                   setExpanded(false);
                 }}
@@ -420,6 +424,7 @@ const RouteCard = React.memo(function RouteCard({
   route: PopularRoute;
   onPress: () => void;
 }) {
+  const { t } = useTranslation();
   const [imageLoaded, setImageLoaded] = useState(false);
 
   return (
@@ -456,15 +461,15 @@ const RouteCard = React.memo(function RouteCard({
       <View style={styles.routeContent}>
         <View style={styles.routeCodeRow}>
           <Text style={styles.routeCode}>{route.fromCode}</Text>
-          <Plane size={14} color={COLORS.creamSoft} strokeWidth={2} />
+          <Plane size={14} color={COLORS.creamSoft} strokeWidth={1.5} />
           <Text style={styles.routeCode}>{route.toCode}</Text>
         </View>
         <Text style={styles.routeLabel}>
-          {route.from} to {route.to}
+          {t('flights.routeFromTo', { defaultValue: '{{from}} to {{to}}', from: route.from, to: route.to })}
         </Text>
         <View style={styles.routeBottom}>
           <Text style={styles.routePrice}>{route.price}</Text>
-          <Text style={styles.routeSearchText}>Search →</Text>
+          <Text style={styles.routeSearchText}>{t('flights.search', { defaultValue: 'Search →' })}</Text>
         </View>
       </View>
     </Pressable>
@@ -537,7 +542,10 @@ export default function FlightsScreen() {
   const [passengers, setPassengers] = useState(1);
   const [fromFocused, setFromFocused] = useState(false);
   const [toFocused, setToFocused] = useState(false);
+  const [amadeusFlights, setAmadeusFlights] = useState<FlightOffer[] | null>(null);
+  const [amadeusLoading, setAmadeusLoading] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const skeletonAnim = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
     track({ type: 'screen_view', screen: 'flights' });
@@ -555,6 +563,60 @@ export default function FlightsScreen() {
       if (code) setToCode(code);
     }
   }, [planDestination]);
+
+  // ── Amadeus real-time flight search ──
+  useEffect(() => {
+    if (!fromCode || !toCode || !departDate) return;
+
+    let cancelled = false;
+
+    const fetchFlights = async () => {
+      setAmadeusLoading(true);
+      setAmadeusFlights(null);
+
+      // Animate skeleton pulse
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(skeletonAnim, {
+            toValue: 1,
+            duration: 700,
+            useNativeDriver: true,
+          }),
+          Animated.timing(skeletonAnim, {
+            toValue: 0.3,
+            duration: 700,
+            useNativeDriver: true,
+          }),
+        ]),
+      ).start();
+
+      const results = await searchFlights(
+        fromCode,
+        toCode,
+        format(departDate, 'yyyy-MM-dd'),
+        passengers,
+      );
+
+      if (!cancelled) {
+        setAmadeusFlights(results);
+        setAmadeusLoading(false);
+        skeletonAnim.stopAnimation();
+        captureEvent('amadeus_search', {
+          from: fromCode,
+          to: toCode,
+          date: format(departDate, 'yyyy-MM-dd'),
+          passengers,
+          resultsCount: results?.length ?? 0,
+        });
+      }
+    };
+
+    fetchFlights();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fromCode, toCode, departDate, passengers, skeletonAnim]);
 
   // ── Swap animation ──
   const swapRotation = useRef(new Animated.Value(0)).current;
@@ -629,6 +691,12 @@ export default function FlightsScreen() {
     [departDate, returnDate],
   );
 
+  // Sonar flight intelligence
+  const sonarFlights = useSonarQuery(
+    toText.trim() || undefined,
+    'flights'
+  );
+
   // ── Inspiration press ──
   const handleInspirationPress = useCallback((card: InspirationCard) => {
     captureEvent('flights_inspiration_tapped', {
@@ -665,9 +733,9 @@ export default function FlightsScreen() {
       >
         {/* ── Hero ── */}
         <View style={styles.hero}>
-          <Text style={styles.heroTitle}>Find your flight.</Text>
+          <Text style={styles.heroTitle}>{t('flights.heroTitle', { defaultValue: "Where are\nyou flying?" })}</Text>
           <Text style={styles.heroSub}>
-            Every route. Every price. One search.
+            {t('flights.heroSub', { defaultValue: "We search Skyscanner so you don't have to open 14 tabs." })}
           </Text>
         </View>
 
@@ -679,9 +747,9 @@ export default function FlightsScreen() {
           {/* From / To */}
           <View style={styles.fromToRow}>
             <View style={styles.inputColumn}>
-              <Text style={styles.inputLabel}>FROM</Text>
+              <Text style={styles.inputLabel}>{t('flights.from', { defaultValue: 'FROM' })}</Text>
               <View style={[styles.inputWrap, fromFocused && styles.inputFocused]}>
-                <MapPin size={16} color={COLORS.creamMuted} strokeWidth={2} />
+                <MapPin size={16} color={COLORS.creamMuted} strokeWidth={1.5} />
                 <TextInput
                   style={styles.input}
                   value={fromText}
@@ -689,7 +757,7 @@ export default function FlightsScreen() {
                     setFromText(t);
                     setFromCode('');
                   }}
-                  placeholder="City or airport"
+                  placeholder={t('flights.cityOrAirport', { defaultValue: 'City or airport' })}
                   placeholderTextColor={COLORS.creamDim}
                   onFocus={() => {
                     setFromFocused(true);
@@ -720,15 +788,15 @@ export default function FlightsScreen() {
                 <ArrowLeftRight
                   size={18}
                   color={COLORS.sage}
-                  strokeWidth={2}
+                  strokeWidth={1.5}
                 />
               </Animated.View>
             </Pressable>
 
             <View style={styles.inputColumn}>
-              <Text style={styles.inputLabel}>TO</Text>
+              <Text style={styles.inputLabel}>{t('flights.to', { defaultValue: 'TO' })}</Text>
               <View style={[styles.inputWrap, toFocused && styles.inputFocused]}>
-                <MapPin size={16} color={COLORS.sage} strokeWidth={2} />
+                <MapPin size={16} color={COLORS.sage} strokeWidth={1.5} />
                 <TextInput
                   style={styles.input}
                   value={toText}
@@ -736,7 +804,7 @@ export default function FlightsScreen() {
                     setToText(t);
                     setToCode('');
                   }}
-                  placeholder="City or airport"
+                  placeholder={t('flights.cityOrAirport', { defaultValue: 'City or airport' })}
                   placeholderTextColor={COLORS.creamDim}
                   onFocus={() => {
                     setToFocused(true);
@@ -756,12 +824,12 @@ export default function FlightsScreen() {
           {/* Dates */}
           <View style={styles.dateRow}>
             <DatePickerInline
-              label="DEPART"
+              label={t('flights.depart', { defaultValue: 'DEPART' })}
               value={departDate}
               onSelect={setDepartDate}
             />
             <DatePickerInline
-              label="RETURN"
+              label={t('flights.return', { defaultValue: 'RETURN' })}
               value={returnDate}
               onSelect={setReturnDate}
               minimumDate={departDate}
@@ -770,7 +838,7 @@ export default function FlightsScreen() {
 
           {/* Passengers */}
           <View style={styles.passengersRow}>
-            <Text style={styles.passengersLabel}>Passengers</Text>
+            <Text style={styles.passengersLabel}>{t('flights.passengers', { defaultValue: 'Passengers' })}</Text>
             <View style={styles.counter}>
               <Pressable
                 accessibilityLabel="Remove one passenger"
@@ -781,7 +849,7 @@ export default function FlightsScreen() {
                 ]}
                 onPress={() => {
                   if (passengers > 1) {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    Haptics.selectionAsync();
                     setPassengers(passengers - 1);
                   }
                 }}
@@ -790,7 +858,7 @@ export default function FlightsScreen() {
                 <Minus
                   size={16}
                   color={passengers <= 1 ? COLORS.creamDim : COLORS.cream}
-                  strokeWidth={2}
+                  strokeWidth={1.5}
                 />
               </Pressable>
               <Text style={styles.counterValue}>{passengers}</Text>
@@ -802,11 +870,11 @@ export default function FlightsScreen() {
                   { opacity: pressed ? 0.7 : 1 },
                 ]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  Haptics.selectionAsync();
                   setPassengers(passengers + 1);
                 }}
               >
-                <Plus size={16} color={COLORS.cream} strokeWidth={2} />
+                <Plus size={16} color={COLORS.cream} strokeWidth={1.5} />
               </Pressable>
             </View>
           </View>
@@ -821,8 +889,8 @@ export default function FlightsScreen() {
             ]}
             onPress={handleSearch}
           >
-            <ExternalLink size={18} color={COLORS.bg} strokeWidth={2} />
-            <Text style={styles.searchBtnText}>Search on Skyscanner</Text>
+            <ExternalLink size={18} color={COLORS.bg} strokeWidth={1.5} />
+            <Text style={styles.searchBtnText}>{t('flights.searchSkyscanner', { defaultValue: 'Search on Skyscanner' })}</Text>
           </Pressable>
         </View>
 
@@ -837,12 +905,105 @@ export default function FlightsScreen() {
           </View>
         )}
 
+        {/* ── Real-Time Prices (Amadeus) ── */}
+        {(amadeusLoading || (amadeusFlights && amadeusFlights.length > 0)) && (
+          <View style={styles.amadeusSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionLabel}>
+                {t('flights.realtimePricesLabel', { defaultValue: 'REAL-TIME PRICES' })}
+              </Text>
+              <Text style={styles.sectionTitle}>
+                {t('flights.realtimePricesTitle', { defaultValue: 'Live fares for your route.' })}
+              </Text>
+            </View>
+
+            {amadeusLoading
+              ? // Skeleton placeholder cards
+                [0, 1, 2].map((i) => (
+                  <Animated.View
+                    key={`skeleton-${i}`}
+                    style={[styles.amadeusCard, { opacity: skeletonAnim }]}
+                  >
+                    <View style={styles.amadeusSkeletonRow}>
+                      <View style={styles.amadeusSkeletonCode} />
+                      <View style={styles.amadeusSkeletonFill} />
+                      <View style={styles.amadeusSkeletonPrice} />
+                    </View>
+                    <View style={styles.amadeusSkeletonMeta} />
+                  </Animated.View>
+                ))
+              : amadeusFlights?.map((offer) => (
+                  <Pressable
+                    key={offer.id}
+                    accessibilityLabel={`${offer.airline} flight from ${offer.origin} to ${offer.destination}. Departs ${offer.departureTime}, arrives ${offer.arrivalTime}. ${offer.stops === 0 ? 'Nonstop' : `${offer.stops} stop${offer.stops > 1 ? 's' : ''}`}. ${offer.price} ${offer.currency}. Tap to book.`}
+                    accessibilityRole="button"
+                    style={({ pressed }) => [
+                      styles.amadeusCard,
+                      pressed && { opacity: 0.8 },
+                    ]}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      Linking.openURL(offer.bookingLink).catch(() => {});
+                    }}
+                  >
+                    {/* Top row: airline | route times | price */}
+                    <View style={styles.amadeusCardRow}>
+                      <Text style={styles.amadeusAirlineCode}>{offer.airline}</Text>
+                      <View style={styles.amadeusRouteCol}>
+                        <View style={styles.amadeusTimeRow}>
+                          <Text style={styles.amadeusTime}>{offer.departureTime}</Text>
+                          <Plane size={12} color={COLORS.creamMuted} strokeWidth={1.5} style={{ marginHorizontal: 4 }} />
+                          <Text style={styles.amadeusTime}>{offer.arrivalTime}</Text>
+                        </View>
+                        <Text style={styles.amadeusMeta}>
+                          {offer.duration}
+                          {'  ·  '}
+                          {offer.stops === 0
+                            ? t('flights.nonstop', { defaultValue: 'Nonstop' })
+                            : t('flights.stops', {
+                                defaultValue: '{{count}} stop',
+                                count: offer.stops,
+                              })}
+                        </Text>
+                      </View>
+                      <View style={styles.amadeusPriceCol}>
+                        <Text style={styles.amadeusPrice}>
+                          {offer.currency === 'USD' ? '$' : offer.currency}
+                          {offer.price}
+                        </Text>
+                        <ChevronRight size={14} color={COLORS.creamDim} strokeWidth={1.5} />
+                      </View>
+                    </View>
+                  </Pressable>
+                ))}
+          </View>
+        )}
+
+        {/* ── Sonar Flight Intel ── */}
+        {sonarFlights.data && (
+          <View style={styles.sonarSection}>
+            <View style={styles.sonarSectionHeader}>
+              <Text style={styles.sectionLabel}>{t('flights.sonarLabel', { defaultValue: 'LIVE INTEL' })}</Text>
+              <LiveBadge />
+            </View>
+            <Text style={styles.sectionTitle}>
+              {t('flights.sonarTitle', { defaultValue: 'What Sonar found' })}
+            </Text>
+            <View style={styles.sonarCard}>
+              <Text style={styles.sonarAnswer}>{sonarFlights.data.answer}</Text>
+              {sonarFlights.citations.length > 0 && (
+                <View style={{ marginTop: SPACING.sm }}>
+                  <SourceCitation citations={sonarFlights.citations} />
+                </View>
+              )}
+            </View>
+          </View>
+        )}
+
         {/* ── Popular Routes ── */}
-        <View style={[styles.sectionHeader, { marginTop: 40 }]}>
-          <Text style={styles.sectionTitle}>Popular routes</Text>
-          <Text style={styles.sectionSub}>
-            Routes worth the miles. Prices that don't hurt.
-          </Text>
+        <View style={[styles.sectionHeader, { marginTop: SPACING.xxl }]}>
+          <Text style={styles.sectionLabel}>{t('flights.popularRoutesLabel', { defaultValue: 'POPULAR ROUTES' })}</Text>
+          <Text style={styles.sectionTitle}>{t('flights.popularRoutesTitle', { defaultValue: "The flights everyone's booking." })}</Text>
         </View>
 
         <ScrollView
@@ -860,11 +1021,9 @@ export default function FlightsScreen() {
         </ScrollView>
 
         {/* ── Best Time to Fly ── */}
-        <View style={[styles.sectionHeader, { marginTop: 40 }]}>
-          <Text style={styles.sectionTitle}>Best time to fly</Text>
-          <Text style={styles.sectionSub}>
-            Go when it matters. Skip the crowds.
-          </Text>
+        <View style={[styles.sectionHeader, { marginTop: SPACING.xxl }]}>
+          <Text style={styles.sectionLabel}>{t('flights.timingLabel', { defaultValue: 'TIMING IS EVERYTHING' })}</Text>
+          <Text style={styles.sectionTitle}>{t('flights.timingTitle', { defaultValue: 'Go when it actually matters.' })}</Text>
         </View>
 
         <ScrollView
@@ -894,18 +1053,17 @@ export default function FlightsScreen() {
             pressed && { opacity: 0.8 },
           ]}
         >
-          <Clock size={20} color={COLORS.gold} strokeWidth={2} />
+          <Clock size={20} color={COLORS.gold} strokeWidth={1.5} />
           <View style={{ flex: 1 }}>
             <Text style={styles.layoverTitle}>{t('flights.layoverTitle')}</Text>
             <Text style={styles.layoverSub}>{t('flights.layoverSub')}</Text>
           </View>
-          <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
+          <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
         </Pressable>
 
         {/* ── Affiliate disclaimer ── */}
         <Text style={styles.disclaimer}>
-          ROAM earns a small commission when you book through Skyscanner. This
-          keeps the app free.
+          {t('flights.disclaimer', { defaultValue: 'ROAM earns a small commission when you book through Skyscanner. This keeps the app free.' })}
         </Text>
       </Animated.ScrollView>
     </View>
@@ -929,29 +1087,30 @@ const styles = StyleSheet.create({
 
   // ── Hero ──
   hero: {
-    paddingHorizontal: 20,
+    paddingHorizontal: MAGAZINE.padding,
     paddingTop: SPACING.xl,
     paddingBottom: SPACING.lg,
   } as ViewStyle,
   heroTitle: {
     fontFamily: FONTS.header,
-    fontSize: 52,
-    fontStyle: 'italic',
+    fontSize: 44,
     color: COLORS.cream,
-    lineHeight: 58,
+    lineHeight: 48,
+    letterSpacing: -1.5,
   } as TextStyle,
   heroSub: {
     fontFamily: FONTS.body,
-    fontSize: 16,
-    color: COLORS.creamSoft,
+    fontSize: 15,
+    color: COLORS.creamDim,
     marginTop: SPACING.sm,
-    lineHeight: 24,
+    lineHeight: 22,
+    maxWidth: '80%',
   } as TextStyle,
 
   // ── Search Card ──
   searchCard: {
-    paddingHorizontal: 20,
-    marginBottom: 40,
+    paddingHorizontal: MAGAZINE.padding,
+    marginBottom: MAGAZINE.sectionGap,
     gap: SPACING.md,
   } as ViewStyle,
   fromToRow: {
@@ -961,7 +1120,7 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   inputColumn: {
     flex: 1,
-    gap: 6,
+    gap: SPACING.sm,
   } as ViewStyle,
   inputLabel: {
     fontFamily: FONTS.mono,
@@ -998,7 +1157,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.bgMagazine,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   } as ViewStyle,
   dateRow: {
     flexDirection: 'row',
@@ -1041,7 +1200,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: SPACING.sm,
     height: 52,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.sage,
   } as ViewStyle,
   searchBtnText: {
@@ -1052,33 +1211,35 @@ const styles = StyleSheet.create({
 
   // ── Section Headers ──
   sectionHeader: {
-    paddingHorizontal: 20,
+    paddingHorizontal: MAGAZINE.padding,
     marginBottom: SPACING.md,
   } as ViewStyle,
+  sectionLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+    letterSpacing: 3,
+    marginBottom: SPACING.sm,
+  } as TextStyle,
   sectionTitle: {
     fontFamily: FONTS.header,
-    fontSize: 28,
-    fontStyle: 'italic',
+    fontSize: 24,
     color: COLORS.cream,
-  } as TextStyle,
-  sectionSub: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.creamMuted,
-    marginTop: 4,
+    letterSpacing: -0.5,
+    lineHeight: 30,
   } as TextStyle,
 
   // ── Popular Routes ──
   routeScroll: {
-    paddingHorizontal: 20,
-    gap: 16,
+    paddingHorizontal: MAGAZINE.padding,
+    gap: MAGAZINE.cardGap,
     paddingBottom: SPACING.sm,
-    marginBottom: 40,
+    marginBottom: MAGAZINE.sectionGap,
   } as ViewStyle,
   routeCard: {
-    width: 280,
-    height: 180,
-    borderRadius: 12,
+    width: 260,
+    height: 200,
+    borderRadius: RADIUS.lg,
     overflow: 'hidden',
   } as ViewStyle,
   routeImage: {
@@ -1096,8 +1257,8 @@ const styles = StyleSheet.create({
   routeCodeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginBottom: 4,
+    gap: SPACING.xs,
+    marginBottom: SPACING.xs,
   } as ViewStyle,
   routeCode: {
     fontFamily: FONTS.mono,
@@ -1109,7 +1270,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 13,
     color: COLORS.creamSoft,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   } as TextStyle,
   routeBottom: {
     flexDirection: 'row',
@@ -1118,7 +1279,7 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   routePrice: {
     fontFamily: FONTS.header,
-    fontSize: 28,
+    fontSize: 24,
     color: COLORS.gold,
     lineHeight: 32,
   } as TextStyle,
@@ -1131,9 +1292,9 @@ const styles = StyleSheet.create({
 
   // ── Inspiration ──
   inspirationScroll: {
-    paddingHorizontal: 20,
-    gap: 16,
-    paddingBottom: 40,
+    paddingHorizontal: MAGAZINE.padding,
+    gap: MAGAZINE.cardGap,
+    paddingBottom: MAGAZINE.sectionGap,
   } as ViewStyle,
   inspirationCard: {
     width: 200,
@@ -1156,7 +1317,7 @@ const styles = StyleSheet.create({
   inspirationMonthBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: SPACING.xs,
     marginBottom: SPACING.xs,
   } as ViewStyle,
   inspirationMonthText: {
@@ -1168,14 +1329,13 @@ const styles = StyleSheet.create({
   inspirationDest: {
     fontFamily: FONTS.header,
     fontSize: 22,
-    fontStyle: 'italic',
     color: COLORS.cream,
   } as TextStyle,
   inspirationReason: {
     fontFamily: FONTS.body,
     fontSize: 13,
     color: COLORS.creamSoft,
-    marginTop: 4,
+    marginTop: SPACING.xs,
     lineHeight: 18,
   } as TextStyle,
 
@@ -1193,9 +1353,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.md,
-    marginHorizontal: 20,
+    marginHorizontal: MAGAZINE.padding,
     marginTop: SPACING.lg,
-    padding: 20,
+    padding: MAGAZINE.padding,
     backgroundColor: COLORS.bgMagazine,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
@@ -1206,7 +1366,6 @@ const styles = StyleSheet.create({
   layoverTitle: {
     fontFamily: FONTS.header,
     fontSize: 20,
-    fontStyle: 'italic',
     color: COLORS.cream,
   } as TextStyle,
   layoverSub: {
@@ -1214,5 +1373,120 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.creamSoft,
     marginTop: 2,
+  } as TextStyle,
+
+  // ── Amadeus Real-Time Prices ──
+  amadeusSection: {
+    paddingHorizontal: MAGAZINE.padding,
+    marginTop: SPACING.xxl,
+    marginBottom: SPACING.md,
+    gap: SPACING.sm,
+  } as ViewStyle,
+  amadeusCard: {
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.md,
+  } as ViewStyle,
+  amadeusCardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  } as ViewStyle,
+  amadeusAirlineCode: {
+    fontFamily: FONTS.mono,
+    fontSize: 13,
+    color: COLORS.sage,
+    letterSpacing: 1,
+    width: 44,
+  } as TextStyle,
+  amadeusRouteCol: {
+    flex: 1,
+    gap: 2,
+  } as ViewStyle,
+  amadeusTimeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  } as ViewStyle,
+  amadeusTime: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
+    color: COLORS.cream,
+  } as TextStyle,
+  amadeusMeta: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamDim,
+    lineHeight: 16,
+  } as TextStyle,
+  amadeusPriceCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  } as ViewStyle,
+  amadeusPrice: {
+    fontFamily: FONTS.header,
+    fontSize: 20,
+    color: COLORS.gold,
+    letterSpacing: -0.5,
+  } as TextStyle,
+  // Skeleton
+  amadeusSkeletonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.xs,
+  } as ViewStyle,
+  amadeusSkeletonCode: {
+    width: 44,
+    height: 14,
+    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.surface2,
+  } as ViewStyle,
+  amadeusSkeletonFill: {
+    flex: 1,
+    height: 14,
+    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.surface2,
+  } as ViewStyle,
+  amadeusSkeletonPrice: {
+    width: 56,
+    height: 20,
+    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.surface2,
+  } as ViewStyle,
+  amadeusSkeletonMeta: {
+    width: 120,
+    height: 12,
+    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.surface2,
+    marginTop: 2,
+  } as ViewStyle,
+
+  // Sonar flight intel
+  sonarSection: {
+    paddingHorizontal: SPACING.lg,
+    marginTop: SPACING.xxl,
+  } as ViewStyle,
+  sonarSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.xs,
+  } as ViewStyle,
+  sonarCard: {
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.md,
+    marginTop: SPACING.md,
+  } as ViewStyle,
+  sonarAnswer: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.cream,
+    lineHeight: 21,
   } as TextStyle,
 });

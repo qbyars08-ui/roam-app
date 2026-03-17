@@ -13,6 +13,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Calendar } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { getLocalEvents, type LocalEvent, type EventCategory } from '../../lib/local-events';
@@ -36,6 +37,7 @@ export default function LocalEventsSection({
   startDate,
   endDate,
 }: LocalEventsSectionProps) {
+  const { t } = useTranslation();
   const [events, setEvents] = useState<LocalEvent[]>([]);
 
   useEffect(() => {
@@ -46,7 +48,7 @@ export default function LocalEventsSection({
 
   return (
     <View style={styles.section}>
-      <Text style={styles.title}>What's happening while you're there</Text>
+      <Text style={styles.title}>{t('events.whatsHappening', { defaultValue: "What's happening while you're there" })}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         {events.map((e) => (
           <Pressable

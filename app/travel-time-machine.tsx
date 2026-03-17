@@ -14,11 +14,13 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, Clock } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { compareDestinationOverTime } from '../lib/travel-time-machine';
 import { withComingSoon } from '../lib/with-coming-soon';
 
 function TravelTimeMachineScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const params = useLocalSearchParams<{ destination?: string; year?: string }>();
@@ -32,7 +34,7 @@ function TravelTimeMachineScreen() {
   React.useEffect(() => {
     compareDestinationOverTime(destination, pastYear)
       .then(setResult)
-      .catch(() => setError('Could not load comparison'))
+      .catch(() => setError(t('timeMachine.errorLoad', { defaultValue: 'Could not load comparison' })))
       .finally(() => setLoading(false));
   }, [destination, pastYear]);
 
@@ -43,8 +45,8 @@ function TravelTimeMachineScreen() {
           <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
         <View style={styles.headerCenter}>
-          <Text style={styles.title}>Travel Time Machine</Text>
-          <Text style={styles.subtitle}>{destination} — {pastYear} vs now</Text>
+          <Text style={styles.title}>{t('timeMachine.title', { defaultValue: 'Travel Time Machine' })}</Text>
+          <Text style={styles.subtitle}>{destination} — {pastYear} {t('timeMachine.vsNow', { defaultValue: 'vs now' })}</Text>
         </View>
         <View style={styles.headerRight} />
       </View>
@@ -52,7 +54,7 @@ function TravelTimeMachineScreen() {
       {loading ? (
         <View style={styles.loading}>
           <ActivityIndicator color={COLORS.sage} size="large" />
-          <Text style={styles.loadingText}>Comparing {destination} then and now...</Text>
+          <Text style={styles.loadingText}>{t('timeMachine.comparing', { defaultValue: 'Comparing {{destination}} then and now...', destination })}</Text>
         </View>
       ) : error ? (
         <View style={styles.error}>
@@ -74,7 +76,7 @@ function TravelTimeMachineScreen() {
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Clock size={18} color={COLORS.sage} />
-              <Text style={[styles.cardLabel, { color: COLORS.sage }]}>Now</Text>
+              <Text style={[styles.cardLabel, { color: COLORS.sage }]}>{t('timeMachine.now', { defaultValue: 'Now' })}</Text>
             </View>
             <Text style={styles.cardBody}>{result.now}</Text>
           </View>
@@ -94,7 +96,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
-  backBtn: { padding: 8, marginLeft: -8 },
+  backBtn: { padding: SPACING.sm, marginLeft: -SPACING.sm },
   headerCenter: { flex: 1, alignItems: 'center' },
   headerRight: { width: 44 },
   title: {

@@ -4,7 +4,7 @@
 // =============================================================================
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, type ViewStyle } from 'react-native';
-import { COLORS, RADIUS } from '../../lib/constants';
+import { COLORS, RADIUS, SPACING } from '../../lib/constants';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -71,7 +71,7 @@ export function SkeletonCard({ style }: { style?: ViewStyle }) {
     <Animated.View style={[styles.card, style]}>
       <Skeleton width="100%" height={160} borderRadius={RADIUS.lg} />
       <Skeleton width="60%" height={16} style={{ marginTop: 12 }} />
-      <Skeleton width="40%" height={12} style={{ marginTop: 8 }} />
+      <Skeleton width="40%" height={12} style={{ marginTop: SPACING.sm }} />
     </Animated.View>
   );
 }

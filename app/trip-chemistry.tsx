@@ -31,6 +31,7 @@ import {
 } from 'lucide-react-native';
 import Svg, { Circle } from 'react-native-svg';
 
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import { useProGate } from '../lib/pro-gate';
@@ -241,6 +242,7 @@ function makeId(): string {
 }
 
 function TripChemistryScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { canAccess } = useProGate('trip-chemistry');
@@ -411,10 +413,10 @@ function TripChemistryScreen() {
 
   // Slider labels
   const sliderMeta = [
-    { key: 'pace' as const, label: 'Pace', low: 'Slow & steady', high: 'Speed runner' },
-    { key: 'budgetStyle' as const, label: 'Budget', low: 'Backpacker', high: 'Luxury' },
-    { key: 'crowdTolerance' as const, label: 'Crowds', low: 'Avoid', high: 'Embrace' },
-    { key: 'foodAdventurousness' as const, label: 'Food', low: 'Familiar', high: 'Adventurous' },
+    { key: 'pace' as const, label: t('chemistry.sliderPace', { defaultValue: 'Pace' }), low: t('chemistry.sliderPaceLow', { defaultValue: 'Slow & steady' }), high: t('chemistry.sliderPaceHigh', { defaultValue: 'Speed runner' }) },
+    { key: 'budgetStyle' as const, label: t('chemistry.sliderBudget', { defaultValue: 'Budget' }), low: t('chemistry.sliderBudgetLow', { defaultValue: 'Backpacker' }), high: t('chemistry.sliderBudgetHigh', { defaultValue: 'Luxury' }) },
+    { key: 'crowdTolerance' as const, label: t('chemistry.sliderCrowds', { defaultValue: 'Crowds' }), low: t('chemistry.sliderCrowdsLow', { defaultValue: 'Avoid' }), high: t('chemistry.sliderCrowdsHigh', { defaultValue: 'Embrace' }) },
+    { key: 'foodAdventurousness' as const, label: t('chemistry.sliderFood', { defaultValue: 'Food' }), low: t('chemistry.sliderFoodLow', { defaultValue: 'Familiar' }), high: t('chemistry.sliderFoodHigh', { defaultValue: 'Adventurous' }) },
   ];
 
   const canCalculate = travelers.length >= 2 && travelers.every((t) => t.isYou || t.name.trim());
@@ -427,12 +429,12 @@ function TripChemistryScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
+          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={1.5} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Trip Chemistry</Text>
+          <Text style={styles.headerTitle}>{t('chemistry.title', { defaultValue: 'Trip Chemistry' })}</Text>
           <Text style={styles.headerSubtitle}>
-            How well will you travel together?
+            {t('chemistry.subtitle', { defaultValue: 'How well will you travel together?' })}
           </Text>
         </View>
         <View style={{ width: 40 }} />
@@ -461,11 +463,11 @@ function TripChemistryScreen() {
                 </View>
                 <View>
                   {traveler.isYou ? (
-                    <Text style={styles.travelerName}>You</Text>
+                    <Text style={styles.travelerName}>{t('chemistry.you', { defaultValue: 'You' })}</Text>
                   ) : (
                     <TextInput
                       style={styles.nameInput}
-                      placeholder="Name"
+                      placeholder={t('chemistry.namePlaceholder', { defaultValue: 'Name' })}
                       placeholderTextColor={COLORS.creamMuted}
                       value={traveler.name}
                       onChangeText={(text) => updateTraveler(traveler.id, { name: text })}
@@ -484,13 +486,13 @@ function TripChemistryScreen() {
                     hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                     style={styles.removeButton}
                   >
-                    <XCircle size={22} color={COLORS.coral} strokeWidth={2} />
+                    <XCircle size={22} color={COLORS.coral} strokeWidth={1.5} />
                   </TouchableOpacity>
                 )}
                 {expandedId === traveler.id ? (
-                  <ChevronUp size={18} color={COLORS.creamMuted} strokeWidth={2} />
+                  <ChevronUp size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
                 ) : (
-                  <ChevronDown size={18} color={COLORS.creamMuted} strokeWidth={2} />
+                  <ChevronDown size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
                 )}
               </View>
             </TouchableOpacity>
@@ -530,8 +532,8 @@ function TripChemistryScreen() {
         {/* Add Companion Button */}
         {travelers.length < 4 && !result && (
           <TouchableOpacity style={styles.addButton} onPress={addCompanion} activeOpacity={0.7}>
-            <UserPlus size={20} color={COLORS.sage} strokeWidth={2} />
-            <Text style={styles.addButtonText}>Add companion</Text>
+            <UserPlus size={20} color={COLORS.sage} strokeWidth={1.5} />
+            <Text style={styles.addButtonText}>{t('chemistry.addCompanion', { defaultValue: 'Add companion' })}</Text>
           </TouchableOpacity>
         )}
 
@@ -549,14 +551,14 @@ function TripChemistryScreen() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
-              <FlaskConical size={20} color={COLORS.white} strokeWidth={2} />
-              <Text style={styles.calculateText}>Calculate Chemistry</Text>
+              <FlaskConical size={20} color={COLORS.white} strokeWidth={1.5} />
+              <Text style={styles.calculateText}>{t('chemistry.calculate', { defaultValue: 'Calculate Chemistry' })}</Text>
             </LinearGradient>
           </TouchableOpacity>
         )}
 
         {travelers.length < 2 && !result && (
-          <Text style={styles.hintText}>Add at least one companion to analyze chemistry</Text>
+          <Text style={styles.hintText}>{t('chemistry.hint', { defaultValue: 'Add at least one companion to analyze chemistry' })}</Text>
         )}
 
         {/* Phase 2: Results */}
@@ -600,7 +602,7 @@ function TripChemistryScreen() {
 
             {/* Dimension Bars */}
             <View style={styles.dimensionsCard}>
-              <Text style={styles.sectionTitle}>Compatibility Breakdown</Text>
+              <Text style={styles.sectionTitle}>{t('chemistry.compatibilityBreakdown', { defaultValue: 'Compatibility Breakdown' })}</Text>
               {result.dimensions.map((dim, i) => (
                 <View key={dim.key} style={styles.dimensionRow}>
                   <View style={styles.dimensionLabelRow}>
@@ -630,11 +632,11 @@ function TripChemistryScreen() {
             {/* Conflicts */}
             {result.conflicts.length > 0 && (
               <View style={styles.conflictsCard}>
-                <Text style={styles.sectionTitle}>Potential Conflicts</Text>
+                <Text style={styles.sectionTitle}>{t('chemistry.potentialConflicts', { defaultValue: 'Potential Conflicts' })}</Text>
                 {result.conflicts.map((conflict, i) => (
                   <View key={i} style={styles.conflictItem}>
                     <View style={styles.conflictIcon}>
-                      <AlertTriangle size={16} color={COLORS.gold} strokeWidth={2} />
+                      <AlertTriangle size={16} color={COLORS.gold} strokeWidth={1.5} />
                     </View>
                     <Text style={styles.conflictText}>{conflict}</Text>
                   </View>
@@ -644,7 +646,7 @@ function TripChemistryScreen() {
 
             {/* Pro Tips */}
             <View style={styles.tipsCard}>
-              <Text style={styles.sectionTitle}>Pro Tips</Text>
+              <Text style={styles.sectionTitle}>{t('chemistry.proTips', { defaultValue: 'Pro Tips' })}</Text>
               {result.proTips.map((tip, i) => (
                 <View key={i} style={styles.tipItem}>
                   <View style={styles.tipNumber}>
@@ -657,9 +659,9 @@ function TripChemistryScreen() {
 
             {/* Best Destination Type */}
             <View style={styles.destinationCard}>
-              <Text style={styles.sectionTitle}>Best Destination Type</Text>
+              <Text style={styles.sectionTitle}>{t('chemistry.bestDestinationType', { defaultValue: 'Best Destination Type' })}</Text>
               <View style={styles.destinationContent}>
-                <Compass size={24} color={COLORS.sage} strokeWidth={2} />
+                <Compass size={24} color={COLORS.sage} strokeWidth={1.5} />
                 <Text style={styles.destinationText}>{result.destinationType}</Text>
               </View>
             </View>
@@ -667,14 +669,14 @@ function TripChemistryScreen() {
             {/* Action Buttons */}
             <View style={styles.actionRow}>
               <TouchableOpacity style={styles.shareButton} onPress={handleShare} activeOpacity={0.7}>
-                <Share2 size={20} color={COLORS.cream} strokeWidth={2} />
-                <Text style={styles.shareButtonText}>Share results</Text>
+                <Share2 size={20} color={COLORS.cream} strokeWidth={1.5} />
+                <Text style={styles.shareButtonText}>{t('chemistry.shareResults', { defaultValue: 'Share results' })}</Text>
               </TouchableOpacity>
             </View>
 
             <TouchableOpacity style={styles.resetButton} onPress={handleReset} activeOpacity={0.7}>
-              <RotateCcw size={18} color={COLORS.creamMuted} strokeWidth={2} />
-              <Text style={styles.resetButtonText}>Try different group</Text>
+              <RotateCcw size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
+              <Text style={styles.resetButtonText}>{t('chemistry.tryDifferentGroup', { defaultValue: 'Try different group' })}</Text>
             </TouchableOpacity>
           </Animated.View>
         )}

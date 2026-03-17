@@ -3,6 +3,7 @@
 // Full screen, cycling Unsplash photos, frosted glass overlay
 // =============================================================================
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -21,6 +22,7 @@ const { width: W, height: H } = Dimensions.get('window');
 const HERO_DESTINATIONS = ['Tokyo', 'Bali', 'Lisbon', 'Medellín', 'Bangkok'];
 
 export default function CinematicHero() {
+  const { t } = useTranslation();
   const [index, setIndex] = useState(0);
   const [typedText, setTypedText] = useState('');
   const kenScale = useRef(new Animated.Value(1)).current;
@@ -102,14 +104,14 @@ export default function CinematicHero() {
       />
       {/* Frosted glass text overlay */}
       <View style={[styles.overlay, Platform.OS === 'web' && styles.overlayWeb]}>
-        <Text style={styles.subhead}>Where to next?</Text>
+        <Text style={styles.subhead}>{t('hero.subhead', { defaultValue: 'Where to next?' })}</Text>
         <Animated.View style={{ opacity: fadeAnim }}>
           <Text style={styles.headline}>
             {typedText}
             <Text style={styles.cursor}>|</Text>
           </Text>
         </Animated.View>
-        <Text style={styles.tagline}>Dream it. Plan it. Go.</Text>
+        <Text style={styles.tagline}>{t('hero.tagline', { defaultValue: 'Dream it. Plan it. Go.' })}</Text>
       </View>
     </View>
   );

@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { TrendingDown, ExternalLink, Calendar, Plane } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
@@ -37,6 +38,7 @@ function DealCard({
   item: GoNowFeedItem;
   onPress: () => void;
 }) {
+  const { t } = useTranslation();
   const { deal } = item;
   const photoUrl = getDestinationPhoto(deal.destination);
   const savingsColor = deal.savingsPercent >= 20 ? COLORS.coral : COLORS.sage;
@@ -65,7 +67,7 @@ function DealCard({
         >
           {/* Deal badge */}
           <View style={[styles.dealBadge, { backgroundColor: savingsColor + '20', borderColor: savingsColor + '40' }]}>
-            <TrendingDown size={12} color={savingsColor} strokeWidth={2} />
+            <TrendingDown size={12} color={savingsColor} strokeWidth={1.5} />
             <Text style={[styles.dealBadgeText, { color: savingsColor }]}>{item.hook}</Text>
           </View>
 
@@ -78,19 +80,19 @@ function DealCard({
           {/* Price */}
           <View style={styles.dealPriceRow}>
             <Text style={styles.dealPrice}>${deal.estimatedPrice}</Text>
-            <Text style={styles.dealAvgPrice}>avg ${deal.historicalAvgPrice}</Text>
+            <Text style={styles.dealAvgPrice}>{t('goNow.avg', { defaultValue: 'avg' })} ${deal.historicalAvgPrice}</Text>
           </View>
 
           {/* Best week */}
           <View style={styles.dealWeekRow}>
-            <Calendar size={12} color={COLORS.creamMuted} strokeWidth={2} />
-            <Text style={styles.dealWeekText}>Best week: {deal.bestWeek}</Text>
+            <Calendar size={12} color={COLORS.creamMuted} strokeWidth={1.5} />
+            <Text style={styles.dealWeekText}>{t('goNow.bestWeek', { defaultValue: 'Best week:' })} {deal.bestWeek}</Text>
           </View>
 
           {/* CTA */}
           <View style={styles.dealCta}>
-            <ExternalLink size={12} color={COLORS.sage} strokeWidth={2} />
-            <Text style={styles.dealCtaText}>Book on Skyscanner</Text>
+            <ExternalLink size={12} color={COLORS.sage} strokeWidth={1.5} />
+            <Text style={styles.dealCtaText}>{t('goNow.bookOnSkyscanner', { defaultValue: 'Book on Skyscanner' })}</Text>
           </View>
         </LinearGradient>
       </ImageBackground>
@@ -102,6 +104,7 @@ function DealCard({
 // Go Now Feed Component
 // ---------------------------------------------------------------------------
 export default function GoNowFeed() {
+  const { t } = useTranslation();
   const trips = useAppStore((s) => s.trips);
   const [deals, setDeals] = useState<GoNowFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -139,10 +142,10 @@ export default function GoNowFeed() {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Plane size={16} color={COLORS.coral} strokeWidth={2} />
-          <Text style={styles.headerTitle}>Go Now</Text>
+          <Plane size={16} color={COLORS.coral} strokeWidth={1.5} />
+          <Text style={styles.headerTitle}>{t('goNow.title', { defaultValue: 'Go Now' })}</Text>
         </View>
-        <Text style={styles.headerSub}>Best deals for your saved destinations</Text>
+        <Text style={styles.headerSub}>{t('goNow.subtitle', { defaultValue: 'Best deals for your saved destinations' })}</Text>
       </View>
 
       <ScrollView
@@ -176,7 +179,7 @@ const styles = StyleSheet.create({
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: SPACING.sm,
   } as ViewStyle,
   headerTitle: {
     fontFamily: FONTS.header,
@@ -187,7 +190,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 12,
     color: COLORS.creamMuted,
-    marginTop: 2,
+    marginTop: SPACING.xs,
   } as TextStyle,
   scrollContent: {
     paddingHorizontal: SPACING.lg,
@@ -211,15 +214,15 @@ const styles = StyleSheet.create({
     minHeight: 200,
     padding: SPACING.md,
     justifyContent: 'flex-end',
-    gap: 4,
+    gap: SPACING.xs,
   } as ViewStyle,
   dealBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    gap: 4,
+    gap: SPACING.xs,
     paddingHorizontal: SPACING.sm,
-    paddingVertical: 3,
+    paddingVertical: SPACING.xs,
     borderRadius: RADIUS.full,
     borderWidth: 1,
     marginBottom: SPACING.xs,
@@ -244,7 +247,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: SPACING.sm,
-    marginTop: 2,
+    marginTop: SPACING.xs,
   } as ViewStyle,
   dealPrice: {
     fontFamily: FONTS.mono,
@@ -261,8 +264,8 @@ const styles = StyleSheet.create({
   dealWeekRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginTop: 2,
+    gap: SPACING.xs,
+    marginTop: SPACING.xs,
   } as ViewStyle,
   dealWeekText: {
     fontFamily: FONTS.mono,
@@ -273,7 +276,7 @@ const styles = StyleSheet.create({
   dealCta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: SPACING.xs,
     marginTop: SPACING.xs,
   } as ViewStyle,
   dealCtaText: {

@@ -91,7 +91,7 @@ export default function ResilientImage({
             pressed && { opacity: 0.8 },
           ]}
         >
-          <RefreshCw size={20} color={COLORS.creamMuted} strokeWidth={2} />
+          <RefreshCw size={20} color={COLORS.creamMuted} strokeWidth={1.5} />
           <Text style={styles.retryText}>Tap to retry</Text>
         </Pressable>
       )}

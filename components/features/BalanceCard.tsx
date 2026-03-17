@@ -3,6 +3,7 @@
 // Shows who owes whom with settle-up actions.
 // =============================================================================
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -46,6 +47,7 @@ export default function BalanceCard({
   currentUserId,
   onSettle,
 }: BalanceCardProps) {
+  const { t } = useTranslation();
   const myBalance = balances.find((b) => b.userId === currentUserId);
   if (!myBalance) return null;
 
@@ -66,22 +68,22 @@ export default function BalanceCard({
 
   return (
     <View style={styles.card}>
-      <Text style={styles.sectionLabel}>GROUP BALANCE</Text>
+      <Text style={styles.sectionLabel}>{t('balance.groupBalance', { defaultValue: 'GROUP BALANCE' })}</Text>
 
       {/* My summary */}
       <View style={styles.summaryRow}>
         <View style={styles.summaryItem}>
-          <Text style={styles.summaryLabel}>You paid</Text>
+          <Text style={styles.summaryLabel}>{t('balance.youPaid', { defaultValue: 'You paid' })}</Text>
           <Text style={styles.summaryValue}>${myBalance.totalPaid.toFixed(2)}</Text>
         </View>
         <View style={styles.summaryDivider} />
         <View style={styles.summaryItem}>
-          <Text style={styles.summaryLabel}>Your share</Text>
+          <Text style={styles.summaryLabel}>{t('balance.yourShare', { defaultValue: 'Your share' })}</Text>
           <Text style={styles.summaryValue}>${myBalance.totalOwed.toFixed(2)}</Text>
         </View>
         <View style={styles.summaryDivider} />
         <View style={styles.summaryItem}>
-          <Text style={styles.summaryLabel}>Net</Text>
+          <Text style={styles.summaryLabel}>{t('balance.net', { defaultValue: 'Net' })}</Text>
           <Text
             style={[
               styles.summaryValueNet,
@@ -102,8 +104,8 @@ export default function BalanceCard({
 
       {!hasDebts && (
         <View style={styles.evenRow}>
-          <Check size={16} color={COLORS.sage} strokeWidth={2} />
-          <Text style={styles.evenText}>All settled up</Text>
+          <Check size={16} color={COLORS.sage} strokeWidth={1.5} />
+          <Text style={styles.evenText}>{t('balance.allSettled', { defaultValue: 'All settled up' })}</Text>
         </View>
       )}
 
@@ -116,7 +118,7 @@ export default function BalanceCard({
             </Text>
           </View>
           <View style={styles.debtInfo}>
-            <Text style={styles.debtName}>{person.name} owes you</Text>
+            <Text style={styles.debtName}>{`${person.name} ${t('balance.owesYou', { defaultValue: 'owes you' })}`}</Text>
             <Text style={[styles.debtAmount, { color: COLORS.sage }]}>
               ${person.amount.toFixed(2)}
             </Text>
@@ -132,7 +134,7 @@ export default function BalanceCard({
                 { opacity: pressed ? 0.85 : 1 },
               ]}
             >
-              <Text style={styles.settleBtnText}>Settle</Text>
+              <Text style={styles.settleBtnText}>{t('balance.settle', { defaultValue: 'Settle' })}</Text>
             </Pressable>
           )}
         </View>
@@ -147,7 +149,7 @@ export default function BalanceCard({
             </Text>
           </View>
           <View style={styles.debtInfo}>
-            <Text style={styles.debtName}>You owe {debt.displayName}</Text>
+            <Text style={styles.debtName}>{`${t('balance.youOwe', { defaultValue: 'You owe' })} ${debt.displayName}`}</Text>
             <Text style={[styles.debtAmount, { color: COLORS.coral }]}>
               ${debt.amount.toFixed(2)}
             </Text>
@@ -163,8 +165,8 @@ export default function BalanceCard({
                 { opacity: pressed ? 0.85 : 1 },
               ]}
             >
-              <Text style={styles.settleBtnText}>Pay</Text>
-              <ArrowRight size={12} color={COLORS.sage} strokeWidth={2} />
+              <Text style={styles.settleBtnText}>{t('balance.pay', { defaultValue: 'Pay' })}</Text>
+              <ArrowRight size={12} color={COLORS.sage} strokeWidth={1.5} />
             </Pressable>
           )}
         </View>
@@ -241,7 +243,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: RADIUS.pill,
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,

@@ -4,6 +4,7 @@
 // Data from lib/passport.ts stamps.
 // =============================================================================
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Modal,
   Pressable,
@@ -46,6 +47,7 @@ interface WorldMapProps {
 }
 
 export default function WorldMap({ onCountryPress, stamps: stampsProp }: WorldMapProps) {
+  const { t } = useTranslation();
   const [stamps, setStamps] = useState<PassportStamp[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -95,7 +97,7 @@ export default function WorldMap({ onCountryPress, stamps: stampsProp }: WorldMa
       {/* Stats overlay */}
       <View style={styles.statsOverlay}>
         <Text style={styles.statsValue}>{totalCountries}</Text>
-        <Text style={styles.statsLabel}>countries visited</Text>
+        <Text style={styles.statsLabel}>{t('worldMap.countriesVisited', { defaultValue: 'countries visited' })}</Text>
       </View>
 
       {/* SVG map */}
@@ -148,7 +150,7 @@ export default function WorldMap({ onCountryPress, stamps: stampsProp }: WorldMa
 
       {/* Tap hint */}
       {totalCountries > 0 && (
-        <Text style={styles.hint}>Tap a country to see your trips</Text>
+        <Text style={styles.hint}>{t('worldMap.tapHint', { defaultValue: 'Tap a country to see your trips' })}</Text>
       )}
 
       {/* Country detail modal */}
@@ -178,14 +180,14 @@ export default function WorldMap({ onCountryPress, stamps: stampsProp }: WorldMa
                     </View>
                   ))}
                   {selectedStamps.length === 0 && (
-                    <Text style={styles.noStamps}>No trips yet</Text>
+                    <Text style={styles.noStamps}>{t('worldMap.noTrips', { defaultValue: 'No trips yet' })}</Text>
                   )}
                 </ScrollView>
                 <Pressable
                   style={styles.closeBtn}
                   onPress={() => setModalVisible(false)}
                 >
-                  <Text style={styles.closeBtnText}>Close</Text>
+                  <Text style={styles.closeBtnText}>{t('worldMap.close', { defaultValue: 'Close' })}</Text>
                 </Pressable>
               </>
             )}

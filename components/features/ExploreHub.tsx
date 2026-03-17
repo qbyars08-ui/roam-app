@@ -3,6 +3,7 @@
 // 2-column glass card grid of all features, navigable from Profile or Home
 // =============================================================================
 import React, { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -126,6 +127,7 @@ type ExploreHubProps = {
 };
 
 export default function ExploreHub({ standalone = false }: ExploreHubProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { canAccess: canAccessPro } = useProGate('travel-twin');
@@ -162,12 +164,12 @@ export default function ExploreHub({ standalone = false }: ExploreHubProps) {
           >
             {isProGated ? (
               <View style={styles.proBadge}>
-                <Lock size={8} color={COLORS.gold} strokeWidth={2.5} />
+                <Lock size={8} color={COLORS.gold} strokeWidth={1.5} />
                 <Text style={styles.proBadgeText}>PRO</Text>
               </View>
             ) : !isLive ? (
               <View style={styles.comingSoonBadge}>
-                <Text style={styles.comingSoonBadgeText}>COMING SOON</Text>
+                <Text style={styles.comingSoonBadgeText}>{t('explore.comingSoon', { defaultValue: 'COMING SOON' })}</Text>
               </View>
             ) : null}
             {(() => {
@@ -177,7 +179,7 @@ export default function ExploreHub({ standalone = false }: ExploreHubProps) {
                   <IconComponent
                     size={24}
                     color={isProGated ? COLORS.gold : isLive ? COLORS.accentGold : COLORS.creamMuted}
-                    strokeWidth={2}
+                    strokeWidth={1.5}
                   />
                 </View>
               ) : null;
@@ -199,8 +201,8 @@ export default function ExploreHub({ standalone = false }: ExploreHubProps) {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.headerTitle}>Explore</Text>
-          <Text style={styles.headerSubtitle}>All your travel tools in one place</Text>
+          <Text style={styles.headerTitle}>{t('explore.title', { defaultValue: 'Explore' })}</Text>
+          <Text style={styles.headerSubtitle}>{t('explore.subtitle', { defaultValue: 'All your travel tools in one place' })}</Text>
           {content}
         </ScrollView>
       </View>
@@ -214,6 +216,7 @@ export default function ExploreHub({ standalone = false }: ExploreHubProps) {
 // Compact horizontal row variant for the Home screen
 // ---------------------------------------------------------------------------
 export function FeatureQuickAccess() {
+  const { t } = useTranslation();
   const router = useRouter();
 
   // Subset of features to show on home — the most useful quick-access items
@@ -232,7 +235,7 @@ export function FeatureQuickAccess() {
   return (
     <View style={quickStyles.section}>
       <View style={quickStyles.header}>
-        <Text style={quickStyles.title}>Features</Text>
+        <Text style={quickStyles.title}>{t('explore.features', { defaultValue: 'Features' })}</Text>
         <Pressable
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -240,7 +243,7 @@ export function FeatureQuickAccess() {
           }}
           style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
         >
-          <Text style={quickStyles.seeAll}>See all</Text>
+          <Text style={quickStyles.seeAll}>{t('explore.seeAll', { defaultValue: 'See all' })}</Text>
         </Pressable>
       </View>
       <ScrollView
@@ -261,7 +264,7 @@ export function FeatureQuickAccess() {
               const IconComponent = ICON_MAP[feature.icon];
               return IconComponent ? (
                 <View style={quickStyles.cardIcon}>
-                  <IconComponent size={22} color={COLORS.accentGold} strokeWidth={2} />
+                  <IconComponent size={22} color={COLORS.accentGold} strokeWidth={1.5} />
                 </View>
               ) : null;
             })()}

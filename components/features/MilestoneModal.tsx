@@ -4,6 +4,7 @@
 // CTAs drive share, refer, or upgrade depending on the milestone.
 // =============================================================================
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Animated,
   Easing,
@@ -37,6 +38,7 @@ const CTA_ICONS = {
 } as const;
 
 export default function MilestoneModal({ milestone, onDismiss }: MilestoneModalProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const [visible, setVisible] = useState(false);
 
@@ -159,7 +161,7 @@ export default function MilestoneModal({ milestone, onDismiss }: MilestoneModalP
             accessibilityLabel="Close"
             style={({ pressed }) => [styles.closeBtn, { opacity: pressed ? 0.6 : 1 }]}
           >
-            <X size={18} color={COLORS.creamMuted} strokeWidth={2} />
+            <X size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
           </Pressable>
 
           {/* Icon */}
@@ -185,14 +187,14 @@ export default function MilestoneModal({ milestone, onDismiss }: MilestoneModalP
               end={{ x: 1, y: 0 }}
               style={styles.ctaGradient}
             >
-              <CtaIcon size={18} color={COLORS.bg} strokeWidth={2} />
+              <CtaIcon size={18} color={COLORS.bg} strokeWidth={1.5} />
               <Text style={styles.ctaText}>{milestone.ctaLabel}</Text>
             </LinearGradient>
           </Pressable>
 
           {/* Dismiss */}
           <Pressable onPress={handleDismiss} hitSlop={12}>
-            <Text style={styles.dismissText}>Not now</Text>
+            <Text style={styles.dismissText}>{t('milestone.notNow', { defaultValue: 'Not now' })}</Text>
           </Pressable>
         </Animated.View>
       </Animated.View>

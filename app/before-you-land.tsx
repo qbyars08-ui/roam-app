@@ -11,7 +11,6 @@ import {
   StyleSheet,
   Text,
   View,
-  ActivityIndicator,
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
@@ -36,8 +35,10 @@ import {
   Wind,
   AlertTriangle,
 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
+import { SkeletonCard } from '../components/premium/LoadingStates';
 import { getTimezoneByDestination, getTimezoneInfo, getTimeDifference } from '../lib/timezone';
 import { getExchangeRates } from '../lib/exchange-rates';
 import type { ExchangeRateData } from '../lib/exchange-rates';
@@ -70,6 +71,16 @@ const CHECKLIST_ITEMS: ChecklistEntry[] = [
   { id: 'meds', label: 'Medications + prescriptions' },
   { id: 'copies', label: 'Copies of documents (digital + paper)' },
 ];
+
+// Checklist label keys for i18n lookup
+const CHECKLIST_I18N_KEYS: Record<string, string> = {
+  passport: 'beforeYouLand.checklist.passport',
+  insurance: 'beforeYouLand.checklist.insurance',
+  currency: 'beforeYouLand.checklist.currency',
+  charger: 'beforeYouLand.checklist.charger',
+  meds: 'beforeYouLand.checklist.meds',
+  copies: 'beforeYouLand.checklist.copies',
+};
 
 // =============================================================================
 // Collapsible Section Component
@@ -118,7 +129,7 @@ function CollapsibleSection({ title, icon, children, defaultOpen = false }: Sect
           <Text style={styles.sectionTitle}>{title}</Text>
         </View>
         <Animated.View style={rotateStyle}>
-          <ChevronDown size={20} color={COLORS.creamDim} strokeWidth={2} />
+          <ChevronDown size={20} color={COLORS.creamDim} strokeWidth={1.5} />
         </Animated.View>
       </Pressable>
       {isOpen ? <View style={styles.sectionBody}>{children}</View> : null}
@@ -132,6 +143,7 @@ function CollapsibleSection({ title, icon, children, defaultOpen = false }: Sect
 function BeforeYouLandScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const { destination } = useLocalSearchParams<{ destination: string }>();
   const trips = useAppStore((s) => s.trips);
 
@@ -268,7 +280,7 @@ function BeforeYouLandScreen() {
       {/* Header */}
       <View style={styles.headerBar}>
         <Pressable onPress={handleBack} hitSlop={12}>
-          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
+          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
       </View>
 
@@ -278,62 +290,59 @@ function BeforeYouLandScreen() {
       >
         {/* Title block */}
         <View style={styles.titleBlock}>
-          <Plane size={32} color={COLORS.sage} strokeWidth={2} />
-          <Text style={styles.title}>Before You Land</Text>
+          <Plane size={32} color={COLORS.sage} strokeWidth={1.5} />
+          <Text style={styles.title}>{t('beforeYouLand.title', { defaultValue: 'Before You Land' })}</Text>
           <Text style={styles.subtitle}>{destName}</Text>
           {trip ? (
             <Text style={styles.tripMeta}>
-              {trip.days} day{trip.days !== 1 ? 's' : ''} planned
+              {t('beforeYouLand.daysPlanned', { defaultValue: '{{count}} day planned', count: trip.days })}
             </Text>
           ) : null}
         </View>
 
         {loading ? (
-          <View style={styles.loadingWrap}>
-            <ActivityIndicator color={COLORS.sage} size="small" />
-            <Text style={styles.loadingText}>Loading briefing...</Text>
-          </View>
+          <SkeletonCard height={48} style={{ marginBottom: SPACING.md }} />
         ) : null}
 
         {/* 1. Time Zone Intel */}
         <CollapsibleSection
-          title="Time Zone Intel"
-          icon={<Clock size={20} color={COLORS.sage} strokeWidth={2} />}
+          title={t('beforeYouLand.sections.timezone', { defaultValue: 'Time Zone Intel' })}
+          icon={<Clock size={20} color={COLORS.sage} strokeWidth={1.5} />}
           defaultOpen
         >
           {timezoneInfo ? (
             <>
               <View style={styles.dataRow}>
-                <Text style={styles.dataLabel}>Local time at destination</Text>
+                <Text style={styles.dataLabel}>{t('beforeYouLand.localTime', { defaultValue: 'Local time at destination' })}</Text>
                 <Text style={styles.dataValueMono}>{timezoneInfo.currentTime}</Text>
               </View>
               <View style={styles.dataRow}>
-                <Text style={styles.dataLabel}>Timezone</Text>
+                <Text style={styles.dataLabel}>{t('beforeYouLand.timezone', { defaultValue: 'Timezone' })}</Text>
                 <Text style={styles.dataValueMono}>
                   {timezoneInfo.abbreviation} ({timezoneInfo.utcOffset})
                 </Text>
               </View>
               {timeDiffLabel ? (
                 <View style={styles.dataRow}>
-                  <Text style={styles.dataLabel}>Difference from home</Text>
+                  <Text style={styles.dataLabel}>{t('beforeYouLand.timeDiff', { defaultValue: 'Difference from home' })}</Text>
                   <Text style={styles.dataValueMono}>{timeDiffLabel}</Text>
                 </View>
               ) : null}
               <View style={styles.nudgeBanner}>
                 <Text style={styles.nudgeText}>
-                  Set your watch now — start adjusting before you land
+                  {t('beforeYouLand.nudge', { defaultValue: 'Set your watch now — start adjusting before you land' })}
                 </Text>
               </View>
             </>
           ) : (
-            <Text style={styles.noData}>Timezone data unavailable for this destination</Text>
+            <Text style={styles.noData}>{t('beforeYouLand.noTimezone', { defaultValue: 'Timezone data unavailable for this destination' })}</Text>
           )}
         </CollapsibleSection>
 
         {/* 2. Weather on Arrival */}
         <CollapsibleSection
-          title="Weather on Arrival"
-          icon={<Sun size={20} color={COLORS.gold} strokeWidth={2} />}
+          title={t('beforeYouLand.sections.weather', { defaultValue: 'Weather on Arrival' })}
+          icon={<Sun size={20} color={COLORS.gold} strokeWidth={1.5} />}
           defaultOpen
         >
           {forecastDays.length > 0 ? (
@@ -343,17 +352,17 @@ function BeforeYouLandScreen() {
                   <Text style={styles.weatherDate}>{formatShortDate(day.date)}</Text>
                   <View style={styles.weatherDetails}>
                     <View style={styles.weatherStat}>
-                      <Thermometer size={14} color={COLORS.coral} strokeWidth={2} />
+                      <Thermometer size={14} color={COLORS.coral} strokeWidth={1.5} />
                       <Text style={styles.weatherStatText}>
                         {Math.round(day.tempMax)}/{Math.round(day.tempMin)}C
                       </Text>
                     </View>
                     <View style={styles.weatherStat}>
-                      <Droplets size={14} color={COLORS.sage} strokeWidth={2} />
+                      <Droplets size={14} color={COLORS.sage} strokeWidth={1.5} />
                       <Text style={styles.weatherStatText}>{day.precipitationChance}%</Text>
                     </View>
                     <View style={styles.weatherStat}>
-                      <Wind size={14} color={COLORS.creamDim} strokeWidth={2} />
+                      <Wind size={14} color={COLORS.creamDim} strokeWidth={1.5} />
                       <Text style={styles.weatherStatText}>
                         {Math.round(day.windSpeedMax)} km/h
                       </Text>
@@ -364,7 +373,7 @@ function BeforeYouLandScreen() {
               ))}
               {packSuggestions.length > 0 ? (
                 <View style={styles.packSection}>
-                  <Text style={styles.packTitle}>Pack recommendation</Text>
+                  <Text style={styles.packTitle}>{t('beforeYouLand.packRecommendation', { defaultValue: 'Pack recommendation' })}</Text>
                   {packSuggestions.map((s) => (
                     <Text key={s} style={styles.packItem}>
                       {s}
@@ -374,56 +383,56 @@ function BeforeYouLandScreen() {
               ) : null}
             </>
           ) : (
-            <Text style={styles.noData}>Weather data unavailable</Text>
+            <Text style={styles.noData}>{t('beforeYouLand.noWeather', { defaultValue: 'Weather data unavailable' })}</Text>
           )}
         </CollapsibleSection>
 
         {/* 3. Money Brief */}
         <CollapsibleSection
-          title="Money Brief"
-          icon={<DollarSign size={20} color={COLORS.gold} strokeWidth={2} />}
+          title={t('beforeYouLand.sections.money', { defaultValue: 'Money Brief' })}
+          icon={<DollarSign size={20} color={COLORS.gold} strokeWidth={1.5} />}
         >
           {exchangeRateLabel ? (
             <View style={styles.dataRow}>
-              <Text style={styles.dataLabel}>Exchange rate</Text>
+              <Text style={styles.dataLabel}>{t('beforeYouLand.exchangeRate', { defaultValue: 'Exchange rate' })}</Text>
               <Text style={styles.dataValueMono}>{exchangeRateLabel}</Text>
             </View>
           ) : null}
           {culturalGuide ? (
             <>
               <View style={styles.dataRow}>
-                <Text style={styles.dataLabel}>Tipping culture</Text>
+                <Text style={styles.dataLabel}>{t('beforeYouLand.tipping', { defaultValue: 'Tipping culture' })}</Text>
                 <Text style={styles.dataValue}>{culturalGuide.tipping}</Text>
               </View>
               <View style={styles.dataRow}>
-                <Text style={styles.dataLabel}>ATM / card info</Text>
+                <Text style={styles.dataLabel}>{t('beforeYouLand.atmInfo', { defaultValue: 'ATM / card info' })}</Text>
                 <Text style={styles.dataValue}>{culturalGuide.currency.tip}</Text>
               </View>
             </>
           ) : null}
           {!exchangeRateLabel && !culturalGuide ? (
-            <Text style={styles.noData}>Money data unavailable for this destination</Text>
+            <Text style={styles.noData}>{t('beforeYouLand.noMoney', { defaultValue: 'Money data unavailable for this destination' })}</Text>
           ) : null}
         </CollapsibleSection>
 
         {/* 4. Emergency Essentials */}
         <CollapsibleSection
-          title="Emergency Essentials"
-          icon={<Shield size={20} color={COLORS.coral} strokeWidth={2} />}
+          title={t('beforeYouLand.sections.emergency', { defaultValue: 'Emergency Essentials' })}
+          icon={<Shield size={20} color={COLORS.coral} strokeWidth={1.5} />}
         >
           {emergencyData ? (
             <>
               <View style={styles.emergencyGrid}>
                 <View style={styles.emergencyItem}>
-                  <Text style={styles.emergencyLabel}>Police</Text>
+                  <Text style={styles.emergencyLabel}>{t('beforeYouLand.police', { defaultValue: 'Police' })}</Text>
                   <Text style={styles.emergencyNumber}>{emergencyData.police}</Text>
                 </View>
                 <View style={styles.emergencyItem}>
-                  <Text style={styles.emergencyLabel}>Ambulance</Text>
+                  <Text style={styles.emergencyLabel}>{t('beforeYouLand.ambulance', { defaultValue: 'Ambulance' })}</Text>
                   <Text style={styles.emergencyNumber}>{emergencyData.ambulance}</Text>
                 </View>
                 <View style={styles.emergencyItem}>
-                  <Text style={styles.emergencyLabel}>Fire</Text>
+                  <Text style={styles.emergencyLabel}>{t('beforeYouLand.fire', { defaultValue: 'Fire' })}</Text>
                   <Text style={styles.emergencyNumber}>{emergencyData.fire}</Text>
                 </View>
               </View>
@@ -432,7 +441,7 @@ function BeforeYouLandScreen() {
           {medicalGuide ? (
             <>
               <View style={styles.dataRow}>
-                <Text style={styles.dataLabel}>Hospital quality</Text>
+                <Text style={styles.dataLabel}>{t('beforeYouLand.hospitalQuality', { defaultValue: 'Hospital quality' })}</Text>
                 <Text
                   style={[
                     styles.dataValueMono,
@@ -451,7 +460,7 @@ function BeforeYouLandScreen() {
                 </Text>
               </View>
               <View style={styles.dataRow}>
-                <Text style={styles.dataLabel}>Insurance priority</Text>
+                <Text style={styles.dataLabel}>{t('beforeYouLand.insurancePriority', { defaultValue: 'Insurance priority' })}</Text>
                 <Text
                   style={[
                     styles.dataValueMono,
@@ -463,39 +472,39 @@ function BeforeYouLandScreen() {
                 </Text>
               </View>
               <View style={styles.dataRow}>
-                <Text style={styles.dataLabel}>Tap water</Text>
+                <Text style={styles.dataLabel}>{t('beforeYouLand.tapWater', { defaultValue: 'Tap water' })}</Text>
                 <Text
                   style={[
                     styles.dataValueMono,
                     { color: medicalGuide.tapWaterSafe ? COLORS.sage : COLORS.coral },
                   ]}
                 >
-                  {medicalGuide.tapWaterSafe ? 'Safe to drink' : 'Bottled only'}
+                  {medicalGuide.tapWaterSafe ? t('beforeYouLand.safeToDrink', { defaultValue: 'Safe to drink' }) : t('beforeYouLand.bottledOnly', { defaultValue: 'Bottled only' })}
                 </Text>
               </View>
             </>
           ) : null}
           {!emergencyData && !medicalGuide ? (
-            <Text style={styles.noData}>Emergency data unavailable for this destination</Text>
+            <Text style={styles.noData}>{t('beforeYouLand.noEmergency', { defaultValue: 'Emergency data unavailable for this destination' })}</Text>
           ) : null}
         </CollapsibleSection>
 
         {/* 5. Cultural Quick Hits */}
         <CollapsibleSection
-          title="Cultural Quick Hits"
-          icon={<Users size={20} color={COLORS.sage} strokeWidth={2} />}
+          title={t('beforeYouLand.sections.cultural', { defaultValue: 'Cultural Quick Hits' })}
+          icon={<Users size={20} color={COLORS.sage} strokeWidth={1.5} />}
         >
           {culturalGuide ? (
             <>
               {culturalGuide.etiquette.length > 0 ? (
                 <View style={styles.cultureBlock}>
-                  <Text style={styles.cultureHeading}>Greeting etiquette</Text>
+                  <Text style={styles.cultureHeading}>{t('beforeYouLand.greetingEtiquette', { defaultValue: 'Greeting etiquette' })}</Text>
                   <Text style={styles.dataValue}>{culturalGuide.etiquette[0].do}</Text>
                 </View>
               ) : null}
               {culturalGuide.dressCodes.length > 0 ? (
                 <View style={styles.cultureBlock}>
-                  <Text style={styles.cultureHeading}>Dress code</Text>
+                  <Text style={styles.cultureHeading}>{t('beforeYouLand.dressCode', { defaultValue: 'Dress code' })}</Text>
                   {culturalGuide.dressCodes.map((d) => (
                     <Text key={d} style={styles.dataValue}>
                       {d}
@@ -504,15 +513,15 @@ function BeforeYouLandScreen() {
                 </View>
               ) : null}
               <View style={styles.cultureBlock}>
-                <Text style={styles.cultureHeading}>Tipping</Text>
+                <Text style={styles.cultureHeading}>{t('beforeYouLand.tippingLabel', { defaultValue: 'Tipping' })}</Text>
                 <Text style={styles.dataValue}>{culturalGuide.tipping}</Text>
               </View>
               {culturalGuide.commonScams.length > 0 ? (
                 <View style={styles.cultureBlock}>
-                  <Text style={styles.cultureHeading}>Scam warnings</Text>
+                  <Text style={styles.cultureHeading}>{t('beforeYouLand.scamWarnings', { defaultValue: 'Scam warnings' })}</Text>
                   {culturalGuide.commonScams.slice(0, 2).map((scam) => (
                     <View key={scam} style={styles.scamRow}>
-                      <AlertTriangle size={14} color={COLORS.gold} strokeWidth={2} />
+                      <AlertTriangle size={14} color={COLORS.gold} strokeWidth={1.5} />
                       <Text style={styles.scamText}>{scam}</Text>
                     </View>
                   ))}
@@ -520,14 +529,14 @@ function BeforeYouLandScreen() {
               ) : null}
             </>
           ) : (
-            <Text style={styles.noData}>Cultural data unavailable for this destination</Text>
+            <Text style={styles.noData}>{t('beforeYouLand.noCultural', { defaultValue: 'Cultural data unavailable for this destination' })}</Text>
           )}
         </CollapsibleSection>
 
         {/* 6. Your Checklist */}
         <CollapsibleSection
-          title="Your Checklist"
-          icon={<CheckSquare size={20} color={COLORS.sage} strokeWidth={2} />}
+          title={t('beforeYouLand.sections.checklist', { defaultValue: 'Your Checklist' })}
+          icon={<CheckSquare size={20} color={COLORS.sage} strokeWidth={1.5} />}
           defaultOpen
         >
           {CHECKLIST_ITEMS.map((item) => {
@@ -539,9 +548,9 @@ function BeforeYouLandScreen() {
                 onPress={() => toggleCheck(item.id)}
               >
                 {isChecked ? (
-                  <CheckSquare size={20} color={COLORS.sage} strokeWidth={2} />
+                  <CheckSquare size={20} color={COLORS.sage} strokeWidth={1.5} />
                 ) : (
-                  <Square size={20} color={COLORS.creamDim} strokeWidth={2} />
+                  <Square size={20} color={COLORS.creamDim} strokeWidth={1.5} />
                 )}
                 <Text
                   style={[
@@ -549,7 +558,7 @@ function BeforeYouLandScreen() {
                     isChecked ? styles.checkLabelDone : undefined,
                   ]}
                 >
-                  {item.label}
+                  {t(CHECKLIST_I18N_KEYS[item.id] ?? item.id, { defaultValue: item.label })}
                 </Text>
               </Pressable>
             );
@@ -680,7 +689,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 13,
     color: COLORS.creamDim,
-    fontStyle: 'italic',
   } as TextStyle,
 
   // Timezone nudge
@@ -707,17 +715,17 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodySemiBold,
     fontSize: 13,
     color: COLORS.cream,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   } as TextStyle,
   weatherDetails: {
     flexDirection: 'row',
     gap: SPACING.md,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   } as ViewStyle,
   weatherStat: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: SPACING.xs,
   } as ViewStyle,
   weatherStatText: {
     fontFamily: FONTS.mono,
@@ -738,7 +746,7 @@ const styles = StyleSheet.create({
     color: COLORS.gold,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   } as TextStyle,
   packItem: {
     fontFamily: FONTS.body,
@@ -791,7 +799,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: SPACING.xs,
-    marginTop: 4,
+    marginTop: SPACING.xs,
   } as ViewStyle,
   scamText: {
     fontFamily: FONTS.body,

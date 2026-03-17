@@ -41,7 +41,7 @@ export async function getExchangeRates(
 
   try {
     const symbols = TRAVEL_CURRENCIES.filter((c) => c !== baseCurrency).join(',');
-    const url = `https://api.frankfurter.dev/v1/latest?base=${baseCurrency}&symbols=${symbols}`;
+    const url = `https://api.frankfurter.app/latest?from=${baseCurrency}&to=${symbols}`;
     const response = await fetch(url);
     if (!response.ok) return null;
 

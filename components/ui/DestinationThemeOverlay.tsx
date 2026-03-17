@@ -9,14 +9,14 @@ import { Animated, StyleSheet, type ViewStyle } from 'react-native';
 const DESTINATION_THEME_COLORS: Record<string, string> = {
   'tokyo': 'rgba(232,137,158,0.05)',       // cherry blossom pink
   'paris': 'rgba(155,142,196,0.05)',       // lavender purple
-  'bali': 'rgba(124,175,138,0.05)',        // tropical green
+  'bali': 'rgba(91,158,111,0.05)',        // tropical green
   'new york': 'rgba(91,155,213,0.05)',     // steel blue
   'barcelona': 'rgba(232,97,74,0.05)',     // terracotta coral
   'rome': 'rgba(201,168,76,0.05)',         // ochre gold
   'london': 'rgba(136,153,170,0.05)',      // slate grey
   'bangkok': 'rgba(240,160,94,0.05)',      // amber gold
   'marrakech': 'rgba(212,165,116,0.05)',   // sand tan
-  'lisbon': 'rgba(245,237,216,0.05)',      // warm cream
+  'lisbon': 'rgba(232,245,225,0.05)',      // warm cream
   'cape town': 'rgba(96,165,250,0.05)',    // ocean blue
   'seoul': 'rgba(180,136,217,0.05)',       // purple
   'buenos aires': 'rgba(232,97,74,0.05)', // tango red
@@ -30,7 +30,7 @@ const DESTINATION_THEME_COLORS: Record<string, string> = {
 
 function getThemeColor(destination: string): string {
   const key = destination.toLowerCase().trim();
-  return DESTINATION_THEME_COLORS[key] ?? 'rgba(124,175,138,0.03)'; // default subtle sage
+  return DESTINATION_THEME_COLORS[key] ?? 'rgba(91,158,111,0.03)'; // default subtle sage
 }
 
 interface DestinationThemeOverlayProps {

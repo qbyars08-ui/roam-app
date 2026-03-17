@@ -29,6 +29,7 @@ import {
 
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import * as Haptics from '../lib/haptics';
+import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../lib/store';
 import { useSocialProfile } from '../lib/hooks/useSocialProfile';
 import VibeTagSelector from '../components/social/VibeTagSelector';
@@ -140,6 +141,7 @@ ToggleRow.displayName = 'ToggleRow';
 // ---------------------------------------------------------------------------
 
 export default function SocialProfileEditScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { profile, upsert } = useSocialProfile();
@@ -229,8 +231,8 @@ export default function SocialProfileEditScreen() {
 
   const validate = useCallback((): boolean => {
     const next: typeof errors = {};
-    if (!displayName.trim()) next.displayName = 'Display name is required';
-    if (vibeTags.length === 0) next.vibeTags = 'Select at least 1 vibe tag';
+    if (!displayName.trim()) next.displayName = t('socialProfileEdit.errorDisplayName', { defaultValue: 'Display name is required' });
+    if (vibeTags.length === 0) next.vibeTags = t('socialProfileEdit.errorVibeTags', { defaultValue: 'Select at least 1 vibe tag' });
     setErrors(next);
     return Object.keys(next).length === 0;
   }, [displayName, vibeTags]);
@@ -293,10 +295,10 @@ export default function SocialProfileEditScreen() {
       {/* ── Header ── */}
       <View style={styles.header}>
         <Pressable onPress={handleBack} style={styles.headerIcon} hitSlop={12}>
-          <ArrowLeft size={22} color={COLORS.cream} strokeWidth={2} />
+          <ArrowLeft size={22} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
 
-        <Text style={styles.headerTitle}>Edit Profile</Text>
+        <Text style={styles.headerTitle}>{t('socialProfileEdit.title', { defaultValue: 'Edit Profile' })}</Text>
 
         <Pressable
           onPress={handleSave}
@@ -308,8 +310,8 @@ export default function SocialProfileEditScreen() {
             <ActivityIndicator size="small" color={COLORS.bg} />
           ) : (
             <>
-              <Check size={16} color={COLORS.bg} strokeWidth={2.5} />
-              <Text style={styles.saveBtnText}>Save</Text>
+              <Check size={16} color={COLORS.bg} strokeWidth={1.5} />
+              <Text style={styles.saveBtnText}>{t('common.save', { defaultValue: 'Save' })}</Text>
             </>
           )}
         </Pressable>
@@ -326,7 +328,7 @@ export default function SocialProfileEditScreen() {
           <View style={styles.avatarCircle}>
             <Text style={styles.avatarEmoji}>{avatarEmoji}</Text>
           </View>
-          <Text style={styles.avatarHint}>Choose your travel avatar</Text>
+          <Text style={styles.avatarHint}>{t('socialProfileEdit.avatarHint', { defaultValue: 'Choose your travel avatar' })}</Text>
           <View style={styles.emojiRow}>
             {AVATAR_EMOJIS.map((emoji) => (
               <Pressable
@@ -346,7 +348,7 @@ export default function SocialProfileEditScreen() {
         {/* ── Display Name ── */}
         <View style={styles.section}>
           <View style={styles.labelRow}>
-            <SectionHeader label="Display Name" />
+            <SectionHeader label={t('socialProfileEdit.displayName', { defaultValue: 'Display Name' })} />
             <Text style={styles.charCount}>{displayNameCount}</Text>
           </View>
           <SectionCard>
@@ -354,7 +356,7 @@ export default function SocialProfileEditScreen() {
               style={styles.input}
               value={displayName}
               onChangeText={setDisplayName}
-              placeholder="How travelers see you"
+              placeholder={t('socialProfileEdit.displayNamePlaceholder', { defaultValue: 'How travelers see you' })}
               placeholderTextColor={COLORS.creamMuted}
               maxLength={50}
               autoCorrect={false}
@@ -369,7 +371,7 @@ export default function SocialProfileEditScreen() {
         {/* ── Bio ── */}
         <View style={styles.section}>
           <View style={styles.labelRow}>
-            <SectionHeader label="Bio" />
+            <SectionHeader label={t('socialProfileEdit.bio', { defaultValue: 'Bio' })} />
             <Text style={styles.charCount}>{bioCount}</Text>
           </View>
           <SectionCard>
@@ -377,7 +379,7 @@ export default function SocialProfileEditScreen() {
               style={[styles.input, styles.bioInput]}
               value={bio}
               onChangeText={setBio}
-              placeholder="What's your travel story?"
+              placeholder={t('socialProfileEdit.bioPlaceholder', { defaultValue: "What's your travel story?" })}
               placeholderTextColor={COLORS.creamMuted}
               maxLength={300}
               multiline
@@ -390,7 +392,7 @@ export default function SocialProfileEditScreen() {
 
         {/* ── Age Range ── */}
         <View style={styles.section}>
-          <SectionHeader label="Age Range" />
+          <SectionHeader label={t('socialProfileEdit.ageRange', { defaultValue: 'Age Range' })} />
           <View style={styles.pillRow}>
             {AGE_RANGES.map((range) => (
               <Pressable
@@ -416,7 +418,7 @@ export default function SocialProfileEditScreen() {
 
         {/* ── Travel Style ── */}
         <View style={styles.section}>
-          <SectionHeader label="Travel Style" />
+          <SectionHeader label={t('socialProfileEdit.travelStyle', { defaultValue: 'Travel Style' })} />
           <View style={styles.styleGrid}>
             {TRAVEL_STYLES.map((item) => {
               const isSelected = travelStyle === item.value;
@@ -448,7 +450,7 @@ export default function SocialProfileEditScreen() {
 
         {/* ── Languages ── */}
         <View style={styles.section}>
-          <SectionHeader label="Languages" />
+          <SectionHeader label={t('socialProfileEdit.languages', { defaultValue: 'Languages' })} />
           <View style={styles.pillRow}>
             {COMMON_LANGUAGES.map((lang) => (
               <Pressable
@@ -476,7 +478,7 @@ export default function SocialProfileEditScreen() {
               style={styles.customLangInput}
               value={customLanguage}
               onChangeText={setCustomLanguage}
-              placeholder="Add another…"
+              placeholder={t('socialProfileEdit.addLanguagePlaceholder', { defaultValue: 'Add another...' })}
               placeholderTextColor={COLORS.creamMuted}
               autoCorrect={false}
               returnKeyType="done"
@@ -484,7 +486,7 @@ export default function SocialProfileEditScreen() {
               selectionColor={COLORS.sage}
             />
             <Pressable onPress={handleAddCustomLanguage} style={styles.customLangAdd}>
-              <Text style={styles.customLangAddText}>Add</Text>
+              <Text style={styles.customLangAddText}>{t('common.add', { defaultValue: 'Add' })}</Text>
             </Pressable>
           </View>
           {/* Custom languages as removable pills */}
@@ -504,11 +506,11 @@ export default function SocialProfileEditScreen() {
         <View style={styles.section}>
           <Pressable onPress={handleTogglePrivacy} style={styles.privacyHeader}>
             <View style={styles.privacyHeaderLeft}>
-              <Shield size={18} color={COLORS.sage} strokeWidth={2} />
-              <Text style={styles.privacyHeaderText}>Privacy Settings</Text>
+              <Shield size={18} color={COLORS.sage} strokeWidth={1.5} />
+              <Text style={styles.privacyHeaderText}>{t('socialProfileEdit.privacySettings', { defaultValue: 'Privacy Settings' })}</Text>
             </View>
             <View style={privacyChevronRotation}>
-              <ChevronDown size={18} color={COLORS.creamMuted} strokeWidth={2} />
+              <ChevronDown size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
             </View>
           </Pressable>
 
@@ -517,8 +519,8 @@ export default function SocialProfileEditScreen() {
               {/* Visibility */}
               <View style={styles.privacySubSection}>
                 <Text style={styles.privacySubLabel}>
-                  <Globe size={13} color={COLORS.creamMuted} strokeWidth={2} />
-                  {'  '}Visibility
+                  <Globe size={13} color={COLORS.creamMuted} strokeWidth={1.5} />
+                  {'  '}{t('socialProfileEdit.visibility', { defaultValue: 'Visibility' })}
                 </Text>
                 <View style={styles.pillRow}>
                   {VISIBILITY_OPTIONS.map((opt) => {
@@ -548,15 +550,15 @@ export default function SocialProfileEditScreen() {
 
               {/* Toggles */}
               <ToggleRow
-                label="Show real name"
-                sublabel="Only shown after mutual match"
+                label={t('socialProfileEdit.showRealName', { defaultValue: 'Show real name' })}
+                sublabel={t('socialProfileEdit.showRealNameSub', { defaultValue: 'Only shown after mutual match' })}
                 value={privacy.showRealName}
                 onToggle={(v) => handlePrivacyField('showRealName', v)}
               />
               <View style={styles.privacyDivider} />
 
               <ToggleRow
-                label="Show age"
+                label={t('socialProfileEdit.showAge', { defaultValue: 'Show age' })}
                 value={privacy.showAge}
                 onToggle={(v) => handlePrivacyField('showAge', v)}
               />
@@ -570,15 +572,15 @@ export default function SocialProfileEditScreen() {
               <View style={styles.privacyDivider} />
 
               <ToggleRow
-                label="Auto-delete chats"
-                sublabel="Chats deleted when your trip ends"
+                label={t('socialProfileEdit.autoDeleteChats', { defaultValue: 'Auto-delete chats' })}
+                sublabel={t('socialProfileEdit.autoDeleteChatsSub', { defaultValue: 'Chats deleted when your trip ends' })}
                 value={privacy.autoDeleteChats}
                 onToggle={(v) => handlePrivacyField('autoDeleteChats', v)}
               />
 
               {/* Location precision */}
               <View style={[styles.privacySubSection, { marginTop: SPACING.md }]}>
-                <Text style={styles.privacySubLabel}>Location precision</Text>
+                <Text style={styles.privacySubLabel}>{t('socialProfileEdit.locationPrecision', { defaultValue: 'Location precision' })}</Text>
                 <View style={styles.pillRow}>
                   {LOCATION_PRECISION_OPTIONS.map((opt) => {
                     const isSelected = privacy.locationPrecision === opt.value;
@@ -614,7 +616,7 @@ export default function SocialProfileEditScreen() {
           {saving ? (
             <ActivityIndicator size="small" color={COLORS.bg} />
           ) : (
-            <Text style={styles.bottomSaveBtnText}>Save Profile</Text>
+            <Text style={styles.bottomSaveBtnText}>{t('socialProfileEdit.saveProfile', { defaultValue: 'Save Profile' })}</Text>
           )}
         </Pressable>
       </ScrollView>
@@ -657,7 +659,7 @@ const styles = StyleSheet.create({
   saveBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: SPACING.xs,
     backgroundColor: COLORS.sage,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs + 2,
@@ -690,7 +692,7 @@ const styles = StyleSheet.create({
   avatarCircle: {
     width: 100,
     height: 100,
-    borderRadius: 50,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.bgElevated,
     borderWidth: 2,
     borderColor: COLORS.sageBorder,
@@ -739,7 +741,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.creamMuted,
     letterSpacing: 0.5,
-    textTransform: 'uppercase',
   } as TextStyle,
   labelRow: {
     flexDirection: 'row',
@@ -819,7 +820,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,
-    gap: 3,
+    gap: SPACING.xs,
   } as ViewStyle,
   styleCardSelected: {
     backgroundColor: COLORS.sageSubtle,
@@ -862,7 +863,7 @@ const styles = StyleSheet.create({
   } as TextStyle,
   customLangAdd: {
     backgroundColor: COLORS.sageSubtle,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
     borderWidth: 1,
     borderColor: COLORS.sageBorder,
     paddingHorizontal: SPACING.md,
@@ -971,7 +972,7 @@ const styles = StyleSheet.create({
   // ── Bottom save ──
   bottomSaveBtn: {
     backgroundColor: COLORS.sage,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
     paddingVertical: SPACING.md,
     alignItems: 'center',
     justifyContent: 'center',

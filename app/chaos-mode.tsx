@@ -43,6 +43,7 @@ import { isGuestUser } from '../lib/guest';
 import { type Itinerary } from '../lib/types/itinerary';
 import { saveChaosDare, getDareShareUrl, getDareShareMessage } from '../lib/chaos-dare';
 import { withComingSoon } from '../lib/with-coming-soon';
+import { useTranslation } from 'react-i18next';
 
 // =============================================================================
 // Chaos Messages — shown during generation
@@ -99,6 +100,7 @@ function pickRandomDestination(): string {
 // Main Screen
 // =============================================================================
 function ChaosModeScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const addTrip = useAppStore((s) => s.addTrip);
@@ -359,10 +361,10 @@ function ChaosModeScreen() {
           <Text style={styles.backBtn}>{'\u2190'}</Text>
         </Pressable>
         <View>
-          <Text style={styles.headerEyebrow}>ZERO DECISIONS</Text>
-          <Text style={styles.headerTitle}>Chaos Mode</Text>
+          <Text style={styles.headerEyebrow}>{t('chaos.eyebrow', { defaultValue: 'ZERO DECISIONS' })}</Text>
+          <Text style={styles.headerTitle}>{t('chaos.title', { defaultValue: 'Chaos Mode' })}</Text>
         </View>
-        <View style={{ width: 24 }} />
+        <View style={{ width: SPACING.lg }} />
       </View>
 
       <ScrollView
@@ -374,11 +376,10 @@ function ChaosModeScreen() {
         {phase === 'idle' && (
           <View style={styles.idleContainer}>
             <Text style={styles.idleTitle}>
-              One tap.{'\n'}We pick everything for you.
+              {t('chaos.idleTitle', { defaultValue: 'One tap.\nWe pick everything for you.' })}
             </Text>
             <Text style={styles.idleSubtitle}>
-              Destination. Duration. Budget. Vibes.{'\n'}
-              No decisions. Just hit the button and pack your bags.
+              {t('chaos.idleSubtitle', { defaultValue: 'Destination. Duration. Budget. Vibes.\nNo decisions. Just hit the button and pack your bags.' })}
             </Text>
 
             <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
@@ -396,13 +397,13 @@ function ChaosModeScreen() {
                   style={styles.chaosButtonGradient}
                 >
                   <View style={styles.chaosButtonIcon}><DiceIcon size={28} color={COLORS.white} /></View>
-                  <Text style={styles.chaosButtonLabel}>SURPRISE ME</Text>
+                  <Text style={styles.chaosButtonLabel}>{t('chaos.surpriseMe', { defaultValue: 'SURPRISE ME' })}</Text>
                 </LinearGradient>
               </Pressable>
             </Animated.View>
 
             <Text style={styles.disclaimer}>
-              Warning: You might end up somewhere incredible.
+              {t('chaos.disclaimer', { defaultValue: 'Warning: You might end up somewhere incredible.' })}
             </Text>
 
             {error && (
@@ -421,15 +422,15 @@ function ChaosModeScreen() {
             </Animated.View>
             <Text style={styles.generatingText}>{chaosMessage}</Text>
             <View style={styles.chosenRow}>
-              <Text style={styles.chosenLabel}>Destination:</Text>
+              <Text style={styles.chosenLabel}>{t('chaos.destination', { defaultValue: 'Destination:' })}</Text>
               <Text style={styles.chosenValue}>{destination}</Text>
             </View>
             <View style={styles.chosenRow}>
-              <Text style={styles.chosenLabel}>Duration:</Text>
-              <Text style={styles.chosenValue}>{days} days</Text>
+              <Text style={styles.chosenLabel}>{t('chaos.duration', { defaultValue: 'Duration:' })}</Text>
+              <Text style={styles.chosenValue}>{t('chaos.daysCount', { defaultValue: '{{count}} days', count: days })}</Text>
             </View>
             <View style={styles.chosenRow}>
-              <Text style={styles.chosenLabel}>Budget:</Text>
+              <Text style={styles.chosenLabel}>{t('chaos.budget', { defaultValue: 'Budget:' })}</Text>
               <Text style={styles.chosenValue}>{budgetLabel}</Text>
             </View>
           </View>
@@ -481,7 +482,7 @@ function ChaosModeScreen() {
                   style={StyleSheet.absoluteFill}
                 />
                 <Text style={styles.chaosCardBrand}>ROAM</Text>
-                <Text style={styles.chaosCardMode}>SURPRISE ME</Text>
+                <Text style={styles.chaosCardMode}>{t('chaos.surpriseMe', { defaultValue: 'SURPRISE ME' })}</Text>
                 <Text style={styles.chaosCardDest}>
                   {itinerary.destination}
                 </Text>
@@ -509,7 +510,7 @@ function ChaosModeScreen() {
                   ))}
                   {itinerary.days.length > 3 && (
                     <Text style={styles.chaosCardMore}>
-                      +{itinerary.days.length - 3} more days
+                      {t('chaos.moreDays', { defaultValue: '+{{count}} more days', count: itinerary.days.length - 3 })}
                     </Text>
                   )}
                 </View>
@@ -523,10 +524,10 @@ function ChaosModeScreen() {
                 </View>
 
                 <Text style={styles.chaosCardDare}>
-                  I dare you.
+                  {t('chaos.dare', { defaultValue: 'I dare you.' })}
                 </Text>
                 <Text style={styles.chaosCardFooter}>
-                  Go somewhere that changes you.
+                  {t('chaos.footer', { defaultValue: 'Go somewhere that changes you.' })}
                 </Text>
               </ImageBackground>
               </View>
@@ -545,7 +546,7 @@ function ChaosModeScreen() {
                   colors={[COLORS.chaosGradientStart, COLORS.chaosGradientEnd]}
                   style={styles.shareBtnGradient}
                 >
-                  <Text style={styles.shareBtnText}>Send to the Group Chat</Text>
+                  <Text style={styles.shareBtnText}>{t('chaos.sendToGroupChat', { defaultValue: 'Send to the Group Chat' })}</Text>
                 </LinearGradient>
               </Pressable>
             </View>
@@ -561,7 +562,7 @@ function ChaosModeScreen() {
                   colors={[COLORS.goldAlpha80, COLORS.gold]}
                   style={styles.shareBtnGradient}
                 >
-                  <Text style={styles.shareBtnText}>Dare you to do this</Text>
+                  <Text style={styles.shareBtnText}>{t('chaos.dareYou', { defaultValue: 'Dare you to do this' })}</Text>
                 </LinearGradient>
               </Pressable>
             </View>
@@ -584,7 +585,7 @@ function ChaosModeScreen() {
               }}
             >
               <Text style={styles.viewBtnText}>
-                See the full trip
+                {t('chaos.seeFullTrip', { defaultValue: 'See the full trip' })}
               </Text>
             </Pressable>
 
@@ -606,7 +607,7 @@ function ChaosModeScreen() {
               }}
             >
               <Text style={styles.viewBtnText}>
-                See The Receipt
+                {t('chaos.seeReceipt', { defaultValue: 'See The Receipt' })}
               </Text>
             </Pressable>
 
@@ -620,13 +621,13 @@ function ChaosModeScreen() {
             >
               <View style={styles.rerollRow}>
                 <DiceIcon size={18} color={COLORS.danger} />
-                <Text style={styles.rerollText}>Try another surprise</Text>
+                <Text style={styles.rerollText}>{t('chaos.tryAnother', { defaultValue: 'Try another surprise' })}</Text>
               </View>
             </Pressable>
           </Animated.View>
         )}
 
-        <View style={{ height: 40 }} />
+        <View style={{ height: SPACING.xxl }} />
       </ScrollView>
     </View>
   );
@@ -714,23 +715,23 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xxl,
   } as TextStyle,
   chaosButton: {
-    borderRadius: 100,
+    borderRadius: RADIUS.pill,
     overflow: 'hidden',
     marginBottom: SPACING.xl,
   } as ViewStyle,
   chaosButtonGradient: {
     width: 160,
     height: 160,
-    borderRadius: 80,
+    borderRadius: RADIUS.pill,
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
   chaosButtonIcon: {
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   } as ViewStyle,
   chaosButtonText: {
     fontSize: 48,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   } as TextStyle,
   chaosButtonLabel: {
     fontFamily: FONTS.mono,
@@ -744,7 +745,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.creamMuted,
     textAlign: 'center',
-    fontStyle: 'italic',
   } as TextStyle,
 
   // Error
@@ -849,7 +849,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.creamMuted,
     letterSpacing: 3,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   } as TextStyle,
   chaosCardMode: {
     fontFamily: FONTS.mono,
@@ -864,7 +864,7 @@ const styles = StyleSheet.create({
     fontSize: 36,
     color: COLORS.cream,
     textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   } as TextStyle,
   chaosCardTagline: {
     fontFamily: FONTS.body,
@@ -944,7 +944,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.dangerHighlight,
     borderRadius: RADIUS.full,
     paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
+    paddingVertical: SPACING.xs,
     borderWidth: 1,
     borderColor: COLORS.dangerBorder,
   } as ViewStyle,
@@ -976,13 +976,13 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   } as ViewStyle,
   shareBtn: {
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.pill,
     overflow: 'hidden',
   } as ViewStyle,
   shareBtnGradient: {
     paddingVertical: SPACING.md,
     alignItems: 'center',
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.pill,
   } as ViewStyle,
   shareBtnText: {
     fontFamily: FONTS.bodySemiBold,
@@ -991,7 +991,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   } as TextStyle,
   viewBtn: {
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.pill,
     borderWidth: 1,
     borderColor: COLORS.border,
     paddingVertical: SPACING.md,
@@ -1004,7 +1004,7 @@ const styles = StyleSheet.create({
     color: COLORS.cream,
   } as TextStyle,
   rerollBtn: {
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.pill,
     borderWidth: 1,
     borderColor: COLORS.danger,
     paddingVertical: SPACING.md,

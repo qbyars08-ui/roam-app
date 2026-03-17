@@ -5,6 +5,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Linking, Pressable } from 'react-native';
 import { Leaf } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { estimateFlightEmissions, type CarbonEstimate } from '../../lib/carbon-footprint';
 
@@ -19,6 +20,7 @@ export default function CarbonFootprintCard({
   destination,
   roundTrip = true,
 }: CarbonFootprintCardProps) {
+  const { t } = useTranslation();
   const [estimate, setEstimate] = useState<CarbonEstimate | null>(null);
 
   useEffect(() => {
@@ -29,11 +31,11 @@ export default function CarbonFootprintCard({
 
   return (
     <View style={styles.card}>
-      <Leaf size={20} color={COLORS.carbonGreen} strokeWidth={2} />
+      <Leaf size={20} color={COLORS.carbonGreen} strokeWidth={1.5} />
       <View style={styles.content}>
-        <Text style={styles.title}>Carbon footprint</Text>
+        <Text style={styles.title}>{t('carbon.title', { defaultValue: 'Carbon footprint' })}</Text>
         <Text style={styles.amount}>
-          This trip ≈ {estimate.tonnesCO2} tonnes CO2
+          {`${t('carbon.tripEstimate', { defaultValue: 'This trip ≈' })} ${estimate.tonnesCO2} ${t('carbon.tonnesCO2', { defaultValue: 'tonnes CO2' })}`}
         </Text>
         {estimate.offsetCost ? (
           <Pressable
@@ -43,7 +45,7 @@ export default function CarbonFootprintCard({
             style={({ pressed }) => [styles.offsetBtn, { opacity: pressed ? 0.8 : 1 }]}
           >
             <Text style={styles.offsetText}>
-              Offset for ~${estimate.offsetCost} (plants trees via Gold Standard)
+              {`${t('carbon.offsetFor', { defaultValue: 'Offset for ~$' })}${estimate.offsetCost} ${t('carbon.offsetVia', { defaultValue: '(plants trees via Gold Standard)' })}`}
             </Text>
           </Pressable>
         ) : null}
@@ -76,7 +78,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   offsetBtn: {
-    marginTop: 8,
+    marginTop: SPACING.sm,
     paddingVertical: 6,
     paddingHorizontal: 10,
     backgroundColor: COLORS.carbonGreenBg,

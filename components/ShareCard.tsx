@@ -7,8 +7,9 @@ import React, { useCallback, useMemo, useRef } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ViewShot from 'react-native-view-shot';
+import { useTranslation } from 'react-i18next';
 
-import { COLORS, FONTS } from '../lib/constants';
+import { COLORS, FONTS, RADIUS, SPACING } from '../lib/constants';
 import { getDestinationPhoto } from '../lib/photos';
 
 // ---------------------------------------------------------------------------
@@ -55,6 +56,7 @@ function ShareCard({
   photoUrl,
   onCapture,
 }: ShareCardProps) {
+  const { t } = useTranslation();
   const viewRef = useRef<ViewShot>(null);
 
   const resolvedPhotoUrl = useMemo(
@@ -98,7 +100,7 @@ function ShareCard({
 
       {/* Gradient overlay: transparent top -> dark bottom */}
       <LinearGradient
-        colors={['transparent', 'rgba(8,15,10,0.85)']}
+        colors={['transparent', 'rgba(10,10,10,0.85)']}
         locations={[0.2, 0.8]}
         style={styles.gradient}
       />
@@ -125,7 +127,7 @@ function ShareCard({
         <View style={styles.bottomRight}>
           <View style={styles.brandRow}>
             <View style={styles.compassDot} />
-            <Text style={styles.brandText}>Made with ROAM</Text>
+            <Text style={styles.brandText}>{t('share.madeWithRoam', { defaultValue: 'Made with ROAM' })}</Text>
           </View>
         </View>
       </View>
@@ -141,7 +143,7 @@ const styles = StyleSheet.create({
   container: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
-    borderRadius: 12,
+    borderRadius: RADIUS.lg,
     overflow: 'hidden',
     backgroundColor: COLORS.bg,
     position: 'absolute',
@@ -161,7 +163,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
-    padding: 16,
+    padding: SPACING.md,
   },
   bottomLeft: {
     flex: 1,
@@ -170,7 +172,6 @@ const styles = StyleSheet.create({
   destinationName: {
     fontFamily: FONTS.header,
     fontSize: 32,
-    fontStyle: 'italic',
     color: COLORS.cream,
     lineHeight: 36,
   },
@@ -184,12 +185,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
-    marginTop: 8,
+    marginTop: SPACING.sm,
   },
   pill: {
     borderWidth: 1,
     borderColor: COLORS.sage,
-    borderRadius: 12,
+    borderRadius: RADIUS.lg,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },

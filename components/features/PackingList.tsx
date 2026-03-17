@@ -11,6 +11,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { Luggage, Check, ShoppingBag } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
@@ -78,6 +79,7 @@ export default function PackingList({
   tripId,
   skipList,
 }: PackingListProps) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [checked, setChecked] = useState<Set<string>>(new Set());
 
@@ -150,10 +152,10 @@ export default function PackingList({
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.headerLabelRow}>
-          <Luggage size={16} color={COLORS.sage} strokeWidth={2} />
-          <Text style={styles.headerLabel}>PACKING LIST</Text>
+          <Luggage size={16} color={COLORS.sage} strokeWidth={1.5} />
+          <Text style={styles.headerLabel}>{t('packing.headerLabel', { defaultValue: 'PACKING LIST' })}</Text>
         </View>
-          <Text style={styles.destination}>for {destination}</Text>
+          <Text style={styles.destination}>{`${t('packing.forPrefix', { defaultValue: 'for' })} ${destination}`}</Text>
         </View>
         <View style={styles.progressBadge}>
           <Text style={styles.progressText}>
@@ -165,7 +167,7 @@ export default function PackingList({
       {/* Don't bring — from packing AI */}
       {skipList && skipList.length > 0 && (
         <View style={styles.skipContainer}>
-          <Text style={styles.skipLabel}>DON'T BRING</Text>
+          <Text style={styles.skipLabel}>{t('packing.skipLabel', { defaultValue: "DON'T BRING" })}</Text>
           <Text style={styles.skipText}>{skipList.join(' · ')}</Text>
         </View>
       )}
@@ -210,7 +212,7 @@ export default function PackingList({
               </Text>
               {item.category === 'destination' && (
                 <View style={styles.destBadge}>
-                  <Text style={styles.destBadgeText}>TRIP</Text>
+                  <Text style={styles.destBadgeText}>{t('packing.tripBadge', { defaultValue: 'TRIP' })}</Text>
                 </View>
               )}
               <Pressable
@@ -221,7 +223,7 @@ export default function PackingList({
                   { opacity: pressed ? 0.5 : 0.7 },
                 ]}
               >
-                <ShoppingBag size={14} color={COLORS.creamMuted} strokeWidth={2} />
+                <ShoppingBag size={14} color={COLORS.creamMuted} strokeWidth={1.5} />
               </Pressable>
             </Pressable>
           );
@@ -239,15 +241,15 @@ export default function PackingList({
         >
           <Text style={styles.expandText}>
             {expanded
-              ? 'Show less'
-              : `Show all ${totalCount} items`}
+              ? t('packing.showLess', { defaultValue: 'Show less' })
+              : `${t('packing.showAll', { defaultValue: 'Show all' })} ${totalCount} ${t('packing.items', { defaultValue: 'items' })}`}
           </Text>
         </Pressable>
       )}
 
       {/* Amazon affiliate footer */}
       <Text style={styles.shopFooter}>
-        Tap the bag to shop on Amazon
+        {t('packing.shopFooter', { defaultValue: 'Tap the bag to shop on Amazon' })}
       </Text>
     </View>
   );
@@ -358,7 +360,7 @@ const styles = StyleSheet.create({
   checkbox: {
     width: 22,
     height: 22,
-    borderRadius: 6,
+    borderRadius: RADIUS.sm,
     borderWidth: 1.5,
     borderColor: COLORS.border,
     backgroundColor: COLORS.bgGlass,

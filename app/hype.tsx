@@ -19,6 +19,7 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import {
@@ -35,6 +36,7 @@ import { withComingSoon } from '../lib/with-coming-soon';
 // Hype Screen
 // ---------------------------------------------------------------------------
 function HypeScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ tripId?: string; destination?: string }>();
@@ -80,13 +82,13 @@ function HypeScreen() {
 
     // Validate YYYY-MM-DD format
     if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-      Alert.alert('Invalid format', 'Please enter a date as YYYY-MM-DD');
+      Alert.alert(t('hype.invalidFormat', { defaultValue: 'Invalid format' }), t('hype.invalidFormatBody', { defaultValue: 'Please enter a date as YYYY-MM-DD' }));
       return;
     }
 
     const parsed = new Date(trimmed);
     if (isNaN(parsed.getTime())) {
-      Alert.alert('Invalid date', 'That date does not appear to be valid');
+      Alert.alert(t('hype.invalidDate', { defaultValue: 'Invalid date' }), t('hype.invalidDateBody', { defaultValue: 'That date does not appear to be valid' }));
       return;
     }
 
@@ -120,7 +122,7 @@ function HypeScreen() {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Getting hyped...</Text>
+          <Text style={styles.loadingText}>{t('hype.loading', { defaultValue: 'Getting hyped...' })}</Text>
         </View>
       </View>
     );
@@ -162,7 +164,7 @@ function HypeScreen() {
                   {daysUntil}
                 </Text>
                 <Text style={styles.countdownLabel}>
-                  {daysUntil === 1 ? 'day' : 'days'} until{' '}
+                  {daysUntil === 1 ? t('hype.day', { defaultValue: 'day' }) : t('hype.days', { defaultValue: 'days' })} {t('hype.until', { defaultValue: 'until' })}{' '}
                   <Text style={styles.countdownDestination}>
                     {destination}
                   </Text>
@@ -173,7 +175,7 @@ function HypeScreen() {
             {/* Progress bar */}
             <View style={styles.progressSection}>
               <View style={styles.progressLabelRow}>
-                <Text style={styles.progressLabel}>TRIP PROGRESS</Text>
+                <Text style={styles.progressLabel}>{t('hype.tripProgress', { defaultValue: 'TRIP PROGRESS' })}</Text>
                 <Text style={styles.progressPercent}>
                   {Math.round(progress * 100)}%
                 </Text>
@@ -220,7 +222,7 @@ function HypeScreen() {
                   style={styles.shareGradient}
                 >
                   <Text style={styles.shareButtonText}>
-                    {'\uD83D\uDCE4'} Share Countdown
+                    {'\uD83D\uDCE4'} {t('hype.shareCountdown', { defaultValue: 'Share Countdown' })}
                   </Text>
                 </LinearGradient>
               </Pressable>
@@ -230,7 +232,7 @@ function HypeScreen() {
                 onPress={() => setShowDateInput(true)}
                 style={styles.changeDateBtn}
               >
-                <Text style={styles.changeDateText}>Change departure date</Text>
+                <Text style={styles.changeDateText}>{t('hype.changeDate', { defaultValue: 'Change departure date' })}</Text>
               </Pressable>
             </View>
           </>
@@ -239,10 +241,10 @@ function HypeScreen() {
           <View style={styles.setupContainer}>
             <Text style={styles.setupEmoji}>{'\uD83D\uDE80'}</Text>
             <Text style={styles.setupTitle}>
-              Set your departure date
+              {t('hype.setDepartureDate', { defaultValue: 'Set your departure date' })}
             </Text>
             <Text style={styles.setupSubtitle}>
-              Start the countdown to {destination}
+              {t('hype.startCountdown', { defaultValue: 'Start the countdown to {{destination}}', destination })}
             </Text>
           </View>
         )}
@@ -250,7 +252,7 @@ function HypeScreen() {
         {/* Date input section */}
         {(showDateInput || !hasHypeTrip) && (
           <View style={styles.dateInputSection}>
-            <Text style={styles.dateInputLabel}>DEPARTURE DATE</Text>
+            <Text style={styles.dateInputLabel}>{t('hype.departureDate', { defaultValue: 'DEPARTURE DATE' })}</Text>
             <TextInput
               style={styles.dateInput}
               placeholder="YYYY-MM-DD"
@@ -273,7 +275,7 @@ function HypeScreen() {
                 style={styles.setDateGradient}
               >
                 <Text style={styles.setDateText}>
-                  {hasHypeTrip ? 'Update Date' : 'Start Countdown'}
+                  {hasHypeTrip ? t('hype.updateDate', { defaultValue: 'Update Date' }) : t('hype.startCountdownBtn', { defaultValue: 'Start Countdown' })}
                 </Text>
               </LinearGradient>
             </Pressable>
@@ -282,7 +284,7 @@ function HypeScreen() {
                 onPress={() => setShowDateInput(false)}
                 style={styles.cancelBtn}
               >
-                <Text style={styles.cancelText}>Cancel</Text>
+                <Text style={styles.cancelText}>{t('hype.cancel', { defaultValue: 'Cancel' })}</Text>
               </Pressable>
             )}
           </View>

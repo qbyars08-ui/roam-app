@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../lib/haptics';
 import { ChevronRight } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
@@ -51,6 +52,7 @@ function CollectionCard({
 function TripCollectionsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const setPlanWizard = useAppStore((s) => s.setPlanWizard);
 
   const handleDestPress = useCallback(
@@ -68,9 +70,9 @@ function TripCollectionsScreen() {
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Text style={styles.backBtn}>{'\u2190'}</Text>
         </Pressable>
-        <Text style={styles.title}>Trip Collections</Text>
+        <Text style={styles.title}>{t('tripCollections.title', { defaultValue: 'Trip Collections' })}</Text>
         <Text style={styles.subtitle}>
-          Curated lists by vibe. Tap a destination to plan your own version.
+          {t('tripCollections.subtitle', { defaultValue: 'Curated lists by vibe. Tap a destination to plan your own version.' })}
         </Text>
       </View>
       <ScrollView

@@ -15,6 +15,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { X, DollarSign } from 'lucide-react-native';
@@ -54,6 +55,7 @@ export default function GroupExpenseCard({
   onSubmit,
   onDismiss,
 }: GroupExpenseCardProps) {
+  const { t } = useTranslation();
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<TripExpense['category']>('food');
   const [description, setDescription] = useState('');
@@ -86,16 +88,16 @@ export default function GroupExpenseCard({
         <View style={styles.modal}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Add Expense</Text>
+            <Text style={styles.title}>{t('group.addExpense', { defaultValue: 'Add Expense' })}</Text>
             <Pressable onPress={onDismiss} hitSlop={12}>
-              <X size={22} color={COLORS.cream} strokeWidth={2} />
+              <X size={22} color={COLORS.cream} strokeWidth={1.5} />
             </Pressable>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false}>
             {/* Amount */}
             <View style={styles.amountRow}>
-              <DollarSign size={28} color={COLORS.sage} strokeWidth={2} />
+              <DollarSign size={28} color={COLORS.sage} strokeWidth={1.5} />
               <TextInput
                 style={styles.amountInput}
                 value={amount}
@@ -109,12 +111,12 @@ export default function GroupExpenseCard({
 
             {perPerson && (
               <Text style={styles.perPerson}>
-                ${perPerson} per person ({members.length} people)
+                ${perPerson} {t('group.perPerson', { defaultValue: 'per person' })} ({members.length} {t('group.people', { defaultValue: 'people' })})
               </Text>
             )}
 
             {/* Category */}
-            <Text style={styles.sectionLabel}>CATEGORY</Text>
+            <Text style={styles.sectionLabel}>{t('group.category', { defaultValue: 'CATEGORY' })}</Text>
             <View style={styles.chipRow}>
               {CATEGORIES.map((cat) => (
                 <Pressable
@@ -141,18 +143,18 @@ export default function GroupExpenseCard({
             </View>
 
             {/* Description */}
-            <Text style={styles.sectionLabel}>DESCRIPTION</Text>
+            <Text style={styles.sectionLabel}>{t('group.description', { defaultValue: 'DESCRIPTION' })}</Text>
             <TextInput
               style={styles.descInput}
               value={description}
               onChangeText={setDescription}
-              placeholder="What was it for?"
+              placeholder={t('group.descriptionPlaceholder', { defaultValue: 'What was it for?' })}
               placeholderTextColor={COLORS.creamMuted}
               maxLength={100}
             />
 
             {/* Split type */}
-            <Text style={styles.sectionLabel}>SPLIT</Text>
+            <Text style={styles.sectionLabel}>{t('group.split', { defaultValue: 'SPLIT' })}</Text>
             <View style={styles.splitRow}>
               {SPLIT_TYPES.map((split) => (
                 <Pressable
@@ -191,7 +193,7 @@ export default function GroupExpenseCard({
             ]}
           >
             <Text style={[styles.submitText, !isValid && styles.submitTextDisabled]}>
-              Add Expense
+              {t('group.addExpenseSubmit', { defaultValue: 'Add Expense' })}
             </Text>
           </Pressable>
         </View>
@@ -232,7 +234,7 @@ const styles = StyleSheet.create({
   amountRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: SPACING.sm,
     marginBottom: SPACING.xs,
   } as ViewStyle,
   amountInput: {
@@ -259,7 +261,7 @@ const styles = StyleSheet.create({
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: SPACING.sm,
   } as ViewStyle,
   chip: {
     paddingHorizontal: SPACING.sm + 4,

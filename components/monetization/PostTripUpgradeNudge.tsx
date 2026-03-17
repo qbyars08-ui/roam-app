@@ -6,6 +6,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Sparkles, Gift, ArrowRight } from 'lucide-react-native';
 import * as Haptics from '../../lib/haptics';
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export default function PostTripUpgradeNudge({ destination }: Props) {
+  const { t } = useTranslation();
   const router = useRouter();
   const isPro = useAppStore((s) => s.isPro);
   const tripsThisMonth = useAppStore((s) => s.tripsThisMonth);
@@ -34,19 +36,20 @@ export default function PostTripUpgradeNudge({ destination }: Props) {
   const nudgeVariant = useMemo(() => {
     if (tripsThisMonth >= FREE_TRIPS_PER_MONTH) {
       return {
-        title: 'Loved this trip?',
-        subtitle: 'Upgrade to Pro for unlimited trips and premium features.',
-        ctaLabel: 'See Pro plans',
+        title: t('postTripNudge.lovedTrip', { defaultValue: 'Loved this trip?' }),
+        subtitle: t('postTripNudge.upgradeForUnlimited', { defaultValue: 'Upgrade to Pro for unlimited trips and premium features.' }),
+        ctaLabel: t('postTripNudge.seeProPlans', { defaultValue: 'See Pro plans' }),
         showReferral: true,
       };
     }
+    const tripsLeft = Math.max(0, FREE_TRIPS_PER_MONTH - tripsThisMonth);
     return {
-      title: 'Planning more adventures?',
-      subtitle: `You have ${Math.max(0, FREE_TRIPS_PER_MONTH - tripsThisMonth)} free trip${FREE_TRIPS_PER_MONTH - tripsThisMonth !== 1 ? 's' : ''} left this month. Go Pro for unlimited.`,
-      ctaLabel: 'Unlock unlimited',
+      title: t('postTripNudge.planningMore', { defaultValue: 'Planning more adventures?' }),
+      subtitle: t('postTripNudge.tripsRemaining', { defaultValue: 'You have {{count}} free trip left this month. Go Pro for unlimited.', count: tripsLeft }),
+      ctaLabel: t('postTripNudge.unlockUnlimited', { defaultValue: 'Unlock unlimited' }),
       showReferral: true,
     };
-  }, [tripsThisMonth]);
+  }, [tripsThisMonth, t]);
 
   if (isPro) return null;
 
@@ -54,7 +57,7 @@ export default function PostTripUpgradeNudge({ destination }: Props) {
     <View style={styles.container}>
       <View style={styles.card}>
         <View style={styles.headerRow}>
-          <Sparkles size={18} color={COLORS.gold} strokeWidth={2} />
+          <Sparkles size={18} color={COLORS.gold} strokeWidth={1.5} />
           <Text style={styles.title}>{nudgeVariant.title}</Text>
         </View>
         <Text style={styles.subtitle}>{nudgeVariant.subtitle}</Text>
@@ -74,7 +77,7 @@ export default function PostTripUpgradeNudge({ destination }: Props) {
               style={styles.ctaGradient}
             >
               <Text style={styles.ctaText}>{nudgeVariant.ctaLabel}</Text>
-              <ArrowRight size={16} color={COLORS.bg} strokeWidth={2.5} />
+              <ArrowRight size={16} color={COLORS.bg} strokeWidth={1.5} />
             </LinearGradient>
           </Pressable>
 
@@ -86,8 +89,8 @@ export default function PostTripUpgradeNudge({ destination }: Props) {
                 { opacity: pressed ? 0.7 : 1 },
               ]}
             >
-              <Gift size={14} color={COLORS.sage} strokeWidth={2} />
-              <Text style={styles.referralText}>Or earn free Pro</Text>
+              <Gift size={14} color={COLORS.sage} strokeWidth={1.5} />
+              <Text style={styles.referralText}>{t('postTripNudge.earnFreePro', { defaultValue: 'Or earn free Pro' })}</Text>
             </Pressable>
           )}
         </View>
@@ -132,7 +135,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
   } as ViewStyle,
   ctaWrapper: {
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
     overflow: 'hidden',
   } as ViewStyle,
   ctaGradient: {
@@ -141,7 +144,7 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm + 2,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
   } as ViewStyle,
   ctaText: {
     fontFamily: FONTS.bodySemiBold,

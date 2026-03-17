@@ -5,6 +5,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CheckCircle, Globe, MessageCircle, Bookmark } from 'lucide-react-native';
+import i18n from '../../lib/i18n';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import * as Haptics from '../../lib/haptics';
 import { type SocialProfile, type TravelStyle, VIBE_TAG_LABELS } from '../../lib/types/social';
@@ -37,12 +38,12 @@ const TRAVEL_STYLE_COLORS: Record<TravelStyle, { bg: string; text: string }> = {
 };
 
 const TRAVEL_STYLE_LABELS: Record<TravelStyle, string> = {
-  backpacker:      'Backpacker',
-  comfort:         'Comfort Traveler',
-  luxury:          'Luxury',
-  adventure:       'Adventure Seeker',
-  'slow-travel':   'Slow Traveler',
-  'digital-nomad': 'Digital Nomad',
+  backpacker:      i18n.t('social.travelStyle.backpacker', { defaultValue: 'Backpacker' }),
+  comfort:         i18n.t('social.travelStyle.comfort', { defaultValue: 'Comfort Traveler' }),
+  luxury:          i18n.t('social.travelStyle.luxury', { defaultValue: 'Luxury' }),
+  adventure:       i18n.t('social.travelStyle.adventure', { defaultValue: 'Adventure Seeker' }),
+  'slow-travel':   i18n.t('social.travelStyle.slowTravel', { defaultValue: 'Slow Traveler' }),
+  'digital-nomad': i18n.t('social.travelStyle.digitalNomad', { defaultValue: 'Digital Nomad' }),
 };
 
 // ---------------------------------------------------------------------------
@@ -78,7 +79,7 @@ const CompactProfileCard = React.memo<ProfileCardProps>(({ profile, chemistrySco
       <View style={styles.nameRow}>
         <Text style={styles.displayNameCompact} numberOfLines={1}>{profile.displayName}</Text>
         {profile.verified && (
-          <CheckCircle size={14} color={COLORS.sage} strokeWidth={2} />
+          <CheckCircle size={14} color={COLORS.sage} strokeWidth={1.5} />
         )}
       </View>
       <Text style={styles.ageRangeText}>{profile.ageRange}</Text>
@@ -142,7 +143,7 @@ const ProfileCard = React.memo<ProfileCardProps>(({
           <View style={styles.nameRow}>
             <Text style={styles.displayName} numberOfLines={1}>{profile.displayName}</Text>
             {profile.verified && (
-              <CheckCircle size={16} color={COLORS.sage} strokeWidth={2} />
+              <CheckCircle size={16} color={COLORS.sage} strokeWidth={1.5} />
             )}
           </View>
 
@@ -192,7 +193,7 @@ const ProfileCard = React.memo<ProfileCardProps>(({
       {/* Languages */}
       {profile.languages.length > 0 && (
         <View style={styles.languagesRow}>
-          <Globe size={14} color={COLORS.creamMuted} strokeWidth={2} />
+          <Globe size={14} color={COLORS.creamMuted} strokeWidth={1.5} />
           <Text style={styles.languagesText} numberOfLines={1}>
             {profile.languages.join(' · ')}
           </Text>
@@ -213,14 +214,14 @@ const ProfileCard = React.memo<ProfileCardProps>(({
             onPress={handleConnect}
             style={({ pressed }) => [styles.connectBtn, pressed && styles.btnPressed]}
           >
-            <Text style={styles.connectBtnText}>Connect</Text>
+            <Text style={styles.connectBtnText}>{i18n.t('social.connect', { defaultValue: 'Connect' })}</Text>
           </Pressable>
           <Pressable
             onPress={handleMessage}
             style={({ pressed }) => [styles.saveBtn, pressed && styles.btnPressed]}
           >
-            <Bookmark size={16} color={COLORS.creamMuted} strokeWidth={2} />
-            <Text style={styles.saveBtnText}>Save</Text>
+            <Bookmark size={16} color={COLORS.creamMuted} strokeWidth={1.5} />
+            <Text style={styles.saveBtnText}>{i18n.t('social.save', { defaultValue: 'Save' })}</Text>
           </Pressable>
         </View>
       )}

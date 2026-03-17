@@ -23,6 +23,7 @@ import * as Haptics from '../lib/haptics';
 import ViewShot, { captureRef } from '../lib/view-shot';
 import * as Sharing from 'expo-sharing';
 
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import {
   COMPAT_QUESTIONS,
@@ -80,6 +81,7 @@ const ResultCard = React.memo(function ResultCard({
   result: CompatResult;
   viewShotRef: React.RefObject<View>;
 }) {
+  const { t } = useTranslation();
   const scoreColor = useMemo(() => {
     if (result.overallScore >= 80) return COLORS.sage;
     if (result.overallScore >= 50) return COLORS.gold;
@@ -89,7 +91,7 @@ const ResultCard = React.memo(function ResultCard({
   return (
     <ViewShot ref={viewShotRef} style={styles.resultCardWrap}>
       <LinearGradient
-        colors={['#1A2E22', '#0D1F1A', COLORS.bg]}
+        colors={['#1A2E22', COLORS.bgCard, COLORS.bg]}
         style={styles.resultCard}
       >
         <Text style={styles.resultEmoji}>{result.matchEmoji}</Text>
@@ -104,11 +106,11 @@ const ResultCard = React.memo(function ResultCard({
         {result.strengths.length > 0 && (
           <View style={styles.resultSection}>
             <Text style={[styles.resultSectionTitle, { color: COLORS.sage }]}>
-              Strengths
+              {t('compatibility.strengths', { defaultValue: 'Strengths' })}
             </Text>
             {result.strengths.map((s, i) => (
               <View key={i} style={styles.resultItem}>
-                <Check size={14} color={COLORS.sage} strokeWidth={2.5} />
+                <Check size={14} color={COLORS.sage} strokeWidth={1.5} />
                 <Text style={styles.resultItemText}>{s}</Text>
               </View>
             ))}
@@ -119,7 +121,7 @@ const ResultCard = React.memo(function ResultCard({
         {result.watchOuts.length > 0 && (
           <View style={styles.resultSection}>
             <Text style={[styles.resultSectionTitle, { color: COLORS.gold }]}>
-              Watch Out For
+              {t('compatibility.watchOuts', { defaultValue: 'Watch Out For' })}
             </Text>
             {result.watchOuts.map((w, i) => (
               <View key={i} style={styles.resultItem}>
@@ -154,6 +156,7 @@ const ResultCard = React.memo(function ResultCard({
 function CompatibilityScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const trips = useAppStore((s) => s.trips);
   const viewShotRef = useRef<View>(null);
 
@@ -270,14 +273,14 @@ function CompatibilityScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <ChevronLeft size={28} color={COLORS.cream} strokeWidth={2} />
+          <ChevronLeft size={28} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
         <Text style={styles.headerTitle}>
-          {phase === 'result' ? 'Results' : 'Compatibility'}
+          {phase === 'result' ? t('compatibility.results', { defaultValue: 'Results' }) : t('compatibility.title', { defaultValue: 'Compatibility' })}
         </Text>
         {phase === 'result' ? (
           <Pressable onPress={handleShare} hitSlop={12}>
-            <Share2 size={22} color={COLORS.cream} strokeWidth={2} />
+            <Share2 size={22} color={COLORS.cream} strokeWidth={1.5} />
           </Pressable>
         ) : (
           <View style={{ width: 22 }} />
@@ -292,15 +295,14 @@ function CompatibilityScreen() {
         {phase === 'intro' && (
           <View style={styles.introContainer}>
             <Text style={styles.introEmoji}>{'\u2764\uFE0F\u200D\u{1F525}'}</Text>
-            <Text style={styles.introTitle}>Travel Compatibility</Text>
+            <Text style={styles.introTitle}>{t('compatibility.introTitle', { defaultValue: 'Travel Compatibility' })}</Text>
             <Text style={styles.introSub}>
-              Answer 10 quick questions about how you travel. Share with a friend
-              to see if you&apos;re travel soulmates — or complete opposites.
+              {t('compatibility.introSub', { defaultValue: "Answer 10 quick questions about how you travel. Share with a friend to see if you're travel soulmates — or complete opposites." })}
             </Text>
             <View style={styles.introBullets}>
-              <Text style={styles.introBullet}>{'\u{23F1}\uFE0F'} Takes 60 seconds</Text>
-              <Text style={styles.introBullet}>{'\u{1F4F8}'} Beautiful shareable results</Text>
-              <Text style={styles.introBullet}>{'\u{1F91D}'} Compare with friends</Text>
+              <Text style={styles.introBullet}>{'\u{23F1}\uFE0F'} {t('compatibility.bullet1', { defaultValue: 'Takes 60 seconds' })}</Text>
+              <Text style={styles.introBullet}>{'\u{1F4F8}'} {t('compatibility.bullet2', { defaultValue: 'Beautiful shareable results' })}</Text>
+              <Text style={styles.introBullet}>{'\u{1F91D}'} {t('compatibility.bullet3', { defaultValue: 'Compare with friends' })}</Text>
             </View>
             <Pressable
               onPress={() => {
@@ -312,8 +314,8 @@ function CompatibilityScreen() {
                 { opacity: pressed ? 0.85 : 1 },
               ]}
             >
-              <Text style={styles.startBtnText}>Start Quiz</Text>
-              <ArrowRight size={18} color="#000" strokeWidth={2.5} />
+              <Text style={styles.startBtnText}>{t('compatibility.startQuiz', { defaultValue: 'Start Quiz' })}</Text>
+              <ArrowRight size={18} color={COLORS.bg} strokeWidth={1.5} />
             </Pressable>
           </View>
         )}
@@ -368,8 +370,8 @@ function CompatibilityScreen() {
                   { opacity: pressed ? 0.85 : 1 },
                 ]}
               >
-                <Share2 size={18} color="#000" strokeWidth={2} />
-                <Text style={styles.shareResultText}>Share Results</Text>
+                <Share2 size={18} color={COLORS.bg} strokeWidth={1.5} />
+                <Text style={styles.shareResultText}>{t('compatibility.shareResults', { defaultValue: 'Share Results' })}</Text>
               </Pressable>
 
               <Pressable
@@ -379,8 +381,8 @@ function CompatibilityScreen() {
                   { opacity: pressed ? 0.7 : 1 },
                 ]}
               >
-                <RefreshCw size={16} color={COLORS.creamMuted} strokeWidth={2} />
-                <Text style={styles.retakeText}>Retake Quiz</Text>
+                <RefreshCw size={16} color={COLORS.creamMuted} strokeWidth={1.5} />
+                <Text style={styles.retakeText}>{t('compatibility.retakeQuiz', { defaultValue: 'Retake Quiz' })}</Text>
               </Pressable>
             </View>
 
@@ -395,10 +397,10 @@ function CompatibilityScreen() {
                 { opacity: pressed ? 0.85 : 1 },
               ]}
             >
-              <Users size={24} color={COLORS.sage} strokeWidth={2} />
-              <Text style={styles.planTogetherTitle}>Plan a trip together</Text>
+              <Users size={24} color={COLORS.sage} strokeWidth={1.5} />
+              <Text style={styles.planTogetherTitle}>{t('compatibility.planTogether', { defaultValue: 'Plan a trip together' })}</Text>
               <Text style={styles.planTogetherSub}>
-                Now that you know your compatibility, plan your next adventure.
+                {t('compatibility.planTogetherSub', { defaultValue: 'Now that you know your compatibility, plan your next adventure.' })}
               </Text>
             </Pressable>
           </View>
@@ -438,13 +440,13 @@ const styles = StyleSheet.create({
   progressDots: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 6,
+    gap: SPACING.sm,
     marginBottom: SPACING.xl,
   } as ViewStyle,
   dot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: SPACING.xs,
   } as ViewStyle,
 
   // Intro
@@ -486,13 +488,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.sage,
     paddingHorizontal: SPACING.xl + SPACING.md,
     paddingVertical: SPACING.md,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
     marginTop: SPACING.xl,
   } as ViewStyle,
   startBtnText: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 16,
-    color: '#000',
+    color: COLORS.bg,
   } as TextStyle,
 
   // Quiz
@@ -601,7 +603,7 @@ const styles = StyleSheet.create({
   } as TextStyle,
   breakdownGrid: {
     width: '100%',
-    gap: 6,
+    gap: SPACING.sm,
     marginTop: SPACING.sm,
   } as ViewStyle,
   breakdownRow: {
@@ -612,7 +614,7 @@ const styles = StyleSheet.create({
   breakdownDot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: SPACING.xs,
   } as ViewStyle,
   breakdownQuestion: {
     fontFamily: FONTS.body,
@@ -640,12 +642,12 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
     backgroundColor: COLORS.sage,
     paddingVertical: SPACING.md,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
   } as ViewStyle,
   shareResultText: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 16,
-    color: '#000',
+    color: COLORS.bg,
   } as TextStyle,
   retakeBtn: {
     flexDirection: 'row',

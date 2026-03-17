@@ -63,7 +63,7 @@ export default function WeatherDayStrip({
         {day.icon.startsWith('http') ? (
           <Image source={{ uri: day.icon }} style={styles.icon} />
         ) : (
-          <Cloud size={24} color={COLORS.creamMuted} strokeWidth={2} />
+          <Cloud size={24} color={COLORS.creamMuted} strokeWidth={1.5} />
         )}
         <View style={styles.temps}>
           <Text style={styles.tempHigh}>{day.tempMax}°</Text>
@@ -73,7 +73,7 @@ export default function WeatherDayStrip({
       <View style={styles.right}>
         {isRainy ? (
           <View style={[styles.rainBadge, { backgroundColor: `${accentColor}26`, borderColor: accentColor }]}>
-            <CloudRain size={14} color={accentColor} strokeWidth={2} />
+            <CloudRain size={14} color={accentColor} strokeWidth={1.5} />
             <Text style={[styles.rainText, { color: accentColor }]}>{rainChance}%</Text>
           </View>
         ) : (

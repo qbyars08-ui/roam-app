@@ -60,7 +60,7 @@ export default function SignInScreen() {
   // ---------------------------------------------------------------------------
   const handleAuth = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Almost there', 'Need your email and password to let you in.');
+      Alert.alert(t('auth.almostThere', { defaultValue: 'Almost there' }), t('auth.needCredentials', { defaultValue: 'Need your email and password to let you in.' }));
       return;
     }
 
@@ -73,7 +73,7 @@ export default function SignInScreen() {
           password,
         });
         if (error) throw error;
-        Alert.alert('Check your inbox', 'Confirmation link sent. Verify your email and you\'re in.');
+        Alert.alert(t('auth.checkInbox', { defaultValue: 'Check your inbox' }), t('auth.confirmationSent', { defaultValue: "Confirmation link sent. Verify your email and you're in." }));
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
@@ -83,7 +83,7 @@ export default function SignInScreen() {
         // Session change will trigger the auth guard redirect automatically
       }
     } catch (err: unknown) {
-      Alert.alert('That didn\'t work', err instanceof Error ? err.message : 'Try again — it usually does.');
+      Alert.alert(t('auth.error', { defaultValue: "That didn't work" }), err instanceof Error ? err.message : t('auth.tryAgain', { defaultValue: 'Try again — it usually does.' }));
     } finally {
       setLoading(false);
     }
@@ -110,11 +110,11 @@ export default function SignInScreen() {
 
       {/* Header */}
       <View style={styles.headerContainer}>
-        <Text style={styles.title}>{isSignUp ? 'Join ROAM' : t('auth.welcomeBack')}</Text>
+        <Text style={styles.title}>{isSignUp ? t('auth.joinRoam', { defaultValue: 'Join ROAM' }) : t('auth.welcomeBack')}</Text>
         <Text style={styles.subtitle}>
           {isSignUp
-            ? 'Takes 30 seconds. Then we build your first trip.'
-            : 'Your trips are waiting.'}
+            ? t('auth.signUpSubtitle', { defaultValue: 'Takes 30 seconds. Then we build your first trip.' })
+            : t('auth.signInSubtitle', { defaultValue: 'Your trips are waiting.' })}
         </Text>
       </View>
 
@@ -160,7 +160,7 @@ export default function SignInScreen() {
         {/* Toggle sign-in / sign-up */}
         <Pressable style={styles.toggleRow} onPress={() => setIsSignUp(!isSignUp)}>
           <Text style={styles.toggleText}>
-            {isSignUp ? 'Already here? ' : "New here? "}
+            {isSignUp ? t('auth.alreadyHere', { defaultValue: 'Already here? ' }) : t('auth.newHere', { defaultValue: 'New here? ' })}
           </Text>
           <Text style={styles.toggleLink}>
             {isSignUp ? t('auth.signIn') : t('auth.createAccount')}
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
   guestBtn: {
     marginTop: SPACING.md,
     paddingVertical: SPACING.md,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
     borderWidth: 1,
     borderColor: COLORS.border,
     alignItems: 'center',

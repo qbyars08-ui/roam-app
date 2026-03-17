@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, View, Text } from 'react-native';
+import { View, Text } from 'react-native';
 import { Sunrise, Sunset, Sun } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { SkeletonCard } from '../premium/LoadingStates';
 
 interface GoldenHourCardProps {
   lat: number;
@@ -100,22 +101,7 @@ export const GoldenHourCard: React.FC<GoldenHourCardProps> = ({ lat, lng }) => {
   }, [data]);
 
   if (loading) {
-    return (
-      <View
-        style={{
-          backgroundColor: COLORS.bgCard,
-          borderRadius: RADIUS.lg,
-          borderWidth: 1,
-          borderColor: COLORS.border,
-          padding: SPACING.lg,
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: 200,
-        }}
-      >
-        <ActivityIndicator color={COLORS.sage} size="small" />
-      </View>
-    );
+    return <SkeletonCard height={200} />;
   }
 
   if (error || !data || !bestPhotoWindow) {
@@ -135,7 +121,7 @@ export const GoldenHourCard: React.FC<GoldenHourCardProps> = ({ lat, lng }) => {
     >
       {/* Header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm }}>
-        <Sun width={24} height={24} color={COLORS.cream} strokeWidth={2} />
+        <Sun width={24} height={24} color={COLORS.cream} strokeWidth={1.5} />
         <Text
           style={{
             fontFamily: FONTS.header,
@@ -151,7 +137,7 @@ export const GoldenHourCard: React.FC<GoldenHourCardProps> = ({ lat, lng }) => {
       {/* Morning Golden Hour */}
       <View style={{ gap: SPACING.xs }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm }}>
-          <Sunrise width={18} height={18} color={COLORS.sage} strokeWidth={2} />
+          <Sunrise width={18} height={18} color={COLORS.sage} strokeWidth={1.5} />
           <Text
             style={{
               fontFamily: FONTS.body,
@@ -178,7 +164,7 @@ export const GoldenHourCard: React.FC<GoldenHourCardProps> = ({ lat, lng }) => {
       {/* Evening Golden Hour */}
       <View style={{ gap: SPACING.xs }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm }}>
-          <Sunset width={18} height={18} color={COLORS.sage} strokeWidth={2} />
+          <Sunset width={18} height={18} color={COLORS.sage} strokeWidth={1.5} />
           <Text
             style={{
               fontFamily: FONTS.body,

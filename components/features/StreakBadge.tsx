@@ -127,7 +127,7 @@ export default function StreakBadge({
         },
       ]}
     >
-      <IconComp size={dims.icon} color={tier.color} strokeWidth={2} />
+      <IconComp size={dims.icon} color={tier.color} strokeWidth={1.5} />
       <Text style={[styles.count, { fontSize: dims.text, color: tier.color }]}>
         {streak}
       </Text>

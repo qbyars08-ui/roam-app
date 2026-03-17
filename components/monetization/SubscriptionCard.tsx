@@ -14,6 +14,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Crown, ArrowRight, Settings, Gift } from 'lucide-react-native';
 import * as Haptics from '../../lib/haptics';
@@ -21,19 +22,20 @@ import { COLORS, FONTS, SPACING, RADIUS, FREE_TRIPS_PER_MONTH } from '../../lib/
 import { useAppStore } from '../../lib/store';
 import { getCurrentPlan, type PlanType } from '../../lib/revenue-cat';
 
-const PLAN_LABELS: Record<PlanType, string> = {
-  free: 'Free',
-  pro: 'ROAM Pro',
-  global: 'Global Pass',
-};
+const getPlanLabels = (t: (key: string, options?: Record<string, unknown>) => string): Record<PlanType, string> => ({
+  free: t('subscription.planFree', { defaultValue: 'Free' }),
+  pro: t('subscription.planPro', { defaultValue: 'ROAM Pro' }),
+  global: t('subscription.planGlobal', { defaultValue: 'Global Pass' }),
+});
 
-const PLAN_DETAILS: Record<PlanType, string> = {
-  free: `${FREE_TRIPS_PER_MONTH} trip per month`,
-  pro: 'Unlimited trips + all features',
-  global: 'Unlimited trips + founding perks',
-};
+const getPlanDetails = (t: (key: string, options?: Record<string, unknown>) => string): Record<PlanType, string> => ({
+  free: t('subscription.detailFree', { defaultValue: '{{count}} trip per month', count: FREE_TRIPS_PER_MONTH }),
+  pro: t('subscription.detailPro', { defaultValue: 'Unlimited trips + all features' }),
+  global: t('subscription.detailGlobal', { defaultValue: 'Unlimited trips + founding perks' }),
+});
 
 export default function SubscriptionCard() {
+  const { t } = useTranslation();
   const router = useRouter();
   const isPro = useAppStore((s) => s.isPro);
   const tripsThisMonth = useAppStore((s) => s.tripsThisMonth);
@@ -74,25 +76,25 @@ export default function SubscriptionCard() {
           style={styles.proGradient}
         >
           <View style={styles.proHeader}>
-            <Crown size={20} color={COLORS.gold} strokeWidth={2} />
-            <Text style={styles.proTitle}>{PLAN_LABELS[plan]}</Text>
+            <Crown size={20} color={COLORS.gold} strokeWidth={1.5} />
+            <Text style={styles.proTitle}>{getPlanLabels(t)[plan]}</Text>
           </View>
-          <Text style={styles.proDetail}>{PLAN_DETAILS[plan]}</Text>
+          <Text style={styles.proDetail}>{getPlanDetails(t)[plan]}</Text>
 
           <View style={styles.proActions}>
             <Pressable
               onPress={handleManage}
               style={({ pressed }) => [styles.manageBtn, { opacity: pressed ? 0.7 : 1 }]}
             >
-              <Settings size={14} color={COLORS.creamMuted} strokeWidth={2} />
-              <Text style={styles.manageBtnText}>Manage subscription</Text>
+              <Settings size={14} color={COLORS.creamMuted} strokeWidth={1.5} />
+              <Text style={styles.manageBtnText}>{t('subscription.manage', { defaultValue: 'Manage subscription' })}</Text>
             </Pressable>
             <Pressable
               onPress={handleReferral}
               style={({ pressed }) => [styles.referralBtn, { opacity: pressed ? 0.7 : 1 }]}
             >
-              <Gift size={14} color={COLORS.sage} strokeWidth={2} />
-              <Text style={styles.referralBtnText}>Share with friends</Text>
+              <Gift size={14} color={COLORS.sage} strokeWidth={1.5} />
+              <Text style={styles.referralBtnText}>{t('subscription.shareWithFriends', { defaultValue: 'Share with friends' })}</Text>
             </Pressable>
           </View>
         </LinearGradient>
@@ -104,14 +106,14 @@ export default function SubscriptionCard() {
     <View style={styles.freeCard}>
       <View style={styles.freeHeader}>
         <View style={styles.freeBadge}>
-          <Text style={styles.freeBadgeText}>FREE PLAN</Text>
+          <Text style={styles.freeBadgeText}>{t('subscription.freePlan', { defaultValue: 'FREE PLAN' })}</Text>
         </View>
         <Text style={styles.freeTrips}>
-          {tripsThisMonth}/{FREE_TRIPS_PER_MONTH} trips used
+          {t('subscription.tripsUsed', { defaultValue: '{{used}}/{{total}} trips used', used: tripsThisMonth, total: FREE_TRIPS_PER_MONTH })}
         </Text>
       </View>
       <Text style={styles.freeDetail}>
-        Upgrade to unlock unlimited trips, all premium features, and priority AI.
+        {t('subscription.upgradeDescription', { defaultValue: 'Upgrade to unlock unlimited trips, all premium features, and priority AI.' })}
       </Text>
       <Pressable
         onPress={handleUpgrade}
@@ -126,8 +128,8 @@ export default function SubscriptionCard() {
           end={{ x: 1, y: 0 }}
           style={styles.upgradeGradient}
         >
-          <Text style={styles.upgradeBtnText}>Upgrade to Pro</Text>
-          <ArrowRight size={16} color={COLORS.bg} strokeWidth={2.5} />
+          <Text style={styles.upgradeBtnText}>{t('subscription.upgradeToPro', { defaultValue: 'Upgrade to Pro' })}</Text>
+          <ArrowRight size={16} color={COLORS.bg} strokeWidth={1.5} />
         </LinearGradient>
       </Pressable>
     </View>
@@ -227,7 +229,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   } as TextStyle,
   upgradeBtn: {
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
     overflow: 'hidden',
     marginTop: SPACING.xs,
   } as ViewStyle,
@@ -237,7 +239,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: SPACING.xs,
     paddingVertical: SPACING.sm + 4,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
   } as ViewStyle,
   upgradeBtnText: {
     fontFamily: FONTS.bodySemiBold,

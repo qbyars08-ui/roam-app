@@ -14,10 +14,10 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Speech from 'expo-speech';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../lib/haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ChevronLeft, Volume2 } from 'lucide-react-native';
+import { ChevronLeft, Volume2, Loader2 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import {
@@ -27,12 +27,19 @@ import {
   type Phrase,
   type PhraseCategory,
 } from '../lib/language-data';
+import { pronounce, SUPPORTED_TTS_LANGUAGES, type TTSLanguage } from '../lib/elevenlabs';
 
 const STORAGE_KEY = '@roam/language-survival-cache';
 const CATEGORY_ORDER: PhraseCategory[] = ['greetings', 'food', 'transport', 'shopping', 'emergency', 'nightlife'];
 
+// Map pack langCode (e.g. ja-JP, es-ES) to voice-proxy TTS language
+function toTTSLanguage(langCode: string): TTSLanguage {
+  const code = langCode.split('-')[0]?.toLowerCase() ?? 'en';
+  return SUPPORTED_TTS_LANGUAGES.includes(code as TTSLanguage) ? (code as TTSLanguage) : 'en';
+}
+
 // -----------------------------------------------------------------------------
-// Phrase card
+// Phrase card — audio via voice-proxy (ElevenLabs TTS)
 // -----------------------------------------------------------------------------
 function PhraseCard({
   phrase,
@@ -43,19 +50,24 @@ function PhraseCard({
   langCode: string;
   onPress: () => void;
 }) {
-  const speak = useCallback(() => {
+  const { t } = useTranslation();
+  const [loading, setLoading] = useState(false);
+  const ttsLang = toTTSLanguage(langCode);
+
+  const playPhrase = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    Speech.stop();
-    Speech.speak(phrase.local, {
-      language: langCode,
-      rate: 0.85,
-    });
     onPress();
-  }, [phrase.local, langCode, onPress]);
+    setLoading(true);
+    pronounce(phrase.local, ttsLang)
+      .catch(() => '')
+      // Voice-proxy unavailable — fail silently
+      .finally(() => setLoading(false));
+  }, [phrase.local, ttsLang, onPress]);
 
   return (
     <Pressable
-      onPress={speak}
+      onPress={playPhrase}
+      disabled={loading}
       style={({ pressed }) => [
         styles.phraseCard,
         { opacity: pressed ? 0.9 : 1 },
@@ -71,12 +83,16 @@ function PhraseCard({
           <Text style={styles.phraseEnglish}>{phrase.english}</Text>
           {phrase.atStop ? (
             <View style={styles.atStopBadge}>
-              <Text style={styles.atStopText}>At {phrase.atStop}</Text>
+              <Text style={styles.atStopText}>{t('languageSurvival.atStop', { defaultValue: 'At {{stop}}', stop: phrase.atStop })}</Text>
             </View>
           ) : null}
         </View>
         <View style={styles.speakBtn}>
-          <Volume2 size={20} color={COLORS.gold} strokeWidth={2} />
+          {loading ? (
+            <Loader2 size={20} color={COLORS.gold} strokeWidth={1.5} />
+          ) : (
+            <Volume2 size={20} color={COLORS.gold} strokeWidth={1.5} />
+          )}
         </View>
       </LinearGradient>
     </Pressable>
@@ -87,6 +103,7 @@ function PhraseCard({
 // Main screen
 // -----------------------------------------------------------------------------
 function LanguageSurvivalScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ city?: string; destination?: string }>();
@@ -142,7 +159,7 @@ function LanguageSurvivalScreen() {
         <Pressable onPress={handleBack} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}>
           <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
-        <Text style={styles.headerTitle}>Language Survival</Text>
+        <Text style={styles.headerTitle}>{t('languageSurvival.title', { defaultValue: 'Language Survival' })}</Text>
       </View>
 
       {/* City picker */}
@@ -177,10 +194,10 @@ function LanguageSurvivalScreen() {
         <Text style={styles.packFlag}>{pack.flag}</Text>
         <View>
           <Text style={styles.packCity}>{pack.city}</Text>
-          <Text style={styles.packLang}>{pack.language} · {pack.phrases.length} phrases</Text>
+          <Text style={styles.packLang}>{pack.language} · {pack.phrases.length} {t('languageSurvival.phrases', { defaultValue: 'phrases' })}</Text>
         </View>
         {cachedCity === selectedCity && (
-          <Text style={styles.cachedBadge}>Offline</Text>
+          <Text style={styles.cachedBadge}>{t('languageSurvival.offline', { defaultValue: 'Offline' })}</Text>
         )}
       </View>
 
@@ -196,7 +213,7 @@ function LanguageSurvivalScreen() {
           style={[styles.catChip, activeCategory === 'all' && styles.catChipActive]}
         >
           <Text style={[styles.catChipText, activeCategory === 'all' && styles.catChipTextActive]}>
-            All
+            {t('languageSurvival.all', { defaultValue: 'All' })}
           </Text>
         </Pressable>
         {CATEGORY_ORDER.map((cat) => {
@@ -396,7 +413,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   } as TextStyle,
   atStopBadge: {
-    marginTop: 8,
+    marginTop: SPACING.sm,
     alignSelf: 'flex-start',
     backgroundColor: COLORS.sageMuted,
     paddingHorizontal: SPACING.sm,

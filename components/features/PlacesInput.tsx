@@ -2,6 +2,7 @@
 // ROAM — Google Places Autocomplete Input
 // =============================================================================
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   FlatList,
   Pressable,
@@ -53,8 +54,10 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
 export default function PlacesInput({
   value,
   onSelect,
-  placeholder = 'Search destinations...',
+  placeholder,
 }: PlacesInputProps) {
+  const { t } = useTranslation();
+  const resolvedPlaceholder = placeholder ?? t('places.searchPlaceholder', { defaultValue: 'Search destinations...' });
   const [query, setQuery] = useState(value);
   const [results, setResults] = useState<PlacePrediction[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -139,7 +142,7 @@ export default function PlacesInput({
           { backgroundColor: pressed ? COLORS.bgGlass : 'transparent' },
         ]}
       >
-        <MapPin size={16} color={COLORS.sage} strokeWidth={2} />
+        <MapPin size={16} color={COLORS.sage} strokeWidth={1.5} />
         <View style={styles.resultTextContainer}>
           <Text style={styles.resultMain} numberOfLines={1}>
             {item.mainText}
@@ -159,14 +162,14 @@ export default function PlacesInput({
     <View style={styles.container}>
       {/* Input field */}
       <View style={styles.inputContainer}>
-        <Search size={18} color={COLORS.creamMuted} strokeWidth={2} />
+        <Search size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
         <TextInput
           ref={inputRef}
           style={styles.input}
           value={query}
           onChangeText={handleChangeText}
           onFocus={handleFocus}
-          placeholder={placeholder}
+          placeholder={resolvedPlaceholder}
           placeholderTextColor={COLORS.creamMuted}
           autoCapitalize="words"
           autoCorrect={false}
@@ -187,7 +190,7 @@ export default function PlacesInput({
             style={styles.clearButton}
             hitSlop={8}
           >
-            <X size={18} color={COLORS.creamMuted} strokeWidth={2} />
+            <X size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
           </Pressable>
         )}
       </View>

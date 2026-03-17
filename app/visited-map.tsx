@@ -20,6 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
 
 import { ChevronLeft } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import {
   type VisitedPlace,
@@ -58,6 +59,7 @@ function getNextMilestone(count: number): number {
 function VisitedMapScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
 
   // State
   const [places, setPlaces] = useState<VisitedPlace[]>([]);
@@ -131,7 +133,7 @@ function VisitedMapScreen() {
         maxCount = count;
       }
     }
-    return max || 'None yet';
+    return max || '';
   }, [stats]);
 
   const mostVisitedCountry = useMemo(() => {
@@ -143,7 +145,7 @@ function VisitedMapScreen() {
         maxCount = arr.length;
       }
     }
-    return max || 'None yet';
+    return max || '';
   }, [visitedCountries]);
 
   const worldExploredPct = useMemo(
@@ -246,7 +248,7 @@ function VisitedMapScreen() {
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
-        <Text style={styles.headerTitle}>Visited Map</Text>
+        <Text style={styles.headerTitle}>{t('visitedMap.title', { defaultValue: 'Visited Map' })}</Text>
         <View style={styles.backBtn} />
       </View>
 
@@ -261,11 +263,11 @@ function VisitedMapScreen() {
           {/* WORLD STATS */}
           {/* ============================================================= */}
           <View style={styles.statsRow}>
-            <StatBig label="Places" value={stats.totalPlaces} />
+            <StatBig label={t('visitedMap.places', { defaultValue: 'Places' })} value={stats.totalPlaces} />
             <View style={styles.statDivider} />
-            <StatBig label="Countries" value={stats.totalCountries} />
+            <StatBig label={t('visitedMap.countries', { defaultValue: 'Countries' })} value={stats.totalCountries} />
             <View style={styles.statDivider} />
-            <StatBig label="Continents" value={stats.totalContinents} />
+            <StatBig label={t('visitedMap.continents', { defaultValue: 'Continents' })} value={stats.totalContinents} />
           </View>
 
           {/* Total miles traveled */}
@@ -274,16 +276,16 @@ function VisitedMapScreen() {
               <Text style={styles.milesValue}>
                 {stats.totalMilesTraveled.toLocaleString()} mi
               </Text>
-              <Text style={styles.milesLabel}>Total miles traveled</Text>
+              <Text style={styles.milesLabel}>{t('visitedMap.totalMiles', { defaultValue: 'Total miles traveled' })}</Text>
               <Text style={styles.milesSub}>
-                Estimated from your trip sequence
+                {t('visitedMap.estimatedMiles', { defaultValue: 'Estimated from your trip sequence' })}
               </Text>
             </View>
           )}
 
           {/* Continent progress bars */}
           <View style={styles.card}>
-            <Text style={styles.sectionLabel}>· Continent progress</Text>
+            <Text style={styles.sectionLabel}>{t('visitedMap.continentProgress', { defaultValue: '· Continent progress' })}</Text>
             {ALL_CONTINENTS.filter((c) => c !== 'Antarctica').map((continent) => {
               const total = COUNTRIES_PER_CONTINENT[continent] ?? 1;
               const visitedInContinent = new Set(
@@ -314,7 +316,7 @@ function VisitedMapScreen() {
           {/* VISUAL WORLD GRID */}
           {/* ============================================================= */}
           <View style={styles.card}>
-            <Text style={styles.sectionLabel}>· World grid</Text>
+            <Text style={styles.sectionLabel}>{t('visitedMap.worldGrid', { defaultValue: '· World grid' })}</Text>
             {Object.entries(WORLD_GRID).map(([continent, countries]) => (
               <View key={continent} style={styles.gridSection}>
                 <Text style={styles.continentHeader}>{continent}</Text>
@@ -373,11 +375,11 @@ function VisitedMapScreen() {
           {/* ADD PLACE */}
           {/* ============================================================= */}
           <View style={styles.card}>
-            <Text style={styles.sectionLabel}>· Add a place</Text>
+            <Text style={styles.sectionLabel}>{t('visitedMap.addPlace', { defaultValue: '· Add a place' })}</Text>
             <View style={styles.inputRow}>
               <TextInput
                 style={styles.textInput}
-                placeholder="Search destination..."
+                placeholder={t('visitedMap.searchPlaceholder', { defaultValue: 'Search destination...' })}
                 placeholderTextColor={COLORS.creamMuted}
                 value={addInput}
                 onChangeText={handleInputChange}
@@ -406,7 +408,7 @@ function VisitedMapScreen() {
             )}
 
             <Pressable style={styles.syncBtn} onPress={handleSyncTrips}>
-              <Text style={styles.syncBtnText}>Sync from trips</Text>
+              <Text style={styles.syncBtnText}>{t('visitedMap.syncFromTrips', { defaultValue: 'Sync from trips' })}</Text>
             </Pressable>
           </View>
 
@@ -414,16 +416,16 @@ function VisitedMapScreen() {
           {/* TRAVEL STATS CARDS */}
           {/* ============================================================= */}
           <View style={styles.card}>
-            <Text style={styles.sectionLabel}>· Travel stats</Text>
+            <Text style={styles.sectionLabel}>{t('visitedMap.travelStats', { defaultValue: '· Travel stats' })}</Text>
 
             <View style={styles.statCardGrid}>
               <View style={styles.statCard}>
-                <Text style={styles.statCardValue}>{mostVisitedContinent}</Text>
-                <Text style={styles.statCardLabel}>Top continent</Text>
+                <Text style={styles.statCardValue}>{mostVisitedContinent || t('visitedMap.noneYet', { defaultValue: 'None yet' })}</Text>
+                <Text style={styles.statCardLabel}>{t('visitedMap.topContinent', { defaultValue: 'Top continent' })}</Text>
               </View>
               <View style={styles.statCard}>
-                <Text style={styles.statCardValue}>{mostVisitedCountry}</Text>
-                <Text style={styles.statCardLabel}>Top country</Text>
+                <Text style={styles.statCardValue}>{mostVisitedCountry || t('visitedMap.noneYet', { defaultValue: 'None yet' })}</Text>
+                <Text style={styles.statCardLabel}>{t('visitedMap.topCountry', { defaultValue: 'Top country' })}</Text>
               </View>
             </View>
 
@@ -456,7 +458,7 @@ function VisitedMapScreen() {
             {/* World explored */}
             <View style={styles.worldExploredCard}>
               <Text style={styles.worldExploredValue}>{worldExploredPct}%</Text>
-              <Text style={styles.worldExploredLabel}>of the world explored</Text>
+              <Text style={styles.worldExploredLabel}>{t('visitedMap.worldExplored', { defaultValue: 'of the world explored' })}</Text>
               <Text style={styles.worldExploredSub}>
                 {stats.totalCountries} of 195 countries
               </Text>
@@ -467,16 +469,16 @@ function VisitedMapScreen() {
           {/* BUCKET LIST */}
           {/* ============================================================= */}
           <View style={styles.card}>
-            <Text style={styles.sectionLabel}>· Bucket list</Text>
+            <Text style={styles.sectionLabel}>{t('visitedMap.bucketList', { defaultValue: '· Bucket list' })}</Text>
             <Text style={styles.sectionSubtext}>
-              Dream destinations you haven't visited yet
+              {t('visitedMap.bucketListSub', { defaultValue: "Dream destinations you haven't visited yet" })}
             </Text>
 
             {/* Add bucket list item */}
             <View style={styles.inputRow}>
               <TextInput
                 style={styles.textInput}
-                placeholder="Add a dream destination..."
+                placeholder={t('visitedMap.addDreamPlaceholder', { defaultValue: 'Add a dream destination...' })}
                 placeholderTextColor={COLORS.creamMuted}
                 value={bucketInput}
                 onChangeText={handleBucketInputChange}
@@ -507,7 +509,7 @@ function VisitedMapScreen() {
             {/* Bucket list items */}
             {bucketList.length === 0 && (
               <Text style={styles.emptyText}>
-                No dream destinations yet. Add one above.
+                {t('visitedMap.noDreamDestinations', { defaultValue: 'No dream destinations yet. Add one above.' })}
               </Text>
             )}
             {bucketList.map((item) => (
@@ -526,7 +528,7 @@ function VisitedMapScreen() {
                     style={styles.bucketActionBtn}
                     onPress={() => handleMoveBucketToVisited(item)}
                   >
-                    <Text style={styles.bucketActionVisited}>Visited</Text>
+                    <Text style={styles.bucketActionVisited}>{t('visitedMap.visited', { defaultValue: 'Visited' })}</Text>
                   </Pressable>
                   <Pressable
                     style={styles.bucketActionBtnRemove}
@@ -544,7 +546,7 @@ function VisitedMapScreen() {
           {/* ============================================================= */}
           {places.length > 0 && (
             <View style={styles.card}>
-              <Text style={styles.sectionLabel}>· All visited places</Text>
+              <Text style={styles.sectionLabel}>{t('visitedMap.allVisitedPlaces', { defaultValue: '· All visited places' })}</Text>
               {places.map((place) => (
                 <View key={place.id} style={styles.placeRow}>
                   <View style={{ flex: 1 }}>
@@ -639,7 +641,7 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   statDivider: {
     width: 1,
-    height: 48,
+    height: SPACING.xxl,
     backgroundColor: COLORS.border,
   } as ViewStyle,
   statBigContainer: {
@@ -652,6 +654,7 @@ const styles = StyleSheet.create({
     color: COLORS.gold,
     lineHeight: 48,
   } as TextStyle,
+
   statBigLabel: {
     fontFamily: FONTS.mono,
     fontSize: 11,
@@ -681,7 +684,7 @@ const styles = StyleSheet.create({
     color: COLORS.creamMuted,
     textTransform: 'uppercase',
     letterSpacing: 1.5,
-    marginTop: 4,
+    marginTop: SPACING.xs,
   } as TextStyle,
   milesSub: {
     fontFamily: FONTS.body,
@@ -873,7 +876,7 @@ const styles = StyleSheet.create({
   syncBtn: {
     alignSelf: 'flex-start',
     backgroundColor: COLORS.sageMuted,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
     borderWidth: 1,
     borderColor: COLORS.sage,
     paddingHorizontal: SPACING.lg,
@@ -884,7 +887,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.monoMedium,
     fontSize: 12,
     color: COLORS.sage,
-    textTransform: 'uppercase',
     letterSpacing: 1,
   } as TextStyle,
 
@@ -1026,7 +1028,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.monoMedium,
     fontSize: 10,
     color: COLORS.sage,
-    textTransform: 'uppercase',
     letterSpacing: 0.5,
   } as TextStyle,
   bucketActionBtnRemove: {
@@ -1075,7 +1076,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.creamMuted,
     marginTop: 2,
-    fontStyle: 'italic',
   } as TextStyle,
   removeBtn: {
     fontFamily: FONTS.mono,

@@ -8,10 +8,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, FREE_TRIPS_PER_MONTH } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
 import { generateItinerary, generateItineraryStreaming, TripLimitReachedError } from '../../lib/claude';
-import { FREE_TRIPS_PER_MONTH } from '../../lib/constants';
+import { useTranslation } from 'react-i18next';
 import { isGuestUser } from '../../lib/guest';
 import type { QuickModeState } from '../../components/generate/GenerateQuickMode';
 import { BUDGET_TO_BACKEND } from '../../components/generate/GenerateQuickMode';
@@ -40,6 +40,7 @@ interface ConversationBrief {
 }
 
 export default function GenerateScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -105,7 +106,7 @@ export default function GenerateScreen() {
 
       // Validate itinerary has required structure before storing
       if (!itinerary?.destination || !itinerary?.days?.length) {
-        throw new Error('Almost had it — the trip came back a little incomplete. One more try should do it.');
+        throw new Error(t('generate.incompleteTrip', { defaultValue: 'Almost had it — the trip came back a little incomplete. One more try should do it.' }));
       }
 
       const trip = {
@@ -120,7 +121,7 @@ export default function GenerateScreen() {
 
       addTrip(trip);
       setTripsThisMonth(tripsUsed);
-      setStreamingProgress('Trip ready!');
+      setStreamingProgress(t('generate.tripReady', { defaultValue: 'Trip ready!' }));
       captureEvent('trip_generation_completed', { destination: state.destination, days: state.duration, budget: BUDGET_TO_BACKEND[state.budget], mode: 'quick' });
       trackBehavior({ type: 'trip_generated', timestamp: new Date().toISOString(), data: { destination: state.destination, days: state.duration, budget: BUDGET_TO_BACKEND[state.budget] } }).catch(() => {});
       recordGrowthEvent('trip_generated').catch(() => {});
@@ -135,7 +136,7 @@ export default function GenerateScreen() {
         captureEvent('rate_limit_hit', { destination: generatingDestRef.current, source: 'quick' });
         setRateLimitVisible(true);
       } else {
-        setNetworkError(err instanceof Error ? err.message : 'Couldn\u2019t reach our servers — probably a WiFi thing. Give it a sec and try again.');
+        setNetworkError(err instanceof Error ? err.message : t('generate.networkError', { defaultValue: 'Couldn\u2019t reach our servers — probably a WiFi thing. Give it a sec and try again.' }));
       }
     } finally {
       setIsGenerating(false);
@@ -184,7 +185,7 @@ export default function GenerateScreen() {
 
       // Validate itinerary has required structure before storing
       if (!itinerary?.destination || !itinerary?.days?.length) {
-        throw new Error('Almost had it — the trip came back a little incomplete. One more try should do it.');
+        throw new Error(t('generate.incompleteTrip', { defaultValue: 'Almost had it — the trip came back a little incomplete. One more try should do it.' }));
       }
 
       const trip = {
@@ -199,7 +200,7 @@ export default function GenerateScreen() {
 
       addTrip(trip);
       setTripsThisMonth(tripsUsed);
-      setStreamingProgress('Trip ready!');
+      setStreamingProgress(t('generate.tripReady', { defaultValue: 'Trip ready!' }));
       captureEvent('trip_generation_completed', { destination: dest, days, budget, mode: 'conversation' });
       trackBehavior({ type: 'trip_generated', timestamp: new Date().toISOString(), data: { destination: dest, days, budget } }).catch(() => {});
       recordGrowthEvent('trip_generated').catch(() => {});
@@ -214,7 +215,7 @@ export default function GenerateScreen() {
         captureEvent('rate_limit_hit', { destination: generatingDestRef.current, source: 'conversation' });
         setRateLimitVisible(true);
       } else {
-        setNetworkError(err instanceof Error ? err.message : 'Couldn\u2019t reach our servers — probably a WiFi thing. Give it a sec and try again.');
+        setNetworkError(err instanceof Error ? err.message : t('generate.networkError', { defaultValue: 'Couldn\u2019t reach our servers — probably a WiFi thing. Give it a sec and try again.' }));
       }
     } finally {
       setIsGenerating(false);
@@ -247,7 +248,7 @@ export default function GenerateScreen() {
             }}
             style={({ pressed }) => [styles.chaosBtn, { opacity: pressed ? 0.7 : 1 }]}
           >
-            <Text style={styles.chaosBtnText}>Surprise me</Text>
+            <Text style={styles.chaosBtnText}>{t('generate.surpriseMe', { defaultValue: 'Surprise me' })}</Text>
           </Pressable>
         </View>
       );
@@ -261,7 +262,7 @@ export default function GenerateScreen() {
             <View style={styles.errorBanner}>
               <Text style={styles.errorBannerText}>{networkError}</Text>
               <Pressable onPress={clearError} hitSlop={8}>
-                <Text style={styles.errorBannerRetry}>Dismiss</Text>
+                <Text style={styles.errorBannerRetry}>{t('common.dismiss', { defaultValue: 'Dismiss' })}</Text>
               </Pressable>
             </View>
           ) : null}
@@ -300,6 +301,22 @@ export default function GenerateScreen() {
         </View>
       )}
 
+      {networkError && !isGenerating && (
+        <View style={styles.errorOverlay}>
+          <Text style={styles.errorOverlayTitle}>{t('generate.errorTitle', { defaultValue: "Didn't quite work" })}</Text>
+          <Text style={styles.errorOverlayBody}>{networkError}</Text>
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              setNetworkError(null);
+            }}
+            style={({ pressed }) => [styles.errorOverlayBtn, { opacity: pressed ? 0.85 : 1 }]}
+          >
+            <Text style={styles.errorOverlayBtnText}>{t('common.tryAgain', { defaultValue: 'Try again' })}</Text>
+          </Pressable>
+        </View>
+      )}
+
       {/* Rate-limit upgrade modal */}
       <Modal
         visible={rateLimitVisible}
@@ -310,17 +327,16 @@ export default function GenerateScreen() {
         <View style={styles.rateLimitOverlay}>
           <View style={styles.rateLimitCard}>
             <View style={styles.rateLimitDot} />
-            <Text style={styles.rateLimitTitle}>You hit your free limit</Text>
+            <Text style={styles.rateLimitTitle}>{t('generate.rateLimitTitle', { defaultValue: 'You hit your free limit' })}</Text>
             <Text style={styles.rateLimitBody}>
-              Free accounts get {FREE_TRIPS_PER_MONTH} trip per month. Upgrade to Pro for
-              unlimited trips and the full ROAM experience.
+              {t('generate.rateLimitBody', { defaultValue: 'Free accounts get {{count}} trip per month. Upgrade to Pro for unlimited trips and the full ROAM experience.', count: FREE_TRIPS_PER_MONTH })}
             </Text>
             <Pressable onPress={handleUpgrade} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
               <LinearGradient
                 colors={[COLORS.gold, COLORS.goldDark]}
                 style={styles.rateLimitUpgradeBtn}
               >
-                <Text style={styles.rateLimitUpgradeText}>See Pro Plans</Text>
+                <Text style={styles.rateLimitUpgradeText}>{t('generate.seeProPlans', { defaultValue: 'See Pro Plans' })}</Text>
               </LinearGradient>
             </Pressable>
             <Pressable
@@ -328,7 +344,7 @@ export default function GenerateScreen() {
               style={styles.rateLimitDismiss}
               hitSlop={12}
             >
-              <Text style={styles.rateLimitDismissText}>Maybe later</Text>
+              <Text style={styles.rateLimitDismissText}>{t('common.maybeLater', { defaultValue: 'Maybe later' })}</Text>
             </Pressable>
           </View>
         </View>
@@ -395,7 +411,7 @@ const styles = StyleSheet.create({
   rateLimitDot: {
     width: 10,
     height: 10,
-    borderRadius: 5,
+    borderRadius: RADIUS.sm,
     backgroundColor: COLORS.gold,
     marginBottom: SPACING.md,
   },
@@ -415,7 +431,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   rateLimitUpgradeBtn: {
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.pill,
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.xxl,
     alignItems: 'center',
@@ -445,5 +461,40 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.creamDim,
     textDecorationLine: 'underline',
+  },
+  errorOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 99,
+    backgroundColor: COLORS.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: SPACING.xxl,
+  },
+  errorOverlayTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 28,
+    color: COLORS.cream,
+    marginBottom: SPACING.sm,
+    letterSpacing: -0.3,
+  },
+  errorOverlayBody: {
+    fontFamily: FONTS.body,
+    fontSize: 15,
+    color: COLORS.creamDim,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: SPACING.xxl,
+  },
+  errorOverlayBtn: {
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+    borderRadius: RADIUS.pill,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xxl,
+  },
+  errorOverlayBtnText: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 15,
+    color: COLORS.sage,
   },
 });

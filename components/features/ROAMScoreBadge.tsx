@@ -14,6 +14,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { computeROAMScore } from '../../lib/roam-score';
 
@@ -64,7 +65,7 @@ const subBarStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.xs,
-    marginBottom: 5,
+    marginBottom: SPACING.xs,
   } as ViewStyle,
   label: {
     fontFamily: FONTS.mono,
@@ -101,6 +102,7 @@ export default function ROAMScoreBadge({
   size = 'md',
   style,
 }: ROAMScoreBadgeProps) {
+  const { t } = useTranslation();
   const score = useMemo(
     () => computeROAMScore(destination),
     [destination]
@@ -139,7 +141,7 @@ export default function ROAMScoreBadge({
             ]}
           />
         </View>
-        <Text style={styles.mdLabel}>ROAM</Text>
+        <Text style={styles.mdLabel}>{t('roamScore.brand', { defaultValue: 'ROAM' })}</Text>
       </View>
     );
   }
@@ -159,7 +161,7 @@ export default function ROAMScoreBadge({
       {/* Header row */}
       <View style={styles.lgHeader}>
         <View>
-          <Text style={styles.lgTitle}>ROAM Score</Text>
+          <Text style={styles.lgTitle}>{t('roamScore.title', { defaultValue: 'ROAM Score' })}</Text>
           <Text style={[styles.lgLabel, { color: score.color }]}>
             {score.label}
           </Text>
@@ -168,7 +170,7 @@ export default function ROAMScoreBadge({
           <Text style={[styles.lgScoreNumber, { color: score.color }]}>
             {score.overall}
           </Text>
-          <Text style={styles.lgScoreDenom}>/100</Text>
+          <Text style={styles.lgScoreDenom}>{t('roamScore.denom', { defaultValue: '/100' })}</Text>
         </View>
       </View>
 
@@ -205,7 +207,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 3,
+    gap: SPACING.xs,
   } as ViewStyle,
   smDot: {
     width: 5,
@@ -270,7 +272,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: COLORS.creamMuted,
     letterSpacing: 1.2,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
     textTransform: 'uppercase',
   } as TextStyle,
   lgLabel: {
@@ -298,7 +300,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.mono,
     fontSize: 9,
     color: COLORS.creamMuted,
-    marginTop: 4,
+    marginTop: SPACING.xs,
   } as TextStyle,
   lgDivider: {
     height: 1,

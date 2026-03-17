@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react-native';
 
 import {
@@ -108,23 +109,24 @@ const InsufficientDataView = ({
   tripCount: number;
   onClose: () => void;
 }) => {
+  const { t } = useTranslation();
   const progress = Math.min(tripCount / 3, 1);
   const progressWidth = useMemo(() => `${Math.round(progress * 100)}%` as const, [progress]);
 
   return (
     <View style={styles.insufficientContainer}>
-      <Text style={styles.insufficientTitle}>ROAM is still learning{'\n'}how you travel.</Text>
+      <Text style={styles.insufficientTitle}>{t('travelMirror.stillLearning', { defaultValue: 'ROAM is still learning\nhow you travel.' })}</Text>
       <Text style={styles.insufficientBody}>
-        Generate a few more trips and your Travel DNA will appear here.
+        {t('travelMirror.generateMore', { defaultValue: 'Generate a few more trips and your Travel DNA will appear here.' })}
       </Text>
       <View style={styles.progressContainer}>
-        <Text style={styles.progressLabel}>{tripCount} of 3 trips</Text>
+        <Text style={styles.progressLabel}>{t('travelMirror.tripProgress', { defaultValue: '{{count}} of 3 trips', count: tripCount })}</Text>
         <View style={styles.progressTrack}>
           <View style={[styles.progressFill, { width: progressWidth }]} />
         </View>
       </View>
       <Pressable style={styles.insufficientClose} onPress={onClose}>
-        <Text style={styles.insufficientCloseText}>Close</Text>
+        <Text style={styles.insufficientCloseText}>{t('travelMirror.close', { defaultValue: 'Close' })}</Text>
       </Pressable>
     </View>
   );
@@ -137,6 +139,7 @@ const InsufficientDataView = ({
 export default function TravelMirrorScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { t } = useTranslation();
   const [loadState, setLoadState] = useState<LoadState>({ status: 'loading' });
 
   useEffect(() => {
@@ -177,12 +180,12 @@ export default function TravelMirrorScreen() {
   const handleDeleteData = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Alert.alert(
-      'Delete Travel DNA',
-      'This will permanently delete all your behavioral data. ROAM will start learning from scratch.',
+      t('travelMirror.deleteTitle', { defaultValue: 'Delete Travel DNA' }),
+      t('travelMirror.deleteBody', { defaultValue: 'This will permanently delete all your behavioral data. ROAM will start learning from scratch.' }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('travelMirror.cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
         {
-          text: 'Delete Everything',
+          text: t('travelMirror.deleteEverything', { defaultValue: 'Delete Everything' }),
           style: 'destructive',
           onPress: async () => {
             await clearAllData();
@@ -219,7 +222,7 @@ export default function TravelMirrorScreen() {
 
   const { dna } = loadState;
   const deleteRatePercent = `${Math.round(dna.deleteRate * 100)}%`;
-  const dreamRatioText = `${dna.totalSaved} saved → ${dna.totalGenerated} planned`;
+  const dreamRatioText = t('travelMirror.dreamRatioText', { defaultValue: '{{saved}} saved → {{planned}} planned', saved: dna.totalSaved, planned: dna.totalGenerated });
 
   return (
     <View style={[styles.root, { paddingTop: topInset }]}>
@@ -235,23 +238,23 @@ export default function TravelMirrorScreen() {
       >
         {/* ── Header ── */}
         <View style={styles.header}>
-          <Text style={styles.title}>Your Travel DNA</Text>
-          <Text style={styles.subtitle}>Built from what you do, not what you say</Text>
+          <Text style={styles.title}>{t('travelMirror.yourTravelDNA', { defaultValue: 'Your Travel DNA' })}</Text>
+          <Text style={styles.subtitle}>{t('travelMirror.builtFrom', { defaultValue: 'Built from what you do, not what you say' })}</Text>
         </View>
 
         {/* ── Section 1: What You Actually Want ── */}
-        <SectionLabel>WHAT YOU ACTUALLY WANT</SectionLabel>
+        <SectionLabel>{t('travelMirror.sectionWhatYouWant', { defaultValue: 'WHAT YOU ACTUALLY WANT' })}</SectionLabel>
 
         <Text style={styles.proseParagraph}>{dna.actualVsStatedPreferences}</Text>
 
         <View style={styles.categoryBars}>
           <CategoryBar
-            label="You save"
+            label={t('travelMirror.youSave', { defaultValue: 'You save' })}
             categories={dna.savedCategories}
             color={COLORS.sage}
           />
           <CategoryBar
-            label="You plan"
+            label={t('travelMirror.youPlan', { defaultValue: 'You plan' })}
             categories={dna.plannedCategories}
             color={COLORS.gold}
           />
@@ -259,14 +262,14 @@ export default function TravelMirrorScreen() {
 
         {dna.avgActivitiesPerDay > 0 && (
           <View style={styles.dataRow}>
-            <Text style={styles.dataLabel}>Avg activities / day</Text>
+            <Text style={styles.dataLabel}>{t('travelMirror.avgActivities', { defaultValue: 'Avg activities / day' })}</Text>
             <Text style={styles.dataValue}>{dna.avgActivitiesPerDay}</Text>
           </View>
         )}
 
         {dna.keptCategories.length > 0 && (
           <View style={styles.dataRow}>
-            <Text style={styles.dataLabel}>You always keep</Text>
+            <Text style={styles.dataLabel}>{t('travelMirror.alwaysKeep', { defaultValue: 'You always keep' })}</Text>
             <Text style={[styles.dataValue, { color: COLORS.sage }]}>
               {dna.keptCategories.join(', ')}
             </Text>
@@ -275,7 +278,7 @@ export default function TravelMirrorScreen() {
 
         {dna.deletedCategories.length > 0 && (
           <View style={styles.dataRow}>
-            <Text style={styles.dataLabel}>You always cut</Text>
+            <Text style={styles.dataLabel}>{t('travelMirror.alwaysCut', { defaultValue: 'You always cut' })}</Text>
             <Text style={[styles.dataValue, { color: COLORS.coral }]}>
               {dna.deletedCategories.join(', ')}
             </Text>
@@ -285,24 +288,24 @@ export default function TravelMirrorScreen() {
         <View style={styles.divider} />
 
         {/* ── Section 2: Your Patterns ── */}
-        <SectionLabel>YOUR PATTERNS</SectionLabel>
+        <SectionLabel>{t('travelMirror.sectionPatterns', { defaultValue: 'YOUR PATTERNS' })}</SectionLabel>
 
         <View style={styles.statsGrid}>
           <StatBlock
             value={dna.avgPlannedDays > 0 ? String(dna.avgPlannedDays) : '—'}
-            label="Avg trip length"
+            label={t('travelMirror.avgTripLength', { defaultValue: 'Avg trip length' })}
           />
           <StatBlock
             value={deleteRatePercent}
-            label="Delete rate"
+            label={t('travelMirror.deleteRate', { defaultValue: 'Delete rate' })}
           />
           <StatBlock
             value={dna.favoriteOpenTime}
-            label="Favorite planning time"
+            label={t('travelMirror.favPlanningTime', { defaultValue: 'Favorite planning time' })}
           />
           <StatBlock
             value={dna.dreamToActionRatio > 0 ? `${dna.dreamToActionRatio}x` : '—'}
-            label="Dream-to-action ratio"
+            label={t('travelMirror.dreamToAction', { defaultValue: 'Dream-to-action ratio' })}
           />
         </View>
 
@@ -318,7 +321,7 @@ export default function TravelMirrorScreen() {
 
         {dna.savedButNeverPlanned.length > 0 && (
           <View style={styles.neverPlannedRow}>
-            <Text style={styles.dataLabel}>Saved but never planned</Text>
+            <Text style={styles.dataLabel}>{t('travelMirror.savedNeverPlanned', { defaultValue: 'Saved but never planned' })}</Text>
             <Text style={styles.neverPlannedList}>
               {dna.savedButNeverPlanned.slice(0, 4).join(', ')}
             </Text>
@@ -328,7 +331,7 @@ export default function TravelMirrorScreen() {
         <View style={styles.divider} />
 
         {/* ── Section 3: What ROAM Knows You'll Love ── */}
-        <SectionLabel>WHAT ROAM KNOWS YOU'LL LOVE</SectionLabel>
+        <SectionLabel>{t('travelMirror.sectionRecommendations', { defaultValue: "WHAT ROAM KNOWS YOU'LL LOVE" })}</SectionLabel>
 
         {dna.behavioralRecommendations.length > 0 ? (
           <View style={styles.recList}>
@@ -342,7 +345,7 @@ export default function TravelMirrorScreen() {
           </View>
         ) : (
           <Text style={styles.proseParagraph}>
-            Keep generating trips and ROAM will find destinations perfectly shaped to your patterns.
+            {t('travelMirror.keepGenerating', { defaultValue: 'Keep generating trips and ROAM will find destinations perfectly shaped to your patterns.' })}
           </Text>
         )}
 
@@ -352,7 +355,7 @@ export default function TravelMirrorScreen() {
         <View style={styles.weeklyCard}>
           <View style={styles.weeklyAccent} />
           <View style={styles.weeklyContent}>
-            <Text style={styles.weeklyHeader}>THIS WEEK</Text>
+            <Text style={styles.weeklyHeader}>{t('travelMirror.thisWeek', { defaultValue: 'THIS WEEK' })}</Text>
             <Text style={styles.weeklyInsight}>{dna.weeklyInsight}</Text>
             {dna.weeklyInsightDestination && (
               <Text style={styles.weeklyDestination}>
@@ -364,7 +367,7 @@ export default function TravelMirrorScreen() {
 
         {/* ── Delete data ── */}
         <Pressable onPress={handleDeleteData} style={styles.deleteLink}>
-          <Text style={styles.deleteLinkText}>Delete all my data</Text>
+          <Text style={styles.deleteLinkText}>{t('travelMirror.deleteAllData', { defaultValue: 'Delete all my data' })}</Text>
         </Pressable>
       </ScrollView>
     </View>
@@ -387,7 +390,7 @@ const CloseButton = ({
     style={[styles.closeButton, { top: topInset + SPACING.sm }]}
     hitSlop={12}
   >
-    <X size={20} color={COLORS.creamDim} strokeWidth={2} />
+    <X size={20} color={COLORS.creamDim} strokeWidth={1.5} />
   </Pressable>
 );
 
@@ -579,7 +582,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 18,
     color: COLORS.creamBright,
-    fontStyle: 'italic',
     textAlign: 'center',
     lineHeight: 28,
   },

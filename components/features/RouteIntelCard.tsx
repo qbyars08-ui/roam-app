@@ -13,6 +13,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { Plane, TrendingDown, ExternalLink } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import {
   getRouteIntelligence,
@@ -34,6 +35,7 @@ interface RouteIntelCardProps {
 // Component
 // ---------------------------------------------------------------------------
 function RouteIntelCard({ destination, compact = false }: RouteIntelCardProps) {
+  const { t } = useTranslation();
   const [homeAirport, setHomeAirport] = useState('JFK');
 
   useEffect(() => {
@@ -98,14 +100,14 @@ function RouteIntelCard({ destination, compact = false }: RouteIntelCardProps) {
           pressed && { opacity: 0.8 },
         ]}
       >
-        <Plane size={16} color={COLORS.sage} strokeWidth={2} />
+        <Plane size={16} color={COLORS.sage} strokeWidth={1.5} />
         <View style={{ flex: 1 }}>
           <Text style={styles.compactRoute}>{intel.route}</Text>
           <Text style={styles.compactPrice}>
-            From ~${intel.avgPrice} round-trip
+            {t('routeIntel.fromPrice', { defaultValue: 'From ~${{price}} round-trip', price: intel.avgPrice })}
           </Text>
         </View>
-        <ExternalLink size={14} color={COLORS.creamMuted} strokeWidth={2} />
+        <ExternalLink size={14} color={COLORS.creamMuted} strokeWidth={1.5} />
       </Pressable>
     );
   }
@@ -114,25 +116,25 @@ function RouteIntelCard({ destination, compact = false }: RouteIntelCardProps) {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Plane size={18} color={COLORS.sage} strokeWidth={2} />
-        <Text style={styles.headerTitle}>Flight Intel</Text>
+        <Plane size={18} color={COLORS.sage} strokeWidth={1.5} />
+        <Text style={styles.headerTitle}>{t('routeIntel.title', { defaultValue: 'Flight Intel' })}</Text>
       </View>
 
       {/* Route + price */}
       <View style={styles.routeRow}>
         <Text style={styles.routeText}>{intel.route}</Text>
         <Text style={styles.avgPrice}>~${intel.avgPrice}</Text>
-        <Text style={styles.avgLabel}>avg round-trip</Text>
+        <Text style={styles.avgLabel}>{t('routeIntel.avgRoundTrip', { defaultValue: 'avg round-trip' })}</Text>
       </View>
 
       {/* Best month + cheapest day */}
       <View style={styles.infoGrid}>
         <View style={styles.infoCell}>
-          <Text style={styles.infoLabel}>Best month</Text>
+          <Text style={styles.infoLabel}>{t('routeIntel.bestMonth', { defaultValue: 'Best month' })}</Text>
           <Text style={styles.infoValue}>{intel.bestMonth}</Text>
         </View>
         <View style={styles.infoCell}>
-          <Text style={styles.infoLabel}>Cheapest day</Text>
+          <Text style={styles.infoLabel}>{t('routeIntel.cheapestDay', { defaultValue: 'Cheapest day' })}</Text>
           <Text style={styles.infoValue}>{intel.cheapestDayOfWeek}</Text>
         </View>
       </View>
@@ -140,9 +142,9 @@ function RouteIntelCard({ destination, compact = false }: RouteIntelCardProps) {
       {/* Best days to fly */}
       {bestDays.length > 0 && (
         <View style={styles.bestDaysWrap}>
-          <TrendingDown size={14} color={COLORS.sage} strokeWidth={2} />
+          <TrendingDown size={14} color={COLORS.sage} strokeWidth={1.5} />
           <Text style={styles.bestDaysText}>
-            Fly on{' '}
+            {t('routeIntel.flyOn', { defaultValue: 'Fly on' })}{' '}
             {bestDays.map((d) => `${d.day} (${d.savings})`).join(', ')}
           </Text>
         </View>
@@ -165,8 +167,8 @@ function RouteIntelCard({ destination, compact = false }: RouteIntelCardProps) {
             pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] },
           ]}
         >
-          <ExternalLink size={16} color={COLORS.bg} strokeWidth={2} />
-          <Text style={styles.searchBtnText}>Search flights</Text>
+          <ExternalLink size={16} color={COLORS.bg} strokeWidth={1.5} />
+          <Text style={styles.searchBtnText}>{t('routeIntel.searchFlights', { defaultValue: 'Search flights' })}</Text>
         </Pressable>
       )}
     </View>
@@ -233,7 +235,7 @@ const styles = StyleSheet.create({
     color: COLORS.creamMuted,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   } as TextStyle,
   infoValue: {
     fontFamily: FONTS.bodySemiBold,
@@ -263,9 +265,9 @@ const styles = StyleSheet.create({
   tipDot: {
     width: 4,
     height: 4,
-    borderRadius: 2,
+    borderRadius: RADIUS.full,
     backgroundColor: COLORS.creamMuted,
-    marginTop: 6,
+    marginTop: SPACING.sm,
   } as ViewStyle,
   tipText: {
     fontFamily: FONTS.body,
@@ -280,7 +282,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: SPACING.xs,
     backgroundColor: COLORS.sage,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
     paddingVertical: SPACING.sm,
     marginTop: SPACING.xs,
   } as ViewStyle,
@@ -307,7 +309,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 12,
     color: COLORS.creamMuted,
-    marginTop: 2,
+    marginTop: SPACING.xs,
   } as TextStyle,
 });
 

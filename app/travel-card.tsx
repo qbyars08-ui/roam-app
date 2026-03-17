@@ -30,6 +30,7 @@ import {
   Compass,
   Sparkles,
 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
@@ -60,7 +61,7 @@ const CARD_THEMES: CardTheme[] = [
   {
     id: 'midnight',
     label: 'Midnight',
-    bg: ['#080F0A', '#0D1F1A', '#142E24'],
+    bg: ['#0A0A0A', '#141414', '#142E24'],
     accent: COLORS.sage,
     textPrimary: COLORS.cream,
     textSecondary: COLORS.creamMuted,
@@ -95,6 +96,7 @@ const CARD_THEMES: CardTheme[] = [
 // Travel Card Screen
 // ---------------------------------------------------------------------------
 function TravelCardScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const trips = useAppStore((s) => s.trips);
@@ -197,9 +199,9 @@ function TravelCardScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={handleBack} hitSlop={12}>
-          <ArrowLeft size={24} color={COLORS.cream} strokeWidth={2} />
+          <ArrowLeft size={24} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
-        <Text style={styles.headerTitle}>Your Travel Card</Text>
+        <Text style={styles.headerTitle}>{t('travelCard.title', { defaultValue: 'Your Travel Card' })}</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -227,7 +229,7 @@ function TravelCardScreen() {
 
               {/* Brand */}
               <View style={styles.brandRow}>
-                <Compass size={14} color={theme.accent} strokeWidth={2} />
+                <Compass size={14} color={theme.accent} strokeWidth={1.5} />
                 <Text style={[styles.brandText, { color: theme.accent }]}>ROAM</Text>
               </View>
 
@@ -292,7 +294,7 @@ function TravelCardScreen() {
               {uniqueDestinations.length > 0 && (
                 <View style={styles.destinationsSection}>
                   <View style={styles.destinationsRow}>
-                    <MapPin size={10} color={theme.textSecondary} strokeWidth={2} />
+                    <MapPin size={10} color={theme.textSecondary} strokeWidth={1.5} />
                     <Text
                       style={[styles.destinationsText, { color: theme.textSecondary }]}
                       numberOfLines={2}
@@ -307,7 +309,7 @@ function TravelCardScreen() {
               {/* Secondary personality */}
               <View style={styles.secondaryRow}>
                 <Text style={[styles.secondaryLabel, { color: theme.textSecondary }]}>
-                  Also a bit of a
+                  {t('travelCard.alsoABitOf', { defaultValue: 'Also a bit of a' })}
                 </Text>
                 <Text style={[styles.secondaryName, { color: theme.accent }]}>
                   {personality.secondary.emoji} {personality.secondary.name}
@@ -326,7 +328,7 @@ function TravelCardScreen() {
 
         {/* Theme picker */}
         <View style={styles.themePicker}>
-          <Text style={styles.themePickerLabel}>Card style</Text>
+          <Text style={styles.themePickerLabel}>{t('travelCard.cardStyle', { defaultValue: 'Card style' })}</Text>
           <View style={styles.themeOptions}>
             {CARD_THEMES.map((t, i) => (
               <Pressable
@@ -365,8 +367,8 @@ function TravelCardScreen() {
               { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
             ]}
           >
-            <Share2 size={18} color={COLORS.bg} strokeWidth={2} />
-            <Text style={styles.shareBtnText}>Share</Text>
+            <Share2 size={18} color={COLORS.bg} strokeWidth={1.5} />
+            <Text style={styles.shareBtnText}>{t('common.share', { defaultValue: 'Share' })}</Text>
           </Pressable>
           <Pressable
             onPress={handleSave}
@@ -376,14 +378,14 @@ function TravelCardScreen() {
               { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
             ]}
           >
-            <Download size={18} color={COLORS.cream} strokeWidth={2} />
-            <Text style={styles.saveBtnText}>Save</Text>
+            <Download size={18} color={COLORS.cream} strokeWidth={1.5} />
+            <Text style={styles.saveBtnText}>{t('common.save', { defaultValue: 'Save' })}</Text>
           </Pressable>
         </View>
 
         {/* Hint */}
         <Text style={styles.hint}>
-          The more trips you plan, the more your personality evolves.
+          {t('travelCard.hint', { defaultValue: 'The more trips you plan, the more your personality evolves.' })}
         </Text>
       </ScrollView>
     </View>
@@ -454,13 +456,13 @@ const styles = StyleSheet.create({
   topAccent: {
     width: 40,
     height: 3,
-    borderRadius: 2,
+    borderRadius: RADIUS.sm,
     marginBottom: SPACING.lg,
   } as ViewStyle,
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: SPACING.sm,
     marginBottom: SPACING.xl,
   } as ViewStyle,
   brandText: {
@@ -535,7 +537,7 @@ const styles = StyleSheet.create({
   destinationsRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 6,
+    gap: SPACING.sm,
   } as ViewStyle,
   destinationsText: {
     fontFamily: FONTS.body,
@@ -548,7 +550,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: SPACING.sm,
     marginBottom: SPACING.md,
   } as ViewStyle,
   secondaryLabel: {
@@ -600,7 +602,7 @@ const styles = StyleSheet.create({
   themeOptionGradient: {
     width: 24,
     height: 24,
-    borderRadius: 12,
+    borderRadius: RADIUS.lg,
   } as ViewStyle,
   themeOptionLabel: {
     fontFamily: FONTS.mono,
@@ -621,7 +623,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: SPACING.sm,
     paddingVertical: SPACING.md + 2,
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.pill,
   } as ViewStyle,
   shareBtn: {
     backgroundColor: COLORS.sage,

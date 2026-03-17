@@ -42,7 +42,7 @@ export default function ReturnTripSection({
   return (
     <View style={styles.wrap}>
       <View style={styles.header}>
-        <RotateCcw size={18} color={COLORS.accentGold} strokeWidth={2} />
+        <RotateCcw size={18} color={COLORS.accentGold} strokeWidth={1.5} />
         <Text style={styles.title}>Returning to {destination}</Text>
       </View>
       <Text style={styles.meta}>Last visit: {priorLabel}</Text>
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.creamMuted,
     lineHeight: 20,
-    marginTop: 8,
+    marginTop: SPACING.sm,
   },
   cta: {
     flexDirection: 'row',

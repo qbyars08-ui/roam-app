@@ -54,6 +54,23 @@ export function getDestinationCoords(destination: string): { lat: number; lng: n
   return DESTINATION_COORDS[destination.toLowerCase().trim()] ?? null;
 }
 
+/**
+ * Resolve coordinates for any destination: tries offline lookup first,
+ * then falls back to Open-Meteo geocoding API.
+ */
+export async function resolveDestinationCoords(
+  destination: string,
+): Promise<{ lat: number; lng: number } | null> {
+  const offline = getDestinationCoords(destination);
+  if (offline) return offline;
+
+  // Lazy import to avoid circular dependency
+  const { geocodeCity } = await import('./geocoding');
+  const geo = await geocodeCity(destination);
+  if (!geo) return null;
+  return { lat: geo.latitude, lng: geo.longitude };
+}
+
 function getAqiInfo(aqi: number): { label: string; color: string; advice: string } {
   if (aqi <= 50) return {
     label: 'Good',

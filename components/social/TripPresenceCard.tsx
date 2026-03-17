@@ -56,7 +56,7 @@ const TripPresenceCard = React.memo<TripPresenceCardProps>(({
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
     >
       <View style={styles.destinationRow}>
-        <MapPin size={16} color={COLORS.sage} strokeWidth={2} />
+        <MapPin size={16} color={COLORS.sage} strokeWidth={1.5} />
         <Text style={styles.destination} numberOfLines={1}>
           {presence.destination}
         </Text>

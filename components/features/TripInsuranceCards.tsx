@@ -3,6 +3,7 @@
 // Show on every itinerary
 // =============================================================================
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, StyleSheet, Linking } from 'react-native';
 import { Shield } from 'lucide-react-native';
 import * as Haptics from '../../lib/haptics';
@@ -39,7 +40,7 @@ function InsuranceCard({
       style={({ pressed }) => [styles.card, { opacity: pressed ? 0.9 : 1 }]}
     >
       <View style={[styles.cardInner, { borderLeftColor: gradientColors[0] }]}>
-        <Shield size={20} color={gradientColors[0]} strokeWidth={2} />
+        <Shield size={20} color={gradientColors[0]} strokeWidth={1.5} />
         <View style={styles.cardText}>
           <Text style={styles.cardTitle}>{name}</Text>
           <Text style={styles.cardTagline}>{tagline}</Text>
@@ -51,19 +52,20 @@ function InsuranceCard({
 }
 
 export default function TripInsuranceCards({ destination }: TripInsuranceCardsProps) {
+  const { t } = useTranslation();
   return (
     <View style={styles.wrap}>
-      <Text style={styles.label}>TRAVEL INSURANCE</Text>
+      <Text style={styles.label}>{t('insurance.travelInsurance', { defaultValue: 'TRAVEL INSURANCE' })}</Text>
       <InsuranceCard
         name="Safetywing"
-        tagline="Nomad insurance — global coverage from ~$1/day"
+        tagline={t('insurance.safetywingTagline', { defaultValue: 'Nomad insurance — global coverage from ~$1/day' })}
         gradientColors={[COLORS.blueGradientStart, COLORS.blueGradientEnd]}
         url={SAFETYWING_URL(destination)}
         onPress={() => {}}
       />
       <InsuranceCard
         name="World Nomads"
-        tagline="Adventure & medical — 150+ activities covered"
+        tagline={t('insurance.worldNomadsTagline', { defaultValue: 'Adventure & medical — 150+ activities covered' })}
         gradientColors={[COLORS.emeraldStart, COLORS.emeraldEnd]}
         url={WORLDNOMADS_URL(destination)}
         onPress={() => {}}

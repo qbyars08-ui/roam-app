@@ -17,6 +17,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 
@@ -158,6 +159,7 @@ const PERSONALITIES: Record<string, PersonalityType> = {
 type Phase = 'quiz' | 'calculating' | 'result';
 
 function AlterEgoScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -260,7 +262,7 @@ function AlterEgoScreen() {
           </View>
 
           <Text style={styles.questionNumber}>
-            {currentQ + 1} of {QUESTIONS.length}
+            {currentQ + 1} {t('alterEgo.of', { defaultValue: 'of' })} {QUESTIONS.length}
           </Text>
           <Text style={styles.questionText}>
             {QUESTIONS[currentQ].question}
@@ -289,7 +291,7 @@ function AlterEgoScreen() {
         <View style={styles.calculatingContainer}>
           <Text style={styles.calculatingEmoji}>{'\uD83D\uDD2E'}</Text>
           <Text style={styles.calculatingText}>
-            Analyzing your travel soul...
+            {t('alterEgo.calculating', { defaultValue: 'Analyzing your travel soul...' })}
           </Text>
         </View>
       )}
@@ -311,13 +313,13 @@ function AlterEgoScreen() {
               style={styles.resultGradient}
             >
               {null}
-              <Text style={styles.resultLabel}>YOUR TRAVEL ALTER-EGO</Text>
+              <Text style={styles.resultLabel}>{t('alterEgo.resultLabel', { defaultValue: 'YOUR TRAVEL ALTER-EGO' })}</Text>
               <Text style={styles.resultTitle}>{result.title}</Text>
               <Text style={styles.resultSubtitle}>{result.subtitle}</Text>
               <View style={styles.resultDivider} />
               <Text style={styles.resultDesc}>{result.description}</Text>
               <View style={styles.resultDestsRow}>
-                <Text style={styles.resultDestsLabel}>IDEAL DESTINATIONS</Text>
+                <Text style={styles.resultDestsLabel}>{t('alterEgo.idealDestinations', { defaultValue: 'IDEAL DESTINATIONS' })}</Text>
                 <Text style={styles.resultDests}>
                   {result.destinations.join(' \u2022 ')}
                 </Text>
@@ -338,13 +340,13 @@ function AlterEgoScreen() {
                 style={styles.shareGradient}
               >
                 <Text style={styles.shareButtonText}>
-                  {'\uD83D\uDCE4'} Share Your Alter-Ego
+                  {'\uD83D\uDCE4'} {t('alterEgo.share', { defaultValue: 'Share Your Alter-Ego' })}
                 </Text>
               </LinearGradient>
             </Pressable>
 
             <Pressable onPress={handleRetake} style={styles.retakeBtn}>
-              <Text style={styles.retakeText}>Retake quiz</Text>
+              <Text style={styles.retakeText}>{t('alterEgo.retake', { defaultValue: 'Retake quiz' })}</Text>
             </Pressable>
           </View>
         </ScrollView>
@@ -490,7 +492,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.creamMuted,
     textAlign: 'center',
-    fontStyle: 'italic',
     lineHeight: 20,
   } as TextStyle,
   resultDivider: {

@@ -148,9 +148,9 @@ export default function AudioGuideBar({
           ]}
         >
           {playing ? (
-            <Pause size={20} color={COLORS.cream} strokeWidth={2} />
+            <Pause size={20} color={COLORS.cream} strokeWidth={1.5} />
           ) : (
-            <Play size={20} color={COLORS.cream} strokeWidth={2} />
+            <Play size={20} color={COLORS.cream} strokeWidth={1.5} />
           )}
         </Pressable>
 
@@ -172,7 +172,7 @@ export default function AudioGuideBar({
             { opacity: pressed ? 0.7 : 1 },
           ]}
         >
-          <SkipForward size={18} color={COLORS.creamSoft} strokeWidth={2} />
+          <SkipForward size={18} color={COLORS.creamSoft} strokeWidth={1.5} />
         </Pressable>
 
         {/* Close / dismiss */}
@@ -185,7 +185,7 @@ export default function AudioGuideBar({
             { opacity: pressed ? 0.7 : 1 },
           ]}
         >
-          <X size={18} color={COLORS.creamDim} strokeWidth={2} />
+          <X size={18} color={COLORS.creamDim} strokeWidth={1.5} />
         </Pressable>
       </View>
 
@@ -244,7 +244,6 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   dayLabel: {
     fontFamily: FONTS.header,
-    fontStyle: 'italic',
     fontSize: 16,
     color: COLORS.cream,
   } as TextStyle,

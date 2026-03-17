@@ -44,6 +44,7 @@ import {
   getTranslatedPhrase,
 } from '../lib/emergency-card';
 import type { BloodType, EmergencyCardData } from '../lib/emergency-card';
+import { useTranslation } from 'react-i18next';
 
 // -----------------------------------------------------------------------------
 // Blood type picker
@@ -190,6 +191,7 @@ function TranslatedRow({
 // Main screen
 // -----------------------------------------------------------------------------
 function EmergencyCardScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { destination } = useLocalSearchParams<{ destination?: string }>();
@@ -293,7 +295,7 @@ function EmergencyCardScreen() {
   if (loading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
-        <Text style={styles.loadingText}>Loading...</Text>
+        <Text style={styles.loadingText}>{t('common.loading')}</Text>
       </View>
     );
   }
@@ -303,7 +305,7 @@ function EmergencyCardScreen() {
       {/* Header bar */}
       <View style={styles.headerBar}>
         <Pressable onPress={handleBack} hitSlop={12}>
-          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
+          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
         <Text style={styles.headerTitle}>Emergency Card</Text>
         <View style={{ width: 24 }} />
@@ -373,7 +375,7 @@ function SetupForm({
     <View>
       {/* Privacy note */}
       <View style={styles.privacyNote}>
-        <Shield size={16} color={COLORS.sage} strokeWidth={2} />
+        <Shield size={16} color={COLORS.sage} strokeWidth={1.5} />
         <Text style={styles.privacyText}>
           This data stays on your device only. It is never uploaded or shared
           with any server.
@@ -408,7 +410,7 @@ function SetupForm({
         <ChevronDown
           size={16}
           color={COLORS.creamDim}
-          strokeWidth={2}
+          strokeWidth={1.5}
           style={{
             transform: [{ rotate: bloodPickerOpen ? '180deg' : '0deg' }],
           }}
@@ -641,14 +643,14 @@ function CardDisplay({
     <View>
       {/* Card header */}
       <View style={styles.cardHeader}>
-        <Heart size={24} color={COLORS.coral} strokeWidth={2} />
+        <Heart size={24} color={COLORS.coral} strokeWidth={1.5} />
         <Text style={styles.cardTitle}>EMERGENCY MEDICAL CARD</Text>
       </View>
 
       {/* Patient info */}
       <View style={styles.cardSection}>
         <View style={styles.cardSectionHeader}>
-          <User size={18} color={COLORS.sage} strokeWidth={2} />
+          <User size={18} color={COLORS.sage} strokeWidth={1.5} />
           <Text style={styles.cardSectionTitle}>Patient Information</Text>
         </View>
         <InfoRow label="Name" value={card.fullName} />
@@ -667,7 +669,7 @@ function CardDisplay({
       {/* Allergies */}
       <View style={styles.cardSection}>
         <View style={styles.cardSectionHeader}>
-          <AlertTriangle size={18} color={COLORS.coral} strokeWidth={2} />
+          <AlertTriangle size={18} color={COLORS.coral} strokeWidth={1.5} />
           <Text style={[styles.cardSectionTitle, { color: COLORS.coral }]}>
             Allergies
           </Text>
@@ -686,7 +688,7 @@ function CardDisplay({
       {/* Medications */}
       <View style={styles.cardSection}>
         <View style={styles.cardSectionHeader}>
-          <Pill size={18} color={COLORS.sage} strokeWidth={2} />
+          <Pill size={18} color={COLORS.sage} strokeWidth={1.5} />
           <Text style={styles.cardSectionTitle}>Medications</Text>
         </View>
         {card.medications.length > 0 ? (
@@ -703,7 +705,7 @@ function CardDisplay({
       {/* Conditions */}
       <View style={styles.cardSection}>
         <View style={styles.cardSectionHeader}>
-          <Activity size={18} color={COLORS.sage} strokeWidth={2} />
+          <Activity size={18} color={COLORS.sage} strokeWidth={1.5} />
           <Text style={styles.cardSectionTitle}>Medical Conditions</Text>
         </View>
         {card.conditions.length > 0 ? (
@@ -720,7 +722,7 @@ function CardDisplay({
       {/* Emergency contact */}
       <View style={styles.cardSection}>
         <View style={styles.cardSectionHeader}>
-          <Phone size={18} color={COLORS.coral} strokeWidth={2} />
+          <Phone size={18} color={COLORS.coral} strokeWidth={1.5} />
           <Text style={[styles.cardSectionTitle, { color: COLORS.coral }]}>
             Emergency Contact
           </Text>
@@ -737,7 +739,7 @@ function CardDisplay({
       {(card.insuranceProvider || card.insuranceNumber) ? (
         <View style={styles.cardSection}>
           <View style={styles.cardSectionHeader}>
-            <Shield size={18} color={COLORS.sage} strokeWidth={2} />
+            <Shield size={18} color={COLORS.sage} strokeWidth={1.5} />
             <Text style={styles.cardSectionTitle}>Insurance</Text>
           </View>
           {card.insuranceProvider ? (
@@ -758,7 +760,7 @@ function CardDisplay({
             { opacity: pressed ? 0.85 : 1 },
           ]}
         >
-          <Phone size={20} color={COLORS.white} strokeWidth={2} />
+          <Phone size={20} color={COLORS.white} strokeWidth={1.5} />
           <Text style={styles.callButtonText}>Call Emergency Contact</Text>
         </Pressable>
       ) : null}
@@ -793,7 +795,7 @@ function CardDisplay({
             { opacity: pressed ? 0.85 : 1 },
           ]}
         >
-          <Pencil size={18} color={COLORS.cream} strokeWidth={2} />
+          <Pencil size={18} color={COLORS.cream} strokeWidth={1.5} />
           <Text style={styles.actionButtonText}>Edit</Text>
         </Pressable>
         <Pressable
@@ -803,7 +805,7 @@ function CardDisplay({
             { opacity: pressed ? 0.85 : 1 },
           ]}
         >
-          <Copy size={18} color={COLORS.cream} strokeWidth={2} />
+          <Copy size={18} color={COLORS.cream} strokeWidth={1.5} />
           <Text style={styles.actionButtonText}>Copy</Text>
         </Pressable>
       </View>
@@ -1059,7 +1061,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 14,
     color: COLORS.creamDim,
-    fontStyle: 'italic',
   } as TextStyle,
 
   // Call button

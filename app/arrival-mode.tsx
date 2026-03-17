@@ -17,6 +17,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../lib/haptics';
 import { ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
@@ -52,14 +53,14 @@ interface CityArrivalData {
 // =============================================================================
 // Section config — labels, icons (text-based), colors
 // =============================================================================
-const SECTIONS = [
-  { key: 'airportToCity', label: 'Airport to City', icon: 'plane', accent: COLORS.sage },
-  { key: 'firstThing', label: 'First Thing to Do', icon: 'pin', accent: COLORS.gold },
-  { key: 'simWifi', label: 'SIM / WiFi', icon: 'signal', accent: COLORS.sage },
-  { key: 'firstMeal', label: 'First Meal', icon: 'fork', accent: COLORS.coral },
-  { key: 'moneySituation', label: 'Money Situation', icon: 'cash', accent: COLORS.gold },
-  { key: 'safetyHeadsUp', label: 'Safety Heads-Up', icon: 'shield', accent: COLORS.coral },
-  { key: 'checklist', label: '24-Hour Checklist', icon: 'check', accent: COLORS.sage },
+const SECTION_KEYS = [
+  { key: 'airportToCity', labelKey: 'arrival.airportToCity', defaultLabel: 'Airport to City', icon: 'plane', accent: COLORS.sage },
+  { key: 'firstThing', labelKey: 'arrival.firstThing', defaultLabel: 'First Thing to Do', icon: 'pin', accent: COLORS.gold },
+  { key: 'simWifi', labelKey: 'arrival.simWifi', defaultLabel: 'SIM / WiFi', icon: 'signal', accent: COLORS.sage },
+  { key: 'firstMeal', labelKey: 'arrival.firstMeal', defaultLabel: 'First Meal', icon: 'fork', accent: COLORS.coral },
+  { key: 'moneySituation', labelKey: 'arrival.moneySituation', defaultLabel: 'Money Situation', icon: 'cash', accent: COLORS.gold },
+  { key: 'safetyHeadsUp', labelKey: 'arrival.safetyHeadsUp', defaultLabel: 'Safety Heads-Up', icon: 'shield', accent: COLORS.coral },
+  { key: 'checklist', labelKey: 'arrival.checklist', defaultLabel: '24-Hour Checklist', icon: 'check', accent: COLORS.sage },
 ] as const;
 
 // =============================================================================
@@ -245,6 +246,7 @@ function SectionIcon({ icon, color }: { icon: string; color: string }) {
 // Main component
 // =============================================================================
 function ArrivalModeScreen() {
+  const { t } = useTranslation();
   const params = useLocalSearchParams<{ destination: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -256,8 +258,8 @@ function ArrivalModeScreen() {
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
 
   // Stagger animation refs
-  const fadeAnims = useRef(SECTIONS.map(() => new Animated.Value(0))).current;
-  const slideAnims = useRef(SECTIONS.map(() => new Animated.Value(30))).current;
+  const fadeAnims = useRef(SECTION_KEYS.map(() => new Animated.Value(0))).current;
+  const slideAnims = useRef(SECTION_KEYS.map(() => new Animated.Value(30))).current;
   const headerFade = useRef(new Animated.Value(0)).current;
   const headerSlide = useRef(new Animated.Value(-20)).current;
 
@@ -277,7 +279,7 @@ function ArrivalModeScreen() {
     ]).start();
 
     // Stagger card animations
-    const animations = SECTIONS.map((_, i) =>
+    const animations = SECTION_KEYS.map((_, i) =>
       Animated.parallel([
         Animated.timing(fadeAnims[i], {
           toValue: 1,
@@ -321,9 +323,9 @@ function ArrivalModeScreen() {
           <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
         <View style={styles.fallbackContainer}>
-          <Text style={styles.fallbackTitle}>Packing your {city} survival kit...</Text>
+          <Text style={styles.fallbackTitle}>{t('arrival.fallbackTitle', { defaultValue: 'Packing your {{city}} survival kit...', city })}</Text>
           <Text style={styles.fallbackSubtitle}>
-            We're pulling together everything you need for your first 24 hours. Almost there.
+            {t('arrival.fallbackSubtitle', { defaultValue: "We're pulling together everything you need for your first 24 hours. Almost there." })}
           </Text>
         </View>
       </View>
@@ -339,18 +341,18 @@ function ArrivalModeScreen() {
       <View>
         <View style={styles.transportRow}>
           <View style={styles.transportPill}>
-            <Text style={styles.transportLabel}>Best route</Text>
+            <Text style={styles.transportLabel}>{t('arrival.bestRoute', { defaultValue: 'Best route' })}</Text>
             <Text style={styles.transportValue}>{method}</Text>
           </View>
         </View>
         <View style={styles.transportStats}>
           <View style={styles.statBlock}>
-            <Text style={styles.statLabel}>Cost</Text>
+            <Text style={styles.statLabel}>{t('arrival.cost', { defaultValue: 'Cost' })}</Text>
             <Text style={styles.statValue}>{cost}</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statBlock}>
-            <Text style={styles.statLabel}>Time</Text>
+            <Text style={styles.statLabel}>{t('arrival.time', { defaultValue: 'Time' })}</Text>
             <Text style={styles.statValue}>{time}</Text>
           </View>
         </View>
@@ -472,15 +474,15 @@ function ArrivalModeScreen() {
             { opacity: headerFade, transform: [{ translateY: headerSlide }] },
           ]}
         >
-          <Text style={[styles.headerLabel, { color: destTheme.primary }]}>· Arrival mode</Text>
+          <Text style={[styles.headerLabel, { color: destTheme.primary }]}>{t('arrival.headerLabel', { defaultValue: '· Arrival mode' })}</Text>
           <Text style={styles.headerCity}>{city}</Text>
           <Text style={styles.headerSub}>
-            Your first 24 hours. Everything you need, nothing you don't.
+            {t('arrival.headerSub', { defaultValue: "Your first 24 hours. Everything you need, nothing you don't." })}
           </Text>
         </Animated.View>
 
         {/* Section cards */}
-        {SECTIONS.map((section, index) => (
+        {SECTION_KEYS.map((section, index) => (
           <Animated.View
             key={section.key}
             style={[
@@ -501,7 +503,7 @@ function ArrivalModeScreen() {
                   <Text style={styles.stepNumber}>{index + 1}</Text>
                 </View>
                 <SectionIcon icon={section.icon} color={section.accent} />
-                <Text style={styles.cardTitle}>{section.label}</Text>
+                <Text style={styles.cardTitle}>{t(section.labelKey, { defaultValue: section.defaultLabel })}</Text>
               </View>
 
               {/* Card content */}
@@ -687,7 +689,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.creamMuted,
     lineHeight: 20,
-    fontStyle: 'italic',
   } as TextStyle,
 
   // Safety

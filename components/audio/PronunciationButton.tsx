@@ -107,7 +107,7 @@ export default function PronunciationButton({
       ]}
     >
       <Animated.View style={{ opacity: pulseAnim }}>
-        <Volume2 size={iconSize} color={iconColor} strokeWidth={2} />
+        <Volume2 size={iconSize} color={iconColor} strokeWidth={1.5} />
       </Animated.View>
     </Pressable>
   );

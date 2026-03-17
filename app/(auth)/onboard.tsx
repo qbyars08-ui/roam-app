@@ -30,7 +30,7 @@ import { getDestinationPhoto } from '../../lib/photos';
 import { useAppStore } from '../../lib/store';
 import { generateItinerary, TripLimitReachedError } from '../../lib/claude';
 import { supabase } from '../../lib/supabase';
-// WaitlistCaptureModal removed — onboarding now always shows real auth
+import { useTranslation } from 'react-i18next';
 
 import { ONBOARDING_COMPLETE } from '../../lib/storage-keys';
 const DESTINATION_CHOICES = DESTINATIONS.slice(0, 4);
@@ -46,6 +46,7 @@ function StepDestination({
   onSelect: (dest: string) => void;
   onSurpriseMe: () => void;
 }) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const fade = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -54,8 +55,8 @@ function StepDestination({
 
   return (
     <Animated.View style={[styles.step, { opacity: fade, paddingTop: insets.top }]}>
-      <Text style={styles.title}>Where to?</Text>
-      <Text style={styles.subtitle}>We'll build you a real trip in seconds</Text>
+      <Text style={styles.title}>{t('onboarding.whereTo', { defaultValue: 'Where to?' })}</Text>
+      <Text style={styles.subtitle}>{t('onboarding.buildTrip', { defaultValue: "We'll build you a real trip in seconds" })}</Text>
 
       <View style={styles.destGrid}>
         {DESTINATION_CHOICES.map((d) => (
@@ -100,7 +101,7 @@ function StepDestination({
           { opacity: pressed ? 0.85 : 1 },
         ]}
       >
-        <Text style={styles.surpriseBtnText}>Surprise me</Text>
+        <Text style={styles.surpriseBtnText}>{t('onboarding.surpriseMe', { defaultValue: 'Surprise me' })}</Text>
       </Pressable>
     </Animated.View>
   );
@@ -109,7 +110,7 @@ function StepDestination({
 // ---------------------------------------------------------------------------
 // Step 2: Generating (make it an experience)
 // ---------------------------------------------------------------------------
-function StepGenerating({ destination }: { destination: string }) {
+function StepGenerating({ destination, t }: { destination: string; t: (key: string, opts?: Record<string, unknown>) => string }) {
   const pulse = useRef(new Animated.Value(1)).current;
   const dotOpacity = useRef([new Animated.Value(0), new Animated.Value(0), new Animated.Value(0)]).current;
 
@@ -143,8 +144,8 @@ function StepGenerating({ destination }: { destination: string }) {
       <Animated.View style={[styles.generatingIcon, { transform: [{ scale: pulse }] }]}>
         <View style={styles.generatingRing} />
       </Animated.View>
-      <Text style={styles.generatingTitle}>Building your {destination} trip</Text>
-      <Text style={styles.generatingSub}>Real places. Real tips. No filler.</Text>
+      <Text style={styles.generatingTitle}>{t('onboarding.buildingTrip', { defaultValue: 'Building your {{destination}} trip', destination })}</Text>
+      <Text style={styles.generatingSub}>{t('onboarding.realPlaces', { defaultValue: 'Real places. Real tips. No filler.' })}</Text>
       <View style={styles.dots}>
         {dotOpacity.map((anim, i) => (
           <Animated.View key={i} style={[styles.dot, { opacity: anim }]} />
@@ -167,6 +168,7 @@ function StepSignup({
   onComplete?: () => void;
   onSkip: () => void;
 }) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(false);
 
@@ -179,7 +181,7 @@ function StepSignup({
         requestedScopes: [AppleAuth.AppleAuthenticationScope.FULL_NAME, AppleAuth.AppleAuthenticationScope.EMAIL],
       });
       if (!cred.identityToken) {
-        Alert.alert('Try again', 'Apple Sign-In didn\u2019t come through.');
+        Alert.alert(t('common.tryAgain', { defaultValue: 'Try again' }), t('auth.appleSignInFailed', { defaultValue: 'Apple Sign-In didn\u2019t come through.' }));
         return;
       }
       const { error } = await supabase.auth.signInWithIdToken({
@@ -187,13 +189,13 @@ function StepSignup({
         token: cred.identityToken,
       });
       if (error) {
-        Alert.alert('Sign-in failed', error.message);
+        Alert.alert(t('auth.signInFailed', { defaultValue: 'Sign-in failed' }), error.message);
       } else {
         await AsyncStorage.setItem(ONBOARDING_COMPLETE, 'true');
       }
     } catch (e: unknown) {
       if (e && typeof e === 'object' && 'code' in e && e.code !== 'ERR_REQUEST_CANCELED') {
-        Alert.alert('Try again', 'Apple Sign-In hit a snag.');
+        Alert.alert(t('common.tryAgain', { defaultValue: 'Try again' }), t('auth.appleSignInSnag', { defaultValue: 'Apple Sign-In hit a snag.' }));
       }
     } finally {
       setLoading(false);
@@ -210,7 +212,7 @@ function StepSignup({
         },
       });
       if (error) {
-        Alert.alert('Sign-in failed', error.message);
+        Alert.alert(t('auth.signInFailed', { defaultValue: 'Sign-in failed' }), error.message);
       }
       // Note: ONBOARDING_COMPLETE_KEY is set by the auth callback handler
       // after the OAuth redirect completes — not here, since the browser
@@ -222,8 +224,8 @@ function StepSignup({
 
   return (
     <View style={[styles.step, { paddingTop: insets.top }]}>
-      <Text style={styles.signupTitle}>Save your {destination} trip</Text>
-      <Text style={styles.signupSub}>Create an account to keep this trip on all your devices</Text>
+      <Text style={styles.signupTitle}>{t('onboarding.saveTrip', { defaultValue: 'Save your {{destination}} trip', destination })}</Text>
+      <Text style={styles.signupSub}>{t('onboarding.createAccount', { defaultValue: 'Create an account to keep this trip on all your devices' })}</Text>
 
       <View style={styles.signupButtons}>
         {Platform.OS === 'ios' && (
@@ -236,7 +238,7 @@ function StepSignup({
               { opacity: pressed || loading ? 0.8 : 1 },
             ]}
           >
-            <Text style={styles.appleBtnText}>Continue with Apple</Text>
+            <Text style={styles.appleBtnText}>{t('auth.continueApple', { defaultValue: 'Continue with Apple' })}</Text>
           </Pressable>
         )}
         <Pressable
@@ -248,7 +250,7 @@ function StepSignup({
             { opacity: pressed || loading ? 0.8 : 1 },
           ]}
         >
-          <Text style={styles.googleBtnText}>Continue with Google</Text>
+          <Text style={styles.googleBtnText}>{t('auth.continueGoogle', { defaultValue: 'Continue with Google' })}</Text>
         </Pressable>
         <Pressable
           onPress={onSignIn}
@@ -259,13 +261,13 @@ function StepSignup({
             { opacity: pressed || loading ? 0.8 : 1 },
           ]}
         >
-          <Text style={styles.emailBtnText}>Continue with Email</Text>
+          <Text style={styles.emailBtnText}>{t('auth.continueEmail', { defaultValue: 'Continue with Email' })}</Text>
         </Pressable>
       </View>
 
       <Pressable onPress={onSkip} style={({ pressed }) => [styles.skipWrap, { opacity: pressed ? 0.6 : 1 }]}>
-        <Text style={styles.skipText}>View my trip first</Text>
-        <Text style={styles.skipSubtext}>You can save it later</Text>
+        <Text style={styles.skipText}>{t('onboarding.viewFirst', { defaultValue: 'View my trip first' })}</Text>
+        <Text style={styles.skipSubtext}>{t('onboarding.saveLater', { defaultValue: 'You can save it later' })}</Text>
       </Pressable>
 
       {DEV && (
@@ -284,6 +286,7 @@ function StepSignup({
 // Main
 // ---------------------------------------------------------------------------
 export default function OnboardScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState(0);
@@ -389,7 +392,7 @@ export default function OnboardScreen() {
         router.push({ pathname: '/paywall', params: { reason: 'limit', destination } });
         return;
       }
-      setError('We couldn\'t build your trip right now. Check your connection and try again.');
+      setError(t('onboarding.generateError', { defaultValue: "We couldn't build your trip right now. Check your connection and try again." }));
     }
   }, [destination, addTrip, setTripsThisMonth, router, isPro, tripsThisMonth, isGuestLike, session, setSession]);
 
@@ -437,12 +440,12 @@ export default function OnboardScreen() {
             locations={[0, 0.5, 1]}
           />
         </ImageBackground>
-        <StepGenerating destination={destination} />
+        <StepGenerating destination={destination} t={t} />
         {error && (
           <View style={styles.errorRow}>
             <Text style={styles.errorText}>{error}</Text>
             <Pressable onPress={() => setStep(0)}>
-              <Text style={styles.errorCta}>Pick again</Text>
+              <Text style={styles.errorCta}>{t('onboarding.pickAgain', { defaultValue: 'Pick again' })}</Text>
             </Pressable>
           </View>
         )}
@@ -550,15 +553,15 @@ const styles = StyleSheet.create({
   generatingIcon: {
     width: 80,
     height: 80,
-    borderRadius: 40,
-    borderWidth: 2,
+    borderRadius: RADIUS.pill,
+    borderWidth: 1.5,
     borderColor: COLORS.sage,
     alignSelf: 'center',
     marginBottom: SPACING.xl,
   } as ViewStyle,
   generatingRing: {
     flex: 1,
-    borderRadius: 38,
+    borderRadius: RADIUS.pill,
     borderWidth: 1,
     borderColor: COLORS.sageMedium,
   } as ViewStyle,
@@ -584,7 +587,7 @@ const styles = StyleSheet.create({
   dot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.sage,
   } as ViewStyle,
   errorRow: {
@@ -623,7 +626,7 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   signupBtn: {
     height: 54,
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.pill,
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,

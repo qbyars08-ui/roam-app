@@ -20,6 +20,7 @@ import {
   Share2,
   ChevronRight,
 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS, BUDGETS, DESTINATIONS, HIDDEN_DESTINATIONS } from '../../lib/constants';
 import * as Haptics from '../../lib/haptics';
 import type { Trip } from '../../lib/store';
@@ -37,6 +38,7 @@ interface TripRecapProps {
 // Component
 // ---------------------------------------------------------------------------
 function TripRecap({ trip, onShare, onPress }: TripRecapProps) {
+  const { t } = useTranslation();
   const budgetLabel = useMemo(
     () => BUDGETS.find((b) => b.id === trip.budget)?.label ?? trip.budget,
     [trip.budget],
@@ -56,12 +58,12 @@ function TripRecap({ trip, onShare, onPress }: TripRecapProps) {
 
   const vibeEmoji = useMemo(() => {
     const vibes = trip.vibes ?? [];
-    if (vibes.includes('adventure')) return 'Adventure';
-    if (vibes.includes('relax')) return 'Relaxation';
-    if (vibes.includes('culture')) return 'Culture';
-    if (vibes.includes('food')) return 'Foodie';
-    if (vibes.includes('party')) return 'Nightlife';
-    return 'Explorer';
+    if (vibes.includes('adventure')) return t('tripRecap.vibes.adventure', { defaultValue: 'Adventure' });
+    if (vibes.includes('relax')) return t('tripRecap.vibes.relax', { defaultValue: 'Relaxation' });
+    if (vibes.includes('culture')) return t('tripRecap.vibes.culture', { defaultValue: 'Culture' });
+    if (vibes.includes('food')) return t('tripRecap.vibes.food', { defaultValue: 'Foodie' });
+    if (vibes.includes('party')) return t('tripRecap.vibes.party', { defaultValue: 'Nightlife' });
+    return t('tripRecap.vibes.default', { defaultValue: 'Explorer' });
   }, [trip.vibes]);
 
   const handleShare = useMemo(
@@ -91,7 +93,7 @@ function TripRecap({ trip, onShare, onPress }: TripRecapProps) {
       {/* Destination header */}
       <View style={styles.header}>
         <View style={styles.destBadge}>
-          <MapPin size={14} color={COLORS.sage} strokeWidth={2} />
+          <MapPin size={14} color={COLORS.sage} strokeWidth={1.5} />
           <Text style={styles.destText}>{trip.destination}</Text>
           {destData && (
             <Text style={styles.countryText}>{destData.country}</Text>
@@ -106,7 +108,7 @@ function TripRecap({ trip, onShare, onPress }: TripRecapProps) {
               pressed && { opacity: 0.6 },
             ]}
           >
-            <Share2 size={16} color={COLORS.cream} strokeWidth={2} />
+            <Share2 size={16} color={COLORS.cream} strokeWidth={1.5} />
           </Pressable>
         )}
       </View>
@@ -114,26 +116,26 @@ function TripRecap({ trip, onShare, onPress }: TripRecapProps) {
       {/* Stats grid */}
       <View style={styles.statsGrid}>
         <View style={styles.statItem}>
-          <Calendar size={14} color={COLORS.gold} strokeWidth={2} />
+          <Calendar size={14} color={COLORS.gold} strokeWidth={1.5} />
           <Text style={styles.statValue}>{trip.days ?? 3}</Text>
-          <Text style={styles.statLabel}>days</Text>
+          <Text style={styles.statLabel}>{t('tripRecap.days', { defaultValue: 'days' })}</Text>
         </View>
         <View style={styles.statItem}>
-          <Sparkles size={14} color={COLORS.coral} strokeWidth={2} />
+          <Sparkles size={14} color={COLORS.coral} strokeWidth={1.5} />
           <Text style={styles.statValue}>{vibeEmoji}</Text>
-          <Text style={styles.statLabel}>vibe</Text>
+          <Text style={styles.statLabel}>{t('tripRecap.vibe', { defaultValue: 'vibe' })}</Text>
         </View>
         <View style={styles.statItem}>
-          <DollarSign size={14} color={COLORS.sage} strokeWidth={2} />
+          <DollarSign size={14} color={COLORS.sage} strokeWidth={1.5} />
           <Text style={styles.statValue}>{budgetLabel}</Text>
-          <Text style={styles.statLabel}>budget</Text>
+          <Text style={styles.statLabel}>{t('tripRecap.budget', { defaultValue: 'budget' })}</Text>
         </View>
       </View>
 
       {/* Estimated cost */}
       {estimatedCost !== null && (
         <View style={styles.costRow}>
-          <Text style={styles.costLabel}>Estimated trip cost</Text>
+          <Text style={styles.costLabel}>{t('tripRecap.estimatedCost', { defaultValue: 'Estimated trip cost' })}</Text>
           <Text style={styles.costValue}>${estimatedCost.toLocaleString()}</Text>
         </View>
       )}
@@ -141,8 +143,8 @@ function TripRecap({ trip, onShare, onPress }: TripRecapProps) {
       {/* CTA */}
       {onPress && (
         <View style={styles.ctaRow}>
-          <Text style={styles.ctaText}>View full itinerary</Text>
-          <ChevronRight size={16} color={COLORS.sage} strokeWidth={2} />
+          <Text style={styles.ctaText}>{t('tripRecap.viewItinerary', { defaultValue: 'View full itinerary' })}</Text>
+          <ChevronRight size={16} color={COLORS.sage} strokeWidth={1.5} />
         </View>
       )}
     </Pressable>
@@ -183,7 +185,7 @@ const styles = StyleSheet.create({
   shareBtn: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.bgCard,
     alignItems: 'center',
     justifyContent: 'center',
@@ -198,7 +200,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.bgCard,
     borderRadius: RADIUS.md,
     padding: SPACING.sm,
-    gap: 4,
+    gap: SPACING.xs,
   } as ViewStyle,
   statValue: {
     fontFamily: FONTS.bodySemiBold,
@@ -235,7 +237,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
+    gap: SPACING.xs,
   } as ViewStyle,
   ctaText: {
     fontFamily: FONTS.bodySemiBold,

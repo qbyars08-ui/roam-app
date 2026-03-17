@@ -4,7 +4,8 @@
 // =============================================================================
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, Text, View, type TextStyle } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, RADIUS, SPACING } from '../../lib/constants';
@@ -29,6 +30,7 @@ interface TravelTruthCardProps {
 // ---------------------------------------------------------------------------
 
 export default function TravelTruthCard({ destination }: TravelTruthCardProps) {
+  const { t } = useTranslation();
   const opacity = useRef(new Animated.Value(1)).current;
 
   const getInitialTruth = useCallback((): TravelTruth => {
@@ -71,10 +73,13 @@ export default function TravelTruthCard({ destination }: TravelTruthCardProps) {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.label}>SOMETHING TRUE</Text>
+      <Text style={styles.label}>{t('truth.somethingTrue', { defaultValue: 'SOMETHING TRUE' })}</Text>
 
       <Animated.View style={{ opacity }}>
-        <Text style={styles.truthText}>{truth.truth}</Text>
+        <Text style={styles.truthText}>
+          <Text style={styles.dropCap}>{truth.truth.charAt(0)}</Text>
+          {truth.truth.slice(1)}
+        </Text>
 
         <Text style={styles.destinationTag}>
           {truth.destination} · {truth.country}
@@ -86,7 +91,7 @@ export default function TravelTruthCard({ destination }: TravelTruthCardProps) {
           onPress={handleTellMeAnother}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
-          <Text style={styles.tellMeAnother}>Tell me another →</Text>
+          <Text style={styles.tellMeAnother}>{t('truth.tellMeAnother', { defaultValue: 'Tell me another →' })}</Text>
         </Pressable>
       </View>
     </View>
@@ -113,6 +118,12 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginBottom: SPACING.sm,
   },
+  dropCap: {
+    fontFamily: FONTS.header,
+    fontSize: 38,
+    lineHeight: 38,
+    color: COLORS.gold,
+  } as TextStyle,
   truthText: {
     fontFamily: FONTS.body,
     fontSize: 15,

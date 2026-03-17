@@ -7,6 +7,7 @@
 // =============================================================================
 
 import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -56,6 +57,7 @@ export default function IAmHereNow({
   hotelName,
   localScriptAddress,
 }: IAmHereNowProps) {
+  const { t } = useTranslation();
   const [showDriverMode, setShowDriverMode] = useState(false);
   const emergency = useMemo(
     () => getEmergencyForDestination(destination),
@@ -82,9 +84,9 @@ export default function IAmHereNow({
   if (!emergency) return null;
 
   const emergencyRows = [
-    { icon: Shield, label: 'Police', number: emergency.police, color: COLORS.sage },
-    { icon: Truck, label: 'Ambulance', number: emergency.ambulance, color: COLORS.coral },
-    { icon: Flame, label: 'Fire', number: emergency.fire, color: COLORS.gold },
+    { icon: Shield, label: t('hereNow.police', { defaultValue: 'Police' }), number: emergency.police, color: COLORS.sage },
+    { icon: Truck, label: t('hereNow.ambulance', { defaultValue: 'Ambulance' }), number: emergency.ambulance, color: COLORS.coral },
+    { icon: Flame, label: t('hereNow.fire', { defaultValue: 'Fire' }), number: emergency.fire, color: COLORS.gold },
   ];
 
   const displayAddress = localScriptAddress ?? hotelAddress ?? hotelName;
@@ -94,7 +96,7 @@ export default function IAmHereNow({
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerLabel}>I AM HERE NOW</Text>
+          <Text style={styles.headerLabel}>{t('hereNow.headerLabel', { defaultValue: 'I AM HERE NOW' })}</Text>
           <Text style={styles.headerDest}>{destination}</Text>
         </View>
 
@@ -111,11 +113,11 @@ export default function IAmHereNow({
               ]}
             >
               <View style={[styles.callIconWrap, { backgroundColor: row.color + '20' }]}>
-                <row.icon size={20} color={row.color} strokeWidth={2} />
+                <row.icon size={20} color={row.color} strokeWidth={1.5} />
               </View>
               <Text style={styles.callLabel}>{row.label}</Text>
               <View style={styles.callNumberRow}>
-                <Phone size={14} color={COLORS.cream} strokeWidth={2} />
+                <Phone size={14} color={COLORS.cream} strokeWidth={1.5} />
                 <Text style={styles.callNumber}>{row.number}</Text>
               </View>
             </Pressable>
@@ -126,9 +128,9 @@ export default function IAmHereNow({
         {displayAddress && (
           <View style={styles.addressSection}>
             <View style={styles.addressHeader}>
-              <MapPin size={16} color={COLORS.sage} strokeWidth={2} />
+              <MapPin size={16} color={COLORS.sage} strokeWidth={1.5} />
               <Text style={styles.addressLabel}>
-                {hotelName ?? 'Your accommodation'}
+                {hotelName ?? t('hereNow.yourAccommodation', { defaultValue: 'Your accommodation' })}
               </Text>
             </View>
 
@@ -145,8 +147,8 @@ export default function IAmHereNow({
                   pressed && { opacity: 0.8 },
                 ]}
               >
-                <Navigation size={14} color={COLORS.sage} strokeWidth={2} />
-                <Text style={styles.addressBtnText}>Navigate</Text>
+                <Navigation size={14} color={COLORS.sage} strokeWidth={1.5} />
+                <Text style={styles.addressBtnText}>{t('hereNow.navigate', { defaultValue: 'Navigate' })}</Text>
               </Pressable>
 
               {/* Show to driver button */}
@@ -157,8 +159,8 @@ export default function IAmHereNow({
                   pressed && { opacity: 0.8 },
                 ]}
               >
-                <Maximize2 size={14} color={COLORS.bg} strokeWidth={2} />
-                <Text style={styles.showDriverBtnText}>Show to driver</Text>
+                <Maximize2 size={14} color={COLORS.bg} strokeWidth={1.5} />
+                <Text style={styles.showDriverBtnText}>{t('hereNow.showToDriver', { defaultValue: 'Show to driver' })}</Text>
               </Pressable>
             </View>
           </View>
@@ -173,12 +175,12 @@ export default function IAmHereNow({
               pressed && { opacity: 0.8 },
             ]}
           >
-            <Shield size={16} color={COLORS.creamMuted} strokeWidth={2} />
+            <Shield size={16} color={COLORS.creamMuted} strokeWidth={1.5} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.embassyLabel}>US Embassy — {emergency.usEmbassy.city}</Text>
+              <Text style={styles.embassyLabel}>{`${t('hereNow.usEmbassy', { defaultValue: 'US Embassy' })} — ${emergency.usEmbassy.city}`}</Text>
               <Text style={styles.embassyPhone}>{emergency.usEmbassy.phone}</Text>
             </View>
-            <Phone size={16} color={COLORS.sage} strokeWidth={2} />
+            <Phone size={16} color={COLORS.sage} strokeWidth={1.5} />
           </Pressable>
         )}
       </View>
@@ -199,13 +201,13 @@ export default function IAmHereNow({
             onPress={() => setShowDriverMode(false)}
             style={styles.driverClose}
           >
-            <X size={24} color={COLORS.creamDim} strokeWidth={2} />
+            <X size={24} color={COLORS.creamDim} strokeWidth={1.5} />
           </Pressable>
 
           {/* Address in large text */}
           <View style={styles.driverContent}>
             <Text style={styles.driverLabel}>
-              {hotelName ? hotelName.toUpperCase() : 'ACCOMMODATION'}
+              {hotelName ? hotelName.toUpperCase() : t('hereNow.accommodation', { defaultValue: 'ACCOMMODATION' })}
             </Text>
             <Text style={styles.driverAddress}>
               {displayAddress}
@@ -215,7 +217,7 @@ export default function IAmHereNow({
                 {hotelAddress}
               </Text>
             )}
-            <Text style={styles.driverTapHint}>Tap anywhere to close</Text>
+            <Text style={styles.driverTapHint}>{t('hereNow.tapToClose', { defaultValue: 'Tap anywhere to close' })}</Text>
           </View>
         </Pressable>
       </Modal>
@@ -269,14 +271,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: SPACING.sm,
     alignItems: 'center',
-    gap: 6,
+    gap: SPACING.sm,
     minHeight: 90,
     justifyContent: 'center',
   } as ViewStyle,
   callIconWrap: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: RADIUS.pill,
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
@@ -307,7 +309,7 @@ const styles = StyleSheet.create({
   addressHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: SPACING.sm,
     marginBottom: SPACING.sm,
   } as ViewStyle,
   addressLabel: {
@@ -331,7 +333,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: SPACING.sm,
     backgroundColor: COLORS.bgElevated,
     borderRadius: RADIUS.md,
     borderWidth: 1,
@@ -348,7 +350,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: SPACING.sm,
     backgroundColor: COLORS.sage,
     borderRadius: RADIUS.md,
     paddingVertical: 10,

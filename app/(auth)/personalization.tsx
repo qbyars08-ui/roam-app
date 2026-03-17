@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   btn: {
     backgroundColor: COLORS.gold,
     height: 56,
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.pill,
     alignItems: 'center',
     justifyContent: 'center',
     maxWidth: 600,

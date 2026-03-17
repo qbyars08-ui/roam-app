@@ -2,6 +2,7 @@
 // ROAM — Trip Events: concerts & experiences during your dates
 // =============================================================================
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -46,6 +47,7 @@ export default function TripEventsCard({
   startDate,
   endDate,
 }: TripEventsCardProps) {
+  const { t } = useTranslation();
   const [events, setEvents] = useState<TripEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -69,8 +71,8 @@ export default function TripEventsCard({
 
   return (
     <View style={styles.card}>
-      <Text style={styles.label}>HAPPENING DURING YOUR TRIP</Text>
-      <Text style={styles.sub}>Concerts, shows & experiences</Text>
+      <Text style={styles.label}>{t('tripEvents.happeningDuringTrip', { defaultValue: 'HAPPENING DURING YOUR TRIP' })}</Text>
+      <Text style={styles.sub}>{t('tripEvents.concertsShowsExperiences', { defaultValue: 'Concerts, shows & experiences' })}</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}

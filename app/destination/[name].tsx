@@ -10,7 +10,6 @@ import {
   ScrollView,
   Pressable,
   StyleSheet,
-  ActivityIndicator,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
@@ -28,7 +27,7 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
-import { getDestinationCoords } from '../../lib/air-quality';
+import { resolveDestinationCoords } from '../../lib/air-quality';
 import { getAirQuality, type AirQuality } from '../../lib/air-quality';
 import { getWeatherForecast, type DailyForecast } from '../../lib/weather-forecast';
 import { getTimezoneByDestination } from '../../lib/timezone';
@@ -46,6 +45,7 @@ import ROAMScoreBadge from '../../components/features/ROAMScoreBadge';
 import SeasonalIntel from '../../components/features/SeasonalIntel';
 import RouteIntelCard from '../../components/features/RouteIntelCard';
 import GoNowFeed from '../../components/features/GoNowFeed';
+import { SkeletonCard } from '../../components/premium/LoadingStates';
 
 // ---------------------------------------------------------------------------
 // Data fetching hook
@@ -76,34 +76,37 @@ function useDashboardData(destination: string) {
     let cancelled = false;
     setLoading(true);
 
-    const coords = getDestinationCoords(destination);
     const cost = getCostOfLiving(destination);
     const safety = getSafetyForDestination(destination);
 
     const promises: Promise<void>[] = [];
 
-    // Weather
-    if (coords) {
-      promises.push(
-        getWeatherForecast(coords.lat, coords.lng)
-          .then((forecast) => {
-            if (!cancelled && forecast) {
-              setData((prev) => ({ ...prev, weather: forecast.days }));
-            }
-          })
-          .catch(() => {}),
-      );
+    // Weather & Air Quality — resolve coords (offline lookup + geocoding fallback)
+    promises.push(
+      resolveDestinationCoords(destination)
+        .then((coords) => {
+          if (!coords || cancelled) return;
 
-      promises.push(
-        getAirQuality(coords.lat, coords.lng)
-          .then((aqi) => {
-            if (!cancelled) {
-              setData((prev) => ({ ...prev, airQuality: aqi }));
-            }
-          })
-          .catch(() => {}),
-      );
-    }
+          return Promise.all([
+            getWeatherForecast(coords.lat, coords.lng)
+              .then((forecast) => {
+                if (!cancelled && forecast) {
+                  setData((prev) => ({ ...prev, weather: forecast.days }));
+                }
+              })
+              .catch(() => {}),
+            getAirQuality(coords.lat, coords.lng)
+              .then((aqi) => {
+                if (!cancelled) {
+                  setData((prev) => ({ ...prev, airQuality: aqi }));
+                }
+              })
+              .catch(() => {}),
+          ]);
+        })
+        .then(() => {})
+        .catch(() => {}),
+    );
 
     // Timezone (synchronous lookup)
     const tz = getTimezoneByDestination(destination);
@@ -184,7 +187,7 @@ function StatCard({
       disabled={!onPress}
     >
       <View style={[styles.statIconWrap, { backgroundColor: `${accentColor}20` }]}>
-        <Icon size={18} color={accentColor} strokeWidth={2} />
+        <Icon size={18} color={accentColor} strokeWidth={1.5} />
       </View>
       <Text style={styles.statLabel}>{label}</Text>
       <Text style={styles.statValue}>{value}</Text>
@@ -215,7 +218,10 @@ export default function DestinationDashboard() {
     return DESTINATIONS.find((d) => d.label.toLowerCase() === destination.toLowerCase());
   }, [destination]);
 
-  const destCoords = useMemo(() => getDestinationCoords(destination), [destination]);
+  const [destCoords, setDestCoords] = useState<{ lat: number; lng: number } | null>(null);
+  useEffect(() => {
+    resolveDestinationCoords(destination).then(setDestCoords).catch(() => {});
+  }, [destination]);
   const destCurrency = useMemo(() => getDestinationCurrency(destination), [destination]);
 
   // Get a comparison destination (different region, similar cost tier)
@@ -240,7 +246,7 @@ export default function DestinationDashboard() {
     const today = data.weather[0];
     return {
       temp: `${Math.round(today.tempMax)}°`,
-      description: today.precipitationChance > 50 ? 'Rainy' : today.tempMax > 28 ? 'Hot' : today.tempMax > 18 ? 'Warm' : 'Cool',
+      description: today.precipitationChance > 50 ? t('destination.weather.rainy', { defaultValue: 'Rainy' }) : today.tempMax > 28 ? t('destination.weather.hot', { defaultValue: 'Hot' }) : today.tempMax > 18 ? t('destination.weather.warm', { defaultValue: 'Warm' }) : t('destination.weather.cool', { defaultValue: 'Cool' }),
       rainChance: `${today.precipitationChance}% rain`,
     };
   }, [data.weather]);
@@ -249,10 +255,10 @@ export default function DestinationDashboard() {
   const safetyBadge = useMemo(() => {
     if (!data.safety) return null;
     const score = data.safety.safetyScore;
-    if (score >= 80) return { label: 'Very Safe', color: COLORS.sage };
-    if (score >= 60) return { label: 'Safe', color: COLORS.sage };
-    if (score >= 40) return { label: 'Moderate', color: COLORS.gold };
-    return { label: 'Use Caution', color: COLORS.coral };
+    if (score >= 80) return { label: t('destination.safety.verySafe', { defaultValue: 'Very Safe' }), color: COLORS.sage };
+    if (score >= 60) return { label: t('destination.safety.safe', { defaultValue: 'Safe' }), color: COLORS.sage };
+    if (score >= 40) return { label: t('destination.safety.moderate', { defaultValue: 'Moderate' }), color: COLORS.gold };
+    return { label: t('destination.safety.useCaution', { defaultValue: 'Use Caution' }), color: COLORS.coral };
   }, [data.safety]);
 
   // Dates for crowd calendar (next 14 days)
@@ -271,7 +277,7 @@ export default function DestinationDashboard() {
           style={({ pressed }) => [styles.backBtn, { opacity: pressed ? 0.7 : 1 }]}
           onPress={() => router.back()}
         >
-          <ArrowLeft size={22} color={COLORS.cream} strokeWidth={2} />
+          <ArrowLeft size={22} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
         <View style={styles.headerText}>
           <Text style={styles.headerTitle}>{destination}</Text>
@@ -290,28 +296,28 @@ export default function DestinationDashboard() {
         <View style={styles.statsGrid}>
           <StatCard
             icon={data.localTime ? Globe : Globe}
-            label="Local time"
+            label={t('destination.localTime', { defaultValue: 'Local time' })}
             value={data.localTime ?? '--:--'}
             subValue={data.timezone?.split('/')[1]?.replace('_', ' ') ?? undefined}
             accentColor={COLORS.sage}
           />
           <StatCard
             icon={Thermometer}
-            label="Right now"
+            label={t('destination.rightNow', { defaultValue: 'Right now' })}
             value={weatherSummary?.temp ?? '--'}
             subValue={weatherSummary?.description}
             accentColor={COLORS.gold}
           />
           <StatCard
             icon={Wind}
-            label="Air quality"
+            label={t('destination.airQuality', { defaultValue: 'Air quality' })}
             value={data.airQuality?.label ?? '--'}
             subValue={data.airQuality ? `AQI ${data.airQuality.aqi}` : undefined}
             accentColor={data.airQuality && data.airQuality.aqi > 100 ? COLORS.coral : COLORS.sage}
           />
           <StatCard
             icon={Shield}
-            label="Safety"
+            label={t('destination.safety', { defaultValue: 'Safety' })}
             value={safetyBadge?.label ?? '--'}
             subValue={data.safety ? `${data.safety.safetyScore}/100` : undefined}
             accentColor={safetyBadge?.color ?? COLORS.sage}
@@ -348,7 +354,7 @@ export default function DestinationDashboard() {
         {/* Upcoming holidays */}
         {data.holidays.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Upcoming holidays</Text>
+            <Text style={styles.sectionTitle}>{t('destination.upcomingHolidays', { defaultValue: 'Upcoming holidays' })}</Text>
             {data.holidays.slice(0, 3).map((h) => (
               <View key={h.date} style={styles.holidayRow}>
                 <View style={styles.holidayDateBadge}>
@@ -409,16 +415,13 @@ export default function DestinationDashboard() {
           ]}
           onPress={handlePlanTrip}
         >
-          <Sparkles size={20} color={COLORS.bg} strokeWidth={2} />
-          <Text style={styles.ctaText}>Plan a trip to {destination}</Text>
+          <Sparkles size={20} color={COLORS.bg} strokeWidth={1.5} />
+          <Text style={styles.ctaText}>{t('destination.planTrip', { defaultValue: 'Plan a trip to {{destination}}', destination })}</Text>
         </Pressable>
 
         {/* Loading indicator for remaining data */}
         {loading && (
-          <View style={styles.loadingRow}>
-            <ActivityIndicator size="small" color={COLORS.sage} />
-            <Text style={styles.loadingText}>Loading live data...</Text>
-          </View>
+          <SkeletonCard height={48} style={{ marginTop: SPACING.md }} />
         )}
       </ScrollView>
     </View>
@@ -438,7 +441,7 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   scrollContent: {
     paddingHorizontal: SPACING.lg,
-    paddingBottom: 120,
+    paddingBottom: SPACING.xxxl + SPACING.xxl,
   } as ViewStyle,
 
   // Header
@@ -487,7 +490,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     padding: SPACING.md,
-    gap: 4,
+    gap: SPACING.xs,
   } as ViewStyle,
   statIconWrap: {
     width: 32,
@@ -495,7 +498,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   } as ViewStyle,
   statLabel: {
     fontFamily: FONTS.mono,
@@ -536,7 +539,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.coralSubtle,
     borderRadius: RADIUS.sm,
     paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
+    paddingVertical: SPACING.xs,
     width: 70,
     alignItems: 'center',
   } as ViewStyle,
@@ -564,7 +567,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: SPACING.sm,
     backgroundColor: COLORS.sage,
-    borderRadius: RADIUS.xl,
+    borderRadius: RADIUS.pill,
     paddingVertical: SPACING.md + 2,
     marginTop: SPACING.md,
   } as ViewStyle,

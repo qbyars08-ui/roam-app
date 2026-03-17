@@ -19,7 +19,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { COLORS, FONTS, SPACING } from '../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { getDestinationPhoto } from '../lib/photos';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../lib/store';
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.bgCard,
     borderWidth: 1,
     borderColor: COLORS.border,

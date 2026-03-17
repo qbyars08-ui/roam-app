@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
 import { withComingSoon } from '../lib/with-coming-soon';
@@ -110,6 +111,7 @@ const VIBE_LABELS: Record<string, string> = {
 function MainCharacterScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
   const trips = useAppStore((s) => s.trips);
   const [data, setData] = useState<MainCharacterData | null>(null);
@@ -187,7 +189,7 @@ function MainCharacterScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch {
       setError(
-        "Couldn't find your main character moments. Try again — every trip has a story."
+        t('mainCharacter.errorGenerate', { defaultValue: "Couldn't find your main character moments. Try again — every trip has a story." })
       );
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
@@ -213,7 +215,7 @@ function MainCharacterScreen() {
       });
       await Sharing.shareAsync(uri, {
         mimeType: 'image/png',
-        dialogTitle: 'Share your Shot List',
+        dialogTitle: t('mainCharacter.shareDialogTitle', { defaultValue: 'Share your Shot List' }),
       });
     } catch {
       // cancelled
@@ -228,13 +230,13 @@ function MainCharacterScreen() {
           <Pressable onPress={() => router.back()} hitSlop={12}>
             <Text style={styles.backBtn}>{'\u2190'}</Text>
           </Pressable>
-          <Text style={styles.headerTitle}>Main Character</Text>
+          <Text style={styles.headerTitle}>{t('mainCharacter.title', { defaultValue: 'Main Character' })}</Text>
           <View style={{ width: 24 }} />
         </View>
         <View style={styles.emptyCenter}>
-          <Text style={styles.emptyTitle}>No trip to direct</Text>
+          <Text style={styles.emptyTitle}>{t('mainCharacter.noTrip', { defaultValue: 'No trip to direct' })}</Text>
           <Text style={styles.emptyBody}>
-            Plan a trip first, then come back to find your cinematic moments.
+            {t('mainCharacter.planFirst', { defaultValue: 'Plan a trip first, then come back to find your cinematic moments.' })}
           </Text>
         </View>
       </View>
@@ -249,8 +251,8 @@ function MainCharacterScreen() {
           <Text style={styles.backBtn}>{'\u2190'}</Text>
         </Pressable>
         <View>
-          <Text style={styles.headerEyebrow}>CINEMATIC MOMENTS</Text>
-          <Text style={styles.headerTitle}>Main Character</Text>
+          <Text style={styles.headerEyebrow}>{t('mainCharacter.eyebrow', { defaultValue: 'CINEMATIC MOMENTS' })}</Text>
+          <Text style={styles.headerTitle}>{t('mainCharacter.title', { defaultValue: 'Main Character' })}</Text>
         </View>
         <Pressable onPress={generateMoments} hitSlop={12} disabled={loading}>
           <Text style={[styles.refreshBtn, loading && { opacity: 0.4 }]}>
@@ -268,10 +270,10 @@ function MainCharacterScreen() {
         {loading && (
           <View style={styles.loadingCenter}>
             <Text style={styles.loadingText}>
-              Finding your cinematic moments...
+              {t('mainCharacter.loading', { defaultValue: 'Finding your cinematic moments...' })}
             </Text>
             <Text style={styles.loadingSubtext}>
-              Every trip has a story. We're finding yours.
+              {t('mainCharacter.loadingSub', { defaultValue: "Every trip has a story. We're finding yours." })}
             </Text>
           </View>
         )}
@@ -287,7 +289,7 @@ function MainCharacterScreen() {
                 { opacity: pressed ? 0.7 : 1 },
               ]}
             >
-              <Text style={styles.retryText}>Try Again</Text>
+              <Text style={styles.retryText}>{t('mainCharacter.tryAgain', { defaultValue: 'Try Again' })}</Text>
             </Pressable>
           </View>
         )}
@@ -297,7 +299,7 @@ function MainCharacterScreen() {
           <>
             {/* Narrative Arc */}
             <Animated.View style={[styles.arcCard, { opacity: fadeIn }]}>
-              <Text style={styles.arcEyebrow}>THE STORY</Text>
+              <Text style={styles.arcEyebrow}>{t('mainCharacter.theStory', { defaultValue: 'THE STORY' })}</Text>
               <Text style={styles.arcTitle}>{data.shotListTitle}</Text>
               <Text style={styles.arcBody}>{data.narrativeArc}</Text>
               <Text style={styles.arcDest}>{data.destination}</Text>
@@ -343,7 +345,7 @@ function MainCharacterScreen() {
                 {/* Footer */}
                 <View style={styles.shotListFooter}>
                   <Text style={styles.shotListFooterText}>
-                    Go somewhere that changes you.
+                    {t('mainCharacter.footerTagline', { defaultValue: 'Go somewhere that changes you.' })}
                   </Text>
                 </View>
               </LinearGradient>
@@ -362,7 +364,7 @@ function MainCharacterScreen() {
                 style={styles.shareBtnGradient}
               >
                 <Text style={styles.shareBtnText}>
-                  Share your Shot List
+                  {t('mainCharacter.shareShotList', { defaultValue: 'Share your Shot List' })}
                 </Text>
               </LinearGradient>
             </Pressable>
@@ -385,6 +387,7 @@ function MomentCard({
   moment: MainCharacterMoment;
   index: number;
 }) {
+  const { t } = useTranslation();
   const vibeColor = VIBE_COLORS[moment.vibeTag] ?? COLORS.sage;
   const vibeLabel = VIBE_LABELS[moment.vibeTag] ?? moment.vibeTag;
 
@@ -393,7 +396,7 @@ function MomentCard({
       {/* Scene number */}
       <View style={styles.sceneRow}>
         <View style={[styles.sceneBadge, { backgroundColor: vibeColor }]}>
-          <Text style={styles.sceneNum}>SCENE {index + 1}</Text>
+          <Text style={styles.sceneNum}>{t('mainCharacter.scene', { defaultValue: 'SCENE {{number}}', number: index + 1 })}</Text>
         </View>
         <View style={[styles.vibeBadge, { borderColor: vibeColor }]}>
           <Text style={[styles.vibeLabel, { color: vibeColor }]}>
@@ -404,7 +407,7 @@ function MomentCard({
 
       {/* Day + Time */}
       <View style={styles.dayTimeRow}>
-        <Text style={styles.dayText}>Day {moment.day}</Text>
+        <Text style={styles.dayText}>{t('mainCharacter.dayNumber', { defaultValue: 'Day {{number}}', number: moment.day })}</Text>
         <Text style={styles.timeText}>{moment.time}</Text>
       </View>
 
@@ -420,18 +423,18 @@ function MomentCard({
       {/* Shot Details */}
       <View style={styles.detailsGrid}>
         <View style={styles.detailItem}>
-          <Text style={styles.detailLabel}>BEST TIME</Text>
+          <Text style={styles.detailLabel}>{t('mainCharacter.bestTime', { defaultValue: 'BEST TIME' })}</Text>
           <Text style={styles.detailValue}>{moment.bestTime}</Text>
         </View>
         <View style={styles.detailItem}>
-          <Text style={styles.detailLabel}>SHOT ANGLE</Text>
+          <Text style={styles.detailLabel}>{t('mainCharacter.shotAngle', { defaultValue: 'SHOT ANGLE' })}</Text>
           <Text style={styles.detailValue}>{moment.shotAngle}</Text>
         </View>
       </View>
 
       {/* Caption */}
       <View style={styles.captionRow}>
-        <Text style={styles.captionLabel}>CAPTION</Text>
+        <Text style={styles.captionLabel}>{t('mainCharacter.caption', { defaultValue: 'CAPTION' })}</Text>
         <Text style={styles.captionText}>{'\u201C'}{moment.caption}{'\u201D'}</Text>
       </View>
     </View>
@@ -542,7 +545,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.dangerHighlight,
     borderRadius: RADIUS.full,
     paddingHorizontal: SPACING.lg,
-    paddingVertical: 8,
+    paddingVertical: SPACING.sm,
   } as ViewStyle,
   retryText: {
     fontFamily: FONTS.bodySemiBold,
@@ -701,7 +704,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.creamBright,
     lineHeight: 22,
-    fontStyle: 'italic',
     marginBottom: SPACING.sm,
   } as TextStyle,
 
@@ -754,7 +756,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 13,
     color: COLORS.creamBrightDim,
-    fontStyle: 'italic',
     lineHeight: 20,
   } as TextStyle,
 

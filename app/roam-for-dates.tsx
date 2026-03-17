@@ -27,10 +27,12 @@ import { DEFAULT_TRAVEL_PROFILE } from '../lib/types/travel-profile';
 import type { TravelProfile } from '../lib/types/travel-profile';
 import type { Itinerary } from '../lib/types/itinerary';
 import Button from '../components/ui/Button';
+import { useTranslation } from 'react-i18next';
 
 function RoamForDatesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const myProfile = useAppStore((s) => s.travelProfile);
   const hasProfile = useAppStore((s) => s.hasCompletedProfile);
   const addTrip = useAppStore((s) => s.addTrip);
@@ -61,7 +63,7 @@ function RoamForDatesScreen() {
 
   const handleGenerate = useCallback(async () => {
     if (!destination.trim()) {
-      Alert.alert('Pick a destination', 'Where do you two want to go?');
+      Alert.alert(t('dates.pickDestination', { defaultValue: 'Pick a destination' }), t('dates.whereToGo', { defaultValue: 'Where do you two want to go?' }));
       return;
     }
     if (isGuestUser() && trips.length >= 1) {
@@ -94,7 +96,7 @@ function RoamForDatesScreen() {
         createdAt: new Date().toISOString(),
       });
     } catch (e: unknown) {
-      Alert.alert('Oops', e instanceof Error ? e.message : 'Couldn\'t plan your trip. Try again.');
+      Alert.alert(t('common.oops', { defaultValue: 'Oops' }), e instanceof Error ? e.message : t('dates.generateError', { defaultValue: "Couldn't plan your trip. Try again." }));
     } finally {
       setGenerating(false);
     }
@@ -107,13 +109,13 @@ function RoamForDatesScreen() {
           <Pressable onPress={() => setResult(null)} hitSlop={12}>
             <Text style={styles.back}>{'←'}</Text>
           </Pressable>
-          <Text style={styles.title}>Your couple's trip</Text>
+          <Text style={styles.title}>{t('dates.couplesTrip', { defaultValue: "Your couple's trip" })}</Text>
         </View>
         <ScrollView contentContainerStyle={styles.resultContent} showsVerticalScrollIndicator={false}>
           <Text style={styles.resultDestination}>{result.destination}</Text>
           <Text style={styles.resultTagline}>{result.tagline}</Text>
           <Button
-            label="View full trip"
+            label={t('dates.viewFullTrip', { defaultValue: 'View full trip' })}
             variant="sage"
             onPress={() => router.push({ pathname: '/itinerary', params: { data: JSON.stringify({ destination: result.destination, days: result.days.length, budget: result.totalBudget, vibes: [], itinerary: JSON.stringify(result) }) } })}
           />
@@ -128,13 +130,13 @@ function RoamForDatesScreen() {
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Text style={styles.back}>{'←'}</Text>
         </Pressable>
-        <Text style={styles.title}>ROAM for Dates</Text>
-        <Text style={styles.subtitle}>Merge your travel styles. Find a trip you'll both love.</Text>
+        <Text style={styles.title}>{t('dates.title', { defaultValue: 'ROAM for Dates' })}</Text>
+        <Text style={styles.subtitle}>{t('dates.subtitle', { defaultValue: "Merge your travel styles. Find a trip you'll both love." })}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Where to?</Text>
+          <Text style={styles.sectionTitle}>{t('dates.whereTo', { defaultValue: 'Where to?' })}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
             {DESTINATIONS.slice(0, 12).map((d) => (
               <Pressable
@@ -149,7 +151,7 @@ function RoamForDatesScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Days</Text>
+          <Text style={styles.sectionTitle}>{t('dates.days', { defaultValue: 'Days' })}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
             {[3, 5, 7, 10, 14].map((d) => (
               <Pressable
@@ -157,14 +159,14 @@ function RoamForDatesScreen() {
                 onPress={() => { setDays(d); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
                 style={[styles.chip, days === d && styles.chipActive]}
               >
-                <Text style={[styles.chipText, days === d && styles.chipActiveText]}>{d} days</Text>
+                <Text style={[styles.chipText, days === d && styles.chipActiveText]}>{`${d} ${t('common.days', { defaultValue: 'days' })}`}</Text>
               </Pressable>
             ))}
           </ScrollView>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Budget</Text>
+          <Text style={styles.sectionTitle}>{t('dates.budget', { defaultValue: 'Budget' })}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
             {BUDGETS.map((b) => (
               <Pressable
@@ -179,9 +181,9 @@ function RoamForDatesScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Partner's style (quick)</Text>
+          <Text style={styles.sectionTitle}>{t('dates.partnerStyle', { defaultValue: "Partner's style (quick)" })}</Text>
           <View style={styles.partnerRow}>
-            <Text style={styles.partnerLabel}>Pace</Text>
+            <Text style={styles.partnerLabel}>{t('dates.pace', { defaultValue: 'Pace' })}</Text>
             <View style={styles.partnerValues}>
               {[1, 3, 5, 7, 10].map((v) => (
                 <Pressable
@@ -195,7 +197,7 @@ function RoamForDatesScreen() {
             </View>
           </View>
           <View style={styles.partnerRow}>
-            <Text style={styles.partnerLabel}>Budget</Text>
+            <Text style={styles.partnerLabel}>{t('dates.budgetLabel', { defaultValue: 'Budget' })}</Text>
             <View style={styles.partnerValues}>
               {[1, 5, 10].map((v) => (
                 <Pressable
@@ -209,7 +211,7 @@ function RoamForDatesScreen() {
             </View>
           </View>
           <View style={styles.partnerRow}>
-            <Text style={styles.partnerLabel}>Vibes</Text>
+            <Text style={styles.partnerLabel}>{t('dates.vibes', { defaultValue: 'Vibes' })}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
               {VIBES.slice(0, 6).map((v) => {
                 const on = partnerPurposes.includes(v.id);
@@ -228,7 +230,7 @@ function RoamForDatesScreen() {
         </View>
 
         <Button
-          label={generating ? 'Finding your perfect trip...' : "Generate our trip"}
+          label={generating ? t('dates.finding', { defaultValue: 'Finding your perfect trip...' }) : t('dates.generate', { defaultValue: 'Generate our trip' })}
           variant="sage"
           onPress={handleGenerate}
           disabled={generating}

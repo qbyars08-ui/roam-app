@@ -5,6 +5,7 @@
 // =============================================================================
 
 import React, { useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Image,
   Pressable,
@@ -39,6 +40,7 @@ interface MomentCardProps {
 }
 
 function MomentCard({ moment, onDream }: MomentCardProps): React.JSX.Element {
+  const { t } = useTranslation();
   const timeDisplay = useMemo<string>(() => getMomentTimeDisplay(moment), [moment]);
 
   const handleDream = useCallback(() => {
@@ -72,7 +74,7 @@ function MomentCard({ moment, onDream }: MomentCardProps): React.JSX.Element {
             {moment.destination}
           </Text>
           <Text style={styles.conditions} numberOfLines={1}>
-            {`Right now · ${timeDisplay}`}
+            {`${t('wanderlust.rightNow', { defaultValue: 'Right now' })} · ${timeDisplay}`}
           </Text>
           <Text style={styles.momentLine} numberOfLines={2}>
             {moment.line}
@@ -88,9 +90,9 @@ function MomentCard({ moment, onDream }: MomentCardProps): React.JSX.Element {
           <Heart
             size={16}
             color={COLORS.sage}
-            strokeWidth={2}
+            strokeWidth={1.5}
           />
-          <Text style={styles.dreamText}>Dream about this</Text>
+          <Text style={styles.dreamText}>{t('wanderlust.dreamAboutThis', { defaultValue: 'Dream about this' })}</Text>
           <Text style={styles.dreamArrow}>→</Text>
         </Pressable>
       </View>
@@ -133,7 +135,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    gap: 12,
+    gap: SPACING.md,
     paddingVertical: SPACING.md,
   },
 

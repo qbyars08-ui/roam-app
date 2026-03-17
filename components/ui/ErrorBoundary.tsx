@@ -47,7 +47,7 @@ export default class ErrorBoundary extends Component<Props, State> {
       return (
         <View style={styles.container}>
           <View style={styles.iconWrap}>
-            <AlertTriangle size={48} color={COLORS.coral} strokeWidth={2} />
+            <AlertTriangle size={48} color={COLORS.coral} strokeWidth={1.5} />
           </View>
           <Text style={styles.title}>{i18n.t('errorBoundary.title')}</Text>
           <Text style={styles.subtitle}>

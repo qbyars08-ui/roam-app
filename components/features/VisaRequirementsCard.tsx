@@ -6,6 +6,7 @@
 // =============================================================================
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import {
   checkVisaRequirements,
@@ -26,6 +27,7 @@ const PASSPORT_COLORS: Record<string, { bg: string; text: string }> = {
 const DEFAULT_PASSPORT_COLOR = { bg: COLORS.sageSubtle, text: COLORS.sage };
 
 export default function VisaRequirementsCard({ destination }: VisaRequirementsCardProps) {
+  const { t } = useTranslation();
   const [visa, setVisa] = useState<VisaResult | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -58,7 +60,7 @@ export default function VisaRequirementsCard({ destination }: VisaRequirementsCa
 
   return (
     <View style={styles.card}>
-      <Text style={styles.sectionLabel}>VISA & ENTRY</Text>
+      <Text style={styles.sectionLabel}>{t('visa.headerLabel', { defaultValue: 'VISA & ENTRY' })}</Text>
 
       {/* Best option summary */}
       <View style={styles.bestRow}>
@@ -99,7 +101,7 @@ export default function VisaRequirementsCard({ destination }: VisaRequirementsCa
                 <Text style={[styles.passportStatus, { color: display.color }]}>
                   {display.label}
                 </Text>
-                {isBest && <Text style={styles.bestBadge}>BEST</Text>}
+                {isBest && <Text style={styles.bestBadge}>{t('visa.best', { defaultValue: 'BEST' })}</Text>}
               </View>
             );
           })}
@@ -107,7 +109,7 @@ export default function VisaRequirementsCard({ destination }: VisaRequirementsCa
       )}
 
       <Text style={styles.source}>
-        {visa.best.destinationCountry} · Verify before travel
+        {visa.best.destinationCountry} · {t('visa.verifyBeforeTravel', { defaultValue: 'Verify before travel' })}
       </Text>
     </View>
   );
@@ -131,12 +133,12 @@ const styles = StyleSheet.create({
   bestRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: SPACING.sm,
   } as ViewStyle,
   statusDot: {
     width: 10,
     height: 10,
-    borderRadius: 5,
+    borderRadius: RADIUS.sm,
   } as ViewStyle,
   bestText: {
     flex: 1,
@@ -165,9 +167,9 @@ const styles = StyleSheet.create({
   passportRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: SPACING.sm,
     paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingHorizontal: SPACING.sm,
     borderRadius: RADIUS.sm,
   } as ViewStyle,
   passportRowBest: {

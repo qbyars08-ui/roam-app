@@ -20,6 +20,7 @@ import * as Haptics from '../lib/haptics';
 import { withComingSoon } from '../lib/with-coming-soon';
 import { LinearGradient } from 'expo-linear-gradient';
 import { UtensilsCrossed, Compass, Mountain, Moon, BarChart3, Users, Calendar, Wallet, Tag, CreditCard, AlertTriangle } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import { getStaticPricePulse, getVibeCheck } from '../lib/recommendations';
@@ -205,6 +206,7 @@ const TABS: { id: TabId; label: string }[] = [
 // Screen
 // ---------------------------------------------------------------------------
 function MadeForYouScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ destination?: string }>();
@@ -258,10 +260,10 @@ function MadeForYouScreen() {
         />
         <View style={styles.header}>
           <Pressable onPress={() => router.back()}>
-          <Text style={[styles.backButton, { color: destTheme.primary }]}>← Back</Text>
+          <Text style={[styles.backButton, { color: destTheme.primary }]}>← {t('madeForYou.back', { defaultValue: 'Back' })}</Text>
         </Pressable>
         <View>
-          <Text style={styles.headerTitle}>Made for you</Text>
+          <Text style={styles.headerTitle}>{t('madeForYou.headerTitle', { defaultValue: 'Made for you' })}</Text>
           <Text style={[styles.headerSubtitle, { color: destTheme.secondary }]}>{destinationLabel}</Text>
         </View>
         </View>
@@ -296,9 +298,9 @@ function MadeForYouScreen() {
         {/* RESTAURANTS */}
         {activeTab === 'restaurants' && (
           <>
-            <Text style={styles.sectionTitle}>Where to eat in {destinationLabel}</Text>
+            <Text style={styles.sectionTitle}>{t('madeForYou.whereToEat', { defaultValue: 'Where to eat in {{destination}}', destination: destinationLabel })}</Text>
             <Text style={styles.sectionSubtitle}>
-              Filtered for your food adventurousness ({travelProfile.foodAdventurousness}/10) and budget ({travelProfile.budgetStyle}/10)
+              {t('madeForYou.filteredFood', { defaultValue: 'Filtered for your food adventurousness ({{food}}/10) and budget ({{budget}}/10)', food: travelProfile.foodAdventurousness, budget: travelProfile.budgetStyle })}
             </Text>
             {restaurants.map((r) => (
               <View key={r.id} style={themedCard}>
@@ -309,7 +311,7 @@ function MadeForYouScreen() {
                       <Text style={styles.cardName}>{r.name}</Text>
                       {r.isHiddenGem && (
                         <View style={styles.gemBadge}>
-                          <Text style={styles.gemBadgeText}>HIDDEN GEM</Text>
+                          <Text style={styles.gemBadgeText}>{t('madeForYou.hiddenGem', { defaultValue: 'HIDDEN GEM' })}</Text>
                         </View>
                       )}
                     </View>
@@ -317,24 +319,24 @@ function MadeForYouScreen() {
                   </View>
                 </View>
                 <View style={styles.cardRow}>
-                  <Text style={[styles.cardLabel, { color: destTheme.primary }]}>ORDER THIS</Text>
+                  <Text style={[styles.cardLabel, { color: destTheme.primary }]}>{t('madeForYou.orderThis', { defaultValue: 'ORDER THIS' })}</Text>
                   <Text style={styles.cardValue}>{r.orderThis}</Text>
                 </View>
                 <View style={styles.cardRow}>
-                  <Text style={[styles.cardLabel, { color: destTheme.primary }]}>LOCAL TIP</Text>
+                  <Text style={[styles.cardLabel, { color: destTheme.primary }]}>{t('madeForYou.localTip', { defaultValue: 'LOCAL TIP' })}</Text>
                   <Text style={styles.cardValue}>{r.localTip}</Text>
                 </View>
                 <View style={styles.cardMeta}>
                   <Text style={styles.typeBadge}>{r.type.replace('-', ' ')}</Text>
                   <Text style={styles.cardMetaText}>
-                    {r.reviewCount < 500 ? `${r.reviewCount} reviews` : `${(r.reviewCount / 1000).toFixed(1)}k reviews`} · {r.rating}/5
+                    {r.reviewCount < 500 ? `${r.reviewCount} ${t('madeForYou.reviews', { defaultValue: 'reviews' })}` : `${(r.reviewCount / 1000).toFixed(1)}k ${t('madeForYou.reviews', { defaultValue: 'reviews' })}`} · {r.rating}/5
                   </Text>
                 </View>
               </View>
             ))}
             {restaurants.length === 0 && (
               <View style={styles.emptyCard}>
-                <Text style={styles.emptyText}>Restaurant recommendations coming soon for {destinationLabel}</Text>
+                <Text style={styles.emptyText}>{t('madeForYou.restaurantsComingSoon', { defaultValue: 'Restaurant recommendations coming soon for {{destination}}', destination: destinationLabel })}</Text>
               </View>
             )}
           </>
@@ -343,9 +345,9 @@ function MadeForYouScreen() {
         {/* EXPERIENCES */}
         {activeTab === 'experiences' && (
           <>
-            <Text style={styles.sectionTitle}>Do in {destinationLabel}</Text>
+            <Text style={styles.sectionTitle}>{t('madeForYou.doIn', { defaultValue: 'Do in {{destination}}', destination: destinationLabel })}</Text>
             <Text style={styles.sectionSubtitle}>
-              Not tours — actual experiences. Filtered for your interests.
+              {t('madeForYou.experiencesSubtitle', { defaultValue: 'Not tours — actual experiences. Filtered for your interests.' })}
             </Text>
             {experiences.map((e) => (
               <View key={e.id} style={themedCard}>
@@ -358,13 +360,13 @@ function MadeForYouScreen() {
                 </View>
                 <Text style={styles.cardDescription}>{e.description}</Text>
                 <View style={styles.cardRow}>
-                  <Text style={[styles.cardLabel, { color: destTheme.primary }]}>INSIDER TIP</Text>
+                  <Text style={[styles.cardLabel, { color: destTheme.primary }]}>{t('madeForYou.insiderTip', { defaultValue: 'INSIDER TIP' })}</Text>
                   <Text style={styles.cardValue}>{e.insiderTip}</Text>
                 </View>
                 <View style={styles.cardMeta}>
                   <Text style={styles.typeBadge}>{e.category}</Text>
                   <Text style={styles.cardMetaText}>
-                    {e.bookAdvance ? 'Book ahead' : 'Walk in'}
+                    {e.bookAdvance ? t('madeForYou.bookAhead', { defaultValue: 'Book ahead' }) : t('madeForYou.walkIn', { defaultValue: 'Walk in' })}
                   </Text>
                 </View>
               </View>
@@ -375,9 +377,9 @@ function MadeForYouScreen() {
         {/* HIKES */}
         {activeTab === 'hikes' && (
           <>
-            <Text style={styles.sectionTitle}>Hikes near {destinationLabel}</Text>
+            <Text style={styles.sectionTitle}>{t('madeForYou.hikesNear', { defaultValue: 'Hikes near {{destination}}', destination: destinationLabel })}</Text>
             <Text style={styles.sectionSubtitle}>
-              Matched to your pace ({travelProfile.pace}/10)
+              {t('madeForYou.matchedPace', { defaultValue: 'Matched to your pace ({{pace}}/10)', pace: travelProfile.pace })}
             </Text>
             {hikes.map((h) => (
               <View key={h.id} style={themedCard}>
@@ -390,27 +392,27 @@ function MadeForYouScreen() {
                 </View>
                 <View style={styles.hikeStats}>
                   <View style={styles.hikeStat}>
-                    <Text style={styles.hikeStatLabel}>Elevation</Text>
+                    <Text style={styles.hikeStatLabel}>{t('madeForYou.elevation', { defaultValue: 'Elevation' })}</Text>
                     <Text style={styles.hikeStatValue}>{h.elevation}</Text>
                   </View>
                   <View style={styles.hikeStat}>
-                    <Text style={styles.hikeStatLabel}>Best time</Text>
+                    <Text style={styles.hikeStatLabel}>{t('madeForYou.bestTime', { defaultValue: 'Best time' })}</Text>
                     <Text style={styles.hikeStatValue}>{h.bestTime}</Text>
                   </View>
                 </View>
                 <View style={styles.cardRow}>
-                  <Text style={[styles.cardLabel, { color: destTheme.primary }]}>WHAT YOU'LL SEE</Text>
+                  <Text style={[styles.cardLabel, { color: destTheme.primary }]}>{t('madeForYou.whatYoullSee', { defaultValue: "WHAT YOU'LL SEE" })}</Text>
                   <Text style={styles.cardValue}>{h.whatYoullSee}</Text>
                 </View>
                 <View style={styles.cardRow}>
-                  <Text style={[styles.cardLabel, { color: destTheme.primary }]}>WORTH THE EFFORT?</Text>
+                  <Text style={[styles.cardLabel, { color: destTheme.primary }]}>{t('madeForYou.worthEffort', { defaultValue: 'WORTH THE EFFORT?' })}</Text>
                   <Text style={[styles.cardValue, { color: COLORS.sage }]}>{h.worthIt}</Text>
                 </View>
               </View>
             ))}
             {hikes.length === 0 && (
               <View style={styles.emptyCard}>
-                <Text style={styles.emptyText}>No hikes matched your pace level. Try adjusting your travel profile.</Text>
+                <Text style={styles.emptyText}>{t('madeForYou.noHikes', { defaultValue: 'No hikes matched your pace level. Try adjusting your travel profile.' })}</Text>
               </View>
             )}
           </>
@@ -419,13 +421,13 @@ function MadeForYouScreen() {
         {/* NIGHTLIFE */}
         {activeTab === 'nightlife' && (
           <>
-            <Text style={styles.sectionTitle}>{destinationLabel} after dark</Text>
-            <Text style={styles.sectionSubtitle}>Matched to your energy and budget</Text>
+            <Text style={styles.sectionTitle}>{t('madeForYou.afterDark', { defaultValue: '{{destination}} after dark', destination: destinationLabel })}</Text>
+            <Text style={styles.sectionSubtitle}>{t('madeForYou.nightlifeSubtitle', { defaultValue: 'Matched to your energy and budget' })}</Text>
             <View style={styles.emptyCard}>
               <View style={styles.emptyIconWrap}>
                 <Moon size={40} color={COLORS.creamMuted} strokeWidth={1.5} />
               </View>
-              <Text style={styles.emptyText}>Nightlife recommendations powered by Google Places coming soon</Text>
+              <Text style={styles.emptyText}>{t('madeForYou.nightlifeComingSoon', { defaultValue: 'Nightlife recommendations powered by Google Places coming soon' })}</Text>
             </View>
           </>
         )}
@@ -433,13 +435,13 @@ function MadeForYouScreen() {
         {/* VIBE CHECK */}
         {activeTab === 'vibe-check' && (
           <>
-            <Text style={styles.sectionTitle}>Vibe Check: {destinationLabel}</Text>
+            <Text style={styles.sectionTitle}>{t('madeForYou.vibeCheck', { defaultValue: 'Vibe Check: {{destination}}', destination: destinationLabel })}</Text>
 
             {/* Crowd level */}
             <View style={styles.vibeCard}>
               <View style={styles.vibeCardTitleRow}>
                 <Users size={18} color={destTheme.primary} strokeWidth={1.5} />
-                <Text style={styles.vibeCardTitle}>Crowd Level</Text>
+                <Text style={styles.vibeCardTitle}>{t('madeForYou.crowdLevel', { defaultValue: 'Crowd Level' })}</Text>
               </View>
               <View style={[
                 styles.crowdIndicator,
@@ -457,7 +459,7 @@ function MadeForYouScreen() {
             <View style={styles.vibeCard}>
               <View style={styles.vibeCardTitleRow}>
                 <Calendar size={18} color={destTheme.primary} strokeWidth={1.5} />
-                <Text style={styles.vibeCardTitle}>Best Months</Text>
+                <Text style={styles.vibeCardTitle}>{t('madeForYou.bestMonths', { defaultValue: 'Best Months' })}</Text>
               </View>
               <Text style={styles.vibeCardText}>{vibeCheck.bestTimeToGo}</Text>
               <Text style={styles.vibeCardSubtext}>{vibeCheck.localEvents}</Text>
@@ -467,7 +469,7 @@ function MadeForYouScreen() {
             <View style={styles.vibeCard}>
               <View style={styles.vibeCardTitleRow}>
                 <Wallet size={18} color={destTheme.primary} strokeWidth={1.5} />
-                <Text style={styles.vibeCardTitle}>Price Pulse</Text>
+                <Text style={styles.vibeCardTitle}>{t('madeForYou.pricePulse', { defaultValue: 'Price Pulse' })}</Text>
               </View>
               <Text style={styles.vibeCardText}>{vibeCheck.priceNote}</Text>
             </View>
@@ -476,7 +478,7 @@ function MadeForYouScreen() {
             <View style={styles.vibeCard}>
               <View style={styles.vibeCardTitleRow}>
                 <Tag size={18} color={destTheme.primary} strokeWidth={1.5} />
-                <Text style={styles.vibeCardTitle}>What Things Cost</Text>
+                <Text style={styles.vibeCardTitle}>{t('madeForYou.whatThingsCost', { defaultValue: 'What Things Cost' })}</Text>
               </View>
               <Text style={styles.vibeCardSubtext}>{pricePulse.currency} · {pricePulse.exchangeRate}</Text>
               {pricePulse.examples.map((ex, i) => (
@@ -491,7 +493,7 @@ function MadeForYouScreen() {
             <View style={styles.vibeCard}>
               <View style={styles.vibeCardTitleRow}>
                 <CreditCard size={18} color={destTheme.primary} strokeWidth={1.5} />
-                <Text style={styles.vibeCardTitle}>Payment & Tipping</Text>
+                <Text style={styles.vibeCardTitle}>{t('madeForYou.paymentTipping', { defaultValue: 'Payment & Tipping' })}</Text>
               </View>
               <Text style={styles.vibeCardText}>{pricePulse.tipping}</Text>
               <Text style={styles.vibeCardSubtext}>{pricePulse.paymentMethod}</Text>
@@ -501,7 +503,7 @@ function MadeForYouScreen() {
             <View style={styles.vibeCard}>
               <View style={styles.vibeCardTitleRow}>
                 <AlertTriangle size={18} color={destTheme.primary} strokeWidth={1.5} />
-                <Text style={styles.vibeCardTitle}>Tourist Traps</Text>
+                <Text style={styles.vibeCardTitle}>{t('madeForYou.touristTraps', { defaultValue: 'Tourist Traps' })}</Text>
               </View>
               <Text style={styles.vibeCardText}>{pricePulse.touristTraps}</Text>
             </View>

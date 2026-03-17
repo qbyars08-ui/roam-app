@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
   base: {
     width: '100%',
     height: 54,
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.pill,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: SPACING.lg,

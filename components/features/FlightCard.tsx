@@ -12,6 +12,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Plane, ExternalLink } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import {
@@ -35,6 +36,7 @@ interface FlightCardProps {
 // Component
 // ---------------------------------------------------------------------------
 export default function FlightCard({ destination, tripDays, departureDate, returnDate }: FlightCardProps) {
+  const { t } = useTranslation();
   const [homeAirport, setHomeAirportState] = useState('JFK');
   const destCode = getDestinationAirport(destination);
 
@@ -69,8 +71,8 @@ export default function FlightCard({ destination, tripDays, departureDate, retur
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Plane size={18} color={COLORS.sage} strokeWidth={2} />
-        <Text style={styles.eyebrow}>FLIGHTS FROM {homeAirport}</Text>
+        <Plane size={18} color={COLORS.sage} strokeWidth={1.5} />
+        <Text style={styles.eyebrow}>{`${t('flights.eyebrowPrefix', { defaultValue: 'FLIGHTS FROM' })} ${homeAirport}`}</Text>
       </View>
 
       <Text style={styles.title}>
@@ -78,7 +80,7 @@ export default function FlightCard({ destination, tripDays, departureDate, retur
       </Text>
 
       <Text style={styles.subtitle}>
-        Search real-time prices on Skyscanner
+        {t('flights.subtitle', { defaultValue: 'Search real-time prices on Skyscanner' })}
       </Text>
 
       <Pressable
@@ -88,12 +90,12 @@ export default function FlightCard({ destination, tripDays, departureDate, retur
         ]}
         onPress={handleSearch}
       >
-        <Text style={styles.searchButtonText}>Search flights</Text>
-        <ExternalLink size={14} color={COLORS.sage} strokeWidth={2} />
+        <Text style={styles.searchButtonText}>{t('flights.searchButton', { defaultValue: 'Search flights' })}</Text>
+        <ExternalLink size={14} color={COLORS.sage} strokeWidth={1.5} />
       </Pressable>
 
       <Text style={styles.disclaimer}>
-        Opens Skyscanner to compare prices across all airlines.
+        {t('flights.disclaimer', { defaultValue: 'Opens Skyscanner to compare prices across all airlines.' })}
       </Text>
     </View>
   );

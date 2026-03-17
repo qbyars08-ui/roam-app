@@ -12,6 +12,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { Globe, Calendar, MapPin, Plane } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, HIDDEN_DESTINATIONS } from '../../lib/constants';
 import type { Trip } from '../../lib/store';
 
@@ -26,6 +27,7 @@ interface TravelStatsProps {
 // Component
 // ---------------------------------------------------------------------------
 function TravelStats({ trips }: TravelStatsProps) {
+  const { t } = useTranslation();
   const stats = useMemo(() => {
     if (trips.length === 0) return null;
 
@@ -71,33 +73,33 @@ function TravelStats({ trips }: TravelStatsProps) {
     <View style={styles.container}>
       <View style={styles.row}>
         <StatCell
-          icon={<Plane size={14} color={COLORS.sage} strokeWidth={2} />}
+          icon={<Plane size={14} color={COLORS.sage} strokeWidth={1.5} />}
           value={stats.tripCount}
-          label={stats.tripCount === 1 ? 'trip' : 'trips'}
+          label={stats.tripCount === 1 ? t('stats.trip', { defaultValue: 'trip' }) : t('stats.trips', { defaultValue: 'trips' })}
         />
         <View style={styles.divider} />
         <StatCell
-          icon={<MapPin size={14} color={COLORS.coral} strokeWidth={2} />}
+          icon={<MapPin size={14} color={COLORS.coral} strokeWidth={1.5} />}
           value={stats.destinationCount}
-          label={stats.destinationCount === 1 ? 'destination' : 'destinations'}
+          label={stats.destinationCount === 1 ? t('stats.destination', { defaultValue: 'destination' }) : t('stats.destinations', { defaultValue: 'destinations' })}
         />
         <View style={styles.divider} />
         <StatCell
-          icon={<Globe size={14} color={COLORS.gold} strokeWidth={2} />}
+          icon={<Globe size={14} color={COLORS.gold} strokeWidth={1.5} />}
           value={stats.countryCount}
-          label={stats.countryCount === 1 ? 'country' : 'countries'}
+          label={stats.countryCount === 1 ? t('stats.country', { defaultValue: 'country' }) : t('stats.countries', { defaultValue: 'countries' })}
         />
         <View style={styles.divider} />
         <StatCell
-          icon={<Calendar size={14} color={COLORS.cream} strokeWidth={2} />}
+          icon={<Calendar size={14} color={COLORS.cream} strokeWidth={1.5} />}
           value={stats.totalDays}
-          label="days"
+          label={t('stats.days', { defaultValue: 'days' })}
         />
       </View>
 
       {stats.continentCount > 1 && (
         <Text style={styles.continentText}>
-          {stats.continentCount} continents explored
+          {t('stats.continentsExplored', { defaultValue: '{{count}} continents explored', count: stats.continentCount })}
         </Text>
       )}
     </View>
@@ -144,7 +146,7 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   cell: {
     alignItems: 'center',
-    gap: 2,
+    gap: SPACING.xs,
     flex: 1,
   } as ViewStyle,
   cellValue: {

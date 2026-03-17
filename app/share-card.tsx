@@ -3,6 +3,7 @@
 // 9:16 Instagram Stories format, full bleed, ready to post
 // =============================================================================
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ImageBackground,
   Platform,
@@ -41,6 +42,7 @@ interface ShareCardData {
 // Component
 // ---------------------------------------------------------------------------
 function ShareCardPage() {
+  const { t } = useTranslation();
   const { k } = useLocalSearchParams<{ k?: string }>();
   const router = useRouter();
   const cardRef = useRef<View>(null);
@@ -94,9 +96,9 @@ function ShareCardPage() {
   if (!data) {
     return (
       <View style={styles.screen}>
-        <Text style={styles.fallbackText}>No share data. Generate a trip first!</Text>
+        <Text style={styles.fallbackText}>{t('shareCard.noData', { defaultValue: 'No share data. Generate a trip first!' })}</Text>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backBtnText}>Go back</Text>
+          <Text style={styles.backBtnText}>{t('shareCard.goBack', { defaultValue: 'Go back' })}</Text>
         </Pressable>
       </View>
     );
@@ -240,7 +242,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: COLORS.whiteMuted90,
     lineHeight: 28,
-    fontStyle: 'italic',
     textAlign: 'center',
     marginBottom: SPACING.md,
   } as TextStyle,

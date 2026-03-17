@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
 
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, BUDGETS, VIBES, FREE_TRIPS_PER_MONTH } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import { generateItinerary, TripLimitReachedError } from '../lib/claude';
@@ -44,6 +45,7 @@ const SPIN_POOL = [
 type SpinPhase = 'idle' | 'spinning' | 'revealing' | 'generating' | 'done';
 
 function GlobeScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const addTrip = useAppStore((s) => s.addTrip);
@@ -264,9 +266,9 @@ function GlobeScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Spin the Globe</Text>
+          <Text style={styles.title}>{t('globe.title', { defaultValue: 'Spin the Globe' })}</Text>
           <Text style={styles.subtitle}>
-            One tap. One destination. Zero planning.
+            {t('globe.subtitle', { defaultValue: 'One tap. One destination. Zero planning.' })}
           </Text>
         </View>
 
@@ -305,7 +307,7 @@ function GlobeScreen() {
                 },
               ]}
             >
-              <Text style={styles.revealLabel}>YOUR NEXT ADVENTURE</Text>
+              <Text style={styles.revealLabel}>{t('globe.yourNextAdventure', { defaultValue: 'YOUR NEXT ADVENTURE' })}</Text>
               <Text style={styles.revealDestination}>{picked.label}</Text>
               <Text style={styles.revealCountry}>
                 {picked.country}
@@ -330,14 +332,14 @@ function GlobeScreen() {
                 style={styles.spinGradient}
               >
                 <Text style={styles.spinButtonText}>
-                  {'\uD83C\uDF0D'} Spin the Globe
+                  {'\uD83C\uDF0D'} {t('globe.spinButton', { defaultValue: 'Spin the Globe' })}
                 </Text>
               </LinearGradient>
             </Pressable>
           )}
 
           {phase === 'spinning' && (
-            <Text style={styles.spinningText}>Finding your destiny...</Text>
+            <Text style={styles.spinningText}>{t('globe.findingDestiny', { defaultValue: 'Finding your destiny...' })}</Text>
           )}
 
           {phase === 'revealing' && (
@@ -354,12 +356,12 @@ function GlobeScreen() {
                   style={styles.spinGradient}
                 >
                   <Text style={styles.spinButtonText}>
-                    {'\u2728'} Build this trip
+                    {'\u2728'} {t('globe.buildTrip', { defaultValue: 'Build this trip' })}
                   </Text>
                 </LinearGradient>
               </Pressable>
               <Pressable onPress={handleReset} style={styles.respin}>
-                <Text style={styles.respinText}>Spin again</Text>
+                <Text style={styles.respinText}>{t('globe.spinAgain', { defaultValue: 'Spin again' })}</Text>
               </Pressable>
             </View>
           )}
@@ -367,10 +369,10 @@ function GlobeScreen() {
           {phase === 'generating' && (
             <View style={styles.generatingContainer}>
               <Text style={styles.generatingText}>
-                Building your {picked?.label} adventure...
+                {t('globe.buildingAdventure', { defaultValue: 'Building your {{destination}} adventure...', destination: picked?.label })}
               </Text>
               <Text style={styles.generatingSubtext}>
-                AI is crafting your trip
+                {t('globe.aiCrafting', { defaultValue: 'AI is crafting your trip' })}
               </Text>
             </View>
           )}
@@ -380,7 +382,7 @@ function GlobeScreen() {
 
         {/* Bottom hint */}
         <Text style={styles.hint}>
-          Every spin is a surprise. No takebacks.
+          {t('globe.hint', { defaultValue: 'Every spin is a surprise. No takebacks.' })}
         </Text>
       </LinearGradient>
     </View>
@@ -430,14 +432,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 200,
     height: 200,
-    borderRadius: 100,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.sage,
     opacity: 0.15,
   } as ViewStyle,
   globe: {
     width: 160,
     height: 160,
-    borderRadius: 80,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.bgCard,
     borderWidth: 2,
     borderColor: COLORS.sage,
@@ -475,7 +477,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 16,
     color: COLORS.creamMuted,
-    fontStyle: 'italic',
     marginTop: SPACING.xs,
   } as TextStyle,
 

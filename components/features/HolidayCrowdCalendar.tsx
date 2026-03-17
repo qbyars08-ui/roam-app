@@ -9,7 +9,6 @@ import {
   ScrollView,
   Pressable,
   StyleSheet,
-  ActivityIndicator,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
@@ -21,7 +20,9 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { SkeletonCard } from '../premium/LoadingStates';
 import {
   getCrowdForecast,
   getVisitVerdict,
@@ -110,6 +111,7 @@ export default function HolidayCrowdCalendar({
   startDate,
   endDate,
 }: HolidayCrowdCalendarProps) {
+  const { t } = useTranslation();
   const [summary, setSummary] = useState<CrowdSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState<CrowdForecast | null>(null);
@@ -145,12 +147,7 @@ export default function HolidayCrowdCalendar({
   }, [summary]);
 
   if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="small" color={COLORS.sage} />
-        <Text style={styles.loadingText}>Analyzing crowd patterns...</Text>
-      </View>
-    );
+    return <SkeletonCard height={120} />;
   }
 
   if (!summary || summary.days.length === 0) {
@@ -161,8 +158,8 @@ export default function HolidayCrowdCalendar({
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Users size={18} color={COLORS.sage} strokeWidth={2} />
-        <Text style={styles.headerTitle}>Crowd forecast</Text>
+        <Users size={18} color={COLORS.sage} strokeWidth={1.5} />
+        <Text style={styles.headerTitle}>{t('crowd.title', { defaultValue: 'Crowd forecast' })}</Text>
       </View>
 
       {/* Verdict badge */}
@@ -196,7 +193,7 @@ export default function HolidayCrowdCalendar({
         {(['low', 'moderate', 'high', 'extreme'] as const).map((level) => (
           <View key={level} style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: crowdColor(level) }]} />
-            <Text style={styles.legendText}>{crowdLabel(level)}</Text>
+            <Text style={styles.legendText}>{t(`crowd.level.${level}`, { defaultValue: crowdLabel(level) })}</Text>
           </View>
         ))}
       </View>
@@ -209,7 +206,7 @@ export default function HolidayCrowdCalendar({
               {format(parseISO(selectedDay.date), 'EEEE, MMM d')}
             </Text>
             <View style={[styles.detailBadge, { backgroundColor: crowdColor(selectedDay.level) }]}>
-              <Text style={styles.detailBadgeText}>{crowdLabel(selectedDay.level)}</Text>
+              <Text style={styles.detailBadgeText}>{t(`crowd.level.${selectedDay.level}`, { defaultValue: crowdLabel(selectedDay.level) })}</Text>
             </View>
           </View>
 
@@ -217,7 +214,7 @@ export default function HolidayCrowdCalendar({
             <View style={styles.reasonsList}>
               {selectedDay.reasons.map((reason) => (
                 <View key={reason} style={styles.reasonRow}>
-                  <Calendar size={12} color={COLORS.creamMuted} strokeWidth={2} />
+                  <Calendar size={12} color={COLORS.creamMuted} strokeWidth={1.5} />
                   <Text style={styles.reasonText}>{reason}</Text>
                 </View>
               ))}
@@ -226,9 +223,9 @@ export default function HolidayCrowdCalendar({
 
           {selectedDay.priceMultiplier > 1.0 && (
             <View style={styles.priceWarning}>
-              <TrendingUp size={14} color={COLORS.coral} strokeWidth={2} />
+              <TrendingUp size={14} color={COLORS.coral} strokeWidth={1.5} />
               <Text style={styles.priceWarningText}>
-                Prices ~{Math.round((selectedDay.priceMultiplier - 1) * 100)}% higher than normal
+                {`${t('crowd.pricesAbout', { defaultValue: 'Prices ~' })}${Math.round((selectedDay.priceMultiplier - 1) * 100)}% ${t('crowd.higherThanNormal', { defaultValue: 'higher than normal' })}`}
               </Text>
             </View>
           )}
@@ -238,7 +235,7 @@ export default function HolidayCrowdCalendar({
       {/* Warnings */}
       {summary.warnings.map((warning) => (
         <View key={warning} style={styles.warningBanner}>
-          <AlertTriangle size={14} color={COLORS.coral} strokeWidth={2} />
+          <AlertTriangle size={14} color={COLORS.coral} strokeWidth={1.5} />
           <Text style={styles.warningText}>{warning}</Text>
         </View>
       ))}

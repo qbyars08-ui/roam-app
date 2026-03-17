@@ -4,6 +4,7 @@
 // =============================================================================
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import i18n from '../../lib/i18n';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import type { ChemistryBreakdown } from '../../lib/social-chemistry';
 
@@ -26,9 +27,9 @@ function scoreColor(score: number): string {
 }
 
 function scoreLabel(score: number): string {
-  if (score >= 80) return 'Great match';
-  if (score >= 60) return 'Good match';
-  return 'Low match';
+  if (score >= 80) return i18n.t('social.chemistry.greatMatch', { defaultValue: 'Great match' });
+  if (score >= 60) return i18n.t('social.chemistry.goodMatch', { defaultValue: 'Good match' });
+  return i18n.t('social.chemistry.lowMatch', { defaultValue: 'Low match' });
 }
 
 interface BreakdownBarProps {
@@ -68,16 +69,16 @@ const ChemistryBadge = React.memo<ChemistryBadgeProps>(({ score, breakdown, comp
     <View style={styles.container}>
       <View style={[styles.circle, { borderColor: color }]}>
         <Text style={[styles.circleScore, { color }]}>{clampedScore}%</Text>
-        <Text style={[styles.circleLabel, { color }]}>match</Text>
+        <Text style={[styles.circleLabel, { color }]}>{i18n.t('social.chemistry.match', { defaultValue: 'match' })}</Text>
       </View>
 
       {breakdown !== undefined && (
         <View style={styles.breakdown}>
           <Text style={styles.breakdownTitle}>{scoreLabel(clampedScore)}</Text>
-          <BreakdownBar label="Vibes"  value={breakdown.vibeOverlap}   color={color} />
-          <BreakdownBar label="Style"  value={breakdown.styleMatch}    color={color} />
-          <BreakdownBar label="Dates"  value={breakdown.dateOverlap}   color={color} />
-          <BreakdownBar label="Age"    value={breakdown.ageProximity}  color={color} />
+          <BreakdownBar label={i18n.t('social.chemistry.vibes', { defaultValue: 'Vibes' })}  value={breakdown.vibeOverlap}   color={color} />
+          <BreakdownBar label={i18n.t('social.chemistry.style', { defaultValue: 'Style' })}  value={breakdown.styleMatch}    color={color} />
+          <BreakdownBar label={i18n.t('social.chemistry.dates', { defaultValue: 'Dates' })}  value={breakdown.dateOverlap}   color={color} />
+          <BreakdownBar label={i18n.t('social.chemistry.age', { defaultValue: 'Age' })}    value={breakdown.ageProximity}  color={color} />
         </View>
       )}
     </View>

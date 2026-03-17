@@ -54,7 +54,7 @@ export default function PrepDetailScreen() {
           <View style={styles.header}>
             <Text style={styles.title}>Language Survival Kit</Text>
             <Pressable onPress={handleClose} hitSlop={12}>
-              <X size={20} color={COLORS.cream} strokeWidth={2} />
+              <X size={20} color={COLORS.cream} strokeWidth={1.5} />
             </Pressable>
           </View>
           <ScrollView
@@ -104,7 +104,7 @@ export default function PrepDetailScreen() {
           <View style={styles.header}>
             <Text style={styles.title}>Emergency Toolkit</Text>
             <Pressable onPress={handleClose} hitSlop={12}>
-              <X size={20} color={COLORS.cream} strokeWidth={2} />
+              <X size={20} color={COLORS.cream} strokeWidth={1.5} />
             </Pressable>
           </View>
           <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
@@ -133,7 +133,7 @@ export default function PrepDetailScreen() {
           <View style={styles.header}>
             <Text style={styles.title}>Cultural Guide</Text>
             <Pressable onPress={handleClose} hitSlop={12}>
-              <X size={20} color={COLORS.cream} strokeWidth={2} />
+              <X size={20} color={COLORS.cream} strokeWidth={1.5} />
             </Pressable>
           </View>
           <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
@@ -160,7 +160,7 @@ export default function PrepDetailScreen() {
           <View style={styles.header}>
             <Text style={styles.title}>Smart Packing List</Text>
             <Pressable onPress={handleClose} hitSlop={12}>
-              <X size={20} color={COLORS.cream} strokeWidth={2} />
+              <X size={20} color={COLORS.cream} strokeWidth={1.5} />
             </Pressable>
           </View>
           <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
@@ -227,9 +227,9 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   fullScreenContent: { alignItems: 'center' },
   fullScreenLocal: { fontFamily: FONTS.body, fontSize: 48, color: COLORS.cream, textAlign: 'center' },
-  fullScreenPhonetic: { fontFamily: FONTS.mono, fontSize: 18, color: COLORS.sage, marginTop: 8 },
-  fullScreenEnglish: { fontFamily: FONTS.body, fontSize: 20, color: COLORS.creamMuted, marginTop: 16 },
-  fullScreenHint: { fontFamily: FONTS.mono, fontSize: 12, color: COLORS.creamMuted, marginTop: 24 },
+  fullScreenPhonetic: { fontFamily: FONTS.mono, fontSize: 18, color: COLORS.sage, marginTop: SPACING.sm },
+  fullScreenEnglish: { fontFamily: FONTS.body, fontSize: 20, color: COLORS.creamMuted, marginTop: SPACING.md },
+  fullScreenHint: { fontFamily: FONTS.mono, fontSize: 12, color: COLORS.creamMuted, marginTop: SPACING.lg },
   sectionLabel: {
     fontFamily: FONTS.mono,
     fontSize: 11,

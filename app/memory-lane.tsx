@@ -3,6 +3,7 @@
 // A beautiful visual timeline of all your past trips
 // =============================================================================
 import React, { useEffect, useRef, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -17,7 +18,7 @@ import {
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../lib/haptics';
 import type { ComponentType } from 'react';
 import {
   ChevronLeft,
@@ -160,6 +161,7 @@ function useStaggerAnim(count: number, delay = 80) {
 // Component
 // =============================================================================
 function MemoryLaneScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { canAccess } = useProGate('memory-lane');
@@ -204,14 +206,14 @@ function MemoryLaneScreen() {
           style={StyleSheet.absoluteFill}
         />
         <Pressable style={styles.backBtn} onPress={() => router.back()}>
-          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
+          <ChevronLeft size={24} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
 
         <View style={styles.emptyContainer}>
           <BookOpen size={64} color={COLORS.sage} strokeWidth={1.5} style={{ marginBottom: SPACING.lg }} />
-          <Text style={styles.emptyTitle}>Memory Lane</Text>
+          <Text style={styles.emptyTitle}>{t('memoryLane.emptyTitle', { defaultValue: 'Memory Lane' })}</Text>
           <Text style={styles.emptySubtitle}>
-            Your story starts with one trip.{'\n'}Every journey becomes a memory.
+            {t('memoryLane.emptySubtitle', { defaultValue: 'Your story starts with one trip.\nEvery journey becomes a memory.' })}
           </Text>
           <Pressable
             style={({ pressed }) => [styles.ctaButton, { opacity: pressed ? 0.85 : 1 }]}
@@ -220,8 +222,8 @@ function MemoryLaneScreen() {
               router.push('/(tabs)/generate' as never);
             }}
           >
-            <Text style={styles.ctaText}>Plan Your First Trip</Text>
-            <ArrowRight size={18} color={COLORS.bg} strokeWidth={2} />
+            <Text style={styles.ctaText}>{t('memoryLane.planFirstTrip', { defaultValue: 'Plan Your First Trip' })}</Text>
+            <ArrowRight size={18} color={COLORS.bg} strokeWidth={1.5} />
           </Pressable>
         </View>
       </View>
@@ -241,7 +243,7 @@ function MemoryLaneScreen() {
 
       {/* Back button */}
       <Pressable style={styles.backBtn} onPress={() => router.back()}>
-        <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
+        <ChevronLeft size={24} color={COLORS.cream} strokeWidth={1.5} />
       </Pressable>
 
       <ScrollView
@@ -260,8 +262,8 @@ function MemoryLaneScreen() {
             },
           ]}
         >
-          <Text style={styles.screenTitle}>Memory Lane</Text>
-          <Text style={styles.screenSubtitle}>Every trip tells a story</Text>
+          <Text style={styles.screenTitle}>{t('memoryLane.screenTitle', { defaultValue: 'Memory Lane' })}</Text>
+          <Text style={styles.screenSubtitle}>{t('memoryLane.screenSubtitle', { defaultValue: 'Every trip tells a story' })}</Text>
         </Animated.View>
 
         {/* ================================================================= */}
@@ -283,10 +285,10 @@ function MemoryLaneScreen() {
             },
           ]}
         >
-          <StatBox label="Trips" value={trips.length} />
-          <StatBox label="Days" value={totalDays} />
-          <StatBox label="Places" value={uniqueDestinations.length} />
-          <StatBox label="Countries" value={countries} />
+          <StatBox label={t('memoryLane.statTrips', { defaultValue: 'Trips' })} value={trips.length} />
+          <StatBox label={t('memoryLane.statDays', { defaultValue: 'Days' })} value={totalDays} />
+          <StatBox label={t('memoryLane.statPlaces', { defaultValue: 'Places' })} value={uniqueDestinations.length} />
+          <StatBox label={t('memoryLane.statCountries', { defaultValue: 'Countries' })} value={countries} />
         </Animated.View>
 
         {/* ================================================================= */}
@@ -309,8 +311,8 @@ function MemoryLaneScreen() {
               },
             ]}
           >
-            {onThisDayTrips.map((t) => (
-              <View key={t.id} style={styles.nostalgiaCard}>
+            {onThisDayTrips.map((nostalgiaTrip) => (
+              <View key={nostalgiaTrip.id} style={styles.nostalgiaCard}>
                 <LinearGradient
                   colors={[COLORS.coralLight, COLORS.dangerSubtle]}
                   start={{ x: 0, y: 0 }}
@@ -318,12 +320,11 @@ function MemoryLaneScreen() {
                   style={StyleSheet.absoluteFill}
                 />
                 <View style={styles.nostalgiaInner}>
-                  <Clock size={20} color={COLORS.coral} strokeWidth={2} />
+                  <Clock size={20} color={COLORS.coral} strokeWidth={1.5} />
                   <View style={{ flex: 1, marginLeft: SPACING.sm }}>
-                    <Text style={styles.nostalgiaTitle}>On This Day</Text>
+                    <Text style={styles.nostalgiaTitle}>{t('memoryLane.onThisDay', { defaultValue: 'On This Day' })}</Text>
                     <Text style={styles.nostalgiaBody}>
-                      You were in {t.destination} this time in{' '}
-                      {new Date(t.createdAt).getFullYear()}!
+                      {`${t('memoryLane.onThisDayBody1', { defaultValue: 'You were in' })} ${nostalgiaTrip.destination} ${t('memoryLane.onThisDayBody2', { defaultValue: 'this time in' })} ${new Date(nostalgiaTrip.createdAt).getFullYear()}!`}
                     </Text>
                   </View>
                 </View>
@@ -351,7 +352,7 @@ function MemoryLaneScreen() {
             },
           ]}
         >
-          <Text style={styles.sectionLabel}>· Passport stamps</Text>
+          <Text style={styles.sectionLabel}>{`· ${t('memoryLane.passportStamps', { defaultValue: 'Passport stamps' })}`}</Text>
           <View style={styles.stampsGrid}>
             {uniqueDestinations.map((dest, i) => (
               <View
@@ -369,7 +370,7 @@ function MemoryLaneScreen() {
                 <View style={styles.stampBorder}>
                   <Text style={styles.stampText}>{dest.toUpperCase()}</Text>
                   <View style={styles.stampDivider} />
-                  <Text style={styles.stampSubtext}>VISITED</Text>
+                  <Text style={styles.stampSubtext}>{t('memoryLane.visited', { defaultValue: 'VISITED' })}</Text>
                 </View>
               </View>
             ))}
@@ -395,7 +396,7 @@ function MemoryLaneScreen() {
             },
           ]}
         >
-          <Text style={styles.sectionLabel}>· Milestones</Text>
+          <Text style={styles.sectionLabel}>{`· ${t('memoryLane.milestones', { defaultValue: 'Milestones' })}`}</Text>
           <View style={styles.milestonesGrid}>
             {MILESTONES.map((m) => {
               const earned = m.check(trips);
@@ -430,7 +431,7 @@ function MemoryLaneScreen() {
         {/* Timeline */}
         {/* ================================================================= */}
         <Text style={[styles.sectionLabel, { marginTop: SPACING.xl, marginBottom: SPACING.md }]}>
-          · Your journey
+          {`· ${t('memoryLane.yourJourney', { defaultValue: 'Your journey' })}`}
         </Text>
 
         <View style={styles.timelineContainer}>
@@ -481,11 +482,11 @@ function MemoryLaneScreen() {
 
                   <View style={styles.tripMeta}>
                     <View style={styles.tripChip}>
-                      <Calendar size={12} color={COLORS.sage} strokeWidth={2} />
-                      <Text style={styles.tripChipText}>{trip.days} days</Text>
+                      <Calendar size={12} color={COLORS.sage} strokeWidth={1.5} />
+                      <Text style={styles.tripChipText}>{`${trip.days} ${t('memoryLane.days', { defaultValue: 'days' })}`}</Text>
                     </View>
                     <View style={styles.tripChip}>
-                      <Wallet size={12} color={COLORS.sage} strokeWidth={2} />
+                      <Wallet size={12} color={COLORS.sage} strokeWidth={1.5} />
                       <Text style={styles.tripChipText}>{budgetLabel}</Text>
                     </View>
                   </View>
@@ -513,8 +514,8 @@ function MemoryLaneScreen() {
                       });
                     }}
                   >
-                    <Text style={styles.reliveBtnText}>Relive this trip</Text>
-                    <ArrowRight size={14} color={COLORS.sage} strokeWidth={2} />
+                    <Text style={styles.reliveBtnText}>{t('memoryLane.reliveTrip', { defaultValue: 'Relive this trip' })}</Text>
+                    <ArrowRight size={14} color={COLORS.sage} strokeWidth={1.5} />
                   </Pressable>
                 </View>
               </Animated.View>
@@ -763,7 +764,7 @@ const styles = StyleSheet.create({
     top: 8,
     width: 14,
     height: 14,
-    borderRadius: 7,
+    borderRadius: RADIUS.sm,
     backgroundColor: COLORS.bg,
     alignItems: 'center',
     justifyContent: 'center',

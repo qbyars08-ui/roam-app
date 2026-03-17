@@ -12,6 +12,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import {
   getVisaInfo,
@@ -33,6 +34,7 @@ const SUPPORTED_PASSPORTS: { code: PassportNationality; label: string }[] = [
 ];
 
 export default function VisaChecker({ destination, variant = 'full' }: VisaCheckerProps) {
+  const { t } = useTranslation();
   const travelProfile = useAppStore((s) => s.travelProfile);
   const updateTravelProfile = useAppStore((s) => s.updateTravelProfile);
   const passport = travelProfile?.passportNationality ?? 'US';
@@ -76,7 +78,7 @@ export default function VisaChecker({ destination, variant = 'full' }: VisaCheck
         <View style={[styles.statusBadge, { backgroundColor: `${color}22`, borderColor: `${color}66` }]}>
           <Text style={[styles.statusText, { color }]}>{label}</Text>
           {info.stayDays != null && info.stayDays < 999 && (
-            <Text style={styles.stayText}>Up to {info.stayDays}d</Text>
+            <Text style={styles.stayText}>{t('visa.upTo', { defaultValue: 'Up to' })} {info.stayDays}d</Text>
           )}
         </View>
       </View>
@@ -86,13 +88,13 @@ export default function VisaChecker({ destination, variant = 'full' }: VisaCheck
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <FileCheck size={16} color={COLORS.sage} strokeWidth={2} />
-        <Text style={styles.headerLabel}>VISA & ENTRY</Text>
+        <FileCheck size={16} color={COLORS.sage} strokeWidth={1.5} />
+        <Text style={styles.headerLabel}>{t('visa.headerLabel', { defaultValue: 'VISA & ENTRY' })}</Text>
       </View>
 
       {/* Passport selector */}
       <View style={styles.passportRow}>
-        <Text style={styles.passportLabel}>Passport</Text>
+        <Text style={styles.passportLabel}>{t('visa.passport', { defaultValue: 'Passport' })}</Text>
         <View style={styles.passportPills}>
           {SUPPORTED_PASSPORTS.map((p) => (
             <Pressable
@@ -120,7 +122,7 @@ export default function VisaChecker({ destination, variant = 'full' }: VisaCheck
       <View style={[styles.badge, { backgroundColor: `${color}22`, borderColor: `${color}66` }]}>
         <Text style={[styles.status, { color }]}>{label}</Text>
         {info.stayDays != null && info.stayDays < 999 && (
-          <Text style={styles.stay}>Up to {info.stayDays} days</Text>
+          <Text style={styles.stay}>{t('visa.upTo', { defaultValue: 'Up to' })} {info.stayDays} {t('visa.days', { defaultValue: 'days' })}</Text>
         )}
       </View>
 

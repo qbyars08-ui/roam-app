@@ -17,24 +17,26 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
-
-const BEFORE_ITEMS = [
-  '"Top 10 things to do in Barcelona"',
-  'Same tourist traps everyone sees',
-  'Hours of scrolling blog posts',
-  'Copy-paste itinerary from Reddit',
-];
-
-const AFTER_ITEMS = [
-  'Hidden tapas bar only locals know',
-  'Perfect 4-day route for your vibe',
-  'Timed to avoid every crowd',
-  'Built for your budget, your style',
-];
+import { useTranslation } from 'react-i18next';
 
 export default function ValuePreviewScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
+
+  const BEFORE_ITEMS = [
+    t('valuePreview.before.item1', { defaultValue: '"Top 10 things to do in Barcelona"' }),
+    t('valuePreview.before.item2', { defaultValue: 'Same tourist traps everyone sees' }),
+    t('valuePreview.before.item3', { defaultValue: 'Hours of scrolling blog posts' }),
+    t('valuePreview.before.item4', { defaultValue: 'Copy-paste itinerary from Reddit' }),
+  ];
+
+  const AFTER_ITEMS = [
+    t('valuePreview.after.item1', { defaultValue: 'Hidden tapas bar only locals know' }),
+    t('valuePreview.after.item2', { defaultValue: 'Perfect 4-day route for your vibe' }),
+    t('valuePreview.after.item3', { defaultValue: 'Timed to avoid every crowd' }),
+    t('valuePreview.after.item4', { defaultValue: 'Built for your budget, your style' }),
+  ];
   const [, setShowAfter] = useState(false);
 
   const titleOpacity = useRef(new Animated.Value(0)).current;
@@ -122,7 +124,7 @@ export default function ValuePreviewScreen() {
     <View style={[styles.container, { paddingTop: insets.top + 40 }]}>
       <View style={styles.content}>
         <Animated.Text style={[styles.title, { opacity: titleOpacity }]}>
-          Stop Googling.{'\n'}Start experiencing.
+          {t('valuePreview.title', { defaultValue: 'Stop Googling.\nStart experiencing.' })}
         </Animated.Text>
 
         {/* Before */}
@@ -135,7 +137,7 @@ export default function ValuePreviewScreen() {
             },
           ]}
         >
-          <Text style={styles.sectionLabel}>WITHOUT ROAM</Text>
+          <Text style={styles.sectionLabel}>{t('valuePreview.withoutRoam', { defaultValue: 'WITHOUT ROAM' })}</Text>
           {BEFORE_ITEMS.map((item, i) => (
             <View key={i} style={styles.row}>
               <Text style={styles.xMark}>x</Text>
@@ -161,7 +163,7 @@ export default function ValuePreviewScreen() {
             },
           ]}
         >
-          <Text style={styles.sectionLabelGold}>WITH ROAM</Text>
+          <Text style={styles.sectionLabelGold}>{t('valuePreview.withRoam', { defaultValue: 'WITH ROAM' })}</Text>
           {AFTER_ITEMS.map((item, i) => (
             <View key={i} style={styles.row}>
               <Text style={styles.checkMark}>&#10003;</Text>
@@ -178,13 +180,13 @@ export default function ValuePreviewScreen() {
         <Pressable
           onPress={handleContinue}
           accessibilityRole="button"
-          accessibilityLabel="Continue"
+          accessibilityLabel={t('valuePreview.continueBtn', { defaultValue: 'Continue' })}
           style={({ pressed }) => [
             styles.btn,
             { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
           ]}
         >
-          <Text style={styles.btnText}>Let's go</Text>
+          <Text style={styles.btnText}>{t('valuePreview.letsGo', { defaultValue: "Let's go" })}</Text>
         </Pressable>
       </Animated.View>
     </View>
@@ -281,7 +283,7 @@ const styles = StyleSheet.create({
   btn: {
     backgroundColor: COLORS.gold,
     height: 56,
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.pill,
     alignItems: 'center',
     justifyContent: 'center',
     maxWidth: 600,

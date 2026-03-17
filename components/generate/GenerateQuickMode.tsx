@@ -48,6 +48,7 @@ import {
   MapPin,
   AlertCircle,
 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
 
@@ -203,6 +204,7 @@ function DatePickerModal({
   onSelect: (d: Date) => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const today = startOfDay(new Date());
   const dates: Date[] = [];
   for (let i = 1; i < 180; i++) {
@@ -215,13 +217,13 @@ function DatePickerModal({
         <Pressable style={dateStyles.content} onPress={(e) => e.stopPropagation()}>
           <View style={dateStyles.header}>
             <View>
-              <Text style={dateStyles.title}>When are you going?</Text>
+              <Text style={dateStyles.title}>{t('generate.quick.whenGoing', { defaultValue: 'When are you going?' })}</Text>
               <Text style={dateStyles.subtitle}>
-                {duration} days — returning {format(addDays(value, duration), 'MMM d')}
+                {t('generate.quick.daysReturning', { defaultValue: `${duration} days — returning ${format(addDays(value, duration), 'MMM d')}`, duration, returnDate: format(addDays(value, duration), 'MMM d') })}
               </Text>
             </View>
             <Pressable onPress={onClose} hitSlop={8}>
-              <X size={20} color={COLORS.creamMuted} strokeWidth={2} />
+              <X size={20} color={COLORS.creamMuted} strokeWidth={1.5} />
             </Pressable>
           </View>
           <ScrollView style={dateStyles.scroll} showsVerticalScrollIndicator={false}>
@@ -250,7 +252,7 @@ function DatePickerModal({
                     </View>
                     {isWkend && (
                       <View style={dateStyles.weekendBadge}>
-                        <Text style={dateStyles.weekendText}>Weekend</Text>
+                        <Text style={dateStyles.weekendText}>{t('generate.quick.weekend', { defaultValue: 'Weekend' })}</Text>
                       </View>
                     )}
                   </View>
@@ -269,15 +271,15 @@ const dateStyles = StyleSheet.create({
   content: { width: '100%', maxWidth: 380, maxHeight: '75%', backgroundColor: COLORS.bg, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, padding: SPACING.lg } as ViewStyle,
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: SPACING.md } as ViewStyle,
   title: { fontFamily: FONTS.header, fontSize: 22, color: COLORS.cream } as TextStyle,
-  subtitle: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.creamMuted, marginTop: 2 } as TextStyle,
+  subtitle: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.creamMuted, marginTop: SPACING.xs } as TextStyle,
   scroll: { maxHeight: 400 } as ViewStyle,
-  option: { paddingVertical: 14, paddingHorizontal: SPACING.sm, borderRadius: RADIUS.sm } as ViewStyle,
+  option: { paddingVertical: SPACING.md, paddingHorizontal: SPACING.sm, borderRadius: RADIUS.sm } as ViewStyle,
   optionSelected: { backgroundColor: COLORS.sageHighlight } as ViewStyle,
   optionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' } as ViewStyle,
   optionDay: { fontFamily: FONTS.bodySemiBold, fontSize: 15, color: COLORS.cream } as TextStyle,
-  optionDate: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.creamMuted, marginTop: 1 } as TextStyle,
+  optionDate: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.creamMuted, marginTop: SPACING.xs } as TextStyle,
   optionTextSelected: { color: COLORS.sage } as TextStyle,
-  weekendBadge: { backgroundColor: COLORS.goldSoft, paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.sm } as ViewStyle,
+  weekendBadge: { backgroundColor: COLORS.goldSoft, paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs, borderRadius: RADIUS.sm } as ViewStyle,
   weekendText: { fontFamily: FONTS.mono, fontSize: 10, color: COLORS.gold } as TextStyle,
 });
 
@@ -285,6 +287,7 @@ const dateStyles = StyleSheet.create({
 // Main Component
 // ---------------------------------------------------------------------------
 export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQuickModeProps) {
+  const { t } = useTranslation();
   const planWizard = useAppStore((s) => s.planWizard);
 
   // Core
@@ -355,7 +358,7 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
   const handleSubmit = useCallback(async () => {
     const dest = destination.trim();
     if (!dest) {
-      setError('Where are you going?');
+      setError(t('generate.quick.errorNoDestination', { defaultValue: 'Where are you going?' }));
       Animated.sequence([
         Animated.timing(shakeAnim, { toValue: 1, duration: 50, useNativeDriver: true }),
         Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
@@ -382,7 +385,7 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
       avoidList: avoidList.trim() || undefined,
       specialRequests: specialRequests.trim() || undefined,
     });
-  }, [destination, duration, budget, groupSize, vibes, startDate, pace, accommodationStyle, morningType, tripComposition, dietary, transport, mustVisit, avoidList, specialRequests, shakeAnim, onSubmit]);
+  }, [destination, duration, budget, groupSize, vibes, startDate, pace, accommodationStyle, morningType, tripComposition, dietary, transport, mustVisit, avoidList, specialRequests, shakeAnim, onSubmit, t]);
 
   const shakeInterpolate = shakeAnim.interpolate({
     inputRange: [0, 1],
@@ -411,17 +414,17 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
         keyboardShouldPersistTaps="handled"
       >
         {/* ── Destination ── */}
-        <Section label="Where to?">
+        <Section label={t('generate.quick.whereTo', { defaultValue: 'Where to?' })}>
           <Animated.View style={[styles.inputRow, { transform: [{ translateX: shakeInterpolate }] }]}>
             <View style={[styles.inputWrap, inputFocused && styles.inputWrapFocused]}>
-              <MapPin size={18} color={inputFocused ? COLORS.sage : COLORS.creamDim} strokeWidth={2} />
+              <MapPin size={18} color={inputFocused ? COLORS.sage : COLORS.creamDim} strokeWidth={1.5} />
               <TextInput
                 style={styles.input}
                 value={destination}
                 onChangeText={(t) => { setDestination(t); setError(null); }}
                 onFocus={() => setInputFocused(true)}
                 onBlur={() => setInputFocused(false)}
-                placeholder="Tokyo, Japan"
+                placeholder={t('generate.quick.destinationPlaceholder', { defaultValue: 'Tokyo, Japan' })}
                 placeholderTextColor={COLORS.creamDim}
               />
             </View>
@@ -429,19 +432,19 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
               onPress={handleShuffle}
               style={({ pressed }) => [styles.shuffleBtn, pressed && { opacity: 0.7 }]}
             >
-              <Shuffle size={20} color={COLORS.sage} strokeWidth={2} />
+              <Shuffle size={20} color={COLORS.sage} strokeWidth={1.5} />
             </Pressable>
           </Animated.View>
           {error ? (
             <View style={styles.errorRow}>
-              <AlertCircle size={14} color={COLORS.coral} strokeWidth={2} />
+              <AlertCircle size={14} color={COLORS.coral} strokeWidth={1.5} />
               <Text style={styles.errorText}>{error}</Text>
             </View>
           ) : null}
         </Section>
 
         {/* ── Travel Dates ── */}
-        <Section label="When?">
+        <Section label={t('generate.quick.when', { defaultValue: 'When?' })}>
           <Pressable
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -449,7 +452,7 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
             }}
             style={({ pressed }) => [styles.dateBtn, pressed && { opacity: 0.85 }]}
           >
-            <Calendar size={22} color={COLORS.sage} strokeWidth={2} />
+            <Calendar size={22} color={COLORS.sage} strokeWidth={1.5} />
             <View style={styles.dateTextWrap}>
               <Text style={styles.datePrimary}>
                 {format(startDate, 'EEE, MMM d')} — {format(addDays(startDate, duration), 'EEE, MMM d')}
@@ -458,12 +461,12 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
                 {duration} days · {format(startDate, 'yyyy')}
               </Text>
             </View>
-            <ChevronDown size={18} color={COLORS.creamMuted} strokeWidth={2} />
+            <ChevronDown size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
           </Pressable>
         </Section>
 
         {/* ── Duration ── */}
-        <Section label="How long?">
+        <Section label={t('generate.quick.howLong', { defaultValue: 'How long?' })}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillRow}>
             {DURATIONS.map((d) => (
               <Pressable
@@ -478,7 +481,7 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
                   {d}
                 </Text>
                 <Text style={[styles.durationUnit, duration === d && styles.durationUnitSelected]}>
-                  days
+                  {t('generate.quick.days', { defaultValue: 'days' })}
                 </Text>
               </Pressable>
             ))}
@@ -486,7 +489,7 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
         </Section>
 
         {/* ── Budget ── */}
-        <Section label="Budget?">
+        <Section label={t('generate.quick.budget', { defaultValue: 'Budget?' })}>
           <View style={styles.budgetRow}>
             {BUDGET_OPTIONS.map((opt) => {
               const isActive = budget === opt.id;
@@ -504,7 +507,7 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
                     pressed && { transform: [{ scale: 0.97 }] },
                   ]}
                 >
-                  <opt.icon size={24} color={isActive ? opt.color : COLORS.creamMuted} strokeWidth={2} />
+                  <opt.icon size={24} color={isActive ? opt.color : COLORS.creamMuted} strokeWidth={1.5} />
                   <Text style={[styles.budgetLabel, isActive && { color: opt.color }]}>{opt.label}</Text>
                   <Text style={styles.budgetPrice}>{opt.price}</Text>
                   <Text style={styles.budgetTagline}>{opt.tagline}</Text>
@@ -515,7 +518,7 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
         </Section>
 
         {/* ── Trip Composition ── */}
-        <Section label="Who's going?">
+        <Section label={t('generate.quick.whosGoing', { defaultValue: "Who's going?" })}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillRow}>
             {TRIP_COMP.map((c) => {
               const isActive = tripComposition === c.id;
@@ -525,7 +528,7 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
                   onPress={() => handleTripCompChange(c.id)}
                   style={[styles.compPill, isActive ? styles.compPillSelected : styles.compPillUnselected]}
                 >
-                  <c.icon size={18} color={isActive ? COLORS.bg : COLORS.cream} strokeWidth={2} />
+                  <c.icon size={18} color={isActive ? COLORS.bg : COLORS.cream} strokeWidth={1.5} />
                   <Text style={[styles.compText, isActive && styles.compTextSelected]}>{c.label}</Text>
                 </Pressable>
               );
@@ -533,14 +536,14 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
           </ScrollView>
           {(tripComposition === 'friends' || tripComposition === 'family') && (
             <View style={styles.groupInline}>
-              <Text style={styles.groupInlineLabel}>How many?</Text>
+              <Text style={styles.groupInlineLabel}>{t('generate.quick.howMany', { defaultValue: 'How many?' })}</Text>
               <View style={styles.groupRow}>
                 <Pressable
                   onPress={() => { Haptics.selectionAsync(); setGroupSize(Math.max(2, groupSize - 1)); }}
                   style={[styles.groupBtn, groupSize <= 2 && styles.groupBtnDisabled]}
                   disabled={groupSize <= 2}
                 >
-                  <Minus size={18} color={groupSize <= 2 ? COLORS.creamMuted : COLORS.sage} strokeWidth={2} />
+                  <Minus size={18} color={groupSize <= 2 ? COLORS.creamMuted : COLORS.sage} strokeWidth={1.5} />
                 </Pressable>
                 <Text style={styles.groupValue}>{groupSize}</Text>
                 <Pressable
@@ -548,7 +551,7 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
                   style={[styles.groupBtn, groupSize >= 20 && styles.groupBtnDisabled]}
                   disabled={groupSize >= 20}
                 >
-                  <Plus size={18} color={groupSize >= 20 ? COLORS.creamMuted : COLORS.sage} strokeWidth={2} />
+                  <Plus size={18} color={groupSize >= 20 ? COLORS.creamMuted : COLORS.sage} strokeWidth={1.5} />
                 </Pressable>
               </View>
             </View>
@@ -556,7 +559,7 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
         </Section>
 
         {/* ── Vibes (multi-select) ── */}
-        <Section label="What's the vibe?">
+        <Section label={t('generate.quick.whatsTheVibe', { defaultValue: "What's the vibe?" })}>
           <View style={styles.vibeGrid}>
             {VIBES.map((v) => {
               const isActive = vibes.includes(v.id);
@@ -577,7 +580,7 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
         </Section>
 
         {/* ── Travel Pace — visual day preview ── */}
-        <Section label="Travel pace?">
+        <Section label={t('generate.quick.travelPace', { defaultValue: 'Travel pace?' })}>
           <View style={styles.paceRow}>
             {PACE_OPTIONS.map((p) => {
               const isActive = pace === p.id;
@@ -612,7 +615,7 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
         </Section>
 
         {/* ── Morning Preference ── */}
-        <Section label="When does your day start?">
+        <Section label={t('generate.quick.dayStart', { defaultValue: 'When does your day start?' })}>
           <View style={styles.morningRow}>
             {MORNING_TYPES.map((m) => {
               const isActive = morningType === m.id;
@@ -625,7 +628,7 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
                   }}
                   style={[styles.morningCard, isActive && styles.morningCardSelected]}
                 >
-                  <m.icon size={20} color={isActive ? COLORS.sage : COLORS.creamMuted} strokeWidth={2} />
+                  <m.icon size={20} color={isActive ? COLORS.sage : COLORS.creamMuted} strokeWidth={1.5} />
                   <Text style={[styles.morningLabel, isActive && styles.morningLabelSelected]}>{m.label}</Text>
                   <Text style={styles.morningTime}>{m.time}</Text>
                 </Pressable>
@@ -635,7 +638,7 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
         </Section>
 
         {/* ── Accommodation ── */}
-        <Section label="Where do you sleep?">
+        <Section label={t('generate.quick.whereDoYouSleep', { defaultValue: 'Where do you sleep?' })}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillRow}>
             {ACCOMMODATION_STYLES.map((a) => {
               const isActive = accommodationStyle === a.id;
@@ -664,20 +667,20 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
           }}
           style={styles.personalizeToggle}
         >
-          <Sparkles size={18} color={COLORS.gold} strokeWidth={2} />
+          <Sparkles size={18} color={COLORS.gold} strokeWidth={1.5} />
           <Text style={styles.personalizeText}>
-            {showPersonalize ? 'Less details' : 'Personalize further'}
+            {showPersonalize ? t('generate.quick.lessDetails', { defaultValue: 'Less details' }) : t('generate.quick.personalizeFurther', { defaultValue: 'Personalize further' })}
           </Text>
           {showPersonalize
-            ? <ChevronUp size={16} color={COLORS.gold} strokeWidth={2} />
-            : <ChevronDown size={16} color={COLORS.gold} strokeWidth={2} />
+            ? <ChevronUp size={16} color={COLORS.gold} strokeWidth={1.5} />
+            : <ChevronDown size={16} color={COLORS.gold} strokeWidth={1.5} />
           }
         </Pressable>
 
         {showPersonalize && (
           <>
             {/* ── Transport ── */}
-            <Section label="How do you get around?">
+            <Section label={t('generate.quick.howGetAround', { defaultValue: 'How do you get around?' })}>
               <View style={styles.transportRow}>
                 {TRANSPORT_OPTIONS.map((t) => {
                   const isActive = transport.includes(t.id);
@@ -687,7 +690,7 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
                       onPress={() => toggleTransport(t.id)}
                       style={[styles.transportPill, isActive ? styles.transportPillSelected : styles.transportPillUnselected]}
                     >
-                      <t.icon size={16} color={isActive ? COLORS.bg : COLORS.cream} strokeWidth={2} />
+                      <t.icon size={16} color={isActive ? COLORS.bg : COLORS.cream} strokeWidth={1.5} />
                       <Text style={[styles.transportText, isActive && styles.transportTextSelected]}>{t.label}</Text>
                     </Pressable>
                   );
@@ -696,7 +699,7 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
             </Section>
 
             {/* ── Dietary ── */}
-            <Section label="Dietary needs?">
+            <Section label={t('generate.quick.dietaryNeeds', { defaultValue: 'Dietary needs?' })}>
               <View style={styles.vibeGrid}>
                 {DIETARY_OPTIONS.map((d) => {
                   const isNone = d === 'No restrictions';
@@ -715,27 +718,27 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
             </Section>
 
             {/* ── Must-visit Spots ── */}
-            <Section label="Must-visit spots">
+            <Section label={t('generate.quick.mustVisitSpots', { defaultValue: 'Must-visit spots' })}>
               <TextInput
                 style={styles.textArea}
                 value={mustVisit}
                 onChangeText={setMustVisit}
-                placeholder="Tsukiji Market, teamLab, a hidden jazz bar, that ramen place from TikTok..."
+                placeholder={t('generate.quick.mustVisitPlaceholder', { defaultValue: 'Tsukiji Market, teamLab, a hidden jazz bar, that ramen place from TikTok...' })}
                 placeholderTextColor={COLORS.creamDim}
                 multiline
                 numberOfLines={3}
                 textAlignVertical="top"
               />
-              <Text style={styles.helper}>AI weaves these into your itinerary at the best times</Text>
+              <Text style={styles.helper}>{t('generate.quick.mustVisitHelper', { defaultValue: 'AI weaves these into your itinerary at the best times' })}</Text>
             </Section>
 
             {/* ── Things to Avoid ── */}
-            <Section label="Skip list">
+            <Section label={t('generate.quick.skipList', { defaultValue: 'Skip list' })}>
               <TextInput
                 style={styles.textArea}
                 value={avoidList}
                 onChangeText={setAvoidList}
-                placeholder="Tourist traps, super spicy food, long bus rides, museums..."
+                placeholder={t('generate.quick.skipListPlaceholder', { defaultValue: 'Tourist traps, super spicy food, long bus rides, museums...' })}
                 placeholderTextColor={COLORS.creamDim}
                 multiline
                 numberOfLines={2}
@@ -744,12 +747,12 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
             </Section>
 
             {/* ── Special Requests ── */}
-            <Section label="Anything else AI should know?">
+            <Section label={t('generate.quick.anythingElse', { defaultValue: 'Anything else AI should know?' })}>
               <TextInput
                 style={styles.textArea}
                 value={specialRequests}
                 onChangeText={setSpecialRequests}
-                placeholder="Celebrating my birthday on Day 3, need wheelchair access, traveling with a 2-year-old, I want to propose..."
+                placeholder={t('generate.quick.specialRequestsPlaceholder', { defaultValue: 'Celebrating my birthday on Day 3, need wheelchair access, traveling with a 2-year-old, I want to propose...' })}
                 placeholderTextColor={COLORS.creamDim}
                 multiline
                 numberOfLines={3}
@@ -770,12 +773,12 @@ export default function GenerateQuickMode({ onSubmit, isGenerating }: GenerateQu
           {isGenerating ? (
             <>
               <ActivityIndicator size="small" color={COLORS.bg} />
-              <Text style={styles.ctaLoading}>Building your perfect trip...</Text>
+              <Text style={styles.ctaLoading}>{t('generate.quick.buildingTrip', { defaultValue: 'Building your perfect trip...' })}</Text>
             </>
           ) : (
             <>
-              <Sparkles size={20} color={COLORS.bg} strokeWidth={2} />
-              <Text style={styles.ctaText}>{destination.trim() ? `See My ${destination.trim()} Trip` : 'See My Trip'}</Text>
+              <Sparkles size={20} color={COLORS.bg} strokeWidth={1.5} />
+              <Text style={styles.ctaText}>{destination.trim() ? t('generate.quick.seeMyTripDest', { defaultValue: `See My ${destination.trim()} Trip`, destination: destination.trim() }) : t('generate.quick.seeMyTrip', { defaultValue: 'See My Trip' })}</Text>
             </>
           )}
         </Pressable>
@@ -821,14 +824,14 @@ const styles = StyleSheet.create({
   inputWrapFocused: { borderColor: COLORS.sage } as ViewStyle,
   input: { flex: 1, fontFamily: FONTS.body, fontSize: 16, color: COLORS.cream, padding: 0 } as TextStyle,
   shuffleBtn: { width: 48, height: 48, borderRadius: RADIUS.lg, backgroundColor: COLORS.bgCard, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.whiteFaintBorder } as ViewStyle,
-  errorRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: SPACING.xs } as ViewStyle,
+  errorRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginTop: SPACING.xs } as ViewStyle,
   errorText: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.coral } as TextStyle,
 
   // Date button
-  dateBtn: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.whiteFaintBorder, paddingHorizontal: SPACING.md, paddingVertical: 14 } as ViewStyle,
+  dateBtn: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.whiteFaintBorder, paddingHorizontal: SPACING.md, paddingVertical: SPACING.md } as ViewStyle,
   dateTextWrap: { flex: 1 } as ViewStyle,
   datePrimary: { fontFamily: FONTS.bodySemiBold, fontSize: 15, color: COLORS.cream } as TextStyle,
-  dateSecondary: { fontFamily: FONTS.mono, fontSize: 12, color: COLORS.creamMuted, marginTop: 2 } as TextStyle,
+  dateSecondary: { fontFamily: FONTS.mono, fontSize: 12, color: COLORS.creamMuted, marginTop: SPACING.xs } as TextStyle,
 
   // Duration pills
   pillRow: { flexDirection: 'row', gap: SPACING.sm } as ViewStyle,
@@ -842,14 +845,14 @@ const styles = StyleSheet.create({
 
   // Budget
   budgetRow: { flexDirection: 'row', gap: SPACING.sm } as ViewStyle,
-  budgetCard: { flex: 1, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.whiteFaintBorder, padding: SPACING.md, alignItems: 'center', gap: 4 } as ViewStyle,
+  budgetCard: { flex: 1, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.whiteFaintBorder, padding: SPACING.md, alignItems: 'center', gap: SPACING.xs } as ViewStyle,
   budgetCardInactive: {} as ViewStyle,
   budgetLabel: { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: COLORS.cream } as TextStyle,
   budgetPrice: { fontFamily: FONTS.mono, fontSize: 11, color: COLORS.creamMuted } as TextStyle,
   budgetTagline: { fontFamily: FONTS.body, fontSize: 9, color: COLORS.creamDim, textAlign: 'center' } as TextStyle,
 
   // Trip composition
-  compPill: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderRadius: RADIUS.full } as ViewStyle,
+  compPill: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: RADIUS.full } as ViewStyle,
   compPillSelected: { backgroundColor: COLORS.sage } as ViewStyle,
   compPillUnselected: { backgroundColor: COLORS.bgCard, borderWidth: 1, borderColor: COLORS.whiteFaintBorder } as ViewStyle,
   compText: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.cream } as TextStyle,
@@ -863,52 +866,52 @@ const styles = StyleSheet.create({
 
   // Vibes
   vibeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm } as ViewStyle,
-  vibePill: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: RADIUS.full } as ViewStyle,
+  vibePill: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: RADIUS.full } as ViewStyle,
   vibePillUnselected: { backgroundColor: COLORS.bgCard, borderWidth: 1, borderColor: COLORS.whiteFaintBorder } as ViewStyle,
   vibeText: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.cream } as TextStyle,
   vibeTextSelected: { color: COLORS.bg, fontFamily: FONTS.bodySemiBold } as TextStyle,
 
   // Pace
   paceRow: { flexDirection: 'row', gap: SPACING.sm } as ViewStyle,
-  paceCard: { flex: 1, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.whiteFaintBorder, padding: SPACING.md, alignItems: 'center', gap: 4 } as ViewStyle,
+  paceCard: { flex: 1, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.whiteFaintBorder, padding: SPACING.md, alignItems: 'center', gap: SPACING.xs } as ViewStyle,
   paceCardSelected: { borderColor: COLORS.sage, backgroundColor: COLORS.sageLight } as ViewStyle,
-  paceBlocks: { flexDirection: 'row', gap: 3, marginBottom: 4, height: 12, alignItems: 'flex-end' } as ViewStyle,
-  paceBlock: { width: 6, height: 12, borderRadius: 2 } as ViewStyle,
+  paceBlocks: { flexDirection: 'row', gap: SPACING.xs, marginBottom: SPACING.xs, height: 12, alignItems: 'flex-end' } as ViewStyle,
+  paceBlock: { width: 6, height: 12, borderRadius: RADIUS.sm } as ViewStyle,
   paceLabel: { fontFamily: FONTS.bodySemiBold, fontSize: 12, color: COLORS.cream } as TextStyle,
   paceLabelSelected: { color: COLORS.sage } as TextStyle,
   paceDesc: { fontFamily: FONTS.mono, fontSize: 10, color: COLORS.creamMuted, textAlign: 'center' } as TextStyle,
-  paceSub: { fontFamily: FONTS.body, fontSize: 9, color: COLORS.creamDim, textAlign: 'center', marginTop: 2 } as TextStyle,
+  paceSub: { fontFamily: FONTS.body, fontSize: 9, color: COLORS.creamDim, textAlign: 'center', marginTop: SPACING.xs } as TextStyle,
 
   // Morning
   morningRow: { flexDirection: 'row', gap: SPACING.sm } as ViewStyle,
-  morningCard: { flex: 1, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.whiteFaintBorder, padding: SPACING.md, alignItems: 'center', gap: 4 } as ViewStyle,
+  morningCard: { flex: 1, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.whiteFaintBorder, padding: SPACING.md, alignItems: 'center', gap: SPACING.xs } as ViewStyle,
   morningCardSelected: { borderColor: COLORS.sage, backgroundColor: COLORS.sageLight } as ViewStyle,
   morningLabel: { fontFamily: FONTS.bodySemiBold, fontSize: 12, color: COLORS.cream } as TextStyle,
   morningLabelSelected: { color: COLORS.sage } as TextStyle,
   morningTime: { fontFamily: FONTS.mono, fontSize: 11, color: COLORS.creamMuted } as TextStyle,
 
   // Accommodation
-  accomPill: { paddingHorizontal: 16, paddingVertical: 12, borderRadius: RADIUS.lg, minWidth: 100, alignItems: 'center' } as ViewStyle,
+  accomPill: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.md, borderRadius: RADIUS.lg, minWidth: 100, alignItems: 'center' } as ViewStyle,
   accomPillSelected: { backgroundColor: COLORS.sage } as ViewStyle,
   accomPillUnselected: { backgroundColor: COLORS.bgCard, borderWidth: 1, borderColor: COLORS.whiteFaintBorder } as ViewStyle,
   accomLabel: { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: COLORS.cream } as TextStyle,
   accomLabelSelected: { color: COLORS.bg } as TextStyle,
-  accomDesc: { fontFamily: FONTS.body, fontSize: 10, color: COLORS.creamMuted, marginTop: 2 } as TextStyle,
+  accomDesc: { fontFamily: FONTS.body, fontSize: 10, color: COLORS.creamMuted, marginTop: SPACING.xs } as TextStyle,
 
   // Personalize toggle
-  personalizeToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm, paddingVertical: 16, marginBottom: SPACING.md, borderTopWidth: 1, borderTopColor: COLORS.whiteFaintBorder, borderBottomWidth: 1, borderBottomColor: COLORS.whiteFaintBorder } as ViewStyle,
+  personalizeToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm, paddingVertical: SPACING.md, marginBottom: SPACING.md, borderTopWidth: 1, borderTopColor: COLORS.whiteFaintBorder, borderBottomWidth: 1, borderBottomColor: COLORS.whiteFaintBorder } as ViewStyle,
   personalizeText: { fontFamily: FONTS.bodySemiBold, fontSize: 14, color: COLORS.gold } as TextStyle,
 
   // Transport
   transportRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm } as ViewStyle,
-  transportPill: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 10, borderRadius: RADIUS.full } as ViewStyle,
+  transportPill: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: RADIUS.full } as ViewStyle,
   transportPillSelected: { backgroundColor: COLORS.sage } as ViewStyle,
   transportPillUnselected: { backgroundColor: COLORS.bgCard, borderWidth: 1, borderColor: COLORS.whiteFaintBorder } as ViewStyle,
   transportText: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.cream } as TextStyle,
   transportTextSelected: { color: COLORS.bg } as TextStyle,
 
   // Dietary
-  dietPill: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: RADIUS.full } as ViewStyle,
+  dietPill: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: RADIUS.full } as ViewStyle,
   dietPillSelected: { backgroundColor: COLORS.gold } as ViewStyle,
   dietPillUnselected: { backgroundColor: COLORS.bgCard, borderWidth: 1, borderColor: COLORS.whiteFaintBorder } as ViewStyle,
   dietText: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.cream } as TextStyle,
@@ -916,11 +919,11 @@ const styles = StyleSheet.create({
 
   // Text areas
   textArea: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.cream, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.whiteFaintBorder, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, minHeight: 72 } as TextStyle,
-  helper: { fontFamily: FONTS.body, fontSize: 11, color: COLORS.creamDim, marginTop: SPACING.xs, marginLeft: 4 } as TextStyle,
+  helper: { fontFamily: FONTS.body, fontSize: 11, color: COLORS.creamDim, marginTop: SPACING.xs, marginLeft: SPACING.xs } as TextStyle,
 
   // CTA
   ctaWrap: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: SPACING.md, paddingBottom: SPACING.lg, backgroundColor: COLORS.bg } as ViewStyle,
-  cta: { height: 56, borderRadius: RADIUS.xl, backgroundColor: COLORS.sage, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: SPACING.sm } as ViewStyle,
+  cta: { height: 56, borderRadius: RADIUS.pill, backgroundColor: COLORS.sage, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: SPACING.sm } as ViewStyle,
   ctaPressed: { opacity: 0.85 } as ViewStyle,
   ctaText: { fontFamily: FONTS.header, fontSize: 22, color: COLORS.bg } as TextStyle,
   ctaLoading: { fontFamily: FONTS.body, fontSize: 15, color: COLORS.bg } as TextStyle,

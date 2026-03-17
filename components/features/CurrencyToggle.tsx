@@ -13,6 +13,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import {
   setHomeCurrency as persistHomeCurrency,
@@ -37,6 +38,7 @@ interface CurrencyToggleProps {
 // Component
 // ---------------------------------------------------------------------------
 export default function CurrencyToggle({ onCurrencyChange, subtle }: CurrencyToggleProps) {
+  const { t } = useTranslation();
   const homeCurrency = useAppStore((s) => s.homeCurrency);
   const rates = useAppStore((s) => s.exchangeRates);
   const setHomeCurrencyStore = useAppStore((s) => s.setHomeCurrency);
@@ -98,16 +100,16 @@ export default function CurrencyToggle({ onCurrencyChange, subtle }: CurrencyTog
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Home Currency</Text>
+              <Text style={styles.modalTitle}>{t('currency.homeCurrency', { defaultValue: 'Home Currency' })}</Text>
               <Pressable onPress={() => setPickerVisible(false)} hitSlop={12}>
                 <Text style={styles.modalClose}>{'\u2715'}</Text>
               </Pressable>
             </View>
             <Text style={styles.modalSubtitle}>
-              All trip prices will show your local equivalent
+              {t('currency.subtitle', { defaultValue: 'All trip prices will show your local equivalent' })}
             </Text>
             <Text style={styles.attribution}>
-              Rates by{' '}
+              {t('currency.ratesBy', { defaultValue: 'Rates by' })}{' '}
               <Text
                 style={styles.attributionLink}
                 onPress={() => Linking.openURL('https://www.frankfurter.app/')}
@@ -196,7 +198,7 @@ const styles = StyleSheet.create({
     gap: 2,
     backgroundColor: COLORS.sageMuted,
     borderRadius: RADIUS.full,
-    paddingHorizontal: 8,
+    paddingHorizontal: SPACING.sm,
     paddingVertical: 4,
     borderWidth: 1,
     borderColor: COLORS.sageBorder,

@@ -3,6 +3,7 @@
 // Long-press floating button → sends SMS with current location
 // =============================================================================
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Animated,
@@ -54,6 +55,7 @@ interface EmergencySSOProps {
 }
 
 export default function EmergencySOS({ countryCode }: EmergencySSOProps) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [emergencyContact, setEmergencyContact] = useState('');
   const [editingContact, setEditingContact] = useState(false);
@@ -106,7 +108,7 @@ export default function EmergencySOS({ countryCode }: EmergencySSOProps) {
         if (status !== 'granted') {
           // Send SMS without location
           const smsUrl = `sms:${phoneNumber}?body=${encodeURIComponent(
-            'EMERGENCY — I need help. Sent from ROAM travel app.'
+            t('sos.smsNoLocation', { defaultValue: 'EMERGENCY — I need help. Sent from ROAM travel app.' })
           )}`;
           await Linking.openURL(smsUrl);
           return;
@@ -117,30 +119,30 @@ export default function EmergencySOS({ countryCode }: EmergencySSOProps) {
         });
 
         const mapsLink = `https://maps.google.com/?q=${loc.coords.latitude},${loc.coords.longitude}`;
-        const body = `EMERGENCY — I need help!\n\nMy location: ${mapsLink}\n\nSent from ROAM travel app.`;
+        const body = `${t('sos.smsWithLocation', { defaultValue: 'EMERGENCY — I need help!' })}\n\n${t('sos.smsLocationLabel', { defaultValue: 'My location:' })} ${mapsLink}\n\n${t('sos.smsSentFrom', { defaultValue: 'Sent from ROAM travel app.' })}`;
 
         const smsUrl = `sms:${phoneNumber}?body=${encodeURIComponent(body)}`;
         await Linking.openURL(smsUrl);
       } catch {
         // Fallback — open SMS without location
         const smsUrl = `sms:${phoneNumber}?body=${encodeURIComponent(
-          'EMERGENCY — I need help. Sent from ROAM travel app.'
+          t('sos.smsNoLocation', { defaultValue: 'EMERGENCY — I need help. Sent from ROAM travel app.' })
         )}`;
         Linking.openURL(smsUrl).catch(() => {});
       }
     },
-    []
+    [t]
   );
 
   const handleSOSLongPress = useCallback(() => {
     if (!emergencyContact) {
       Alert.alert(
-        'No Emergency Contact',
-        'Set an emergency contact number first.',
+        t('sos.noContactTitle', { defaultValue: 'No Emergency Contact' }),
+        t('sos.noContactMessage', { defaultValue: 'Set an emergency contact number first.' }),
         [
-          { text: 'Cancel', style: 'cancel' },
+          { text: t('sos.cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
           {
-            text: 'Set Contact',
+            text: t('sos.setContact', { defaultValue: 'Set Contact' }),
             onPress: () => {
               setExpanded(true);
               setEditingContact(true);
@@ -159,16 +161,19 @@ export default function EmergencySOS({ countryCode }: EmergencySSOProps) {
     const number = EMERGENCY_NUMBERS[code] ?? EMERGENCY_NUMBERS.DEFAULT;
 
     Alert.alert(
-      `Call ${number}?`,
-      `This will call the local emergency number for ${code}.`,
+      `${t('sos.callQuestion', { defaultValue: 'Call' })} ${number}?`,
+      `${t('sos.callConfirmPrefix', { defaultValue: 'This will call the local emergency number for' })} ${code}.`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('sos.cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
         {
-          text: 'Call Now',
+          text: t('sos.callNow', { defaultValue: 'Call Now' }),
           style: 'destructive',
           onPress: () => {
             Linking.openURL(`tel:${number}`).catch(() =>
-              Alert.alert('Call Failed', 'Couldn\u2019t connect the call. Try dialing the number directly.')
+              Alert.alert(
+                t('sos.callFailedTitle', { defaultValue: 'Call Failed' }),
+                t('sos.callFailedMessage', { defaultValue: 'Couldn\u2019t connect the call. Try dialing the number directly.' })
+              )
             );
           },
         },
@@ -190,7 +195,7 @@ export default function EmergencySOS({ countryCode }: EmergencySSOProps) {
           { opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.95 : 1 }] },
         ]}
       >
-        <Shield size={28} color={COLORS.cream} strokeWidth={2} />
+        <Shield size={28} color={COLORS.cream} strokeWidth={1.5} />
       </Pressable>
     );
   }
@@ -200,8 +205,8 @@ export default function EmergencySOS({ countryCode }: EmergencySSOProps) {
       {/* Header */}
       <View style={styles.expandedHeader}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm }}>
-            <Shield size={22} color={COLORS.coral} strokeWidth={2} />
-            <Text style={styles.expandedTitle}>Emergency SOS</Text>
+            <Shield size={22} color={COLORS.coral} strokeWidth={1.5} />
+            <Text style={styles.expandedTitle}>{t('sos.title', { defaultValue: 'Emergency SOS' })}</Text>
           </View>
         <Pressable
           onPress={() => {
@@ -210,7 +215,7 @@ export default function EmergencySOS({ countryCode }: EmergencySSOProps) {
           }}
           hitSlop={8}
         >
-          <X size={20} color={COLORS.cream} strokeWidth={2} />
+          <X size={20} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
       </View>
 
@@ -225,26 +230,26 @@ export default function EmergencySOS({ countryCode }: EmergencySSOProps) {
           ]}
         >
           <Text style={styles.sosButtonText}>SOS</Text>
-          <Text style={styles.sosHint}>Hold to send location</Text>
+          <Text style={styles.sosHint}>{t('sos.holdHint', { defaultValue: 'Hold to send location' })}</Text>
         </Pressable>
       </Animated.View>
 
       {/* Emergency contact */}
       <View style={styles.contactSection}>
-        <Text style={styles.contactLabel}>EMERGENCY CONTACT</Text>
+        <Text style={styles.contactLabel}>{t('sos.contactLabel', { defaultValue: 'EMERGENCY CONTACT' })}</Text>
         {editingContact ? (
           <View style={styles.contactEditRow}>
             <TextInput
               style={styles.contactInput}
               value={contactInput}
               onChangeText={setContactInput}
-              placeholder="Phone number"
+              placeholder={t('sos.phonePlaceholder', { defaultValue: 'Phone number' })}
               placeholderTextColor={COLORS.creamMuted}
               keyboardType="phone-pad"
               autoFocus
             />
             <Pressable onPress={saveContact} style={styles.saveBtn}>
-              <Text style={styles.saveBtnText}>Save</Text>
+              <Text style={styles.saveBtnText}>{t('sos.save', { defaultValue: 'Save' })}</Text>
             </Pressable>
           </View>
         ) : (
@@ -255,7 +260,7 @@ export default function EmergencySOS({ countryCode }: EmergencySSOProps) {
             }}
           >
             <Text style={styles.contactValue}>
-              {emergencyContact || 'Tap to set'}
+              {emergencyContact || t('sos.tapToSet', { defaultValue: 'Tap to set' })}
             </Text>
           </Pressable>
         )}
@@ -270,12 +275,9 @@ export default function EmergencySOS({ countryCode }: EmergencySSOProps) {
         ]}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm }}>
-          <Phone size={18} color={COLORS.cream} strokeWidth={2} />
+          <Phone size={18} color={COLORS.cream} strokeWidth={1.5} />
           <Text style={styles.callButtonText}>
-          Call Local Emergency (
-          {EMERGENCY_NUMBERS[countryCode?.toUpperCase() ?? 'DEFAULT'] ??
-            EMERGENCY_NUMBERS.DEFAULT}
-          )
+            {`${t('sos.callLocal', { defaultValue: 'Call Local Emergency' })} (${EMERGENCY_NUMBERS[countryCode?.toUpperCase() ?? 'DEFAULT'] ?? EMERGENCY_NUMBERS.DEFAULT})`}
           </Text>
         </View>
       </Pressable>
@@ -293,7 +295,7 @@ const styles = StyleSheet.create({
     right: SPACING.md,
     width: 52,
     height: 52,
-    borderRadius: 26,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.emergencyRed,
     alignItems: 'center',
     justifyContent: 'center',

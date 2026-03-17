@@ -395,7 +395,7 @@ function getCategoryIcon(cat: ExpenseCategory) {
 function PrivacyBanner() {
   return (
     <View style={locationStyles.privacyBanner}>
-      <Shield size={14} color={COLORS.sage} strokeWidth={2} />
+      <Shield size={14} color={COLORS.sage} strokeWidth={1.5} />
       <Text style={locationStyles.privacyText}>Only visible to your trip group</Text>
     </View>
   );
@@ -475,7 +475,7 @@ function LocationSharingCard({
             <Navigation
               size={16}
               color={isActive ? COLORS.bg : COLORS.creamMuted}
-              strokeWidth={2}
+              strokeWidth={1.5}
             />
             <Text style={[
               locationStyles.shareToggleText,
@@ -488,7 +488,7 @@ function LocationSharingCard({
       </View>
       {showStaleAlert && (
         <View style={locationStyles.staleAlert}>
-          <AlertTriangle size={14} color={COLORS.gold} strokeWidth={2} />
+          <AlertTriangle size={14} color={COLORS.gold} strokeWidth={1.5} />
           <Text style={locationStyles.staleAlertText}>
             {member.name} hasn't moved in 30+ min
           </Text>
@@ -525,7 +525,7 @@ function DurationPickerModal({
               onPress={() => onSelect(opt.value)}
             >
               <View style={locationStyles.durationOptionLeft}>
-                <Clock size={18} color={opt.value === 'off' ? COLORS.coral : COLORS.sage} strokeWidth={2} />
+                <Clock size={18} color={opt.value === 'off' ? COLORS.coral : COLORS.sage} strokeWidth={1.5} />
                 <View>
                   <Text style={locationStyles.durationOptionLabel}>{opt.label}</Text>
                   <Text style={locationStyles.durationOptionDesc}>{opt.description}</Text>
@@ -591,11 +591,11 @@ const locationStyles = StyleSheet.create({
   privacyBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: SPACING.sm,
     backgroundColor: COLORS.sageSubtle,
     borderRadius: RADIUS.sm,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
     marginBottom: SPACING.md,
   } as ViewStyle,
   privacyText: {
@@ -620,7 +620,7 @@ const locationStyles = StyleSheet.create({
   memberAvatar: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: RADIUS.pill,
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
@@ -635,7 +635,7 @@ const locationStyles = StyleSheet.create({
     right: 0,
     width: 12,
     height: 12,
-    borderRadius: 6,
+    borderRadius: RADIUS.sm,
     backgroundColor: COLORS.sage,
     borderWidth: 2,
     borderColor: COLORS.bg,
@@ -670,8 +670,8 @@ const locationStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
     borderRadius: RADIUS.full,
     borderWidth: 1,
     borderColor: COLORS.creamMuted,
@@ -691,7 +691,7 @@ const locationStyles = StyleSheet.create({
   staleAlert: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: SPACING.sm,
     backgroundColor: COLORS.goldSoft,
     borderRadius: RADIUS.sm,
     paddingVertical: 6,
@@ -798,7 +798,7 @@ const locationStyles = StyleSheet.create({
   mapPinDot: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: RADIUS.pill,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
@@ -1087,7 +1087,7 @@ export default function GroupScreen() {
                     {activeTrip?.days} days · 4 members
                   </Text>
                   <Pressable style={styles.inviteBtn}>
-                    <UserPlus size={16} color={COLORS.sage} strokeWidth={2} />
+                    <UserPlus size={16} color={COLORS.sage} strokeWidth={1.5} />
                     <Text style={styles.inviteBtnText}>Invite friends</Text>
                   </Pressable>
                 </View>
@@ -1107,7 +1107,7 @@ export default function GroupScreen() {
                     </View>
                   ))}
                   <Pressable style={styles.avatarAdd}>
-                    <Plus size={20} color={COLORS.creamMuted} strokeWidth={2} />
+                    <Plus size={20} color={COLORS.creamMuted} strokeWidth={1.5} />
                   </Pressable>
                 </View>
 
@@ -1146,7 +1146,7 @@ export default function GroupScreen() {
                   onPress={() => setAddExpenseVisible(true)}
                   style={styles.addExpenseBtn}
                 >
-                  <Plus size={20} color={COLORS.bg} strokeWidth={2.5} />
+                  <Plus size={20} color={COLORS.bg} strokeWidth={1.5} />
                   <Text style={styles.addExpenseBtnText}>Add Expense</Text>
                 </Pressable>
 
@@ -1162,7 +1162,7 @@ export default function GroupScreen() {
                   const showConversion = e.currency !== homeCurrency;
                   return (
                     <View key={e.id} style={styles.expenseRow}>
-                      <Icon size={20} color={COLORS.creamMuted} strokeWidth={2} />
+                      <Icon size={20} color={COLORS.creamMuted} strokeWidth={1.5} />
                       <View style={styles.expenseContent}>
                         <Text style={styles.expenseDesc}>{e.description}</Text>
                         <Text style={styles.expenseMeta}>
@@ -1222,7 +1222,7 @@ export default function GroupScreen() {
               <Text style={styles.title}>Currency</Text>
               {isOffline && (
                 <View style={styles.offlineBadge}>
-                  <WifiOff size={12} color={COLORS.bg} strokeWidth={2} />
+                  <WifiOff size={12} color={COLORS.bg} strokeWidth={1.5} />
                   <Text style={styles.offlineText}>Offline rates</Text>
                 </View>
               )}
@@ -1249,7 +1249,7 @@ export default function GroupScreen() {
               </View>
               <Pressable onPress={handleSwap} style={styles.swapBtn}>
                 <Animated.View style={{ transform: [{ rotate: swapInterpolate }] }}>
-                  <ArrowUpDown size={24} color={COLORS.bg} strokeWidth={2} />
+                  <ArrowUpDown size={24} color={COLORS.bg} strokeWidth={1.5} />
                 </Animated.View>
               </Pressable>
               <View style={styles.converterField}>
@@ -1297,7 +1297,7 @@ export default function GroupScreen() {
 
             <View style={styles.budgetSection}>
               <View style={styles.budgetHeader}>
-                <Wallet size={20} color={COLORS.sage} strokeWidth={2} />
+                <Wallet size={20} color={COLORS.sage} strokeWidth={1.5} />
                 <Text style={styles.budgetTitle}>Trip Budget</Text>
               </View>
               <TextInput
@@ -1486,9 +1486,9 @@ const styles = StyleSheet.create({
   inviteBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    gap: SPACING.sm,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
     borderWidth: 1,
     borderColor: COLORS.sage,
     borderRadius: RADIUS.sm,
@@ -1508,7 +1508,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: RADIUS.pill,
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
@@ -1520,7 +1520,7 @@ const styles = StyleSheet.create({
   avatarAdd: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: RADIUS.pill,
     borderWidth: 2,
     borderStyle: 'dashed',
     borderColor: COLORS.creamDim,
@@ -1537,7 +1537,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: SPACING.sm,
     backgroundColor: COLORS.sage,
     paddingVertical: 14,
     borderRadius: RADIUS.md,
@@ -1574,7 +1574,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: SPACING.sm,
     flexWrap: 'wrap',
-    gap: 8,
+    gap: SPACING.sm,
   } as ViewStyle,
   balanceText: {
     fontFamily: FONTS.body,
@@ -1588,7 +1588,7 @@ const styles = StyleSheet.create({
   } as TextStyle,
   settleBtn: {
     paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingHorizontal: SPACING.sm,
   } as ViewStyle,
   settleBtnText: {
     fontFamily: FONTS.mono,
@@ -1616,7 +1616,7 @@ const styles = StyleSheet.create({
   emptyCta: {
     marginTop: SPACING.lg,
     backgroundColor: COLORS.sage,
-    paddingVertical: 12,
+    paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.lg,
     borderRadius: RADIUS.md,
   } as ViewStyle,
@@ -1682,7 +1682,7 @@ const styles = StyleSheet.create({
   } as TextStyle,
   currencyPill: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 12,
+    paddingHorizontal: SPACING.md,
     paddingVertical: 6,
     borderRadius: RADIUS.full,
     backgroundColor: COLORS.bgGlass,
@@ -1695,7 +1695,7 @@ const styles = StyleSheet.create({
   swapBtn: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.sage,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1762,7 +1762,7 @@ const styles = StyleSheet.create({
   budgetHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: SPACING.sm,
     marginBottom: SPACING.md,
   } as ViewStyle,
   budgetTitle: {

@@ -23,6 +23,7 @@ import {
   Plus,
   Plane,
 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS, MAGAZINE } from '../lib/constants';
 import {
@@ -151,8 +152,9 @@ function AirportPhotoCard({
 }
 
 function HeroSection({ guide }: { guide: LayoverGuide }) {
+  const { t } = useTranslation();
   const photoUri = getDestinationPhoto(guide.city, 800);
-  const terminalNote = TERMINAL_NOTES[guide.airportCode] ?? 'Check terminal maps on arrival';
+  const terminalNote = TERMINAL_NOTES[guide.airportCode] ?? t('layover.checkTerminalMaps', { defaultValue: 'Check terminal maps on arrival' });
 
   return (
     <View style={styles.heroContainer}>
@@ -212,6 +214,7 @@ function LoungeItem({ text }: { text: string }) {
 // Main Screen
 // ---------------------------------------------------------------------------
 function LayoverScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const airports = useMemo(() => getSupportedLayoverAirports(), []);
@@ -254,13 +257,13 @@ function LayoverScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={handleBack} hitSlop={12}>
-          <ArrowLeft size={24} color={COLORS.cream} strokeWidth={2} />
+          <ArrowLeft size={24} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
         <View style={{ flex: 1 }}>
-          <Text style={styles.headerTitle}>Layover Optimizer</Text>
-          <Text style={styles.headerSub}>What to do with your time</Text>
+          <Text style={styles.headerTitle}>{t('layover.headerTitle', { defaultValue: 'Layover Optimizer' })}</Text>
+          <Text style={styles.headerSub}>{t('layover.headerSub', { defaultValue: 'What to do with your time' })}</Text>
         </View>
-        <Plane size={20} color={COLORS.sage} strokeWidth={2} />
+        <Plane size={20} color={COLORS.sage} strokeWidth={1.5} />
       </View>
 
       <ScrollView
@@ -269,7 +272,7 @@ function LayoverScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Airport selector — photo cards */}
-        <Text style={styles.sectionLabel}>AIRPORT</Text>
+        <Text style={styles.sectionLabel}>{t('layover.airportLabel', { defaultValue: 'AIRPORT' })}</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -293,16 +296,16 @@ function LayoverScreen() {
           <View style={styles.transitCard}>
             <View style={styles.transitAccent} />
             <View style={styles.transitCardInner}>
-              <Text style={styles.transitLabel}>CITY ACCESS</Text>
+              <Text style={styles.transitLabel}>{t('layover.cityAccess', { defaultValue: 'CITY ACCESS' })}</Text>
               <Text style={styles.transitDetail}>
-                {guide.transitTime} via {guide.transitMethod}
+                {t('layover.transitDetail', { defaultValue: '{{time}} via {{method}}', time: guide.transitTime, method: guide.transitMethod })}
               </Text>
             </View>
           </View>
         )}
 
         {/* Hours selector */}
-        <Text style={[styles.sectionLabel, { marginTop: SPACING.xl }]}>LAYOVER TIME</Text>
+        <Text style={[styles.sectionLabel, { marginTop: SPACING.xl }]}>{t('layover.layoverTime', { defaultValue: 'LAYOVER TIME' })}</Text>
         <View style={styles.hoursRow}>
           <Pressable
             onPress={handleDecrease}
@@ -312,7 +315,7 @@ function LayoverScreen() {
           </Pressable>
           <View style={styles.hoursDisplay}>
             <Text style={styles.hoursNum}>{hours}</Text>
-            <Text style={styles.hoursLabel}>{hours === 1 ? 'hour' : 'hours'}</Text>
+            <Text style={styles.hoursLabel}>{hours === 1 ? t('layover.hour', { defaultValue: 'hour' }) : t('layover.hours', { defaultValue: 'hours' })}</Text>
           </View>
           <Pressable
             onPress={handleIncrease}
@@ -328,14 +331,16 @@ function LayoverScreen() {
           { color: canLeave ? COLORS.sage : COLORS.coral },
         ]}>
           {canLeave
-            ? `${hours} hours is enough to explore ${guide?.city ?? 'the city'}`
-            : `Stay in the airport${guide ? ` — need ${guide.minHoursToLeave}+ hours to leave` : ''}`}
+            ? t('layover.enoughTime', { defaultValue: '{{hours}} hours is enough to explore {{city}}', hours, city: guide?.city ?? t('layover.theCity', { defaultValue: 'the city' }) })
+            : guide
+              ? t('layover.stayInAirportWithHours', { defaultValue: 'Stay in the airport — need {{minHours}}+ hours to leave', minHours: guide.minHoursToLeave })
+              : t('layover.stayInAirport', { defaultValue: 'Stay in the airport' })}
         </Text>
 
         {/* In-airport perks */}
         {inAirport.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionHeader}>Inside the airport</Text>
+            <Text style={styles.sectionHeader}>{t('layover.insideAirport', { defaultValue: 'Inside the airport' })}</Text>
             {inAirport.map((perk, i) => (
               <PerkItem key={i} text={perk} />
             ))}
@@ -345,7 +350,7 @@ function LayoverScreen() {
         {/* Lounge intel */}
         {loungeNotes.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionHeader}>Lounge access</Text>
+            <Text style={styles.sectionHeader}>{t('layover.loungeAccess', { defaultValue: 'Lounge access' })}</Text>
             {loungeNotes.map((note, i) => (
               <LoungeItem key={i} text={note} />
             ))}
@@ -355,9 +360,9 @@ function LayoverScreen() {
         {/* Outside activities */}
         {activities.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionHeader}>Leave the airport</Text>
+            <Text style={styles.sectionHeader}>{t('layover.leaveAirport', { defaultValue: 'Leave the airport' })}</Text>
             <Text style={styles.sectionMeta}>
-              Fits your {hours}-hour layover — 90 min buffer for transit and security included.
+              {t('layover.fitsLayover', { defaultValue: 'Fits your {{hours}}-hour layover — 90 min buffer for transit and security included.', hours })}
             </Text>
             {activities.map((activity, i) => (
               <ActivityCard key={i} activity={activity} />
@@ -370,7 +375,7 @@ function LayoverScreen() {
           <View style={styles.emptyCard}>
             <View style={styles.emptyAccent} />
             <Text style={styles.emptyText}>
-              Not enough time for city activities after transit and security. Enjoy the airport amenities instead.
+              {t('layover.notEnoughTime', { defaultValue: 'Not enough time for city activities after transit and security. Enjoy the airport amenities instead.' })}
             </Text>
           </View>
         )}
@@ -400,7 +405,6 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   headerTitle: {
     fontFamily: FONTS.header,
-    fontStyle: 'italic',
     fontSize: 26,
     color: COLORS.cream,
   } as TextStyle,
@@ -439,7 +443,7 @@ const styles = StyleSheet.create({
   airportCard: {
     width: 160,
     height: 100,
-    borderRadius: 12,
+    borderRadius: RADIUS.lg,
     overflow: 'hidden',
     borderWidth: 2,
     borderColor: 'transparent',
@@ -457,7 +461,7 @@ const styles = StyleSheet.create({
   } as ImageStyle,
   airportCardOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: COLORS.overlayMedium,
   } as ViewStyle,
   airportCardContent: {
     position: 'absolute',
@@ -492,7 +496,7 @@ const styles = StyleSheet.create({
   } as ImageStyle,
   heroGradient: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: COLORS.overlayLight,
   } as ViewStyle,
   heroContent: {
     position: 'absolute',
@@ -502,7 +506,6 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   heroAirportName: {
     fontFamily: FONTS.header,
-    fontStyle: 'italic',
     fontSize: 32,
     color: COLORS.cream,
     lineHeight: 36,
@@ -596,7 +599,6 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   sectionHeader: {
     fontFamily: FONTS.header,
-    fontStyle: 'italic',
     fontSize: 22,
     color: COLORS.cream,
     marginBottom: SPACING.md,
@@ -690,10 +692,9 @@ const styles = StyleSheet.create({
   } as TextStyle,
   activityTitle: {
     fontFamily: FONTS.header,
-    fontStyle: 'italic',
     fontSize: 20,
     color: COLORS.cream,
-    marginBottom: 8,
+    marginBottom: SPACING.sm,
     lineHeight: 24,
   } as TextStyle,
   activityDesc: {
@@ -714,7 +715,6 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   tipText: {
     fontFamily: FONTS.body,
-    fontStyle: 'italic',
     fontSize: 13,
     color: COLORS.creamDim,
     flex: 1,

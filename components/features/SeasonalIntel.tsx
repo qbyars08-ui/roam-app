@@ -22,6 +22,7 @@ import {
   CalendarDays,
   ThermometerSun,
 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, HIDDEN_DESTINATIONS } from '../../lib/constants';
 
 import type { LucideIcon } from 'lucide-react-native';
@@ -127,6 +128,7 @@ interface SeasonalIntelProps {
 // Component
 // ---------------------------------------------------------------------------
 function SeasonalIntel({ destination, month }: SeasonalIntelProps) {
+  const { t } = useTranslation();
   const currentMonth = useMemo(() => month ?? new Date().getMonth() + 1, [month]);
 
   const rating = useMemo(
@@ -157,8 +159,8 @@ function SeasonalIntel({ destination, month }: SeasonalIntelProps) {
     <View style={styles.container}>
       {/* Season badge */}
       <View style={[styles.seasonBadge, { backgroundColor: season.color + '18' }]}>
-        <SeasonIcon size={18} color={season.color} strokeWidth={2} />
-        <Text style={[styles.seasonName, { color: season.color }]}>{season.name}</Text>
+        <SeasonIcon size={18} color={season.color} strokeWidth={1.5} />
+        <Text style={[styles.seasonName, { color: season.color }]}>{t(`seasonal.${rating}`, { defaultValue: season.name })}</Text>
         <Text style={styles.monthLabel}>{MONTH_NAMES[currentMonth - 1]}</Text>
       </View>
 
@@ -167,20 +169,20 @@ function SeasonalIntel({ destination, month }: SeasonalIntelProps) {
 
       {/* Info rows */}
       <View style={styles.infoRow}>
-        <Users size={14} color={COLORS.creamMuted} strokeWidth={2} />
-        <Text style={styles.infoText}>{CROWD_LABELS[rating]}</Text>
+        <Users size={14} color={COLORS.creamMuted} strokeWidth={1.5} />
+        <Text style={styles.infoText}>{t(`seasonal.crowd.${rating}`, { defaultValue: CROWD_LABELS[rating] })}</Text>
       </View>
 
       <View style={styles.infoRow}>
-        <PriceIcon size={14} color={COLORS.creamMuted} strokeWidth={2} />
-        <Text style={styles.infoText}>{PRICE_LABELS[rating]}</Text>
+        <PriceIcon size={14} color={COLORS.creamMuted} strokeWidth={1.5} />
+        <Text style={styles.infoText}>{t(`seasonal.price.${rating}`, { defaultValue: PRICE_LABELS[rating] })}</Text>
       </View>
 
       {bestMonthsDisplay.length > 0 && (
         <View style={styles.infoRow}>
-          <CalendarDays size={14} color={COLORS.sage} strokeWidth={2} />
+          <CalendarDays size={14} color={COLORS.sage} strokeWidth={1.5} />
           <Text style={[styles.infoText, { color: COLORS.sage }]}>
-            Best months: {bestMonthsDisplay}
+            {t('seasonal.bestMonths', { defaultValue: 'Best months:' })} {bestMonthsDisplay}
           </Text>
         </View>
       )}

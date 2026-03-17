@@ -4,6 +4,7 @@
 // =============================================================================
 import React, { useEffect, useRef } from 'react';
 import { assignOnboardingVariant } from '../../lib/ab-test';
+import { useTranslation } from 'react-i18next';
 import {
   Animated,
   Easing,
@@ -16,11 +17,12 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { COLORS, FONTS } from '../../lib/constants';
+import { COLORS, FONTS, RADIUS } from '../../lib/constants';
 import { getDestinationPhoto } from '../../lib/photos';
 
 export default function SplashScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const logoScale = useRef(new Animated.Value(0.85)).current;
   const taglineOpacity = useRef(new Animated.Value(0)).current;
@@ -111,7 +113,7 @@ export default function SplashScreen() {
       </Animated.Text>
 
       <Animated.Text style={[styles.tagline, { opacity: taglineOpacity }]}>
-        Go somewhere that changes you.
+        {t('splash.tagline', { defaultValue: 'Go somewhere that changes you.' })}
       </Animated.Text>
     </View>
   );
@@ -128,7 +130,7 @@ const _rawStyles = {
     position: 'absolute',
     width: 320,
     height: 320,
-    borderRadius: 160,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.gold,
     opacity: 0.12,
   } as ViewStyle,

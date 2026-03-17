@@ -59,7 +59,7 @@ import {
 
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../../lib/constants';
 import { useAppStore, type Trip } from '../../lib/store';
 import {
   getEmergencyForDestination,
@@ -80,7 +80,6 @@ import {
   destinationToCountryCode,
   type PassportNationality,
 } from '../../lib/visa-intel';
-import { DESTINATIONS } from '../../lib/constants';
 import { parseItinerary, type Itinerary, type ItineraryDay } from '../../lib/types/itinerary';
 import { getMedicalGuideByDestination, type MedicalGuide } from '../../lib/medical-abroad';
 import { getTimezoneByDestination } from '../../lib/timezone';
@@ -97,6 +96,12 @@ import PackingList from '../../components/features/PackingList';
 import HolidayCrowdCalendar from '../../components/features/HolidayCrowdCalendar';
 import IAmHereNow from '../../components/prep/IAmHereNow';
 import { getJetLagForDestination, type JetLagPlan } from '../../lib/jet-lag';
+import { useSonarQuery } from '../../lib/sonar';
+import LiveBadge from '../../components/ui/LiveBadge';
+import SourceCitation from '../../components/ui/SourceCitation';
+import { getEntryRequirements, type EntryRequirements } from '../../lib/apis/sherpa';
+import { getCurrentWeather, getWeatherIntel, type CurrentWeather, type WeatherIntel } from '../../lib/apis/openweather';
+import { getRoutes, type RouteResult } from '../../lib/apis/rome2rio';
 
 // ---------------------------------------------------------------------------
 // Survival phrase keys (6 phrases for Language tab)
@@ -154,10 +159,11 @@ const E_VISA_URLS: Record<string, string> = {
 // Offline Banner
 // ---------------------------------------------------------------------------
 function OfflineBanner() {
+  const { t } = useTranslation();
   return (
     <View style={styles.offlineBanner}>
       <WifiOff size={14} color={COLORS.bg} />
-      <Text style={styles.offlineText}>Everything you need, no signal required</Text>
+      <Text style={styles.offlineText}>{t('prep.offlineBanner', { defaultValue: 'Everything you need, no signal required' })}</Text>
     </View>
   );
 }
@@ -207,8 +213,9 @@ function EditorialHeader({
     return () => { cancelled = true; };
   }, [destination]);
 
+  const { t } = useTranslation();
   const score = safety?.safetyScore ?? null;
-  const safetyLabel = score == null ? null : score > 70 ? 'Safe for travelers' : score >= 40 ? 'Use caution' : 'High risk';
+  const safetyLabel = score == null ? null : score > 70 ? t('prep.safeForTravelers', { defaultValue: 'Safe for travelers' }) : score >= 40 ? t('prep.useCaution', { defaultValue: 'Use caution' }) : t('prep.highRisk', { defaultValue: 'High risk' });
 
   return (
     <View style={editorialHeaderStyles.container}>
@@ -220,7 +227,7 @@ function EditorialHeader({
       )}
       {score != null && (
         <Text style={editorialHeaderStyles.safetyLine}>
-          Safety {score} — {safetyLabel}
+          {t('prep.safetyScore', { defaultValue: 'Safety' })} {score} — {safetyLabel}
         </Text>
       )}
     </View>
@@ -231,21 +238,21 @@ const editorialHeaderStyles = StyleSheet.create({
   container: {
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 24,
-    gap: 8,
+    paddingBottom: SPACING.lg,
+    gap: SPACING.sm,
   } as ViewStyle,
   destination: {
     fontFamily: FONTS.header,
-    fontSize: 32,
+    fontSize: 38,
+    letterSpacing: -1.2,
     color: COLORS.cream,
-    fontStyle: 'italic',
-    lineHeight: 38,
+    lineHeight: 42,
   } as TextStyle,
   meta: {
     fontFamily: FONTS.mono,
-    fontSize: 14,
-    color: COLORS.creamSoft,
-    letterSpacing: 0.3,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+    letterSpacing: 1,
   } as TextStyle,
   safetyLine: {
     fontFamily: FONTS.mono,
@@ -260,22 +267,19 @@ const editorialHeaderStyles = StyleSheet.create({
 // ---------------------------------------------------------------------------
 type SectionId = 'schedule' | 'overview' | 'currency' | 'connectivity' | 'culture' | 'packing' | 'jetlag' | 'crowds' | 'emergency' | 'health' | 'language' | 'visa';
 
-const SECTIONS: Array<
-  | { id: SectionId; label: string }
-  | { id: SectionId; labelKey: string }
-> = [
-  { id: 'schedule', label: 'Schedule' },
-  { id: 'overview', label: 'Overview' },
-  { id: 'packing', label: 'Packing' },
-  { id: 'jetlag', label: 'Jet Lag' },
-  { id: 'crowds', label: 'Crowds' },
+const SECTIONS: Array<{ id: SectionId; labelKey: string }> = [
+  { id: 'schedule', labelKey: 'prep.schedule' },
+  { id: 'overview', labelKey: 'prep.overview' },
+  { id: 'packing', labelKey: 'prep.packing' },
+  { id: 'jetlag', labelKey: 'prep.jetLag' },
+  { id: 'crowds', labelKey: 'prep.crowds' },
   { id: 'emergency', labelKey: 'prep.emergency' },
   { id: 'health', labelKey: 'prep.health' },
   { id: 'language', labelKey: 'prep.language' },
   { id: 'visa', labelKey: 'prep.visa' },
-  { id: 'currency', label: 'Currency' },
-  { id: 'connectivity', label: 'SIM & WiFi' },
-  { id: 'culture', label: 'Culture' },
+  { id: 'currency', labelKey: 'prep.currency' },
+  { id: 'connectivity', labelKey: 'prep.simAndWifi' },
+  { id: 'culture', labelKey: 'prep.culture' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -284,12 +288,13 @@ const SECTIONS: Array<
 const SLOT_DEFAULTS: Record<string, string> = { morning: '9:00 AM', afternoon: '2:00 PM', evening: '6:00 PM' };
 
 function ScheduleTab({ itinerary }: { itinerary: Itinerary | null }) {
+  const { t } = useTranslation();
   if (!itinerary?.days?.length) {
     return (
       <View style={styles.tabContent}>
-        <Text style={styles.scheduleEmptyTitle}>No schedule yet</Text>
+        <Text style={styles.scheduleEmptyTitle}>{t('prep.nothingToPrep', { defaultValue: 'Nothing to prep for.' })}</Text>
         <Text style={styles.noDataText}>
-          Plan a trip first — your prep intel loads after
+          {t('prep.buildTripHint', { defaultValue: 'Build a trip and this screen fills itself.' })}
         </Text>
       </View>
     );
@@ -298,11 +303,11 @@ function ScheduleTab({ itinerary }: { itinerary: Itinerary | null }) {
   return (
     <View style={styles.tabContent}>
       <Text style={styles.scheduleIntro}>
-        {itinerary.destination} · {itinerary.days.length} days
+        {itinerary.destination} · {itinerary.days.length} {t('prep.days', { defaultValue: 'days' })}
       </Text>
       {itinerary.days.map((day: ItineraryDay) => (
         <View key={day.day} style={styles.scheduleDayCard}>
-          <Text style={styles.scheduleDayLabel}>Day {day.day}</Text>
+          <Text style={styles.scheduleDayLabel}>{t('prep.day', { defaultValue: 'Day' })} {day.day}</Text>
           <Text style={styles.scheduleDayTheme}>{day.theme}</Text>
           {(['morning', 'afternoon', 'evening'] as const).map((slot) => {
             const a = day[slot];
@@ -327,6 +332,7 @@ function ScheduleTab({ itinerary }: { itinerary: Itinerary | null }) {
 // Overview Tab
 // ---------------------------------------------------------------------------
 function OverviewTab({ safety }: { safety: SafetyData }) {
+  const { t } = useTranslation();
   const advisoryColor =
     safety.advisoryLevel === 1
       ? COLORS.sage
@@ -338,7 +344,7 @@ function OverviewTab({ safety }: { safety: SafetyData }) {
   return (
     <View style={styles.tabContent}>
       <View style={styles.overviewRow}>
-        <Text style={styles.overviewLabel}>Travel Advisory</Text>
+        <Text style={styles.overviewLabel}>{t('prep.travelAdvisory', { defaultValue: 'Travel Advisory' })}</Text>
         <View style={[styles.advisoryBadge, { backgroundColor: advisoryColor + '1A', borderColor: advisoryColor }]}>
           <Text
             style={[
@@ -365,19 +371,19 @@ function OverviewTab({ safety }: { safety: SafetyData }) {
 
       <View style={styles.metricsWrap}>
         <MetricRow
-          label="Crime Index"
+          label={t('prep.crimeIndex', { defaultValue: 'Crime Index' })}
           value={safety.crimeIndex}
           fillColor={COLORS.coral}
           invert
         />
         <MetricRow
-          label="Health Risk"
+          label={t('prep.healthRisk', { defaultValue: 'Health Risk' })}
           value={safety.healthRisk}
           fillColor={COLORS.coral}
           invert
         />
         <MetricRow
-          label="Political Stability"
+          label={t('prep.politicalStability', { defaultValue: 'Political Stability' })}
           value={safety.politicalStability}
           fillColor={COLORS.sage}
         />
@@ -429,6 +435,7 @@ function SOSButton({
   onActivate: () => void;
   emergency: EmergencyData | null;
 }) {
+  const { t } = useTranslation();
   const progress = useRef(new Animated.Value(0)).current;
   const pulse = useRef(new Animated.Value(1)).current;
   const hasActivated = useRef(false);
@@ -436,7 +443,7 @@ function SOSButton({
 
   const handlePressIn = useCallback(() => {
     if (hasActivated.current) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     progress.setValue(0);
     Animated.timing(progress, {
       toValue: 1,
@@ -478,7 +485,7 @@ function SOSButton({
 
   return (
     <View style={styles.sosWrap}>
-      <Text style={styles.sosInstruction}>Hold 2 seconds to activate</Text>
+      <Text style={styles.sosInstruction}>{t('prep.holdToActivate', { defaultValue: 'Hold 2 seconds to activate' })}</Text>
       <Pressable
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
@@ -489,7 +496,7 @@ function SOSButton({
       >
         <Animated.View style={[styles.sosButtonInner, { opacity: pulse }]}>
           <ShieldAlert size={48} color={COLORS.bg} />
-          <Text style={styles.sosButtonLabel}>Hold for SOS</Text>
+          <Text style={styles.sosButtonLabel}>{t('prep.holdForSOS', { defaultValue: 'Hold for SOS' })}</Text>
         </Animated.View>
         <View style={styles.sosProgressRing} pointerEvents="none">
           <Svg width={160} height={160}>
@@ -524,20 +531,21 @@ function SOSButton({
 // Emergency Numbers Strip (always visible, coral accent)
 // ---------------------------------------------------------------------------
 function EmergencyNumbers({ data }: { data: EmergencyData }) {
+  const { t } = useTranslation();
   const openTel = useCallback((num: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     Linking.openURL(`tel:${num.replace(/\s/g, '')}`).catch(() => {});
   }, []);
 
   const rows: Array<{ icon: LucideIcon; label: string; number: string }> = [
-    { icon: Shield, label: 'Police', number: data.police },
-    { icon: Truck, label: 'Ambulance', number: data.ambulance },
-    { icon: Flame, label: 'Fire', number: data.fire },
+    { icon: Shield, label: t('prep.police', { defaultValue: 'Police' }), number: data.police },
+    { icon: Truck, label: t('prep.ambulance', { defaultValue: 'Ambulance' }), number: data.ambulance },
+    { icon: Flame, label: t('prep.fire', { defaultValue: 'Fire' }), number: data.fire },
   ];
 
   return (
     <View style={emergencyStripStyles.container}>
-      <Text style={emergencyStripStyles.label}>EMERGENCY</Text>
+      <Text style={emergencyStripStyles.label}>{t('prep.emergencyLabel', { defaultValue: 'EMERGENCY' })}</Text>
       <View style={emergencyStripStyles.row}>
         {rows.map((r) => (
           <TouchableOpacity
@@ -564,8 +572,8 @@ const emergencyStripStyles = StyleSheet.create({
     backgroundColor: COLORS.bgMagazine,
     borderLeftWidth: 3,
     borderLeftColor: COLORS.coral,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
     marginBottom: SPACING.lg,
   } as ViewStyle,
   label: {
@@ -582,7 +590,7 @@ const emergencyStripStyles = StyleSheet.create({
   item: {
     flex: 1,
     alignItems: 'center',
-    gap: 4,
+    gap: SPACING.xs,
   } as ViewStyle,
   itemLabel: {
     fontFamily: FONTS.body,
@@ -600,8 +608,9 @@ const emergencyStripStyles = StyleSheet.create({
 // Embassy Card
 // ---------------------------------------------------------------------------
 function EmbassyCard({ data }: { data: EmergencyData }) {
+  const { t } = useTranslation();
   const openTel = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     Linking.openURL(`tel:${data.usEmbassy.phone.replace(/\s/g, '')}`).catch(() => {});
   }, [data.usEmbassy.phone]);
 
@@ -613,8 +622,8 @@ function EmbassyCard({ data }: { data: EmergencyData }) {
 
   return (
     <View style={styles.embassyCard}>
-      <Text style={styles.embassyLabel}>Nearest Embassy</Text>
-      <Text style={styles.embassyName}>US Embassy — {data.usEmbassy.city}</Text>
+      <Text style={styles.embassyLabel}>{t('prep.nearestEmbassy', { defaultValue: 'Nearest Embassy' })}</Text>
+      <Text style={styles.embassyName}>{t('prep.usEmbassy', { defaultValue: 'US Embassy — {{city}}', city: data.usEmbassy.city })}</Text>
       <TouchableOpacity
         style={styles.embassyAddressRow}
         onPress={openMap}
@@ -654,6 +663,7 @@ function HealthTab({
   medicalGuide: MedicalGuide | null;
   destination: string;
 }) {
+  const { t } = useTranslation();
   const router = useRouter();
   const tapSafe = safety.tapWaterSafe ?? tapWaterFromCultural ?? medicalGuide?.tapWaterSafe ?? false;
 
@@ -683,12 +693,12 @@ function HealthTab({
         }]}>
           <Droplets size={28} color={tapSafe ? COLORS.sage : COLORS.coral} />
           <Text style={[styles.healthQuickValue, { color: tapSafe ? COLORS.sage : COLORS.coral }]}>
-            {tapSafe ? 'Tap water safe' : 'Don\'t drink tap water'}
+            {tapSafe ? t('prep.tapWaterSafe', { defaultValue: 'Tap water safe' }) : t('prep.dontDrinkTapWater', { defaultValue: "Don't drink tap water" })}
           </Text>
           {medicalGuide?.waterNote ? (
             <Text style={styles.healthQuickNote}>{medicalGuide.waterNote}</Text>
           ) : !tapSafe ? (
-            <Text style={styles.healthQuickNote}>Stick to bottled or filtered water</Text>
+            <Text style={styles.healthQuickNote}>{t('prep.stickToBottledWater', { defaultValue: 'Stick to bottled or filtered water' })}</Text>
           ) : null}
         </View>
 
@@ -700,12 +710,12 @@ function HealthTab({
           }]}>
             <AlertTriangle size={20} color={insuranceColor} />
             <Text style={[styles.healthQuickSmallLabel, { color: insuranceColor }]}>
-              Insurance
+              {t('prep.insurance', { defaultValue: 'Insurance' })}
             </Text>
             <Text style={[styles.healthQuickSmallValue, { color: insuranceColor }]}>
-              {medicalGuide?.insurancePriority === 'critical' ? 'Critical'
-                : medicalGuide?.insurancePriority === 'recommended' ? 'Get it'
-                : medicalGuide ? 'Nice to have' : 'Recommended'}
+              {medicalGuide?.insurancePriority === 'critical' ? t('prep.critical', { defaultValue: 'Critical' })
+                : medicalGuide?.insurancePriority === 'recommended' ? t('prep.getIt', { defaultValue: 'Get it' })
+                : medicalGuide ? t('prep.niceToHave', { defaultValue: 'Nice to have' }) : t('prep.recommended', { defaultValue: 'Recommended' })}
             </Text>
           </View>
 
@@ -716,7 +726,7 @@ function HealthTab({
             }]}>
               <Stethoscope size={20} color={hospitalColor} />
               <Text style={[styles.healthQuickSmallLabel, { color: hospitalColor }]}>
-                Hospitals
+                {t('prep.hospitals', { defaultValue: 'Hospitals' })}
               </Text>
               <Text style={[styles.healthQuickSmallValue, { color: hospitalColor }]}>
                 {medicalGuide.hospitalQuality.charAt(0).toUpperCase() + medicalGuide.hospitalQuality.slice(1)}
@@ -729,9 +739,9 @@ function HealthTab({
               borderLeftColor: COLORS.sage,
             }]}>
               <Stethoscope size={20} color={COLORS.creamMuted} />
-              <Text style={styles.healthQuickSmallLabel}>Hospitals</Text>
+              <Text style={styles.healthQuickSmallLabel}>{t('prep.hospitals', { defaultValue: 'Hospitals' })}</Text>
               <Text style={[styles.healthQuickSmallValue, { color: COLORS.creamMuted }]}>
-                Research locally
+                {t('prep.researchLocally', { defaultValue: 'Research locally' })}
               </Text>
             </View>
           )}
@@ -741,14 +751,14 @@ function HealthTab({
       {/* ── 2. Medical Details (if available) ── */}
       {medicalGuide && (
         <View style={styles.healthSection}>
-          <Text style={styles.healthSectionTitle}>Medical Details</Text>
+          <Text style={styles.healthSectionTitle}>{t('prep.medicalDetails', { defaultValue: 'Medical Details' })}</Text>
 
           {/* Pharmacy */}
           <View style={styles.healthDetailRow}>
             <Pill size={16} color={medicalGuide.pharmacyOTC ? COLORS.sage : COLORS.gold} />
             <View style={styles.healthDetailContent}>
               <Text style={styles.healthDetailLabel}>
-                Pharmacy: {medicalGuide.pharmacyOTC ? 'OTC meds available' : 'Prescription required'}
+                {t('prep.pharmacy', { defaultValue: 'Pharmacy' })}: {medicalGuide.pharmacyOTC ? t('prep.otcAvailable', { defaultValue: 'OTC meds available' }) : t('prep.prescriptionRequired', { defaultValue: 'Prescription required' })}
               </Text>
               <Text style={styles.healthDetailNote}>{medicalGuide.pharmacyNote}</Text>
             </View>
@@ -759,7 +769,7 @@ function HealthTab({
             <View style={styles.healthDetailRow}>
               <Heart size={16} color={COLORS.coral} />
               <View style={styles.healthDetailContent}>
-                <Text style={styles.healthDetailLabel}>ER visit (no insurance)</Text>
+                <Text style={styles.healthDetailLabel}>{t('prep.erVisitNoInsurance', { defaultValue: 'ER visit (no insurance)' })}</Text>
                 <Text style={[styles.healthDetailNote, { color: COLORS.coral }]}>
                   {medicalGuide.erCostRange}
                 </Text>
@@ -792,7 +802,7 @@ function HealthTab({
       {/* ── 3. If You Get Sick ── */}
       {medicalGuide && medicalGuide.whereToGo.length > 0 && (
         <View style={styles.healthSection}>
-          <Text style={styles.healthSectionTitle}>If You Get Sick</Text>
+          <Text style={styles.healthSectionTitle}>{t('prep.ifYouGetSick', { defaultValue: 'If You Get Sick' })}</Text>
           {medicalGuide.whereToGo.map((item, i) => (
             <View key={i} style={styles.whereToGoRow}>
               <Text style={styles.whereToGoCondition}>{item.condition}</Text>
@@ -804,11 +814,11 @@ function HealthTab({
 
       {/* ── 4. Vaccinations ── */}
       <View style={styles.healthSection}>
-        <Text style={styles.healthSectionTitle}>Vaccinations</Text>
+        <Text style={styles.healthSectionTitle}>{t('prep.vaccinations', { defaultValue: 'Vaccinations' })}</Text>
 
         {requiredVaccines.length > 0 ? (
           <>
-            <Text style={styles.healthSubLabel}>REQUIRED</Text>
+            <Text style={styles.healthSubLabel}>{t('prep.required', { defaultValue: 'REQUIRED' })}</Text>
             {requiredVaccines.map((v, i) => (
               <View key={i} style={styles.vaccineRow}>
                 <AlertTriangle size={14} color={COLORS.coral} />
@@ -819,13 +829,13 @@ function HealthTab({
         ) : (
           <View style={styles.healthGoodNews}>
             <CheckCircle size={16} color={COLORS.sage} />
-            <Text style={styles.healthGoodNewsText}>No required vaccinations</Text>
+            <Text style={styles.healthGoodNewsText}>{t('prep.noRequiredVaccinations', { defaultValue: 'No required vaccinations' })}</Text>
           </View>
         )}
 
         {recommendedVaccines.length > 0 && (
           <>
-            <Text style={[styles.healthSubLabel, { marginTop: SPACING.md }]}>RECOMMENDED</Text>
+            <Text style={[styles.healthSubLabel, { marginTop: SPACING.md }]}>{t('prep.recommendedLabel', { defaultValue: 'RECOMMENDED' })}</Text>
             {recommendedVaccines.map((v, i) => (
               <View key={i} style={styles.vaccineRow}>
                 <CheckCircle size={14} color={COLORS.sage} />
@@ -839,7 +849,7 @@ function HealthTab({
       {/* ── 5. Health Risks ── */}
       {healthRisks.length > 0 && (
         <View style={styles.healthSection}>
-          <Text style={styles.healthSectionTitle}>Watch Out For</Text>
+          <Text style={styles.healthSectionTitle}>{t('prep.watchOutFor', { defaultValue: 'Watch Out For' })}</Text>
           {healthRisks.map((risk, i) => (
             <View key={i} style={styles.healthRiskRow}>
               <View style={styles.healthRiskDot} />
@@ -864,9 +874,9 @@ function HealthTab({
       >
         <ShieldCheck size={20} color={COLORS.sage} />
         <View style={{ flex: 1 }}>
-          <Text style={styles.bodyIntelCtaTitle}>Body Intel</Text>
+          <Text style={styles.bodyIntelCtaTitle}>{t('prep.bodyIntel', { defaultValue: 'Body Intel' })}</Text>
           <Text style={styles.bodyIntelCtaSubtitle}>
-            Symptom checker, emergency phrases & local medication
+            {t('prep.bodyIntelDesc', { defaultValue: 'Symptom checker, emergency phrases & local medication' })}
           </Text>
         </View>
         <ChevronRight size={18} color={COLORS.creamMuted} />
@@ -879,6 +889,7 @@ function HealthTab({
 // Language Tab (6 survival phrases)
 // ---------------------------------------------------------------------------
 function LanguageTab({ pack }: { pack: LanguagePack }) {
+  const { t } = useTranslation();
   const phrases = useMemo(() => getSurvivalPhrases(pack), [pack]);
 
   const langCode = useMemo(() => {
@@ -887,13 +898,13 @@ function LanguageTab({ pack }: { pack: LanguagePack }) {
   }, [pack.language]);
 
   const handlePlay = useCallback((phrase: Phrase) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Haptics.selectionAsync();
     pronounce(phrase.local, langCode).catch(() => {});
   }, [langCode]);
 
   return (
     <View style={styles.tabContent}>
-      <Text style={styles.languageTitle}>Survival Phrases</Text>
+      <Text style={styles.languageTitle}>{t('prep.survivalPhrases', { defaultValue: 'Survival Phrases' })}</Text>
       <Text style={styles.languageSubtitle}>
         {pack.language}
         {pack.flag ? ` \u2022 ${pack.flag}` : ''}
@@ -931,6 +942,7 @@ function VisaTab({
   destination: string;
   passport: PassportNationality;
 }) {
+  const { t } = useTranslation();
   const visa = getVisaInfo(destination, passport);
   const countryCode = destinationToCountryCode(destination);
   const applyUrl = countryCode ? E_VISA_URLS[countryCode] : null;
@@ -938,9 +950,9 @@ function VisaTab({
   if (!visa) {
     return (
       <View style={styles.tabContent}>
-        <Text style={styles.noDataText}>Visa data not available for this destination.</Text>
+        <Text style={styles.noDataText}>{t('prep.visaDataNotAvailable', { defaultValue: 'Visa data not available for this destination.' })}</Text>
         <Text style={styles.visaReminder}>
-          Visa intel — know before you go. Contact your embassy for requirements.
+          {t('prep.visaIntelContact', { defaultValue: 'Visa intel — know before you go. Contact your embassy for requirements.' })}
         </Text>
       </View>
     );
@@ -960,7 +972,7 @@ function VisaTab({
 
   return (
     <View style={styles.tabContent}>
-      <Text style={styles.visaReminder}>Visa intel — know before you go</Text>
+      <Text style={styles.visaReminder}>{t('prep.visaIntel', { defaultValue: 'Visa intel — know before you go' })}</Text>
       <View
         style={[
           styles.visaHeroCard,
@@ -975,21 +987,21 @@ function VisaTab({
           ]}
         >
           {isNotRequired
-            ? 'Visa Not Required'
+            ? t('prep.visaNotRequired', { defaultValue: 'Visa Not Required' })
             : isOnArrival
-              ? 'Visa on Arrival'
-              : 'Visa Required'}
+              ? t('prep.visaOnArrival', { defaultValue: 'Visa on Arrival' })
+              : t('prep.visaRequired', { defaultValue: 'Visa Required' })}
         </Text>
       </View>
 
       {info.stayDays != null && info.stayDays < 999 && (
-        <Text style={styles.visaDetail}>Stay up to {info.stayDays} days</Text>
+        <Text style={styles.visaDetail}>{t('prep.stayUpTo', { defaultValue: 'Stay up to {{days}} days', days: info.stayDays })}</Text>
       )}
       {info.notes && (
         <Text style={styles.visaMeta}>{info.notes}</Text>
       )}
       {info.cost != null && (
-        <Text style={styles.visaMeta}>Application fee: ${info.cost}</Text>
+        <Text style={styles.visaMeta}>{t('prep.applicationFee', { defaultValue: 'Application fee: ${{cost}}', cost: info.cost })}</Text>
       )}
 
       {isRequired && applyUrl && (
@@ -1004,12 +1016,12 @@ function VisaTab({
           accessibilityRole="link"
         >
           <ExternalLink size={14} color={COLORS.sage} />
-          <Text style={styles.applyOnlineText}>Apply Online</Text>
+          <Text style={styles.applyOnlineText}>{t('prep.applyOnline', { defaultValue: 'Apply Online' })}</Text>
         </TouchableOpacity>
       )}
 
-      <Text style={styles.visaChecklistLabel}>Requirements</Text>
-      {['Valid passport (6+ months)', 'Return ticket', 'Proof of accommodation'].map((item, i) => (
+      <Text style={styles.visaChecklistLabel}>{t('prep.requirements', { defaultValue: 'Requirements' })}</Text>
+      {[t('prep.validPassport', { defaultValue: 'Valid passport (6+ months)' }), t('prep.returnTicket', { defaultValue: 'Return ticket' }), t('prep.proofOfAccommodation', { defaultValue: 'Proof of accommodation' })].map((item, i) => (
         <View key={i} style={styles.visaChecklistRow}>
           <CheckSquare size={16} color={COLORS.sage} />
           <Text style={styles.visaChecklistText}>{item}</Text>
@@ -1029,10 +1041,11 @@ function CurrencyTab({
   cultural: ReturnType<typeof getCulturalGuideForDestination>;
   destination: string;
 }) {
+  const { t } = useTranslation();
   if (!cultural) {
     return (
       <View style={styles.tabContent}>
-        <Text style={styles.noDataText}>Currency info not available for {destination}.</Text>
+        <Text style={styles.noDataText}>{t('prep.currencyNotAvailable', { defaultValue: 'Currency info not available for {{destination}}.', destination })}</Text>
       </View>
     );
   }
@@ -1049,7 +1062,7 @@ function CurrencyTab({
       <View style={styles.infoCard}>
         <View style={styles.infoCardRow}>
           <Banknote size={16} color={COLORS.sage} />
-          <Text style={styles.infoCardLabel}>Local Tip</Text>
+          <Text style={styles.infoCardLabel}>{t('prep.localTip', { defaultValue: 'Local Tip' })}</Text>
         </View>
         <Text style={styles.infoCardBody}>{currency.tip}</Text>
       </View>
@@ -1057,17 +1070,17 @@ function CurrencyTab({
       <View style={styles.infoCard}>
         <View style={styles.infoCardRow}>
           <CreditCard size={16} color={COLORS.gold} />
-          <Text style={styles.infoCardLabel}>Tipping Culture</Text>
+          <Text style={styles.infoCardLabel}>{t('prep.tippingCulture', { defaultValue: 'Tipping Culture' })}</Text>
         </View>
         <Text style={styles.infoCardBody}>{tipping}</Text>
       </View>
 
-      <Text style={styles.currencySectionLabel}>Payment Tips</Text>
+      <Text style={styles.currencySectionLabel}>{t('prep.paymentTips', { defaultValue: 'Payment Tips' })}</Text>
       {[
-        'Text your bank before departure — or your card gets blocked on day one',
-        'Small bills win at street food stalls and local taxis',
-        'Airport exchange = tourist tax. ATMs or local banks only',
-        'No-foreign-fee card? Bring it. It pays for itself in a weekend',
+        t('prep.paymentTip1', { defaultValue: 'Text your bank before departure — or your card gets blocked on day one' }),
+        t('prep.paymentTip2', { defaultValue: 'Small bills win at street food stalls and local taxis' }),
+        t('prep.paymentTip3', { defaultValue: 'Airport exchange = tourist tax. ATMs or local banks only' }),
+        t('prep.paymentTip4', { defaultValue: 'No-foreign-fee card? Bring it. It pays for itself in a weekend' }),
       ].map((tip, i) => (
         <View key={i} style={styles.currencyTipRow}>
           <View style={styles.currencyTipDot} />
@@ -1088,10 +1101,11 @@ function ConnectivityTab({
   cultural: ReturnType<typeof getCulturalGuideForDestination>;
   destination: string;
 }) {
+  const { t } = useTranslation();
   if (!cultural) {
     return (
       <View style={styles.tabContent}>
-        <Text style={styles.noDataText}>Connectivity info not available for {destination}.</Text>
+        <Text style={styles.noDataText}>{t('prep.connectivityNotAvailable', { defaultValue: 'Connectivity info not available for {{destination}}.', destination })}</Text>
       </View>
     );
   }
@@ -1103,14 +1117,14 @@ function ConnectivityTab({
       <View style={styles.infoCard}>
         <View style={styles.infoCardRow}>
           <Smartphone size={16} color={COLORS.sage} />
-          <Text style={styles.infoCardLabel}>Local SIM</Text>
+          <Text style={styles.infoCardLabel}>{t('prep.localSIM', { defaultValue: 'Local SIM' })}</Text>
         </View>
         <Text style={styles.connProviderName}>{simCard.provider}</Text>
         <Text style={styles.infoCardBody}>{simCard.cost}</Text>
         <Text style={styles.connWhere}>{simCard.where}</Text>
       </View>
 
-      <Text style={styles.currencySectionLabel}>eSIM Options</Text>
+      <Text style={styles.currencySectionLabel}>{t('prep.esimOptions', { defaultValue: 'eSIM Options' })}</Text>
       {[
         { name: 'Airalo', note: 'Global coverage, pay per GB', url: 'https://www.airalo.com/' },
         { name: 'Holafly', note: 'Unlimited data, fixed-day plans', url: 'https://www.holafly.com/' },
@@ -1138,11 +1152,11 @@ function ConnectivityTab({
       <View style={[styles.infoCard, { marginTop: SPACING.lg }]}>
         <View style={styles.infoCardRow}>
           <Wifi size={16} color={COLORS.gold} />
-          <Text style={styles.infoCardLabel}>WiFi & Power</Text>
+          <Text style={styles.infoCardLabel}>{t('prep.wifiAndPower', { defaultValue: 'WiFi & Power' })}</Text>
         </View>
-        <Text style={styles.infoCardBody}>Plug type: {plugType}</Text>
+        <Text style={styles.infoCardBody}>{t('prep.plugType', { defaultValue: 'Plug type: {{plugType}}', plugType })}</Text>
         <Text style={styles.connTip}>
-          Hit a cafe or co-working spot for reliable WiFi. Download offline maps before you leave — not when you land.
+          {t('prep.wifiTip', { defaultValue: 'Hit a cafe or co-working spot for reliable WiFi. Download offline maps before you leave — not when you land.' })}
         </Text>
       </View>
     </View>
@@ -1159,10 +1173,11 @@ function CultureTab({
   cultural: ReturnType<typeof getCulturalGuideForDestination>;
   destination: string;
 }) {
+  const { t } = useTranslation();
   if (!cultural) {
     return (
       <View style={styles.tabContent}>
-        <Text style={styles.noDataText}>Cultural guide not available for {destination}.</Text>
+        <Text style={styles.noDataText}>{t('prep.culturalNotAvailable', { defaultValue: 'Cultural guide not available for {{destination}}.', destination })}</Text>
       </View>
     );
   }
@@ -1173,7 +1188,7 @@ function CultureTab({
     <View style={styles.tabContent}>
       <Text style={styles.cultureTitle}>{flag} {country}</Text>
 
-      <Text style={styles.currencySectionLabel}>Etiquette</Text>
+      <Text style={styles.currencySectionLabel}>{t('prep.etiquette', { defaultValue: 'Etiquette' })}</Text>
       {etiquette.slice(0, 4).map((rule, i) => (
         <View key={i} style={styles.etiquetteCard}>
           <View style={styles.etiquetteRow}>
@@ -1191,7 +1206,7 @@ function CultureTab({
         <>
           <View style={[styles.infoCardRow, { marginTop: SPACING.lg, marginBottom: SPACING.sm }]}>
             <Shirt size={16} color={COLORS.gold} />
-            <Text style={styles.infoCardLabel}>Dress Code</Text>
+            <Text style={styles.infoCardLabel}>{t('prep.dressCode', { defaultValue: 'Dress Code' })}</Text>
           </View>
           {dressCodes.map((code, i) => (
             <View key={i} style={styles.currencyTipRow}>
@@ -1206,7 +1221,7 @@ function CultureTab({
         <>
           <View style={[styles.infoCardRow, { marginTop: SPACING.lg, marginBottom: SPACING.sm }]}>
             <HandMetal size={16} color={COLORS.coral} />
-            <Text style={styles.infoCardLabel}>Common Scams</Text>
+            <Text style={styles.infoCardLabel}>{t('prep.commonScams', { defaultValue: 'Common Scams' })}</Text>
           </View>
           {commonScams.map((scam, i) => (
             <View key={i} style={styles.scamRow}>
@@ -1230,6 +1245,7 @@ function TripCountdownHero({
   trip: Trip | null;
   destination: string;
 }) {
+  const { t } = useTranslation();
   if (!trip) return null;
 
   const tripDuration = trip.days ?? 0;
@@ -1239,7 +1255,7 @@ function TripCountdownHero({
       <View style={countdownStyles.row}>
         <View style={countdownStyles.numberWrap}>
           <Text style={countdownStyles.number}>{tripDuration}</Text>
-          <Text style={countdownStyles.unit}>days</Text>
+          <Text style={countdownStyles.unit}>{t('prep.days', { defaultValue: 'days' })}</Text>
         </View>
         <View style={countdownStyles.details}>
           <Text style={countdownStyles.heading}>{destination}</Text>
@@ -1247,10 +1263,10 @@ function TripCountdownHero({
             {trip.budget} budget · {trip.vibes.slice(0, 2).join(', ')}
           </Text>
           <Text style={countdownStyles.duration}>
-            {trip.isMockData ? 'Sample trip' : 'Your trip'}
+            {trip.isMockData ? t('prep.sampleTrip', { defaultValue: 'Sample trip' }) : t('prep.yourTrip', { defaultValue: 'Your trip' })}
           </Text>
         </View>
-        <Plane size={24} color={COLORS.sage} strokeWidth={2} />
+        <Plane size={24} color={COLORS.sage} strokeWidth={1.5} />
       </View>
     </View>
   );
@@ -1262,7 +1278,7 @@ const countdownStyles = StyleSheet.create({
     borderRadius: RADIUS.xl,
     borderLeftWidth: 3,
     borderLeftColor: COLORS.sage,
-    padding: 20,
+    padding: SPACING.lg,
     marginBottom: SPACING.lg,
   } as ViewStyle,
   row: {
@@ -1289,7 +1305,7 @@ const countdownStyles = StyleSheet.create({
   } as TextStyle,
   details: {
     flex: 1,
-    gap: 4,
+    gap: SPACING.xs,
   } as ViewStyle,
   heading: {
     fontFamily: FONTS.header,
@@ -1312,6 +1328,7 @@ const countdownStyles = StyleSheet.create({
 // Jet Lag Tab
 // ---------------------------------------------------------------------------
 function JetLagTab({ destination }: { destination: string }) {
+  const { t } = useTranslation();
   const jetLag = useMemo(() => getJetLagForDestination(destination), [destination]);
 
   if (!jetLag || jetLag.severity === 'none') {
@@ -1319,9 +1336,9 @@ function JetLagTab({ destination }: { destination: string }) {
       <View style={styles.tabContent}>
         <View style={jetLagStyles.noLag}>
           <Coffee size={24} color={COLORS.sage} />
-          <Text style={jetLagStyles.noLagTitle}>No jet lag expected</Text>
+          <Text style={jetLagStyles.noLagTitle}>{t('prep.noJetLag', { defaultValue: 'No jet lag expected' })}</Text>
           <Text style={styles.noDataText}>
-            {destination} is in a similar timezone — no adjustment needed.
+            {t('prep.noJetLagDesc', { defaultValue: '{{destination}} is in a similar timezone — no adjustment needed.', destination })}
           </Text>
         </View>
       </View>
@@ -1343,13 +1360,13 @@ function JetLagTab({ destination }: { destination: string }) {
               {jetLag.hoursDifference}h {jetLag.direction}
             </Text>
             <Text style={jetLagStyles.heroSeverity}>
-              {jetLag.severity.charAt(0).toUpperCase() + jetLag.severity.slice(1)} jet lag
+              {jetLag.severity.charAt(0).toUpperCase() + jetLag.severity.slice(1)} {t('prep.jetLagLabel', { defaultValue: 'jet lag' })}
             </Text>
           </View>
           <View style={jetLagStyles.recoveryBadge}>
             <BedDouble size={16} color={COLORS.cream} />
             <Text style={jetLagStyles.recoveryText}>
-              ~{jetLag.recoveryDays} day{jetLag.recoveryDays !== 1 ? 's' : ''} to adjust
+              {t('prep.daysToAdjust', { defaultValue: '~{{days}} days to adjust', days: jetLag.recoveryDays })}
             </Text>
           </View>
         </View>
@@ -1361,14 +1378,14 @@ function JetLagTab({ destination }: { destination: string }) {
       </View>
 
       {/* Pre-flight advice */}
-      <Text style={styles.healthSectionLabel}>Before Your Flight</Text>
+      <Text style={styles.healthSectionLabel}>{t('prep.beforeYourFlight', { defaultValue: 'Before Your Flight' })}</Text>
       <View style={jetLagStyles.adviceCard}>
         <Plane size={16} color={COLORS.sage} />
         <Text style={jetLagStyles.adviceText}>{jetLag.preFlightAdvice}</Text>
       </View>
 
       {/* Arrival strategy */}
-      <Text style={[styles.healthSectionLabel, { marginTop: SPACING.md }]}>On Arrival</Text>
+      <Text style={[styles.healthSectionLabel, { marginTop: SPACING.md }]}>{t('prep.onArrival', { defaultValue: 'On Arrival' })}</Text>
       <View style={jetLagStyles.adviceCard}>
         <MapPin size={16} color={COLORS.gold} />
         <Text style={jetLagStyles.adviceText}>{jetLag.arrivalStrategy}</Text>
@@ -1377,7 +1394,7 @@ function JetLagTab({ destination }: { destination: string }) {
       {/* Melatonin window */}
       {jetLag.melatoninWindow && (
         <>
-          <Text style={[styles.healthSectionLabel, { marginTop: SPACING.md }]}>Melatonin</Text>
+          <Text style={[styles.healthSectionLabel, { marginTop: SPACING.md }]}>{t('prep.melatonin', { defaultValue: 'Melatonin' })}</Text>
           <View style={jetLagStyles.adviceCard}>
             <Pill size={16} color={COLORS.coral} />
             <Text style={jetLagStyles.adviceText}>{jetLag.melatoninWindow}</Text>
@@ -1386,7 +1403,7 @@ function JetLagTab({ destination }: { destination: string }) {
       )}
 
       {/* Tips */}
-      <Text style={[styles.healthSectionLabel, { marginTop: SPACING.md }]}>Adjustment Tips</Text>
+      <Text style={[styles.healthSectionLabel, { marginTop: SPACING.md }]}>{t('prep.adjustmentTips', { defaultValue: 'Adjustment Tips' })}</Text>
       {jetLag.tips.map((tip, i) => (
         <View key={i} style={jetLagStyles.tipRow}>
           <View style={[jetLagStyles.tipDot, { backgroundColor: severityColor }]} />
@@ -1412,7 +1429,7 @@ const jetLagStyles = StyleSheet.create({
   } as ViewStyle,
   heroHours: {
     fontFamily: FONTS.header,
-    fontSize: 28,
+    fontSize: 26,
   } as TextStyle,
   heroSeverity: {
     fontFamily: FONTS.body,
@@ -1423,7 +1440,7 @@ const jetLagStyles = StyleSheet.create({
   recoveryBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: SPACING.sm,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
   } as ViewStyle,
@@ -1440,7 +1457,7 @@ const jetLagStyles = StyleSheet.create({
     borderRadius: RADIUS.md,
     borderLeftWidth: 3,
     borderLeftColor: COLORS.sage,
-    padding: 16,
+    padding: SPACING.md,
     marginBottom: SPACING.sm,
   } as ViewStyle,
   adviceText: {
@@ -1459,7 +1476,7 @@ const jetLagStyles = StyleSheet.create({
   tipDot: {
     width: 6,
     height: 6,
-    borderRadius: 3,
+    borderRadius: RADIUS.sm,
     marginTop: 6,
   } as ViewStyle,
   tipText: {
@@ -1534,6 +1551,7 @@ function CrowdsTab({
   destination: string;
   trip: Trip | null;
 }) {
+  const { t } = useTranslation();
   const { startDate, endDate } = useMemo(() => {
     const now = new Date();
     const start = now.toISOString().split('T')[0];
@@ -1546,10 +1564,10 @@ function CrowdsTab({
     <View style={styles.tabContent}>
       <View style={crowdsStyles.header}>
         <Users size={20} color={COLORS.sage} />
-        <Text style={crowdsStyles.title}>Crowd Forecast</Text>
+        <Text style={crowdsStyles.title}>{t('prep.crowdForecast', { defaultValue: 'Crowd Forecast' })}</Text>
       </View>
       <Text style={crowdsStyles.subtitle}>
-        How busy {destination} will be during your trip
+        {t('prep.howBusy', { defaultValue: 'How busy {{destination}} will be during your trip', destination })}
       </Text>
       <HolidayCrowdCalendar
         destination={destination}
@@ -1565,7 +1583,7 @@ const crowdsStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   } as ViewStyle,
   title: {
     fontFamily: FONTS.header,
@@ -1584,12 +1602,220 @@ const crowdsStyles = StyleSheet.create({
 // No-Data State
 // ---------------------------------------------------------------------------
 function NoDataState({ destination }: { destination: string }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.noDataWrap}>
-      <Text style={styles.noDataTitle}>Data not available for this destination</Text>
+      <Text style={styles.noDataTitle}>{t('prep.dataNotAvailable', { defaultValue: 'Data not available for this destination' })}</Text>
       <Text style={styles.noDataText}>
-        We're still building intel for {destination}. Emergency numbers may be available for the country — try selecting a nearby city.
+        {t('prep.stillBuildingIntel', { defaultValue: "We're still building intel for {{destination}}. Emergency numbers may be available for the country — try selecting a nearby city.", destination })}
       </Text>
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Shared styles for live-API data cards
+// ---------------------------------------------------------------------------
+const apiCardStyles = StyleSheet.create({
+  card: {
+    backgroundColor: COLORS.bgMagazine,
+    borderRadius: RADIUS.lg,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.sage,
+    padding: SPACING.md,
+  } as ViewStyle,
+  sectionLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.sage,
+    letterSpacing: 1.5,
+    marginBottom: SPACING.sm,
+  } as TextStyle,
+  row: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: SPACING.sm,
+    marginBottom: SPACING.xs,
+  } as ViewStyle,
+  rowText: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.cream,
+    flex: 1,
+    lineHeight: 18,
+  } as TextStyle,
+  dot: {
+    width: 5,
+    height: 5,
+    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.sage,
+    marginTop: 6,
+  } as ViewStyle,
+  weatherHero: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    marginBottom: SPACING.md,
+  } as ViewStyle,
+  weatherEmoji: {
+    fontSize: 36,
+    lineHeight: 44,
+  } as TextStyle,
+  weatherTemp: {
+    fontFamily: FONTS.header,
+    fontSize: 32,
+    color: COLORS.cream,
+    lineHeight: 36,
+  } as TextStyle,
+  weatherCondition: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamMuted,
+    marginTop: 2,
+  } as TextStyle,
+  weatherGrid: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  } as ViewStyle,
+  weatherStat: {
+    flex: 1,
+    alignItems: 'center',
+    gap: SPACING.xs,
+    backgroundColor: COLORS.bgElevated,
+    borderRadius: RADIUS.md,
+    paddingVertical: SPACING.sm,
+  } as ViewStyle,
+  weatherStatLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.creamMuted,
+    letterSpacing: 0.5,
+  } as TextStyle,
+  weatherStatValue: {
+    fontFamily: FONTS.mono,
+    fontSize: 13,
+    color: COLORS.cream,
+  } as TextStyle,
+});
+
+// ---------------------------------------------------------------------------
+// Entry Requirements Card (Sherpa)
+// ---------------------------------------------------------------------------
+function EntryRequirementsCard({ data }: { data: EntryRequirements }) {
+  const { t } = useTranslation();
+  return (
+    <View style={apiCardStyles.card}>
+      <Text style={apiCardStyles.sectionLabel}>
+        {t('prep.entryRequirements', { defaultValue: 'ENTRY REQUIREMENTS' })}
+      </Text>
+
+      {data.covidRestrictions ? (
+        <View style={apiCardStyles.row}>
+          <AlertTriangle size={14} color={COLORS.gold} />
+          <Text style={apiCardStyles.rowText}>{data.covidRestrictions}</Text>
+        </View>
+      ) : null}
+
+      <View style={apiCardStyles.row}>
+        <CheckCircle
+          size={14}
+          color={data.healthDeclaration ? COLORS.gold : COLORS.sage}
+        />
+        <Text style={apiCardStyles.rowText}>
+          {data.healthDeclaration
+            ? t('prep.healthDeclarationRequired', { defaultValue: 'Health declaration required' })
+            : t('prep.noHealthDeclaration', { defaultValue: 'No health declaration required' })}
+        </Text>
+      </View>
+
+      <View style={apiCardStyles.row}>
+        <CheckCircle
+          size={14}
+          color={data.insuranceRequired ? COLORS.gold : COLORS.sage}
+        />
+        <Text style={apiCardStyles.rowText}>
+          {data.insuranceRequired
+            ? t('prep.travelInsuranceRequired', { defaultValue: 'Travel insurance required' })
+            : t('prep.travelInsuranceOptional', { defaultValue: 'Travel insurance not required' })}
+        </Text>
+      </View>
+
+      {data.notes.map((note, i) => (
+        <View key={i} style={apiCardStyles.row}>
+          <View style={apiCardStyles.dot} />
+          <Text style={apiCardStyles.rowText}>{note}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Weather helper — pick emoji from condition string
+// ---------------------------------------------------------------------------
+function weatherEmoji(condition: string): string {
+  const lc = condition.toLowerCase();
+  if (lc.includes('thunder') || lc.includes('storm')) return '\u26A1';
+  if (lc.includes('snow') || lc.includes('blizzard')) return '\u2744\uFE0F';
+  if (lc.includes('rain') || lc.includes('drizzle') || lc.includes('shower')) return '\uD83C\uDF27';
+  if (lc.includes('cloud') || lc.includes('overcast')) return '\u2601\uFE0F';
+  if (lc.includes('fog') || lc.includes('mist') || lc.includes('haze')) return '\uD83C\uDF2B';
+  if (lc.includes('wind') || lc.includes('breezy')) return '\uD83D\uDCA8';
+  if (lc.includes('clear') || lc.includes('sunny') || lc.includes('sun')) return '\u2600\uFE0F';
+  if (lc.includes('partly')) return '\u26C5';
+  return '\uD83C\uDF24'; // default: partly-sunny-behind-rain
+}
+
+// ---------------------------------------------------------------------------
+// Current Weather Card (OpenWeather)
+// ---------------------------------------------------------------------------
+function CurrentWeatherCard({ data }: { data: CurrentWeather }) {
+  const { t } = useTranslation();
+  const emoji = weatherEmoji(data.condition);
+  return (
+    <View style={apiCardStyles.card}>
+      <Text style={apiCardStyles.sectionLabel}>
+        {t('prep.currentWeather', { defaultValue: 'CURRENT WEATHER' })}
+      </Text>
+
+      <View style={apiCardStyles.weatherHero}>
+        <Text style={apiCardStyles.weatherEmoji}>{emoji}</Text>
+        <View>
+          <Text style={apiCardStyles.weatherTemp}>{Math.round(data.temp)}&deg;C</Text>
+          <Text style={apiCardStyles.weatherCondition}>{data.condition}</Text>
+        </View>
+      </View>
+
+      <View style={apiCardStyles.weatherGrid}>
+        <View style={apiCardStyles.weatherStat}>
+          <Droplets size={14} color={COLORS.sage} />
+          <Text style={apiCardStyles.weatherStatLabel}>
+            {t('prep.humidity', { defaultValue: 'Humidity' })}
+          </Text>
+          <Text style={apiCardStyles.weatherStatValue}>{data.humidity}%</Text>
+        </View>
+
+        <View style={apiCardStyles.weatherStat}>
+          <Wifi size={14} color={COLORS.sage} />
+          <Text style={apiCardStyles.weatherStatLabel}>
+            {t('prep.wind', { defaultValue: 'Wind' })}
+          </Text>
+          <Text style={apiCardStyles.weatherStatValue}>{Math.round(data.windSpeed)} km/h</Text>
+        </View>
+
+        {data.uvIndex != null && (
+          <View style={apiCardStyles.weatherStat}>
+            <AlertTriangle
+              size={14}
+              color={data.uvIndex >= 8 ? COLORS.coral : data.uvIndex >= 3 ? COLORS.gold : COLORS.sage}
+            />
+            <Text style={apiCardStyles.weatherStatLabel}>
+              {t('prep.uvIndex', { defaultValue: 'UV Index' })}
+            </Text>
+            <Text style={apiCardStyles.weatherStatValue}>{data.uvIndex}</Text>
+          </View>
+        )}
+      </View>
     </View>
   );
 }
@@ -1604,6 +1830,7 @@ function IntelligenceCardsGrid({
   destination: string;
   safety: SafetyData | null;
 }) {
+  const { t } = useTranslation();
   const [weather, setWeather] = useState<DailyForecast | null>(null);
   const [exchangeRate, setExchangeRate] = useState<string | null>(null);
   const [currencyCode, setCurrencyCode] = useState<string | null>(null);
@@ -1654,15 +1881,15 @@ function IntelligenceCardsGrid({
 
   const score = safety?.safetyScore ?? null;
   const safetyColor = score == null ? COLORS.creamMuted : score > 70 ? COLORS.sage : score >= 40 ? COLORS.gold : COLORS.coral;
-  const safetyDesc = score == null ? '—' : score > 70 ? 'Safe for travelers' : score >= 40 ? 'Use caution' : 'High risk area';
+  const safetyDesc = score == null ? '—' : score > 70 ? t('prep.safeForTravelers', { defaultValue: 'Safe for travelers' }) : score >= 40 ? t('prep.useCaution', { defaultValue: 'Use caution' }) : t('prep.highRiskArea', { defaultValue: 'High risk area' });
 
   const visa = getVisaInfo(destination, 'US');
   const visaStatus = visa?.info?.status ?? null;
-  const visaLabel = visaStatus === 'visa_free' ? 'No visa required'
-    : visaStatus === 'visa_on_arrival' ? 'Visa on arrival'
-    : visaStatus === 'e_visa' ? 'e-Visa required'
-    : visaStatus === 'eta' ? 'ETA required'
-    : visaStatus === 'visa_required' ? 'Visa required'
+  const visaLabel = visaStatus === 'visa_free' ? t('prep.noVisaRequired', { defaultValue: 'No visa required' })
+    : visaStatus === 'visa_on_arrival' ? t('prep.visaOnArrivalShort', { defaultValue: 'Visa on arrival' })
+    : visaStatus === 'e_visa' ? t('prep.eVisaRequired', { defaultValue: 'e-Visa required' })
+    : visaStatus === 'eta' ? t('prep.etaRequired', { defaultValue: 'ETA required' })
+    : visaStatus === 'visa_required' ? t('prep.visaRequiredShort', { defaultValue: 'Visa required' })
     : null;
   const visaColor = visaStatus === 'visa_free' ? COLORS.sage
     : visaStatus === 'visa_on_arrival' ? COLORS.sage
@@ -1677,7 +1904,7 @@ function IntelligenceCardsGrid({
             {score ?? '—'}
           </Text>
           <Text style={intelGridStyles.cardDesc}>{safetyDesc}</Text>
-          <Text style={intelGridStyles.cardLabel}>SAFETY SCORE</Text>
+          <Text style={intelGridStyles.cardLabel}>{t('prep.safetyScoreLabel', { defaultValue: 'SAFETY SCORE' })}</Text>
         </View>
 
         {/* Currency card */}
@@ -1686,9 +1913,9 @@ function IntelligenceCardsGrid({
             {exchangeRate ?? '—'}
           </Text>
           <Text style={intelGridStyles.cardDesc}>
-            {currencyTip ?? (currencyCode ? `1 USD = ${currencyCode}` : 'Exchange rate')}
+            {currencyTip ?? (currencyCode ? `1 USD = ${currencyCode}` : t('prep.exchangeRate', { defaultValue: 'Exchange rate' }))}
           </Text>
-          <Text style={intelGridStyles.cardLabel}>CURRENCY</Text>
+          <Text style={intelGridStyles.cardLabel}>{t('prep.currencyLabel', { defaultValue: 'CURRENCY' })}</Text>
         </View>
       </View>
 
@@ -1703,14 +1930,14 @@ function IntelligenceCardsGrid({
               <Text style={intelGridStyles.cardDesc}>{weather.weatherLabel}</Text>
               {weather.precipitationChance > 0 && (
                 <Text style={[intelGridStyles.cardDesc, { color: COLORS.creamMuted }]}>
-                  {weather.precipitationChance}% rain
+                  {weather.precipitationChance}% {t('prep.rain', { defaultValue: 'rain' })}
                 </Text>
               )}
             </>
           ) : (
             <Text style={[intelGridStyles.bigNumber, { color: COLORS.creamMuted }]}>—</Text>
           )}
-          <Text style={intelGridStyles.cardLabel}>WEATHER</Text>
+          <Text style={intelGridStyles.cardLabel}>{t('prep.weatherLabel', { defaultValue: 'WEATHER' })}</Text>
         </View>
 
         {/* Visa card */}
@@ -1721,13 +1948,13 @@ function IntelligenceCardsGrid({
                 {visaLabel}
               </Text>
               {visa?.info?.stayDays != null && visa.info.stayDays < 999 && (
-                <Text style={intelGridStyles.cardDesc}>Up to {visa.info.stayDays} days</Text>
+                <Text style={intelGridStyles.cardDesc}>{t('prep.upToDays', { defaultValue: 'Up to {{days}} days', days: visa.info.stayDays })}</Text>
               )}
             </>
           ) : (
-            <Text style={[intelGridStyles.cardDesc, { color: COLORS.creamMuted }]}>Check requirements</Text>
+            <Text style={[intelGridStyles.cardDesc, { color: COLORS.creamMuted }]}>{t('prep.checkRequirements', { defaultValue: 'Check requirements' })}</Text>
           )}
-          <Text style={intelGridStyles.cardLabel}>VISA</Text>
+          <Text style={intelGridStyles.cardLabel}>{t('prep.visaLabel', { defaultValue: 'VISA' })}</Text>
         </View>
       </View>
     </View>
@@ -1737,21 +1964,21 @@ function IntelligenceCardsGrid({
 const intelGridStyles = StyleSheet.create({
   container: {
     paddingHorizontal: 20,
-    gap: 12,
+    gap: SPACING.md,
     marginBottom: 40,
   } as ViewStyle,
   row: {
     flexDirection: 'row',
-    gap: 12,
+    gap: SPACING.md,
   } as ViewStyle,
   card: {
     flex: 1,
     backgroundColor: COLORS.bgMagazine,
-    borderRadius: 12,
+    borderRadius: RADIUS.lg,
     borderLeftWidth: 3,
     borderLeftColor: COLORS.sage,
-    padding: 16,
-    gap: 4,
+    padding: SPACING.md,
+    gap: SPACING.xs,
     minHeight: 100,
     justifyContent: 'flex-end',
   } as ViewStyle,
@@ -1770,7 +1997,6 @@ const intelGridStyles = StyleSheet.create({
     fontFamily: FONTS.header,
     fontSize: 16,
     lineHeight: 20,
-    fontStyle: 'italic',
   } as TextStyle,
   cardDesc: {
     fontFamily: FONTS.body,
@@ -1783,7 +2009,7 @@ const intelGridStyles = StyleSheet.create({
     fontSize: 10,
     color: COLORS.sage,
     letterSpacing: 1.5,
-    marginTop: 4,
+    marginTop: SPACING.xs,
   } as TextStyle,
 });
 
@@ -1845,6 +2071,37 @@ function PrepScreen() {
     }
   }, [trips, activeTrip, selectedDest]);
 
+  // Sonar live intelligence
+  const sonarPrep = useSonarQuery(selectedDest, 'prep');
+  const sonarSafety = useSonarQuery(selectedDest, 'safety');
+
+  // Live API data — Entry Requirements (Sherpa) + Weather (weather-intel edge, OPENWEATHERMAP_KEY)
+  const [entryRequirements, setEntryRequirements] = useState<EntryRequirements | null>(null);
+  const [currentWeather, setCurrentWeather] = useState<CurrentWeather | null>(null);
+  const [weatherIntel, setWeatherIntel] = useState<WeatherIntel | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setEntryRequirements(null);
+    setCurrentWeather(null);
+    setWeatherIntel(null);
+
+    Promise.all([
+      getEntryRequirements(selectedDest),
+      getCurrentWeather(selectedDest),
+      getWeatherIntel(selectedDest),
+    ]).then(([entry, weather, intel]) => {
+      if (cancelled) return;
+      if (entry) setEntryRequirements(entry);
+      if (weather) setCurrentWeather(weather);
+      if (intel) setWeatherIntel(intel);
+    }).catch(() => {
+      // graceful no-op — sections simply won't render
+    });
+
+    return () => { cancelled = true; };
+  }, [selectedDest]);
+
   const hasNoData = !emergency && !safety;
   const countryName = emergency?.country ?? safety?.country ?? selectedDest;
 
@@ -1886,8 +2143,75 @@ function PrepScreen() {
               countryName={countryName}
             />
 
+            {/* ── Entry Requirements (Sherpa) ── */}
+            {entryRequirements && (
+              <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}>
+                <EntryRequirementsCard data={entryRequirements} />
+              </View>
+            )}
+
+            {/* ── Current Weather + 7-day intel (weather-intel edge, OPENWEATHERMAP_KEY) ── */}
+            {currentWeather && (
+              <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}>
+                <CurrentWeatherCard data={currentWeather} />
+              </View>
+            )}
+            {weatherIntel && (weatherIntel.summary || (weatherIntel.packingAdvice?.length > 0)) && (
+              <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}>
+                <View style={apiCardStyles.card}>
+                  <Text style={intelGridStyles.cardLabel}>
+                    {t('prep.weatherForecast', { defaultValue: '7-DAY WEATHER' })}
+                  </Text>
+                  {weatherIntel.summary ? (
+                    <Text style={intelGridStyles.cardDesc}>{weatherIntel.summary}</Text>
+                  ) : null}
+                  {weatherIntel.packingAdvice?.length > 0 ? (
+                    <View style={{ marginTop: SPACING.sm }}>
+                      {weatherIntel.packingAdvice.map((line, i) => (
+                        <Text key={i} style={[intelGridStyles.cardDesc, { marginTop: 4 }]}>{line}</Text>
+                      ))}
+                    </View>
+                  ) : null}
+                </View>
+              </View>
+            )}
+
+            {/* ── Sonar Live Intel ── */}
+            {(sonarPrep.data || sonarSafety.data) && (
+              <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}>
+                {sonarPrep.data && (
+                  <View style={styles.sonarCard}>
+                    <View style={styles.sonarCardHeader}>
+                      <Text style={styles.sonarCardTitle}>{t('prep.currentConditions', { defaultValue: 'Current Conditions' })}</Text>
+                      {sonarPrep.isLive && <LiveBadge />}
+                    </View>
+                    <Text style={styles.sonarCardBody}>{sonarPrep.data.answer}</Text>
+                    {sonarPrep.citations.length > 0 && (
+                      <View style={{ marginTop: SPACING.sm }}>
+                        <SourceCitation citations={sonarPrep.citations} />
+                      </View>
+                    )}
+                  </View>
+                )}
+                {sonarSafety.data && (
+                  <View style={[styles.sonarCard, { marginTop: SPACING.md }]}>
+                    <View style={styles.sonarCardHeader}>
+                      <Text style={styles.sonarCardTitle}>{t('prep.safetyUpdate', { defaultValue: 'Safety Update' })}</Text>
+                      {sonarSafety.isLive && <LiveBadge />}
+                    </View>
+                    <Text style={styles.sonarCardBody}>{sonarSafety.data.answer}</Text>
+                    {sonarSafety.citations.length > 0 && (
+                      <View style={{ marginTop: SPACING.sm }}>
+                        <SourceCitation citations={sonarSafety.citations} />
+                      </View>
+                    )}
+                  </View>
+                )}
+              </View>
+            )}
+
             {/* I Am Here Now — ALWAYS first, works offline */}
-            <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
+            <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}>
               <IAmHereNow
                 destination={selectedDest}
                 hotelName={parsedItinerary?.days?.[0]?.accommodation?.name ?? undefined}
@@ -1932,7 +2256,7 @@ function PrepScreen() {
                       styles.pill,
                       isActive && styles.pillActive,
                     ]}
-                    accessibilityLabel={`${'labelKey' in s ? t(s.labelKey) : s.label} section${isActive ? ', selected' : ''}`}
+                    accessibilityLabel={`${t(s.labelKey)} section${isActive ? ', selected' : ''}`}
                     accessibilityRole="tab"
                     accessibilityState={{ selected: isActive }}
                   >
@@ -1942,7 +2266,7 @@ function PrepScreen() {
                         isActive && styles.pillTextActive,
                       ]}
                     >
-                      {'labelKey' in s ? t(s.labelKey) : s.label}
+                      {t(s.labelKey)}
                     </Text>
                   </Pressable>
                 );
@@ -1993,7 +2317,7 @@ function PrepScreen() {
                   </>
                 ) : (
                   <Text style={styles.noDataText}>
-                    Emergency numbers not available for {selectedDest}. Select another destination.
+                    {t('prep.emergencyNotAvailable', { defaultValue: 'Emergency numbers not available for {{destination}}. Select another destination.', destination: selectedDest })}
                   </Text>
                 )}
 
@@ -2013,9 +2337,9 @@ function PrepScreen() {
                 >
                   <Heart size={20} color={COLORS.coral} />
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.bodyIntelCtaTitle, { color: COLORS.coral }]}>Emergency Medical Card</Text>
+                    <Text style={[styles.bodyIntelCtaTitle, { color: COLORS.coral }]}>{t('prep.emergencyMedicalCard', { defaultValue: 'Emergency Medical Card' })}</Text>
                     <Text style={styles.bodyIntelCtaSubtitle}>
-                      One-tap card with your allergies, meds & blood type in local language
+                      {t('prep.emergencyMedicalCardDesc', { defaultValue: 'One-tap card with your allergies, meds & blood type in local language' })}
                     </Text>
                   </View>
                   <ChevronRight size={18} color={COLORS.creamMuted} />
@@ -2044,7 +2368,7 @@ function PrepScreen() {
               ) : (
                 <View style={styles.tabContent}>
                   <Text style={styles.noDataText}>
-                    Language pack not available for {selectedDest}. English may be widely spoken.
+                    {t('prep.languageNotAvailable', { defaultValue: 'Language pack not available for {{destination}}. English may be widely spoken.', destination: selectedDest })}
                   </Text>
                 </View>
               )
@@ -2068,6 +2392,32 @@ function PrepScreen() {
           </>
         )}
 
+        {/* Health Intel — quick action */}
+        {!hasNoData && (
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push('/body-intel' as never);
+            }}
+            style={({ pressed }) => [
+              styles.bodyIntelCta,
+              { borderLeftColor: COLORS.sage, marginTop: SPACING.lg },
+              pressed && { opacity: 0.7 },
+            ]}
+            accessibilityLabel="Open Health Intel — destination health and body intel"
+            accessibilityRole="button"
+          >
+            <Stethoscope size={20} color={COLORS.sage} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.bodyIntelCtaTitle, { color: COLORS.sage }]}>{t('prep.healthIntel', { defaultValue: 'Health Intel' })}</Text>
+              <Text style={styles.bodyIntelCtaSubtitle}>
+                {t('prep.healthIntelDesc', { defaultValue: 'Destination health & body intel' })}
+              </Text>
+            </View>
+            <ChevronRight size={18} color={COLORS.creamMuted} />
+          </Pressable>
+        )}
+
         {/* Before You Land — quick action */}
         {!hasNoData && (
           <Pressable
@@ -2085,9 +2435,9 @@ function PrepScreen() {
           >
             <Plane size={20} color={COLORS.gold} />
             <View style={{ flex: 1 }}>
-              <Text style={[styles.bodyIntelCtaTitle, { color: COLORS.gold }]}>Before You Land</Text>
+              <Text style={[styles.bodyIntelCtaTitle, { color: COLORS.gold }]}>{t('prep.beforeYouLand', { defaultValue: 'Before You Land' })}</Text>
               <Text style={styles.bodyIntelCtaSubtitle}>
-                Pre-departure brief: weather, currency, time zone & essentials
+                {t('prep.beforeYouLandDesc', { defaultValue: 'Pre-departure brief: weather, currency, time zone & essentials' })}
               </Text>
             </View>
             <ChevronRight size={18} color={COLORS.creamMuted} />
@@ -2110,10 +2460,10 @@ function PrepScreen() {
                 };
                 await AsyncStorage.setItem(cacheKey, JSON.stringify(payload));
                 // eslint-disable-next-line no-alert
-                alert(`${selectedDest} prep data saved for offline use.`);
+                alert(t('prep.offlineSaved', { defaultValue: '{{destination}} prep data saved for offline use.', destination: selectedDest }));
               } catch {
                 // eslint-disable-next-line no-alert
-                alert('Could not save offline data. Try again.');
+                alert(t('prep.offlineSaveError', { defaultValue: 'Could not save offline data. Try again.' }));
               }
             }}
             style={({ pressed }) => [
@@ -2126,9 +2476,9 @@ function PrepScreen() {
           >
             <Download size={20} color={COLORS.sage} />
             <View style={{ flex: 1 }}>
-              <Text style={[styles.bodyIntelCtaTitle, { color: COLORS.sage }]}>Download for Offline</Text>
+              <Text style={[styles.bodyIntelCtaTitle, { color: COLORS.sage }]}>{t('prep.downloadForOffline', { defaultValue: 'Download for Offline' })}</Text>
               <Text style={styles.bodyIntelCtaSubtitle}>
-                Save {selectedDest} intel to your device — no WiFi needed later
+                {t('prep.downloadForOfflineDesc', { defaultValue: 'Save {{destination}} intel to your device — no WiFi needed later', destination: selectedDest })}
               </Text>
             </View>
             <ChevronRight size={18} color={COLORS.creamMuted} />
@@ -2137,7 +2487,7 @@ function PrepScreen() {
 
         {!hasNoData && (
           <View style={styles.destPickerWrap}>
-            <Text style={styles.destPickerLabel}>DESTINATION</Text>
+            <Text style={styles.destPickerLabel}>{t('prep.destination', { defaultValue: 'DESTINATION' })}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -2197,9 +2547,9 @@ const styles = StyleSheet.create({
   offlineBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: SPACING.sm,
     backgroundColor: COLORS.coral,
-    padding: 8,
+    padding: SPACING.sm,
     marginBottom: SPACING.md,
     borderRadius: RADIUS.sm,
   } as ViewStyle,
@@ -2214,7 +2564,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.xl,
     borderLeftWidth: 3,
     borderLeftColor: COLORS.sage,
-    padding: 20,
+    padding: SPACING.lg,
     alignItems: 'flex-start',
     marginBottom: SPACING.lg,
   } as ViewStyle,
@@ -2235,14 +2585,13 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   heroScoreNum: {
     fontFamily: FONTS.mono,
-    fontSize: 32,
+    fontSize: 28,
   } as TextStyle,
   heroCountry: {
     fontFamily: FONTS.header,
     fontSize: 22,
     color: COLORS.cream,
-    marginBottom: 4,
-    fontStyle: 'italic',
+    marginBottom: SPACING.xs,
   } as TextStyle,
   heroLabel: {
     fontFamily: FONTS.body,
@@ -2294,7 +2643,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: SPACING.md,
+    marginBottom: 18,
   } as ViewStyle,
   overviewLabel: {
     fontFamily: FONTS.body,
@@ -2303,7 +2652,7 @@ const styles = StyleSheet.create({
   } as TextStyle,
   advisoryBadge: {
     paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
+    paddingVertical: SPACING.xs,
   } as ViewStyle,
   advisoryBadgeText: {
     fontFamily: FONTS.bodyMedium,
@@ -2328,7 +2677,7 @@ const styles = StyleSheet.create({
     flex: 1,
   } as TextStyle,
   metricsWrap: {
-    gap: SPACING.md,
+    gap: 14,
   } as ViewStyle,
   metricRow: {
     flexDirection: 'row',
@@ -2344,13 +2693,13 @@ const styles = StyleSheet.create({
   metricBarWrap: {
     flex: 1,
     height: 4,
-    borderRadius: 2,
+    borderRadius: RADIUS.sm,
     backgroundColor: COLORS.bgMagazine,
     overflow: 'hidden',
   } as ViewStyle,
   metricBarFill: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: RADIUS.sm,
   } as ViewStyle,
   metricPct: {
     fontFamily: FONTS.mono,
@@ -2373,7 +2722,7 @@ const styles = StyleSheet.create({
   sosButton: {
     width: 160,
     height: 160,
-    borderRadius: 80,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.coral,
     alignItems: 'center',
     justifyContent: 'center',
@@ -2420,13 +2769,13 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     borderLeftWidth: 3,
     borderLeftColor: COLORS.sage,
-    padding: 16,
+    padding: SPACING.md,
   } as ViewStyle,
   embassyLabel: {
     fontFamily: FONTS.mono,
     fontSize: 11,
     color: COLORS.sage,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   } as TextStyle,
   embassyName: {
     fontFamily: FONTS.header,
@@ -2437,7 +2786,7 @@ const styles = StyleSheet.create({
   embassyAddressRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: SPACING.sm,
     marginBottom: SPACING.xs,
   } as ViewStyle,
   embassyAddress: {
@@ -2465,9 +2814,9 @@ const styles = StyleSheet.create({
   healthQuickCard: {
     borderRadius: RADIUS.lg,
     borderLeftWidth: 3,
-    padding: 20,
+    padding: SPACING.lg,
     alignItems: 'center',
-    gap: 8,
+    gap: SPACING.sm,
   } as ViewStyle,
   healthQuickValue: {
     fontFamily: FONTS.header,
@@ -2489,9 +2838,9 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: RADIUS.lg,
     borderLeftWidth: 3,
-    padding: 16,
+    padding: SPACING.md,
     alignItems: 'center',
-    gap: 8,
+    gap: SPACING.sm,
   } as ViewStyle,
   healthQuickSmallLabel: {
     fontFamily: FONTS.mono,
@@ -2531,7 +2880,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: SPACING.sm,
     marginBottom: SPACING.sm,
-    paddingVertical: 4,
+    paddingVertical: SPACING.xs,
   } as ViewStyle,
   healthDetailContent: {
     flex: 1,
@@ -2552,7 +2901,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    paddingVertical: 4,
+    paddingVertical: SPACING.xs,
   } as ViewStyle,
   healthGoodNewsText: {
     fontFamily: FONTS.body,
@@ -2610,7 +2959,7 @@ const styles = StyleSheet.create({
   healthRiskDot: {
     width: 6,
     height: 6,
-    borderRadius: 3,
+    borderRadius: RADIUS.sm,
     backgroundColor: COLORS.coral,
   } as ViewStyle,
   healthRiskText: {
@@ -2630,7 +2979,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     borderLeftWidth: 3,
     borderLeftColor: COLORS.sage,
-    padding: 12,
+    padding: SPACING.md,
     marginBottom: SPACING.xs,
   } as ViewStyle,
   whereToGoCondition: {
@@ -2650,7 +2999,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.header,
     fontSize: 22,
     color: COLORS.cream,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   } as TextStyle,
   languageSubtitle: {
     fontFamily: FONTS.body,
@@ -2665,7 +3014,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     borderLeftWidth: 3,
     borderLeftColor: COLORS.sage,
-    padding: 16,
+    padding: SPACING.md,
     marginBottom: SPACING.sm,
   } as ViewStyle,
   phraseCardBody: {
@@ -2675,19 +3024,18 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 14,
     color: COLORS.creamMuted,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   } as TextStyle,
   phraseCardLocal: {
     fontFamily: FONTS.mono,
     fontSize: 16,
     color: COLORS.cream,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   } as TextStyle,
   phraseCardPhonetic: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    fontStyle: 'italic',
     color: COLORS.sage,
   } as TextStyle,
   phrasePlayBtn: {
@@ -2708,7 +3056,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.bgMagazine,
     borderRadius: RADIUS.lg,
     borderLeftWidth: 3,
-    padding: 20,
+    padding: SPACING.lg,
     marginBottom: SPACING.md,
   } as ViewStyle,
   visaHeroText: {
@@ -2722,13 +3070,13 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.mono,
     fontSize: 14,
     color: COLORS.cream,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   } as TextStyle,
   visaMeta: {
     fontFamily: FONTS.mono,
     fontSize: 13,
     color: COLORS.creamMuted,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   } as TextStyle,
   applyOnlineBtn: {
     flexDirection: 'row',
@@ -2798,7 +3146,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
-    marginRight: 4,
+    marginRight: SPACING.xs,
   } as ViewStyle,
   destChipActive: {
     borderBottomColor: COLORS.sage,
@@ -2829,7 +3177,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     borderLeftWidth: 3,
     borderLeftColor: COLORS.sage,
-    padding: 20,
+    padding: SPACING.lg,
     marginBottom: SPACING.md,
   } as ViewStyle,
   scheduleDayLabel: {
@@ -2837,7 +3185,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.sage,
     letterSpacing: 1,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   } as TextStyle,
   scheduleDayTheme: {
     fontFamily: FONTS.header,
@@ -2848,7 +3196,7 @@ const styles = StyleSheet.create({
   scheduleSlotRow: {
     flexDirection: 'row',
     marginBottom: SPACING.sm,
-    gap: SPACING.md,
+    gap: 14,
   } as ViewStyle,
   scheduleSlotTime: {
     fontFamily: FONTS.mono,
@@ -2904,7 +3252,7 @@ const styles = StyleSheet.create({
   currencyTipDot: {
     width: 5,
     height: 5,
-    borderRadius: 3,
+    borderRadius: RADIUS.sm,
     backgroundColor: COLORS.sage,
     marginTop: 6,
   } as ViewStyle,
@@ -2922,7 +3270,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     borderLeftWidth: 3,
     borderLeftColor: COLORS.sage,
-    padding: 16,
+    padding: SPACING.md,
     marginBottom: SPACING.sm,
   } as ViewStyle,
   infoCardRow: {
@@ -2955,7 +3303,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 12,
     color: COLORS.creamMuted,
-    marginTop: 4,
+    marginTop: SPACING.xs,
   } as TextStyle,
   connTip: {
     fontFamily: FONTS.body,
@@ -2972,7 +3320,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     borderLeftWidth: 3,
     borderLeftColor: COLORS.sage,
-    padding: 12,
+    padding: SPACING.md,
     marginBottom: SPACING.xs,
   } as ViewStyle,
   esimName: {
@@ -2989,16 +3337,17 @@ const styles = StyleSheet.create({
   // Culture Tab
   cultureTitle: {
     fontFamily: FONTS.header,
-    fontSize: 24,
+    fontSize: 26,
+    letterSpacing: -0.5,
     color: COLORS.cream,
-    marginBottom: SPACING.md,
+    marginBottom: 14,
   } as TextStyle,
   etiquetteCard: {
     backgroundColor: COLORS.bgMagazine,
     borderRadius: RADIUS.lg,
     borderLeftWidth: 3,
     borderLeftColor: COLORS.sage,
-    padding: 16,
+    padding: SPACING.md,
     marginBottom: SPACING.sm,
     gap: SPACING.sm,
   } as ViewStyle,
@@ -3039,7 +3388,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: SPACING.sm,
     marginTop: SPACING.lg,
-    padding: 16,
+    padding: SPACING.md,
     backgroundColor: COLORS.bgMagazine,
     borderRadius: RADIUS.lg,
     borderLeftWidth: 3,
@@ -3055,6 +3404,32 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.creamMuted,
     marginTop: 2,
+  } as TextStyle,
+
+  // Sonar live intel
+  sonarCard: {
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.md,
+  } as ViewStyle,
+  sonarCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.sm,
+  } as ViewStyle,
+  sonarCardTitle: {
+    fontFamily: FONTS.headerMedium,
+    fontSize: 16,
+    color: COLORS.cream,
+  } as TextStyle,
+  sonarCardBody: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.cream,
+    lineHeight: 21,
   } as TextStyle,
 });
 

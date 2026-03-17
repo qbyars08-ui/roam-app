@@ -4,6 +4,7 @@
 // =============================================================================
 import React, { useCallback, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Languages, Volume2 } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { getPhrasesForDestination, type Phrase } from '../../lib/language-survival';
@@ -26,6 +27,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export default function LanguageSurvivalSection({ destination }: LanguageSurvivalSectionProps) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [speakingIdx, setSpeakingIdx] = useState<number | null>(null);
   const phrases = getPhrasesForDestination(destination);
@@ -52,9 +54,9 @@ export default function LanguageSurvivalSection({ destination }: LanguageSurviva
         onPress={() => setExpanded((e) => !e)}
         style={({ pressed }) => [styles.header, { opacity: pressed ? 0.9 : 1 }]}
       >
-        <Languages size={20} color={COLORS.gold} strokeWidth={2} />
+        <Languages size={20} color={COLORS.gold} strokeWidth={1.5} />
         <Text style={styles.headerText}>
-          Essential phrases for {destination}
+          {t('language.essentialPhrasesFor', { defaultValue: 'Essential phrases for' })} {destination}
         </Text>
         <Text style={styles.toggle}>{expanded ? '−' : '+'}</Text>
       </Pressable>
@@ -63,7 +65,7 @@ export default function LanguageSurvivalSection({ destination }: LanguageSurviva
           <Pressable
             key={i}
             onPress={() => speak(p, i)}
-            accessibilityLabel={`Hear ${p.english} in ${destination} language`}
+            accessibilityLabel={`${t('language.hear', { defaultValue: 'Hear' })} ${p.english} ${t('language.inLanguage', { defaultValue: 'in' })} ${destination} ${t('language.language', { defaultValue: 'language' })}`}
             style={({ pressed }) => [styles.row, { opacity: pressed ? 0.9 : 1, minHeight: 44 }]}
           >
             <View style={styles.phraseRow}>
@@ -75,14 +77,14 @@ export default function LanguageSurvivalSection({ destination }: LanguageSurviva
               <Volume2
                 size={16}
                 color={speakingIdx === i ? COLORS.gold : COLORS.creamMuted}
-                strokeWidth={2}
+                strokeWidth={1.5}
               />
             </View>
           </Pressable>
         ))}
       </View>
       {!expanded && rest.length > 0 && (
-        <Text style={styles.more}>Tap to see {rest.length} more phrases</Text>
+        <Text style={styles.more}>{t('language.tapToSee', { defaultValue: 'Tap to see' })} {rest.length} {t('language.morePhrases', { defaultValue: 'more phrases' })}</Text>
       )}
     </View>
   );

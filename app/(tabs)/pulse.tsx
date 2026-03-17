@@ -1,10 +1,12 @@
 // =============================================================================
-// ROAM — Pulse Tab (Magazine Editorial Layout)
+// ROAM — Pulse Tab (Clean Spatial Layout)
 // Time-aware recommendations, hyper-local tips, and seasonal intelligence.
 // Full visual reset — editorial, photo-driven, no filled card backgrounds.
 // =============================================================================
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -18,6 +20,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Radio, Clock } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
@@ -28,6 +31,10 @@ import LiveFeedTicker from '../../components/features/LiveFeedTicker';
 import SocialProofBanner from '../../components/features/SocialProofBanner';
 import GoNowFeed from '../../components/features/GoNowFeed';
 import WanderlustFeed from '../../components/features/WanderlustFeed';
+import { useSonarQuery } from '../../lib/sonar';
+import LiveBadge from '../../components/ui/LiveBadge';
+import SourceCitation from '../../components/ui/SourceCitation';
+import { searchEvents, type EventResult } from '../../lib/apis/eventbrite';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -55,6 +62,21 @@ interface SeasonalEvent {
   heroPhoto: string;
   dateRange: string;
 }
+
+// ---------------------------------------------------------------------------
+// Index-based height variation (avoids uniform AI-generated look)
+// ---------------------------------------------------------------------------
+
+const DEST_CARD_HEIGHTS = [140, 155, 130, 160, 145, 135, 150];
+const EDITORIAL_CARD_HEIGHTS = [200, 220, 185, 210, 195, 180, 215];
+const SEASONAL_SMALL_HEIGHTS = [120, 135, 115, 140, 125, 110, 130];
+
+const getDestCardHeight = (index: number) =>
+  DEST_CARD_HEIGHTS[index % DEST_CARD_HEIGHTS.length];
+const getEditorialCardHeight = (index: number) =>
+  EDITORIAL_CARD_HEIGHTS[index % EDITORIAL_CARD_HEIGHTS.length];
+const getSeasonalSmallHeight = (index: number) =>
+  SEASONAL_SMALL_HEIGHTS[index % SEASONAL_SMALL_HEIGHTS.length];
 
 // ---------------------------------------------------------------------------
 // Destination photo cards config
@@ -616,49 +638,100 @@ function getLocalTimeString(destKey: string): string {
 // Sub-components
 // ---------------------------------------------------------------------------
 
+// Animated pulsing live indicator dot
+function PulseDot() {
+  const pulse = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 0.4, duration: 1200, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1, duration: 1200, useNativeDriver: true }),
+      ]),
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [pulse]);
+
+  return (
+    <View style={{ width: SPACING.lg, height: SPACING.lg, alignItems: 'center', justifyContent: 'center' }}>
+      <Animated.View style={{ opacity: pulse }}>
+        <Radio size={20} color={COLORS.coral} strokeWidth={1.5} />
+      </Animated.View>
+    </View>
+  );
+}
+
 function DestinationCard({
   dest,
   active,
   onPress,
+  index,
 }: {
   dest: typeof PULSE_DESTINATIONS[0];
   active: boolean;
   onPress: () => void;
+  index: number;
 }) {
+  const { t } = useTranslation();
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = useCallback(() => {
+    Animated.spring(scale, {
+      toValue: 0.95,
+      useNativeDriver: true,
+      tension: 300,
+      friction: 10,
+    }).start();
+  }, [scale]);
+
+  const handlePressOut = useCallback(() => {
+    Animated.spring(scale, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 200,
+      friction: 12,
+    }).start();
+  }, [scale]);
+
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityLabel={`Select ${dest.label}`}
-      accessibilityRole="button"
-      style={[styles.destCard, active && styles.destCardActive]}
-    >
-      <Image
-        source={{ uri: dest.photo }}
-        style={styles.destCardImage as ImageStyle}
-        contentFit="cover"
-        transition={200}
-        accessibilityLabel={`${dest.label} destination photo`}
-      />
-      <LinearGradient
-        colors={['transparent', COLORS.overlay]}
-        style={styles.destCardGradient}
-      />
-      <Text style={[styles.destCardLabel, active && styles.destCardLabelActive]}>
-        {dest.label}
-      </Text>
-    </Pressable>
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        accessibilityLabel={t('pulse.selectDestination', { defaultValue: `Select ${dest.label}`, destination: dest.label })}
+        accessibilityRole="button"
+        style={[styles.destCard, { height: getDestCardHeight(index) }, active && styles.destCardActive]}
+      >
+        <Image
+          source={{ uri: dest.photo }}
+          style={styles.destCardImage as ImageStyle}
+          contentFit="cover"
+          transition={200}
+          accessibilityLabel={t('pulse.destinationPhoto', { defaultValue: `${dest.label} destination photo`, destination: dest.label })}
+        />
+        <LinearGradient
+          colors={['transparent', COLORS.overlay]}
+          style={styles.destCardGradient}
+        />
+        <Text style={[styles.destCardLabel, active && styles.destCardLabelActive]}>
+          {dest.label}
+        </Text>
+      </Pressable>
+    </Animated.View>
   );
 }
 
-function EditorialCard({ rec }: { rec: TimeRec }) {
+function EditorialCard({ rec, index }: { rec: TimeRec; index: number }) {
+  const { t } = useTranslation();
   return (
-    <View style={styles.editorialCard}>
+    <View style={[styles.editorialCard, { height: getEditorialCardHeight(index) }]}>
       <Image
         source={{ uri: rec.photo }}
         style={styles.editorialCardPhoto as ImageStyle}
         contentFit="cover"
         transition={300}
-        accessibilityLabel={`${rec.label} — ${rec.timeSlot}`}
+        accessibilityLabel={t('pulse.editorialCardLabel', { defaultValue: `${rec.label} — ${rec.timeSlot}`, label: rec.label, timeSlot: rec.timeSlot })}
       />
       <LinearGradient
         colors={['transparent', COLORS.overlayDark]}
@@ -678,15 +751,17 @@ function EditorialCard({ rec }: { rec: TimeRec }) {
 }
 
 function LocalTipRow({ tip }: { tip: LocalTip }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.tipRow}>
       <Text style={styles.tipText}>{tip.text}</Text>
-      <Text style={styles.tipSource}>— Local tip · {tip.upvotes} agree</Text>
+      <Text style={styles.tipSource}>{t('pulse.tipSource', { defaultValue: '— Local tip · {{count}} agree', count: tip.upvotes })}</Text>
     </View>
   );
 }
 
 function SeasonalHeroCard({ event }: { event: SeasonalEvent }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.seasonalHeroCard}>
       <Image
@@ -694,7 +769,7 @@ function SeasonalHeroCard({ event }: { event: SeasonalEvent }) {
         style={styles.seasonalHeroPhoto as ImageStyle}
         contentFit="cover"
         transition={300}
-        accessibilityLabel={`${event.event} in ${event.destination}`}
+        accessibilityLabel={t('pulse.seasonalEventLabel', { defaultValue: `${event.event} in ${event.destination}`, event: event.event, destination: event.destination })}
       />
       <LinearGradient
         colors={['transparent', COLORS.overlayDark]}
@@ -706,27 +781,28 @@ function SeasonalHeroCard({ event }: { event: SeasonalEvent }) {
           <Text style={styles.seasonalHeroDate}>{event.dateRange}</Text>
         </View>
         <Pressable
-          onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
-          accessibilityLabel={`Learn more about ${event.event}`}
+          onPress={() => Haptics.selectionAsync()}
+          accessibilityLabel={t('pulse.learnMoreAbout', { defaultValue: `Learn more about ${event.event}`, event: event.event })}
           accessibilityRole="button"
           style={styles.learnMoreButton}
         >
-          <Text style={styles.seasonalLearnMore}>Read the brief →</Text>
+          <Text style={styles.seasonalLearnMore}>{t('pulse.readBrief', { defaultValue: 'Read the brief →' })}</Text>
         </Pressable>
       </View>
     </View>
   );
 }
 
-function SeasonalSmallCard({ item }: { item: typeof SEASONAL_SMALL_EVENTS[0] }) {
+function SeasonalSmallCard({ item, index }: { item: typeof SEASONAL_SMALL_EVENTS[0]; index: number }) {
+  const { t } = useTranslation();
   return (
-    <View style={styles.seasonalSmallCard}>
+    <View style={[styles.seasonalSmallCard, { height: getSeasonalSmallHeight(index) }]}>
       <Image
         source={{ uri: item.photo }}
         style={styles.seasonalSmallPhoto as ImageStyle}
         contentFit="cover"
         transition={200}
-        accessibilityLabel={`${item.name} — ${item.dest}`}
+        accessibilityLabel={t('pulse.seasonalSmallLabel', { defaultValue: `${item.name} — ${item.dest}`, name: item.name, dest: item.dest })}
       />
       <LinearGradient
         colors={['transparent', COLORS.overlayDim]}
@@ -740,11 +816,54 @@ function SeasonalSmallCard({ item }: { item: typeof SEASONAL_SMALL_EVENTS[0] }) 
   );
 }
 
+function LiveEventCard({ event }: { event: EventResult }) {
+  const { t } = useTranslation();
+
+  const handlePress = useCallback(() => {
+    Haptics.selectionAsync();
+    if (event.url) {
+      Linking.openURL(event.url).catch(() => {/* best-effort */});
+    }
+  }, [event.url]);
+
+  const priceLabel = event.isFree
+    ? t('pulse.liveEvents.free', { defaultValue: 'Free' })
+    : event.price
+    ? event.price
+    : t('pulse.liveEvents.free', { defaultValue: 'Free' });
+
+  return (
+    <Pressable
+      onPress={handlePress}
+      accessibilityRole="button"
+      accessibilityLabel={t('pulse.liveEvents.cardLabel', { defaultValue: `View event: ${event.name}`, name: event.name })}
+      style={styles.liveEventCard}
+    >
+      <View style={styles.liveEventCardInner}>
+        <View style={styles.liveEventLeft}>
+          <Text style={styles.liveEventName} numberOfLines={2}>{event.name}</Text>
+          <Text style={styles.liveEventVenue} numberOfLines={1}>{event.venue}</Text>
+          <Text style={styles.liveEventDate} numberOfLines={1}>{event.date}</Text>
+        </View>
+        <View style={styles.liveEventRight}>
+          <View style={styles.liveEventPriceChip}>
+            <Text style={styles.liveEventPrice}>{priceLabel}</Text>
+          </View>
+          {event.category ? (
+            <Text style={styles.liveEventCategory} numberOfLines={1}>{event.category}</Text>
+          ) : null}
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Main Screen
 // ---------------------------------------------------------------------------
 
 export default function PulseScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const trips = useAppStore((s) => s.trips);
 
@@ -780,6 +899,10 @@ export default function PulseScreen() {
     [selectedKey],
   );
 
+  // Sonar live intelligence
+  const sonarPulse = useSonarQuery(selectedDest.label, 'pulse');
+  const sonarLocal = useSonarQuery(selectedDest.label, 'local');
+
   const localTimeString = useMemo(
     () => getLocalTimeString(selectedKey),
     [selectedKey],
@@ -791,17 +914,29 @@ export default function PulseScreen() {
     [selectedKey],
   );
 
+  // Live Eventbrite events
+  const [liveEvents, setLiveEvents] = useState<EventResult[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLiveEvents(null);
+    searchEvents(selectedDest.label).then((results) => {
+      if (!cancelled) setLiveEvents(results);
+    });
+    return () => { cancelled = true; };
+  }, [selectedDest.label]);
+
   const handleSelectDest = useCallback((key: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Haptics.selectionAsync();
     setSelectedKey(key);
   }, []);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header */}
+      {/* Header with pulsing live dot */}
       <View style={styles.header}>
-        <Radio size={20} color={COLORS.coral} strokeWidth={2} />
-        <Text style={styles.headerTitle}>Pulse</Text>
+        <PulseDot />
+        <Text style={styles.headerLabel}>{t('pulse.live', { defaultValue: 'LIVE' })}</Text>
       </View>
 
       <ScrollView
@@ -815,18 +950,19 @@ export default function PulseScreen() {
           contentContainerStyle={styles.destCardRow}
           style={styles.destCardScroll}
         >
-          {PULSE_DESTINATIONS.map((dest) => (
+          {PULSE_DESTINATIONS.map((dest, index) => (
             <DestinationCard
               key={dest.key}
               dest={dest}
               active={dest.key === selectedKey}
               onPress={() => handleSelectDest(dest.key)}
+              index={index}
             />
           ))}
         </ScrollView>
 
         {/* ── Live Feed Ticker ── */}
-        <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}>
+        <View style={{ paddingHorizontal: SPACING.lg, marginBottom: SPACING.lg }}>
           <LiveFeedTicker />
         </View>
 
@@ -837,32 +973,74 @@ export default function PulseScreen() {
 
         {/* ── Right Now Section ── */}
         <View style={styles.section}>
-          <Text style={styles.sectionHeading}>
-            Right now in{'\n'}{selectedDest.label}
-          </Text>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionHeading}>
+              {t('pulse.rightNowIn', { defaultValue: 'Right now in' })}{'\n'}{selectedDest.label}
+            </Text>
+            {sonarPulse.isLive && <LiveBadge />}
+          </View>
           {localTimeString ? (
             <Text style={styles.sectionSubMono}>{localTimeString}</Text>
           ) : null}
 
+          {/* Live Sonar intel (when available) */}
+          {sonarPulse.data ? (
+            <View style={styles.sonarCard}>
+              <Text style={styles.sonarAnswer}>{sonarPulse.data.answer}</Text>
+              {sonarPulse.citations.length > 0 && (
+                <View style={{ marginTop: SPACING.sm }}>
+                  <SourceCitation citations={sonarPulse.citations} />
+                </View>
+              )}
+              {sonarPulse.data.timestamp ? (
+                <Text style={styles.sonarTimestamp}>
+                  {t('sonar.updated', { defaultValue: 'Updated' })}{' '}
+                  {new Date(sonarPulse.data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
+
+          {/* Hardcoded time recs (always shown as fallback/supplement) */}
           {timeRecs.length > 0 ? (
             <View style={styles.editorialStack}>
               {timeRecs.map((rec, i) => (
-                <EditorialCard key={i} rec={rec} />
+                <EditorialCard key={i} rec={rec} index={i} />
               ))}
             </View>
-          ) : (
+          ) : !sonarPulse.data ? (
             <View style={styles.emptyState}>
               <Clock size={24} color={COLORS.creamDim} strokeWidth={1.5} />
               <Text style={styles.emptyText}>
-                {`Insider picks for ${selectedDest.label} are on their way.`}
+                {t('pulse.emptyState', { defaultValue: `Still digging up the good stuff for ${selectedDest.label}. Check back soon.`, destination: selectedDest.label })}
               </Text>
             </View>
-          )}
+          ) : null}
         </View>
 
         {/* ── What Locals Know Section ── */}
         <View style={styles.section}>
-          <Text style={styles.sectionHeading}>What locals won't tell you</Text>
+          <View style={styles.sectionHeaderRow}>
+            <View>
+              <Text style={styles.tipsLabel}>{t('pulse.localsOnly', { defaultValue: 'LOCALS ONLY' })}</Text>
+              <Text style={styles.sectionHeading}>{t('pulse.whatTheyWontTellYou', { defaultValue: "What they won't tell you" })}</Text>
+            </View>
+            {sonarLocal.isLive && <LiveBadge />}
+          </View>
+
+          {/* Live Sonar local intel */}
+          {sonarLocal.data ? (
+            <View style={styles.sonarCard}>
+              <Text style={styles.sonarAnswer}>{sonarLocal.data.answer}</Text>
+              {sonarLocal.citations.length > 0 && (
+                <View style={{ marginTop: SPACING.sm }}>
+                  <SourceCitation citations={sonarLocal.citations} />
+                </View>
+              )}
+            </View>
+          ) : null}
+
+          {/* Hardcoded tips (always shown) */}
           <View style={styles.tipsStack}>
             {localTips.map((tip, i) => (
               <LocalTipRow key={i} tip={tip} />
@@ -874,13 +1052,14 @@ export default function PulseScreen() {
         <GoNowFeed />
 
         {/* ── Wanderlust — aspirational destination moments ── */}
-        <View style={{ paddingHorizontal: 20, marginTop: SPACING.lg }}>
+        <View style={{ paddingHorizontal: SPACING.lg, marginTop: SPACING.lg }}>
           <WanderlustFeed />
         </View>
 
         {/* ── This Month Section ── */}
-        <View style={[styles.section, styles.sectionLast]}>
-          <Text style={styles.sectionHeading}>Worth going now</Text>
+        <View style={styles.section}>
+          <Text style={styles.seasonLabel}>{t('pulse.thisMonth', { defaultValue: 'THIS MONTH' })}</Text>
+          <Text style={styles.sectionHeading}>{t('pulse.worthGoingNow', { defaultValue: 'Worth going now' })}</Text>
 
           <SeasonalHeroCard event={heroEvent} />
 
@@ -891,10 +1070,27 @@ export default function PulseScreen() {
             style={styles.seasonalSmallScroll}
           >
             {SEASONAL_SMALL_EVENTS.map((item, i) => (
-              <SeasonalSmallCard key={i} item={item} />
+              <SeasonalSmallCard key={i} item={item} index={i} />
             ))}
           </ScrollView>
         </View>
+
+        {/* ── Live Events Section (Eventbrite) ── */}
+        {liveEvents && liveEvents.length > 0 ? (
+          <View style={[styles.section, styles.sectionLast]}>
+            <Text style={styles.liveEventsLabel}>
+              {t('pulse.liveEvents.label', { defaultValue: 'LIVE EVENTS' })}
+            </Text>
+            <Text style={styles.sectionHeading}>
+              {t('pulse.liveEvents.heading', { defaultValue: `Happening in ${selectedDest.label}`, destination: selectedDest.label })}
+            </Text>
+            <View style={styles.liveEventsStack}>
+              {liveEvents.map((evt) => (
+                <LiveEventCard key={evt.id} event={evt} />
+              ))}
+            </View>
+          </View>
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -914,15 +1110,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    paddingHorizontal: 20,
+    paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
   } as ViewStyle,
 
-  headerTitle: {
-    fontFamily: FONTS.header,
-    fontSize: 28,
-    color: COLORS.cream,
-    fontStyle: 'italic',
+  headerLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+    letterSpacing: 4,
   } as TextStyle,
 
   scrollContent: {
@@ -931,18 +1127,17 @@ const styles = StyleSheet.create({
 
   // ── Destination card row ──
   destCardScroll: {
-    marginBottom: 40,
+    marginBottom: SPACING.xxl,
   } as ViewStyle,
 
   destCardRow: {
-    paddingHorizontal: 20,
-    gap: 12,
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.md,
   } as ViewStyle,
 
   destCard: {
     width: 200,
-    height: 140,
-    borderRadius: 12,
+    borderRadius: RADIUS.lg,
     overflow: 'hidden',
     opacity: 0.7,
     position: 'relative',
@@ -969,12 +1164,11 @@ const styles = StyleSheet.create({
 
   destCardLabel: {
     position: 'absolute',
-    bottom: 10,
-    left: 12,
+    bottom: SPACING.sm + 2,
+    left: SPACING.md,
     fontFamily: FONTS.header,
     fontSize: 18,
     color: COLORS.cream,
-    fontStyle: 'italic',
   } as TextStyle,
 
   destCardLabelActive: {
@@ -983,8 +1177,8 @@ const styles = StyleSheet.create({
 
   // ── Sections ──
   section: {
-    marginBottom: 40,
-    paddingHorizontal: 20,
+    marginBottom: SPACING.xxl,
+    paddingHorizontal: SPACING.lg,
   } as ViewStyle,
 
   sectionLast: {
@@ -995,8 +1189,8 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.header,
     fontSize: 32,
     color: COLORS.cream,
-    fontStyle: 'italic',
-    marginBottom: 4,
+    marginBottom: SPACING.xs + 2,
+    letterSpacing: -0.8,
     lineHeight: 38,
   } as TextStyle,
 
@@ -1004,19 +1198,34 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.mono,
     fontSize: 12,
     color: COLORS.creamSoft,
-    marginBottom: 20,
+    marginBottom: SPACING.lg,
     letterSpacing: 0.3,
+  } as TextStyle,
+
+  tipsLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.gold,
+    letterSpacing: 3,
+    marginBottom: SPACING.sm,
+  } as TextStyle,
+
+  seasonLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+    letterSpacing: 3,
+    marginBottom: SPACING.sm,
   } as TextStyle,
 
   // ── Editorial card stack ──
   editorialStack: {
-    gap: 16,
-    marginTop: 20,
+    gap: SPACING.md,
+    marginTop: SPACING.lg,
   } as ViewStyle,
 
   editorialCard: {
-    height: 200,
-    borderRadius: 12,
+    borderRadius: RADIUS.lg,
     overflow: 'hidden',
     position: 'relative',
   } as ViewStyle,
@@ -1042,19 +1251,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    padding: 14,
+    padding: SPACING.md - 2,
   } as ViewStyle,
 
   editorialCardTextBlock: {
     flex: 1,
-    paddingRight: 8,
+    paddingRight: SPACING.sm,
   } as ViewStyle,
 
   editorialCardTitle: {
     fontFamily: FONTS.header,
     fontSize: 22,
     color: COLORS.cream,
-    fontStyle: 'italic',
     lineHeight: 26,
     marginBottom: 2,
   } as TextStyle,
@@ -1068,9 +1276,9 @@ const styles = StyleSheet.create({
 
   timeContextChip: {
     backgroundColor: COLORS.sageLight,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.sm,
     flexShrink: 0,
   } as ViewStyle,
 
@@ -1083,14 +1291,14 @@ const styles = StyleSheet.create({
 
   // ── Tips ──
   tipsStack: {
-    marginTop: 20,
+    marginTop: SPACING.lg,
   } as ViewStyle,
 
   tipRow: {
     borderLeftWidth: 3,
     borderLeftColor: COLORS.sage,
-    paddingLeft: 20,
-    marginBottom: 20,
+    paddingLeft: SPACING.lg,
+    marginBottom: SPACING.lg,
   } as ViewStyle,
 
   tipText: {
@@ -1098,7 +1306,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: COLORS.cream,
     lineHeight: 24,
-    marginBottom: 6,
+    marginBottom: SPACING.xs + 2,
   } as TextStyle,
 
   tipSource: {
@@ -1111,11 +1319,11 @@ const styles = StyleSheet.create({
   // ── Seasonal hero ──
   seasonalHeroCard: {
     height: 220,
-    borderRadius: 12,
+    borderRadius: RADIUS.lg,
     overflow: 'hidden',
     position: 'relative',
-    marginTop: 20,
-    marginBottom: 16,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.md,
   } as ViewStyle,
 
   seasonalHeroPhoto: {
@@ -1136,7 +1344,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 16,
+    padding: SPACING.md,
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
@@ -1146,7 +1354,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.header,
     fontSize: 28,
     color: COLORS.cream,
-    fontStyle: 'italic',
     lineHeight: 32,
   } as TextStyle,
 
@@ -1154,7 +1361,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.mono,
     fontSize: 12,
     color: COLORS.creamSoft,
-    marginTop: 4,
+    marginTop: SPACING.xs,
     letterSpacing: 0.2,
   } as TextStyle,
 
@@ -1174,19 +1381,18 @@ const styles = StyleSheet.create({
 
   // ── Seasonal small cards ──
   seasonalSmallScroll: {
-    marginLeft: -20,
-    marginRight: -20,
+    marginLeft: -(SPACING.lg),
+    marginRight: -(SPACING.lg),
   } as ViewStyle,
 
   seasonalSmallRow: {
-    paddingHorizontal: 20,
-    gap: 12,
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.md,
   } as ViewStyle,
 
   seasonalSmallCard: {
     width: 160,
-    height: 120,
-    borderRadius: 12,
+    borderRadius: RADIUS.lg,
     overflow: 'hidden',
     position: 'relative',
   } as ViewStyle,
@@ -1209,7 +1415,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 10,
+    padding: SPACING.sm + 2,
   } as ViewStyle,
 
   seasonalSmallName: {
@@ -1240,5 +1446,119 @@ const styles = StyleSheet.create({
     color: COLORS.creamMuted,
     textAlign: 'center',
     lineHeight: 20,
+  } as TextStyle,
+
+  // Sonar live intel
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  } as ViewStyle,
+  sonarCard: {
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.md,
+    marginTop: SPACING.md,
+  } as ViewStyle,
+  sonarAnswer: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.cream,
+    lineHeight: 21,
+  } as TextStyle,
+  sonarTimestamp: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.creamDim,
+    marginTop: SPACING.sm,
+  } as TextStyle,
+
+  // ── Live Events (Eventbrite) ──
+  liveEventsLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.coral,
+    letterSpacing: 3,
+    marginBottom: SPACING.sm,
+  } as TextStyle,
+
+  liveEventsStack: {
+    marginTop: SPACING.lg,
+    gap: SPACING.sm,
+  } as ViewStyle,
+
+  liveEventCard: {
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: 'hidden',
+    minHeight: 44,
+  } as ViewStyle,
+
+  liveEventCardInner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    padding: SPACING.md,
+    gap: SPACING.sm,
+  } as ViewStyle,
+
+  liveEventLeft: {
+    flex: 1,
+    gap: SPACING.xs,
+  } as ViewStyle,
+
+  liveEventName: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 15,
+    color: COLORS.cream,
+    lineHeight: 20,
+  } as TextStyle,
+
+  liveEventVenue: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamSoft,
+    lineHeight: 18,
+  } as TextStyle,
+
+  liveEventDate: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.creamDim,
+    letterSpacing: 0.2,
+    marginTop: 2,
+  } as TextStyle,
+
+  liveEventRight: {
+    alignItems: 'flex-end',
+    gap: SPACING.xs,
+    flexShrink: 0,
+  } as ViewStyle,
+
+  liveEventPriceChip: {
+    backgroundColor: COLORS.sageLight,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.sm,
+  } as ViewStyle,
+
+  liveEventPrice: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.sage,
+    letterSpacing: 0.2,
+  } as TextStyle,
+
+  liveEventCategory: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.creamDim,
+    letterSpacing: 0.5,
+    textAlign: 'right',
+    maxWidth: 100,
   } as TextStyle,
 });

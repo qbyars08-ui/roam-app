@@ -4,6 +4,7 @@
 // =============================================================================
 import React, { useState } from 'react';
 import { Linking, Pressable, StyleSheet, Text, View, Alert, type ViewStyle, type TextStyle } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import {
@@ -22,6 +23,7 @@ interface FlightDealCardProps {
 }
 
 export default function FlightDealCard({ destination, onDealAlert }: FlightDealCardProps) {
+  const { t } = useTranslation();
   const [watched, setWatched] = useState<SavedDestination | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -47,9 +49,9 @@ export default function FlightDealCard({ destination, onDealAlert }: FlightDealC
       await loadWatched();
     } catch {
       Alert.alert(
-        'Couldn\'t add',
-        'Couldn\u2019t save this route. Try again in a moment.',
-        [{ text: 'OK' }]
+        t('flights.errorTitle', { defaultValue: "Couldn't add" }),
+        t('flights.errorSaveRoute', { defaultValue: "Couldn\u2019t save this route. Try again in a moment." }),
+        [{ text: t('flights.ok', { defaultValue: 'OK' }) }]
       );
     } finally {
       setLoading(false);
@@ -72,13 +74,13 @@ export default function FlightDealCard({ destination, onDealAlert }: FlightDealC
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TrendingDown size={18} color={COLORS.sage} strokeWidth={2} />
-        <Text style={styles.headerLabel}>FLIGHT DEALS</Text>
+        <TrendingDown size={18} color={COLORS.sage} strokeWidth={1.5} />
+        <Text style={styles.headerLabel}>{t('flights.dealsLabel', { defaultValue: 'FLIGHT DEALS' })}</Text>
       </View>
       <Text style={styles.title}>
         {watched
-          ? `Saved: ${destination}`
-          : `Track flights to ${destination}`}
+          ? `${t('flights.saved', { defaultValue: 'Saved' })}: ${destination}`
+          : `${t('flights.trackFlightsTo', { defaultValue: 'Track flights to' })} ${destination}`}
       </Text>
       <View style={styles.actions}>
         {watched ? (
@@ -91,14 +93,14 @@ export default function FlightDealCard({ destination, onDealAlert }: FlightDealC
                 { opacity: pressed ? 0.7 : 1 },
               ]}
             >
-              <Text style={styles.btnText}>Search on Skyscanner</Text>
-              <ExternalLink size={12} color={COLORS.sage} strokeWidth={2} />
+              <Text style={styles.btnText}>{t('flights.searchOnSkyscanner', { defaultValue: 'Search on Skyscanner' })}</Text>
+              <ExternalLink size={12} color={COLORS.sage} strokeWidth={1.5} />
             </Pressable>
             <Pressable
               onPress={handleUnwatch}
               style={({ pressed }) => [styles.btn, { opacity: pressed ? 0.7 : 1 }]}
             >
-              <Text style={styles.btnTextMuted}>Remove</Text>
+              <Text style={styles.btnTextMuted}>{t('flights.remove', { defaultValue: 'Remove' })}</Text>
             </Pressable>
           </>
         ) : (
@@ -111,7 +113,7 @@ export default function FlightDealCard({ destination, onDealAlert }: FlightDealC
               { opacity: pressed || loading ? 0.7 : 1 },
             ]}
           >
-            <Text style={styles.btnText}>{loading ? 'Adding...' : 'Save destination'}</Text>
+            <Text style={styles.btnText}>{loading ? t('flights.adding', { defaultValue: 'Adding...' }) : t('flights.saveDestination', { defaultValue: 'Save destination' })}</Text>
           </Pressable>
         )}
       </View>

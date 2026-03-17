@@ -30,8 +30,10 @@ import {
 } from '../lib/flight-deals';
 import { validateDestination } from '../lib/params-validator';
 import { getHomeAirport } from '../lib/flights';
+import { useTranslation } from 'react-i18next';
 
 function DreamVaultScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const params = useLocalSearchParams<{ destination?: string }>();
@@ -68,15 +70,15 @@ function DreamVaultScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const url = getSkyscannerUrl(dest.destination);
     await Linking.openURL(url).catch(() =>
-      Alert.alert('Error', 'Could not open Skyscanner')
+      Alert.alert(t('common.error', { defaultValue: 'Error' }), t('dreamVault.skyscannerError', { defaultValue: 'Could not open Skyscanner' }))
     );
   };
 
   const handleRemove = (dest: SavedDestination) => {
-    Alert.alert('Remove from vault?', `Stop tracking ${dest.destination}?`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('dreamVault.removeTitle', { defaultValue: 'Remove from vault?' }), t('dreamVault.removeMessage', { defaultValue: 'Stop tracking {{destination}}?', destination: dest.destination }), [
+      { text: t('common.cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
       {
-        text: 'Remove',
+        text: t('common.remove', { defaultValue: 'Remove' }),
         style: 'destructive',
         onPress: () => removeSavedDestination(dest.id).then(load),
       },
@@ -89,9 +91,9 @@ function DreamVaultScreen() {
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Text style={styles.back}>{'←'}</Text>
         </Pressable>
-        <Text style={styles.title}>Dream Trip Vault</Text>
+        <Text style={styles.title}>{t('dreamVault.title', { defaultValue: 'Dream Trip Vault' })}</Text>
         <Text style={styles.subtitle}>
-          {loading ? 'Loading...' : `${destinations.length} saved — we'll alert when prices drop`}
+          {loading ? t('common.loading') : t('dreamVault.subtitle', { defaultValue: "{{count}} saved — we'll alert when prices drop", count: destinations.length })}
         </Text>
       </View>
 
@@ -122,14 +124,14 @@ function DreamVaultScreen() {
                 <View style={styles.cardContent}>
                   {low && (
                     <View style={styles.badge}>
-                      <Text style={styles.badgeText}>Prices low</Text>
+                      <Text style={styles.badgeText}>{t('dreamVault.pricesLow', { defaultValue: 'Prices low' })}</Text>
                     </View>
                   )}
                   <Text style={styles.destName}>{d.destination}</Text>
                   {d.baselinePrice != null && (
                     <Text style={styles.price}>From ${d.baselinePrice}</Text>
                   )}
-                  <Text style={styles.cta}>Tap to search flights →</Text>
+                  <Text style={styles.cta}>{t('dreamVault.tapToSearch', { defaultValue: 'Tap to search flights' })} →</Text>
                 </View>
               </LinearGradient>
             </Pressable>
@@ -139,15 +141,15 @@ function DreamVaultScreen() {
 
       {!loading && destinations.length === 0 && (
         <View style={styles.empty}>
-          <Text style={styles.emptyText}>No dream destinations yet</Text>
+          <Text style={styles.emptyText}>{t('dreamVault.emptyTitle', { defaultValue: 'No dream destinations yet' })}</Text>
           <Text style={styles.emptySub}>
-            Save destinations from itineraries to track flight prices
+            {t('dreamVault.emptySubtitle', { defaultValue: 'Save destinations from itineraries to track flight prices' })}
           </Text>
           <Pressable
             style={styles.addBtn}
             onPress={() => router.push('/(tabs)/generate' as never)}
           >
-            <Text style={styles.addBtnText}>Plan a trip</Text>
+            <Text style={styles.addBtnText}>{t('dreamVault.planTrip', { defaultValue: 'Plan a trip' })}</Text>
           </Pressable>
         </View>
       )}
@@ -168,7 +170,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 14,
     color: COLORS.creamMuted,
-    marginTop: 4,
+    marginTop: SPACING.xs,
   } as TextStyle,
   skeletonWrap: {
     paddingHorizontal: SPACING.lg,
@@ -193,7 +195,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     padding: SPACING.md,
   } as ViewStyle,
-  cardContent: { gap: 2 },
+  cardContent: { gap: SPACING.xs },
   extraLine: {
     fontFamily: FONTS.body,
     fontSize: 11,
@@ -208,10 +210,10 @@ const styles = StyleSheet.create({
   badge: {
     alignSelf: 'flex-start',
     backgroundColor: COLORS.sage,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
     borderRadius: RADIUS.sm,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   } as ViewStyle,
   badgeText: {
     fontFamily: FONTS.mono,
@@ -232,7 +234,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 11,
     color: COLORS.creamMuted,
-    marginTop: 4,
+    marginTop: SPACING.xs,
   } as TextStyle,
   empty: {
     flex: 1,
@@ -249,7 +251,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 14,
     color: COLORS.creamMuted,
-    marginTop: 8,
+    marginTop: SPACING.sm,
     textAlign: 'center',
   } as TextStyle,
   addBtn: {
@@ -257,7 +259,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
     backgroundColor: COLORS.sageLight,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
   } as ViewStyle,
   addBtnText: {
     fontFamily: FONTS.bodySemiBold,

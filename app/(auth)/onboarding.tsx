@@ -19,6 +19,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from '../../lib/haptics';
+import { useTranslation } from 'react-i18next';
 
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import ConfettiBurst from '../../components/ui/ConfettiBurst';
@@ -38,42 +39,43 @@ interface OnboardingStep {
   options: StepOption[];
 }
 
-const STEPS: OnboardingStep[] = [
-  {
-    title: 'How do you travel?',
-    subtitle: 'Be honest. We\'ll build around it.',
-    options: [
-      { label: 'Solo — faster, freer, no compromises', value: 'solo', bgImage: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=85' },
-      { label: 'With my partner — one trip, zero arguments', value: 'couple', bgImage: 'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?w=800&q=85' },
-      { label: 'Friends — the group chat finally has a plan', value: 'friends', bgImage: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=85' },
-      { label: 'Family — everyone\'s happy or no one is', value: 'family', bgImage: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&q=85' },
-    ],
-  },
-  {
-    title: 'What are you actually chasing?',
-    subtitle: 'This changes everything about your trip.',
-    options: [
-      { label: 'The food. Always the food.', value: 'food', bgImage: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=85' },
-      { label: 'Nature that makes you put your phone down', value: 'nature', bgImage: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=85' },
-      { label: 'Energy, nightlife, the whole scene', value: 'nightlife', bgImage: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&q=85' },
-      { label: 'Culture, history, things that matter', value: 'culture', bgImage: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=85' },
-    ],
-  },
-  {
-    title: 'How are we doing this?',
-    subtitle: 'No judgment. Just better recommendations.',
-    options: [
-      { label: 'Hostels, street food, no regrets — $50/day', value: 'backpacker', bgImage: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=85' },
-      { label: 'Nice but not stupid about it — $150/day', value: 'comfort', bgImage: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=85' },
-      { label: 'You worked hard. Spend accordingly — $300/day', value: 'treat-yourself', bgImage: 'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&q=85' },
-      { label: 'Money isn\'t the constraint — $500+/day', value: 'no-budget', bgImage: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=85' },
-    ],
-  },
-];
-
 export default function OnboardingScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
+
+  const STEPS: OnboardingStep[] = [
+    {
+      title: t('onboarding.step1.title', { defaultValue: 'How do you travel?' }),
+      subtitle: t('onboarding.step1.subtitle', { defaultValue: "Be honest. We'll build around it." }),
+      options: [
+        { label: t('onboarding.step1.solo', { defaultValue: 'Solo — faster, freer, no compromises' }), value: 'solo', bgImage: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=85' },
+        { label: t('onboarding.step1.couple', { defaultValue: 'With my partner — one trip, zero arguments' }), value: 'couple', bgImage: 'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?w=800&q=85' },
+        { label: t('onboarding.step1.friends', { defaultValue: 'Friends — the group chat finally has a plan' }), value: 'friends', bgImage: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=85' },
+        { label: t('onboarding.step1.family', { defaultValue: "Family — everyone's happy or no one is" }), value: 'family', bgImage: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&q=85' },
+      ],
+    },
+    {
+      title: t('onboarding.step2.title', { defaultValue: 'What are you actually chasing?' }),
+      subtitle: t('onboarding.step2.subtitle', { defaultValue: 'This changes everything about your trip.' }),
+      options: [
+        { label: t('onboarding.step2.food', { defaultValue: 'The food. Always the food.' }), value: 'food', bgImage: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=85' },
+        { label: t('onboarding.step2.nature', { defaultValue: 'Nature that makes you put your phone down' }), value: 'nature', bgImage: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=85' },
+        { label: t('onboarding.step2.nightlife', { defaultValue: 'Energy, nightlife, the whole scene' }), value: 'nightlife', bgImage: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&q=85' },
+        { label: t('onboarding.step2.culture', { defaultValue: 'Culture, history, things that matter' }), value: 'culture', bgImage: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=85' },
+      ],
+    },
+    {
+      title: t('onboarding.step3.title', { defaultValue: 'How are we doing this?' }),
+      subtitle: t('onboarding.step3.subtitle', { defaultValue: 'No judgment. Just better recommendations.' }),
+      options: [
+        { label: t('onboarding.step3.backpacker', { defaultValue: 'Hostels, street food, no regrets — $50/day' }), value: 'backpacker', bgImage: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=85' },
+        { label: t('onboarding.step3.comfort', { defaultValue: 'Nice but not stupid about it — $150/day' }), value: 'comfort', bgImage: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=85' },
+        { label: t('onboarding.step3.treatYourself', { defaultValue: 'You worked hard. Spend accordingly — $300/day' }), value: 'treat-yourself', bgImage: 'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&q=85' },
+        { label: t('onboarding.step3.noBudget', { defaultValue: "Money isn't the constraint — $500+/day" }), value: 'no-budget', bgImage: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=85' },
+      ],
+    },
+  ];
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -153,9 +155,9 @@ export default function OnboardingScreen() {
           onPress={handleSkip}
           hitSlop={12}
           accessibilityRole="button"
-          accessibilityLabel="Skip"
+          accessibilityLabel={t('onboarding.skip', { defaultValue: 'Skip' })}
         >
-          <Text style={styles.skipText}>Skip</Text>
+          <Text style={styles.skipText}>{t('onboarding.skip', { defaultValue: 'Skip' })}</Text>
         </Pressable>
       </View>
 
@@ -199,7 +201,7 @@ export default function OnboardingScreen() {
         </View>
       </View>
 
-      <Text style={styles.bottomTagline}>This shapes everything we recommend</Text>
+      <Text style={styles.bottomTagline}>{t('onboarding.bottomTagline', { defaultValue: 'This shapes everything we recommend' })}</Text>
     </View>
   );
 }
@@ -247,29 +249,32 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   title: {
     fontFamily: FONTS.header,
-    fontSize: 36,
+    fontSize: 38,
     color: COLORS.cream,
-    textAlign: 'center',
-    marginBottom: SPACING.sm,
+    textAlign: 'left',
+    marginBottom: 6,
+    letterSpacing: -1,
+    lineHeight: 42,
   } as TextStyle,
   subtitle: {
     fontFamily: FONTS.body,
-    fontSize: 16,
-    color: COLORS.creamMuted,
-    textAlign: 'center',
-    marginBottom: SPACING.xxl,
+    fontSize: 15,
+    color: COLORS.creamDim,
+    textAlign: 'left',
+    marginBottom: 40,
+    lineHeight: 22,
   } as TextStyle,
   optionsGrid: {
-    gap: SPACING.md,
+    gap: 10,
   } as ViewStyle,
   optionWrapper: {},
   optionCard: {
     borderRadius: RADIUS.xl,
     overflow: 'hidden' as const,
-    height: 90,
+    height: 88,
     justifyContent: 'flex-end' as const,
     padding: SPACING.md,
-    paddingBottom: SPACING.lg,
+    paddingBottom: 18,
   },
   optionCardPlain: {
     backgroundColor: COLORS.bgCard,

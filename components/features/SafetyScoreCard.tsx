@@ -4,6 +4,7 @@
 // =============================================================================
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import {
   getAdvisory,
@@ -17,6 +18,7 @@ interface SafetyScoreCardProps {
 }
 
 export default function SafetyScoreCard({ destination }: SafetyScoreCardProps) {
+  const { t } = useTranslation();
   const [advisory, setAdvisory] = useState<TravelAdvisory | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -49,7 +51,7 @@ export default function SafetyScoreCard({ destination }: SafetyScoreCardProps) {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.sectionLabel}>TRAVEL ADVISORY</Text>
+      <Text style={styles.sectionLabel}>{t('safety.travelAdvisory', { defaultValue: 'TRAVEL ADVISORY' })}</Text>
       <View style={styles.row}>
         <View style={[styles.levelBadge, { backgroundColor: display.color + '20', borderColor: display.color }]}>
           <Text style={[styles.levelNumber, { color: display.color }]}>{advisory.level}</Text>
@@ -61,7 +63,7 @@ export default function SafetyScoreCard({ destination }: SafetyScoreCardProps) {
             <Text style={[styles.statusLabel, { color: display.color }]}>{display.shortLabel}</Text>
           </View>
           <Text style={styles.country}>{country?.name ?? destination}</Text>
-          <Text style={styles.source}>US State Department</Text>
+          <Text style={styles.source}>{t('safety.source', { defaultValue: 'US State Department' })}</Text>
         </View>
       </View>
     </View>
@@ -91,7 +93,7 @@ const styles = StyleSheet.create({
   levelBadge: {
     width: 52,
     height: 52,
-    borderRadius: 26,
+    borderRadius: RADIUS.pill,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',

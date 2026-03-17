@@ -4,6 +4,7 @@
 // =============================================================================
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, type ViewStyle, type TextStyle } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { getVisaInfo, getVisaStatusMessage, PASSPORT_FLAGS, type PassportNationality } from '../../lib/visa-intel';
 import { FileCheck } from 'lucide-react-native';
@@ -14,6 +15,7 @@ interface VisaStatusCardProps {
 }
 
 export default function VisaStatusCard({ destination, passport }: VisaStatusCardProps) {
+  const { t } = useTranslation();
   const result = getVisaInfo(destination, passport);
   if (!result) return null;
 
@@ -24,14 +26,14 @@ export default function VisaStatusCard({ destination, passport }: VisaStatusCard
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <FileCheck size={16} color={COLORS.sage} strokeWidth={2} />
-        <Text style={styles.headerLabel}>VISA & ENTRY</Text>
+        <FileCheck size={16} color={COLORS.sage} strokeWidth={1.5} />
+        <Text style={styles.headerLabel}>{t('visa.headerLabel', { defaultValue: 'VISA & ENTRY' })}</Text>
         <Text style={styles.flag}>{flag}</Text>
       </View>
       <View style={[styles.badge, { backgroundColor: `${color}22`, borderColor: `${color}66` }]}>
         <Text style={[styles.status, { color }]}>{label}</Text>
         {info.stayDays != null && info.stayDays < 999 && (
-          <Text style={styles.stay}>Up to {info.stayDays} days</Text>
+          <Text style={styles.stay}>{t('visa.upTo', { defaultValue: 'Up to' })} {info.stayDays} {t('visa.days', { defaultValue: 'days' })}</Text>
         )}
       </View>
       <Text style={styles.statusMsg}>{statusMsg}</Text>

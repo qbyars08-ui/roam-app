@@ -2,6 +2,7 @@
 // ROAM — SurvivalPhrasesCard: survival phrases with audio playback
 // =============================================================================
 import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Pressable,
   StyleSheet,
@@ -65,6 +66,7 @@ export default function SurvivalPhrasesCard({
   language,
   phrases,
 }: SurvivalPhrasesCardProps) {
+  const { t } = useTranslation();
   const [playingAll, setPlayingAll] = useState(false);
   const playAllAbortRef = useRef(false);
 
@@ -115,8 +117,8 @@ export default function SurvivalPhrasesCard({
     <View style={styles.card}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Survival Phrases</Text>
-        <Text style={styles.headerSubtitle}>Tap to hear</Text>
+        <Text style={styles.headerTitle}>{t('survivalPhrases.title', { defaultValue: 'Survival Phrases' })}</Text>
+        <Text style={styles.headerSubtitle}>{t('survivalPhrases.tapToHear', { defaultValue: 'Tap to hear' })}</Text>
       </View>
 
       {/* Phrase groups */}
@@ -133,7 +135,7 @@ export default function SurvivalPhrasesCard({
               <IconComponent
                 size={14}
                 color={COLORS.creamDim}
-                strokeWidth={2}
+                strokeWidth={1.5}
               />
               <Text style={styles.categoryLabel}>
                 {group.category.charAt(0).toUpperCase() +
@@ -164,7 +166,7 @@ export default function SurvivalPhrasesCard({
       <Pressable
         onPress={handlePlayAll}
         accessibilityLabel={
-          playingAll ? 'Stop playing all phrases' : 'Play all phrases'
+          playingAll ? t('survivalPhrases.stopPlayingAll', { defaultValue: 'Stop playing all phrases' }) : t('survivalPhrases.playAllPhrases', { defaultValue: 'Play all phrases' })
         }
         accessibilityRole="button"
         style={({ pressed }) => [
@@ -173,9 +175,9 @@ export default function SurvivalPhrasesCard({
           playingAll && styles.playAllButtonActive,
         ]}
       >
-        <Play size={16} color={COLORS.bg} strokeWidth={2} />
+        <Play size={16} color={COLORS.bg} strokeWidth={1.5} />
         <Text style={styles.playAllLabel}>
-          {playingAll ? 'Stop' : 'Play All'}
+          {playingAll ? t('survivalPhrases.stop', { defaultValue: 'Stop' }) : t('survivalPhrases.playAll', { defaultValue: 'Play All' })}
         </Text>
       </Pressable>
     </View>
@@ -199,7 +201,6 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   headerTitle: {
     fontFamily: FONTS.header,
-    fontStyle: 'italic',
     fontSize: 22,
     color: COLORS.cream,
   } as TextStyle,
@@ -251,7 +252,6 @@ const styles = StyleSheet.create({
   phonetic: {
     fontFamily: FONTS.mono,
     fontSize: 12,
-    fontStyle: 'italic',
     color: COLORS.creamDim,
     marginTop: 2,
   } as TextStyle,

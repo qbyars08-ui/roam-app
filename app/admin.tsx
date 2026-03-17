@@ -20,6 +20,7 @@ import { useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { getWaitlistStats, getLocalWaitlistEntries } from '../lib/waitlist';
 import { useAppStore } from '../lib/store';
@@ -528,6 +529,7 @@ async function fetchAllData(): Promise<DashboardData> {
 // =============================================================================
 
 export default function AdminDashboard() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const trips = useAppStore((s) => s.trips);
@@ -686,14 +688,14 @@ export default function AdminDashboard() {
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <Pressable onPress={() => router.back()} style={styles.backButton}>
-              <ChevronLeft size={24} color={COLORS.cream} strokeWidth={2} />
+              <ChevronLeft size={24} color={COLORS.cream} strokeWidth={1.5} />
             </Pressable>
             <View>
               <Text style={styles.headerTitle}>ROAM HQ</Text>
               <Text style={styles.headerTimestamp}>
                 {data
                   ? `Last refreshed ${formatTimestamp(data.lastRefreshed)}`
-                  : 'Loading...'}
+                  : t('common.loading')}
               </Text>
             </View>
           </View>
@@ -1505,7 +1507,7 @@ const styles = StyleSheet.create({
   destinationRank: {
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: RADIUS.xl,
     backgroundColor: COLORS.bgCard,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1644,7 +1646,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.sage,
     letterSpacing: 1,
-    textTransform: 'uppercase',
   },
 
   // Skeleton loader

@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
 import { ChevronLeft } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useDestinationTheme } from '../lib/useDestinationTheme';
 import { withComingSoon } from '../lib/with-coming-soon';
@@ -814,6 +815,7 @@ function HonestReviews() {
   const params = useLocalSearchParams<{ destination: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
 
   const [activeFilter, setActiveFilter] = useState<FilterOption>('All');
   const [activeSort, setActiveSort] = useState<SortOption>('Default');
@@ -864,7 +866,7 @@ function HonestReviews() {
       idx <= 1 ? COLORS.sage : idx === 2 ? COLORS.gold : COLORS.coral;
     return (
       <View style={styles.crowdRow}>
-        <Text style={styles.crowdLabel}>Crowds</Text>
+        <Text style={styles.crowdLabel}>{t('honestReviews.crowds', { defaultValue: 'Crowds' })}</Text>
         <View style={styles.crowdDots}>
           {CROWD_LEVELS.map((_, i) => (
             <View
@@ -918,9 +920,9 @@ function HonestReviews() {
           <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
         <View style={styles.headerText}>
-          <Text style={styles.headerTitle}>Honest Reviews</Text>
+          <Text style={styles.headerTitle}>{t('honestReviews.title', { defaultValue: 'Honest Reviews' })}</Text>
           <Text style={styles.headerSubtitle}>
-            {hasData ? cityName : 'No reviews available'}
+            {hasData ? cityName : t('honestReviews.noReviews', { defaultValue: 'No reviews available' })}
           </Text>
         </View>
       </View>
@@ -928,7 +930,7 @@ function HonestReviews() {
       {/* Tag line */}
       <View style={styles.taglineWrap}>
         <Text style={styles.tagline}>
-          No sponsorships. No BS. Just what's actually worth your time.
+          {t('honestReviews.tagline', { defaultValue: "No sponsorships. No BS. Just what's actually worth your time." })}
         </Text>
       </View>
 
@@ -936,17 +938,16 @@ function HonestReviews() {
         /* Fallback for unknown destinations */
         <View style={styles.fallbackContainer}>
           <Text style={styles.fallbackTitle}>
-            We don't have reviews for {cityName || 'this destination'} yet
+            {t('honestReviews.fallbackTitle', { defaultValue: "We don't have reviews for {{city}} yet", city: cityName || t('honestReviews.thisDestination', { defaultValue: 'this destination' }) })}
           </Text>
           <Text style={styles.fallbackBody}>
-            We're adding new cities all the time. Check back soon or try one of
-            Tokyo, Paris, Bali, New York, Barcelona, Rome, London, Bangkok, Marrakech, Lisbon, or Mexico City.
+            {t('honestReviews.fallbackBody', { defaultValue: "We're adding new cities all the time. Check back soon or try one of Tokyo, Paris, Bali, New York, Barcelona, Rome, London, Bangkok, Marrakech, Lisbon, or Mexico City." })}
           </Text>
           <Pressable
             onPress={() => router.back()}
             style={styles.fallbackButton}
           >
-            <Text style={styles.fallbackButtonText}>Go Back</Text>
+            <Text style={styles.fallbackButtonText}>{t('honestReviews.goBack', { defaultValue: 'Go Back' })}</Text>
           </Pressable>
         </View>
       ) : (
@@ -990,7 +991,7 @@ function HonestReviews() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.sortRow}
           >
-            <Text style={styles.sortLabel}>Sort:</Text>
+            <Text style={styles.sortLabel}>{t('honestReviews.sort', { defaultValue: 'Sort:' })}</Text>
             {SORTS.map((s) => {
               const isActive = activeSort === s;
               return (
@@ -1067,11 +1068,11 @@ function HonestReviews() {
                   {/* Cost + Time badges */}
                   <View style={styles.badgeRow}>
                     <View style={styles.infoBadge}>
-                      <Text style={styles.infoBadgeLabel}>Cost</Text>
+                      <Text style={styles.infoBadgeLabel}>{t('honestReviews.cost', { defaultValue: 'Cost' })}</Text>
                       <Text style={styles.infoBadgeValue}>{attraction.cost}</Text>
                     </View>
                     <View style={styles.infoBadge}>
-                      <Text style={styles.infoBadgeLabel}>Time</Text>
+                      <Text style={styles.infoBadgeLabel}>{t('honestReviews.time', { defaultValue: 'Time' })}</Text>
                       <Text style={styles.infoBadgeValue}>{attraction.timeNeeded}</Text>
                     </View>
                   </View>
@@ -1079,7 +1080,7 @@ function HonestReviews() {
                   {/* Best time (only for non-SKIP) */}
                   {!isSkip && attraction.bestTime !== '' && (
                     <View style={styles.bestTimeRow}>
-                      <Text style={styles.bestTimeLabel}>Best time</Text>
+                      <Text style={styles.bestTimeLabel}>{t('honestReviews.bestTime', { defaultValue: 'Best time' })}</Text>
                       <Text style={styles.bestTimeValue}>{attraction.bestTime}</Text>
                     </View>
                   )}
@@ -1087,7 +1088,7 @@ function HonestReviews() {
                   {/* DO THIS INSTEAD (only for SKIP IT) */}
                   {isSkip && attraction.bestAlternative !== '' && (
                     <View style={styles.alternativeCard}>
-                      <Text style={styles.alternativeLabel}>DO THIS INSTEAD</Text>
+                      <Text style={styles.alternativeLabel}>{t('honestReviews.doThisInstead', { defaultValue: 'DO THIS INSTEAD' })}</Text>
                       <Text style={styles.alternativeText}>
                         {attraction.bestAlternative}
                       </Text>
@@ -1098,7 +1099,7 @@ function HonestReviews() {
                   {attraction.rating === 'MIXED' && attraction.bestAlternative !== '' && (
                     <View style={[styles.alternativeCard, styles.alternativeCardMixed]}>
                       <Text style={[styles.alternativeLabel, { color: COLORS.gold }]}>
-                        ALTERNATIVE
+                        {t('honestReviews.alternative', { defaultValue: 'ALTERNATIVE' })}
                       </Text>
                       <Text style={styles.alternativeText}>
                         {attraction.bestAlternative}
@@ -1108,7 +1109,7 @@ function HonestReviews() {
 
                   {/* Insider tip callout */}
                   <View style={styles.tipCallout}>
-                    <Text style={styles.tipLabel}>INSIDER TIP</Text>
+                    <Text style={styles.tipLabel}>{t('honestReviews.insiderTip', { defaultValue: 'INSIDER TIP' })}</Text>
                     <Text style={styles.tipText}>{attraction.insiderTip}</Text>
                   </View>
                 </Animated.View>
@@ -1118,7 +1119,7 @@ function HonestReviews() {
             {reviews.length === 0 && (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyText}>
-                  No {activeFilter.toLowerCase()} attractions found for {cityName}.
+                  {t('honestReviews.noAttractions', { defaultValue: 'No {{filter}} attractions found for {{city}}.', filter: activeFilter.toLowerCase(), city: cityName })}
                 </Text>
               </View>
             )}
@@ -1206,7 +1207,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.monoMedium,
     fontSize: 12,
     color: COLORS.creamMuted,
-    textTransform: 'uppercase',
     letterSpacing: 1,
   } as TextStyle,
 
@@ -1316,12 +1316,12 @@ const styles = StyleSheet.create({
   } as TextStyle,
   crowdDots: {
     flexDirection: 'row',
-    gap: 4,
+    gap: SPACING.xs,
   } as ViewStyle,
   crowdDot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: SPACING.xs,
   } as ViewStyle,
   crowdText: {
     fontFamily: FONTS.monoMedium,
@@ -1461,7 +1461,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.monoMedium,
     fontSize: 13,
     color: COLORS.sage,
-    textTransform: 'uppercase',
     letterSpacing: 1,
   } as TextStyle,
 

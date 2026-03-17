@@ -5,6 +5,7 @@
 // =============================================================================
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -340,6 +341,7 @@ function computeCosts(tripsGenerated: number, mrr: number): CostStructure {
 // =============================================================================
 
 export default function InvestorDashboard() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const session = useAppStore((s) => s.session);
@@ -415,17 +417,17 @@ export default function InvestorDashboard() {
         <View style={styles.heroSection}>
           <Text style={styles.heroWordmark}>ROAM</Text>
           <Text style={styles.heroTagline}>
-            The AI travel planner that sounds like your most well-traveled friend
+            {t('investor.heroTagline', { defaultValue: 'The AI travel planner that sounds like your most well-traveled friend' })}
           </Text>
           <View style={styles.heroPills}>
             <View style={[styles.pill, { backgroundColor: COLORS.sageSubtle }]}>
-              <Text style={[styles.pillText, { color: COLORS.sage }]}>Pre-Seed</Text>
+              <Text style={[styles.pillText, { color: COLORS.sage }]}>{t('investor.pillPreSeed', { defaultValue: 'Pre-Seed' })}</Text>
             </View>
             <View style={[styles.pill, { backgroundColor: COLORS.goldSoft }]}>
-              <Text style={[styles.pillText, { color: COLORS.accentGold }]}>iOS + Web</Text>
+              <Text style={[styles.pillText, { color: COLORS.accentGold }]}>{t('investor.pillPlatform', { defaultValue: 'iOS + Web' })}</Text>
             </View>
             <View style={[styles.pill, { backgroundColor: COLORS.coralSubtle }]}>
-              <Text style={[styles.pillText, { color: COLORS.coral }]}>AI-Native</Text>
+              <Text style={[styles.pillText, { color: COLORS.coral }]}>{t('investor.pillAiNative', { defaultValue: 'AI-Native' })}</Text>
             </View>
           </View>
         </View>
@@ -433,7 +435,7 @@ export default function InvestorDashboard() {
         {/* ================================================================ */}
         {/* LIVE METRICS (2x3 Grid)                                          */}
         {/* ================================================================ */}
-        <SectionHeader title="Live Metrics" accent="Real-time from Supabase" />
+        <SectionHeader title={t('investor.sectionLiveMetrics', { defaultValue: 'Live Metrics' })} accent={t('investor.accentRealTime', { defaultValue: 'Real-time from Supabase' })} />
 
         {isLoading ? (
           <View style={styles.metricsGrid}>
@@ -447,57 +449,57 @@ export default function InvestorDashboard() {
           </View>
         ) : (
           <View style={styles.metricsGrid}>
-            <MetricCard value={fmt(m.totalUsers)} label="Total Users" />
-            <MetricCard value={fmt(m.proSubscribers)} label="Pro Subscribers" color={COLORS.sage} />
-            <MetricCard value={fmt(m.waitlistSignups)} label="Waitlist Signups" />
-            <MetricCard value={fmt(m.tripsGenerated)} label="Trips Generated" />
-            <MetricCard value={fmt(m.affiliateClicks)} label="Affiliate Clicks" color={COLORS.accentGold} />
-            <MetricCard value={fmt(m.groupsCreated)} label="Group Trips" />
+            <MetricCard value={fmt(m.totalUsers)} label={t('investor.labelTotalUsers', { defaultValue: 'Total Users' })} />
+            <MetricCard value={fmt(m.proSubscribers)} label={t('investor.labelProSubscribers', { defaultValue: 'Pro Subscribers' })} color={COLORS.sage} />
+            <MetricCard value={fmt(m.waitlistSignups)} label={t('investor.labelWaitlistSignups', { defaultValue: 'Waitlist Signups' })} />
+            <MetricCard value={fmt(m.tripsGenerated)} label={t('investor.labelTripsGenerated', { defaultValue: 'Trips Generated' })} />
+            <MetricCard value={fmt(m.affiliateClicks)} label={t('investor.labelAffiliateClicks', { defaultValue: 'Affiliate Clicks' })} color={COLORS.accentGold} />
+            <MetricCard value={fmt(m.groupsCreated)} label={t('investor.labelGroupTrips', { defaultValue: 'Group Trips' })} />
           </View>
         )}
 
         {/* ================================================================ */}
         {/* UNIT ECONOMICS                                                   */}
         {/* ================================================================ */}
-        <SectionHeader title="Unit Economics" />
+        <SectionHeader title={t('investor.sectionUnitEconomics', { defaultValue: 'Unit Economics' })} />
 
         <View style={styles.card}>
           <View style={styles.econRow}>
-            <Text style={styles.econLabel}>MRR</Text>
+            <Text style={styles.econLabel}>{t('investor.econMrr', { defaultValue: 'MRR' })}</Text>
             <Text style={[styles.econValue, { color: COLORS.sage }]}>
               {fmtCurrency(unitEcon.mrr)}
             </Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.econRow}>
-            <Text style={styles.econLabel}>ARPU</Text>
+            <Text style={styles.econLabel}>{t('investor.econArpu', { defaultValue: 'ARPU' })}</Text>
             <Text style={styles.econValue}>{fmtCurrency(unitEcon.arpu)}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.econRow}>
-            <Text style={styles.econLabel}>Conversion (Free to Pro)</Text>
+            <Text style={styles.econLabel}>{t('investor.econConversion', { defaultValue: 'Conversion (Free to Pro)' })}</Text>
             <Text style={styles.econValue}>{fmtPct(unitEcon.conversionRate)}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.econRow}>
-            <Text style={styles.econLabel}>LTV Projection</Text>
+            <Text style={styles.econLabel}>{t('investor.econLtv', { defaultValue: 'LTV Projection' })}</Text>
             <Text style={styles.econValue}>{fmtCurrency(unitEcon.ltvProjection)}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.econRow}>
-            <Text style={styles.econLabel}>Target CAC</Text>
+            <Text style={styles.econLabel}>{t('investor.econCac', { defaultValue: 'Target CAC' })}</Text>
             <Text style={styles.econValue}>{fmtCurrency(unitEcon.estimatedCac)}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.econRow}>
-            <Text style={styles.econLabel}>LTV / CAC</Text>
+            <Text style={styles.econLabel}>{t('investor.econLtvCac', { defaultValue: 'LTV / CAC' })}</Text>
             <Text style={[styles.econValue, { color: COLORS.accentGold }]}>
               {unitEcon.ltvCacRatio.toFixed(1)}x
             </Text>
           </View>
 
           <View style={styles.targetBar}>
-            <Text style={styles.targetLabel}>Target conversion: 8-12%</Text>
+            <Text style={styles.targetLabel}>{t('investor.targetConversion', { defaultValue: 'Target conversion: 8-12%' })}</Text>
             <ProgressBar value={unitEcon.conversionRate} maxValue={12} color={COLORS.sage} />
           </View>
         </View>
@@ -505,12 +507,12 @@ export default function InvestorDashboard() {
         {/* ================================================================ */}
         {/* COST STRUCTURE                                                   */}
         {/* ================================================================ */}
-        <SectionHeader title="Cost Structure" accent="Per-trip API costs" />
+        <SectionHeader title={t('investor.sectionCostStructure', { defaultValue: 'Cost Structure' })} accent={t('investor.accentCostPerTrip', { defaultValue: 'Per-trip API costs' })} />
 
         <View style={styles.card}>
           <View style={styles.econRow}>
             <View>
-              <Text style={styles.econLabel}>Claude API</Text>
+              <Text style={styles.econLabel}>{t('investor.costClaudeApi', { defaultValue: 'Claude API' })}</Text>
               <Text style={styles.econDetail}>
                 {fmt(m.tripsGenerated)} trips x {fmtCurrency(CLAUDE_COST_PER_TRIP)}
               </Text>
@@ -520,7 +522,7 @@ export default function InvestorDashboard() {
           <View style={styles.divider} />
           <View style={styles.econRow}>
             <View>
-              <Text style={styles.econLabel}>Google Places</Text>
+              <Text style={styles.econLabel}>{t('investor.costGooglePlaces', { defaultValue: 'Google Places' })}</Text>
               <Text style={styles.econDetail}>
                 ~{fmt(m.tripsGenerated * 2)} calls x {fmtCurrency(GOOGLE_PLACES_COST_PER_CALL)}
               </Text>
@@ -530,18 +532,18 @@ export default function InvestorDashboard() {
           <View style={styles.divider} />
           <View style={styles.econRow}>
             <View>
-              <Text style={styles.econLabel}>Free APIs</Text>
-              <Text style={styles.econDetail}>Weather, Safety, Visa, Holidays, Timezone</Text>
+              <Text style={styles.econLabel}>{t('investor.costFreeApis', { defaultValue: 'Free APIs' })}</Text>
+              <Text style={styles.econDetail}>{t('investor.costFreeApisDetail', { defaultValue: 'Weather, Safety, Visa, Holidays, Timezone' })}</Text>
             </View>
             <Text style={[styles.econValue, { color: COLORS.sage }]}>{fmtCurrency(0)}</Text>
           </View>
           <View style={styles.costTotalDivider} />
           <View style={styles.econRow}>
-            <Text style={styles.costTotalLabel}>Monthly API spend</Text>
+            <Text style={styles.costTotalLabel}>{t('investor.costMonthlySpend', { defaultValue: 'Monthly API spend' })}</Text>
             <Text style={styles.costTotalValue}>{fmtCurrency(costs.totalApiCost)}</Text>
           </View>
           <View style={styles.econRow}>
-            <Text style={styles.costTotalLabel}>Gross margin</Text>
+            <Text style={styles.costTotalLabel}>{t('investor.costGrossMargin', { defaultValue: 'Gross margin' })}</Text>
             <Text
               style={[
                 styles.costTotalValue,
@@ -556,7 +558,7 @@ export default function InvestorDashboard() {
         {/* ================================================================ */}
         {/* REVENUE MODEL                                                    */}
         {/* ================================================================ */}
-        <SectionHeader title="Revenue Model" />
+        <SectionHeader title={t('investor.sectionRevenueModel', { defaultValue: 'Revenue Model' })} />
 
         <View style={styles.card}>
           {REVENUE_STREAMS.map((stream, i) => (
@@ -571,7 +573,7 @@ export default function InvestorDashboard() {
                 </View>
                 <View style={[styles.statusPill, { borderColor: stream.color }]}>
                   <Text style={[styles.statusPillText, { color: stream.color }]}>
-                    {stream.status === 'live' ? 'LIVE' : 'PLANNED'}
+                    {stream.status === 'live' ? t('investor.statusLive', { defaultValue: 'LIVE' }) : t('investor.statusPlanned', { defaultValue: 'PLANNED' })}
                   </Text>
                 </View>
               </View>
@@ -583,7 +585,7 @@ export default function InvestorDashboard() {
         {/* ================================================================ */}
         {/* MARKET OPPORTUNITY                                               */}
         {/* ================================================================ */}
-        <SectionHeader title="Market Opportunity" />
+        <SectionHeader title={t('investor.sectionMarket', { defaultValue: 'Market Opportunity' })} />
 
         <View style={styles.metricsGrid}>
           <MetricCard value={MARKET_DATA.tam} label={MARKET_DATA.tamLabel} color={COLORS.accentGold} />
@@ -595,14 +597,14 @@ export default function InvestorDashboard() {
         {/* ================================================================ */}
         {/* GROWTH PROJECTIONS                                               */}
         {/* ================================================================ */}
-        <SectionHeader title="Growth Projections" />
+        <SectionHeader title={t('investor.sectionGrowth', { defaultValue: 'Growth Projections' })} />
 
         <View style={styles.card}>
           <View style={styles.projectionHeader}>
-            <Text style={[styles.projColHead, { flex: 1 }]}>Period</Text>
-            <Text style={[styles.projColHead, { flex: 1 }]}>Downloads</Text>
-            <Text style={[styles.projColHead, { flex: 1 }]}>Trips</Text>
-            <Text style={[styles.projColHead, { flex: 1 }]}>Revenue</Text>
+            <Text style={[styles.projColHead, { flex: 1 }]}>{t('investor.colPeriod', { defaultValue: 'Period' })}</Text>
+            <Text style={[styles.projColHead, { flex: 1 }]}>{t('investor.colDownloads', { defaultValue: 'Downloads' })}</Text>
+            <Text style={[styles.projColHead, { flex: 1 }]}>{t('investor.colTrips', { defaultValue: 'Trips' })}</Text>
+            <Text style={[styles.projColHead, { flex: 1 }]}>{t('investor.colRevenue', { defaultValue: 'Revenue' })}</Text>
           </View>
           {GROWTH_PROJECTIONS.map((row, i) => (
             <View key={row.period}>
@@ -622,7 +624,7 @@ export default function InvestorDashboard() {
         {/* ================================================================ */}
         {/* COMPETITIVE ADVANTAGES                                           */}
         {/* ================================================================ */}
-        <SectionHeader title="Competitive Moat" />
+        <SectionHeader title={t('investor.sectionMoat', { defaultValue: 'Competitive Moat' })} />
 
         {COMPETITIVE_ADVANTAGES.map((adv, i) => (
           <Pressable
@@ -645,7 +647,7 @@ export default function InvestorDashboard() {
         {/* ================================================================ */}
         {/* TRACTION                                                         */}
         {/* ================================================================ */}
-        <SectionHeader title="Traction" accent="Pre-launch" />
+        <SectionHeader title={t('investor.sectionTraction', { defaultValue: 'Traction' })} accent={t('investor.accentPreLaunch', { defaultValue: 'Pre-launch' })} />
 
         <View style={styles.card}>
           {TRACTION_HIGHLIGHTS.map((item, i) => (
@@ -665,7 +667,7 @@ export default function InvestorDashboard() {
         {/* ================================================================ */}
         {/* TECH STACK                                                       */}
         {/* ================================================================ */}
-        <SectionHeader title="Tech Stack" />
+        <SectionHeader title={t('investor.sectionTechStack', { defaultValue: 'Tech Stack' })} />
 
         <View style={styles.techGrid}>
           {[
@@ -687,8 +689,8 @@ export default function InvestorDashboard() {
         {/* THE ASK                                                          */}
         {/* ================================================================ */}
         <View style={styles.askSection}>
-          <Text style={styles.askTitle}>The Ask</Text>
-          <Text style={styles.askSubtitle}>Pre-Seed Round</Text>
+          <Text style={styles.askTitle}>{t('investor.askTitle', { defaultValue: 'The Ask' })}</Text>
+          <Text style={styles.askSubtitle}>{t('investor.askSubtitle', { defaultValue: 'Pre-Seed Round' })}</Text>
           <View style={styles.askItems}>
             {[
               'App Store launch + initial marketing push',
@@ -939,7 +941,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.creamMuted,
     marginTop: 2,
-    marginLeft: 16,
+    marginLeft: SPACING.md,
   },
   statusDot: {
     width: 8,
@@ -1005,7 +1007,7 @@ const styles = StyleSheet.create({
   advantageNumberCircle: {
     width: 24,
     height: 24,
-    borderRadius: 12,
+    borderRadius: RADIUS.lg,
     backgroundColor: COLORS.goldSoft,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1026,7 +1028,7 @@ const styles = StyleSheet.create({
     color: COLORS.creamMuted,
     lineHeight: 20,
     marginTop: SPACING.sm,
-    marginLeft: 32,
+    marginLeft: SPACING.xl,
   },
 
   // Traction

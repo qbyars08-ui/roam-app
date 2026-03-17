@@ -12,6 +12,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { Check, RefreshCw, Lightbulb } from 'lucide-react-native';
@@ -49,6 +50,7 @@ export default function GroupVoteCard({
   voteResults,
   onVote,
 }: GroupVoteCardProps) {
+  const { t } = useTranslation();
   const [showSuggestion, setShowSuggestion] = useState(false);
   const [suggestionText, setSuggestionText] = useState('');
 
@@ -99,7 +101,7 @@ export default function GroupVoteCard({
           <Check
             size={14}
             color={myVote?.voteType === 'keep' ? COLORS.bg : COLORS.sage}
-            strokeWidth={2}
+            strokeWidth={1.5}
           />
           <Text
             style={[
@@ -107,7 +109,7 @@ export default function GroupVoteCard({
               myVote?.voteType === 'keep' && styles.voteBtnTextActive,
             ]}
           >
-            Keep
+            {t('group.voteKeep', { defaultValue: 'Keep' })}
           </Text>
           {keepCount > 0 && (
             <Text style={[
@@ -129,7 +131,7 @@ export default function GroupVoteCard({
           <RefreshCw
             size={14}
             color={myVote?.voteType === 'swap' ? COLORS.bg : COLORS.accentGold}
-            strokeWidth={2}
+            strokeWidth={1.5}
           />
           <Text
             style={[
@@ -137,7 +139,7 @@ export default function GroupVoteCard({
               myVote?.voteType === 'swap' && styles.voteBtnTextActive,
             ]}
           >
-            Swap
+            {t('group.voteSwap', { defaultValue: 'Swap' })}
           </Text>
           {swapCount > 0 && (
             <Text style={[
@@ -159,7 +161,7 @@ export default function GroupVoteCard({
           <Lightbulb
             size={14}
             color={myVote?.voteType === 'suggest' ? COLORS.bg : COLORS.cream}
-            strokeWidth={2}
+            strokeWidth={1.5}
           />
           <Text
             style={[
@@ -167,7 +169,7 @@ export default function GroupVoteCard({
               myVote?.voteType === 'suggest' && styles.voteBtnTextActive,
             ]}
           >
-            Suggest
+            {t('group.voteSuggest', { defaultValue: 'Suggest' })}
           </Text>
         </Pressable>
       </View>
@@ -179,7 +181,7 @@ export default function GroupVoteCard({
             style={styles.suggestInput}
             value={suggestionText}
             onChangeText={setSuggestionText}
-            placeholder="What would you rather do?"
+            placeholder={t('group.suggestionPlaceholder', { defaultValue: 'What would you rather do?' })}
             placeholderTextColor={COLORS.creamMuted}
             autoFocus
             onSubmitEditing={() => handleVote('suggest')}
@@ -192,7 +194,7 @@ export default function GroupVoteCard({
               !suggestionText.trim() && { opacity: 0.4 },
             ]}
           >
-            <Text style={styles.suggestSubmitText}>Send</Text>
+            <Text style={styles.suggestSubmitText}>{t('group.send', { defaultValue: 'Send' })}</Text>
           </Pressable>
         </View>
       )}
@@ -206,7 +208,7 @@ export default function GroupVoteCard({
             );
             return (
               <View key={i} style={styles.suggestionRow}>
-                <Lightbulb size={12} color={COLORS.accentGold} strokeWidth={2} />
+                <Lightbulb size={12} color={COLORS.accentGold} strokeWidth={1.5} />
                 <Text style={styles.suggestionText}>"{s}"</Text>
               </View>
             );
@@ -286,7 +288,7 @@ const styles = StyleSheet.create({
   } as TextStyle,
   suggestRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: SPACING.sm,
     marginTop: SPACING.sm,
   } as ViewStyle,
   suggestInput: {
@@ -327,7 +329,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 12,
     color: COLORS.creamHighlight,
-    fontStyle: 'italic',
     flex: 1,
   } as TextStyle,
 });

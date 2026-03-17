@@ -3,6 +3,7 @@
 // "How do you feel right now?" → ROAM picks the destination
 // =============================================================================
 import React, { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -17,7 +18,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../../lib/haptics';
 import { useRouter } from 'expo-router';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, type Destination } from '../../lib/constants';
 import BreathingLine from '../ui/BreathingLine';
 import { useAppStore } from '../../lib/store';
 import {
@@ -27,7 +28,6 @@ import {
   getVibeCheck,
   type Mood,
 } from '../../lib/recommendations';
-import type { Destination } from '../../lib/constants';
 import { getDestinationPhoto } from '../../lib/photos';
 import { useCurrency } from './CurrencyToggle';
 import { formatUSD } from '../../lib/currency';
@@ -37,6 +37,7 @@ interface Props {
 }
 
 export default function MoodDiscovery({ photoUrls: _photoUrls }: Props) {
+  const { t } = useTranslation();
   const router = useRouter();
   const setPlanWizard = useAppStore((s) => s.setPlanWizard);
   const travelProfile = useAppStore((s) => s.travelProfile);
@@ -78,9 +79,9 @@ export default function MoodDiscovery({ photoUrls: _photoUrls }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>How are you feeling?</Text>
+      <Text style={styles.sectionTitle}>{t('mood.howAreYouFeeling', { defaultValue: 'How are you feeling?' })}</Text>
       <Text style={styles.sectionSubtitle}>
-        Tell us your mood. We'll pick where you should go.
+        {t('mood.tellUsMood', { defaultValue: "Tell us your mood. We'll pick where you should go." })}
       </Text>
 
       <ScrollView
@@ -122,7 +123,7 @@ export default function MoodDiscovery({ photoUrls: _photoUrls }: Props) {
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <Pressable onPress={() => setShowResults(false)}>
-              <Text style={styles.modalClose}>Close</Text>
+              <Text style={styles.modalClose}>{t('mood.close', { defaultValue: 'Close' })}</Text>
             </Pressable>
           </View>
 
@@ -137,7 +138,7 @@ export default function MoodDiscovery({ photoUrls: _photoUrls }: Props) {
           {loading ? (
             <View style={styles.loadingContainer}>
               <BreathingLine width={100} height={4} color={COLORS.sage} />
-              <Text style={styles.loadingText}>Finding your perfect match...</Text>
+              <Text style={styles.loadingText}>{t('mood.findingMatch', { defaultValue: 'Finding your perfect match...' })}</Text>
             </View>
           ) : (
             <ScrollView contentContainerStyle={styles.resultsContainer}>
@@ -170,7 +171,7 @@ export default function MoodDiscovery({ photoUrls: _photoUrls }: Props) {
                         >
                           {i === 0 && (
                             <View style={styles.topPickBadge}>
-                              <Text style={styles.topPickText}>TOP PICK</Text>
+                              <Text style={styles.topPickText}>{t('mood.topPick', { defaultValue: 'TOP PICK' })}</Text>
                             </View>
                           )}
                           <View style={styles.resultContent}>
@@ -179,7 +180,7 @@ export default function MoodDiscovery({ photoUrls: _photoUrls }: Props) {
                             <Text style={styles.resultHook}>{dest.hook}</Text>
                             <Text style={styles.resultReason}>{reason}</Text>
                             <View style={styles.resultMeta}>
-                              <Text style={styles.resultPrice}>{rates && currency !== 'USD' ? formatUSD(dest.dailyCost, currency, rates) : `$${dest.dailyCost}`}/day</Text>
+                              <Text style={styles.resultPrice}>{rates && currency !== 'USD' ? formatUSD(dest.dailyCost, currency, rates) : `$${dest.dailyCost}`}/{t('mood.day', { defaultValue: 'day' })}</Text>
                               <View
                                 style={[
                                   styles.crowdBadge,
@@ -190,9 +191,9 @@ export default function MoodDiscovery({ photoUrls: _photoUrls }: Props) {
                                 ]}
                               >
                                 <Text style={styles.crowdBadgeText}>
-                                  {vibeCheck.crowdLevel === 'low' ? 'Quiet' :
-                                    vibeCheck.crowdLevel === 'moderate' ? 'Moderate' :
-                                      vibeCheck.crowdLevel === 'high' ? 'Busy' : 'Peak'}
+                                  {vibeCheck.crowdLevel === 'low' ? t('mood.crowdLow', { defaultValue: 'Quiet' }) :
+                                    vibeCheck.crowdLevel === 'moderate' ? t('mood.crowdModerate', { defaultValue: 'Moderate' }) :
+                                      vibeCheck.crowdLevel === 'high' ? t('mood.crowdHigh', { defaultValue: 'Busy' }) : t('mood.crowdPeak', { defaultValue: 'Peak' })}
                                 </Text>
                               </View>
                             </View>

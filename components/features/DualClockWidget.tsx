@@ -5,6 +5,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
 import { Clock, ArrowRight, Moon, Sun } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import {
   getTimezoneByDestination,
@@ -47,6 +48,7 @@ function getSeverityColor(severity: JetLagSeverity): string {
 // Component
 // ---------------------------------------------------------------------------
 function DualClockWidget({ destination }: DualClockWidgetProps): React.JSX.Element | null {
+  const { t } = useTranslation();
   const [clockState, setClockState] = useState<ClockState | null>(null);
   const [jetLag, setJetLag] = useState<JetLagPlan | null>(null);
   const [loading, setLoading] = useState(true);
@@ -119,8 +121,9 @@ function DualClockWidget({ destination }: DualClockWidgetProps): React.JSX.Eleme
 
   const severityText = useMemo(() => {
     if (!jetLag || jetLag.severity === 'none') return null;
-    return `${jetLag.severity.charAt(0).toUpperCase()}${jetLag.severity.slice(1)} jet lag`;
-  }, [jetLag]);
+    const severityLabel = `${jetLag.severity.charAt(0).toUpperCase()}${jetLag.severity.slice(1)}`;
+    return `${severityLabel} ${t('clock.jetLag', { defaultValue: 'jet lag' })}`;
+  }, [jetLag, t]);
 
   const topTips = useMemo(() => {
     if (!jetLag || jetLag.tips.length === 0) return [];
@@ -133,20 +136,20 @@ function DualClockWidget({ destination }: DualClockWidgetProps): React.JSX.Eleme
     <View style={s.card}>
       {/* Header */}
       <View style={s.header}>
-        <Clock size={18} color={COLORS.sage} strokeWidth={2} />
-        <Text style={s.headerText}>Time zones</Text>
+        <Clock size={18} color={COLORS.sage} strokeWidth={1.5} />
+        <Text style={s.headerText}>{t('clock.title', { defaultValue: 'Time zones' })}</Text>
       </View>
 
       {/* Dual clock display */}
       <View style={s.clocksContainer}>
         <View style={s.clockBox}>
-          <Text style={s.clockLabel}>Here</Text>
+          <Text style={s.clockLabel}>{t('clock.here', { defaultValue: 'Here' })}</Text>
           <Text style={s.clockTime}>{clockState.localTime}</Text>
           <Text style={s.tzAbbr}>{clockState.localTz}</Text>
         </View>
 
         <View style={s.arrowContainer}>
-          <ArrowRight size={18} color={COLORS.creamMuted} strokeWidth={2} />
+          <ArrowRight size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
         </View>
 
         <View style={s.clockBox}>
@@ -154,8 +157,8 @@ function DualClockWidget({ destination }: DualClockWidgetProps): React.JSX.Eleme
           <View style={s.destTimeRow}>
             <Text style={s.clockTime}>{clockState.destTime}</Text>
             {clockState.isDestNight
-              ? <Moon size={16} color={COLORS.goldMuted} strokeWidth={2} />
-              : <Sun size={16} color={COLORS.goldMuted} strokeWidth={2} />
+              ? <Moon size={16} color={COLORS.goldMuted} strokeWidth={1.5} />
+              : <Sun size={16} color={COLORS.goldMuted} strokeWidth={1.5} />
             }
           </View>
           <Text style={s.tzAbbr}>{clockState.destTz}</Text>
@@ -172,7 +175,7 @@ function DualClockWidget({ destination }: DualClockWidgetProps): React.JSX.Eleme
         <View style={s.jetLagSection}>
           <View style={[s.severityBadge, { backgroundColor: getSeverityColor(jetLag.severity) }]}>
             <Text style={s.severityText}>{severityText}</Text>
-            <Text style={s.recoveryText}>~{jetLag.recoveryDays} days to adjust</Text>
+            <Text style={s.recoveryText}>{`~${jetLag.recoveryDays} ${t('clock.daysToAdjust', { defaultValue: 'days to adjust' })}`}</Text>
           </View>
 
           {topTips.length > 0 && (
@@ -187,7 +190,7 @@ function DualClockWidget({ destination }: DualClockWidgetProps): React.JSX.Eleme
 
       {jetLag && jetLag.severity === 'none' && (
         <View style={s.noJetLagContainer}>
-          <Text style={s.noJetLagText}>No significant jet lag</Text>
+          <Text style={s.noJetLagText}>{t('clock.noJetLag', { defaultValue: 'No significant jet lag' })}</Text>
         </View>
       )}
     </View>

@@ -110,7 +110,7 @@ function PassportScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>{t('passport.title')}</Text>
           <Pressable onPress={handleShare} hitSlop={8} style={styles.shareBtn}>
-            <Share2 size={22} color={COLORS.cream} strokeWidth={2} />
+            <Share2 size={22} color={COLORS.cream} strokeWidth={1.5} />
           </Pressable>
         </View>
 
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
   passportIcon: {
     width: 72,
     height: 72,
-    borderRadius: 12,
+    borderRadius: RADIUS.lg,
     backgroundColor: COLORS.bgCard,
     borderWidth: 2,
     borderColor: COLORS.gold,

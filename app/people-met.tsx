@@ -3,6 +3,7 @@
 // Add contacts at each destination, where met, photos, social links, proximity
 // =============================================================================
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -63,6 +64,7 @@ function FormInput({
 }
 
 function PeopleMetScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [people, setPeople] = useState<PersonMet[]>([]);
@@ -166,10 +168,10 @@ function PeopleMetScreen() {
 
   const handleDelete = useCallback(
     (p: PersonMet) => {
-      Alert.alert('Remove contact', `Remove ${p.name}?`, [
-        { text: 'Cancel', style: 'cancel' },
+      Alert.alert(t('peopleMet.removeContact', { defaultValue: 'Remove contact' }), `${t('peopleMet.removeConfirm', { defaultValue: 'Remove' })} ${p.name}?`, [
+        { text: t('peopleMet.cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
         {
-          text: 'Remove',
+          text: t('peopleMet.remove', { defaultValue: 'Remove' }),
           style: 'destructive',
           onPress: async () => {
             await deletePersonMet(p.id);
@@ -187,18 +189,18 @@ function PeopleMetScreen() {
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Text style={styles.back}>{'\u2190'}</Text>
         </Pressable>
-        <Text style={styles.title}>People You&apos;ve Met</Text>
+        <Text style={styles.title}>{t('peopleMet.title', { defaultValue: "People You've Met" })}</Text>
         <Text style={styles.subtitle}>
-          {people.length} contact{people.length !== 1 ? 's' : ''} from your travels
+          {people.length} {people.length !== 1 ? t('peopleMet.contacts', { defaultValue: 'contacts' }) : t('peopleMet.contact', { defaultValue: 'contact' })} {t('peopleMet.fromYourTravels', { defaultValue: 'from your travels' })}
         </Text>
       </View>
 
       {/* Proximity: people in your city */}
       {peopleInCity.length > 0 && (
         <View style={styles.proximityCard}>
-          <Text style={styles.proximityTitle}>Near you</Text>
+          <Text style={styles.proximityTitle}>{t('peopleMet.nearYou', { defaultValue: 'Near you' })}</Text>
           <Text style={styles.proximitySub}>
-            {peopleInCity.length} {peopleInCity.length === 1 ? 'person' : 'people'} in {currentCity}
+            {peopleInCity.length} {peopleInCity.length === 1 ? t('peopleMet.person', { defaultValue: 'person' }) : t('peopleMet.people', { defaultValue: 'people' })} {t('peopleMet.in', { defaultValue: 'in' })} {currentCity}
           </Text>
           {peopleInCity.slice(0, 3).map((p) => (
             <Pressable
@@ -236,7 +238,7 @@ function PeopleMetScreen() {
               <View style={styles.info}>
                 <Text style={styles.name}>{item.name}</Text>
                 <Text style={styles.meta}>
-                  Met in {item.whereMet}
+                  {t('peopleMet.metIn', { defaultValue: 'Met in' })} {item.whereMet}
                   {item.destination ? `, ${item.destination}` : ''} – {item.tripDates}
                 </Text>
                 <View style={styles.socialRow}>
@@ -255,7 +257,7 @@ function PeopleMetScreen() {
                         Linking.openURL(`https://linkedin.com/in/${item.linkedin}`)
                       }
                     >
-                      <Text style={styles.link}>LinkedIn</Text>
+                      <Text style={styles.link}>{t('peopleMet.linkedin', { defaultValue: 'LinkedIn' })}</Text>
                     </Pressable>
                   )}
                   {item.twitter && (
@@ -280,75 +282,75 @@ function PeopleMetScreen() {
               onPress={() => handleDelete(item)}
               style={styles.deleteBtn}
             >
-              <Text style={styles.deleteText}>Remove</Text>
+              <Text style={styles.deleteText}>{t('peopleMet.remove', { defaultValue: 'Remove' })}</Text>
             </Pressable>
           </View>
         )}
       />
 
       <Pressable style={[styles.fab, { bottom: insets.bottom + SPACING.lg }]} onPress={openAdd}>
-        <Plus size={24} color={COLORS.bg} strokeWidth={2} />
+        <Plus size={24} color={COLORS.bg} strokeWidth={1.5} />
       </Pressable>
 
       <Modal visible={modalOpen} animationType="slide" transparent>
         <View style={modalStyles.overlay}>
           <View style={[modalStyles.sheet, { paddingBottom: insets.bottom + SPACING.lg }]}>
             <View style={modalStyles.handle} />
-            <Text style={modalStyles.title}>{editing ? 'Edit contact' : 'Add contact'}</Text>
+            <Text style={modalStyles.title}>{editing ? t('peopleMet.editContact', { defaultValue: 'Edit contact' }) : t('peopleMet.addContact', { defaultValue: 'Add contact' })}</Text>
             <ScrollView showsVerticalScrollIndicator={false}>
               <FormInput
-                label="Name"
+                label={t('peopleMet.fieldName', { defaultValue: 'Name' })}
                 value={form.name}
                 onChange={(v) => setForm((f) => ({ ...f, name: v }))}
-                placeholder="Full name"
+                placeholder={t('peopleMet.placeholderFullName', { defaultValue: 'Full name' })}
               />
               <FormInput
-                label="Where you met"
+                label={t('peopleMet.fieldWhereMet', { defaultValue: 'Where you met' })}
                 value={form.whereMet}
                 onChange={(v) => setForm((f) => ({ ...f, whereMet: v }))}
-                placeholder="e.g. Hostel common room, walking tour"
+                placeholder={t('peopleMet.placeholderWhereMet', { defaultValue: 'e.g. Hostel common room, walking tour' })}
               />
               <FormInput
-                label="Destination"
+                label={t('peopleMet.fieldDestination', { defaultValue: 'Destination' })}
                 value={form.destination}
                 onChange={(v) => setForm((f) => ({ ...f, destination: v }))}
-                placeholder="e.g. Lisbon, Portugal"
+                placeholder={t('peopleMet.placeholderDestination', { defaultValue: 'e.g. Lisbon, Portugal' })}
               />
               <FormInput
-                label="Trip dates"
+                label={t('peopleMet.fieldTripDates', { defaultValue: 'Trip dates' })}
                 value={form.tripDates}
                 onChange={(v) => setForm((f) => ({ ...f, tripDates: v }))}
-                placeholder="e.g. March 2025"
+                placeholder={t('peopleMet.placeholderTripDates', { defaultValue: 'e.g. March 2025' })}
               />
               <FormInput
-                label="Photo URL"
+                label={t('peopleMet.fieldPhotoUrl', { defaultValue: 'Photo URL' })}
                 value={form.photoUrl}
                 onChange={(v) => setForm((f) => ({ ...f, photoUrl: v }))}
-                placeholder="Optional image URL"
+                placeholder={t('peopleMet.placeholderPhotoUrl', { defaultValue: 'Optional image URL' })}
               />
               <FormInput
-                label="Instagram"
+                label={t('peopleMet.fieldInstagram', { defaultValue: 'Instagram' })}
                 value={form.instagram}
                 onChange={(v) => setForm((f) => ({ ...f, instagram: v.replace('@', '') }))}
-                placeholder="@username"
+                placeholder={t('peopleMet.placeholderUsername', { defaultValue: '@username' })}
               />
               <FormInput
-                label="LinkedIn"
+                label={t('peopleMet.fieldLinkedIn', { defaultValue: 'LinkedIn' })}
                 value={form.linkedin}
                 onChange={(v) => setForm((f) => ({ ...f, linkedin: v }))}
-                placeholder="Username or profile URL"
+                placeholder={t('peopleMet.placeholderLinkedIn', { defaultValue: 'Username or profile URL' })}
               />
               <FormInput
-                label="Twitter"
+                label={t('peopleMet.fieldTwitter', { defaultValue: 'Twitter' })}
                 value={form.twitter}
                 onChange={(v) => setForm((f) => ({ ...f, twitter: v.replace('@', '') }))}
-                placeholder="@username"
+                placeholder={t('peopleMet.placeholderUsername', { defaultValue: '@username' })}
               />
               <FormInput
-                label="Their city (proximity)"
+                label={t('peopleMet.fieldCity', { defaultValue: 'Their city (proximity)' })}
                 value={form.city}
                 onChange={(v) => setForm((f) => ({ ...f, city: v }))}
-                placeholder="For alerts when you're in the same city"
+                placeholder={t('peopleMet.placeholderCity', { defaultValue: "For alerts when you're in the same city" })}
               />
             </ScrollView>
             <View style={modalStyles.actions}>
@@ -356,7 +358,7 @@ function PeopleMetScreen() {
                 style={modalStyles.cancelBtn}
                 onPress={() => setModalOpen(false)}
               >
-                <Text style={modalStyles.cancelText}>Cancel</Text>
+                <Text style={modalStyles.cancelText}>{t('peopleMet.cancel', { defaultValue: 'Cancel' })}</Text>
               </Pressable>
               <Pressable
                 style={[
@@ -367,7 +369,7 @@ function PeopleMetScreen() {
                 onPress={handleSave}
                 disabled={!form.name.trim() || !form.whereMet.trim() || !form.tripDates.trim()}
               >
-                <Text style={modalStyles.saveText}>Save</Text>
+                <Text style={modalStyles.saveText}>{t('peopleMet.save', { defaultValue: 'Save' })}</Text>
               </Pressable>
             </View>
           </View>
@@ -422,7 +424,7 @@ const styles = StyleSheet.create({
   proxAvatar: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: RADIUS.pill,
   } as ImageStyle,
   proxName: {
     fontFamily: FONTS.bodyMedium,
@@ -446,13 +448,13 @@ const styles = StyleSheet.create({
   cardPhoto: {
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: RADIUS.pill,
     marginRight: SPACING.md,
   } as ImageStyle,
   avatar: {
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.sageLight,
     alignItems: 'center',
     justifyContent: 'center',
@@ -509,7 +511,7 @@ const styles = StyleSheet.create({
     right: SPACING.lg,
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.sage,
     alignItems: 'center',
     justifyContent: 'center',

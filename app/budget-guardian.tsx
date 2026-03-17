@@ -22,6 +22,7 @@ import { parseItinerary } from '../lib/types/itinerary';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from '../lib/haptics';
 import { ChevronLeft } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
@@ -110,6 +111,7 @@ const CHEAPER_ALTERNATIVES: Record<CategoryId, string> = {
 };
 
 function BudgetGuardianScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
@@ -302,7 +304,7 @@ function BudgetGuardianScreen() {
 
   function getSmartAlerts(): string[] {
     const alerts: string[] = [];
-    if (expenses.length === 0) return ['Start adding expenses to get smart insights'];
+    if (expenses.length === 0) return [t('budget.startAddingExpenses', { defaultValue: 'Start adding expenses to get smart insights' })];
 
     const catBreakdown = getCategoryBreakdown();
     const foodSpend = catBreakdown.find((c) => c.id === 'food')?.amount ?? 0;
@@ -310,33 +312,33 @@ function BudgetGuardianScreen() {
 
     if (totalSpent > 0 && foodSpend / totalSpent > 0.4) {
       alerts.push(
-        `Food is ${Math.round((foodSpend / totalSpent) * 100)}% of your spending — more than planned`,
+        t('budget.foodOverspend', { defaultValue: 'Food is {{pct}}% of your spending — more than planned', pct: Math.round((foodSpend / totalSpent) * 100) }),
       );
     }
     if (totalSpent > 0 && transportSpend / totalSpent > 0.25) {
-      alerts.push('Transport is eating into your budget');
+      alerts.push(t('budget.transportOverspend', { defaultValue: 'Transport is eating into your budget' }));
     }
 
     if (totalSpent > totalBudget) {
       const biggest = catBreakdown[0];
       alerts.push(
-        `Over budget by $${Math.round(totalSpent - totalBudget)} — cut back on ${biggest?.label ?? 'spending'}`,
+        t('budget.overBudget', { defaultValue: 'Over budget by ${{amount}} — cut back on {{category}}', amount: Math.round(totalSpent - totalBudget), category: biggest?.label ?? t('budget.spending', { defaultValue: 'spending' }) }),
       );
       if (biggest) {
         const alt = CHEAPER_ALTERNATIVES[biggest.id];
-        if (alt) alerts.push(`Cheaper alternative: ${alt}`);
+        if (alt) alerts.push(t('budget.cheaperAlternative', { defaultValue: 'Cheaper alternative: {{alt}}', alt }));
       }
     } else if (spentPercentage >= 75) {
-      alerts.push(`At ${Math.round(spentPercentage)}% of budget — watch your spending`);
+      alerts.push(t('budget.nearBudget', { defaultValue: 'At {{pct}}% of budget — watch your spending', pct: Math.round(spentPercentage) }));
       const biggest = catBreakdown[0];
       if (biggest) {
         const alt = CHEAPER_ALTERNATIVES[biggest.id];
-        if (alt) alerts.push(`Tip: ${alt}`);
+        if (alt) alerts.push(t('budget.tip', { defaultValue: 'Tip: {{alt}}', alt }));
       }
     } else {
       const daysLeft = totalDays - currentDay + 1;
       const perDayLeft = daysLeft > 0 ? Math.round(remaining / daysLeft) : 0;
-      alerts.push(`On track — you have $${perDayLeft}/day left for ${daysLeft} days`);
+      alerts.push(t('budget.onTrack', { defaultValue: 'On track — you have ${{perDay}}/day left for {{daysLeft}} days', perDay: perDayLeft, daysLeft }));
     }
 
     return alerts;
@@ -441,9 +443,9 @@ function BudgetGuardianScreen() {
             <ChevronLeft size={24} color={COLORS.cream} />
           </Pressable>
           <View style={{ flex: 1 }}>
-            <Text style={styles.headerTitle}>Budget Guardian</Text>
+            <Text style={styles.headerTitle}>{t('budget.headerTitle', { defaultValue: 'Budget Guardian' })}</Text>
             <Text style={styles.headerSubtitle}>
-              {destination} {'\u00B7'} {totalDays} days
+              {destination} {'\u00B7'} {t('budget.daysCount', { defaultValue: '{{count}} days', count: totalDays })}
             </Text>
           </View>
           {/* Day selector */}
@@ -454,7 +456,7 @@ function BudgetGuardianScreen() {
             }}
             style={styles.dayChip}
           >
-            <Text style={styles.dayChipText}>Day {currentDay}</Text>
+            <Text style={styles.dayChipText}>{t('budget.dayNumber', { defaultValue: 'Day {{day}}', day: currentDay })}</Text>
           </Pressable>
         </View>
       </LinearGradient>
@@ -471,7 +473,7 @@ function BudgetGuardianScreen() {
               ================================================================ */}
           {renderGlassCard(
             <>
-              <Text style={styles.sectionLabel}>· Total budget</Text>
+              <Text style={styles.sectionLabel}>{t('budget.totalBudgetLabel', { defaultValue: '· Total budget' })}</Text>
               <Text style={[styles.bigAmount, { color: budgetStatusColor }]}>
                 {formatCurrency(totalBudget)}
               </Text>
@@ -500,13 +502,13 @@ function BudgetGuardianScreen() {
 
               <View style={styles.budgetRow}>
                 <View>
-                  <Text style={styles.budgetLabel}>Spent</Text>
+                  <Text style={styles.budgetLabel}>{t('budget.spent', { defaultValue: 'Spent' })}</Text>
                   <Text style={[styles.budgetValue, { color: budgetStatusColor }]}>
                     {formatCurrency(totalSpent)}
                   </Text>
                 </View>
                 <View>
-                  <Text style={styles.budgetLabel}>Remaining</Text>
+                  <Text style={styles.budgetLabel}>{t('budget.remaining', { defaultValue: 'Remaining' })}</Text>
                   <Text
                     style={[
                       styles.budgetValue,
@@ -517,7 +519,7 @@ function BudgetGuardianScreen() {
                   </Text>
                 </View>
                 <View>
-                  <Text style={styles.budgetLabel}>Daily Target</Text>
+                  <Text style={styles.budgetLabel}>{t('budget.dailyTarget', { defaultValue: 'Daily Target' })}</Text>
                   <Text style={[styles.budgetValue, { color: COLORS.cream }]}>
                     {formatCurrency(dailyBudget)}
                   </Text>
@@ -531,7 +533,7 @@ function BudgetGuardianScreen() {
               ================================================================ */}
           {renderGlassCard(
             <>
-              <Text style={styles.sectionLabel}>· Add expense</Text>
+              <Text style={styles.sectionLabel}>{t('budget.addExpenseLabel', { defaultValue: '· Add expense' })}</Text>
 
               {/* Amount input */}
               <View style={styles.amountRow}>
@@ -579,7 +581,7 @@ function BudgetGuardianScreen() {
               {/* Note */}
               <TextInput
                 style={styles.noteInput}
-                placeholder="Note (optional)"
+                placeholder={t('budget.notePlaceholder', { defaultValue: 'Note (optional)' })}
                 placeholderTextColor={COLORS.creamMuted}
                 value={noteText}
                 onChangeText={setNoteText}
@@ -601,7 +603,7 @@ function BudgetGuardianScreen() {
                   end={{ x: 1, y: 0 }}
                   style={styles.addButtonGradient}
                 >
-                  <Text style={styles.addButtonText}>Add Expense</Text>
+                  <Text style={styles.addButtonText}>{t('budget.addExpenseButton', { defaultValue: 'Add Expense' })}</Text>
                 </LinearGradient>
               </Pressable>
             </>,
@@ -613,7 +615,7 @@ function BudgetGuardianScreen() {
           {renderGlassCard(
             <>
               <View style={styles.sectionHeaderRow}>
-                <Text style={styles.sectionLabel}>· Today{'\u2019'}s spending</Text>
+                <Text style={styles.sectionLabel}>{t('budget.todaysSpending', { defaultValue: "· Today\u2019s spending" })}</Text>
                 <Text
                   style={[
                     styles.todayTotal,
@@ -639,7 +641,7 @@ function BudgetGuardianScreen() {
               </View>
 
               {todaysExpenses.length === 0 ? (
-                <Text style={styles.emptyText}>No expenses yet for Day {currentDay}</Text>
+                <Text style={styles.emptyText}>{t('budget.noExpenses', { defaultValue: 'No expenses yet for Day {{day}}', day: currentDay })}</Text>
               ) : (
                 todaysExpenses.map((exp) => {
                   const cat = getCategoryMeta(exp.category);
@@ -668,7 +670,7 @@ function BudgetGuardianScreen() {
           {expenses.length > 0 &&
             renderGlassCard(
               <>
-                <Text style={styles.sectionLabel}>· Category breakdown</Text>
+                <Text style={styles.sectionLabel}>{t('budget.categoryBreakdown', { defaultValue: '· Category breakdown' })}</Text>
                 {getCategoryBreakdown().map((cat, i) => {
                   const pct = totalSpent > 0 ? (cat.amount / totalSpent) * 100 : 0;
                   return (
@@ -711,7 +713,7 @@ function BudgetGuardianScreen() {
           {expenses.length > 0 &&
             renderGlassCard(
               <>
-                <Text style={styles.sectionLabel}>· Daily trend</Text>
+                <Text style={styles.sectionLabel}>{t('budget.dailyTrend', { defaultValue: '· Daily trend' })}</Text>
                 <View style={styles.chartContainer}>
                   {/* Budget target line */}
                   {(() => {
@@ -786,7 +788,7 @@ function BudgetGuardianScreen() {
               ================================================================ */}
           {renderGlassCard(
             <>
-              <Text style={styles.sectionLabel}>· Smart alerts</Text>
+              <Text style={styles.sectionLabel}>{t('budget.smartAlerts', { defaultValue: '· Smart alerts' })}</Text>
               {getSmartAlerts().map((alert, i) => {
                 const isWarning =
                   alert.includes('eating') ||
@@ -820,7 +822,7 @@ function BudgetGuardianScreen() {
           {currencyInfo &&
             renderGlassCard(
               <>
-                <Text style={styles.sectionLabel}>· Currency converter</Text>
+                <Text style={styles.sectionLabel}>{t('budget.currencyConverter', { defaultValue: '· Currency converter' })}</Text>
                 <Text style={styles.exchangeRate}>
                   1 USD = {currencyInfo.rate.toLocaleString()} {currencyInfo.code}
                 </Text>

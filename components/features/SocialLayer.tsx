@@ -18,6 +18,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Globe, User, Coffee, MapPin, AlertTriangle, X, Check } from 'lucide-react-native';
 import * as Haptics from '../../lib/haptics';
+import { useTranslation } from 'react-i18next';
+import i18n from '../../lib/i18n';
 
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import {
@@ -57,6 +59,7 @@ export function SquadFinder({
   destination,
   dateRange,
 }: SquadFinderProps) {
+  const { t } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(0);
   const cardX = useRef(new Animated.Value(0)).current;
   const cardRotate = useRef(new Animated.Value(0)).current;
@@ -127,9 +130,9 @@ export function SquadFinder({
         <View style={squadStyles.emptyIconWrap}>
           <Globe size={48} color={COLORS.creamMuted} strokeWidth={1.5} />
         </View>
-        <Text style={squadStyles.emptyTitle}>No more travelers</Text>
+        <Text style={squadStyles.emptyTitle}>{t('social.squad.noMoreTravelers', { defaultValue: 'No more travelers' })}</Text>
         <Text style={squadStyles.emptySub}>
-          Check back later — new people join every day
+          {t('social.squad.checkBackLater', { defaultValue: 'Check back later — new people join every day' })}
         </Text>
       </View>
     );
@@ -139,7 +142,7 @@ export function SquadFinder({
     <View style={squadStyles.container}>
       {/* Header */}
       <View style={squadStyles.header}>
-        <Text style={squadStyles.headerTitle}>Squad Finder</Text>
+        <Text style={squadStyles.headerTitle}>{t('social.squad.title', { defaultValue: 'Squad Finder' })}</Text>
         <Text style={squadStyles.headerSub}>
           {destination} \u00B7 {dateRange}
         </Text>
@@ -187,7 +190,7 @@ export function SquadFinder({
             { opacity: pressed ? 0.7 : 1, transform: [{ scale: pressed ? 0.95 : 1 }] },
           ]}
         >
-          <X size={20} color={COLORS.creamMuted} strokeWidth={2} />
+          <X size={20} color={COLORS.creamMuted} strokeWidth={1.5} />
         </Pressable>
 
         <Pressable
@@ -199,8 +202,8 @@ export function SquadFinder({
           ]}
         >
           <View style={squadStyles.connectBtnInner}>
-            <Check size={18} color={COLORS.bg} strokeWidth={2} />
-            <Text style={squadStyles.connectBtnText}>Connect</Text>
+            <Check size={18} color={COLORS.bg} strokeWidth={1.5} />
+            <Text style={squadStyles.connectBtnText}>{t('social.connect', { defaultValue: 'Connect' })}</Text>
           </View>
         </Pressable>
       </View>
@@ -233,7 +236,7 @@ function CandidateCardContent({ candidate }: { candidate: SquadCandidate }) {
           <Text style={squadStyles.scoreText}>{candidate.compatibilityScore}%</Text>
         </View>
         <Text style={squadStyles.overlapText}>
-          {candidate.overlapDays} days overlap
+          {`${candidate.overlapDays} ${i18n.t('social.squad.daysOverlap', { defaultValue: 'days overlap' })}`}
         </Text>
       </View>
 
@@ -258,7 +261,7 @@ function CandidateCardContent({ candidate }: { candidate: SquadCandidate }) {
       {/* Looking for */}
       {tags.length > 0 && (
         <View style={squadStyles.tagsSection}>
-          <Text style={squadStyles.tagsLabel}>LOOKING FOR</Text>
+          <Text style={squadStyles.tagsLabel}>{i18n.t('social.squad.lookingFor', { defaultValue: 'LOOKING FOR' })}</Text>
           <View style={squadStyles.tagsRow}>
             {tags.map((tag: string, i: number) => (
               <View
@@ -285,7 +288,7 @@ function CandidateCardContent({ candidate }: { candidate: SquadCandidate }) {
       {/* Languages */}
       {(profile.languages?.length ?? 0) > 0 && (
         <Text style={squadStyles.languagesText}>
-          Speaks: {profile.languages.join(', ')}
+          {`${i18n.t('social.speaks', { defaultValue: 'Speaks' })}: ${profile.languages.join(', ')}`}
         </Text>
       )}
     </LinearGradient>
@@ -310,16 +313,17 @@ export function BreakfastClub({
   onCreateListing,
   onRequestJoin,
 }: BreakfastClubProps) {
+  const { t } = useTranslation();
   return (
     <View style={breakfastStyles.container}>
       {/* Header */}
       <View style={breakfastStyles.header}>
-        <Text style={breakfastStyles.eyebrow}>BREAKFAST CLUB</Text>
+        <Text style={breakfastStyles.eyebrow}>{t('social.breakfast.eyebrow', { defaultValue: 'BREAKFAST CLUB' })}</Text>
         <Text style={breakfastStyles.title}>
-          Find someone to eat with{'\n'}in {city}
+          {`${t('social.breakfast.findSomeoneToEatWith', { defaultValue: 'Find someone to eat with' })}\n${t('social.breakfast.inCity', { defaultValue: 'in' })} ${city}`}
         </Text>
         <Text style={breakfastStyles.sub}>
-          Opt-in only. Neighborhood-level location. No exact addresses.
+          {t('social.breakfast.privacyNote', { defaultValue: 'Opt-in only. Neighborhood-level location. No exact addresses.' })}
         </Text>
       </View>
 
@@ -337,7 +341,7 @@ export function BreakfastClub({
           end={{ x: 1, y: 0 }}
           style={breakfastStyles.createGradient}
         >
-          <Text style={breakfastStyles.createText}>+ I'm open to meeting people</Text>
+          <Text style={breakfastStyles.createText}>{t('social.breakfast.createBtn', { defaultValue: "+ I'm open to meeting people" })}</Text>
         </LinearGradient>
       </Pressable>
 
@@ -347,8 +351,8 @@ export function BreakfastClub({
           <View style={breakfastStyles.emptyIconWrap}>
             <Coffee size={40} color={COLORS.creamMuted} strokeWidth={1.5} />
           </View>
-          <Text style={breakfastStyles.emptyTitle}>No one's posted yet</Text>
-          <Text style={breakfastStyles.emptySub}>Be the first — post what you're looking for</Text>
+          <Text style={breakfastStyles.emptyTitle}>{t('social.breakfast.emptyTitle', { defaultValue: "No one's posted yet" })}</Text>
+          <Text style={breakfastStyles.emptySub}>{t('social.breakfast.emptySub', { defaultValue: "Be the first — post what you're looking for" })}</Text>
         </View>
       ) : (
         <View style={breakfastStyles.listingsGrid}>
@@ -404,7 +408,7 @@ function MeetupCard({
 
       <View style={breakfastStyles.cardFooter}>
         <Text style={breakfastStyles.spotsText}>
-          {spotsLeft > 0 ? `${spotsLeft} spot${spotsLeft > 1 ? 's' : ''} left` : 'Full'}
+          {spotsLeft > 0 ? `${spotsLeft} ${spotsLeft > 1 ? i18n.t('social.breakfast.spotsLeft', { defaultValue: 'spots left' }) : i18n.t('social.breakfast.spotLeft', { defaultValue: 'spot left' })}` : i18n.t('social.breakfast.full', { defaultValue: 'Full' })}
         </Text>
 
         {spotsLeft > 0 && (
@@ -418,7 +422,7 @@ function MeetupCard({
               { opacity: pressed ? 0.85 : 1 },
             ]}
           >
-            <Text style={breakfastStyles.joinBtnText}>Join</Text>
+            <Text style={breakfastStyles.joinBtnText}>{i18n.t('social.join', { defaultValue: 'Join' })}</Text>
           </Pressable>
         )}
       </View>
@@ -446,12 +450,13 @@ export function HostelSocial({
   onCreateEvent,
   onJoinEvent,
 }: HostelSocialProps) {
+  const { t } = useTranslation();
   return (
     <View style={hostelStyles.container}>
       <View style={hostelStyles.header}>
-        <Text style={hostelStyles.eyebrow}>HOSTEL SOCIAL</Text>
+        <Text style={hostelStyles.eyebrow}>{t('social.hostel.eyebrow', { defaultValue: 'HOSTEL SOCIAL' })}</Text>
         <Text style={hostelStyles.title}>{hostelName}</Text>
-        <Text style={hostelStyles.meta}>{memberCount} ROAM users staying here</Text>
+        <Text style={hostelStyles.meta}>{`${memberCount} ${t('social.hostel.usersStayingHere', { defaultValue: 'ROAM users staying here' })}`}</Text>
       </View>
 
       <Pressable
@@ -461,12 +466,12 @@ export function HostelSocial({
           { opacity: pressed ? 0.85 : 1 },
         ]}
       >
-        <Text style={hostelStyles.createBtnText}>+ Post an event</Text>
+        <Text style={hostelStyles.createBtnText}>{t('social.hostel.postEvent', { defaultValue: '+ Post an event' })}</Text>
       </Pressable>
 
       {events.length === 0 ? (
         <View style={hostelStyles.empty}>
-          <Text style={hostelStyles.emptyText}>No events yet — be the first!</Text>
+          <Text style={hostelStyles.emptyText}>{t('social.hostel.noEvents', { defaultValue: 'No events yet — be the first!' })}</Text>
         </View>
       ) : (
         <View style={hostelStyles.eventsList}>
@@ -486,11 +491,11 @@ export function HostelSocial({
                   <Text style={hostelStyles.eventDesc} numberOfLines={2}>{event.description}</Text>
                 ) : null}
                 {meetingPoint ? (
-                  <Text style={hostelStyles.eventMeeting}>Meet: {meetingPoint}</Text>
+                  <Text style={hostelStyles.eventMeeting}>{`${t('social.hostel.meet', { defaultValue: 'Meet' })}: ${meetingPoint}`}</Text>
                 ) : null}
                 <View style={hostelStyles.eventFooter}>
                   <Text style={hostelStyles.eventAttendees}>
-                    {attendeeCount}/{maxPeople} going
+                    {`${attendeeCount}/${maxPeople} ${t('social.hostel.going', { defaultValue: 'going' })}`}
                   </Text>
                   {attendeeCount < maxPeople && (
                     <Pressable
@@ -503,7 +508,7 @@ export function HostelSocial({
                         { opacity: pressed ? 0.85 : 1 },
                       ]}
                     >
-                      <Text style={hostelStyles.joinBtnText}>I'm in</Text>
+                      <Text style={hostelStyles.joinBtnText}>{t('social.hostel.imIn', { defaultValue: "I'm in" })}</Text>
                     </Pressable>
                   )}
                 </View>
@@ -528,12 +533,13 @@ interface NightlifeCrewProps {
 }
 
 export function NightlifeCrew({ venues, city, onJoinVenue }: NightlifeCrewProps) {
+  const { t } = useTranslation();
   return (
     <View style={nightlifeStyles.container}>
       <View style={nightlifeStyles.header}>
-        <Text style={nightlifeStyles.eyebrow}>NIGHTLIFE CREW</Text>
-        <Text style={nightlifeStyles.title}>Tonight in {city}</Text>
-        <Text style={nightlifeStyles.sub}>Join a crew heading out. Group chat unlocks at 2+.</Text>
+        <Text style={nightlifeStyles.eyebrow}>{t('social.nightlife.eyebrow', { defaultValue: 'NIGHTLIFE CREW' })}</Text>
+        <Text style={nightlifeStyles.title}>{`${t('social.nightlife.tonightIn', { defaultValue: 'Tonight in' })} ${city}`}</Text>
+        <Text style={nightlifeStyles.sub}>{t('social.nightlife.sub', { defaultValue: 'Join a crew heading out. Group chat unlocks at 2+.' })}</Text>
       </View>
 
       <View style={nightlifeStyles.venueList}>
@@ -557,7 +563,7 @@ export function NightlifeCrew({ venues, city, onJoinVenue }: NightlifeCrewProps)
                   <Text style={nightlifeStyles.eventName}>{todayEvent}</Text>
                 )}
                 <Text style={nightlifeStyles.usersGoing}>
-                  {usersGoing} ROAM user{usersGoing !== 1 ? 's' : ''} going tonight
+                  {`${usersGoing} ${usersGoing !== 1 ? t('social.nightlife.roamUsers', { defaultValue: 'ROAM users' }) : t('social.nightlife.roamUser', { defaultValue: 'ROAM user' })} ${t('social.nightlife.goingTonight', { defaultValue: 'going tonight' })}`}
                 </Text>
               </View>
               <Pressable
@@ -570,7 +576,7 @@ export function NightlifeCrew({ venues, city, onJoinVenue }: NightlifeCrewProps)
                   { opacity: pressed ? 0.85 : 1 },
                 ]}
               >
-                <Text style={nightlifeStyles.joinBtnText}>Join</Text>
+                <Text style={nightlifeStyles.joinBtnText}>{t('social.join', { defaultValue: 'Join' })}</Text>
               </Pressable>
             </View>
           );
@@ -592,12 +598,13 @@ interface GroupTripBuilderProps {
 }
 
 export function GroupTripBuilder({ trips, onCreateTrip, onRequestJoin }: GroupTripBuilderProps) {
+  const { t } = useTranslation();
   return (
     <View style={groupStyles.container}>
       <View style={groupStyles.header}>
-        <Text style={groupStyles.eyebrow}>GROUP TRIPS</Text>
-        <Text style={groupStyles.title}>Turn solo into squad</Text>
-        <Text style={groupStyles.sub}>Post your trip, find your crew, split the costs.</Text>
+        <Text style={groupStyles.eyebrow}>{t('social.group.eyebrow', { defaultValue: 'GROUP TRIPS' })}</Text>
+        <Text style={groupStyles.title}>{t('social.group.title', { defaultValue: 'Turn solo into squad' })}</Text>
+        <Text style={groupStyles.sub}>{t('social.group.sub', { defaultValue: 'Post your trip, find your crew, split the costs.' })}</Text>
       </View>
 
       <Pressable
@@ -611,15 +618,15 @@ export function GroupTripBuilder({ trips, onCreateTrip, onRequestJoin }: GroupTr
           colors={[COLORS.sage, COLORS.sageDarkMuted]}
           style={groupStyles.createGradient}
         >
-          <Text style={groupStyles.createText}>+ Post my trip</Text>
+          <Text style={groupStyles.createText}>{t('social.group.postMyTrip', { defaultValue: '+ Post my trip' })}</Text>
         </LinearGradient>
       </Pressable>
 
       {trips.map((trip) => {
-        const t = trip as unknown as Record<string, unknown>;
-        const currentMembers = trip.currentMembers ?? t.current_members ?? [];
-        const maxMembers = trip.maxMembers ?? t.max_members ?? 6;
-        const startDate = trip.startDate ?? t.start_date ?? '';
+        const raw = trip as unknown as Record<string, unknown>;
+        const currentMembers = trip.currentMembers ?? raw.current_members ?? [];
+        const maxMembers = trip.maxMembers ?? raw.max_members ?? 6;
+        const startDate = trip.startDate ?? raw.start_date ?? '';
         const spotsLeft = maxMembers - currentMembers.length;
 
         return (
@@ -640,14 +647,14 @@ export function GroupTripBuilder({ trips, onCreateTrip, onRequestJoin }: GroupTr
             </View>
             <View style={groupStyles.cardFooter}>
               <Text style={groupStyles.members}>
-                {currentMembers.length}/{maxMembers} members \u00B7 {trip.budget}
+                {`${currentMembers.length}/${maxMembers} ${t('social.group.members', { defaultValue: 'members' })} \u00B7 ${trip.budget}`}
               </Text>
               {spotsLeft > 0 && (
                 <Pressable
                   onPress={() => onRequestJoin(trip.id)}
                   style={({ pressed }) => [groupStyles.joinBtn, { opacity: pressed ? 0.85 : 1 }]}
                 >
-                  <Text style={groupStyles.joinBtnText}>Request to join</Text>
+                  <Text style={groupStyles.joinBtnText}>{t('social.group.requestToJoin', { defaultValue: 'Request to join' })}</Text>
                 </Pressable>
               )}
             </View>
@@ -670,13 +677,14 @@ interface LocalConnectProps {
 }
 
 export function LocalConnect({ locals, city, onBook }: LocalConnectProps) {
+  const { t } = useTranslation();
   return (
     <View style={localStyles.container}>
       <View style={localStyles.header}>
-        <Text style={localStyles.eyebrow}>LOCAL CONNECT</Text>
-        <Text style={localStyles.title}>Meet a local in {city}</Text>
+        <Text style={localStyles.eyebrow}>{t('social.local.eyebrow', { defaultValue: 'LOCAL CONNECT' })}</Text>
+        <Text style={localStyles.title}>{`${t('social.local.meetALocalIn', { defaultValue: 'Meet a local in' })} ${city}`}</Text>
         <Text style={localStyles.sub}>
-          Real people, genuine connection. Not tour guides — just locals who love their city.
+          {t('social.local.sub', { defaultValue: 'Real people, genuine connection. Not tour guides — just locals who love their city.' })}
         </Text>
       </View>
 
@@ -691,19 +699,18 @@ export function LocalConnect({ locals, city, onBook }: LocalConnectProps) {
             <View style={localStyles.cardHeader}>
               <View>
                 <View style={localStyles.localNameRow}>
-                  <MapPin size={14} color={COLORS.sage} strokeWidth={2} />
+                  <MapPin size={14} color={COLORS.sage} strokeWidth={1.5} />
                   <Text style={localStyles.localName}>
                     {(local.neighborhoods ?? []).slice(0, 2).join(', ')}
                   </Text>
                 </View>
                 <Text style={localStyles.localMeta}>
-                  {yearsInCity}yr{yearsInCity !== 1 ? 's' : ''} in {city}
-                  {reviewCount > 0 ? ` · ${local.rating} (${reviewCount})` : ''}
+                  {`${yearsInCity}${yearsInCity !== 1 ? t('social.local.yrs', { defaultValue: 'yrs' }) : t('social.local.yr', { defaultValue: 'yr' })} ${t('social.local.in', { defaultValue: 'in' })} ${city}${reviewCount > 0 ? ` · ${local.rating} (${reviewCount})` : ''}`}
                 </Text>
               </View>
               <View style={localStyles.pricingBadge}>
                 <Text style={localStyles.pricingText}>
-                  {local.pricing === 'free' ? 'Free' : local.pricing === 'tip-based' ? 'Tip-based' : `$${local.fixedPrice ?? (local as unknown as Record<string, unknown>).fixed_price ?? 0}`}
+                  {local.pricing === 'free' ? t('social.local.free', { defaultValue: 'Free' }) : local.pricing === 'tip-based' ? t('social.local.tipBased', { defaultValue: 'Tip-based' }) : `$${local.fixedPrice ?? (local as unknown as Record<string, unknown>).fixed_price ?? 0}`}
                 </Text>
               </View>
             </View>
@@ -733,7 +740,7 @@ export function LocalConnect({ locals, city, onBook }: LocalConnectProps) {
             </View>
 
             <Text style={localStyles.languages}>
-              Speaks: {(local.languages ?? []).join(', ')}
+              {`${t('social.speaks', { defaultValue: 'Speaks' })}: ${(local.languages ?? []).join(', ')}`}
             </Text>
           </View>
         );
@@ -764,12 +771,13 @@ export function SafetyCircleView({
   onConfirmCheckIn,
   onSOS,
 }: SafetyCircleProps) {
+  const { t } = useTranslation();
   return (
     <View style={safetyStyles.container}>
       <View style={safetyStyles.header}>
-        <Text style={safetyStyles.eyebrow}>SAFETY CIRCLE</Text>
+        <Text style={safetyStyles.eyebrow}>{t('social.safety.eyebrow', { defaultValue: 'SAFETY CIRCLE' })}</Text>
         <Text style={safetyStyles.title}>{circleName}</Text>
-        <Text style={safetyStyles.meta}>{memberCount} trusted members</Text>
+        <Text style={safetyStyles.meta}>{`${memberCount} ${t('social.safety.trustedMembers', { defaultValue: 'trusted members' })}`}</Text>
       </View>
 
       {/* Quick actions */}
@@ -785,10 +793,10 @@ export function SafetyCircleView({
           ]}
         >
           <View style={safetyStyles.checkInBtnInner}>
-            <MapPin size={18} color={COLORS.cream} strokeWidth={2} />
-            <Text style={safetyStyles.checkInText}>Check In</Text>
+            <MapPin size={18} color={COLORS.cream} strokeWidth={1.5} />
+            <Text style={safetyStyles.checkInText}>{t('social.safety.checkIn', { defaultValue: 'Check In' })}</Text>
           </View>
-          <Text style={safetyStyles.checkInSub}>Share neighborhood + heading</Text>
+          <Text style={safetyStyles.checkInSub}>{t('social.safety.checkInSub', { defaultValue: 'Share neighborhood + heading' })}</Text>
         </Pressable>
 
         <Pressable
@@ -802,8 +810,8 @@ export function SafetyCircleView({
           ]}
         >
           <View style={safetyStyles.sosBtnInner}>
-            <AlertTriangle size={18} color={COLORS.coral} strokeWidth={2} />
-            <Text style={safetyStyles.sosBtnText}>SOS</Text>
+            <AlertTriangle size={18} color={COLORS.coral} strokeWidth={1.5} />
+            <Text style={safetyStyles.sosBtnText}>{t('social.safety.sos', { defaultValue: 'SOS' })}</Text>
           </View>
         </Pressable>
       </View>
@@ -811,7 +819,7 @@ export function SafetyCircleView({
       {/* Active check-ins */}
       {activeCheckIns.length > 0 && (
         <View style={safetyStyles.checkIns}>
-          <Text style={safetyStyles.sectionLabel}>ACTIVE CHECK-INS</Text>
+          <Text style={safetyStyles.sectionLabel}>{t('social.safety.activeCheckIns', { defaultValue: 'ACTIVE CHECK-INS' })}</Text>
           {activeCheckIns.map((ci) => {
             const expectedAt = ci.expectedCheckInAt ?? (ci as unknown as Record<string, unknown>).expected_checkin_at ?? '';
             const expectedTime = expectedAt ? new Date(expectedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
@@ -819,9 +827,9 @@ export function SafetyCircleView({
             return (
               <View key={ci.id} style={safetyStyles.checkInCard}>
                 <View style={safetyStyles.checkInInfo}>
-                  <Text style={safetyStyles.checkInHeading}>{ci.heading || `In ${ci.neighborhood}`}</Text>
+                  <Text style={safetyStyles.checkInHeading}>{ci.heading || `${t('social.safety.in', { defaultValue: 'In' })} ${ci.neighborhood}`}</Text>
                   <Text style={safetyStyles.checkInExpected}>
-                    Next check-in by {expectedTime}
+                    {`${t('social.safety.nextCheckInBy', { defaultValue: 'Next check-in by' })} ${expectedTime}`}
                   </Text>
                 </View>
                 <Pressable
@@ -835,8 +843,8 @@ export function SafetyCircleView({
                   ]}
                 >
                   <View style={safetyStyles.confirmBtnInner}>
-                    <Check size={16} color={COLORS.bg} strokeWidth={2} />
-                    <Text style={safetyStyles.confirmText}>I'm safe</Text>
+                    <Check size={16} color={COLORS.bg} strokeWidth={1.5} />
+                    <Text style={safetyStyles.confirmText}>{t('social.safety.imSafe', { defaultValue: "I'm safe" })}</Text>
                   </View>
                 </Pressable>
               </View>
@@ -846,7 +854,7 @@ export function SafetyCircleView({
       )}
 
       <Text style={safetyStyles.privacyNote}>
-        Location is always neighborhood-level. Never exact. You can go invisible anytime.
+        {t('social.safety.privacyNote', { defaultValue: 'Location is always neighborhood-level. Never exact. You can go invisible anytime.' })}
       </Text>
     </View>
   );
@@ -878,7 +886,7 @@ const squadStyles = StyleSheet.create({
   avatarWrap: { marginBottom: 4 } as ViewStyle,
   displayName: { fontFamily: FONTS.bodySemiBold, fontSize: 22, color: COLORS.cream } as TextStyle,
   metaText: { fontFamily: FONTS.mono, fontSize: 12, color: COLORS.creamMuted, textTransform: 'capitalize' } as TextStyle,
-  bio: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.creamMuted, textAlign: 'center', fontStyle: 'italic', lineHeight: 21 } as TextStyle,
+  bio: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.creamMuted, textAlign: 'center', lineHeight: 21 } as TextStyle,
   tagsSection: { gap: SPACING.xs } as ViewStyle,
   tagsLabel: { fontFamily: FONTS.mono, fontSize: 10, color: COLORS.creamMuted, letterSpacing: 2 } as TextStyle,
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.xs } as ViewStyle,

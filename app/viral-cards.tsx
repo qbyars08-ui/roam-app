@@ -16,6 +16,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
 
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import { parseItinerary, type Itinerary } from '../lib/types/itinerary';
@@ -30,6 +31,7 @@ import { withComingSoon } from '../lib/with-coming-soon';
 type TabId = 'reveal' | 'cost' | 'reality';
 
 function ViralCardsScreen() {
+  const { t } = useTranslation();
   const { tripId } = useLocalSearchParams<{ tripId?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -55,8 +57,8 @@ function ViralCardsScreen() {
           <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
         <View style={styles.empty}>
-          <Text style={styles.emptyTitle}>No trip to card-ify</Text>
-          <Text style={styles.emptySub}>Open one of your trips first, then come back to make it shareable.</Text>
+          <Text style={styles.emptyTitle}>{t('viralCards.noTrip', { defaultValue: 'No trip to card-ify' })}</Text>
+          <Text style={styles.emptySub}>{t('viralCards.noTripSub', { defaultValue: 'Open one of your trips first, then come back to make it shareable.' })}</Text>
         </View>
       </View>
     );
@@ -69,7 +71,7 @@ function ViralCardsScreen() {
           <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
         <View style={styles.empty}>
-          <Text style={styles.emptyTitle}>Building your card...</Text>
+          <Text style={styles.emptyTitle}>{t('viralCards.building', { defaultValue: 'Building your card...' })}</Text>
         </View>
       </View>
     );
@@ -83,16 +85,16 @@ function ViralCardsScreen() {
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <ChevronLeft size={24} color={COLORS.cream} />
         </Pressable>
-        <Text style={styles.headerTitle}>Viral Cards</Text>
+        <Text style={styles.headerTitle}>{t('viralCards.title', { defaultValue: 'Viral Cards' })}</Text>
         <View style={styles.backBtn} />
       </View>
 
       {/* Tabs */}
       <View style={styles.tabs}>
         {([
-          { id: 'reveal' as TabId, label: 'Trip Reveal' },
-          { id: 'cost' as TabId, label: 'Cost' },
-          { id: 'reality' as TabId, label: 'AI vs Reality' },
+          { id: 'reveal' as TabId, label: t('viralCards.tabReveal', { defaultValue: 'Trip Reveal' }) },
+          { id: 'cost' as TabId, label: t('viralCards.tabCost', { defaultValue: 'Cost' }) },
+          { id: 'reality' as TabId, label: t('viralCards.tabReality', { defaultValue: 'AI vs Reality' }) },
         ] as const).map((tab) => (
           <Pressable
             key={tab.id}
