@@ -20,17 +20,16 @@ export default function TabsLayout() {
         screenOptions={{
           headerShown: false,
           tabBarHideOnKeyboard: true,
-          animation: 'shift',
           tabBarStyle: { display: 'none' },
           lazy: true,
         }}
       >
         {/* ── Visible tabs (5) ── */}
-        <Tabs.Screen name="plan" options={{ title: 'Plan', lazy: false }} />
-        <Tabs.Screen name="pulse" options={{ title: 'Pulse', lazy: true }} />
-        <Tabs.Screen name="flights" options={{ title: 'Flights', lazy: true }} />
-        <Tabs.Screen name="people" options={{ title: 'People', lazy: true }} />
-        <Tabs.Screen name="prep" options={{ title: 'Prep', lazy: false }} />
+        <Tabs.Screen name="plan" options={{ title: 'Plan' }} />
+        <Tabs.Screen name="pulse" options={{ title: 'Pulse' }} />
+        <Tabs.Screen name="flights" options={{ title: 'Flights' }} />
+        <Tabs.Screen name="people" options={{ title: 'People' }} />
+        <Tabs.Screen name="prep" options={{ title: 'Prep' }} />
         {/* ── Hidden (still routable, not in nav pill) ── */}
         <Tabs.Screen name="pets" options={{ href: null }} />
         <Tabs.Screen name="index" options={{ href: null }} />
