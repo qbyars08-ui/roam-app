@@ -15,7 +15,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from '../lib/haptics';
 import { ArrowLeft, Send } from 'lucide-react-native';
@@ -26,10 +26,19 @@ import {
   applyAnswer,
   hasAllRequiredForGeneration,
   buildCraftContextBlock,
+  buildFollowUpMessages,
   type CraftState,
+  type CraftPreferences,
 } from '../lib/craft-engine';
-import { CRAFT_BUILDING_MESSAGE, CRAFT_ITINERARY_INTRO, CRAFT_FOLLOW_UP_PROMPT } from '../lib/craft-prompts';
-import { generateCraftItineraryStreaming, TripLimitReachedError } from '../lib/claude';
+import { CRAFT_BUILDING_MESSAGE, CRAFT_ITINERARY_INTRO, CRAFT_FOLLOW_UP_PROMPT, CRAFT_STEPS } from '../lib/craft-prompts';
+import { generateCraftItineraryStreaming, callClaudeWithMessages, TripLimitReachedError } from '../lib/claude';
+import { CRAFT_FOLLOW_UP_SYSTEM } from '../lib/claude';
+import {
+  updateProfileFromCraft,
+  craftPreferencesToLearned,
+  getCraftLearnedPreferences,
+  getWelcomeBackMessage,
+} from '../lib/craft-profile';
 import { parseItinerary } from '../lib/types/itinerary';
 import type { Itinerary } from '../lib/types/itinerary';
 import CraftMessage from '../components/CraftMessage';
@@ -46,12 +55,17 @@ import TripLimitBanner from '../components/monetization/TripLimitBanner';
 export default function CraftSessionScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [state, setState] = useState<CraftState>(getInitialCraftState);
+  const params = useLocalSearchParams<{ sessionId?: string }>();
+  const sessionId = typeof params.sessionId === 'string' ? params.sessionId : undefined;
+
+  const [state, setState] = useState<CraftState>(getInitialCraftState());
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [parsedItinerary, setParsedItinerary] = useState<Itinerary | null>(null);
+  const [welcomeBackMessage, setWelcomeBackMessage] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
+  const loadedSessionRef = useRef(false);
 
   const session = useAppStore((s) => s.session);
   const addTrip = useAppStore((s) => s.addTrip);
@@ -65,6 +79,59 @@ export default function CraftSessionScreen() {
   const isBuilding = state.phase === 'gathering' && state.currentStepId === null && canGenerate;
   const isDone = state.phase === 'done' && parsedItinerary;
   const isFollowUp = state.phase === 'follow_up';
+
+  // Load saved session by sessionId (resume)
+  useEffect(() => {
+    if (!sessionId || !session?.user?.id || loadedSessionRef.current) return;
+    loadedSessionRef.current = true;
+    (async () => {
+      const { data: row } = await supabase
+        .from('craft_sessions')
+        .select('conversation, preferences_captured, generated_itinerary, destination')
+        .eq('id', sessionId)
+        .eq('user_id', session.user.id)
+        .single();
+      if (!row) return;
+      const conv = (row.conversation as Array<{ role: string; content: string }>) ?? [];
+      const prefs = (row.preferences_captured as CraftPreferences) ?? {};
+      const genJson = row.generated_itinerary as string | null;
+      let phase: CraftState['phase'] = 'gathering';
+      let currentStepId: CraftState['currentStepId'] =
+        conv.length < CRAFT_STEPS.length ? (CRAFT_STEPS[conv.length]?.id ?? null) : null;
+      if (conv.length >= CRAFT_STEPS.length && !genJson) {
+        phase = 'building';
+        currentStepId = null;
+      }
+      if (genJson) {
+        phase = 'done';
+        currentStepId = null;
+        try {
+          const it = parseItinerary(typeof genJson === 'string' ? genJson : JSON.stringify(genJson));
+          setParsedItinerary(it);
+        } catch {
+          // ignore parse error
+        }
+      }
+      setState({
+        messages: conv.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+        currentStepId,
+        preferences: prefs,
+        phase,
+        generatedItineraryJson: genJson,
+        followUpMessages: [],
+        sessionId,
+      });
+    })();
+  }, [sessionId, session?.user?.id]);
+
+  // Welcome-back: load learned preferences when starting fresh (no sessionId)
+  useEffect(() => {
+    if (sessionId || !session?.user?.id || welcomeBackMessage !== null) return;
+    getCraftLearnedPreferences(session.user.id).then((learned) => {
+      const msg = getWelcomeBackMessage(learned);
+      setWelcomeBackMessage(msg);
+    }).catch(() => {});
+  }, [sessionId, session?.user?.id, welcomeBackMessage]);
 
   // Start building when we have all steps answered and no current step (once)
   const hasStartedBuild = useRef(false);
@@ -95,6 +162,7 @@ export default function CraftSessionScreen() {
             mode: 'craft',
           });
           if (session?.user?.id && fullText) {
+            const learned = craftPreferencesToLearned(state.preferences);
             void (async () => {
               try {
                 await supabase.from('craft_sessions').insert({
@@ -104,6 +172,9 @@ export default function CraftSessionScreen() {
                   generated_itinerary: JSON.parse(fullText),
                   preferences_captured: state.preferences,
                 });
+                if (Object.keys(learned).length > 0) {
+                  await updateProfileFromCraft(session.user.id, learned);
+                }
               } catch {
                 // ignore persistence failure
               }
@@ -135,11 +206,31 @@ export default function CraftSessionScreen() {
       const next = applyAnswer(state, state.currentStepId, text);
       setState(next);
       setInput('');
-    } else if (isFollowUp) {
+    } else if (isFollowUp && parsedItinerary) {
       setInput('');
-      // TODO: send follow-up to Claude and append response (callClaudeWithMessages)
+      setError(null);
+      setLoading(true);
+      const itinerarySummary = `${parsedItinerary.destination}: ${parsedItinerary.tagline}. ${parsedItinerary.days?.length ?? 0} days. Budget: ${parsedItinerary.totalBudget}.`;
+      const messages = buildFollowUpMessages(state, itinerarySummary, text);
+      callClaudeWithMessages(CRAFT_FOLLOW_UP_SYSTEM, messages, false)
+        .then((res) => {
+          setState((s) => ({
+            ...s,
+            followUpMessages: [
+              ...s.followUpMessages,
+              { role: 'user', content: text },
+              { role: 'assistant', content: res.content },
+            ],
+          }));
+        })
+        .catch((err) => {
+          setError(err instanceof Error ? err.message : 'Something went wrong');
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     }
-  }, [input, isGathering, isFollowUp, state]);
+  }, [input, isGathering, isFollowUp, state, parsedItinerary]);
 
   const handleBack = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -198,34 +289,93 @@ export default function CraftSessionScreen() {
         <Text style={styles.headerTitle}>Plan together</Text>
       </View>
 
-      {isDone && parsedItinerary ? (
-        <ScrollView
-          ref={scrollRef}
-          style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
+      {(isDone || isFollowUp) && parsedItinerary ? (
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={insets.top + 56}
         >
-          <Text style={styles.introText}>{CRAFT_ITINERARY_INTRO(parsedItinerary.destination)}</Text>
-          <CraftItinerary itinerary={parsedItinerary} />
-          <View style={styles.actions}>
-            <Pressable
-              onPress={handleSaveTrip}
-              style={({ pressed }) => [styles.primaryBtn, { opacity: pressed ? 0.9 : 1 }]}
-              accessibilityLabel="Save trip and view full itinerary"
-              accessibilityRole="button"
-            >
-              <Text style={styles.primaryBtnText}>Save trip</Text>
-            </Pressable>
-            <Pressable
-              onPress={handleStartFollowUp}
-              style={({ pressed }) => [styles.secondaryBtn, { opacity: pressed ? 0.9 : 1 }]}
-              accessibilityLabel="Tell ROAM what you would change"
-              accessibilityRole="button"
-            >
-              <Text style={styles.secondaryBtnText}>{CRAFT_FOLLOW_UP_PROMPT}</Text>
-            </Pressable>
-          </View>
-        </ScrollView>
+          <ScrollView
+            ref={scrollRef}
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <Text style={styles.introText}>{CRAFT_ITINERARY_INTRO(parsedItinerary.destination)}</Text>
+            <CraftItinerary itinerary={parsedItinerary} />
+            {isFollowUp ? (
+              <>
+                {state.followUpMessages.length > 0 ? (
+                  <View style={styles.followUpBlock}>
+                    {state.followUpMessages.map((msg, i) => (
+                      <CraftMessage key={i} role={msg.role} content={msg.content} />
+                    ))}
+                  </View>
+                ) : null}
+              </>
+            ) : (
+              <View style={styles.actions}>
+                <Pressable
+                  onPress={handleSaveTrip}
+                  style={({ pressed }) => [styles.primaryBtn, { opacity: pressed ? 0.9 : 1 }]}
+                  accessibilityLabel="Save trip and view full itinerary"
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.primaryBtnText}>Save trip</Text>
+                </Pressable>
+                <Pressable
+                  onPress={handleStartFollowUp}
+                  style={({ pressed }) => [styles.secondaryBtn, { opacity: pressed ? 0.9 : 1 }]}
+                  accessibilityLabel="Tell ROAM what you would change"
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.secondaryBtnText}>{CRAFT_FOLLOW_UP_PROMPT}</Text>
+                </Pressable>
+              </View>
+            )}
+          </ScrollView>
+          {isFollowUp && (
+            <>
+              <View style={styles.actions}>
+                <Pressable
+                  onPress={handleSaveTrip}
+                  style={({ pressed }) => [styles.primaryBtn, { opacity: pressed ? 0.9 : 1 }]}
+                  accessibilityLabel="Save trip"
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.primaryBtnText}>Save trip</Text>
+                </Pressable>
+              </View>
+              {error ? (
+                <View style={styles.errorBanner}>
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              ) : null}
+              <View style={styles.inputRow}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="What would you change?"
+                  placeholderTextColor={COLORS.creamDim}
+                  value={input}
+                  onChangeText={setInput}
+                  onSubmitEditing={handleSubmit}
+                  editable={!loading}
+                  multiline
+                  maxLength={2000}
+                />
+                <Pressable
+                  onPress={handleSubmit}
+                  style={({ pressed }) => [styles.sendBtn, { opacity: pressed ? 0.8 : 1 }]}
+                  accessibilityLabel="Send"
+                  accessibilityRole="button"
+                >
+                  <Send size={20} color={COLORS.bg} strokeWidth={1.5} />
+                </Pressable>
+              </View>
+            </>
+          )}
+        </KeyboardAvoidingView>
       ) : isBuilding || loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={COLORS.gold} />
@@ -244,6 +394,11 @@ export default function CraftSessionScreen() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
+            {welcomeBackMessage ? (
+              <View style={styles.welcomeBackBlock}>
+                <Text style={styles.welcomeBackText}>{welcomeBackMessage}</Text>
+              </View>
+            ) : null}
             {state.messages.length > 0 ? (
               state.messages.map((msg, i) => (
                 <CraftMessage key={i} role={msg.role} content={msg.content} />
@@ -413,5 +568,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.gold,
     textAlign: 'center',
+  } as TextStyle,
+  followUpBlock: {
+    marginTop: SPACING.lg,
+    gap: SPACING.sm,
+  } as ViewStyle,
+  welcomeBackBlock: {
+    marginBottom: SPACING.lg,
+    padding: SPACING.md,
+    backgroundColor: COLORS.sageVeryFaint,
+    borderRadius: RADIUS.lg,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.sage,
+  } as ViewStyle,
+  welcomeBackText: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.cream,
+    lineHeight: 21,
   } as TextStyle,
 });

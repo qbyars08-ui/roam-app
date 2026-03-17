@@ -32,6 +32,10 @@ export interface CraftState {
   preferences: CraftPreferences;
   phase: 'gathering' | 'building' | 'done' | 'follow_up';
   generatedItineraryJson: string | null;
+  /** Follow-up thread after itinerary is shown (user/assistant pairs) */
+  followUpMessages: CraftMessage[];
+  /** When resuming, the saved session id */
+  sessionId: string | null;
 }
 
 const STEP_ORDER: CraftStepId[] = [
@@ -47,13 +51,16 @@ const STEP_ORDER: CraftStepId[] = [
   'perfect_trip',
 ];
 
-export function getInitialCraftState(): CraftState {
+export function getInitialCraftState(overrides?: Partial<CraftState>): CraftState {
   return {
     messages: [],
     currentStepId: 'destination',
     preferences: {},
     phase: 'gathering',
     generatedItineraryJson: null,
+    followUpMessages: [],
+    sessionId: null,
+    ...overrides,
   };
 }
 
@@ -166,5 +173,27 @@ export function getPreferencesForProfile(state: CraftState): Record<string, unkn
   if (p.dietaryHealth) out.dietaryRestrictions = p.dietaryHealth;
   if (p.travelParty) out.travelCompanions = p.travelParty;
   if (p.whatMatters) out.whatMattersMost = p.whatMatters;
+  return out;
+}
+
+/** Build messages array for CRAFT follow-up: context + itinerary summary + thread + new user message */
+export function buildFollowUpMessages(
+  state: CraftState,
+  itinerarySummary: string,
+  newUserMessage: string
+): Array<{ role: 'user' | 'assistant'; content: string }> {
+  const out: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+  out.push({
+    role: 'assistant',
+    content: `Here is the traveler's context from our planning conversation:\n${buildCraftContextBlock(state)}`,
+  });
+  out.push({
+    role: 'assistant',
+    content: `Here is the itinerary I generated for them:\n${itinerarySummary}`,
+  });
+  for (const msg of state.followUpMessages) {
+    out.push({ role: msg.role, content: msg.content });
+  }
+  out.push({ role: 'user', content: newUserMessage });
   return out;
 }
