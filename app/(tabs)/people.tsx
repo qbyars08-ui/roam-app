@@ -36,7 +36,9 @@ import {
   Utensils,
   Wallet,
 } from 'lucide-react-native';
+import { Share } from 'react-native';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAppStore } from '../../lib/store';
 import { useSocialProfile } from '../../lib/hooks/useSocialProfile';
 import { useTripPresence } from '../../lib/hooks/useTripPresence';
@@ -217,6 +219,7 @@ type MockRoamer = {
   arrivalDate: string;
   departureDate: string;
   currentlyThere: boolean;
+  isDemo?: boolean;
 };
 
 function getMockRoamers(destination: string): MockRoamer[] {
@@ -233,6 +236,7 @@ function getMockRoamers(destination: string): MockRoamer[] {
       arrivalDate: new Date(Date.now() + 2 * 86400000).toISOString(),
       departureDate: new Date(Date.now() + 14 * 86400000).toISOString(),
       currentlyThere: false,
+      isDemo: true,
     },
     {
       id: 'mock-2',
@@ -246,6 +250,7 @@ function getMockRoamers(destination: string): MockRoamer[] {
       arrivalDate: new Date(Date.now() - 3 * 86400000).toISOString(),
       departureDate: new Date(Date.now() + 7 * 86400000).toISOString(),
       currentlyThere: true,
+      isDemo: true,
     },
     {
       id: 'mock-3',
@@ -259,6 +264,7 @@ function getMockRoamers(destination: string): MockRoamer[] {
       arrivalDate: new Date(Date.now() + 5 * 86400000).toISOString(),
       departureDate: new Date(Date.now() + 12 * 86400000).toISOString(),
       currentlyThere: false,
+      isDemo: true,
     },
   ];
 }
@@ -400,6 +406,12 @@ DestinationChip.displayName = 'DestinationChip';
 // =============================================================================
 // SUB-COMPONENT: RoamerProfileCard
 // =============================================================================
+const DemoBadge = () => (
+  <View style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, backgroundColor: COLORS.bgElevated, borderWidth: 1, borderColor: COLORS.border }}>
+    <Text style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.creamMuted, letterSpacing: 1, textTransform: 'uppercase' }}>Demo</Text>
+  </View>
+);
+
 const RoamerProfileCard = React.memo<{
   roamer: MockRoamer;
   compatibilityScore: number;
@@ -434,6 +446,7 @@ const RoamerProfileCard = React.memo<{
       <View style={styles.roamerCardHeader}>
         <View style={styles.roamerNameRow}>
           <Text style={styles.roamerName}>{roamer.name}</Text>
+          {roamer.isDemo && <DemoBadge />}
           <Text style={styles.roamerScore}>{compatibilityScore}%</Text>
         </View>
         <View style={styles.roamerMeta}>
@@ -483,7 +496,7 @@ RoamerProfileCard.displayName = 'RoamerProfileCard';
 const EmptyMatchState = React.memo<{ destination: string }>(({ destination }) => (
   <View style={styles.emptyState}>
     <Text style={styles.emptyText}>
-      No other ROAMers heading to {destination} yet. You'd be the first.
+      You'd be the first ROAMer in {destination}.{'\n'}Add your trip and someone will find you.
     </Text>
     <Pressable
       accessibilityLabel="Invite a friend"
@@ -564,11 +577,19 @@ export default function PeopleTab() {
   );
 
   // ---------------------------------------------------------------------------
-  // Analytics
+  // Load persisted connections + analytics
   // ---------------------------------------------------------------------------
   useEffect(() => {
     track({ type: 'screen_view', screen: 'people_tab' }).catch(() => {});
     trackEvent('people_tab_opened').catch(() => {});
+    // Load persisted connections
+    AsyncStorage.getItem('roam_connections').then((raw) => {
+      if (raw) {
+        try {
+          setConnections(JSON.parse(raw));
+        } catch { /* ignore */ }
+      }
+    }).catch(() => {});
   }, []);
 
   // ---------------------------------------------------------------------------
@@ -632,9 +653,16 @@ export default function PeopleTab() {
 
   const handleCompleteProfile = useCallback(async () => {
     setSaving(true);
+    console.log('[People] Starting profile creation...');
+    console.log('[People] Draft:', JSON.stringify({ name: draft.name, homeCity: draft.homeCity, styles: draft.travelStyles, langs: draft.languages }));
     try {
+      const session = useAppStore.getState().session;
+      console.log('[People] Session exists:', !!session, 'User ID:', session?.user?.id ?? 'none');
+
       const { travelStyle, vibeTags } = resolveProfileFromDraft(draft.travelStyles);
-      const result = await upsert({
+      console.log('[People] Resolved style:', travelStyle, 'vibeTags:', vibeTags);
+
+      const profileData: Partial<SocialProfile> = {
         displayName: draft.name.trim() || 'Traveler',
         bio: draft.bio.trim(),
         languages: draft.languages.length > 0 ? draft.languages : ['English'],
@@ -642,35 +670,77 @@ export default function PeopleTab() {
         travelStyle,
         avatarEmoji: '',
         ageRange: '25-30',
-      } as Partial<SocialProfile>);
+      };
+
+      let result: SocialProfile | null = null;
+      try {
+        result = await upsert(profileData);
+        console.log('[People] Supabase upsert result:', result ? 'SUCCESS' : 'NULL');
+      } catch (upsertErr: unknown) {
+        const msg = upsertErr instanceof Error ? upsertErr.message : String(upsertErr);
+        console.log('[People] Supabase upsert failed:', msg);
+        // Fallback: save locally if Supabase fails (guest mode or no tables)
+        if (msg.includes('Not authenticated') || msg.includes('sign in')) {
+          console.log('[People] Guest mode — saving profile locally');
+          const localProfile: SocialProfile = {
+            id: `local-${Date.now()}`,
+            userId: session?.user?.id ?? `guest-${Date.now()}`,
+            ...profileData as Omit<SocialProfile, 'id' | 'userId' | 'createdAt' | 'privacy' | 'verified'>,
+            displayName: profileData.displayName ?? 'Traveler',
+            bio: profileData.bio ?? '',
+            languages: profileData.languages ?? ['English'],
+            vibeTags: profileData.vibeTags ?? [],
+            travelStyle: profileData.travelStyle ?? 'comfort',
+            avatarEmoji: '',
+            ageRange: profileData.ageRange ?? '25-30',
+            verified: false,
+            privacy: { ...DEFAULT_PRIVACY },
+            createdAt: new Date().toISOString(),
+          };
+          useAppStore.getState().setSocialProfile(localProfile);
+          result = localProfile;
+        }
+      }
+
       if (!result) {
         Alert.alert('Couldn\u2019t save profile', 'Check your connection and try again.');
         return;
       }
+
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      console.log('[People] Profile saved successfully!');
+
       trackEvent('profile_created', {
         name: draft.name.trim(),
         homeCity: draft.homeCity.trim(),
         travelStyles: draft.travelStyles,
         languages: draft.languages,
       }).catch(() => {});
+
       // Post first trip if provided
       if (draft.firstTripDestination.trim()) {
         const arrival = draft.firstTripStartDate || new Date().toISOString();
         const departure = draft.firstTripEndDate ||
           new Date(Date.now() + 7 * 86400000).toISOString();
-        await postPresence({
-          destination: draft.firstTripDestination.trim(),
-          arrivalDate: arrival,
-          departureDate: departure,
-          lookingFor: vibeTags,
-        });
+        try {
+          await postPresence({
+            destination: draft.firstTripDestination.trim(),
+            arrivalDate: arrival,
+            departureDate: departure,
+            lookingFor: vibeTags,
+          });
+          console.log('[People] Trip presence posted for', draft.firstTripDestination);
+        } catch {
+          console.log('[People] Trip presence post failed (non-blocking)');
+        }
         trackEvent('trip_added_to_presence', {
           destination: draft.firstTripDestination.trim(),
         }).catch(() => {});
       }
-    } catch {
-      Alert.alert('Something went wrong', 'Please try again.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('[People] Profile creation error:', msg);
+      Alert.alert('Something went wrong', msg);
     } finally {
       setSaving(false);
     }
@@ -687,7 +757,12 @@ export default function PeopleTab() {
   const handleConnect = useCallback(async (roamerId: string) => {
     const current = connections[roamerId] ?? 'none';
     if (current !== 'none') return;
-    setConnections((prev) => ({ ...prev, [roamerId]: 'requested' }));
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const updated = { ...connections, [roamerId]: 'requested' as ConnectionStatus };
+    setConnections(updated);
+    // Persist connections to AsyncStorage
+    AsyncStorage.setItem('roam_connections', JSON.stringify(updated)).catch(() => {});
+    console.log('[People] Connection requested:', roamerId);
     trackEvent('connect_tapped', { roamerId }).catch(() => {});
   }, [connections]);
 
@@ -1051,6 +1126,30 @@ export default function PeopleTab() {
           />
         </View>
       </View>
+
+      {/* Share Profile Link */}
+      {socialProfile && (
+        <Pressable
+          onPress={async () => {
+            await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            const userId = socialProfile.userId ?? socialProfile.id;
+            const url = `https://roamapp.app/profile/${userId}`;
+            try {
+              await Share.share({
+                message: `Check out my travel profile on ROAM: ${url}`,
+                url,
+              });
+              trackEvent('profile_shared').catch(() => {});
+            } catch { /* cancelled */ }
+          }}
+          accessibilityLabel="Share your travel profile"
+          style={({ pressed }) => [styles.shareBtn, pressed && styles.pressed]}
+        >
+          <Send size={14} color={COLORS.sage} strokeWidth={2} />
+          <Text style={styles.shareBtnText}>Share your travel profile</Text>
+          <ArrowRight size={12} color={COLORS.sage} strokeWidth={2} />
+        </Pressable>
+      )}
 
       {/* Section 1: Also Going */}
       {alsoGoing.length > 0 && (
@@ -1417,6 +1516,27 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontStyle: 'italic',
     color: COLORS.cream,
+  },
+
+  // Share button
+  shareBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    marginHorizontal: MAGAZINE.padding,
+    marginBottom: SPACING.md,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+    backgroundColor: COLORS.sageVeryFaint,
+  },
+  shareBtnText: {
+    flex: 1,
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 13,
+    color: COLORS.sage,
   },
 
   // ---------------------------------------------------------------------------

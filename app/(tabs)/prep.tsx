@@ -20,6 +20,7 @@ import { useNetInfo } from '@react-native-community/netinfo';
 import Svg, { Circle } from 'react-native-svg';
 
 const AnimatedSvgCircle = Animated.createAnimatedComponent(Circle);
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from '../../lib/haptics';
 import { pronounce } from '../../lib/elevenlabs';
 import {
@@ -52,6 +53,7 @@ import {
   Coffee,
   ShieldCheck,
   ChevronRight,
+  Download,
   type LucideIcon,
 } from 'lucide-react-native';
 
@@ -2086,6 +2088,47 @@ function PrepScreen() {
               <Text style={[styles.bodyIntelCtaTitle, { color: COLORS.gold }]}>Before You Land</Text>
               <Text style={styles.bodyIntelCtaSubtitle}>
                 Pre-departure brief: weather, currency, time zone & essentials
+              </Text>
+            </View>
+            <ChevronRight size={18} color={COLORS.creamMuted} />
+          </Pressable>
+        )}
+
+        {!hasNoData && (
+          <Pressable
+            onPress={async () => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              try {
+                const cacheKey = `@roam/prep_offline_${selectedDest}`;
+                const payload = {
+                  destination: selectedDest,
+                  emergency,
+                  safety,
+                  cultural,
+                  medicalGuide,
+                  savedAt: new Date().toISOString(),
+                };
+                await AsyncStorage.setItem(cacheKey, JSON.stringify(payload));
+                // eslint-disable-next-line no-alert
+                alert(`${selectedDest} prep data saved for offline use.`);
+              } catch {
+                // eslint-disable-next-line no-alert
+                alert('Could not save offline data. Try again.');
+              }
+            }}
+            style={({ pressed }) => [
+              styles.bodyIntelCta,
+              { borderLeftColor: COLORS.sage, marginTop: SPACING.md },
+              pressed && { opacity: 0.7 },
+            ]}
+            accessibilityLabel={`Download ${selectedDest} prep data for offline use`}
+            accessibilityRole="button"
+          >
+            <Download size={20} color={COLORS.sage} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.bodyIntelCtaTitle, { color: COLORS.sage }]}>Download for Offline</Text>
+              <Text style={styles.bodyIntelCtaSubtitle}>
+                Save {selectedDest} intel to your device — no WiFi needed later
               </Text>
             </View>
             <ChevronRight size={18} color={COLORS.creamMuted} />
