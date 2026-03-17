@@ -2381,6 +2381,80 @@ function PrepScreen() {
               </View>
             )}
 
+            {/* ── Quick Navigation Links ── */}
+            <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg, gap: SPACING.sm }}>
+              {/* Before You Land — show when user has an upcoming trip */}
+              {activeTrip && (
+                <Pressable
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    router.push('/before-you-land' as never);
+                  }}
+                  style={({ pressed }) => [
+                    styles.prepNavCard,
+                    { opacity: pressed ? 0.85 : 1 },
+                  ]}
+                  accessibilityLabel="Before You Land"
+                  accessibilityRole="button"
+                >
+                  <View style={styles.prepNavCardLeft}>
+                    <Plane size={20} color={COLORS.sage} strokeWidth={1.5} />
+                    <View>
+                      <Text style={styles.prepNavCardTitle}>Before You Land</Text>
+                      <Text style={styles.prepNavCardSub}>Pre-departure briefing for {selectedDest}</Text>
+                    </View>
+                  </View>
+                  <ChevronRight size={18} color={COLORS.muted} strokeWidth={1.5} />
+                </Pressable>
+              )}
+
+              {/* Body Intel — health intelligence */}
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push('/body-intel' as never);
+                }}
+                style={({ pressed }) => [
+                  styles.prepNavCard,
+                  { opacity: pressed ? 0.85 : 1 },
+                ]}
+                accessibilityLabel="Body Intel"
+                accessibilityRole="button"
+              >
+                <View style={styles.prepNavCardLeft}>
+                  <Stethoscope size={20} color={COLORS.sage} strokeWidth={1.5} />
+                  <View>
+                    <Text style={styles.prepNavCardTitle}>Body Intel</Text>
+                    <Text style={styles.prepNavCardSub}>Destination-aware health intelligence</Text>
+                  </View>
+                </View>
+                <ChevronRight size={18} color={COLORS.muted} strokeWidth={1.5} />
+              </Pressable>
+
+              {/* Airport Guide */}
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push('/airport-guide' as never);
+                }}
+                style={({ pressed }) => [
+                  styles.prepNavCard,
+                  { opacity: pressed ? 0.85 : 1 },
+                ]}
+                accessibilityLabel="Airport Guide"
+                accessibilityRole="button"
+              >
+                <View style={styles.prepNavCardLeft}>
+                  <Luggage size={20} color={COLORS.sage} strokeWidth={1.5} />
+                  <View>
+                    <Text style={styles.prepNavCardTitle}>Airport Guide</Text>
+                    <Text style={styles.prepNavCardSub}>Layover tips, lounges, and terminal maps</Text>
+                  </View>
+                </View>
+                <ChevronRight size={18} color={COLORS.muted} strokeWidth={1.5} />
+              </Pressable>
+            </View>
+
             {/* I Am Here Now — ALWAYS first, works offline */}
             <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}>
               <IAmHereNow
@@ -3701,6 +3775,34 @@ const styles = StyleSheet.create({
   } as TextStyle,
   geoCoords: {
     fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.muted,
+    marginTop: 2,
+  } as TextStyle,
+  prepNavCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingVertical: 14,
+    paddingHorizontal: SPACING.md,
+  } as ViewStyle,
+  prepNavCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    flex: 1,
+  } as ViewStyle,
+  prepNavCardTitle: {
+    fontFamily: FONTS.headerMedium,
+    fontSize: 15,
+    color: COLORS.cream,
+  } as TextStyle,
+  prepNavCardSub: {
+    fontFamily: FONTS.body,
     fontSize: 12,
     color: COLORS.muted,
     marginTop: 2,

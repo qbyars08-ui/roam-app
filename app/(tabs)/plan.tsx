@@ -529,10 +529,10 @@ export default function PlanScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (id === 'flights') {
       router.push('/(tabs)/flights' as never);
-    } else if (id === 'hotels' || id === 'food') {
-      // Navigate to plan with context
-      setShowGenerator(true);
-      setGenerateMode('quick');
+    } else if (id === 'hotels') {
+      router.push('/(tabs)/stays' as never);
+    } else if (id === 'food') {
+      router.push('/(tabs)/food' as never);
     }
   }, [router, setGenerateMode]);
 
@@ -697,7 +697,7 @@ export default function PlanScreen() {
   }, [router]);
 
   // ── Render: Generator mode ──
-  if (showGenerator || !hasTrips) {
+  if (showGenerator) {
     const renderGeneratorContent = () => {
       if (generateMode === null) {
         return (
@@ -810,13 +810,15 @@ export default function PlanScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>{t('plan.yourTrips')}</Text>
-          <Text style={styles.headerSub}>
-            {t('plan.tripsPlanned', { count: sortedTrips.length })}
-          </Text>
-        </View>
+        {/* Header — only when the user has trips */}
+        {hasTrips && (
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>{t('plan.yourTrips')}</Text>
+            <Text style={styles.headerSub}>
+              {t('plan.tripsPlanned', { count: sortedTrips.length })}
+            </Text>
+          </View>
+        )}
 
         {/* ── Travel-state adaptive hero section ── */}
         {stage === 'DREAMING' && !showGenerator && (
@@ -926,8 +928,19 @@ export default function PlanScreen() {
         {/* Destination Intel (shows when planning) */}
         {planDestination && !showGenerator && (sonarDest.data || destWeather || destEvents) && (
           <View style={styles.destIntel}>
-            <Text style={styles.destIntelLabel}>DESTINATION INTEL</Text>
-            <Text style={styles.destIntelHeading}>{planDestination}</Text>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push({ pathname: '/destination/[name]', params: { name: planDestination } } as never);
+              }}
+              style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
+            >
+              <Text style={styles.destIntelLabel}>DESTINATION INTEL</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.xs }}>
+                <Text style={styles.destIntelHeading}>{planDestination}</Text>
+                <ChevronRight size={18} color={COLORS.sage} strokeWidth={1.5} />
+              </View>
+            </Pressable>
 
             {destWeather && (
               <View style={styles.destIntelCard}>

@@ -295,9 +295,6 @@ async function ensureValidSession(): Promise<void> {
     !session.access_token ||
     String(session.user?.id).startsWith('guest-');
 
-  // #region agent log
-  fetch('http://127.0.0.1:7616/ingest/63f217f0-eacc-4083-91d1-27bfecce344b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f6988f'},body:JSON.stringify({sessionId:'f6988f',location:'claude.ts:ensureValidSession',message:'Session check',data:{needsUpgrade,hasSession:!!session,hasToken:!!session?.access_token,userIdPrefix:session?.user?.id?.toString().slice(0,8)},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
-  // #endregion
   console.log('[ROAM] ensureValidSession: needsUpgrade=', needsUpgrade, 'hasSession=', !!session, 'hasToken=', !!session?.access_token);
 
   if (!needsUpgrade) {
@@ -316,9 +313,6 @@ async function ensureValidSession(): Promise<void> {
       console.log('[ROAM] Upgrading to anonymous session (attempt', attempt, ')...');
       const { data, error } = await supabase.auth.signInAnonymously();
       if (!error && data.session) {
-        // #region agent log
-        fetch('http://127.0.0.1:7616/ingest/63f217f0-eacc-4083-91d1-27bfecce344b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f6988f'},body:JSON.stringify({sessionId:'f6988f',location:'claude.ts:ensureValidSession',message:'Anonymous session created',data:{userId:data.session.user.id},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         console.log('[ROAM] Anonymous session created, userId=', data.session.user.id);
         useAppStore.getState().setSession(data.session);
         return; // Success
@@ -344,9 +338,6 @@ async function ensureValidSession(): Promise<void> {
     return;
   }
 
-  // #region agent log
-  fetch('http://127.0.0.1:7616/ingest/63f217f0-eacc-4083-91d1-27bfecce344b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f6988f'},body:JSON.stringify({sessionId:'f6988f',location:'claude.ts:ensureValidSession',message:'Auth failed - no valid session',data:{},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
-  // #endregion
   // Truly no auth available — throw so the caller shows a real error
   throw new Error('Unable to authenticate. Check your internet connection and try again.');
 }
@@ -532,9 +523,6 @@ export async function callClaudeStreaming(
 
   const url = `${supabaseUrl}/functions/v1/claude-proxy`;
 
-  // #region agent log
-  fetch('http://127.0.0.1:7616/ingest/63f217f0-eacc-4083-91d1-27bfecce344b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f6988f'},body:JSON.stringify({sessionId:'f6988f',location:'claude.ts:callClaudeStreaming',message:'Stream fetch starting',data:{urlLen:url.length,hasJwt:!!jwt,supabaseUrlLen:supabaseUrl?.length ?? 0},timestamp:Date.now(),hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
   try {
     const response = await fetch(url, {
       method: 'POST',
@@ -551,9 +539,6 @@ export async function callClaudeStreaming(
       }),
     });
 
-    // #region agent log
-    fetch('http://127.0.0.1:7616/ingest/63f217f0-eacc-4083-91d1-27bfecce344b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f6988f'},body:JSON.stringify({sessionId:'f6988f',location:'claude.ts:callClaudeStreaming',message:'Stream response',data:{ok:response.ok,status:response.status},timestamp:Date.now(),hypothesisId:'B_C'})}).catch(()=>{});
-    // #endregion
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ error: 'Stream request failed' }));
       if (errorData.code === 'LIMIT_REACHED') {
@@ -608,14 +593,8 @@ export async function callClaudeStreaming(
       }
     }
 
-    // #region agent log
-    fetch('http://127.0.0.1:7616/ingest/63f217f0-eacc-4083-91d1-27bfecce344b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f6988f'},body:JSON.stringify({sessionId:'f6988f',location:'claude.ts:callClaudeStreaming:onDone',message:'Stream done',data:{accumulatedLen:accumulated.length,accumulatedPreview:accumulated.slice(0,200),tripsUsed,limit},timestamp:Date.now(),hypothesisId:'C_D'})}).catch(()=>{});
-    // #endregion
     callbacks.onDone(accumulated, tripsUsed, limit);
   } catch (err: unknown) {
-    // #region agent log
-    fetch('http://127.0.0.1:7616/ingest/63f217f0-eacc-4083-91d1-27bfecce344b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f6988f'},body:JSON.stringify({sessionId:'f6988f',location:'claude.ts:callClaudeStreaming:catch',message:'Stream error',data:{errMessage:err instanceof Error ? err.message : String(err)},timestamp:Date.now(),hypothesisId:'A_B_C'})}).catch(()=>{});
-    // #endregion
     callbacks.onError(err instanceof Error ? err : new Error(String(err)));
   }
 }
@@ -915,10 +894,7 @@ export async function generateItineraryStreaming(params: {
       },
       onDone(fullText, tripsUsed, limit) {
         try {
-          // #region agent log
-          fetch('http://127.0.0.1:7616/ingest/63f217f0-eacc-4083-91d1-27bfecce344b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f6988f'},body:JSON.stringify({sessionId:'f6988f',location:'claude.ts:generateItineraryStreaming:onDone',message:'Before parseItinerary',data:{fullTextLen:fullText?.length ?? 0,fullTextPreview:fullText?.slice(0,150)},timestamp:Date.now(),hypothesisId:'C_D'})}).catch(()=>{});
-          // #endregion
-          // Reject clearly when stream returned non-JSON or refusal (log evidence: "Sorry, I cannot help with that.", "not json", etc.)
+          // Reject clearly when stream returned non-JSON or refusal (e.g. "Sorry, I cannot help with that.")
           const trimmed = fullText?.trim() ?? '';
           if (trimmed.length < 200) {
             reject(new Error('The trip came back too short — try again and we\'ll build a full itinerary.'));
@@ -941,9 +917,6 @@ export async function generateItineraryStreaming(params: {
             limit: limit ?? 1,
           });
         } catch (parseErr) {
-          // #region agent log
-          fetch('http://127.0.0.1:7616/ingest/63f217f0-eacc-4083-91d1-27bfecce344b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f6988f'},body:JSON.stringify({sessionId:'f6988f',location:'claude.ts:generateItineraryStreaming:parseErr',message:'parseItinerary failed',data:{errMessage:parseErr instanceof Error ? parseErr.message : String(parseErr)},timestamp:Date.now(),hypothesisId:'D'})}).catch(()=>{});
-          // #endregion
           reject(parseErr instanceof Error ? parseErr : new Error('Failed to parse itinerary'));
         }
       },

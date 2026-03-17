@@ -19,7 +19,8 @@ import {
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Radio, Clock, MapPin } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { Radio, Clock, MapPin, ChevronRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../../lib/constants';
@@ -869,6 +870,7 @@ function LiveEventCard({ event }: { event: EventResult }) {
 
 export default function PulseScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const trips = useAppStore((s) => s.trips);
 
@@ -1031,12 +1033,42 @@ export default function PulseScreen() {
           <SocialProofBanner destination={trips[0].destination} />
         )}
 
+        {/* ── I Am Here Now — flagship "open at 2AM" button ── */}
+        {trips.length > 0 && (
+          <View style={{ paddingHorizontal: SPACING.lg, marginBottom: SPACING.lg }}>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                router.push('/i-am-here-now' as never);
+              }}
+              style={({ pressed }) => [
+                styles.hereNowBtn,
+                { opacity: pressed ? 0.85 : 1 },
+              ]}
+              accessibilityLabel="I Am Here Now"
+              accessibilityRole="button"
+            >
+              <MapPin size={20} color={COLORS.bg} strokeWidth={1.5} />
+              <Text style={styles.hereNowBtnText}>I Am Here Now</Text>
+            </Pressable>
+          </View>
+        )}
+
         {/* ── Right Now Section ── */}
         <View style={styles.section}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionHeading}>
-              {t('pulse.rightNowIn', { defaultValue: 'Right now in' })}{'\n'}{selectedDest.label}
-            </Text>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push({ pathname: '/destination/[name]', params: { name: selectedDest.label } } as never);
+              }}
+              style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1, flexDirection: 'row', alignItems: 'flex-end', gap: SPACING.xs }]}
+            >
+              <Text style={styles.sectionHeading}>
+                {t('pulse.rightNowIn', { defaultValue: 'Right now in' })}{'\n'}{selectedDest.label}
+              </Text>
+              <ChevronRight size={18} color={COLORS.sage} strokeWidth={1.5} style={{ marginBottom: 4 }} />
+            </Pressable>
             {(sonarPulse.data?.isLive ?? sonarPulse.isLive) && <LiveBadge />}
           </View>
           {localTimeString ? (
@@ -1843,5 +1875,21 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: COLORS.creamMuted,
     marginTop: 2,
+  } as TextStyle,
+  hereNowBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.sage,
+    borderRadius: RADIUS.pill,
+    paddingVertical: 14,
+    paddingHorizontal: SPACING.lg,
+  } as ViewStyle,
+  hereNowBtnText: {
+    fontFamily: FONTS.header,
+    fontSize: 16,
+    color: COLORS.bg,
+    letterSpacing: 0.3,
   } as TextStyle,
 });

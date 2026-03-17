@@ -871,6 +871,22 @@ export default function ItineraryScreen() {
             <Text style={styles.mapExploreBtnText}>MAP</Text>
           </Pressable>
 
+          {/* Here Now — quick access to I Am Here Now screen */}
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/i-am-here-now' as never);
+            }}
+            hitSlop={8}
+            style={({ pressed }) => [
+              styles.hereNowPill,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
+          >
+            <MapPin size={12} color={COLORS.bg} strokeWidth={1.5} />
+            <Text style={styles.hereNowPillText}>HERE NOW</Text>
+          </Pressable>
+
           {/* List / Map toggle */}
           <View style={styles.viewToggle}>
             <Pressable
@@ -2653,6 +2669,21 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.mono,
     fontSize: 11,
     color: COLORS.sage,
+    letterSpacing: 0.5,
+  } as TextStyle,
+  hereNowPill: {
+    backgroundColor: COLORS.sage,
+    borderRadius: RADIUS.pill,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  } as ViewStyle,
+  hereNowPillText: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.bg,
     letterSpacing: 0.5,
   } as TextStyle,
 

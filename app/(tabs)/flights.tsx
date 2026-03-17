@@ -753,6 +753,28 @@ export default function FlightsScreen() {
           </Text>
         </View>
 
+        {/* ── Airport Guide ── */}
+        <View style={{ paddingHorizontal: SPACING.lg, marginBottom: SPACING.lg }}>
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/airport-guide' as never);
+            }}
+            style={({ pressed }) => [
+              styles.airportGuideBtn,
+              { opacity: pressed ? 0.85 : 1 },
+            ]}
+            accessibilityLabel="Airport Guide"
+            accessibilityRole="button"
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm }}>
+              <Plane size={18} color={COLORS.sage} strokeWidth={1.5} />
+              <Text style={styles.airportGuideBtnTitle}>{t('flights.airportGuide', { defaultValue: 'Airport Guide' })}</Text>
+            </View>
+            <ChevronRight size={16} color={COLORS.muted} strokeWidth={1.5} />
+          </Pressable>
+        </View>
+
         {/* ── Go Now Deal Feed ── */}
         <GoNowFeed />
 
@@ -1576,5 +1598,21 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 13,
     color: COLORS.creamDim,
+  } as TextStyle,
+  airportGuideBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingVertical: 12,
+    paddingHorizontal: SPACING.md,
+  } as ViewStyle,
+  airportGuideBtnTitle: {
+    fontFamily: FONTS.headerMedium,
+    fontSize: 14,
+    color: COLORS.cream,
   } as TextStyle,
 });
