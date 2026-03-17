@@ -236,7 +236,8 @@ export const useAppStore = create<AppState>((set) => ({
   },
   setIsPro: (isPro) => set({ isPro }),
   setTripsThisMonth: (tripsThisMonth) => {
-    AsyncStorage.setItem(TRIPS_MONTH_KEY, JSON.stringify(tripsThisMonth)).catch((err: unknown) => { console.warn('[ROAM] Persist failed:', err instanceof Error ? err.message : String(err)); });
+    const monthData = { count: tripsThisMonth, month: new Date().toISOString().slice(0, 7) };
+    AsyncStorage.setItem(TRIPS_MONTH_KEY, JSON.stringify(monthData)).catch((err: unknown) => { console.warn('[ROAM] Persist failed:', err instanceof Error ? err.message : String(err)); });
     set({ tripsThisMonth });
   },
   setChatMessages: (chatMessages) => {
@@ -444,7 +445,15 @@ export async function loadPersistedTrips(): Promise<void> {
       store.setTrips(JSON.parse(tripsRaw));
     }
     if (monthRaw) {
-      store.setTripsThisMonth(JSON.parse(monthRaw));
+      const parsed: unknown = JSON.parse(monthRaw);
+      const currentMonth = new Date().toISOString().slice(0, 7);
+      if (typeof parsed === 'object' && parsed !== null && 'count' in parsed && 'month' in parsed) {
+        const { count, month } = parsed as { count: number; month: string };
+        store.setTripsThisMonth(month === currentMonth ? count : 0);
+      } else if (typeof parsed === 'number') {
+        // Legacy format (bare number) — reset since we can't verify the month
+        store.setTripsThisMonth(0);
+      }
     }
     if (chatRaw) {
       store.setChatMessages(JSON.parse(chatRaw));

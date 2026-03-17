@@ -521,9 +521,8 @@ export default function PlanScreen() {
 
   const handleNewTrip = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setShowGenerator(true);
-    setGenerateMode(null);
-  }, [setGenerateMode]);
+    router.push('/craft-session' as never);
+  }, [router]);
 
   const handleQuickAction = useCallback((id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -904,6 +903,18 @@ export default function PlanScreen() {
             <Text style={styles.newTripText}>{t('plan.planNewTrip')}</Text>
           </LinearGradient>
         </Pressable>
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setShowGenerator(true);
+            setGenerateMode('quick');
+          }}
+          accessibilityLabel={t('plan.orQuickTrip', { defaultValue: 'or try Quick Trip' })}
+          accessibilityRole="button"
+          style={({ pressed }) => [styles.quickTripLink, { opacity: pressed ? 0.6 : 1 }]}
+        >
+          <Text style={styles.quickTripLinkText}>{t('plan.orQuickTrip', { defaultValue: 'or try Quick Trip' })}</Text>
+        </Pressable>
 
         {/* People nudge — social proof for latest destination */}
         {!peopleBannerDismissed && sortedTrips.length > 0 && (
@@ -1061,26 +1072,26 @@ function DreamingSection({
       <Text style={stageStyles.dreamingTypewriter}>{cityLabel}</Text>
       <View style={stageStyles.dreamingButtons}>
         <Pressable
-          onPress={onQuickTrip}
-          accessibilityLabel={t('plan.dreaming.quickTrip', { defaultValue: 'Quick Trip' })}
+          onPress={onPlanTogether}
+          accessibilityLabel={t('plan.dreaming.planTogether', { defaultValue: 'Plan Together' })}
           accessibilityRole="button"
           style={({ pressed }) => [stageStyles.dreamingBtn, stageStyles.dreamingBtnSage, { opacity: pressed ? 0.85 : 1 }]}
         >
           <Text style={[stageStyles.dreamingBtnText, stageStyles.dreamingBtnTextSage]}>
-            {t('plan.dreaming.quickTrip', { defaultValue: 'Quick Trip' })}
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={onPlanTogether}
-          accessibilityLabel={t('plan.dreaming.planTogether', { defaultValue: 'Plan Together' })}
-          accessibilityRole="button"
-          style={({ pressed }) => [stageStyles.dreamingBtn, stageStyles.dreamingBtnGold, { opacity: pressed ? 0.85 : 1 }]}
-        >
-          <Text style={[stageStyles.dreamingBtnText, stageStyles.dreamingBtnTextGold]}>
             {t('plan.dreaming.planTogether', { defaultValue: 'Plan Together' })}
           </Text>
         </Pressable>
       </View>
+      <Pressable
+        onPress={onQuickTrip}
+        accessibilityLabel={t('plan.dreaming.quickTrip', { defaultValue: 'Quick Trip' })}
+        accessibilityRole="button"
+        style={({ pressed }) => [stageStyles.dreamingQuickLink, { opacity: pressed ? 0.6 : 1 }]}
+      >
+        <Text style={stageStyles.dreamingQuickLinkText}>
+          {t('plan.dreaming.orQuickTrip', { defaultValue: 'or try Quick Trip' })}
+        </Text>
+      </Pressable>
     </View>
   );
 }
@@ -1424,6 +1435,16 @@ const stageStyles = StyleSheet.create({
   dreamingBtnTextGold: {
     color: COLORS.bg,
   } as TextStyle,
+  dreamingQuickLink: {
+    alignSelf: 'center',
+    paddingTop: SPACING.sm,
+  } as ViewStyle,
+  dreamingQuickLinkText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
+    color: COLORS.muted,
+    textDecorationLine: 'underline',
+  } as TextStyle,
 
   // ── PLANNING / IMMINENT ──
   planningContainer: {
@@ -1663,6 +1684,16 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.header,
     fontSize: 18,
     color: COLORS.bg,
+  } as TextStyle,
+  quickTripLink: {
+    alignSelf: 'center',
+    paddingVertical: SPACING.sm,
+  } as ViewStyle,
+  quickTripLinkText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
+    color: COLORS.muted,
+    textDecorationLine: 'underline',
   } as TextStyle,
 
   // ── People Nudge Banner ──

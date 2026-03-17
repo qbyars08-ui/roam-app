@@ -111,6 +111,7 @@ export default function LivingDestinationPage(): React.JSX.Element {
   const {
     data: pulseData,
     isLoading: pulseLoading,
+    error: pulseError,
     citations: pulseCitations,
   } = useSonarQuery(destination || undefined, 'pulse');
 
@@ -304,7 +305,7 @@ export default function LivingDestinationPage(): React.JSX.Element {
             })}
             badge={pulseData?.isLive ? <LiveBadge /> : undefined}
           />
-          {pulseLoading ? (
+          {pulseLoading && !pulseError ? (
             <>
               <Skeleton />
               <Skeleton />

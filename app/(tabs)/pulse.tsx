@@ -1108,8 +1108,8 @@ export default function PulseScreen() {
             <Text style={styles.sectionSubMono}>{localTimeString}</Text>
           ) : null}
 
-          {/* Skeleton while Sonar loading or when empty (no sonar + no time recs) */}
-          {(sonarPulse.isLoading || (!sonarPulse.data && timeRecs.length === 0)) ? (
+          {/* Skeleton while Sonar loading (not on error/timeout) */}
+          {(sonarPulse.isLoading && !sonarPulse.error) ? (
             <View style={styles.sonarSkeletonStack}>
               <View style={styles.sonarCard}>
                 <SkeletonCard width="100%" height={16} borderRadius={RADIUS.sm} style={{ marginBottom: SPACING.sm }} />

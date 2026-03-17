@@ -349,7 +349,7 @@ function BeforeYouLandScreen() {
               ) : null}
             </View>
           </View>
-        ) : sonarPrep.isLoading ? (
+        ) : sonarPrep.isLoading && !sonarPrep.error ? (
           <SkeletonCard height={80} style={{ marginBottom: SPACING.md }} />
         ) : null}
 

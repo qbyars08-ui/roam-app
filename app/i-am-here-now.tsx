@@ -88,7 +88,7 @@ export default function IAmHereNow(): React.JSX.Element {
   const [isSavingMoment, setIsSavingMoment] = useState(false);
 
   // Sonar "right now" pulse
-  const { data: sonarData, isLoading: sonarLoading } = useSonarQuery(destination, 'pulse');
+  const { data: sonarData, isLoading: sonarLoading, error: sonarError } = useSonarQuery(destination, 'pulse');
 
   // ---------------------------------------------------------------------------
   // Load weather + emergency data
@@ -338,7 +338,7 @@ export default function IAmHereNow(): React.JSX.Element {
               </Text>
               {sonarData?.isLive && <LiveBadge size="sm" />}
             </View>
-            {sonarLoading && !sonarData ? (
+            {sonarLoading && !sonarData && !sonarError ? (
               <Text style={styles.sonarLoading}>
                 {t('hereNow.fetchingPulse', { defaultValue: 'Reading the city...' })}
               </Text>
@@ -349,6 +349,10 @@ export default function IAmHereNow(): React.JSX.Element {
                   <SourceCitation citations={sonarData.citations} max={3} />
                 ) : null}
               </>
+            ) : sonarError ? (
+              <Text style={styles.sonarLoading}>
+                {t('hereNow.liveUnavailable', { defaultValue: 'Live data unavailable' })}
+              </Text>
             ) : null}
           </View>
         ) : null}

@@ -3,7 +3,7 @@
 // Live travel intelligence with AsyncStorage cache (6hr TTL)
 // =============================================================================
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
 import { useAppStore } from './store';
@@ -139,6 +139,8 @@ export async function fetchSonarResult(
 // ---------------------------------------------------------------------------
 // React hook — useSonarQuery
 // ---------------------------------------------------------------------------
+const SONAR_TIMEOUT_MS = 10_000;
+
 interface UseSonarQueryResult {
   data: SonarResult | null;
   isLoading: boolean;
@@ -156,6 +158,7 @@ export function useSonarQuery(
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fetchKey, setFetchKey] = useState(0);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const refetch = useCallback(() => {
     setFetchKey((k) => k + 1);
@@ -173,15 +176,25 @@ export function useSonarQuery(
     setIsLoading(true);
     setError(null);
 
+    // Safety timeout — if the query hasn't resolved after 10s, bail out
+    timeoutRef.current = setTimeout(() => {
+      if (!cancelled) {
+        setIsLoading(false);
+        setError('timeout');
+      }
+    }, SONAR_TIMEOUT_MS);
+
     fetchSonarResult(destination, queryType)
       .then((result) => {
         if (!cancelled) {
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
           setData(result);
           setIsLoading(false);
         }
       })
       .catch((err: unknown) => {
         if (!cancelled) {
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
           const msg =
             err instanceof Error ? err.message : 'Sonar query failed';
           setError(msg);
@@ -191,6 +204,7 @@ export function useSonarQuery(
 
     return () => {
       cancelled = true;
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, [destination, queryType, fetchKey]);
 
