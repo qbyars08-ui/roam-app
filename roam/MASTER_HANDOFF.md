@@ -10,7 +10,7 @@ Generated: 2026-03-15 (overnight session)
 |-------|--------|
 | TypeScript | 0 errors |
 | Web export | 6.7MB, 3898 modules |
-| Live URL | https://tryroam.netlify.app |
+| Live URL | https://roamapp.app |
 | Latest commit | `85c9f6e` feat: latest build deployed — demo ready |
 | Agent system | 15 agents defined in .mdc files, pending Cursor Cloud rebuild |
 | Model config | All Sonnet except Builder (Opus) |
@@ -47,7 +47,7 @@ Generated: 2026-03-15 (overnight session)
 ### Agent 06 — GROWTH
 - **Status:** ACTIVE (growth_dashboard.md has 269 lines)
 - **Completed:** ASO keywords, 5 TikTok concepts, 3 A/B tests designed, waitlist referral system with DB schema, hooks engine, smart triggers, enhanced paywall
-- **Resume task:** First-time UX audit of tryroam.netlify.app. Open it as a brand new Gen Z user. Answer: Does discover communicate value? Do cards make you tap? Does generate empty state guide you? Is the share moment obvious? What makes a user screenshot and share this? Write actionable recommendations to roam/growth_dashboard.md.
+- **Resume task:** First-time UX audit of roamapp.app. Open it as a brand new Gen Z user. Answer: Does discover communicate value? Do cards make you tap? Does generate empty state guide you? Is the share moment obvious? What makes a user screenshot and share this? Write actionable recommendations to roam/growth_dashboard.md.
 
 ### Agent 07 — MONETIZATION
 - **Status:** PENDING REBUILD

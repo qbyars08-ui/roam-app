@@ -261,7 +261,7 @@ describe('Waitlist — referral URL helpers', () => {
   it('getGuestReferralUrl returns a URL with the ref code', () => {
     const url = getGuestReferralUrl('abc123');
     expect(url).toContain('ref=abc123');
-    expect(url).toContain('tryroam.netlify.app');
+    expect(url).toContain('roamapp.app');
   });
 
   it('getWaitlistReferralUrl returns a URL with the ref code', () => {
@@ -271,7 +271,7 @@ describe('Waitlist — referral URL helpers', () => {
 
   it('getTryAppUrl returns base URL when no email given', () => {
     const url = getTryAppUrl();
-    expect(url).toContain('tryroam.netlify.app');
+    expect(url).toContain('roamapp.app');
     expect(url).not.toContain('email=');
   });
 

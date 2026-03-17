@@ -139,7 +139,7 @@ You are ROAM's growth engine. Read .cursor/rules/agent-06-growth.mdc for your fu
 
 Your previous work: growth_dashboard.md has ASO keywords, TikTok concepts, A/B tests, waitlist referral system.
 
-Your job right now: First-time UX audit of tryroam.netlify.app.
+Your job right now: First-time UX audit of roamapp.app.
 
 Open it as a brand new Gen Z user (18-24, uses TikTok for travel inspo). Answer:
 - Does the discover tab communicate value in 3 seconds?
@@ -191,7 +191,7 @@ Your job right now: GDPR compliance audit for DACH launch.
 Check:
 1. What personal data does ROAM collect? (auth emails, trip data, analytics events)
 2. Is there a data deletion mechanism? (Supabase has RLS — verify user can delete their data)
-3. Cookie consent for web version (tryroam.netlify.app)
+3. Cookie consent for web version (roamapp.app)
 4. Privacy policy needed before German App Store submission
 5. PostHog GDPR compliance (EU data residency?)
 6. Any data sent to third parties? (Anthropic API, Unsplash, Open-Meteo — document each)

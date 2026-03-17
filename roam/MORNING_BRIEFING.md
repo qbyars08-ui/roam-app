@@ -4,7 +4,7 @@ Here's what happened overnight.
 
 ---
 
-## What's live at tryroam.netlify.app
+## What's live at roamapp.app
 
 - Every destination card now has a real photo (direct Unsplash URLs for all 37 destinations + 5 hidden)
 - No more broken images or grey placeholders from deprecated source.unsplash.com
@@ -47,7 +47,7 @@ One yellow flag: Google Places edge function (destination-photo) requires GOOGLE
 ## Your demo talking points
 
 **For parents:**
-1. "This is a live app at tryroam.netlify.app — type any destination and get a complete trip plan in 30 seconds. Try Tokyo."
+1. "This is a live app at roamapp.app — type any destination and get a complete trip plan in 30 seconds. Try Tokyo."
 2. "The prep tab gives you everything you need before you land — weather, emergency numbers, currency conversion, air quality — all live data, all free."
 3. "I have 15 AI agents building this around the clock while I sleep. One handles security, one handles design, one handles German market launch."
 

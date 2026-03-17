@@ -131,7 +131,7 @@ If no reply after Day 7: mark creator as Cold, archive in tracker. Do not follow
 >
 > ROAM-Launch in DACH läuft nächste Woche. Unsere ersten Creator-Videos gehen live, und ich hab noch genau einen Spot frei.
 >
-> Ich versteh wenn's grad nicht passt oder du kein Interesse hast — kein Problem. Aber falls du doch neugierig bist: tryroam.netlify.app — lad dir die App, generier dir einen Trip, und dann weißt du worum's geht. Keine DM nötig, kein Call, kein Commitment.
+> Ich versteh wenn's grad nicht passt oder du kein Interesse hast — kein Problem. Aber falls du doch neugierig bist: roamapp.app — lad dir die App, generier dir einen Trip, und dann weißt du worum's geht. Keine DM nötig, kein Call, kein Commitment.
 >
 > Wenn du dann noch Bock auf Zusammenarbeit hast, meld dich einfach. Das Angebot gilt noch zwei Wochen.
 
@@ -145,7 +145,7 @@ If no reply after Day 7: mark creator as Cold, archive in tracker. Do not follow
 >
 > Der Deal ist simpel: 1 Video, du kriegst Lifetime Pro + Revenue Share. Keine Strings attached.
 >
-> Falls du in den nächsten Tagen Zeit hast: tryroam.netlify.app. Probier's aus. Dann weißt du ob's für deinen Content Sinn macht.
+> Falls du in den nächsten Tagen Zeit hast: roamapp.app. Probier's aus. Dann weißt du ob's für deinen Content Sinn macht.
 
 ---
 

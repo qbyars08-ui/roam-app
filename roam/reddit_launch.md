@@ -30,7 +30,7 @@ It's not perfect. It doesn't know about that ramen shop that just opened last mo
 
 Would love honest feedback from people who actually solo travel. What's missing. What's annoying. What would make you actually use something like this instead of your current process.
 
-[tryroam.netlify.app](https://tryroam.netlify.app)
+[roamapp.app](https://roamapp.app)
 
 ---
 
@@ -64,7 +64,7 @@ The full itinerary is day-by-day with transit between every stop, estimated cost
 
 Genuine question: is this level of detail useful or is it too much. I keep going back and forth. Some people want a loose framework and figure out the rest on the ground. Others want to know exactly which exit to take. I don't know which camp is bigger.
 
-If you want to try it: [tryroam.netlify.app](https://tryroam.netlify.app)
+If you want to try it: [roamapp.app](https://roamapp.app)
 
 ---
 
@@ -91,4 +91,4 @@ A few questions I'd actually like opinions on:
 
 I'm not trying to build a social network. I'm trying to reduce the friction between "I want to go" and "I'm going." If that resonates with anyone, I'd like to hear how. If it doesn't, I'd like to hear that too.
 
-[tryroam.netlify.app](https://tryroam.netlify.app)
+[roamapp.app](https://roamapp.app)

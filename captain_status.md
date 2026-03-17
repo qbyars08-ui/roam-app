@@ -7,7 +7,7 @@
 ## ROAM Status: PRODUCTION READY
 
 ### Infrastructure
-- **Deployment:** Live at tryroam.netlify.app with real Supabase credentials
+- **Deployment:** Live at roamapp.app with real Supabase credentials
 - **TypeScript:** 0 errors (`npx tsc --noEmit` passes cleanly)
 - **Bundle:** Clean Expo export, no placeholder domains in build
 - **Build System:** Smart rebuild + lazy loading optimized

@@ -146,7 +146,7 @@ DACH → Western Europe → UK → North America
 
 | Metric | Status |
 |--------|--------|
-| Product | Live at tryroam.netlify.app |
+| Product | Live at roamapp.app |
 | Tab Structure | 5 tabs shipped: Plan, Discover, People, Flights, Prep |
 | Screens | 75+ unique screens/components |
 | AI Generation | Working end-to-end (Plan tab) |

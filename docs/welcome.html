@@ -192,7 +192,7 @@ footer{
 <nav>
   <div class="nav-inner">
     <div class="logo">R<span>O</span>AM</div>
-    <a href="https://tryroam.netlify.app" class="nav-cta">Open the app &rarr;</a>
+    <a href="https://roamapp.app" class="nav-cta">Open the app &rarr;</a>
   </div>
 </nav>
 
@@ -309,7 +309,7 @@ footer{
   <!-- bottom CTA -->
   <section class="bottom-cta">
     <p>This is just a preview. The real app builds personalized itineraries with maps, booking links, packing lists, and more.</p>
-    <a href="https://tryroam.netlify.app" id="try-app-link" class="btn-app">Try ROAM Now &rarr;</a>
+    <a href="https://roamapp.app" id="try-app-link" class="btn-app">Try ROAM Now &rarr;</a>
   </section>
 
 </div>
@@ -375,7 +375,7 @@ async function loadData() {
 
   // Set try-app link
   var tryLink = document.getElementById('try-app-link');
-  if (tryLink) tryLink.href = 'https://tryroam.netlify.app?email=' + encodeURIComponent(trimmed);
+  if (tryLink) tryLink.href = 'https://roamapp.app?email=' + encodeURIComponent(trimmed);
 
   try {
     var res = await fetch(

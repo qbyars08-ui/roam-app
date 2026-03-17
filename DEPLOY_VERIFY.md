@@ -1,4 +1,4 @@
-# Deploy Verification — tryroam.netlify.app
+# Deploy Verification — roamapp.app
 
 ## Required Netlify Settings
 

@@ -166,7 +166,7 @@ READ FIRST:
 
 OUTPUT FILE: roam/growth_dashboard.md
 
-CURRENT TASK: First-time UX audit of tryroam.netlify.app.
+CURRENT TASK: First-time UX audit of roamapp.app.
 
 Open it as a brand new Gen Z user (18-24, uses TikTok for travel inspo, short attention span, design-savvy). Answer honestly:
 
@@ -237,7 +237,7 @@ Status: Admin bypass is ALREADY DONE in claude-proxy/index.ts — reads ADMIN_TE
 GDPR audit checklist:
 1. What personal data does ROAM collect? (auth emails, trip data, analytics events, device info)
 2. Data deletion mechanism — can a user delete all their data? Check Supabase RLS + any cascade deletes.
-3. Cookie consent for web version (tryroam.netlify.app) — do we have a banner?
+3. Cookie consent for web version (roamapp.app) — do we have a banner?
 4. Privacy policy — needed before German App Store submission. Draft outline.
 5. PostHog GDPR compliance — is data stored in EU? Can we enable EU data residency?
 6. Third-party data sharing — document every external service (Anthropic API, Unsplash, Open-Meteo, Skyscanner, Booking.com, PostHog, RevenueCat, Supabase).

@@ -245,7 +245,7 @@ describe('joinWaitlist — referral source', () => {
 describe('getGuestReferralUrl', () => {
   it('builds the correct URL with ref param', () => {
     const url = getGuestReferralUrl('abc123');
-    expect(url).toBe('https://tryroam.netlify.app?ref=abc123');
+    expect(url).toBe('https://roamapp.app?ref=abc123');
   });
 });
 
@@ -258,17 +258,17 @@ describe('getWaitlistReferralUrl', () => {
 
 describe('getTryAppUrl', () => {
   it('returns base URL when no email provided', () => {
-    expect(getTryAppUrl()).toBe('https://tryroam.netlify.app');
+    expect(getTryAppUrl()).toBe('https://roamapp.app');
   });
 
   it('returns base URL when empty string provided', () => {
-    expect(getTryAppUrl('')).toBe('https://tryroam.netlify.app');
+    expect(getTryAppUrl('')).toBe('https://roamapp.app');
   });
 
   it('appends URL-encoded email when provided', () => {
     const url = getTryAppUrl('Test@Example.com');
     expect(url).toContain('email=test%40example.com');
-    expect(url).toContain('https://tryroam.netlify.app');
+    expect(url).toContain('https://roamapp.app');
   });
 
   it('trims and lowercases email in URL', () => {

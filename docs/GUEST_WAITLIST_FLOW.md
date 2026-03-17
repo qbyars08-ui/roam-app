@@ -2,11 +2,11 @@
 
 ## Overview
 
-Web visitors at **tryroam.netlify.app** can generate 1 trip as a guest without signing in. After the trip generates, a modal captures their email for the waitlist and gives them a referral link.
+Web visitors at **roamapp.app** can generate 1 trip as a guest without signing in. After the trip generates, a modal captures their email for the waitlist and gives them a referral link.
 
 ## Flow
 
-1. **Guest visits** tryroam.netlify.app (optionally with `?ref=CODE` or `?email=xxx`)
+1. **Guest visits** roamapp.app (optionally with `?ref=CODE` or `?email=xxx`)
 2. **Splash → Hook → Onboard**: They pick a destination, AI generates a real trip
 3. **Modal**: "Save this trip and get early access" — email input
 4. **Submit**: Adds to `waitlist_emails`, generates referral code, shows "You're #X on the waitlist"
@@ -22,7 +22,7 @@ Web visitors at **tryroam.netlify.app** can generate 1 trip as a guest without s
 
 ## Waitlist Page (roamappwait.netlify.app)
 
-- **Nav**: "Try the app now →" links to tryroam.netlify.app
+- **Nav**: "Try the app now →" links to roamapp.app
 - **Success state**: After joining, "Try the app now →" with email in URL (so they don't enter twice)
 
 ## Supabase Migration

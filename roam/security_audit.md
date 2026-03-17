@@ -13,7 +13,7 @@
 |---|----------|----------|-------------|---------|--------|
 | 1 | CRITICAL | Data Deletion | No "Delete Account" UI exists. Support FAQ references "Profile > Settings > Delete Account" but route does not exist in `app/profile.tsx`. GDPR Article 17. | `app/profile.tsx`, `app/support.tsx` | OPEN |
 | 2 | CRITICAL | Analytics PII Leak | `WAITLIST_JOINED` PostHog event sends `email` as a property. Email is PII and must never be sent to third-party analytics. | `lib/posthog-events.ts:417-420` | OPEN |
-| 3 | CRITICAL | No Tracking Consent | PostHog initializes unconditionally on app start before any user consent. Violates TTDSG § 25 (Germany), DSG (Austria), nDSG (Switzerland). Web (`tryroam.netlify.app`) has no cookie banner or CMP. | `app/_layout.tsx:111`, `lib/posthog.ts` | OPEN |
+| 3 | CRITICAL | No Tracking Consent | PostHog initializes unconditionally on app start before any user consent. Violates TTDSG § 25 (Germany), DSG (Austria), nDSG (Switzerland). Web (`roamapp.app`) has no cookie banner or CMP. | `app/_layout.tsx:111`, `lib/posthog.ts` | OPEN |
 | 4 | HIGH | PostHog US Data Residency | Default host `https://us.i.posthog.com`. EU users' behavioral data routes to US servers. Should be `https://eu.i.posthog.com`. | `lib/posthog.ts:14-15` | OPEN |
 | 5 | HIGH | Supabase US Region | Privacy policy states "Data stored on Supabase (US)". No SCCs referenced. Must use Supabase EU (Frankfurt) or document SCCs. | `app/privacy.tsx:104` | OPEN |
 | 6 | HIGH | Anthropic Data Transfer | Trip preferences + dietary data sent to `api.anthropic.com` (US). Dietary restrictions may constitute Art. 9 special category data. No DPA documented. | `supabase/functions/claude-proxy/index.ts:167-179` | OPEN |

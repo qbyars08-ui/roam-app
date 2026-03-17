@@ -360,7 +360,7 @@ footer{
   <div class="nav-inner">
     <div class="logo">R<span>O</span>AM</div>
     <div style="display:flex;gap:12px;align-items:center">
-      <a href="https://tryroam.netlify.app" class="nav-cta">Try the app &rarr;</a>
+      <a href="https://roamapp.app" class="nav-cta">Try the app &rarr;</a>
       <a href="#signup" class="nav-cta">Join the waitlist</a>
     </div>
   </div>
@@ -420,7 +420,7 @@ footer{
           <button class="share-btn primary" onclick="copyRefLink()">Copy</button>
         </div>
 
-        <a href="https://tryroam.netlify.app" id="try-app-btn" class="btn-try-app">
+        <a href="https://roamapp.app" id="try-app-btn" class="btn-try-app">
           Try the app now &rarr;
         </a>
         <div class="share-row">
@@ -728,7 +728,7 @@ form.addEventListener('submit', async function(e) {
     // Set try-app link
     var tryBtn = document.getElementById('try-app-btn');
     if (tryBtn) {
-      tryBtn.href = 'https://tryroam.netlify.app?email=' + encodeURIComponent(trimmedEmail);
+      tryBtn.href = 'https://roamapp.app?email=' + encodeURIComponent(trimmedEmail);
     }
 
     showReferralState(code, position, refCount);
@@ -741,7 +741,7 @@ form.addEventListener('submit', async function(e) {
     currentCount++;
     var tryBtn2 = document.getElementById('try-app-btn');
     if (tryBtn2) {
-      tryBtn2.href = 'https://tryroam.netlify.app?email=' + encodeURIComponent(trimmedEmail);
+      tryBtn2.href = 'https://roamapp.app?email=' + encodeURIComponent(trimmedEmail);
     }
     showReferralState(fallbackCode, currentCount, 0);
   }

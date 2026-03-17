@@ -5,7 +5,7 @@ Last updated: 2026-03-15 (post-merge deploy)
 ## Quick Pulse
 - **System:** GREEN
 - **TypeScript:** 0 errors
-- **Site:** LIVE at https://tryroam.netlify.app
+- **Site:** LIVE at https://roamapp.app
 - **Tab Structure:** 5 tabs — Plan, Discover, People, Flights, Prep
 - **PRs:** ALL 14 MERGED (0 open)
 - **Deploy:** Production live with all agent work merged
@@ -95,5 +95,5 @@ Last updated: 2026-03-15 (post-merge deploy)
 - [x] Monetization: Pro gate, FlightPriceCard merged
 - [x] Design audit: component fixes across 11 files merged
 - [x] Duplicate locale key fix (german key appeared twice)
-- [x] Production deploy live at https://tryroam.netlify.app
+- [x] Production deploy live at https://roamapp.app
 - [x] AGENT_BOARD.md updated with post-restructure tasks for all 14 agents

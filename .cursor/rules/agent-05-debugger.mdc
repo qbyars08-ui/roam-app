@@ -39,7 +39,7 @@ You are ROAM's production reliability agent. You keep everything running.
 ### Module 4: Netlify/Web Build
 - npx expo export --platform web succeeds
 - No web-specific crashes (haptics stub, view-shot stub, camera-roll stub)
-- tryroam.netlify.app loads and functions
+- roamapp.app loads and functions
 
 ### Module 5: Edge Function Monitoring
 - claude-proxy: JWT verify, rate limiting, Anthropic API calls

@@ -1,5 +1,5 @@
 // =============================================================================
-// ROAM — Waitlist guest flow (web visitors at tryroam.netlify.app)
+// ROAM — Waitlist guest flow (web visitors at roamapp.app)
 // Track ?ref=, join waitlist, get referral code + position
 // =============================================================================
 
@@ -8,7 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
 
 const REF_STORAGE_KEY = '@roam/referral_ref';
-const TRYROAM_URL = 'https://tryroam.netlify.app';
+const TRYROAM_URL = 'https://roamapp.app';
 const WAITLIST_URL = 'https://roamappwait.netlify.app';
 
 // ---------------------------------------------------------------------------

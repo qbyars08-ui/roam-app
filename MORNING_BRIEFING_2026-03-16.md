@@ -35,7 +35,7 @@
 - Ken Burns animation, staggered card entrances, Before/After split
 
 ## Deployed
-- https://tryroam.netlify.app — live
+- https://roamapp.app — live
 
 ## Still blocked (needs Quinn)
 - Booking.com real AID — sign up at partners.booking.com

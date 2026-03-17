@@ -84,10 +84,10 @@ Join the early access community. The next generation of travel planning is here,
 - **Key elements:** Price calendar heat map with low-fare highlights, airline logos, departure/arrival times, price comparison cards, fare alert toggle, coral (#E8614A) accent on lowest price, dark UI with cream text
 
 ## Privacy URL
-https://tryroam.netlify.app/privacy
+https://roamapp.app/privacy
 
 ## Support URL
-https://tryroam.netlify.app/support
+https://roamapp.app/support
 
 ## Category
 - **Primary:** Travel

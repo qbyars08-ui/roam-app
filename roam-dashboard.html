@@ -443,7 +443,7 @@
 // CONFIG
 // ═══════════════════════════════════════════════════════════════════════════
 const REPO='qbyars08-ui/roam-app';
-const SITE_URL='https://tryroam.netlify.app';
+const SITE_URL='https://roamapp.app';
 const START=new Date('2026-03-08');
 const APP_STORE_TARGET=new Date('2026-06-01');
 const GH_API='https://api.github.com/repos/';
@@ -542,7 +542,7 @@ const BUDGET_DEF=[
 ];
 
 const LINKS=[
-  {label:'ROAM Live',url:'https://tryroam.netlify.app'},
+  {label:'ROAM Live',url:'https://roamapp.app'},
   {label:'GitHub',url:'https://github.com/'+REPO},
   {label:'Supabase',url:'https://supabase.com/dashboard'},
   {label:'Netlify',url:'https://app.netlify.com'},
@@ -820,7 +820,7 @@ function renderHealth(){
   const st=r.up===null?'CHECKING':r.up?'UP':'DOWN';
   document.getElementById('health').innerHTML=`
     <div class="health-card">
-      <div class="hdr"><span class="name">tryroam.netlify.app</span><div class="status-dot ${sc}"></div></div>
+      <div class="hdr"><span class="name">roamapp.app</span><div class="status-dot ${sc}"></div></div>
       <div class="metrics">
         <div class="metric"><div class="k">Status</div><div class="v ${r.up?'':'bad'}">${st}</div></div>
         <div class="metric"><div class="k">Ping</div><div class="v ${r.ms>2000?'warn':''}">${r.ms?r.ms+'ms':'—'}</div></div>
@@ -1028,7 +1028,7 @@ function renderSBStats(){
 function renderSBUsers(){
   const el=document.getElementById('sb-users');
   if(!sbCache.profiles.length){
-    el.innerHTML='<div class="empty-state">No users yet<div class="es-context">You\'re in waitlist mode. First users come from TestFlight invites and your landing page. Share tryroam.netlify.app to start collecting signups.</div></div>';
+    el.innerHTML='<div class="empty-state">No users yet<div class="es-context">You\'re in waitlist mode. First users come from TestFlight invites and your landing page. Share roamapp.app to start collecting signups.</div></div>';
     return;
   }
   el.innerHTML=sbCache.profiles.slice(0,10).map(p=>{

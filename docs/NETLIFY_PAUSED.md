@@ -1,6 +1,6 @@
-# tryroam.netlify.app Not Loading
+# roamapp.app Not Loading
 
-If tryroam.netlify.app shows "Site paused as it reached its usage limits", this is a **Netlify billing** issue, not a build or code problem.
+If roamapp.app shows "Site paused as it reached its usage limits", this is a **Netlify billing** issue, not a build or code problem.
 
 ## Fix in Netlify Dashboard
 

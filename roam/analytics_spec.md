@@ -23,7 +23,7 @@
 ### URL Template
 
 ```
-https://tryroam.netlify.app?utm_source={SOURCE}&utm_medium={MEDIUM}&utm_campaign=dach_launch&utm_content={CONTENT_ID}
+https://roamapp.app?utm_source={SOURCE}&utm_medium={MEDIUM}&utm_campaign=dach_launch&utm_content={CONTENT_ID}
 ```
 
 ### Full URL Matrix — All 40 Combinations
@@ -43,7 +43,7 @@ https://tryroam.netlify.app?utm_source={SOURCE}&utm_medium={MEDIUM}&utm_campaign
 
 ### How UTM Params Are Captured
 
-UTM params land on `tryroam.netlify.app` (web, `Platform.OS === 'web'`). The existing `captureRefOnLoad()` in `lib/waitlist-guest.ts` handles `?ref=` but **does not yet capture UTM params**. 
+UTM params land on `roamapp.app` (web, `Platform.OS === 'web'`). The existing `captureRefOnLoad()` in `lib/waitlist-guest.ts` handles `?ref=` but **does not yet capture UTM params**. 
 
 **Required addition to `lib/waitlist-guest.ts`:**
 

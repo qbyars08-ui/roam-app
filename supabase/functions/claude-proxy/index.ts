@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 
 // SECURITY: Restrict CORS to our app origins only
 const ALLOWED_ORIGINS = [
-  "https://tryroam.netlify.app",
+  "https://roamapp.app",
   "https://roamtravel.app",
   "http://localhost:8081",   // Expo dev
   "http://localhost:19006",  // Expo web dev

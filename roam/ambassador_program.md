@@ -97,7 +97,7 @@ ROAM's Ambassador Program converts active creators into long-term growth partner
 
 ### How it works
 
-Every ambassador gets a unique UTM link: `tryroam.netlify.app?ref=[creator_handle]`
+Every ambassador gets a unique UTM link: `roamapp.app?ref=[creator_handle]`
 
 When a user clicks that link, signs up, and upgrades to Pro:
 - The subscription revenue is attributed to that creator in PostHog
@@ -256,7 +256,7 @@ If user purchases annual Pro (€79,99/year): revenue share calculated on full a
 - [ ] Confirm DACH audience (check comment language on at least 3 videos)
 - [ ] Confirm creator has an iPhone with current iOS (screen recording quality requirement)
 - [ ] Assign tier based on follower count and prior UGC experience
-- [ ] Generate unique UTM referral link: `tryroam.netlify.app?ref=[handle]`
+- [ ] Generate unique UTM referral link: `roamapp.app?ref=[handle]`
 - [ ] Create PostHog referral tracking tag for creator
 - [ ] Add creator to tracking spreadsheet with all fields populated
 - [ ] Prepare welcome message with referral link, brief, and PostHog dashboard link
@@ -285,7 +285,7 @@ If user purchases annual Pro (€79,99/year): revenue share calculated on full a
 > Hey [Name]! Willkommen im ROAM Creator Team — hier ist alles was du brauchst:
 >
 > **1. Dein persönlicher Referral-Link:**
-> tryroam.netlify.app?ref=[handle]
+> roamapp.app?ref=[handle]
 > (Pack diesen Link in deine Bio und Caption für alle ROAM-Videos)
 >
 > **2. Dein Dashboard:**

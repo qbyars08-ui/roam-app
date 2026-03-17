@@ -24,7 +24,7 @@
 
 6. **Implement guest mode** — See PLAN_GUEST_MODE.md
 7. **Reduce bundle size** — See PLAN_BUNDLE_SIZE.md
-8. **Verify Netlify deploy** — Confirm tryroam.netlify.app loads after push
+8. **Verify Netlify deploy** — Confirm roamapp.app loads after push
 
 ---
 

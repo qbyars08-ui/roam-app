@@ -4,7 +4,7 @@
 
 ---
 
-## Gen Z UX Audit — tryroam.netlify.app
+## Gen Z UX Audit — roamapp.app
 
 **Date:** 2026-03-15  
 **Auditor:** Agent 06  
@@ -84,9 +84,9 @@ The share card design (9:16, full bleed photo, Cormorant destination name, pill 
 
 - [ ] **#5 — Trigger a full-screen "Share your trip" moment immediately after generation.** After `router.push('/itinerary')` resolves, push a bottom sheet or interstitial that shows the share card preview with a single "Share to Stories" CTA. Right now the share button is one of four 20px icons in the header — invisible to new users. The post-generation high is the peak motivational moment. Move the share prompt to that exact moment. Expected lift: share rate 3×. Files: `app/generate.tsx` (add post-navigation prompt), or add a `showSharePrompt` param to the itinerary route.
 
-- [ ] **#6 — Pre-fill a viral caption + hashtags when sharing.** In `lib/sharing.ts` and `components/features/ShareCard.tsx`, append a pre-written caption to the share sheet: `"I let AI plan my [destination] trip in 30 seconds. tryroam.netlify.app #ROAM #AITravel #TravelTok"`. Copy it to clipboard as a fallback. Users will not write their own copy. Giving them 180 pre-written characters with a referral URL is the difference between 0 hashtag posts and a TikTok thread. This is the highest-leverage single code change for virality.
+- [ ] **#6 — Pre-fill a viral caption + hashtags when sharing.** In `lib/sharing.ts` and `components/features/ShareCard.tsx`, append a pre-written caption to the share sheet: `"I let AI plan my [destination] trip in 30 seconds. roamapp.app #ROAM #AITravel #TravelTok"`. Copy it to clipboard as a fallback. Users will not write their own copy. Giving them 180 pre-written characters with a referral URL is the difference between 0 hashtag posts and a TikTok thread. This is the highest-leverage single code change for virality.
 
-- [ ] **#7 — Make "Built with ROAM" a visible, tappable referral watermark on the share card.** In `components/features/ShareCard.tsx` (and `app/share-card.tsx`), change `styles.builtWith` from `COLORS.successMuted` to `COLORS.gold`, increase fontSize to 13, add letterSpacing, and on native wrap it in a `Linking.openURL('https://tryroam.netlify.app?ref=[userCode]')` pressable. Every shared card becomes a tracked referral. Currently the watermark is invisible at 10px in faint green — zero brand recall survives the post.
+- [ ] **#7 — Make "Built with ROAM" a visible, tappable referral watermark on the share card.** In `components/features/ShareCard.tsx` (and `app/share-card.tsx`), change `styles.builtWith` from `COLORS.successMuted` to `COLORS.gold`, increase fontSize to 13, add letterSpacing, and on native wrap it in a `Linking.openURL('https://roamapp.app?ref=[userCode]')` pressable. Every shared card becomes a tracked referral. Currently the watermark is invisible at 10px in faint green — zero brand recall survives the post.
 
 - [ ] **#8 — Add live social proof counts to Trending destination cards.** In `DestinationPhotoCard` (`app/(tabs)/index.tsx`), replace the static "TRENDING" text badge with dynamic copy pulled from a `DESTINATIONS` constant field (e.g. `destination.weeklyTrips`). Render: "247 trips this week" in the badge. Even if the number is seeded/approximate initially, specificity converts. "TRENDING" is a pattern Gen Z has learned to ignore. "247 trips this week" creates real FOMO. Files: `lib/constants.ts` (add `weeklyTrips` to `Destination` type), `app/(tabs)/index.tsx`.
 
@@ -353,16 +353,16 @@ All sample sizes calculated using:
 All People tab invite links follow this structure:
 
 ```
-https://tryroam.netlify.app/people?invite=[INVITE_CODE]&dest=[destination]&from=[sharer_name]
+https://roamapp.app/people?invite=[INVITE_CODE]&dest=[destination]&from=[sharer_name]
 ```
 
 **Examples:**
 
 | Intent | URL |
 |--------|-----|
-| Generic invite | `https://tryroam.netlify.app/people?invite=abc123&from=Maya` |
-| Destination-scoped | `https://tryroam.netlify.app/people?invite=abc123&dest=Tokyo&from=Maya` |
-| Group-scoped | `https://tryroam.netlify.app/people?invite=abc123&group=g_bali_may&from=Maya` |
+| Generic invite | `https://roamapp.app/people?invite=abc123&from=Maya` |
+| Destination-scoped | `https://roamapp.app/people?invite=abc123&dest=Tokyo&from=Maya` |
+| Group-scoped | `https://roamapp.app/people?invite=abc123&group=g_bali_may&from=Maya` |
 
 The `invite` code is the sharer's existing 6-char referral code from `lib/referral.ts` (`getReferralCode(userId)`). No new code table required — reuse what's already built.
 
@@ -373,7 +373,7 @@ Sharer taps "Invite a travel buddy" (People tab or post-match)
   → Bottom sheet opens
   → Pre-filled copy: "I found someone going to [dest] the same week. Join me on ROAM: [link]"
   → Share sheet opens (native Share API)
-  → Recipient taps link → lands on tryroam.netlify.app/people?invite=...&from=Maya
+  → Recipient taps link → lands on roamapp.app/people?invite=...&from=Maya
   → Landing page shows: "[Maya] invited you to find travel companions on ROAM"
   → CTA: "Find people going to [dest]" → downloads app or opens web app
   → On signup, `referred_by` recorded → sharer gets +1 referral_count → existing reward tiers apply
@@ -485,7 +485,7 @@ The card is a variant of `components/features/ShareCard.tsx` with a `mode="group
 | Sub-center | "[dates]" in DM Mono |
 | Avatar row | Circular avatars overlapping (48px each, 12px offset) |
 | Bottom-left | "{N} people. Same vibe. Same week." |
-| Bottom-right | "tryroam.netlify.app/people?dest=[dest]" |
+| Bottom-right | "roamapp.app/people?dest=[dest]" |
 | Watermark | "Built with ROAM" in sage, 11px — **not** successMuted |
 
 #### Share CTA Copy (for share sheet pre-fill)
@@ -494,7 +494,7 @@ The card is a variant of `components/features/ShareCard.tsx` with a `mode="group
 Me and {N-1} others are going to {destination} in {month}. 
 We matched on ROAM — an app that finds travelers going where you're going.
 
-Find your people: tryroam.netlify.app/people?dest={destination}&invite={code}
+Find your people: roamapp.app/people?dest={destination}&invite={code}
 
 #ROAM #TravelSquad #{destination}Travel #TravelTok
 ```

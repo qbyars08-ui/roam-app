@@ -18,7 +18,7 @@ You type where you want to go, how long, your budget, and your vibe. It builds a
 
 Not tourist trap recommendations. The kind of stuff a friend who lived there for a year would tell you.
 
-It's free to try: tryroam.netlify.app
+It's free to try: roamapp.app
 
 I built this for myself, honestly. Would love honest feedback from people who actually travel solo — what's missing, what's wrong, what you'd actually use.
 
@@ -61,7 +61,7 @@ That's the level of specificity across every time slot, every day.
 
 My question is honest: is this actually useful, or is it overwhelming? I want to know if the cost-in-local-currency thing matters to you, whether the transit directions are the right level of detail, or if you'd prefer a looser plan you can riff on.
 
-tryroam.netlify.app — free to try, takes about 30 seconds to generate a full trip.
+roamapp.app — free to try, takes about 30 seconds to generate a full trip.
 
 ---
 
@@ -93,6 +93,6 @@ The pattern is: less category, more instruction. Less "the neighborhood is known
 
 I built it as a solo dev over the last few months. It runs on Claude under the hood with a prompt I spent a long time tuning specifically for the kind of insider-knowledge output that actually changes how you travel.
 
-It's free to try: tryroam.netlify.app
+It's free to try: roamapp.app
 
 Would love feedback from people who actually live nomadically — you'll be the first to tell me what's wrong with it.

@@ -66,7 +66,7 @@ Back on creator's face:
 **CTA (55–60 sec):**
 "ROAM — People Tab. Link in Bio. Kostenlos."
 
-*[Lower third text: tryroam.netlify.app]*
+*[Lower third text: roamapp.app]*
 
 ---
 
@@ -123,7 +123,7 @@ Beat 3 (18–32 sec): Scroll through traveler cards
 Creator back on camera (brief):
 "Das ist nicht Tinder. Das ist Reisepartner-Matching. Anderer Vibe komplett."
 
-CTA text overlay: "tryroam.netlify.app · People Tab · Kostenlos"
+CTA text overlay: "roamapp.app · People Tab · Kostenlos"
 
 Voiceover: "Link in Bio."
 
@@ -314,7 +314,7 @@ When users share a ROAM trip, the share card should show not just the destinatio
 │  │  └────────────────────────┘ │    │
 │  │                             │    │
 │  │  [Plan your trip → ]        │    │  ← CTA pill (sage green background)
-│  │  tryroam.netlify.app        │    │  ← URL (DM Mono, 11pt, muted)
+│  │  roamapp.app        │    │  ← URL (DM Mono, 11pt, muted)
 │  └─────────────────────────────┘    │
 └─────────────────────────────────────┘
 ```
@@ -330,7 +330,7 @@ When users share a ROAM trip, the share card should show not just the destinatio
 | Overflow | +2 more (if >4 members) | DM Mono | 12pt | Sage |
 | Vibe pills | adventure · beach · photography | DM Mono | 11pt | CreamMuted |
 | CTA | Plan your trip | DM Sans SemiBold | 14pt | BG (on sage) |
-| URL | tryroam.netlify.app | DM Mono | 11pt | CreamMuted |
+| URL | roamapp.app | DM Mono | 11pt | CreamMuted |
 
 ### Three Card Variants
 
@@ -424,7 +424,7 @@ Creators sharing this card should:
 - Back to People tab hero card
 - Zoom out slowly
 - Text overlay (large, centered): "Dein nächster Trip. Dein Squad."
-- URL lower third: tryroam.netlify.app
+- URL lower third: roamapp.app
 - ROAM logo fades in, bottom center
 
 ---
@@ -497,7 +497,7 @@ Record this as a clean screen recording first, then edit:
 | Profile completions from creator traffic | >10% of new visitors | PostHog: profile_setup |
 
 UTM structure for People tab content:
-`tryroam.netlify.app?utm_source=tiktok&utm_medium=ugc&utm_campaign=people_tab&utm_content=script_01`
+`roamapp.app?utm_source=tiktok&utm_medium=ugc&utm_campaign=people_tab&utm_content=script_01`
 
 Change `utm_content` per script: `script_01`, `script_02`, `script_03`, `story_format`, `reel_matching`.
 

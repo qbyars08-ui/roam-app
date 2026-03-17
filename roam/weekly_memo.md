@@ -5,7 +5,7 @@ Week of: 2026-03-16 to 2026-03-22
 ## What Shipped This Week
 
 ### Product
-- 75+ screen React Native app live at **tryroam.netlify.app**
+- 75+ screen React Native app live at **roamapp.app**
 - Full AI trip generation flow operational (Claude Sonnet via Supabase Edge Function)
 - Prep tab with live travel intelligence: weather, air quality, currency, emergency numbers, cost of living
 - Plan, Discover, People, Flights, Prep tabs — all functional
@@ -21,7 +21,7 @@ Week of: 2026-03-16 to 2026-03-22
 
 | Metric | Status |
 |--------|--------|
-| App | Live at tryroam.netlify.app |
+| App | Live at roamapp.app |
 | Tab Structure | 5 tabs: Plan, Discover, People, Flights, Prep |
 | Free APIs | 10+ integrated (weather, AQI, currency, safety, holidays, etc.) |
 | DACH | 10 scripts, 20 influencers, strategy complete |

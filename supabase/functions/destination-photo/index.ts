@@ -7,7 +7,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 
 // ── CORS ────────────────────────────────────────────────────────────────────
 const ALLOWED_ORIGINS = [
-  "https://tryroam.netlify.app",
+  "https://roamapp.app",
   "https://roamtravel.app",
   "http://localhost:8081",
   "http://localhost:19006",

@@ -1,7 +1,7 @@
 // =============================================================================
 // ROAM — Feature Flags
 // v1.0 App Store: only core features are unlocked
-// Web: everything is unlocked (tryroam.netlify.app stays full-featured)
+// Web: everything is unlocked (roamapp.app stays full-featured)
 // =============================================================================
 import { Platform } from 'react-native';
 

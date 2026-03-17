@@ -32,7 +32,7 @@
 - Captain status briefing: full 13-agent rundown compiled
 
 ### Remaining Quinn-only blockers
-- **Netlify** (tryroam.netlify.app): billing paused, waitlist funnel dead
+- **Netlify** (roamapp.app): billing paused, waitlist funnel dead
 - **Booking.com AID**: placeholder in lib/affiliates.ts
 - **Amadeus env vars**: dead weight in Supabase Dashboard
 - **RevenueCat products**: not created, paywall points to nothing

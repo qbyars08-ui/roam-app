@@ -6,7 +6,7 @@ Last updated: 2026-03-16
 - All scripts in German (native-sounding, Gen Z register)
 - 60-second vertical format (9:16)
 - Hook must stop the scroll in under 3 seconds
-- Every CTA drives to tryroam.netlify.app
+- Every CTA drives to roamapp.app
 - No corporate language, no tourism-board voice
 
 ---
@@ -281,6 +281,6 @@ Target solo female travel audience. Address safety + loneliness. ROAM's privacy 
 - Each script gets 3 creator versions (different creators, same script)
 
 ### Tracking
-- UTM links: tryroam.netlify.app?utm_source=tiktok&utm_medium=ugc&utm_campaign=dach_launch&utm_content=script_XX
+- UTM links: roamapp.app?utm_source=tiktok&utm_medium=ugc&utm_campaign=dach_launch&utm_content=script_XX
 - Track: installs, signups, first trip generated per script
 - Weekly review: kill underperformers, double down on winners

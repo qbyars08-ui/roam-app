@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy tryroam.netlify.app — run from roam/
+# Deploy roamapp.app — run from roam/
 set -e
 echo "Exporting web..."
 npx expo export --platform web
