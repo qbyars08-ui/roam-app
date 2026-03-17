@@ -17,18 +17,18 @@ const MS_PER_DAY = 1000 * 60 * 60 * 24;
 // Pure helpers
 // ---------------------------------------------------------------------------
 
-/** Days from now until the trip's estimated departure (createdAt). Negative = in the past. */
+/** Days from now until the trip's departure. Uses startDate when set, falls back to createdAt. */
 export function getDaysUntilDeparture(trip: Trip): number {
-  const departure = new Date(trip.createdAt);
+  const departure = new Date(trip.startDate ?? trip.createdAt);
   departure.setHours(0, 0, 0, 0);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return Math.ceil((departure.getTime() - today.getTime()) / MS_PER_DAY);
 }
 
-/** Days since the trip ended (createdAt + days). Negative = trip hasn't ended yet. */
+/** Days since the trip ended (departure + days). Negative = trip hasn't ended yet. */
 export function getDaysSinceReturn(trip: Trip): number {
-  const departure = new Date(trip.createdAt);
+  const departure = new Date(trip.startDate ?? trip.createdAt);
   departure.setHours(0, 0, 0, 0);
   const end = new Date(departure.getTime() + trip.days * MS_PER_DAY);
   const today = new Date();
