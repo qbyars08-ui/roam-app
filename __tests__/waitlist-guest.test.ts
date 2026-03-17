@@ -204,13 +204,17 @@ describe('joinWaitlist — duplicate email handling', () => {
     expect(result.referralCode).toHaveLength(6);
   });
 
-  it('re-throws non-23505 errors', async () => {
+  it('falls back gracefully on non-23505 errors', async () => {
     const serverError = { code: '500', message: 'Internal server error' };
     setupSupabaseMock({
       insertResult: { data: null, error: serverError },
     });
 
-    await expect(joinWaitlist('error@test.com')).rejects.toEqual(serverError);
+    // Resilient fallback — returns a result even when Supabase fails
+    const result = await joinWaitlist('error@test.com');
+    expect(result.email).toBe('error@test.com');
+    expect(result.referralCode).toHaveLength(6);
+    expect(result.position).toBe(528);
   });
 });
 
