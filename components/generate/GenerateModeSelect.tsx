@@ -274,8 +274,8 @@ export default function GenerateModeSelect({ onSelect, firstTime = false }: Gene
           iconColor={COLORS.sage}
           iconBg={COLORS.sageLight}
           borderGlow={COLORS.sageBorder}
-          title={t('generate.quickMode')}
-          subtitle={t('generate.quickModeDesc')}
+          title={t('generate.quickTrip', { defaultValue: 'Quick Trip' })}
+          subtitle={t('generate.quickTripDesc', { defaultValue: '30 seconds. Just go.' })}
           onPress={() => handlePress('quick')}
           delay={300}
         />
@@ -285,8 +285,8 @@ export default function GenerateModeSelect({ onSelect, firstTime = false }: Gene
           iconColor={COLORS.gold}
           iconBg={COLORS.goldSoft}
           borderGlow={COLORS.goldBorder}
-          title={t('generate.conversationMode')}
-          subtitle={t('generate.conversationModeDesc')}
+          title={t('generate.planTogether', { defaultValue: 'Plan Together' })}
+          subtitle={t('generate.planTogetherDesc', { defaultValue: 'Tell me everything.' })}
           onPress={() => handlePress('conversation')}
           delay={450}
         />

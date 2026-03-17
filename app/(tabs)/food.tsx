@@ -28,6 +28,8 @@ import { useAppStore, getActiveTrip } from '../../lib/store';
 import { SkeletonCard } from '../../components/premium/LoadingStates';
 import { searchPlaces, type FSQPlace } from '../../lib/apis/foursquare';
 import { geocode } from '../../lib/apis/mapbox';
+import { searchNearby, type PlaceResult } from '../../lib/apis/google-places';
+import { searchLocations, type TALocation } from '../../lib/apis/tripadvisor';
 import { track } from '../../lib/analytics';
 import { captureEvent } from '../../lib/posthog';
 import { useSonarQuery } from '../../lib/sonar';
@@ -270,6 +272,10 @@ export default function FoodScreen() {
   const [fsqPlaces, setFsqPlaces] = useState<FSQPlace[]>([]);
   const [fsqLoading, setFsqLoading] = useState(false);
 
+  // Google Places + TripAdvisor restaurants
+  const [googleRestaurants, setGoogleRestaurants] = useState<PlaceResult[] | null>(null);
+  const [taRestaurants, setTaRestaurants] = useState<TALocation[] | null>(null);
+
   const destination =
     activeTrip?.destination ?? planWizard.destination ?? null;
 
@@ -311,6 +317,26 @@ export default function FoodScreen() {
       }
     }
     fetchNearbyRestaurants();
+    return () => { cancelled = true; };
+  }, [destination]);
+
+  // Google Places + TripAdvisor: fetch when destination changes
+  useEffect(() => {
+    let cancelled = false;
+    const dest = destination;
+    if (!dest) {
+      setGoogleRestaurants(null);
+      setTaRestaurants(null);
+      return;
+    }
+    geocode(dest).then(async (geo) => {
+      if (cancelled || !geo) return;
+      const results = await searchNearby(geo.lat, geo.lng, 'restaurant', 2000);
+      if (!cancelled) setGoogleRestaurants(results?.slice(0, 6) ?? null);
+    });
+    searchLocations(dest, 'restaurants').then((results) => {
+      if (!cancelled) setTaRestaurants(results?.slice(0, 5) ?? null);
+    });
     return () => { cancelled = true; };
   }, [destination]);
 
@@ -610,6 +636,48 @@ export default function FoodScreen() {
                 </Pressable>
               ))
             )}
+          </View>
+        )}
+
+        {/* ── Google Places: Nearby Restaurants ── */}
+        {googleRestaurants && googleRestaurants.length > 0 && (
+          <View style={styles.apiSection}>
+            <Text style={styles.apiSectionLabel}>GOOGLE PLACES</Text>
+            <Text style={styles.apiSectionHeading}>Highly rated nearby</Text>
+            <View style={styles.apiCardStack}>
+              {googleRestaurants.map((place, i) => (
+                <View key={place.placeId ?? i} style={styles.apiCard}>
+                  <Text style={styles.apiCardName}>{place.name}</Text>
+                  <Text style={styles.apiCardMeta}>
+                    {place.rating != null ? `${place.rating.toFixed(1)} \u2605` : ''}
+                    {place.userRatingsTotal ? ` (${place.userRatingsTotal})` : ''}
+                    {place.priceLevel != null ? ` · ${'$'.repeat(place.priceLevel)}` : ''}
+                  </Text>
+                  {place.vicinity ? <Text style={styles.apiCardSub}>{place.vicinity}</Text> : null}
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* ── TripAdvisor: Top Restaurants ── */}
+        {taRestaurants && taRestaurants.length > 0 && (
+          <View style={styles.apiSection}>
+            <Text style={styles.apiSectionLabel}>TRIPADVISOR</Text>
+            <Text style={styles.apiSectionHeading}>Top reviewed restaurants</Text>
+            <View style={styles.apiCardStack}>
+              {taRestaurants.map((loc, i) => (
+                <View key={loc.locationId ?? i} style={styles.apiCard}>
+                  <Text style={styles.apiCardName}>{loc.name}</Text>
+                  <Text style={styles.apiCardMeta}>
+                    {loc.rating != null ? `${loc.rating.toFixed(1)} \u2605` : ''}
+                    {loc.numReviews ? ` (${loc.numReviews} reviews)` : ''}
+                    {loc.priceLevel ? ` · ${loc.priceLevel}` : ''}
+                  </Text>
+                  {loc.address ? <Text style={styles.apiCardSub}>{loc.address}</Text> : null}
+                </View>
+              ))}
+            </View>
           </View>
         )}
 
@@ -1327,4 +1395,48 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.xs,
     flexShrink: 0,
   } as ViewStyle,
+
+  // ── Google Places + TripAdvisor ──
+  apiSection: {
+    paddingHorizontal: 20,
+    paddingTop: SPACING.xl,
+    gap: SPACING.sm,
+  } as ViewStyle,
+  apiSectionLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+    letterSpacing: 2,
+  } as TextStyle,
+  apiSectionHeading: {
+    fontFamily: FONTS.header,
+    fontSize: 22,
+    color: COLORS.cream,
+    letterSpacing: -0.5,
+    marginBottom: SPACING.md,
+  } as TextStyle,
+  apiCardStack: {
+    gap: SPACING.sm,
+  } as ViewStyle,
+  apiCard: {
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    gap: 4,
+  } as ViewStyle,
+  apiCardName: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 15,
+    color: COLORS.cream,
+  } as TextStyle,
+  apiCardMeta: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.sage,
+  } as TextStyle,
+  apiCardSub: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamDim,
+  } as TextStyle,
 });

@@ -27,6 +27,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
+import { useSonarQuery } from '../../lib/sonar';
+import LiveBadge from '../../components/ui/LiveBadge';
+import SourceCitation from '../../components/ui/SourceCitation';
+import { searchNearby, type PlaceResult } from '../../lib/apis/google-places';
+import { searchLocations, type TALocation } from '../../lib/apis/tripadvisor';
+import { geocode } from '../../lib/apis/mapbox';
 import { track } from '../../lib/analytics';
 import { captureEvent } from '../../lib/posthog';
 import { getHotelLink, openBookingLink } from '../../lib/booking-links';
@@ -355,6 +361,31 @@ export default function StaysScreen() {
   const [guests, setGuests] = useState(2);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
+  // Live API data
+  const sonarStays = useSonarQuery(destinationText.trim() || undefined, 'prep');
+  const [nearbyHotels, setNearbyHotels] = useState<PlaceResult[] | null>(null);
+  const [taHotels, setTaHotels] = useState<TALocation[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const dest = destinationText.trim();
+    if (!dest) { setNearbyHotels(null); setTaHotels(null); return; }
+
+    // Google Places hotels
+    geocode(dest).then(async (geo) => {
+      if (cancelled || !geo) return;
+      const results = await searchNearby(geo.lat, geo.lng, 'lodging', 2000);
+      if (!cancelled) setNearbyHotels(results?.slice(0, 6) ?? null);
+    });
+
+    // TripAdvisor hotels
+    searchLocations(dest, 'hotels').then((results) => {
+      if (!cancelled) setTaHotels(results?.slice(0, 5) ?? null);
+    });
+
+    return () => { cancelled = true; };
+  }, [destinationText]);
+
   useEffect(() => {
     track({ type: 'screen_view', screen: 'stays' });
     Animated.timing(fadeAnim, {
@@ -524,6 +555,60 @@ export default function StaysScreen() {
             />
           ))}
         </View>
+
+        {/* Sonar Stays Intel */}
+        {sonarStays.data && (
+          <View style={styles.apiSection}>
+            <View style={styles.apiSectionHeader}>
+              <Text style={styles.apiSectionLabel}>LIVE INTEL</Text>
+              {sonarStays.isLive && <LiveBadge />}
+            </View>
+            <View style={styles.apiCard}>
+              <Text style={styles.apiCardBody}>{sonarStays.data.answer}</Text>
+              {sonarStays.citations.length > 0 && <SourceCitation citations={sonarStays.citations} />}
+            </View>
+          </View>
+        )}
+
+        {/* Google Places Nearby Hotels */}
+        {nearbyHotels && nearbyHotels.length > 0 && (
+          <View style={styles.apiSection}>
+            <Text style={styles.apiSectionLabel}>NEARBY HOTELS</Text>
+            <Text style={styles.apiSectionHeading}>Real hotels near {destinationText.trim()}</Text>
+            <View style={styles.apiCardStack}>
+              {nearbyHotels.map((h) => (
+                <View key={h.placeId} style={styles.apiCard}>
+                  <Text style={styles.apiCardName}>{h.name}</Text>
+                  <Text style={styles.apiCardMeta}>
+                    {h.rating ? `${h.rating} ★` : ''}{h.priceLevel ? ` · ${'$'.repeat(h.priceLevel)}` : ''}
+                  </Text>
+                  {h.vicinity && <Text style={styles.apiCardSub}>{h.vicinity}</Text>}
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* TripAdvisor Top Hotels */}
+        {taHotels && taHotels.length > 0 && (
+          <View style={styles.apiSection}>
+            <Text style={styles.apiSectionLabel}>TOP RATED</Text>
+            <Text style={styles.apiSectionHeading}>Highest rated stays</Text>
+            <View style={styles.apiCardStack}>
+              {taHotels.map((h) => (
+                <Pressable
+                  key={h.locationId}
+                  style={styles.apiCard}
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                >
+                  <Text style={styles.apiCardName}>{h.name}</Text>
+                  {h.rating && <Text style={styles.apiCardMeta}>{h.rating} ★ · {h.numReviews ?? 0} reviews</Text>}
+                  {h.address && <Text style={styles.apiCardSub}>{h.address}</Text>}
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* Stay Inspiration */}
         <View style={styles.sectionHeader}>
@@ -809,4 +894,15 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
     lineHeight: 16,
   } as TextStyle,
+
+  apiSection: { paddingHorizontal: 20, paddingTop: SPACING.xl, gap: SPACING.sm } as ViewStyle,
+  apiSectionHeader: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm } as ViewStyle,
+  apiSectionLabel: { fontFamily: FONTS.mono, fontSize: 11, color: COLORS.sage, letterSpacing: 2 } as TextStyle,
+  apiSectionHeading: { fontFamily: FONTS.header, fontSize: 22, color: COLORS.cream, letterSpacing: -0.5, marginBottom: SPACING.md } as TextStyle,
+  apiCardStack: { gap: SPACING.sm } as ViewStyle,
+  apiCard: { backgroundColor: COLORS.surface1, borderRadius: RADIUS.lg, padding: SPACING.md, gap: 4 } as ViewStyle,
+  apiCardName: { fontFamily: FONTS.bodyMedium, fontSize: 15, color: COLORS.cream } as TextStyle,
+  apiCardMeta: { fontFamily: FONTS.mono, fontSize: 12, color: COLORS.sage } as TextStyle,
+  apiCardSub: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.creamDim } as TextStyle,
+  apiCardBody: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.cream, lineHeight: 20 } as TextStyle,
 });

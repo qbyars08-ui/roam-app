@@ -49,6 +49,11 @@ import { getMedicalGuideByDestination } from '../lib/medical-abroad';
 import { getEmergencyForDestination } from '../lib/prep/emergency-data';
 import { getCulturalGuideForDestination } from '../lib/prep/cultural-data';
 import { getSafetyForDestination } from '../lib/prep/safety-data';
+import { getEntryRequirements, type EntryRequirements } from '../lib/apis/sherpa';
+import { getWeatherIntel, type WeatherIntel } from '../lib/apis/openweather';
+import { useSonarQuery } from '../lib/sonar';
+import LiveBadge from '../components/ui/LiveBadge';
+import SourceCitation from '../components/ui/SourceCitation';
 import type { TimezoneInfo } from '../lib/timezone';
 import type { WeatherForecast } from '../lib/weather-forecast';
 
@@ -153,8 +158,13 @@ function BeforeYouLandScreen() {
   const [weatherData, setWeatherData] = useState<WeatherForecast | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
+  const [entryReqs, setEntryReqs] = useState<EntryRequirements | null>(null);
+  const [liveWeather, setLiveWeather] = useState<WeatherIntel | null>(null);
 
   const destName = destination ?? 'your destination';
+
+  // Sonar pre-departure intel
+  const sonarPrep = useSonarQuery(destination || undefined, 'prep');
 
   // Synchronous data
   const medicalGuide = useMemo(() => getMedicalGuideByDestination(destName), [destName]);
@@ -195,6 +205,20 @@ function BeforeYouLandScreen() {
             const weather = await getWeatherForecast(geo.latitude, geo.longitude, 3);
             if (!cancelled && weather) setWeatherData(weather);
           }
+        }),
+      );
+
+      // Sherpa entry requirements
+      promises.push(
+        getEntryRequirements(destName).then((reqs) => {
+          if (!cancelled) setEntryReqs(reqs);
+        }),
+      );
+
+      // OpenWeather live forecast
+      promises.push(
+        getWeatherIntel(destName).then((intel) => {
+          if (!cancelled) setLiveWeather(intel);
         }),
       );
 
@@ -304,6 +328,31 @@ function BeforeYouLandScreen() {
           <SkeletonCard height={48} style={{ marginBottom: SPACING.md }} />
         ) : null}
 
+        {/* Sonar Pre-Departure Intel */}
+        {sonarPrep.data ? (
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionHeaderLeft}>
+                <Plane size={20} color={COLORS.sage} strokeWidth={1.5} />
+                <Text style={styles.sectionTitle}>
+                  {t('beforeYouLand.sections.sonarPrep', { defaultValue: 'Pre-Departure Intel' })}
+                </Text>
+                {sonarPrep.isLive ? <LiveBadge size="sm" /> : null}
+              </View>
+            </View>
+            <View style={styles.sectionBody}>
+              <Text style={styles.dataValue}>{sonarPrep.data.answer}</Text>
+              {sonarPrep.citations.length > 0 ? (
+                <View style={{ marginTop: SPACING.sm }}>
+                  <SourceCitation citations={sonarPrep.citations} />
+                </View>
+              ) : null}
+            </View>
+          </View>
+        ) : sonarPrep.isLoading ? (
+          <SkeletonCard height={80} style={{ marginBottom: SPACING.md }} />
+        ) : null}
+
         {/* 1. Time Zone Intel */}
         <CollapsibleSection
           title={t('beforeYouLand.sections.timezone', { defaultValue: 'Time Zone Intel' })}
@@ -386,6 +435,48 @@ function BeforeYouLandScreen() {
             <Text style={styles.noData}>{t('beforeYouLand.noWeather', { defaultValue: 'Weather data unavailable' })}</Text>
           )}
         </CollapsibleSection>
+
+        {/* 2b. Live Weather (OpenWeather) */}
+        {liveWeather ? (
+          <CollapsibleSection
+            title={t('beforeYouLand.sections.liveWeather', { defaultValue: 'Live Weather Forecast' })}
+            icon={<CloudRain size={20} color={COLORS.sage} strokeWidth={1.5} />}
+          >
+            <Text style={styles.dataValue}>{liveWeather.summary}</Text>
+            {liveWeather.days.slice(0, 5).map((day) => (
+              <View key={day.date} style={styles.weatherRow}>
+                <Text style={styles.weatherDate}>{formatShortDate(day.date)}</Text>
+                <View style={styles.weatherDetails}>
+                  <View style={styles.weatherStat}>
+                    <Thermometer size={14} color={COLORS.coral} strokeWidth={1.5} />
+                    <Text style={styles.weatherStatText}>
+                      {Math.round(day.tempHigh)}/{Math.round(day.tempLow)}C
+                    </Text>
+                  </View>
+                  <View style={styles.weatherStat}>
+                    <Droplets size={14} color={COLORS.sage} strokeWidth={1.5} />
+                    <Text style={styles.weatherStatText}>{day.humidity}%</Text>
+                  </View>
+                  <View style={styles.weatherStat}>
+                    <Wind size={14} color={COLORS.creamDim} strokeWidth={1.5} />
+                    <Text style={styles.weatherStatText}>
+                      {Math.round(day.windSpeed)} m/s
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.weatherLabel}>{day.description}</Text>
+              </View>
+            ))}
+            {liveWeather.packingAdvice.length > 0 ? (
+              <View style={styles.packSection}>
+                <Text style={styles.packTitle}>{t('beforeYouLand.livePackAdvice', { defaultValue: 'Packing advice' })}</Text>
+                {liveWeather.packingAdvice.map((tip) => (
+                  <Text key={tip} style={styles.packItem}>{tip}</Text>
+                ))}
+              </View>
+            ) : null}
+          </CollapsibleSection>
+        ) : null}
 
         {/* 3. Money Brief */}
         <CollapsibleSection
@@ -532,6 +623,53 @@ function BeforeYouLandScreen() {
             <Text style={styles.noData}>{t('beforeYouLand.noCultural', { defaultValue: 'Cultural data unavailable for this destination' })}</Text>
           )}
         </CollapsibleSection>
+
+        {/* 5b. Entry Requirements (Sherpa) */}
+        {entryReqs ? (
+          <CollapsibleSection
+            title={t('beforeYouLand.sections.entryReqs', { defaultValue: 'Entry Requirements' })}
+            icon={<Shield size={20} color={COLORS.gold} strokeWidth={1.5} />}
+          >
+            {entryReqs.covidRestrictions ? (
+              <View style={styles.dataRow}>
+                <Text style={styles.dataLabel}>{t('beforeYouLand.covidRestrictions', { defaultValue: 'COVID restrictions' })}</Text>
+                <Text style={styles.dataValue}>{entryReqs.covidRestrictions}</Text>
+              </View>
+            ) : null}
+            <View style={styles.dataRow}>
+              <Text style={styles.dataLabel}>{t('beforeYouLand.healthDeclaration', { defaultValue: 'Health declaration required' })}</Text>
+              <Text style={[styles.dataValueMono, { color: entryReqs.healthDeclaration ? COLORS.gold : COLORS.sage }]}>
+                {entryReqs.healthDeclaration ? t('common.yes', { defaultValue: 'Yes' }) : t('common.no', { defaultValue: 'No' })}
+              </Text>
+            </View>
+            <View style={styles.dataRow}>
+              <Text style={styles.dataLabel}>{t('beforeYouLand.insuranceRequired', { defaultValue: 'Insurance required' })}</Text>
+              <Text style={[styles.dataValueMono, { color: entryReqs.insuranceRequired ? COLORS.coral : COLORS.sage }]}>
+                {entryReqs.insuranceRequired ? t('common.yes', { defaultValue: 'Yes' }) : t('common.no', { defaultValue: 'No' })}
+              </Text>
+            </View>
+            {entryReqs.customsForms ? (
+              <View style={styles.dataRow}>
+                <Text style={styles.dataLabel}>{t('beforeYouLand.customsForms', { defaultValue: 'Customs forms' })}</Text>
+                <Text style={styles.dataValue}>{entryReqs.customsForms}</Text>
+              </View>
+            ) : null}
+            {entryReqs.currencyRestrictions ? (
+              <View style={styles.dataRow}>
+                <Text style={styles.dataLabel}>{t('beforeYouLand.currencyRestrictions', { defaultValue: 'Currency restrictions' })}</Text>
+                <Text style={styles.dataValue}>{entryReqs.currencyRestrictions}</Text>
+              </View>
+            ) : null}
+            {entryReqs.notes.length > 0 ? (
+              <View style={styles.dataRow}>
+                <Text style={styles.dataLabel}>{t('beforeYouLand.notes', { defaultValue: 'Notes' })}</Text>
+                {entryReqs.notes.map((note) => (
+                  <Text key={note} style={styles.dataValue}>{note}</Text>
+                ))}
+              </View>
+            ) : null}
+          </CollapsibleSection>
+        ) : null}
 
         {/* 6. Your Checklist */}
         <CollapsibleSection

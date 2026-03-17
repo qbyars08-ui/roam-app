@@ -5,6 +5,7 @@ import React, { memo, useCallback } from 'react';
 import {
   Image,
   Linking,
+  Pressable,
   StyleSheet,
   Text,
   View,
@@ -15,6 +16,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MapPin } from 'lucide-react-native';
+import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS, AFFILIATES } from '../../lib/constants';
 import SafetyBadge from './SafetyBadge';
 import Button from '../ui/Button';
@@ -22,6 +24,8 @@ import Button from '../ui/Button';
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
+
+export type VenueCardTapTarget = 'restaurant' | 'hotel' | 'activity' | 'flight';
 
 interface VenueCardProps {
   name: string;
@@ -35,6 +39,12 @@ interface VenueCardProps {
   booking_url?: string;
   /** City for neighborhood safety badge */
   city?: string;
+  /** Tap action: restaurant/activity → Maps, hotel → Booking.com, flight → Skyscanner */
+  tapTarget?: VenueCardTapTarget;
+  /** Destination for hotel search URL */
+  destination?: string;
+  /** Show "Powered by Google" when data is from Google Places */
+  poweredByGoogle?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -59,6 +69,27 @@ function formatReviewCount(count: number): string {
 // Component
 // ---------------------------------------------------------------------------
 
+function getVenueTapUrl(
+  tapTarget: VenueCardTapTarget,
+  props: { maps_url: string; booking_url?: string; destination?: string; name: string }
+): string {
+  switch (tapTarget) {
+    case 'hotel':
+      return (
+        props.booking_url ??
+        `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(
+          [props.destination, props.name].filter(Boolean).join(' ')
+        )}`
+      );
+    case 'flight':
+      return AFFILIATES.skyscanner;
+    case 'restaurant':
+    case 'activity':
+    default:
+      return props.maps_url;
+  }
+}
+
 function VenueCardInner({
   name,
   photo_url,
@@ -70,21 +101,34 @@ function VenueCardInner({
   maps_url,
   booking_url,
   city,
+  tapTarget,
+  destination,
+  poweredByGoogle,
 }: VenueCardProps) {
   const { t } = useTranslation();
+  const tapUrl = tapTarget ? getVenueTapUrl(tapTarget, { maps_url, booking_url, destination, name }) : null;
+
+  const handleCardPress = useCallback(() => {
+    if (!tapUrl) return;
+    Haptics.selectionAsync();
+    Linking.openURL(tapUrl).catch(() => {});
+  }, [tapUrl]);
+
   const handleOpenMaps = useCallback(() => {
+    Haptics.selectionAsync();
     Linking.openURL(maps_url).catch(() => {});
   }, [maps_url]);
 
   const handleBook = useCallback(() => {
+    Haptics.selectionAsync();
     const url =
       booking_url ??
       `${AFFILIATES.getyourguide}${encodeURIComponent(name)}`;
     Linking.openURL(url).catch(() => {});
   }, [booking_url, name]);
 
-  return (
-    <View style={styles.container}>
+  const content = (
+    <>
       {/* Photo */}
       <View style={styles.photoContainer}>
         {photo_url ? (
@@ -157,8 +201,21 @@ function VenueCardInner({
           </View>
         </View>
       </View>
-    </View>
+      {poweredByGoogle ? (
+        <Text style={styles.poweredByGoogle}>Powered by Google</Text>
+      ) : null}
+    </>
   );
+
+  if (tapUrl) {
+    return (
+      <Pressable onPress={handleCardPress} style={styles.container} accessibilityRole="button" accessibilityLabel={t('venue.openLink', { defaultValue: `Open ${name}` })}>
+        {content}
+      </Pressable>
+    );
+  }
+
+  return <View style={styles.container}>{content}</View>;
 }
 
 const VenueCard = memo(VenueCardInner);
@@ -283,4 +340,14 @@ const styles = StyleSheet.create({
   buttonWrapper: {
     flex: 1,
   } as ViewStyle,
+
+  poweredByGoogle: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.creamMuted,
+    letterSpacing: 0.5,
+    marginTop: SPACING.xs,
+    marginBottom: SPACING.xs,
+    paddingHorizontal: SPACING.md,
+  } as TextStyle,
 });

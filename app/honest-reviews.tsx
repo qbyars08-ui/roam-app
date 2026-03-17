@@ -24,6 +24,7 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useDestinationTheme } from '../lib/useDestinationTheme';
 import { withComingSoon } from '../lib/with-coming-soon';
 import { validateDestination } from '../lib/params-validator';
+import { searchLocations, getLocationReviews, type TALocation, type TAReview } from '../lib/apis/tripadvisor';
 
 // =============================================================================
 // Types
@@ -819,6 +820,8 @@ function HonestReviews() {
 
   const [activeFilter, setActiveFilter] = useState<FilterOption>('All');
   const [activeSort, setActiveSort] = useState<SortOption>('Default');
+  const [taLocations, setTaLocations] = useState<TALocation[]>([]);
+  const [taReviews, setTaReviews] = useState<Record<string, TAReview[]>>({});
 
   // Animation refs for stagger
   const fadeAnims = useRef<Animated.Value[]>([]).current;
@@ -856,6 +859,25 @@ function HonestReviews() {
     Animated.stagger(80, animations).start();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- fadeAnims, reviews intentionally excluded
   }, [activeFilter, activeSort, cityName]);
+
+  // Fetch TripAdvisor locations and reviews
+  useEffect(() => {
+    if (!cityName) return;
+    let cancelled = false;
+    searchLocations(cityName, 'attractions').then((locations) => {
+      if (cancelled || !locations) return;
+      setTaLocations(locations);
+      // Fetch reviews for first 3 locations
+      locations.slice(0, 3).forEach((loc) => {
+        getLocationReviews(loc.locationId).then((revs) => {
+          if (!cancelled && revs) {
+            setTaReviews((prev) => ({ ...prev, [loc.locationId]: revs }));
+          }
+        });
+      });
+    });
+    return () => { cancelled = true; };
+  }, [cityName]);
 
   // -------------------------------------------------------------------------
   // Crowd level indicator (filled dots)
@@ -1123,6 +1145,39 @@ function HonestReviews() {
                 </Text>
               </View>
             )}
+
+            {/* TripAdvisor Real Reviews */}
+            {taLocations.length > 0 ? (
+              <View style={{ marginTop: SPACING.xl }}>
+                <Text style={styles.headerTitle}>
+                  {t('honestReviews.realReviews', { defaultValue: 'Real Reviews (TripAdvisor)' })}
+                </Text>
+                {taLocations.slice(0, 5).map((loc) => (
+                  <View key={loc.locationId} style={styles.card}>
+                    <Text style={styles.attractionName}>{loc.name}</Text>
+                    {loc.rating != null ? (
+                      <View style={styles.badgeRow}>
+                        <View style={styles.infoBadge}>
+                          <Text style={styles.infoBadgeLabel}>{t('honestReviews.rating', { defaultValue: 'Rating' })}</Text>
+                          <Text style={styles.infoBadgeValue}>{loc.rating.toFixed(1)}/5</Text>
+                        </View>
+                        <View style={styles.infoBadge}>
+                          <Text style={styles.infoBadgeLabel}>{t('honestReviews.reviews', { defaultValue: 'Reviews' })}</Text>
+                          <Text style={styles.infoBadgeValue}>{loc.numReviews}</Text>
+                        </View>
+                      </View>
+                    ) : null}
+                    <Text style={styles.honestTake}>{loc.address}</Text>
+                    {taReviews[loc.locationId]?.slice(0, 2).map((rev) => (
+                      <View key={rev.id} style={styles.tipCallout}>
+                        <Text style={styles.tipLabel}>{rev.author} ({rev.rating}/5)</Text>
+                        <Text style={styles.tipText} numberOfLines={3}>{rev.text}</Text>
+                      </View>
+                    ))}
+                  </View>
+                ))}
+              </View>
+            ) : null}
           </ScrollView>
         </>
       )}

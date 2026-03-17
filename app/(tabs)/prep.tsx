@@ -93,6 +93,8 @@ import CurrencyQuickCard from '../../components/prep/CurrencyQuickCard';
 import CostOfLivingCard from '../../components/prep/CostOfLivingCard';
 import DualClockWidget from '../../components/features/DualClockWidget';
 import PackingList from '../../components/features/PackingList';
+import WeatherDayStrip from '../../components/features/WeatherDayStrip';
+import { SkeletonCard } from '../../components/premium/LoadingStates';
 import HolidayCrowdCalendar from '../../components/features/HolidayCrowdCalendar';
 import IAmHereNow from '../../components/prep/IAmHereNow';
 import { getJetLagForDestination, type JetLagPlan } from '../../lib/jet-lag';
@@ -102,6 +104,8 @@ import SourceCitation from '../../components/ui/SourceCitation';
 import { getEntryRequirements, type EntryRequirements } from '../../lib/apis/sherpa';
 import { getCurrentWeather, getWeatherIntel, type CurrentWeather, type WeatherIntel } from '../../lib/apis/openweather';
 import { getRoutes, type RouteResult } from '../../lib/apis/rome2rio';
+import { geocode, type GeoResult } from '../../lib/apis/mapbox';
+import { getVisaRequirements, type VisaResult } from '../../lib/apis/sherpa';
 
 // ---------------------------------------------------------------------------
 // Survival phrase keys (6 phrases for Language tab)
@@ -938,9 +942,13 @@ function LanguageTab({ pack }: { pack: LanguagePack }) {
 function VisaTab({
   destination,
   passport,
+  visaReqs,
+  geoCoords,
 }: {
   destination: string;
   passport: PassportNationality;
+  visaReqs: VisaResult | null;
+  geoCoords: GeoResult | null;
 }) {
   const { t } = useTranslation();
   const visa = getVisaInfo(destination, passport);
@@ -1027,6 +1035,53 @@ function VisaTab({
           <Text style={styles.visaChecklistText}>{item}</Text>
         </View>
       ))}
+
+      {/* Sherpa granular visa requirements */}
+      {visaReqs && (
+        <View style={styles.sherpaVisaSection}>
+          <Text style={styles.sherpaVisaHeading}>{t('prep.sherpaDetails', { defaultValue: 'Detailed Requirements (Sherpa)' })}</Text>
+          {visaReqs.maxStay != null && (
+            <Text style={styles.sherpaVisaDetail}>{t('prep.maxStay', { defaultValue: 'Max stay: {{days}} days', days: visaReqs.maxStay })}</Text>
+          )}
+          {visaReqs.processingTime && (
+            <Text style={styles.sherpaVisaDetail}>{t('prep.processingTime', { defaultValue: 'Processing: {{time}}', time: visaReqs.processingTime })}</Text>
+          )}
+          {visaReqs.documentsNeeded.length > 0 && (
+            <>
+              <Text style={styles.sherpaVisaDocLabel}>{t('prep.documentsNeeded', { defaultValue: 'Documents needed' })}</Text>
+              {visaReqs.documentsNeeded.map((doc, i) => (
+                <View key={i} style={styles.visaChecklistRow}>
+                  <CheckSquare size={14} color={COLORS.muted} />
+                  <Text style={styles.visaChecklistText}>{doc}</Text>
+                </View>
+              ))}
+            </>
+          )}
+          {visaReqs.notes && (
+            <Text style={styles.sherpaVisaNote}>{visaReqs.notes}</Text>
+          )}
+          {visaReqs.officialLink && (
+            <TouchableOpacity
+              style={styles.applyOnlineBtn}
+              onPress={() => Linking.openURL(visaReqs.officialLink!).catch(() => {})}
+              activeOpacity={0.7}
+              accessibilityLabel="Official visa info — opens government website"
+              accessibilityRole="link"
+            >
+              <ExternalLink size={14} color={COLORS.sage} />
+              <Text style={styles.applyOnlineText}>{t('prep.officialInfo', { defaultValue: 'Official Info' })}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
+      {/* Mapbox coordinates */}
+      {geoCoords && (
+        <View style={styles.geoSection}>
+          <Text style={styles.geoLabel}>{geoCoords.placeName}</Text>
+          <Text style={styles.geoCoords}>{geoCoords.lat.toFixed(4)}, {geoCoords.lng.toFixed(4)}</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -1769,9 +1824,18 @@ function weatherEmoji(condition: string): string {
 // ---------------------------------------------------------------------------
 // Current Weather Card (OpenWeather)
 // ---------------------------------------------------------------------------
-function CurrentWeatherCard({ data }: { data: CurrentWeather }) {
+function currentWeatherUpdatedMinutes(updatedAt: number | null): string {
+  if (updatedAt == null) return '';
+  const min = Math.floor((Date.now() - updatedAt) / 60_000);
+  if (min < 1) return 'Updated just now';
+  if (min === 1) return 'Updated 1 min ago';
+  return `Updated ${min} min ago`;
+}
+
+function CurrentWeatherCard({ data, updatedAt }: { data: CurrentWeather; updatedAt?: number | null }) {
   const { t } = useTranslation();
   const emoji = weatherEmoji(data.condition);
+  const updatedLabel = currentWeatherUpdatedMinutes(updatedAt ?? null);
   return (
     <View style={apiCardStyles.card}>
       <Text style={apiCardStyles.sectionLabel}>
@@ -1816,6 +1880,11 @@ function CurrentWeatherCard({ data }: { data: CurrentWeather }) {
           </View>
         )}
       </View>
+      {updatedLabel ? (
+        <Text style={[apiCardStyles.weatherStatLabel, { marginTop: SPACING.sm, fontSize: 11 }]}>
+          {updatedLabel}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -2075,16 +2144,24 @@ function PrepScreen() {
   const sonarPrep = useSonarQuery(selectedDest, 'prep');
   const sonarSafety = useSonarQuery(selectedDest, 'safety');
 
+  // Mapbox geocode + Sherpa visa requirements
+  const [geoCoords, setGeoCoords] = useState<GeoResult | null>(null);
+  const [visaReqs, setVisaReqs] = useState<VisaResult | null>(null);
+
   // Live API data — Entry Requirements (Sherpa) + Weather (weather-intel edge, OPENWEATHERMAP_KEY)
   const [entryRequirements, setEntryRequirements] = useState<EntryRequirements | null>(null);
   const [currentWeather, setCurrentWeather] = useState<CurrentWeather | null>(null);
   const [weatherIntel, setWeatherIntel] = useState<WeatherIntel | null>(null);
+  const [weatherLoading, setWeatherLoading] = useState(true);
+  const [weatherFetchedAt, setWeatherFetchedAt] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     setEntryRequirements(null);
     setCurrentWeather(null);
     setWeatherIntel(null);
+    setWeatherLoading(true);
+    setWeatherFetchedAt(null);
 
     Promise.all([
       getEntryRequirements(selectedDest),
@@ -2094,13 +2171,38 @@ function PrepScreen() {
       if (cancelled) return;
       if (entry) setEntryRequirements(entry);
       if (weather) setCurrentWeather(weather);
-      if (intel) setWeatherIntel(intel);
+      if (intel) {
+        setWeatherIntel(intel);
+        setWeatherFetchedAt(Date.now());
+      }
+      setWeatherLoading(false);
     }).catch(() => {
-      // graceful no-op — sections simply won't render
+      if (!cancelled) setWeatherLoading(false);
     });
 
     return () => { cancelled = true; };
   }, [selectedDest]);
+
+  // Mapbox geocode for map coordinates
+  useEffect(() => {
+    if (!selectedDest) return;
+    let cancelled = false;
+    geocode(selectedDest).then((result) => {
+      if (!cancelled) setGeoCoords(result);
+    });
+    return () => { cancelled = true; };
+  }, [selectedDest]);
+
+  // Sherpa granular visa requirements
+  useEffect(() => {
+    if (!selectedDest) return;
+    let cancelled = false;
+    const passportCountry = (travelProfile.passportNationality ?? 'US') as string;
+    getVisaRequirements(passportCountry, selectedDest).then((result) => {
+      if (!cancelled) setVisaReqs(result);
+    });
+    return () => { cancelled = true; };
+  }, [selectedDest, travelProfile.passportNationality]);
 
   const hasNoData = !emergency && !safety;
   const countryName = emergency?.country ?? safety?.country ?? selectedDest;
@@ -2150,13 +2252,62 @@ function PrepScreen() {
               </View>
             )}
 
-            {/* ── Current Weather + 7-day intel (weather-intel edge, OPENWEATHERMAP_KEY) ── */}
-            {currentWeather && (
+            {/* ── Current Weather + 7-day (weather-intel edge) — skeleton while loading ── */}
+            {weatherLoading ? (
               <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}>
-                <CurrentWeatherCard data={currentWeather} />
+                <View style={apiCardStyles.card}>
+                  <SkeletonCard width={140} height={14} borderRadius={4} style={{ marginBottom: SPACING.md }} />
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.md }}>
+                    <SkeletonCard width={48} height={48} borderRadius={RADIUS.sm} />
+                    <View style={{ gap: SPACING.xs }}>
+                      <SkeletonCard width={80} height={28} borderRadius={4} />
+                      <SkeletonCard width={120} height={16} borderRadius={4} />
+                    </View>
+                  </View>
+                  <View style={{ flexDirection: 'row', gap: SPACING.lg }}>
+                    {[1, 2, 3].map((i) => (
+                      <SkeletonCard key={i} width={72} height={40} borderRadius={RADIUS.sm} />
+                    ))}
+                  </View>
+                  <SkeletonCard width={100} height={12} borderRadius={4} style={{ marginTop: SPACING.md }} />
+                </View>
+                <View style={{ marginTop: SPACING.sm, gap: SPACING.sm }}>
+                  {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                    <SkeletonCard key={i} width="100%" height={52} borderRadius={RADIUS.md} />
+                  ))}
+                </View>
+              </View>
+            ) : null}
+            {currentWeather && !weatherLoading && (
+              <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}>
+                <CurrentWeatherCard
+                  data={currentWeather}
+                  updatedAt={weatherFetchedAt}
+                />
               </View>
             )}
-            {weatherIntel && (weatherIntel.summary || (weatherIntel.packingAdvice?.length > 0)) && (
+            {weatherIntel && weatherIntel.days?.length > 0 && !weatherLoading ? (
+              <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}>
+                <View style={{ marginBottom: SPACING.sm, gap: SPACING.xs }}>
+                  {weatherIntel.days.map((day) => (
+                    <WeatherDayStrip
+                      key={day.date}
+                      day={{
+                        date: day.date,
+                        tempMin: day.tempLow,
+                        tempMax: day.tempHigh,
+                        description: day.description,
+                        icon: day.icon,
+                        pop: day.rainChance / 100,
+                        humidity: day.humidity,
+                        windSpeed: day.windSpeed,
+                      }}
+                    />
+                  ))}
+                </View>
+              </View>
+            ) : null}
+            {weatherIntel && (weatherIntel.summary || (weatherIntel.packingAdvice?.length > 0)) && !weatherLoading ? (
               <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}>
                 <View style={apiCardStyles.card}>
                   <Text style={intelGridStyles.cardLabel}>
@@ -2174,7 +2325,7 @@ function PrepScreen() {
                   ) : null}
                 </View>
               </View>
-            )}
+            ) : null}
 
             {/* ── Sonar Live Intel ── */}
             {(sonarPrep.data || sonarSafety.data) && (
@@ -2375,7 +2526,7 @@ function PrepScreen() {
             )}
 
             {activeSection === 'visa' && (
-              <VisaTab destination={selectedDest} passport={passport} />
+              <VisaTab destination={selectedDest} passport={passport} visaReqs={visaReqs} geoCoords={geoCoords} />
             )}
 
             {activeSection === 'currency' && (
@@ -3430,6 +3581,60 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.cream,
     lineHeight: 21,
+  } as TextStyle,
+
+  // ── Sherpa Visa Section ────────────────────────────────────────────────────
+  sherpaVisaSection: {
+    marginTop: SPACING.md,
+    paddingTop: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  } as ViewStyle,
+  sherpaVisaHeading: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.muted,
+    letterSpacing: 1,
+    marginBottom: SPACING.sm,
+  } as TextStyle,
+  sherpaVisaDetail: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.cream,
+    marginBottom: 4,
+  } as TextStyle,
+  sherpaVisaDocLabel: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 13,
+    color: COLORS.muted,
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.xs,
+  } as TextStyle,
+  sherpaVisaNote: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.muted,
+    marginTop: SPACING.sm,
+    fontStyle: 'italic',
+  } as TextStyle,
+
+  // ── Geo Coordinates ────────────────────────────────────────────────────────
+  geoSection: {
+    marginTop: SPACING.md,
+    paddingTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  } as ViewStyle,
+  geoLabel: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 13,
+    color: COLORS.cream,
+  } as TextStyle,
+  geoCoords: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.muted,
+    marginTop: 2,
   } as TextStyle,
 });
 

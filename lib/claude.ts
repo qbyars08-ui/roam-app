@@ -186,6 +186,40 @@ Never schedule activities that are geographically impossible in sequence. Rules:
 - Before finalizing each day, mentally verify: "Can a person physically get from Activity A to Activity B in the time between them?" If not, restructure.
 - The "routeSummary" field should show neighborhoods flowing geographically, not zigzagging across the city.`;
 
+// ---------------------------------------------------------------------------
+// SPARK mode — fast, opinionated, one shot. "Trust me."
+// ---------------------------------------------------------------------------
+export const SPARK_SYSTEM_PROMPT = ITINERARY_SYSTEM_PROMPT;
+
+// ---------------------------------------------------------------------------
+// CRAFT mode — deeply personalized from full conversation context
+// ---------------------------------------------------------------------------
+export const CRAFT_SYSTEM_PROMPT = `You are building a completely personalized trip for a specific person. You have their exact preferences, budget, travel style, and what would make this trip perfect for them.
+
+This is NOT a generic itinerary. Every single recommendation is chosen specifically for this person.
+
+If they want business class: Find the best value business class option for their route and dates. Specific airline. Specific reason why. What to look for when booking.
+
+If they have a tight budget: Every dollar accounted for. Where to splurge (worth it). Where to save (doesn't matter). Honest about tradeoffs.
+
+If they're traveling with family: Every activity works for everyone. Logistics thought through. Backup plans included.
+
+If they're solo: Specific advice for solo travelers. Where to meet people. Where to go alone. Safety specific to this person.
+
+The output should feel like it was written by someone who knows them. Not a template. A plan.
+
+CRITICAL: Respond with ONLY valid JSON. No markdown, no explanation, no extra text.
+
+Use the same JSON schema as the main itinerary (destination, tagline, totalBudget, days array with morning/afternoon/evening, accommodation, dailyCost, routeSummary, budgetBreakdown, packingEssentials, proTip, visaInfo).
+
+DAY THEMES: Reference something specific they said. Examples: "Day 3 — The temple morning you asked for", "Day 5 — Business class home. You earned it."
+
+FLIGHT SECTION: If they asked about flights, include a specific recommendation in your response before the JSON: airline, route, why, where to book, price range. Then output the full JSON.
+
+HOTEL: Not just a name. A reason tied to what they said (e.g. "you said design matters — this is the best design hotel in Tokyo under $300/night").
+
+BUDGET BREAKDOWN: Line by line. Flights, hotel, daily spending, activities, buffer, total, remaining from their budget. Feels like a financial plan.`;
+
 export const CHAT_SYSTEM_PROMPT = `You're the friend who's been everywhere and always knows a spot. You're ROAM's travel chat — knowledgeable, honest, opinionated, and never boring.
 
 Voice:
@@ -542,6 +576,17 @@ export async function callClaudeStreaming(
   } catch (err: unknown) {
     callbacks.onError(err instanceof Error ? err : new Error(String(err)));
   }
+}
+
+// ---------------------------------------------------------------------------
+// generateCraftItineraryStreaming — CRAFT mode: full conversation context → personalized itinerary
+// ---------------------------------------------------------------------------
+export async function generateCraftItineraryStreaming(
+  contextBlock: string,
+  callbacks: StreamingCallbacks
+): Promise<void> {
+  const userMessage = `${contextBlock}\n\nGenerate the complete itinerary as valid JSON only. Use the exact schema: destination, tagline, totalBudget, days (each with day, theme, morning, afternoon, evening, accommodation, dailyCost, routeSummary), budgetBreakdown, packingEssentials, proTip, visaInfo.`;
+  return callClaudeStreaming(CRAFT_SYSTEM_PROMPT, userMessage, callbacks);
 }
 
 // ---------------------------------------------------------------------------

@@ -116,6 +116,8 @@ import SeasonalIntel from '../components/features/SeasonalIntel';
 import AudioGuideBar from '../components/audio/AudioGuideBar';
 import PocketConcierge from '../components/features/PocketConcierge';
 import NarrationToggle from '../components/audio/NarrationToggle';
+import { getPlaceTips, type FSQTip } from '../lib/apis/foursquare';
+import { searchActivities, type GYGActivity } from '../lib/apis/getyourguide';
 
 // =============================================================================
 // Component
@@ -158,6 +160,8 @@ export default function ItineraryScreen() {
     data: TimeSlotActivity;
   } | null>(null);
   const [narrationController, setNarrationController] = useState<NarrationController | null>(null);
+  const [fsqTipsMap, setFsqTipsMap] = useState<Map<string, FSQTip[]>>(new Map());
+  const [gygActivities, setGygActivities] = useState<GYGActivity[] | null>(null);
   const mapRef = useRef<typeof MapView>(null);
   const dayPagerRef = useRef<ScrollView>(null);
   const updateTrip = useAppStore((s) => s.updateTrip);
@@ -410,6 +414,37 @@ export default function ItineraryScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // GetYourGuide bookable experiences
+  useEffect(() => {
+    if (!trip?.destination) return;
+    let cancelled = false;
+    searchActivities(trip.destination).then((results) => {
+      if (!cancelled) setGygActivities(results?.slice(0, 8) ?? null);
+    });
+    return () => { cancelled = true; };
+  }, [trip?.destination]);
+
+  // Foursquare tips for enriched venues
+  useEffect(() => {
+    if (!venueData || venueData.size === 0) return;
+    let cancelled = false;
+    const entries = Array.from(venueData.entries()).slice(0, 10);
+    entries.forEach(([key, venue]) => {
+      if (venue.place_id) {
+        getPlaceTips(venue.place_id).then((tips) => {
+          if (!cancelled && tips?.length) {
+            setFsqTipsMap((prev) => {
+              const next = new Map(prev);
+              next.set(key, tips.slice(0, 2));
+              return next;
+            });
+          }
+        });
+      }
+    });
+    return () => { cancelled = true; };
+  }, [venueData]);
+
   const fallbackNow = useMemo(
     () => Date.now(), // eslint-disable-line react-hooks/purity -- fallback when trip.createdAt missing
     []
@@ -604,9 +639,13 @@ export default function ItineraryScreen() {
   // ---------------------------------------------------------------------------
   // Venue card renderer
   // ---------------------------------------------------------------------------
-  const renderVenueCard = (activityKey: string) => {
+  const renderVenueCard = (activityKey: string, options?: { isHotel?: boolean }) => {
     const venue = venueData.get(activityKey);
     if (!venue) return null;
+    const tips = fsqTipsMap.get(activityKey);
+    const isHotel = options?.isHotel ?? activityKey.startsWith('accom::');
+    const tapTarget = isHotel ? 'hotel' : 'activity';
+    const poweredByGoogle = !!(venue.photo_url || (venue.rating != null));
     return (
       <View style={styles.section}>
         <VenueCard
@@ -619,7 +658,22 @@ export default function ItineraryScreen() {
           hours_today={getTodayHours(venue.opening_hours?.weekday_text)}
           maps_url={venue.maps_url}
           city={trip?.destination}
+          tapTarget={tapTarget}
+          destination={trip?.destination}
+          poweredByGoogle={poweredByGoogle}
         />
+        {tips && tips.length > 0 && (
+          <View style={styles.fsqTipsContainer}>
+            {tips.map((tip, idx) => (
+              <View key={idx} style={styles.fsqTipRow}>
+                <Text style={styles.fsqTipText} numberOfLines={3}>{tip.text}</Text>
+                {tip.agreeCount > 0 && (
+                  <Text style={styles.fsqTipAgree}>{tip.agreeCount} agree</Text>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
       </View>
     );
   };
@@ -1024,6 +1078,8 @@ export default function ItineraryScreen() {
                   open_now={pin.venue.opening_hours?.open_now ?? null}
                   hours_today={getTodayHours(pin.venue.opening_hours?.weekday_text)}
                   maps_url={pin.venue.maps_url}
+                  tapTarget="activity"
+                  poweredByGoogle={!!(pin.venue.photo_url || pin.venue.rating != null)}
                 />
                 <Pressable
                   onPress={() => handleGetDirections(pin.venue.place_id)}
@@ -1541,6 +1597,22 @@ export default function ItineraryScreen() {
                   </Text>
                 </View>
               </View>
+
+              {/* Bookable experiences (GYG) */}
+              {gygActivities && gygActivities.length > 0 && activeDay === 0 && (
+                <View style={styles.gygSection}>
+                  <Text style={styles.gygLabel}>BOOKABLE EXPERIENCES</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.gygScroll}>
+                    {gygActivities.map((act) => (
+                      <Pressable key={act.id} style={styles.gygCard} onPress={() => act.bookingUrl && Linking.openURL(act.bookingUrl)}>
+                        <Text style={styles.gygTitle} numberOfLines={2}>{act.name}</Text>
+                        {act.price != null && <Text style={styles.gygPrice}>From {act.currency} {act.price}</Text>}
+                        {act.rating != null && <Text style={styles.gygRating}>{act.rating.toFixed(1)} ({act.reviewCount})</Text>}
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
 
               {/* Voice guide */}
               {narrationText.length > 0 && (
@@ -3610,5 +3682,71 @@ const styles = StyleSheet.create({
     color: COLORS.sage,
     fontWeight: '700',
     marginBottom: 2,
+  } as TextStyle,
+
+  // ── Foursquare Tips ──────────────────────────────────────────────────────
+  fsqTipsContainer: {
+    marginTop: SPACING.xs,
+    paddingHorizontal: SPACING.sm,
+    gap: SPACING.xs,
+  } as ViewStyle,
+  fsqTipRow: {
+    backgroundColor: COLORS.bgGlass,
+    borderRadius: RADIUS.sm,
+    padding: SPACING.sm,
+  } as ViewStyle,
+  fsqTipText: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.muted,
+    lineHeight: 18,
+  } as TextStyle,
+  fsqTipAgree: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+    marginTop: 4,
+  } as TextStyle,
+
+  // ── GetYourGuide Experiences ─────────────────────────────────────────────
+  gygSection: {
+    marginTop: SPACING.md,
+    paddingHorizontal: SPACING.md,
+  } as ViewStyle,
+  gygLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.muted,
+    letterSpacing: 1,
+    marginBottom: SPACING.sm,
+  } as TextStyle,
+  gygScroll: {
+    flexGrow: 0,
+  } as ViewStyle,
+  gygCard: {
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    width: 200,
+    marginRight: SPACING.sm,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  } as ViewStyle,
+  gygTitle: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
+    color: COLORS.cream,
+    marginBottom: SPACING.xs,
+  } as TextStyle,
+  gygPrice: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.sage,
+  } as TextStyle,
+  gygRating: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.muted,
+    marginTop: 2,
   } as TextStyle,
 });

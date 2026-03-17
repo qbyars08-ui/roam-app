@@ -22,6 +22,8 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useDestinationTheme } from '../lib/useDestinationTheme';
 import { withComingSoon } from '../lib/with-coming-soon';
 import { validateDestination } from '../lib/params-validator';
+import { searchPlaces, type FSQPlace } from '../lib/apis/foursquare';
+import { geocodeCity } from '../lib/geocoding';
 import { useTranslation } from 'react-i18next';
 import i18n from '../lib/i18n';
 
@@ -1620,6 +1622,20 @@ function LocalLensScreen() {
   const city = validateDestination(params.destination) ?? '';
   const data = LOCAL_DATA[city] ?? null;
   const destTheme = useDestinationTheme(city);
+  const [fsqPlaces, setFsqPlaces] = useState<FSQPlace[]>([]);
+
+  // Fetch Foursquare local recommendations
+  useEffect(() => {
+    if (!city) return;
+    let cancelled = false;
+    geocodeCity(city).then((geo) => {
+      if (cancelled || !geo) return;
+      searchPlaces('local favorites', geo.latitude, geo.longitude, undefined, 5000).then((places) => {
+        if (!cancelled && places) setFsqPlaces(places);
+      });
+    });
+    return () => { cancelled = true; };
+  }, [city]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -1774,6 +1790,33 @@ function LocalLensScreen() {
             </FadeInSection>
           </>
         )}
+
+        {/* ---- Foursquare Hidden Gems ---- */}
+        {fsqPlaces.length > 0 ? (
+          <FadeInSection delay={700}>
+            <Text style={styles.sectionLabel}>{t('localLens.hiddenGems', { defaultValue: '· Hidden gems nearby' })}</Text>
+            <Text style={styles.sectionSubtitle}>
+              {t('localLens.hiddenGemsSub', { defaultValue: 'Local favorites from Foursquare' })}
+            </Text>
+            {fsqPlaces.slice(0, 8).map((place) => (
+              <View key={place.fsqId} style={styles.glassCard}>
+                <View style={styles.foodHeaderRow}>
+                  <Text style={styles.foodDish}>{place.name}</Text>
+                  {place.rating != null ? (
+                    <View style={styles.priceBadge}>
+                      <Text style={styles.priceText}>{place.rating.toFixed(1)}</Text>
+                    </View>
+                  ) : null}
+                </View>
+                <Text style={styles.foodWhere}>{place.category}</Text>
+                <Text style={styles.timeWhy}>{place.address}</Text>
+                {place.price != null ? (
+                  <Text style={styles.tipText}>{'$'.repeat(place.price)}</Text>
+                ) : null}
+              </View>
+            ))}
+          </FadeInSection>
+        ) : null}
       </ScrollView>
     </View>
   );

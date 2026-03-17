@@ -38,6 +38,7 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import { getMedicalGuideByDestination, type MedicalGuide } from '../lib/medical-abroad';
 import { getHealthBrief, type HealthBrief } from '../lib/health-brief';
+import { getWeatherIntel, type WeatherIntel } from '../lib/apis/openweather';
 import { track } from '../lib/analytics';
 import { captureEvent } from '../lib/posthog';
 
@@ -339,10 +340,24 @@ function BodyIntelScreen() {
   const [destination, setDestination] = useState(params.destination ?? '');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [weatherIntel, setWeatherIntel] = useState<WeatherIntel | null>(null);
 
   useEffect(() => {
     track({ type: 'screen_view', screen: 'body-intel' });
   }, []);
+
+  // Fetch weather intel for health correlation
+  useEffect(() => {
+    if (!destination) {
+      setWeatherIntel(null);
+      return;
+    }
+    let cancelled = false;
+    getWeatherIntel(destination).then((intel) => {
+      if (!cancelled) setWeatherIntel(intel);
+    });
+    return () => { cancelled = true; };
+  }, [destination]);
 
   // Auto-detect destination from latest trip if not provided
   useEffect(() => {
@@ -441,6 +456,37 @@ function BodyIntelScreen() {
 
               {/* Water safety */}
               <WaterSafetyCard guide={medicalGuide} />
+
+              {/* Weather-Health Correlation */}
+              {weatherIntel?.days?.[0] ? (
+                <View style={styles.briefCard}>
+                  <Activity size={16} color={COLORS.gold} strokeWidth={1.5} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.briefLabel}>{t('bodyIntel.weatherHealth', { defaultValue: 'Weather & Health' })}</Text>
+                    <Text style={styles.briefValue}>
+                      {t('bodyIntel.tempRange', { defaultValue: `Temp: ${Math.round(weatherIntel.days[0].tempLow)}–${Math.round(weatherIntel.days[0].tempHigh)}C` })}
+                    </Text>
+                    <Text style={styles.briefValue}>
+                      {t('bodyIntel.humidity', { defaultValue: `Humidity: ${weatherIntel.days[0].humidity}%` })}
+                    </Text>
+                    {weatherIntel.days[0].humidity > 80 ? (
+                      <Text style={[styles.briefValue, { color: COLORS.gold }]}>
+                        {t('bodyIntel.highHumidityWarning', { defaultValue: 'High humidity — stay hydrated, risk of heat exhaustion' })}
+                      </Text>
+                    ) : null}
+                    {weatherIntel.days[0].tempHigh > 35 ? (
+                      <Text style={[styles.briefValue, { color: COLORS.coral }]}>
+                        {t('bodyIntel.extremeHeatWarning', { defaultValue: 'Extreme heat — limit outdoor activity, wear sunscreen' })}
+                      </Text>
+                    ) : null}
+                    {weatherIntel.days[0].tempLow < 0 ? (
+                      <Text style={[styles.briefValue, { color: COLORS.sage }]}>
+                        {t('bodyIntel.coldWarning', { defaultValue: 'Freezing temps — layer up, watch for hypothermia' })}
+                      </Text>
+                    ) : null}
+                  </View>
+                </View>
+              ) : null}
 
               {/* Vaccinations */}
               {healthBrief && (

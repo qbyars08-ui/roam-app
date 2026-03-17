@@ -34,7 +34,12 @@ import WanderlustFeed from '../../components/features/WanderlustFeed';
 import { useSonarQuery } from '../../lib/sonar';
 import LiveBadge from '../../components/ui/LiveBadge';
 import SourceCitation from '../../components/ui/SourceCitation';
+import { SkeletonCard } from '../../components/premium/LoadingStates';
 import { searchEvents, type EventResult } from '../../lib/apis/eventbrite';
+import { searchLocations, type TALocation } from '../../lib/apis/tripadvisor';
+import { searchActivities, type GYGActivity } from '../../lib/apis/getyourguide';
+import { searchPlaces, getPlaceTips, type FSQPlace, type FSQTip } from '../../lib/apis/foursquare';
+import { getDestinationCoords } from '../../lib/air-quality';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -926,6 +931,47 @@ export default function PulseScreen() {
     return () => { cancelled = true; };
   }, [selectedDest.label]);
 
+  // TripAdvisor trending attractions
+  const [taAttractions, setTaAttractions] = useState<TALocation[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setTaAttractions(null);
+    searchLocations(selectedDest.label, 'attractions').then((results) => {
+      if (!cancelled) setTaAttractions(results?.slice(0, 5) ?? null);
+    });
+    return () => { cancelled = true; };
+  }, [selectedDest.label]);
+
+  // GetYourGuide experiences
+  const [gygActivities, setGygActivities] = useState<GYGActivity[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setGygActivities(null);
+    searchActivities(selectedDest.label).then((results) => {
+      if (!cancelled) setGygActivities(results?.slice(0, 5) ?? null);
+    });
+    return () => { cancelled = true; };
+  }, [selectedDest.label]);
+
+  // Foursquare insider tips
+  const [fsqTips, setFsqTips] = useState<FSQTip[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setFsqTips(null);
+    const coords = getDestinationCoords(selectedDest.label);
+    if (!coords) return;
+    searchPlaces(selectedDest.label, coords.lat, coords.lng).then(async (places) => {
+      if (cancelled || !places?.length) return;
+      const firstId = places[0].fsqId;
+      const tips = await getPlaceTips(firstId);
+      if (!cancelled) setFsqTips(tips?.slice(0, 4) ?? null);
+    });
+    return () => { cancelled = true; };
+  }, [selectedDest.label]);
+
   const handleSelectDest = useCallback((key: string) => {
     Haptics.selectionAsync();
     setSelectedKey(key);
@@ -977,21 +1023,36 @@ export default function PulseScreen() {
             <Text style={styles.sectionHeading}>
               {t('pulse.rightNowIn', { defaultValue: 'Right now in' })}{'\n'}{selectedDest.label}
             </Text>
-            {sonarPulse.isLive && <LiveBadge />}
+            {(sonarPulse.data?.isLive ?? sonarPulse.isLive) && <LiveBadge />}
           </View>
           {localTimeString ? (
             <Text style={styles.sectionSubMono}>{localTimeString}</Text>
           ) : null}
 
-          {/* Live Sonar intel (when available) */}
-          {sonarPulse.data ? (
+          {/* Skeleton while Sonar loading or when empty (no sonar + no time recs) */}
+          {(sonarPulse.isLoading || (!sonarPulse.data && timeRecs.length === 0)) ? (
+            <View style={styles.sonarSkeletonStack}>
+              <View style={styles.sonarCard}>
+                <SkeletonCard width="100%" height={16} borderRadius={RADIUS.sm} style={{ marginBottom: SPACING.sm }} />
+                <SkeletonCard width="100%" height={60} borderRadius={RADIUS.sm} style={{ marginBottom: SPACING.sm }} />
+                <SkeletonCard width={80} height={12} borderRadius={RADIUS.sm} />
+              </View>
+            </View>
+          ) : null}
+
+          {/* Live Sonar intel card: title, description, source chip, Live badge */}
+          {sonarPulse.data && !sonarPulse.isLoading ? (
             <View style={styles.sonarCard}>
+              <View style={styles.sonarCardTitleRow}>
+                <Text style={styles.sonarCardTitle}>{t('pulse.rightNow', { defaultValue: 'Right now' })}</Text>
+                {(sonarPulse.data.isLive ?? sonarPulse.isLive) && <LiveBadge />}
+              </View>
               <Text style={styles.sonarAnswer}>{sonarPulse.data.answer}</Text>
-              {sonarPulse.citations.length > 0 && (
+              {sonarPulse.citations.length > 0 ? (
                 <View style={{ marginTop: SPACING.sm }}>
                   <SourceCitation citations={sonarPulse.citations} />
                 </View>
-              )}
+              ) : null}
               {sonarPulse.data.timestamp ? (
                 <Text style={styles.sonarTimestamp}>
                   {t('sonar.updated', { defaultValue: 'Updated' })}{' '}
@@ -1008,7 +1069,7 @@ export default function PulseScreen() {
                 <EditorialCard key={i} rec={rec} index={i} />
               ))}
             </View>
-          ) : !sonarPulse.data ? (
+          ) : !sonarPulse.data && !sonarPulse.isLoading ? (
             <View style={styles.emptyState}>
               <Clock size={24} color={COLORS.creamDim} strokeWidth={1.5} />
               <Text style={styles.emptyText}>
@@ -1091,6 +1152,63 @@ export default function PulseScreen() {
             </View>
           </View>
         ) : null}
+
+        {/* ── TripAdvisor Trending Attractions ── */}
+        {taAttractions && taAttractions.length > 0 && (
+          <View style={styles.apiSection}>
+            <Text style={styles.apiSectionLabel}>{t('pulse.trending.label', { defaultValue: 'TRENDING' })}</Text>
+            <Text style={styles.apiSectionHeading}>{t('pulse.trending.heading', { defaultValue: `Top rated in ${selectedDest.label}` })}</Text>
+            <View style={styles.apiCardStack}>
+              {taAttractions.map((loc) => (
+                <View
+                  key={loc.locationId}
+                  style={styles.apiCard}
+                >
+                  <Text style={styles.apiCardName}>{loc.name}</Text>
+                  {loc.rating != null && <Text style={styles.apiCardMeta}>{loc.rating} ★ · {loc.numReviews} reviews</Text>}
+                  {loc.address ? <Text style={styles.apiCardSub}>{loc.address}</Text> : null}
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* ── GetYourGuide Experiences ── */}
+        {gygActivities && gygActivities.length > 0 && (
+          <View style={styles.apiSection}>
+            <Text style={styles.apiSectionLabel}>{t('pulse.experiences.label', { defaultValue: 'EXPERIENCES' })}</Text>
+            <Text style={styles.apiSectionHeading}>{t('pulse.experiences.heading', { defaultValue: `Things to do in ${selectedDest.label}` })}</Text>
+            <View style={styles.apiCardStack}>
+              {gygActivities.map((act) => (
+                <Pressable
+                  key={act.id}
+                  style={styles.apiCard}
+                  onPress={() => { Haptics.selectionAsync(); if (act.bookingUrl) Linking.openURL(act.bookingUrl); }}
+                >
+                  <Text style={styles.apiCardName}>{act.name}</Text>
+                  {act.price != null && <Text style={styles.apiCardMeta}>From {act.currency} {act.price}</Text>}
+                  {act.rating != null && <Text style={styles.apiCardSub}>{act.rating} ★ · {act.duration ?? ''}</Text>}
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* ── Foursquare Insider Tips ── */}
+        {fsqTips && fsqTips.length > 0 && (
+          <View style={styles.apiSection}>
+            <Text style={styles.apiSectionLabel}>{t('pulse.insider.label', { defaultValue: 'INSIDER' })}</Text>
+            <Text style={styles.apiSectionHeading}>{t('pulse.insider.heading', { defaultValue: 'Local tips' })}</Text>
+            <View style={styles.apiCardStack}>
+              {fsqTips.map((tip, i) => (
+                <View key={i} style={styles.apiCard}>
+                  <Text style={styles.apiCardName}>{'\u201C'}{tip.text}{'\u201D'}</Text>
+                  {tip.createdAt ? <Text style={styles.apiCardSub}>{new Date(tip.createdAt).toLocaleDateString()}</Text> : null}
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -1462,6 +1580,20 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     marginTop: SPACING.md,
   } as ViewStyle,
+  sonarCardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.sm,
+  } as ViewStyle,
+  sonarCardTitle: {
+    fontFamily: FONTS.headerMedium,
+    fontSize: 16,
+    color: COLORS.cream,
+  } as TextStyle,
+  sonarSkeletonStack: {
+    marginTop: SPACING.md,
+  } as ViewStyle,
   sonarAnswer: {
     fontFamily: FONTS.body,
     fontSize: 14,
@@ -1560,5 +1692,56 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     textAlign: 'right',
     maxWidth: 100,
+  } as TextStyle,
+
+  // ── API integration sections (TripAdvisor, GetYourGuide, Foursquare) ──
+  apiSection: {
+    paddingHorizontal: 20,
+    paddingTop: SPACING.xl,
+    gap: SPACING.sm,
+  } as ViewStyle,
+
+  apiSectionLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+    letterSpacing: 2,
+  } as TextStyle,
+
+  apiSectionHeading: {
+    fontFamily: FONTS.header,
+    fontSize: 22,
+    color: COLORS.cream,
+    letterSpacing: -0.5,
+    marginBottom: SPACING.md,
+  } as TextStyle,
+
+  apiCardStack: {
+    gap: SPACING.sm,
+  } as ViewStyle,
+
+  apiCard: {
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    gap: 4,
+  } as ViewStyle,
+
+  apiCardName: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 15,
+    color: COLORS.cream,
+  } as TextStyle,
+
+  apiCardMeta: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.sage,
+  } as TextStyle,
+
+  apiCardSub: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamDim,
   } as TextStyle,
 });

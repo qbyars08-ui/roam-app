@@ -2,7 +2,7 @@
 // ROAM — Airport Survival Guide
 // Best food, lounges, security, sleep, work, SIM, currency for major hubs
 // =============================================================================
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ import * as Haptics from '../lib/haptics';
 import { withComingSoon } from '../lib/with-coming-soon';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { AIRPORTS, type AirportData } from '../lib/airport-data';
+import { getRoutes, type RouteResult } from '../lib/apis/rome2rio';
 // ---------------------------------------------------------------------------
 // Airport list card
 // ---------------------------------------------------------------------------
@@ -54,11 +55,21 @@ function AirportCard({
 function AirportDetail({ airport }: { airport: AirportData }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState<string | null>('food');
+  const [routes, setRoutes] = useState<RouteResult[]>([]);
 
   const toggle = useCallback((key: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setExpanded((e) => (e === key ? null : key));
   }, []);
+
+  // Fetch Rome2Rio routes from airport to city
+  useEffect(() => {
+    let cancelled = false;
+    getRoutes(airport.name, airport.city).then((result) => {
+      if (!cancelled && result) setRoutes(result);
+    });
+    return () => { cancelled = true; };
+  }, [airport.name, airport.city]);
 
   return (
     <ScrollView
@@ -161,6 +172,31 @@ function AirportDetail({ airport }: { airport: AirportData }) {
       >
         <Text style={styles.bodyText}>{airport.terminalTransfer}</Text>
       </DetailSection>
+
+      {routes.length > 0 ? (
+        <DetailSection
+          title={t('airportGuide.transitRoutes', { defaultValue: 'Transit to city center' })}
+          expanded={expanded === 'routes'}
+          onToggle={() => toggle('routes')}
+        >
+          {routes.slice(0, 5).map((route, i) => (
+            <View key={`${route.name}-${i}`} style={styles.loungeRow}>
+              <Text style={styles.loungeName}>{route.name}</Text>
+              <Text style={styles.bodyText}>
+                {Math.round(route.duration)} min
+                {route.price
+                  ? ` | ${route.price.currency} ${route.price.low}–${route.price.high}`
+                  : ''}
+              </Text>
+              {route.segments.length > 0 ? (
+                <Text style={styles.loungeCost}>
+                  {route.segments.map((s) => s.mode).join(' > ')}
+                </Text>
+              ) : null}
+            </View>
+          ))}
+        </DetailSection>
+      ) : null}
     </ScrollView>
   );
 }

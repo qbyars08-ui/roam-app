@@ -45,6 +45,7 @@ import {
   getSkyscannerFlightUrl,
 } from '../../lib/flights';
 import { searchFlights, type FlightOffer } from '../../lib/apis/amadeus';
+import { getRoutes, type RouteResult } from '../../lib/apis/rome2rio';
 import GoNowFeed from '../../components/features/GoNowFeed';
 import FlightPriceCalendar from '../../components/features/FlightPriceCalendar';
 import { useSonarQuery } from '../../lib/sonar';
@@ -544,6 +545,7 @@ export default function FlightsScreen() {
   const [toFocused, setToFocused] = useState(false);
   const [amadeusFlights, setAmadeusFlights] = useState<FlightOffer[] | null>(null);
   const [amadeusLoading, setAmadeusLoading] = useState(false);
+  const [altRoutes, setAltRoutes] = useState<RouteResult[] | null>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const skeletonAnim = useRef(new Animated.Value(0.3)).current;
 
@@ -563,6 +565,18 @@ export default function FlightsScreen() {
       if (code) setToCode(code);
     }
   }, [planDestination]);
+
+  // ── Rome2Rio alternative transport ──
+  useEffect(() => {
+    let cancelled = false;
+    const from = fromText?.trim();
+    const to = toText?.trim();
+    if (!from || !to) { setAltRoutes(null); return; }
+    getRoutes(from, to).then((results) => {
+      if (!cancelled) setAltRoutes(results?.slice(0, 4) ?? null);
+    });
+    return () => { cancelled = true; };
+  }, [fromText, toText]);
 
   // ── Amadeus real-time flight search ──
   useEffect(() => {
@@ -996,6 +1010,36 @@ export default function FlightsScreen() {
                   <SourceCitation citations={sonarFlights.citations} />
                 </View>
               )}
+            </View>
+          </View>
+        )}
+
+        {/* ── Alternative Routes (Rome2Rio) ── */}
+        {altRoutes && altRoutes.length > 0 && (
+          <View style={styles.apiSection}>
+            <Text style={styles.apiSectionLabel}>ALTERNATIVE ROUTES</Text>
+            <Text style={styles.apiSectionHeading}>Other ways to get there</Text>
+            <View style={styles.apiCardStack}>
+              {altRoutes.map((route, i) => {
+                const hrs = Math.floor(route.duration / 60);
+                const mins = route.duration % 60;
+                const durationStr = hrs > 0
+                  ? `${hrs}h${mins > 0 ? ` ${mins}m` : ''}`
+                  : `${mins}m`;
+                const priceStr = route.price
+                  ? `${route.price.currency} ${route.price.low}–${route.price.high}`
+                  : null;
+                const operator = route.segments?.[0]?.operator ?? null;
+                return (
+                  <View key={i} style={styles.apiCard}>
+                    <Text style={styles.apiCardName}>{route.name}</Text>
+                    <Text style={styles.apiCardMeta}>
+                      {durationStr}{priceStr ? ` · ${priceStr}` : ''}
+                    </Text>
+                    {operator && <Text style={styles.apiCardSub}>via {operator}</Text>}
+                  </View>
+                );
+              })}
             </View>
           </View>
         )}
@@ -1488,5 +1532,49 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.cream,
     lineHeight: 21,
+  } as TextStyle,
+
+  // ── Alternative routes (Rome2Rio) ──
+  apiSection: {
+    paddingHorizontal: 20,
+    paddingTop: SPACING.xl,
+    gap: SPACING.sm,
+  } as ViewStyle,
+  apiSectionLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+    letterSpacing: 2,
+  } as TextStyle,
+  apiSectionHeading: {
+    fontFamily: FONTS.header,
+    fontSize: 22,
+    color: COLORS.cream,
+    letterSpacing: -0.5,
+    marginBottom: SPACING.md,
+  } as TextStyle,
+  apiCardStack: {
+    gap: SPACING.sm,
+  } as ViewStyle,
+  apiCard: {
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    gap: 4,
+  } as ViewStyle,
+  apiCardName: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 15,
+    color: COLORS.cream,
+  } as TextStyle,
+  apiCardMeta: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.sage,
+  } as TextStyle,
+  apiCardSub: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamDim,
   } as TextStyle,
 });

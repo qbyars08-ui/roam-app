@@ -52,6 +52,11 @@ import { track, trackEvent } from '../../lib/analytics';
 import { captureEvent } from '../../lib/posthog';
 import { parseItinerary } from '../../lib/types/itinerary';
 import { Users } from 'lucide-react-native';
+import { useSonarQuery } from '../../lib/sonar';
+import LiveBadge from '../../components/ui/LiveBadge';
+import SourceCitation from '../../components/ui/SourceCitation';
+import { getCurrentWeather, type CurrentWeather } from '../../lib/apis/openweather';
+import { searchEvents, type EventResult } from '../../lib/apis/eventbrite';
 
 // ---------------------------------------------------------------------------
 // Destination images for trip cards
@@ -416,6 +421,20 @@ export default function PlanScreen() {
   const isPro = useAppStore((s) => s.isPro);
   const trips = useAppStore((s) => s.trips);
 
+  // ── Destination intel (weather, sonar, events) ──
+  const planDestination = useAppStore((s) => s.planWizard.destination);
+  const sonarDest = useSonarQuery(planDestination || undefined, 'pulse');
+  const [destWeather, setDestWeather] = useState<CurrentWeather | null>(null);
+  const [destEvents, setDestEvents] = useState<EventResult[] | null>(null);
+
+  useEffect(() => {
+    if (!planDestination) { setDestWeather(null); setDestEvents(null); return; }
+    let cancelled = false;
+    getCurrentWeather(planDestination).then((w) => { if (!cancelled) setDestWeather(w); }).catch(() => { /* silent */ });
+    searchEvents(planDestination).then((e) => { if (!cancelled) setDestEvents(e?.slice(0, 3) ?? null); }).catch(() => { /* silent */ });
+    return () => { cancelled = true; };
+  }, [planDestination]);
+
   const sortedTrips = useMemo(
     () => [...trips].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
     [trips],
@@ -424,9 +443,13 @@ export default function PlanScreen() {
   const hasTrips = sortedTrips.length > 0;
 
   const handleModeSelect = useCallback((mode: 'quick' | 'conversation') => {
-    setGenerateMode(mode);
     trackEvent('generate_mode_selected', { mode }).catch(() => {});
-  }, [setGenerateMode]);
+    if (mode === 'conversation') {
+      router.push('/craft-session' as never);
+      return;
+    }
+    setGenerateMode(mode);
+  }, [setGenerateMode, router]);
 
   const handleNewTrip = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -742,6 +765,42 @@ export default function PlanScreen() {
             </Pressable>
           ))}
         </View>
+
+        {/* Destination Intel (shows when planning) */}
+        {planDestination && !showGenerator && (sonarDest.data || destWeather || destEvents) && (
+          <View style={styles.destIntel}>
+            <Text style={styles.destIntelLabel}>DESTINATION INTEL</Text>
+            <Text style={styles.destIntelHeading}>{planDestination}</Text>
+
+            {destWeather && (
+              <View style={styles.destIntelCard}>
+                <Text style={styles.destIntelCardTitle}>Weather Now</Text>
+                <Text style={styles.destIntelWeather}>{destWeather.temp}°C · {destWeather.condition}</Text>
+                <Text style={styles.destIntelMeta}>Humidity {destWeather.humidity}% · Wind {destWeather.windSpeed} km/h</Text>
+              </View>
+            )}
+
+            {sonarDest.data && (
+              <View style={styles.destIntelCard}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={styles.destIntelCardTitle}>Live Intel</Text>
+                  {sonarDest.isLive && <LiveBadge />}
+                </View>
+                <Text style={styles.destIntelBody}>{sonarDest.data.answer}</Text>
+                {sonarDest.citations.length > 0 && <SourceCitation citations={sonarDest.citations} />}
+              </View>
+            )}
+
+            {destEvents && destEvents.length > 0 && (
+              <View style={styles.destIntelCard}>
+                <Text style={styles.destIntelCardTitle}>Upcoming Events</Text>
+                {destEvents.map((evt) => (
+                  <Text key={evt.id} style={styles.destIntelEvent}>· {evt.name}{evt.date ? ` — ${new Date(evt.date).toLocaleDateString()}` : ''}</Text>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
 
         {/* Trip Cards */}
         <Text style={styles.sectionLabel}>{t('plan.sectionYourTrips')}</Text>
@@ -1377,5 +1436,59 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodyMedium,
     fontSize: 14,
     color: COLORS.creamMuted,
+  } as TextStyle,
+
+  // ── Destination Intel ──
+  destIntel: {
+    paddingTop: SPACING.xl,
+    gap: SPACING.sm,
+    marginBottom: SPACING.lg,
+  } as ViewStyle,
+  destIntelLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+    letterSpacing: 2,
+  } as TextStyle,
+  destIntelHeading: {
+    fontFamily: FONTS.header,
+    fontSize: 26,
+    color: COLORS.cream,
+    letterSpacing: -0.5,
+  } as TextStyle,
+  destIntelCard: {
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    gap: 6,
+    marginTop: SPACING.sm,
+  } as ViewStyle,
+  destIntelCardTitle: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 13,
+    color: COLORS.sage,
+    letterSpacing: 0.5,
+  } as TextStyle,
+  destIntelWeather: {
+    fontFamily: FONTS.header,
+    fontSize: 20,
+    color: COLORS.cream,
+  } as TextStyle,
+  destIntelMeta: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.creamDim,
+  } as TextStyle,
+  destIntelBody: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.cream,
+    lineHeight: 20,
+  } as TextStyle,
+  destIntelEvent: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamDim,
+    lineHeight: 18,
   } as TextStyle,
 });
