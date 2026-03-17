@@ -36,6 +36,7 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, FREE_TRIPS_PER_MONTH, type Destination } from '../../lib/constants';
 import { useAppStore, type Trip } from '../../lib/store';
+import { useDreamStore } from '../../lib/dream-store';
 import { Flame, Sparkle } from 'lucide-react-native';
 import { generateItineraryStreaming, TripLimitReachedError } from '../../lib/claude';
 import { isGuestUser } from '../../lib/guest';
@@ -64,6 +65,7 @@ import TripMapCard from '../../components/features/TripMapCard';
 import CountdownHero from '../../components/features/CountdownHero';
 import { useTravelStage, type TravelStage } from '../../lib/travel-state';
 import { useDailyBrief, getChecklistItems } from '../../lib/daily-brief';
+import { useSavingsStore } from '../../lib/savings-store';
 
 // ---------------------------------------------------------------------------
 // Destination images for trip cards
@@ -934,6 +936,12 @@ export default function PlanScreen() {
           <Text style={styles.quickTripLinkText}>{t('plan.orQuickTrip', { defaultValue: 'or try Quick Trip' })}</Text>
         </Pressable>
 
+        {/* Dream Board link */}
+        <DreamBoardBanner />
+
+        {/* Trip Fund card — only shows when user has savings goals */}
+        <TripFundCard />
+
         {/* People nudge — social proof for latest destination */}
         {!peopleBannerDismissed && sortedTrips.length > 0 && (
           <PeopleNudgeBanner
@@ -1070,6 +1078,78 @@ export default function PlanScreen() {
 }
 
 // ---------------------------------------------------------------------------
+// DreamBoardBanner — appears below trip cards for users who have trips
+// ---------------------------------------------------------------------------
+function DreamBoardBanner() {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const dreamCount = useDreamStore((s) => s.dreams.filter((d) => !d.isArchived).length);
+
+  return (
+    <Pressable
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+        router.push('/dream-board' as never);
+      }}
+      accessibilityLabel={t('plan.dreamBoard', { defaultValue: 'Dream Board' })}
+      accessibilityRole="button"
+      style={({ pressed }) => [stageStyles.dreamBoardBanner, { opacity: pressed ? 0.8 : 1 }]}
+    >
+      <Heart size={16} color={COLORS.sage} strokeWidth={1.5} />
+      <Text style={stageStyles.dreamBoardBannerText}>
+        {dreamCount > 0
+          ? t('plan.dreamBoardCount', {
+              defaultValue: `Dream Board \u00B7 ${dreamCount} destinations saved`,
+              count: dreamCount,
+            })
+          : t('plan.dreamBoardCta', { defaultValue: 'Your dream destinations' })}
+      </Text>
+      <ChevronRight size={16} color={COLORS.sage} strokeWidth={1.5} />
+    </Pressable>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// TripFundCard — shows total savings progress, navigates to /money
+// ---------------------------------------------------------------------------
+function TripFundCard() {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const goals = useSavingsStore((s) => s.goals);
+
+  if (goals.length === 0) return null;
+
+  const totalSaved = goals.reduce((sum, g) => sum + g.savedAmount, 0);
+  const totalTarget = goals.reduce((sum, g) => sum + g.targetAmount, 0);
+  const pct = totalTarget > 0 ? Math.min(100, Math.round((totalSaved / totalTarget) * 100)) : 0;
+
+  return (
+    <Pressable
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+        router.push('/money' as never);
+      }}
+      accessibilityLabel={t('plan.tripFund', { defaultValue: 'Trip Fund' })}
+      accessibilityRole="button"
+      style={({ pressed }) => [stageStyles.dreamBoardBanner, { opacity: pressed ? 0.8 : 1 }]}
+    >
+      <Wallet size={16} color={COLORS.sage} strokeWidth={1.5} />
+      <View style={{ flex: 1, marginHorizontal: SPACING.sm }}>
+        <Text style={stageStyles.dreamBoardBannerText}>
+          {t('plan.tripFundLabel', {
+            defaultValue: `Trip Fund \u00B7 $${totalSaved.toLocaleString()} of $${totalTarget.toLocaleString()}`,
+          })}
+        </Text>
+        <View style={{ height: 3, borderRadius: 2, backgroundColor: COLORS.surface2, marginTop: 4, overflow: 'hidden' }}>
+          <View style={{ height: 3, borderRadius: 2, backgroundColor: COLORS.sage, width: `${pct}%` }} />
+        </View>
+      </View>
+      <ChevronRight size={16} color={COLORS.sage} strokeWidth={1.5} />
+    </Pressable>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // DreamingSection — shown when no active trips (DREAMING stage)
 // ---------------------------------------------------------------------------
 function DreamingSection({
@@ -1082,6 +1162,7 @@ function DreamingSection({
   onPlanTogether: () => void;
 }) {
   const { t } = useTranslation();
+  const router = useRouter();
   return (
     <View style={stageStyles.dreamingContainer}>
       <Text style={stageStyles.dreamingHeadline}>
@@ -1109,6 +1190,22 @@ function DreamingSection({
         <Text style={stageStyles.dreamingQuickLinkText}>
           {t('plan.dreaming.orQuickTrip', { defaultValue: 'or try Quick Trip' })}
         </Text>
+      </Pressable>
+      {/* Dream Board link */}
+      <Pressable
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+          router.push('/dream-board' as never);
+        }}
+        accessibilityLabel={t('plan.dreamBoard', { defaultValue: 'Dream Board' })}
+        accessibilityRole="button"
+        style={({ pressed }) => [stageStyles.dreamBoardLink, { opacity: pressed ? 0.75 : 1 }]}
+      >
+        <Heart size={14} color={COLORS.sage} strokeWidth={1.5} />
+        <Text style={stageStyles.dreamBoardLinkText}>
+          {t('plan.dreamBoardCta', { defaultValue: 'Your dream destinations' })}
+        </Text>
+        <ChevronRight size={14} color={COLORS.sage} strokeWidth={1.5} />
       </Pressable>
     </View>
   );
@@ -1462,6 +1559,41 @@ const stageStyles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.muted,
     textDecorationLine: 'underline',
+  } as TextStyle,
+  dreamBoardLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    marginTop: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.pill,
+    backgroundColor: COLORS.sageSubtle,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+  } as ViewStyle,
+  dreamBoardLinkText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 13,
+    color: COLORS.sage,
+  } as TextStyle,
+  dreamBoardBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.sm + 2,
+    paddingHorizontal: SPACING.md,
+    marginTop: SPACING.md,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.sageSubtle,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+  } as ViewStyle,
+  dreamBoardBannerText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
+    color: COLORS.sage,
+    flex: 1,
   } as TextStyle,
 
   // ── PLANNING / IMMINENT ──

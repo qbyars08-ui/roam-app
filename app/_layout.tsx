@@ -24,6 +24,7 @@ import { ensureReferralCode } from '../lib/referral';
 import { requestNotificationPermission, scheduleDailyDiscovery, registerPushToken, registerForPushNotifications } from '../lib/notifications';
 import { recordAppOpen, cancelReengagementNotifications, scheduleReengagementNotifications } from '../lib/reengagement';
 import { COLORS } from '../lib/constants';
+import { HAS_SEEN_ONBOARDING } from './onboarding';
 import { getSharedTrip } from '../lib/sharing';
 import { trackOnboardingComplete } from '../lib/ab-test';
 import { captureRefOnLoad } from '../lib/waitlist-guest';
@@ -55,9 +56,10 @@ function useProtectedRoute(session: { user: { id: string } } | null) {
   useEffect(() => {
     const inAuthGroup = segments[0] === '(auth)';
     const onJoinGroup = segments[0] === 'join-group' || segments[0] === 'join';
+    const onOnboarding = segments[0] === 'onboarding';
 
     // Deferred signup: unauthenticated users can view join-group preview
-    if (onJoinGroup) return;
+    if (onJoinGroup || onOnboarding) return;
 
     if (!session && !inAuthGroup) {
       // No session → check if onboarding is complete
@@ -76,8 +78,14 @@ function useProtectedRoute(session: { user: { id: string } } | null) {
         router.replace('/(auth)/signup');
       }
     } else if (session && inAuthGroup) {
-      // Has session but in auth screens → go to tabs
-      router.replace('/(tabs)');
+      // Has session but in auth screens → check swipeable onboarding first
+      AsyncStorage.getItem(HAS_SEEN_ONBOARDING).then((seen) => {
+        if (seen === 'true') {
+          router.replace('/(tabs)');
+        } else {
+          router.replace('/onboarding');
+        }
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- router intentional mount-only
   }, [session, segments]);
@@ -341,6 +349,14 @@ export default function RootLayout() {
         >
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen
+            name="onboarding"
+            options={{
+              presentation: 'card',
+              animation: 'fade',
+              gestureEnabled: false,
+            }}
+          />
           <Stack.Screen
             name="join-group"
             options={{

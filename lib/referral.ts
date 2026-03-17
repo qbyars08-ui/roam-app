@@ -50,9 +50,56 @@ export function getReferralCode(userId: string): string {
   return seededHash(userId);
 }
 
+/**
+ * Generate an 8-char referral code: first 3 chars of destination (or "ROAM") + 5 random.
+ * Used when creating shareable codes with destination context.
+ */
+export function generateReferralCodeWithPrefix(
+  userId: string,
+  destination?: string
+): string {
+  const prefix = destination
+    ? destination.slice(0, 3).toUpperCase()
+    : 'ROAM';
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  // Deterministic from userId but looks random
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash = ((hash << 5) - hash + userId.charCodeAt(i)) | 0;
+  }
+  let h = Math.abs(hash);
+  let suffix = '';
+  const needed = 8 - prefix.length;
+  for (let i = 0; i < needed; i++) {
+    suffix += chars[h % chars.length];
+    h = Math.floor(h / chars.length) || 1;
+  }
+  return (prefix + suffix).slice(0, 8);
+}
+
+/**
+ * Returns existing referral code or creates a new one for the user.
+ */
+export async function getOrCreateReferralCode(userId: string): Promise<string> {
+  try {
+    const { data } = await supabase
+      .from('referral_codes')
+      .select('code')
+      .eq('user_id', userId)
+      .single();
+    if (data?.code) return data.code as string;
+  } catch { /* no existing code */ }
+  return ensureReferralCode(userId);
+}
+
 /** Full referral URL: roamappwait.netlify.app?ref=code */
 export function getReferralUrl(code: string): string {
   return `${BASE_URL}?ref=${code}`;
+}
+
+/** App deep link URL for referrals */
+export function getReferralDeepLink(code: string): string {
+  return `roamapp.app/ref/${code}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -159,9 +206,10 @@ export async function recordReferral(referrerUserId?: string): Promise<void> {
 // Share sheet — native share with waitlist URL
 // ---------------------------------------------------------------------------
 export async function shareReferralLink(code: string): Promise<void> {
+  const deepLink = getReferralDeepLink(code);
   const url = getReferralUrl(code);
   await Share.share({
-    message: `Plan your next trip with ROAM — it's like having a well-traveled friend in your pocket. Join the waitlist: ${url}`,
+    message: `Plan your next trip in 30 seconds. Use code ${code} for 3 bonus trips. ${deepLink}`,
     url,
     title: 'Join ROAM',
   });

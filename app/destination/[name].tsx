@@ -8,11 +8,12 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, MapPin, Share2 } from 'lucide-react-native';
+import { ChevronLeft, Heart, MapPin, Share2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
 import * as Haptics from '../../lib/haptics';
 import { COLORS, DESTINATION_HERO_PHOTOS, DESTINATIONS, FONTS, RADIUS, SPACING } from '../../lib/constants';
+import { useDreamStore } from '../../lib/dream-store';
 import { useSonarQuery } from '../../lib/sonar';
 import { getCurrentWeather, type CurrentWeather } from '../../lib/apis/openweather';
 import { searchPlaces, type FSQPlace } from '../../lib/apis/foursquare';
@@ -23,6 +24,7 @@ import { getTravelAdvisory, type TravelAdvisory } from '../../lib/travel-safety'
 import { getVisaRequirements, type VisaResult } from '../../lib/apis/sherpa';
 import { getTimezoneByDestination } from '../../lib/timezone';
 import { useAppStore } from '../../lib/store';
+import { useSavingsStore } from '../../lib/savings-store';
 import { supabase } from '../../lib/supabase';
 import { shareDestination } from '../../lib/share-image';
 import LiveBadge from '../../components/ui/LiveBadge';
@@ -77,6 +79,9 @@ export default function LivingDestinationPage(): React.JSX.Element {
   const { t } = useTranslation();
   const setPlanWizard = useAppStore((st) => st.setPlanWizard);
   const setGenerateMode = useAppStore((st) => st.setGenerateMode);
+  const isDreamSaved = useDreamStore((st) => st.isDreamSaved);
+  const toggleDreamByDestination = useDreamStore((st) => st.toggleDreamByDestination);
+  const dreamSaved = useMemo(() => isDreamSaved(destination), [isDreamSaved, destination]);
 
   const destInfo = useMemo(
     () => DESTINATIONS.find((d) => d.label.toLowerCase() === destination.toLowerCase()),
@@ -231,6 +236,11 @@ export default function LivingDestinationPage(): React.JSX.Element {
     }
   }, [destination]);
 
+  const handleToggleDream = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    void toggleDreamByDestination(destination);
+  }, [destination, toggleDreamByDestination]);
+
   const handleQuickTrip = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     setPlanWizard({ destination });
@@ -244,6 +254,15 @@ export default function LivingDestinationPage(): React.JSX.Element {
     setGenerateMode('conversation');
     router.push('/craft-session');
   }, [destination, setPlanWizard, setGenerateMode, router]);
+
+  const createGoal = useSavingsStore((s) => s.createGoal);
+  const handleStartSaving = useCallback(async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    // Estimate cost from destination dailyCost * 7 days
+    const estimated = destInfo ? destInfo.dailyCost * 7 : 1000;
+    await createGoal({ destination, targetAmount: estimated });
+    router.push('/money' as never);
+  }, [destination, destInfo, createGoal, router]);
 
   // Hero "right now" summary
   const rightNowSummary = useMemo(() => {
@@ -286,13 +305,28 @@ export default function LivingDestinationPage(): React.JSX.Element {
           >
             <ChevronLeft size={22} color={COLORS.white} strokeWidth={1.5} />
           </Pressable>
-          <Pressable
-            style={[s.shareHeroBtn, { top: insets.top + SPACING.sm }]}
-            onPress={handleShareDestination}
-            hitSlop={8}
-          >
-            <Share2 size={18} color={COLORS.white} strokeWidth={1.5} />
-          </Pressable>
+          <View style={[s.heroActions, { top: insets.top + SPACING.sm }]}>
+            <Pressable
+              style={s.dreamHeroBtn}
+              onPress={handleToggleDream}
+              hitSlop={8}
+              accessibilityLabel={t('destination.saveToDreamBoard', { defaultValue: 'Save to Dream Board' })}
+            >
+              <Heart
+                size={18}
+                color={dreamSaved ? COLORS.sage : COLORS.white}
+                strokeWidth={1.5}
+                fill={dreamSaved ? COLORS.sage : 'transparent'}
+              />
+            </Pressable>
+            <Pressable
+              style={s.shareHeroBtn2}
+              onPress={handleShareDestination}
+              hitSlop={8}
+            >
+              <Share2 size={18} color={COLORS.white} strokeWidth={1.5} />
+            </Pressable>
+          </View>
           <View style={s.heroText}>
             <Text style={s.heroTitle}>{destination}</Text>
             {destInfo && (
@@ -345,7 +379,7 @@ export default function LivingDestinationPage(): React.JSX.Element {
         <RoutesSection routes={routes} loading={routesLoading} />
 
         {/* 5. WHAT IT COSTS */}
-        <CostSection data={costData} />
+        <CostSection data={costData} onStartSaving={handleStartSaving} />
 
         {/* 6. SAFETY */}
         <SafetySection advisory={advisory} loading={advisoryLoading} />
@@ -401,9 +435,21 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  shareHeroBtn: {
+  heroActions: {
     position: 'absolute',
     right: SPACING.md,
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+  dreamHeroBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.overlayDark,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shareHeroBtn2: {
     width: 40,
     height: 40,
     borderRadius: RADIUS.full,

@@ -186,7 +186,13 @@ export function RoutesSection({
 // ---------------------------------------------------------------------------
 // 5. What it costs — Cost of living
 // ---------------------------------------------------------------------------
-export function CostSection({ data }: { data: CostOfLiving | null }) {
+export function CostSection({
+  data,
+  onStartSaving,
+}: {
+  data: CostOfLiving | null;
+  onStartSaving?: () => void;
+}) {
   const { t } = useTranslation();
   if (!data) return null;
 
@@ -234,6 +240,17 @@ export function CostSection({ data }: { data: CostOfLiving | null }) {
         <Text style={[styles.mono, { marginTop: SPACING.sm }]}>
           {data.tipping}
         </Text>
+        {onStartSaving && (
+          <Pressable
+            onPress={onStartSaving}
+            style={({ pressed }) => [styles.startSavingBtn, { opacity: pressed ? 0.8 : 1 }]}
+          >
+            <DollarSign size={16} color={COLORS.bg} strokeWidth={1.5} />
+            <Text style={styles.startSavingText}>
+              {t('destination.startSaving', { defaultValue: 'Start saving' })}
+            </Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );
@@ -664,6 +681,21 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.mono,
     fontSize: 13,
     color: COLORS.cream,
+  },
+  startSavingBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    backgroundColor: COLORS.sage,
+    borderRadius: RADIUS.pill,
+    paddingVertical: SPACING.sm,
+    marginTop: SPACING.md,
+  },
+  startSavingText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
+    color: COLORS.bg,
   },
   // Safety
   safetyRow: {
