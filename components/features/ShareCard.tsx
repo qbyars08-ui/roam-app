@@ -15,6 +15,7 @@ import {
   type ImageStyle,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Compass } from 'lucide-react-native';
 import { captureRef } from '../../lib/view-shot';
 import * as Sharing from 'expo-sharing';
 import { COLORS, FONTS, SPACING, RADIUS, BUDGETS } from '../../lib/constants';
@@ -128,55 +129,52 @@ export default function ShareCard({
         {heroPhoto ? (
           <ImageBackground source={{ uri: heroPhoto }} style={styles.heroBg} resizeMode="cover">
             <LinearGradient
-              colors={['transparent', COLORS.overlayDarkDim, COLORS.bgDark1515Overlay, COLORS.bgDark1515End]}
-              locations={[0.15, 0.45, 0.75, 1]}
+              colors={['rgba(8,15,10,0.15)', 'transparent', COLORS.overlayDarkDim, COLORS.bgDark1515Overlay, COLORS.bgDark1515End]}
+              locations={[0, 0.25, 0.5, 0.75, 1]}
               style={styles.overlay}
             >
-              {/* Top left: ROAM logo in gold */}
-              <Text style={styles.logo}>ROAM</Text>
+              {/* Top left: ROAM compass logo */}
+              <View style={styles.logoRow}>
+                <Compass size={16} color={COLORS.sage} strokeWidth={2} />
+                <Text style={styles.logo}>ROAM</Text>
+              </View>
 
-              {/* Spacer */}
+              {/* Spacer — photo breathes */}
               <View style={styles.spacer} />
 
-              {/* Center: destination, tagline, pills */}
-              <View style={styles.center}>
+              {/* Bottom content block */}
+              <View style={styles.bottomBlock}>
+                {/* Destination name — large, dramatic */}
                 <Text style={styles.destination} numberOfLines={2}>
                   {trip.destination}
                 </Text>
+
+                {/* Trip meta line */}
+                <Text style={styles.metaLine}>
+                  {dayCount} days{dailyCost ? ` · $${dailyCost}/day` : ''} · {travelStyle}
+                </Text>
+
+                {/* Tagline if provided */}
                 {tagline ? (
                   <Text style={styles.tagline} numberOfLines={2}>
                     {tagline}
                   </Text>
                 ) : null}
 
-                {/* 3 pill badges */}
-                <View style={styles.pills}>
-                  <View style={styles.pill}>
-                    <Text style={styles.pillText}>{dayCount} days</Text>
+                {/* Top 3 activities as pills */}
+                {dayThemes.length > 0 && (
+                  <View style={styles.pills}>
+                    {dayThemes.slice(0, 3).map((theme, i) => (
+                      <View key={i} style={styles.pill}>
+                        <Text style={styles.pillText} numberOfLines={1}>{theme}</Text>
+                      </View>
+                    ))}
                   </View>
-                  <View style={styles.pill}>
-                    <Text style={styles.pillText}>
-                      {dailyCost ? `$${dailyCost}/day` : formatBudget(totalBudget ?? trip.budget)}
-                    </Text>
-                  </View>
-                  <View style={styles.pill}>
-                    <Text style={styles.pillText}>{travelStyle}</Text>
-                  </View>
-                </View>
+                )}
+
+                {/* Bottom branding */}
+                <Text style={styles.brandUrl}>roamapp.app</Text>
               </View>
-
-              {/* Bottom: top 3 day themes */}
-              {dayThemes.length > 0 && (
-                <View style={styles.themes}>
-                  {dayThemes.slice(0, 3).map((theme, i) => (
-                    <Text key={i} style={styles.themeItem} numberOfLines={1}>
-                      Day {i + 1} · {theme}
-                    </Text>
-                  ))}
-                </View>
-              )}
-
-              <Text style={styles.builtWith}>Built with ROAM</Text>
             </LinearGradient>
           </ImageBackground>
         ) : (
@@ -186,33 +184,28 @@ export default function ShareCard({
             end={{ x: 1, y: 1 }}
             style={styles.gradientFallback}
           >
-            <Text style={styles.logo}>ROAM</Text>
-            <View style={styles.spacer} />
-            <View style={styles.center}>
-              <Text style={styles.destination}>{trip.destination}</Text>
-              {tagline ? <Text style={styles.tagline}>{tagline}</Text> : null}
-              <View style={styles.pills}>
-                <View style={styles.pill}>
-                  <Text style={styles.pillText}>{dayCount} days</Text>
-                </View>
-                <View style={styles.pill}>
-                  <Text style={styles.pillText}>{formatBudget(totalBudget ?? trip.budget)}</Text>
-                </View>
-                <View style={styles.pill}>
-                  <Text style={styles.pillText}>{travelStyle}</Text>
-                </View>
-              </View>
+            <View style={styles.logoRow}>
+              <Compass size={16} color={COLORS.sage} strokeWidth={2} />
+              <Text style={styles.logo}>ROAM</Text>
             </View>
-            {dayThemes.length > 0 && (
-              <View style={styles.themes}>
-                {dayThemes.slice(0, 3).map((theme, i) => (
-                  <Text key={i} style={styles.themeItem}>
-                    Day {i + 1} · {theme}
-                  </Text>
-                ))}
-              </View>
-            )}
-            <Text style={styles.builtWith}>Built with ROAM</Text>
+            <View style={styles.spacer} />
+            <View style={styles.bottomBlock}>
+              <Text style={styles.destination}>{trip.destination}</Text>
+              <Text style={styles.metaLine}>
+                {dayCount} days{dailyCost ? ` · $${dailyCost}/day` : ''} · {travelStyle}
+              </Text>
+              {tagline ? <Text style={styles.tagline}>{tagline}</Text> : null}
+              {dayThemes.length > 0 && (
+                <View style={styles.pills}>
+                  {dayThemes.slice(0, 3).map((theme, i) => (
+                    <View key={i} style={styles.pill}>
+                      <Text style={styles.pillText} numberOfLines={1}>{theme}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+              <Text style={styles.brandUrl}>roamapp.app</Text>
+            </View>
           </LinearGradient>
         )}
       </View>
@@ -301,11 +294,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   } as ViewStyle,
 
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  } as ViewStyle,
+
   logo: {
     fontFamily: FONTS.header,
-    fontSize: 18,
-    color: COLORS.gold,
-    letterSpacing: 4,
+    fontSize: 14,
+    color: COLORS.sage,
+    letterSpacing: 3,
   } as TextStyle,
 
   spacer: {
@@ -313,69 +312,66 @@ const styles = StyleSheet.create({
     minHeight: 40,
   } as ViewStyle,
 
-  center: {
-    alignItems: 'center',
-    paddingVertical: SPACING.md,
+  bottomBlock: {
+    paddingBottom: 4,
   } as ViewStyle,
 
   destination: {
     fontFamily: FONTS.header,
-    fontSize: 40,
-    color: COLORS.white,
-    lineHeight: 46,
+    fontSize: 52,
+    fontStyle: 'italic',
+    color: COLORS.cream,
+    lineHeight: 56,
     letterSpacing: -0.5,
-    textAlign: 'center',
+    marginBottom: 4,
+  } as TextStyle,
+
+  metaLine: {
+    fontFamily: FONTS.body,
+    fontSize: 16,
+    color: COLORS.cream,
+    opacity: 0.7,
     marginBottom: SPACING.sm,
   } as TextStyle,
 
   tagline: {
     fontFamily: FONTS.header,
-    fontSize: 20,
-    color: COLORS.whiteMuted90,
-    lineHeight: 28,
+    fontSize: 18,
+    color: COLORS.cream,
+    opacity: 0.85,
+    lineHeight: 24,
     fontStyle: 'italic',
-    textAlign: 'center',
     marginBottom: SPACING.md,
   } as TextStyle,
 
   pills: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: SPACING.sm,
+    gap: 8,
+    marginBottom: SPACING.lg,
   } as ViewStyle,
 
   pill: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.sageMuted,
     borderWidth: 1,
-    borderColor: COLORS.whiteMuted15,
+    borderColor: COLORS.sage,
+    backgroundColor: 'rgba(124,175,138,0.12)',
   } as ViewStyle,
 
   pillText: {
-    fontFamily: FONTS.bodyMedium,
-    fontSize: 13,
-    color: COLORS.white,
-  } as TextStyle,
-
-  themes: {
-    gap: 4,
-  } as ViewStyle,
-
-  themeItem: {
     fontFamily: FONTS.body,
     fontSize: 12,
-    color: COLORS.slateMuted75,
+    color: COLORS.cream,
   } as TextStyle,
 
-  builtWith: {
+  brandUrl: {
     fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.successMuted,
-    letterSpacing: 2,
-    textAlign: 'center',
+    fontSize: 11,
+    color: COLORS.sage,
+    letterSpacing: 1,
+    textAlign: 'right',
   } as TextStyle,
 
   actions: {
