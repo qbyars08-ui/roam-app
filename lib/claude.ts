@@ -8,6 +8,7 @@ import { parseItinerary, type Itinerary } from './types/itinerary';
 import { type TravelProfile, profileToPromptString } from './types/travel-profile';
 import { useAppStore } from './store';
 import { getPersonaConfig, type TravelerPersona } from './traveler-persona';
+import { type TravelPreference, getPreferencesSummary } from './travel-preferences';
 
 // ---------------------------------------------------------------------------
 // System prompts
@@ -245,15 +246,19 @@ Voice:
 // ---------------------------------------------------------------------------
 export const CRAFT_FOLLOW_UP_SYSTEM = `You are ROAM. The user has a personalized trip itinerary and is chatting with you. You have FULL context: the full itinerary (destination, days, every activity with times, neighborhoods, costs, transit, tips) plus the planning conversation. They can ask anything: changes, more details, alternatives, flights, hotels, food, timing, or general questions.
 
-Respond in plain language. Be specific and actionable. Do NOT output JSON or markdown code blocks.
+RESPONSE FORMAT:
+1. Always start with a plain language explanation of what you changed or your answer. Be specific and actionable.
+2. If the user's request modifies the itinerary (changing activities, adding restaurants, swapping days, adjusting budget, etc.), you MUST include the COMPLETE updated itinerary as a JSON block at the END of your response, wrapped in <itinerary_json>...</itinerary_json> tags. Use the exact same JSON schema as the original itinerary (destination, tagline, totalBudget, days, budgetBreakdown, packingEssentials, proTip, visaInfo). Output the FULL itinerary, not just the changed parts.
+3. If the user is asking a question that does NOT change the itinerary (general advice, flight tips, "tell me more", etc.), do NOT include the JSON block — just answer in plain text.
 
-- If they want a cheaper hotel: suggest 2–3 alternatives with names and why they fit.
-- If they want more food: add specific restaurants or food experiences and where they fit in the day.
-- If they want less walking: suggest transport or different activity order.
-- If they ask about flights/cabin: give a concrete recommendation (airline, route, price range) and where to book.
-- If they ask "what else" or "tell me more": use your full itinerary context to add detail, alternatives, or pro tips.
+Guidelines:
+- If they want a cheaper hotel: suggest alternatives and update the itinerary JSON with the new accommodation.
+- If they want more food: add specific restaurants and update the itinerary JSON with the new activities.
+- If they want less walking: adjust transport/order and update the itinerary JSON.
+- If they ask about flights/cabin: give a recommendation (no itinerary change needed).
+- If they ask "what else" or "tell me more": add detail, alternatives, or pro tips (no itinerary change needed).
 
-Keep responses under 200 words. Sound like a travel planner who has the full context. Never use emojis. Conversation can continue indefinitely — answer each message with full context.`;
+Keep the plain language part under 200 words. Sound like a travel planner who has the full context. Never use emojis. Conversation can continue indefinitely — answer each message with full context.`;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -601,6 +606,101 @@ export async function callClaudeStreaming(
 }
 
 // ---------------------------------------------------------------------------
+// callClaudeStreamingWithMessages — SSE streaming with multi-turn messages
+// Used for follow-up conversations where we need streaming responses.
+// ---------------------------------------------------------------------------
+
+export async function callClaudeStreamingWithMessages(
+  systemPrompt: string,
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+  callbacks: StreamingCallbacks,
+): Promise<void> {
+  await ensureValidSession();
+
+  const session = useAppStore.getState().session;
+  const jwt = session?.access_token ?? '';
+  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
+  const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+
+  const url = `${supabaseUrl}/functions/v1/claude-proxy`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${jwt}`,
+        apikey: supabaseAnonKey,
+      },
+      body: JSON.stringify({
+        system: systemPrompt,
+        messages: messages.map((m) => ({ role: m.role, content: m.content })),
+        isTripGeneration: false,
+        stream: true,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Stream request failed' }));
+      if (errorData.code === 'LIMIT_REACHED') {
+        callbacks.onError(new TripLimitReachedError(errorData.tripsUsed ?? 0, errorData.limit ?? 1));
+      } else {
+        callbacks.onError(new Error(errorData.error ?? `HTTP ${response.status}`));
+      }
+      return;
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      callbacks.onError(new Error('No readable stream'));
+      return;
+    }
+
+    const decoder = new TextDecoder();
+    let accumulated = '';
+    let tripsUsed = 0;
+    let limit: number | null = null;
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const payload = line.slice(6).trim();
+        if (!payload) continue;
+
+        try {
+          const event = JSON.parse(payload);
+
+          if (event.type === 'meta') {
+            tripsUsed = event.tripsUsed ?? 0;
+            limit = event.limit ?? null;
+            callbacks.onMeta?.(tripsUsed, limit);
+          } else if (event.type === 'text') {
+            accumulated += event.text;
+            callbacks.onChunk(accumulated, event.text);
+          } else if (event.type === 'done') {
+            // Stream complete
+          }
+        } catch {
+          // Skip malformed JSON
+        }
+      }
+    }
+
+    callbacks.onDone(accumulated, tripsUsed, limit);
+  } catch (err: unknown) {
+    callbacks.onError(err instanceof Error ? err : new Error(String(err)));
+  }
+}
+
+// ---------------------------------------------------------------------------
 // generateCraftItineraryStreaming — CRAFT mode: full conversation context → personalized itinerary
 // ---------------------------------------------------------------------------
 export async function generateCraftItineraryStreaming(
@@ -643,6 +743,7 @@ export function buildTripPrompt(params: {
   avoidList?: string;
   specialRequests?: string;
   travelerPersona?: TravelerPersona | null;
+  travelPreferences?: readonly TravelPreference[] | null;
 }): string {
   // Validate required params at runtime
   const dest = params.destination?.trim();
@@ -730,6 +831,18 @@ export function buildTripPrompt(params: {
     lines.push('--- TRAVELER PROFILE (personalize every recommendation to this) ---');
     lines.push(profileToPromptString(params.travelProfile));
     lines.push('---');
+  }
+
+  // Inject learned travel preferences from CRAFT sessions
+  if (params.travelPreferences && params.travelPreferences.length > 0) {
+    const prefsSummary = getPreferencesSummary(params.travelPreferences);
+    if (prefsSummary) {
+      lines.push('');
+      lines.push('--- LEARNED PREFERENCES (from previous trip planning sessions) ---');
+      lines.push(prefsSummary);
+      lines.push('Use these as defaults unless the user explicitly overrides them in this session.');
+      lines.push('---');
+    }
   }
 
   // Inject weather forecast if available — AI adjusts outdoor activities for rain

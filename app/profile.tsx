@@ -34,10 +34,11 @@ import { logoutRevenueCat } from '../lib/revenue-cat';
 import {
   Sparkles, Repeat, Gift, Shield, ChevronRight, BarChart3,
   CreditCard, LogOut, Globe, Camera, MapPin, ImageIcon, Heart, Scan, Backpack,
-  Volume2,
+  Volume2, X, Brain,
 } from 'lucide-react-native';
 import { getPersonaConfig } from '../lib/traveler-persona';
 import { hasEnoughData } from '../lib/travel-dna';
+import { usePreferences, getPreferenceLabel, type PreferenceKey } from '../lib/travel-preferences';
 import { track } from '../lib/analytics';
 import Button from '../components/ui/Button';
 import ExploreHub from '../components/features/ExploreHub';
@@ -158,6 +159,21 @@ export default function ProfileScreen() {
   useEffect(() => {
     hasEnoughData().then(setShowDNA).catch(() => {});
   }, []);
+
+  // Travel preferences from CRAFT sessions
+  const { preferences: travelPrefs, remove: removePreference } = usePreferences();
+
+  const handleRemovePreference = useCallback((key: PreferenceKey) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Alert.alert('Remove preference?', 'ROAM will stop using this for future trips.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: () => { void removePreference(key); },
+      },
+    ]);
+  }, [removePreference]);
 
   // eslint-disable-next-line react-hooks/preserve-manual-memoization, react-hooks/exhaustive-deps
   const handleEditEmergencyContact = useCallback(() => {
@@ -280,6 +296,41 @@ export default function ProfileScreen() {
           </View>
           <ChevronRight size={18} color={COLORS.creamDim} strokeWidth={1.5} />
         </Pressable>
+
+        {/* ── Travel Preferences (learned from CRAFT) ── */}
+        {travelPrefs.length > 0 && (
+          <View style={styles.travelPrefsCard}>
+            <View style={styles.travelPrefsHeader}>
+              <Brain size={20} color={COLORS.sage} strokeWidth={1.5} />
+              <View style={{ flex: 1, marginLeft: SPACING.sm }}>
+                <Text style={styles.travelPrefsTitle}>Travel DNA</Text>
+                <Text style={styles.travelPrefsSub}>ROAM learns how you travel</Text>
+              </View>
+            </View>
+            <View style={styles.travelPrefsChips}>
+              {travelPrefs.map((pref) => (
+                <Pressable
+                  key={pref.key}
+                  onPress={() => handleRemovePreference(pref.key)}
+                  style={({ pressed }) => [
+                    styles.travelPrefsChip,
+                    { opacity: pressed ? 0.7 : 1 },
+                  ]}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.travelPrefsChipLabel}>
+                      {getPreferenceLabel(pref.key)}
+                    </Text>
+                    <Text style={styles.travelPrefsChipValue} numberOfLines={1}>
+                      {pref.value}
+                    </Text>
+                  </View>
+                  <X size={14} color={COLORS.creamDim} strokeWidth={1.5} />
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* ── Travel Personality ── */}
         {personality && (
@@ -1456,5 +1507,59 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.creamMuted,
     marginTop: 2,
+  } as TextStyle,
+  // ── Travel Preferences (learned from CRAFT) ──
+  travelPrefsCard: {
+    marginTop: SPACING.lg,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+    padding: SPACING.md,
+  } as ViewStyle,
+  travelPrefsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  } as ViewStyle,
+  travelPrefsTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 18,
+    color: COLORS.cream,
+  } as TextStyle,
+  travelPrefsSub: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamDim,
+    marginTop: 2,
+  } as TextStyle,
+  travelPrefsChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+  } as ViewStyle,
+  travelPrefsChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.sageSubtle,
+    borderRadius: RADIUS.pill,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+  } as ViewStyle,
+  travelPrefsChipLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.creamDim,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  } as TextStyle,
+  travelPrefsChipValue: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
+    color: COLORS.cream,
+    marginTop: 1,
   } as TextStyle,
 });

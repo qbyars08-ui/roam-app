@@ -31,8 +31,8 @@ import {
   type CraftState,
   type CraftPreferences,
 } from '../lib/craft-engine';
-import { CRAFT_BUILDING_MESSAGE, CRAFT_ITINERARY_INTRO, CRAFT_FOLLOW_UP_PROMPT, CRAFT_STEPS } from '../lib/craft-prompts';
-import { generateCraftItineraryStreaming, callClaudeWithMessages, CRAFT_FOLLOW_UP_SYSTEM, TripLimitReachedError } from '../lib/claude';
+import { CRAFT_BUILDING_MESSAGE, CRAFT_ITINERARY_INTRO, CRAFT_STEPS } from '../lib/craft-prompts';
+import { generateCraftItineraryStreaming, callClaudeStreamingWithMessages, CRAFT_FOLLOW_UP_SYSTEM, TripLimitReachedError } from '../lib/claude';
 import {
   updateProfileFromCraft,
   craftPreferencesToLearned,
@@ -64,6 +64,7 @@ export default function CraftSessionScreen() {
   const [error, setError] = useState<string | null>(null);
   const [parsedItinerary, setParsedItinerary] = useState<Itinerary | null>(null);
   const [welcomeBackMessage, setWelcomeBackMessage] = useState<string | null>(null);
+  const [streamingText, setStreamingText] = useState('');
   const scrollRef = useRef<ScrollView>(null);
   const loadedSessionRef = useRef(false);
 
@@ -77,8 +78,7 @@ export default function CraftSessionScreen() {
   const canGenerate = hasAllRequiredForGeneration(state);
   const isGathering = state.phase === 'gathering' && state.currentStepId !== null;
   const isBuilding = state.phase === 'gathering' && state.currentStepId === null && canGenerate;
-  const isDone = state.phase === 'done' && parsedItinerary;
-  const isFollowUp = state.phase === 'follow_up';
+  const isFollowUp = state.phase === 'follow_up' && parsedItinerary;
 
   // Load saved session by sessionId (resume)
   useEffect(() => {
@@ -103,7 +103,7 @@ export default function CraftSessionScreen() {
         phase = 'gathering';
       }
       if (genJson) {
-        phase = 'done';
+        phase = 'follow_up';
         currentStepId = null;
         try {
           const it = parseItinerary(typeof genJson === 'string' ? genJson : JSON.stringify(genJson));
@@ -150,7 +150,7 @@ export default function CraftSessionScreen() {
           setParsedItinerary(itinerary);
           setState((s) => ({
             ...s,
-            phase: 'done',
+            phase: 'follow_up',
             generatedItineraryJson: fullText,
           }));
           setTripsThisMonth(tripsUsed);
@@ -198,9 +198,29 @@ export default function CraftSessionScreen() {
     });
   }, [isBuilding]);
 
+  /** Extract itinerary JSON from <itinerary_json>...</itinerary_json> tags if present */
+  const extractItineraryUpdate = useCallback((text: string): { displayText: string; itinerary: Itinerary | null } => {
+    const tagStart = '<itinerary_json>';
+    const tagEnd = '</itinerary_json>';
+    const startIdx = text.indexOf(tagStart);
+    const endIdx = text.indexOf(tagEnd);
+    if (startIdx === -1 || endIdx === -1 || endIdx <= startIdx) {
+      return { displayText: text.trim(), itinerary: null };
+    }
+    const jsonStr = text.slice(startIdx + tagStart.length, endIdx).trim();
+    const displayText = (text.slice(0, startIdx) + text.slice(endIdx + tagEnd.length)).trim();
+    try {
+      const itinerary = parseItinerary(jsonStr);
+      return { displayText, itinerary };
+    } catch {
+      return { displayText, itinerary: null };
+    }
+  }, []);
+
   const handleSubmit = useCallback(() => {
     const text = input.trim();
     if (!text && isGathering) return;
+    if (!text && isFollowUp) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (isGathering && state.currentStepId) {
       const next = applyAnswer(state, state.currentStepId, text);
@@ -210,27 +230,60 @@ export default function CraftSessionScreen() {
       setInput('');
       setError(null);
       setLoading(true);
+      setStreamingText('');
+      // Add user message to state immediately so it renders in the conversation
+      setState((s) => ({
+        ...s,
+        followUpMessages: [
+          ...s.followUpMessages,
+          { role: 'user', content: text },
+        ],
+      }));
       const itinerarySummary = buildFullItinerarySummary(parsedItinerary);
       const messages = buildFollowUpMessages(state, itinerarySummary, text);
-      callClaudeWithMessages(CRAFT_FOLLOW_UP_SYSTEM, messages, false)
-        .then((res) => {
-          setState((s) => ({
-            ...s,
-            followUpMessages: [
-              ...s.followUpMessages,
-              { role: 'user', content: text },
-              { role: 'assistant', content: res.content },
-            ],
-          }));
-        })
-        .catch((err) => {
-          setError(err instanceof Error ? err.message : 'Something went wrong');
-        })
-        .finally(() => {
+      callClaudeStreamingWithMessages(CRAFT_FOLLOW_UP_SYSTEM, messages, {
+        onChunk: (accumulated) => {
+          setStreamingText(accumulated);
+        },
+        onDone: (fullText) => {
           setLoading(false);
-        });
+          setStreamingText('');
+          const { displayText, itinerary: updatedItinerary } = extractItineraryUpdate(fullText);
+          if (updatedItinerary) {
+            setParsedItinerary(updatedItinerary);
+            setState((s) => ({
+              ...s,
+              generatedItineraryJson: JSON.stringify(updatedItinerary),
+              followUpMessages: [
+                ...s.followUpMessages,
+                { role: 'assistant', content: displayText || 'Itinerary updated.' },
+              ],
+            }));
+          } else {
+            setState((s) => ({
+              ...s,
+              followUpMessages: [
+                ...s.followUpMessages,
+                { role: 'assistant', content: displayText },
+              ],
+            }));
+          }
+        },
+        onError: (err) => {
+          setLoading(false);
+          setStreamingText('');
+          if (err instanceof TripLimitReachedError) {
+            router.push({
+              pathname: '/paywall',
+              params: { reason: 'limit', destination: state.preferences.destination ?? '' },
+            });
+          } else {
+            setError(err instanceof Error ? err.message : 'Something went wrong');
+          }
+        },
+      });
     }
-  }, [input, isGathering, isFollowUp, state, parsedItinerary]);
+  }, [input, isGathering, isFollowUp, state, parsedItinerary, extractItineraryUpdate, router]);
 
   const handleBack = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -254,10 +307,6 @@ export default function CraftSessionScreen() {
     addTrip(trip);
     router.replace({ pathname: '/itinerary', params: { tripId: trip.id } });
   }, [parsedItinerary, state.preferences, addTrip, router]);
-
-  const handleStartFollowUp = useCallback(() => {
-    setState((s) => ({ ...s, phase: 'follow_up' }));
-  }, []);
 
   const question = getCurrentQuestion(state);
 
@@ -289,7 +338,7 @@ export default function CraftSessionScreen() {
         <Text style={styles.headerTitle}>Plan together</Text>
       </View>
 
-      {(isDone || isFollowUp) && parsedItinerary ? (
+      {isFollowUp && parsedItinerary ? (
         <KeyboardAvoidingView
           style={styles.flex}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -301,80 +350,73 @@ export default function CraftSessionScreen() {
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
+            onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
           >
             <Text style={styles.introText}>{CRAFT_ITINERARY_INTRO(parsedItinerary.destination)}</Text>
             <CraftItinerary itinerary={parsedItinerary} />
-            {isFollowUp ? (
-              <>
-                {state.followUpMessages.length > 0 ? (
-                  <View style={styles.followUpBlock}>
-                    {state.followUpMessages.map((msg, i) => (
-                      <CraftMessage key={i} role={msg.role} content={msg.content} />
-                    ))}
-                  </View>
-                ) : null}
-              </>
-            ) : (
-              <View style={styles.actions}>
-                <Pressable
-                  onPress={handleSaveTrip}
-                  style={({ pressed }) => [styles.primaryBtn, { opacity: pressed ? 0.9 : 1 }]}
-                  accessibilityLabel="Save trip and view full itinerary"
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.primaryBtnText}>Save trip</Text>
-                </Pressable>
-                <Pressable
-                  onPress={handleStartFollowUp}
-                  style={({ pressed }) => [styles.secondaryBtn, { opacity: pressed ? 0.9 : 1 }]}
-                  accessibilityLabel="Tell ROAM what you would change"
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.secondaryBtnText}>{CRAFT_FOLLOW_UP_PROMPT}</Text>
-                </Pressable>
+            {state.followUpMessages.length > 0 ? (
+              <View style={styles.followUpBlock}>
+                {state.followUpMessages.map((msg, i) => (
+                  <CraftMessage key={i} role={msg.role} content={msg.content} />
+                ))}
               </View>
-            )}
+            ) : null}
+            {streamingText ? (
+              <View style={styles.followUpBlock}>
+                <CraftMessage role="assistant" content={
+                  streamingText.includes('<itinerary_json>')
+                    ? streamingText.slice(0, streamingText.indexOf('<itinerary_json>')).trim()
+                    : streamingText
+                } />
+              </View>
+            ) : null}
+            {loading && !streamingText ? (
+              <View style={styles.followUpLoading}>
+                <ActivityIndicator size="small" color={COLORS.gold} />
+              </View>
+            ) : null}
           </ScrollView>
-          {isFollowUp && (
-            <>
-              <View style={styles.actions}>
-                <Pressable
-                  onPress={handleSaveTrip}
-                  style={({ pressed }) => [styles.primaryBtn, { opacity: pressed ? 0.9 : 1 }]}
-                  accessibilityLabel="Save trip"
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.primaryBtnText}>Save trip</Text>
-                </Pressable>
-              </View>
-              {error ? (
-                <View style={styles.errorBanner}>
-                  <Text style={styles.errorText}>{error}</Text>
-                </View>
-              ) : null}
-              <View style={styles.inputRow}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Ask anything about your trip — changes, more details, alternatives..."
-                  placeholderTextColor={COLORS.creamDim}
-                  value={input}
-                  onChangeText={setInput}
-                  onSubmitEditing={handleSubmit}
-                  editable={!loading}
-                  multiline
-                  maxLength={2000}
-                />
-                <Pressable
-                  onPress={handleSubmit}
-                  style={({ pressed }) => [styles.sendBtn, { opacity: pressed ? 0.8 : 1 }]}
-                  accessibilityLabel="Send"
-                  accessibilityRole="button"
-                >
-                  <Send size={20} color={COLORS.bg} strokeWidth={1.5} />
-                </Pressable>
-              </View>
-            </>
-          )}
+          <View style={styles.followUpFooter}>
+            <Pressable
+              onPress={handleSaveTrip}
+              style={({ pressed }) => [styles.saveChip, { opacity: pressed ? 0.9 : 1 }]}
+              accessibilityLabel="Save trip"
+              accessibilityRole="button"
+            >
+              <Text style={styles.saveChipText}>Save trip</Text>
+            </Pressable>
+          </View>
+          {error ? (
+            <View style={styles.errorBanner}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          ) : null}
+          <View style={styles.inputRow}>
+            <TextInput
+              style={styles.input}
+              placeholder="Ask anything about your trip — changes, more details, alternatives..."
+              placeholderTextColor={COLORS.creamDim}
+              value={input}
+              onChangeText={setInput}
+              onSubmitEditing={handleSubmit}
+              editable={!loading}
+              multiline
+              maxLength={2000}
+            />
+            <Pressable
+              onPress={handleSubmit}
+              style={({ pressed }) => [styles.sendBtn, { opacity: pressed ? 0.8 : 1 }]}
+              accessibilityLabel="Send"
+              accessibilityRole="button"
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color={COLORS.bg} />
+              ) : (
+                <Send size={20} color={COLORS.bg} strokeWidth={1.5} />
+              )}
+            </Pressable>
+          </View>
         </KeyboardAvoidingView>
       ) : isBuilding || loading ? (
         <View style={styles.center}>
@@ -541,38 +583,31 @@ const styles = StyleSheet.create({
     color: COLORS.cream,
     marginBottom: SPACING.lg,
   } as TextStyle,
-  actions: {
-    marginTop: SPACING.xl,
-    gap: SPACING.md,
-  } as ViewStyle,
-  primaryBtn: {
-    backgroundColor: COLORS.gold,
-    borderRadius: RADIUS.pill,
-    paddingVertical: SPACING.md,
-    alignItems: 'center',
-  } as ViewStyle,
-  primaryBtnText: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 16,
-    color: COLORS.bg,
-  } as TextStyle,
-  secondaryBtn: {
-    borderWidth: 1,
-    borderColor: COLORS.goldBorder,
-    borderRadius: RADIUS.pill,
-    paddingVertical: SPACING.md,
-    alignItems: 'center',
-  } as ViewStyle,
-  secondaryBtnText: {
-    fontFamily: FONTS.body,
-    fontSize: 14,
-    color: COLORS.gold,
-    textAlign: 'center',
-  } as TextStyle,
   followUpBlock: {
     marginTop: SPACING.lg,
     gap: SPACING.sm,
   } as ViewStyle,
+  followUpLoading: {
+    marginTop: SPACING.md,
+    alignItems: 'flex-start',
+    paddingLeft: SPACING.sm,
+  } as ViewStyle,
+  followUpFooter: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.xs,
+    alignItems: 'flex-end',
+  } as ViewStyle,
+  saveChip: {
+    backgroundColor: COLORS.gold,
+    borderRadius: RADIUS.pill,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
+  } as ViewStyle,
+  saveChipText: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 13,
+    color: COLORS.bg,
+  } as TextStyle,
   welcomeBackBlock: {
     marginBottom: SPACING.lg,
     padding: SPACING.md,
