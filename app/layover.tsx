@@ -298,7 +298,7 @@ function LayoverScreen() {
             <View style={styles.transitCardInner}>
               <Text style={styles.transitLabel}>{t('layover.cityAccess', { defaultValue: 'CITY ACCESS' })}</Text>
               <Text style={styles.transitDetail}>
-                {t('layover.transitDetail', { defaultValue: '{{time}} via {{method}}', time: guide.transitTime, method: guide.transitMethod })}
+                {`${guide.transitTime} via ${guide.transitMethod}`}
               </Text>
             </View>
           </View>

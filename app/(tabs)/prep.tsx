@@ -273,19 +273,19 @@ const editorialHeaderStyles = StyleSheet.create({
 // ---------------------------------------------------------------------------
 type SectionId = 'schedule' | 'overview' | 'currency' | 'connectivity' | 'culture' | 'packing' | 'jetlag' | 'crowds' | 'emergency' | 'health' | 'language' | 'visa';
 
-const SECTIONS: Array<{ id: SectionId; labelKey: string }> = [
-  { id: 'schedule', labelKey: 'prep.schedule' },
-  { id: 'overview', labelKey: 'prep.overview' },
-  { id: 'packing', labelKey: 'prep.packing' },
-  { id: 'jetlag', labelKey: 'prep.jetLag' },
-  { id: 'crowds', labelKey: 'prep.crowds' },
-  { id: 'emergency', labelKey: 'prep.emergency' },
-  { id: 'health', labelKey: 'prep.health' },
-  { id: 'language', labelKey: 'prep.language' },
-  { id: 'visa', labelKey: 'prep.visa' },
-  { id: 'currency', labelKey: 'prep.currency' },
-  { id: 'connectivity', labelKey: 'prep.simAndWifi' },
-  { id: 'culture', labelKey: 'prep.culture' },
+const SECTIONS: Array<{ id: SectionId; label: string }> = [
+  { id: 'schedule', label: 'Schedule' },
+  { id: 'overview', label: 'Overview' },
+  { id: 'packing', label: 'Packing' },
+  { id: 'jetlag', label: 'Jet Lag' },
+  { id: 'crowds', label: 'Crowds' },
+  { id: 'emergency', label: 'Emergency' },
+  { id: 'health', label: 'Health' },
+  { id: 'language', label: 'Language' },
+  { id: 'visa', label: 'Visa' },
+  { id: 'currency', label: 'Currency' },
+  { id: 'connectivity', label: 'SIM & WiFi' },
+  { id: 'culture', label: 'Culture' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -1046,7 +1046,7 @@ function VisaTab({
             <Text style={styles.sherpaVisaDetail}>{t('prep.maxStay', { defaultValue: 'Max stay: {{days}} days', days: visaReqs.maxStay })}</Text>
           )}
           {visaReqs.processingTime && (
-            <Text style={styles.sherpaVisaDetail}>{t('prep.processingTime', { defaultValue: 'Processing: {{time}}', time: visaReqs.processingTime })}</Text>
+            <Text style={styles.sherpaVisaDetail}>{`Processing: ${visaReqs.processingTime}`}</Text>
           )}
           {visaReqs.documentsNeeded.length > 0 && (
             <>
@@ -1119,7 +1119,7 @@ function CurrencyTab({
   if (!cultural) {
     return (
       <View style={styles.tabContent}>
-        <Text style={styles.noDataText}>{t('prep.currencyNotAvailable', { defaultValue: 'Currency info not available for {{destination}}.', destination })}</Text>
+        <Text style={styles.noDataText}>{`Currency info not available for ${destination}.`}</Text>
       </View>
     );
   }
@@ -2600,7 +2600,7 @@ function PrepScreen() {
                       styles.pill,
                       isActive && styles.pillActive,
                     ]}
-                    accessibilityLabel={`${t(s.labelKey)} section${isActive ? ', selected' : ''}`}
+                    accessibilityLabel={`${s.label} section${isActive ? ', selected' : ''}`}
                     accessibilityRole="tab"
                     accessibilityState={{ selected: isActive }}
                   >
@@ -2610,7 +2610,7 @@ function PrepScreen() {
                         isActive && styles.pillTextActive,
                       ]}
                     >
-                      {t(s.labelKey)}
+                      {s.label}
                     </Text>
                   </Pressable>
                 );

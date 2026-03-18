@@ -529,7 +529,7 @@ const en = {
   currency: {
     title: 'Currency',
     exchangeRate: '1 {{from}} = {{rate}} {{to}}',
-    lastUpdated: 'Updated {{time}}',
+    lastUpdated: 'Updated',
     convert: 'Convert',
     homeCurrency: 'Home currency',
   },
