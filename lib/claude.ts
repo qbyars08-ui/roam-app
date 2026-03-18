@@ -276,7 +276,7 @@ export class TripLimitReachedError extends Error {
 
   constructor(tripsUsed: number, limit: number) {
     super(
-      `You\u2019ve used your free trip this month. Upgrade to Pro to keep planning \u2014 or come back next month, we won\u2019t judge.`
+      `You\u2019ve used your free trip. Upgrade to Pro for unlimited AI-planned trips.`
     );
     this.name = 'TripLimitReachedError';
     this.tripsUsed = tripsUsed;
@@ -393,16 +393,18 @@ export async function callClaude(
     clearTimeout(timer);
   }
 
+  // Check LIMIT_REACHED before generic error — Supabase SDK sets both `error`
+  // and `data` on non-2xx responses, so the rate-limit body is in `data`.
+  if (data?.code === 'LIMIT_REACHED') {
+    throw new TripLimitReachedError((data.tripsUsed as number) ?? 0, (data.limit as number) ?? 1);
+  }
+
   if (error) {
     const message =
       typeof error === 'object' && 'message' in error
         ? (error as { message: string }).message
         : String(error);
     throw new Error(`Claude proxy error: ${message}`);
-  }
-
-  if (data?.code === 'LIMIT_REACHED') {
-    throw new TripLimitReachedError((data.tripsUsed as number) ?? 0, (data.limit as number) ?? 1);
   }
 
   if (data?.error) throw new Error(String(data.error));
@@ -460,13 +462,15 @@ export async function callClaudeWithMessages(
     clearTimeout(timeoutId);
   }
 
+  // Check LIMIT_REACHED before generic error — Supabase SDK sets both `error`
+  // and `data` on non-2xx responses, so the rate-limit body is in `data`.
+  if (data?.code === 'LIMIT_REACHED') {
+    throw new TripLimitReachedError((data.tripsUsed as number) ?? 0, (data.limit as number) ?? 1);
+  }
   if (error) {
     const msg = typeof error === 'object' && 'message' in error ? (error as { message: string }).message : String(error);
     console.error('[ROAM] callClaudeWithMessages proxy error:', msg);
     throw new Error(`Claude proxy error: ${msg}`);
-  }
-  if (data?.code === 'LIMIT_REACHED') {
-    throw new TripLimitReachedError((data.tripsUsed as number) ?? 0, (data.limit as number) ?? 1);
   }
   if (data?.error) {
     console.error('[ROAM] callClaudeWithMessages data.error:', String(data.error));

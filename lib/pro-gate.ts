@@ -60,7 +60,7 @@ export function useProGate(feature: ProFeature): {
 
 /**
  * Check if the user can generate another trip.
- * Free users: 1 trip/month. Pro users: unlimited.
+ * Free users: 1 trip lifetime. Pro users: unlimited.
  * Returns { canGenerate, remaining, reason }
  */
 export function canGenerateTrip(): {

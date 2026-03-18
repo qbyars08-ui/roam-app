@@ -18,7 +18,7 @@ import { Printer, ArrowLeft, MapPin, Sun, Sunset, Moon, Building2, ShieldAlert, 
 import { useAppStore } from '../lib/store';
 import { parseItinerary, type Itinerary, type ItineraryDay, type TimeSlotActivity } from '../lib/types/itinerary';
 import { getEmergencyNumbers, type EmergencyNumbers } from '../lib/emergency-numbers';
-import { getVisaInfo, type VisaInfo, destinationToCountryCode } from '../lib/visa-data';
+import { getSimpleVisaInfo as getVisaInfo, type SimpleVisaInfo as VisaInfo, destinationToCountryCode } from '../lib/visa-intel';
 import { getPhrasesForDestination, type SurvivalPhrase } from '../lib/survival-phrases';
 
 // ---------------------------------------------------------------------------

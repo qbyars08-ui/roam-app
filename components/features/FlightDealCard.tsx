@@ -13,7 +13,7 @@ import {
   removeSavedDestination,
   getSkyscannerUrl,
   type SavedDestination,
-} from '../../lib/flight-deals';
+} from '../../lib/flight-intelligence';
 import { getHomeAirport } from '../../lib/flights';
 import { TrendingDown, ExternalLink } from 'lucide-react-native';
 

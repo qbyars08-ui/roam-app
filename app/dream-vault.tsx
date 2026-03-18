@@ -27,7 +27,7 @@ import {
   isPricesLow,
   getSkyscannerUrl,
   type SavedDestination,
-} from '../lib/flight-deals';
+} from '../lib/flight-intelligence';
 import { validateDestination } from '../lib/params-validator';
 import { getHomeAirport } from '../lib/flights';
 import { useTranslation } from 'react-i18next';

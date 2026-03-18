@@ -24,7 +24,7 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import { getCurrentWeather, type CurrentWeather } from '../lib/apis/openweather';
 import { getCostOfLiving, type CostOfLiving } from '../lib/cost-of-living';
 import { getTravelAdvisory, type TravelAdvisory } from '../lib/travel-safety';
-import { getVisaInfo, destinationToCountryCode, type VisaInfo } from '../lib/visa-data';
+import { getSimpleVisaInfo as getVisaInfo, destinationToCountryCode, type SimpleVisaInfo as VisaInfo } from '../lib/visa-intel';
 import { getExchangeRates, type ExchangeRateData } from '../lib/exchange-rates';
 import { useSonarQuery } from '../lib/sonar';
 import { DESTINATIONS } from '../lib/constants';

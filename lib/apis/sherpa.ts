@@ -1,6 +1,7 @@
 // ROAM — Sherpa Visa/Entry Requirements Client (via travel-proxy edge function)
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../supabase';
+import { ensureValidSession } from '../ensure-session';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -60,17 +61,8 @@ async function writeCache<T>(key: string, data: T): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Session guard
+// Session guard — shared via lib/ensure-session.ts
 // ---------------------------------------------------------------------------
-
-async function ensureSession(): Promise<boolean> {
-  try {
-    const { data } = await supabase.auth.getSession();
-    return !!data.session;
-  } catch {
-    return false;
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -84,7 +76,7 @@ export async function getVisaRequirements(
   const cached = await readCache<VisaResult>(cacheKey);
   if (cached) return cached;
 
-  if (!(await ensureSession())) return null;
+  if (!(await ensureValidSession())) return null;
 
   try {
     const { data, error } = await supabase.functions.invoke('travel-proxy', {
@@ -111,7 +103,7 @@ export async function getEntryRequirements(
   const cached = await readCache<EntryRequirements>(cacheKey);
   if (cached) return cached;
 
-  if (!(await ensureSession())) return null;
+  if (!(await ensureValidSession())) return null;
 
   try {
     const { data, error } = await supabase.functions.invoke('travel-proxy', {

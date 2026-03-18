@@ -151,6 +151,7 @@ const PROFILE_COMPLETED_KEY = 'roam_profile_completed';
 const BOOKMARKED_RESTAURANTS_KEY = 'roam_bookmarked_restaurants';
 const SOCIAL_PROFILE_KEY = 'roam_social_profile';
 const LAST_VIEWED_DESTINATION_KEY = 'roam_last_viewed_destination';
+const IS_PRO_KEY = 'roam_is_pro';
 const TRAVELER_PERSONA_KEY = '@roam/persona';
 
 function persistBookmarkedRestaurants(ids: string[]) {
@@ -240,7 +241,10 @@ export const useAppStore = create<AppState>((set) => ({
     persistTrips(trips);
     set({ trips });
   },
-  setIsPro: (isPro) => set({ isPro }),
+  setIsPro: (isPro) => {
+    AsyncStorage.setItem(IS_PRO_KEY, JSON.stringify(isPro)).catch((err: unknown) => { console.warn('[ROAM] Persist failed:', err instanceof Error ? err.message : String(err)); });
+    set({ isPro });
+  },
   setTripsThisMonth: (tripsThisMonth) => {
     // No monthly reset — free tier = 1 trip lifetime, then paywall
     AsyncStorage.setItem(TRIPS_MONTH_KEY, JSON.stringify(tripsThisMonth)).catch((err: unknown) => { console.warn('[ROAM] Persist failed:', err instanceof Error ? err.message : String(err)); });
@@ -449,10 +453,11 @@ export async function loadGenerateMode(): Promise<void> {
 // ---------------------------------------------------------------------------
 export async function loadPersistedTrips(): Promise<void> {
   try {
-    const [tripsRaw, monthRaw, chatRaw] = await Promise.all([
+    const [tripsRaw, monthRaw, chatRaw, proRaw] = await Promise.all([
       AsyncStorage.getItem(TRIPS_STORAGE_KEY),
       AsyncStorage.getItem(TRIPS_MONTH_KEY),
       AsyncStorage.getItem(CHAT_STORAGE_KEY),
+      AsyncStorage.getItem(IS_PRO_KEY),
     ]);
     const store = useAppStore.getState();
     if (tripsRaw) {
@@ -469,6 +474,14 @@ export async function loadPersistedTrips(): Promise<void> {
     }
     if (chatRaw) {
       store.setChatMessages(JSON.parse(chatRaw));
+    }
+    // Restore cached Pro status so paid users don't flash the paywall on cold start.
+    // RevenueCat will overwrite with the authoritative value once bootstrap completes.
+    if (proRaw) {
+      const cachedPro = JSON.parse(proRaw);
+      if (typeof cachedPro === 'boolean') {
+        useAppStore.setState({ isPro: cachedPro });
+      }
     }
   } catch {
     // silent — first launch or corrupt data

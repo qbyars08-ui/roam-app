@@ -631,3 +631,128 @@ export async function getGoNowFeed(
 
   return feedItems;
 }
+
+// =============================================================================
+// Saved Destinations & Price Tracking (merged from flight-deals.ts)
+// =============================================================================
+
+const SAVED_DEST_STORAGE_KEY = 'roam_flight_deals';
+
+export interface SavedDestination {
+  id: string;
+  destination: string;
+  baselinePrice: number | null;
+  lastCheckedAt: string;
+  homeAirport: string;
+  /** Price history for sparkline (last 90 days of checks) */
+  priceHistory: number[];
+  /** Best time to visit (e.g. "Mar–May, Sep–Nov") */
+  bestTimeToVisit?: string;
+  /** Estimated 7-day trip cost in USD */
+  estimatedCost?: number;
+}
+
+export interface PriceDropAlert {
+  destination: string;
+  oldPrice: number;
+  newPrice: number;
+  dropPercent: number;
+}
+
+export async function getSavedDestinations(): Promise<SavedDestination[]> {
+  try {
+    const raw = await AsyncStorage.getItem(SAVED_DEST_STORAGE_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    return list.map((d: Partial<SavedDestination>) => ({
+      ...d,
+      priceHistory: d.priceHistory ?? [],
+    })) as SavedDestination[];
+  } catch {
+    return [];
+  }
+}
+
+export async function saveDestinations(destinations: SavedDestination[]): Promise<void> {
+  await AsyncStorage.setItem(SAVED_DEST_STORAGE_KEY, JSON.stringify(destinations));
+}
+
+export async function addSavedDestination(
+  destination: string,
+  homeAirport: string
+): Promise<SavedDestination> {
+  const list = await getSavedDestinations();
+  const existing = list.find(
+    (d) => d.destination.toLowerCase() === destination.toLowerCase()
+  );
+  if (existing) return existing;
+
+  const newOne: SavedDestination = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    destination,
+    baselinePrice: null,
+    lastCheckedAt: new Date().toISOString(),
+    homeAirport,
+    priceHistory: [],
+  };
+  list.push(newOne);
+  await saveDestinations(list);
+  return newOne;
+}
+
+export async function removeSavedDestination(id: string): Promise<void> {
+  const list = await getSavedDestinations().then((d) =>
+    d.filter((x) => x.id !== id)
+  );
+  await saveDestinations(list);
+}
+
+export async function updateDestinationPrice(
+  id: string,
+  price: number
+): Promise<PriceDropAlert | null> {
+  const list = await getSavedDestinations();
+  const idx = list.findIndex((d) => d.id === id);
+  if (idx < 0) return null;
+
+  const dest = list[idx];
+  const oldPrice = dest.baselinePrice;
+  dest.lastCheckedAt = new Date().toISOString();
+
+  if (oldPrice == null) {
+    dest.baselinePrice = price;
+    dest.priceHistory = [price];
+    await saveDestinations(list);
+    return null;
+  }
+
+  const hist = dest.priceHistory ?? [];
+  hist.push(price);
+  dest.priceHistory = hist.slice(-90);
+
+  const dropPercent = Math.round(((oldPrice - price) / oldPrice) * 100);
+  let alert: PriceDropAlert | null = null;
+
+  if (dropPercent >= 20) {
+    alert = {
+      destination: dest.destination,
+      oldPrice,
+      newPrice: price,
+      dropPercent,
+    };
+  }
+  if (price < oldPrice) dest.baselinePrice = price;
+  await saveDestinations(list);
+
+  return alert;
+}
+
+/** Returns true if baseline price is below $500 */
+export function isPricesLow(dest: SavedDestination): boolean {
+  return dest.baselinePrice != null && dest.baselinePrice < 500;
+}
+
+/** Build Skyscanner search URL for destination (simple query version) */
+export function getSkyscannerUrl(destination: string): string {
+  const encoded = encodeURIComponent(destination);
+  return `https://www.skyscanner.com/transport/flights/?q=${encoded}`;
+}

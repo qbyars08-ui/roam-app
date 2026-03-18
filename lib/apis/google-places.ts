@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../supabase';
 import { useAppStore } from '../store';
 import { trackEvent } from '../analytics';
+import { ensureValidSession } from '../ensure-session';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -90,29 +91,8 @@ async function writeCache<T>(key: string, data: T): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Session helper — mirrors claude.ts pattern
+// Session helper — shared via lib/ensure-session.ts
 // ---------------------------------------------------------------------------
-
-async function ensureSession(): Promise<void> {
-  const session = useAppStore.getState().session;
-  const needsUpgrade =
-    !session ||
-    !session.access_token ||
-    String(session.user?.id).startsWith('guest-');
-
-  if (!needsUpgrade) {
-    const { data: { session: refreshed } } = await supabase.auth.getSession();
-    if (refreshed && refreshed.access_token !== session?.access_token) {
-      useAppStore.getState().setSession(refreshed);
-    }
-    return;
-  }
-
-  const { data, error } = await supabase.auth.signInAnonymously();
-  if (!error && data.session) {
-    useAppStore.getState().setSession(data.session);
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Proxy invoker — shared error handling, never throws
@@ -124,7 +104,7 @@ async function invokePlacesProxy<T>(
   params: Record<string, unknown>,
 ): Promise<T | null> {
   try {
-    await ensureSession();
+    await ensureValidSession();
     const { data, error } = await supabase.functions.invoke('places-proxy', {
       body: { action, params },
     });

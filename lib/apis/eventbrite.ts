@@ -2,6 +2,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../supabase';
+import { ensureValidSession } from '../ensure-session';
 
 export interface EventResult {
   id: string;
@@ -64,8 +65,7 @@ export async function searchEvents(
   if (cached) return cached;
 
   // Guard: edge function requires an authenticated session
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return null;
+  if (!(await ensureValidSession())) return null;
 
   try {
     const { data, error } = await supabase.functions.invoke('travel-proxy', {

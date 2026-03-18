@@ -231,3 +231,49 @@ export function getVisaInfo(
 }
 
 export { statusLabels, statusColors };
+
+// =============================================================================
+// Backward-compatible API (replaces visa-data.ts)
+// Consumers that need the simple { status, maxStay, notes, officialLink } shape
+// should use getSimpleVisaInfo() instead of getVisaInfo().
+// =============================================================================
+
+/** Hyphenated status values used by the legacy visa-data API */
+export type SimpleVisaStatus = 'visa-free' | 'visa-on-arrival' | 'e-visa' | 'visa-required';
+
+export interface SimpleVisaInfo {
+  status: SimpleVisaStatus;
+  maxStay: number;
+  notes: string;
+  officialLink?: string;
+}
+
+/** Map underscored status → hyphenated status for backward compat */
+function toSimpleStatus(s: VisaStatus): SimpleVisaStatus {
+  switch (s) {
+    case 'visa_free': return 'visa-free';
+    case 'eta': return 'visa-free'; // eTA is effectively visa-free for the traveler
+    case 'visa_on_arrival': return 'visa-on-arrival';
+    case 'e_visa': return 'e-visa';
+    case 'visa_required': return 'visa-required';
+    default: return 'visa-required';
+  }
+}
+
+/**
+ * Backward-compatible visa lookup that returns the simple flat shape.
+ * Drop-in replacement for the old visa-data.ts getVisaInfo().
+ */
+export function getSimpleVisaInfo(
+  destination: string,
+  _nationality: 'US' | 'UK' | 'EU' | 'AU' | 'CA' = 'US',
+): SimpleVisaInfo | null {
+  const result = getVisaInfo(destination, 'US');
+  if (!result) return null;
+  return {
+    status: toSimpleStatus(result.info.status),
+    maxStay: result.info.stayDays ?? 0,
+    notes: result.info.notes ?? result.statusMessage,
+    officialLink: undefined,
+  };
+}

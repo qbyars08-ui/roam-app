@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
 import { useAppStore } from './store';
 import { trackEvent } from './analytics';
+import { ensureValidSession } from './ensure-session';
 import { CACHE_SONAR_PREFIX } from './storage-keys';
 import { getPersonaConfig } from './traveler-persona';
 import type {
@@ -64,34 +65,8 @@ async function setCache(
 }
 
 // ---------------------------------------------------------------------------
-// ensureValidSession — reuse pattern from lib/claude.ts
+// Session guard — shared via lib/ensure-session.ts
 // ---------------------------------------------------------------------------
-async function ensureValidSession(): Promise<void> {
-  const session = useAppStore.getState().session;
-  const needsUpgrade =
-    !session ||
-    !session.access_token ||
-    String(session.user?.id).startsWith('guest-');
-
-  if (!needsUpgrade) {
-    const {
-      data: { session: refreshed },
-    } = await supabase.auth.getSession();
-    if (refreshed && refreshed.access_token !== session?.access_token) {
-      useAppStore.getState().setSession(refreshed);
-    }
-    return;
-  }
-
-  const {
-    data: { session: anonSession },
-    error,
-  } = await supabase.auth.signInAnonymously();
-  if (error || !anonSession) {
-    throw new Error('Failed to create anonymous session');
-  }
-  useAppStore.getState().setSession(anonSession);
-}
 
 // ---------------------------------------------------------------------------
 // Core fetch — calls sonar-proxy edge function
@@ -106,7 +81,8 @@ export async function fetchSonarResult(
   if (cached) return cached;
 
   // 2. Ensure auth
-  await ensureValidSession();
+  const hasSession = await ensureValidSession();
+  if (!hasSession) throw new Error('Failed to create anonymous session');
 
   // 3. Inject persona modifier into context
   const travelerPersona = useAppStore.getState().travelerPersona;

@@ -58,8 +58,8 @@ export default function TripLimitBanner() {
       icon: 'zap' as const,
       label: `${remaining}/${FREE_TRIPS_PER_MONTH}`,
       message: remaining === 1
-        ? t('tripLimit.lastFreeTrip', { defaultValue: 'Last free trip this month' })
-        : t('tripLimit.freeTripsLeft', { defaultValue: '{{count}} free trips left', count: remaining }),
+        ? t('tripLimit.lastFreeTrip', { defaultValue: 'Last free trip' })
+        : t('tripLimit.freeTripsLeft', { defaultValue: `${remaining} free trips left` }),
       color: remaining === 1 ? COLORS.coral : COLORS.sage,
       showUpgrade: true,
     };

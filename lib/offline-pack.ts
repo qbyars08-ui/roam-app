@@ -9,7 +9,7 @@ import { getEmergencyNumbers, type EmergencyNumbers } from './emergency-numbers'
 import { getPhrasesForDestination, type SurvivalPhrase } from './survival-phrases';
 import { getWeatherForecast, type WeatherForecast } from './weather-forecast';
 import { getCostOfLiving, type CostOfLiving } from './cost-of-living';
-import { getVisaInfo, destinationToCountryCode, type VisaInfo } from './visa-data';
+import { getSimpleVisaInfo as getVisaInfo, destinationToCountryCode, type SimpleVisaInfo as VisaInfo } from './visa-intel';
 import { getExchangeRates, type ExchangeRateData } from './exchange-rates';
 import { geocodeCity } from './geocoding';
 
