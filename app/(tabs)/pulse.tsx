@@ -785,7 +785,7 @@ function LocalTipRow({ tip, destinationLabel }: { tip: LocalTip; destinationLabe
       style={({ pressed }) => [styles.tipRow, { opacity: pressed ? 0.85 : 1 }]}
     >
       <Text style={styles.tipText}>{tip.text}</Text>
-      <Text style={styles.tipSource}>{t('pulse.tipSource', { defaultValue: '— Local tip · {{count}} agree', count: tip.upvotes })}</Text>
+      <Text style={styles.tipSource}>{`— Local tip · ${tip.upvotes} agree`}</Text>
     </Pressable>
   );
 }
@@ -952,7 +952,7 @@ export default function PulseScreen() {
 
   // Seasonal event for selected destination (if any)
   const heroEvent = useMemo(
-    () => SEASONAL_EVENTS.find((e) => e.destination.toLowerCase() === selectedKey) ?? SEASONAL_EVENTS[0],
+    () => SEASONAL_EVENTS.find((e) => e.destination.toLowerCase() === selectedKey),
     [selectedKey],
   );
 
@@ -1099,11 +1099,11 @@ export default function PulseScreen() {
                 styles.hereNowBtn,
                 { opacity: pressed ? 0.85 : 1 },
               ]}
-              accessibilityLabel="I Am Here Now"
+              accessibilityLabel={t('pulse.iAmHereNow', { defaultValue: 'I Am Here Now' })}
               accessibilityRole="button"
             >
               <MapPin size={20} color={COLORS.bg} strokeWidth={1.5} />
-              <Text style={styles.hereNowBtnText}>I Am Here Now</Text>
+              <Text style={styles.hereNowBtnText}>{t('pulse.iAmHereNow', { defaultValue: 'I Am Here Now' })}</Text>
             </Pressable>
           </View>
         )}
@@ -1130,6 +1130,35 @@ export default function PulseScreen() {
               <Text style={styles.checkInFloatBtnSub}>
                 {t('pulse.checkInSub', { defaultValue: 'Meet travelers nearby' })}
               </Text>
+            </Pressable>
+          </View>
+        )}
+
+        {/* ── No-trip CTA — shown when user has no planned trips ── */}
+        {trips.length === 0 && (
+          <View style={{ paddingHorizontal: SPACING.lg, marginBottom: SPACING.lg }}>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/(tabs)/plan' as never);
+              }}
+              style={({ pressed }) => [
+                styles.noTripCtaCard,
+                { opacity: pressed ? 0.85 : 1 },
+              ]}
+              accessibilityLabel={t('pulse.noTripCta', { defaultValue: 'Plan a trip to unlock live features' })}
+              accessibilityRole="button"
+            >
+              <MapPin size={20} color={COLORS.sage} strokeWidth={1.5} />
+              <View style={{ flex: 1, marginLeft: SPACING.sm }}>
+                <Text style={styles.noTripCtaText}>
+                  {t('pulse.noTripCta', { defaultValue: 'Plan a trip to unlock live features' })}
+                </Text>
+                <Text style={styles.noTripCtaSub}>
+                  {t('pulse.noTripCtaSub', { defaultValue: 'Check in, meet travelers, and go live when you arrive' })}
+                </Text>
+              </View>
+              <ChevronRight size={18} color={COLORS.muted} strokeWidth={1.5} />
             </Pressable>
           </View>
         )}
@@ -1293,7 +1322,7 @@ export default function PulseScreen() {
           <Text style={styles.seasonLabel}>{t('pulse.thisMonth', { defaultValue: 'THIS MONTH' })}</Text>
           <Text style={styles.sectionHeading}>{t('pulse.worthGoingNow', { defaultValue: 'Worth going now' })}</Text>
 
-          <SeasonalHeroCard event={heroEvent} />
+          {heroEvent ? <SeasonalHeroCard event={heroEvent} /> : null}
 
           <ScrollView
             horizontal
@@ -1374,7 +1403,7 @@ export default function PulseScreen() {
                     onPress={() => { Haptics.selectionAsync(); Linking.openURL(taUrl).catch(() => {}); }}
                   >
                     <Text style={styles.apiCardName}>{loc.name}</Text>
-                    {loc.rating != null && <Text style={styles.apiCardMeta}>{loc.rating} ★ · {loc.numReviews} reviews</Text>}
+                    {loc.rating != null && <Text style={styles.apiCardMeta}>{loc.rating} ★ · {loc.numReviews ?? 0} reviews</Text>}
                     {loc.address ? <Text style={styles.apiCardSub}>{loc.address}</Text> : null}
                   </Pressable>
                 );
@@ -1396,7 +1425,7 @@ export default function PulseScreen() {
                   onPress={() => { Haptics.selectionAsync(); if (act.bookingUrl) Linking.openURL(act.bookingUrl); }}
                 >
                   <Text style={styles.apiCardName}>{act.name}</Text>
-                  {act.price != null && <Text style={styles.apiCardMeta}>From {act.currency} {act.price}</Text>}
+                  {act.price != null && <Text style={styles.apiCardMeta}>From {act.currency ?? '$'} {act.price}</Text>}
                   {act.rating != null && <Text style={styles.apiCardSub}>{act.rating} ★ · {act.duration ?? ''}</Text>}
                 </Pressable>
               ))}
@@ -1444,8 +1473,8 @@ export default function PulseScreen() {
             <View style={styles.pulseNavCardLeft}>
               <MapPin size={20} color={COLORS.sage} strokeWidth={1.5} />
               <View>
-                <Text style={styles.pulseNavCardTitle}>Local Eats Radar</Text>
-                <Text style={styles.pulseNavCardSub}>Authentic spots locals eat in {selectedDest.label}</Text>
+                <Text style={styles.pulseNavCardTitle}>{t('pulse.localEatsRadar', { defaultValue: 'Local Eats Radar' })}</Text>
+                <Text style={styles.pulseNavCardSub}>{t('pulse.localEatsSub', { defaultValue: `Authentic spots locals eat in ${selectedDest.label}`, destination: selectedDest.label })}</Text>
               </View>
             </View>
             <ChevronRight size={18} color={COLORS.muted} strokeWidth={1.5} />
@@ -2072,6 +2101,27 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
     flex: 1,
     textAlign: 'right',
+  } as TextStyle,
+  noTripCtaCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingVertical: 14,
+    paddingHorizontal: SPACING.md,
+  } as ViewStyle,
+  noTripCtaText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 15,
+    color: COLORS.cream,
+    marginBottom: 2,
+  } as TextStyle,
+  noTripCtaSub: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.muted,
   } as TextStyle,
   pulseNavCard: {
     flexDirection: 'row',
