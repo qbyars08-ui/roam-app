@@ -11,7 +11,12 @@ export type SonarQueryType =
   | 'safety'
   | 'flights'
   | 'food'
-  | 'local';
+  | 'local'
+  | 'health'
+  | 'hostels'
+  | 'local_eats'
+  | 'safety_detail'
+  | 'meetups';
 
 export interface SonarCitation {
   url: string;

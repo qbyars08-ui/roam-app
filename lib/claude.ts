@@ -7,6 +7,7 @@ import { supabase } from './supabase';
 import { parseItinerary, type Itinerary } from './types/itinerary';
 import { type TravelProfile, profileToPromptString } from './types/travel-profile';
 import { useAppStore } from './store';
+import { getPersonaConfig, type TravelerPersona } from './traveler-persona';
 
 // ---------------------------------------------------------------------------
 // System prompts
@@ -641,6 +642,7 @@ export function buildTripPrompt(params: {
   mustVisit?: string;
   avoidList?: string;
   specialRequests?: string;
+  travelerPersona?: TravelerPersona | null;
 }): string {
   // Validate required params at runtime
   const dest = params.destination?.trim();
@@ -713,6 +715,15 @@ export function buildTripPrompt(params: {
     lines.push('---');
   }
 
+  // Inject traveler persona if available
+  if (params.travelerPersona) {
+    const personaCfg = getPersonaConfig(params.travelerPersona);
+    lines.push('');
+    lines.push('--- TRAVELER PERSONA (override all defaults with this persona) ---');
+    lines.push(personaCfg.itineraryPromptModifier);
+    lines.push('---');
+  }
+
   // Inject travel profile if available
   if (params.travelProfile) {
     lines.push('');
@@ -765,6 +776,7 @@ export async function generateItinerary(params: {
   mustVisit?: string;
   avoidList?: string;
   specialRequests?: string;
+  travelerPersona?: TravelerPersona | null;
 }): Promise<{ itinerary: Itinerary; tripsUsed: number; limit: number }> {
   // Auto-inject travel profile from store if not explicitly provided
   const profile = params.travelProfile ?? (
@@ -772,6 +784,8 @@ export async function generateItinerary(params: {
       ? useAppStore.getState().travelProfile
       : null
   );
+  // Auto-inject persona from store if not explicitly provided
+  const persona = params.travelerPersona ?? useAppStore.getState().travelerPersona ?? null;
 
   // Fetch weather forecast to inject into the prompt (non-blocking — if it fails, skip)
   // AI will swap outdoor→indoor activities on rainy days
@@ -804,6 +818,7 @@ export async function generateItinerary(params: {
     travelProfile: profile,
     weather: weatherCtx,
     groupSize: params.groupSize,
+    travelerPersona: persona,
   });
   const response = await callClaude(ITINERARY_SYSTEM_PROMPT, prompt, true);
 
@@ -839,6 +854,7 @@ export async function generateItineraryStreaming(params: {
   mustVisit?: string;
   avoidList?: string;
   specialRequests?: string;
+  travelerPersona?: TravelerPersona | null;
   onProgress?: (info: { daysFound: number; totalDays: number; text: string }) => void;
 }): Promise<{ itinerary: Itinerary; tripsUsed: number; limit: number }> {
   const profile = params.travelProfile ?? (
@@ -846,6 +862,8 @@ export async function generateItineraryStreaming(params: {
       ? useAppStore.getState().travelProfile
       : null
   );
+  // Auto-inject persona from store if not explicitly provided
+  const persona = params.travelerPersona ?? useAppStore.getState().travelerPersona ?? null;
 
   let weatherCtx = params.weather ?? null;
   if (!weatherCtx) {
@@ -876,6 +894,7 @@ export async function generateItineraryStreaming(params: {
     travelProfile: profile,
     weather: weatherCtx,
     groupSize: params.groupSize,
+    travelerPersona: persona,
   });
 
   return new Promise((resolve, reject) => {

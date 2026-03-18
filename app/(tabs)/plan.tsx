@@ -31,6 +31,7 @@ import {
   Plane,
   ShieldCheck,
   Heart,
+  Receipt,
 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
@@ -66,6 +67,10 @@ import CountdownHero from '../../components/features/CountdownHero';
 import { useTravelStage, type TravelStage } from '../../lib/travel-state';
 import { useDailyBrief, getChecklistItems } from '../../lib/daily-brief';
 import { useSavingsStore } from '../../lib/savings-store';
+import { getWeatherForecast, type DailyForecast } from '../../lib/weather-forecast';
+import { getCostOfLiving } from '../../lib/cost-of-living';
+import { getAirQuality, resolveDestinationCoords, type AirQuality } from '../../lib/air-quality';
+import { geocodeCity } from '../../lib/geocoding';
 
 // ---------------------------------------------------------------------------
 // Destination images for trip cards
@@ -506,6 +511,44 @@ export default function PlanScreen() {
     return () => { cancelled = true; };
   }, [planDestination]);
 
+  // ── PLANNING section extras — trip forecast, cost, air quality ──
+  const [planWeatherDays, setPlanWeatherDays] = useState<DailyForecast[]>([]);
+  const [planAirQuality, setPlanAirQuality] = useState<AirQuality | null>(null);
+  const planCostData = useMemo(
+    () => (activeTrip ? getCostOfLiving(activeTrip.destination) : null),
+    [activeTrip],
+  );
+
+  useEffect(() => {
+    if (!activeTrip || (stage !== 'PLANNING' && stage !== 'IMMINENT')) {
+      setPlanWeatherDays([]);
+      setPlanAirQuality(null);
+      return;
+    }
+    let cancelled = false;
+    const destination = activeTrip.destination;
+
+    (async () => {
+      try {
+        const geo = await geocodeCity(destination);
+        if (!geo || cancelled) return;
+        const forecast = await getWeatherForecast(geo.latitude, geo.longitude, activeTrip.days || 7);
+        if (!cancelled && forecast?.days) {
+          setPlanWeatherDays(forecast.days.slice(0, Math.min(activeTrip.days || 7, forecast.days.length)));
+        }
+      } catch { /* silent */ }
+    })();
+
+    resolveDestinationCoords(destination).then((coords) => {
+      if (!coords || cancelled) return;
+      getAirQuality(coords.lat, coords.lng)
+        .then((aq) => { if (!cancelled) setPlanAirQuality(aq); })
+        .catch(() => {});
+    }).catch(() => {});
+
+    return () => { cancelled = true; };
+  }, [activeTrip, stage]);
+
   const sortedTrips = useMemo(
     () => [...trips].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
     [trips],
@@ -859,6 +902,9 @@ export default function PlanScreen() {
             checkedItems={checkedItems}
             onToggle={handleChecklistToggle}
             pulseAnim={pulseAnim}
+            weatherDays={planWeatherDays}
+            airQuality={planAirQuality}
+            costData={planCostData}
           />
         )}
 
@@ -867,6 +913,7 @@ export default function PlanScreen() {
             activeTrip={activeTrip}
             onHelpPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/i-am-here-now' as never); }}
             onCapturePress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/trip-journal' as never); }}
+            onSplitPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/split-expenses' as never); }}
           />
         )}
 
@@ -1224,6 +1271,9 @@ function PlanningSection({
   checkedItems,
   onToggle,
   pulseAnim,
+  weatherDays,
+  airQuality,
+  costData,
 }: {
   stage: TravelStage;
   daysUntil: number;
@@ -1234,11 +1284,15 @@ function PlanningSection({
   checkedItems: Set<string>;
   onToggle: (id: string) => void;
   pulseAnim: Animated.Value;
+  weatherDays?: DailyForecast[];
+  airQuality?: AirQuality | null;
+  costData?: import('../../lib/cost-of-living').CostOfLiving | null;
 }) {
   const { t } = useTranslation();
   const router = useRouter();
   const isImminent = stage === 'IMMINENT';
   const countdownColor = isImminent ? COLORS.gold : COLORS.cream;
+  const hasNotableAir = airQuality != null && airQuality.aqi > 100;
 
   return (
     <View style={stageStyles.planningContainer}>
@@ -1271,6 +1325,52 @@ function PlanningSection({
             {isLive && <LiveBadge />}
           </View>
           <Text style={stageStyles.briefSubtext}>{brief.subtext}</Text>
+        </View>
+      )}
+
+      {/* Weather during trip */}
+      {weatherDays && weatherDays.length > 0 && (
+        <View style={stageStyles.planDataCard}>
+          <Text style={stageStyles.planDataLabel}>
+            {t('plan.planning.weatherDuringTrip', { defaultValue: 'Weather during trip' })}
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: SPACING.sm }}>
+            <View style={{ flexDirection: 'row', gap: SPACING.sm }}>
+              {weatherDays.slice(0, 5).map((day, i) => (
+                <View key={i} style={stageStyles.weatherPill}>
+                  <Text style={stageStyles.weatherPillDate}>
+                    {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' })}
+                  </Text>
+                  <Text style={stageStyles.weatherPillTemp}>{Math.round(day.tempMax)}° / {Math.round(day.tempMin)}°</Text>
+                  <Text style={stageStyles.weatherPillLabel} numberOfLines={1}>{day.weatherLabel}</Text>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
+      )}
+
+      {/* Cost estimate */}
+      {costData && (
+        <View style={stageStyles.planDataCard}>
+          <Text style={stageStyles.planDataLabel}>
+            {t('plan.planning.estimatedDailyCost', { defaultValue: 'Estimated daily cost' })}
+          </Text>
+          <Text style={stageStyles.planDataValue}>{costData.comfort.dailyTotal}</Text>
+          <Text style={stageStyles.planDataSub}>{costData.tipping}</Text>
+        </View>
+      )}
+
+      {/* Air quality alert (only if notable) */}
+      {hasNotableAir && airQuality && (
+        <View style={[stageStyles.planDataCard, { borderColor: COLORS.coral + '40' }]}>
+          <Text style={[stageStyles.planDataLabel, { color: COLORS.coral }]}>
+            {t('plan.planning.airQualityAlert', { defaultValue: 'Air quality at destination' })}
+          </Text>
+          <Text style={[stageStyles.planDataValue, { color: COLORS.coral }]}>
+            {airQuality.label} (AQI {airQuality.aqi})
+          </Text>
+          <Text style={stageStyles.planDataSub}>{airQuality.advice}</Text>
         </View>
       )}
 
@@ -1313,10 +1413,12 @@ function TravelingSection({
   activeTrip,
   onHelpPress,
   onCapturePress,
+  onSplitPress,
 }: {
   activeTrip: import('../../lib/store').Trip;
   onHelpPress: () => void;
   onCapturePress: () => void;
+  onSplitPress: () => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -1347,6 +1449,25 @@ function TravelingSection({
           </Text>
         </Pressable>
       </View>
+      <Pressable
+        onPress={onSplitPress}
+        accessibilityLabel={t('plan.traveling.splitCosts', { defaultValue: 'Split costs' })}
+        accessibilityRole="button"
+        style={({ pressed }) => [stageStyles.splitCostsCard, { opacity: pressed ? 0.85 : 1 }]}
+      >
+        <View style={stageStyles.splitCostsIcon}>
+          <Receipt size={18} color={COLORS.sage} strokeWidth={1.5} />
+        </View>
+        <View style={stageStyles.splitCostsText}>
+          <Text style={stageStyles.splitCostsTitle}>
+            {t('plan.traveling.splitCosts', { defaultValue: 'Split costs' })}
+          </Text>
+          <Text style={stageStyles.splitCostsSub}>
+            {t('plan.traveling.splitCostsSub', { defaultValue: 'Track expenses & settle up' })}
+          </Text>
+        </View>
+        <ChevronRight size={16} color={COLORS.muted} strokeWidth={1.5} />
+      </Pressable>
     </View>
   );
 }
@@ -1741,6 +1862,40 @@ const stageStyles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.cream,
   } as TextStyle,
+  splitCostsCard: {
+    marginTop: SPACING.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.sageFaint,
+    borderRadius: RADIUS.md,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.sm,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+    gap: SPACING.sm,
+  } as ViewStyle,
+  splitCostsIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.sageLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
+  splitCostsText: {
+    flex: 1,
+  } as ViewStyle,
+  splitCostsTitle: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
+    color: COLORS.cream,
+  } as TextStyle,
+  splitCostsSub: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.muted,
+    marginTop: 1,
+  } as TextStyle,
 
   // ── RETURNED ──
   returnedContainer: {
@@ -1766,6 +1921,62 @@ const stageStyles = StyleSheet.create({
     fontFamily: FONTS.bodyMedium,
     fontSize: 15,
     color: COLORS.gold,
+  } as TextStyle,
+  // ── Planning data cards ──
+  planDataCard: {
+    backgroundColor: COLORS.surface1,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
+  } as ViewStyle,
+  planDataLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.muted,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    marginBottom: SPACING.xs,
+  } as TextStyle,
+  planDataValue: {
+    fontFamily: FONTS.header,
+    fontSize: 18,
+    color: COLORS.cream,
+    marginBottom: 2,
+  } as TextStyle,
+  planDataSub: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamDim,
+    lineHeight: 18,
+  } as TextStyle,
+  weatherPill: {
+    backgroundColor: COLORS.surface2,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.sm,
+    padding: SPACING.sm,
+    minWidth: 90,
+    alignItems: 'center',
+  } as ViewStyle,
+  weatherPillDate: {
+    fontFamily: FONTS.mono,
+    fontSize: 9,
+    color: COLORS.muted,
+    letterSpacing: 0.3,
+    marginBottom: 2,
+  } as TextStyle,
+  weatherPillTemp: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 13,
+    color: COLORS.cream,
+  } as TextStyle,
+  weatherPillLabel: {
+    fontFamily: FONTS.body,
+    fontSize: 11,
+    color: COLORS.creamDim,
+    marginTop: 2,
   } as TextStyle,
 });
 

@@ -20,7 +20,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Radio, Clock, MapPin, ChevronRight } from 'lucide-react-native';
+import { Radio, Clock, MapPin, ChevronRight, Users } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../../lib/constants';
@@ -40,7 +40,9 @@ import { searchEvents, type EventResult } from '../../lib/apis/eventbrite';
 import { searchLocations, type TALocation } from '../../lib/apis/tripadvisor';
 import { searchActivities, type GYGActivity } from '../../lib/apis/getyourguide';
 import { searchPlaces, getPlaceTips, type FSQPlace, type FSQTip } from '../../lib/apis/foursquare';
-import { getDestinationCoords } from '../../lib/air-quality';
+import { getDestinationCoords, getAirQuality, type AirQuality } from '../../lib/air-quality';
+import { getSunTimes, type SunTimes } from '../../lib/sun-times';
+import { getGoldenHour, type GoldenHourData } from '../../lib/golden-hour';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -1021,6 +1023,25 @@ export default function PulseScreen() {
     return () => { cancelled = true; };
   }, [selectedDest.label]);
 
+  // Right-now data row: air quality, sun times, golden hour
+  const [rightNowAQ, setRightNowAQ] = useState<AirQuality | null>(null);
+  const [rightNowSun, setRightNowSun] = useState<SunTimes | null>(null);
+  const [rightNowGolden, setRightNowGolden] = useState<GoldenHourData | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setRightNowAQ(null);
+    setRightNowSun(null);
+    setRightNowGolden(null);
+    const coords = getDestinationCoords(selectedDest.label);
+    if (!coords) return;
+    const { lat, lng } = coords;
+    getAirQuality(lat, lng).then((aq) => { if (!cancelled) setRightNowAQ(aq); }).catch(() => {});
+    getSunTimes(lat, lng).then((st) => { if (!cancelled) setRightNowSun(st); }).catch(() => {});
+    getGoldenHour(lat, lng).then((gh) => { if (!cancelled) setRightNowGolden(gh); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [selectedDest.label]);
+
   const handleSelectDest = useCallback((key: string) => {
     Haptics.selectionAsync();
     setSelectedKey(key);
@@ -1087,6 +1108,32 @@ export default function PulseScreen() {
           </View>
         )}
 
+        {/* ── Check In — find other travelers in destination ── */}
+        {trips.length > 0 && (
+          <View style={{ paddingHorizontal: SPACING.lg, marginBottom: SPACING.lg }}>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/nearby-travelers' as never);
+              }}
+              style={({ pressed }) => [
+                styles.checkInFloatBtn,
+                { opacity: pressed ? 0.85 : 1 },
+              ]}
+              accessibilityLabel={t('pulse.checkIn', { defaultValue: 'Check in' })}
+              accessibilityRole="button"
+            >
+              <Users size={18} color={COLORS.sage} strokeWidth={1.5} />
+              <Text style={styles.checkInFloatBtnText}>
+                {t('pulse.checkIn', { defaultValue: 'Check in' })}
+              </Text>
+              <Text style={styles.checkInFloatBtnSub}>
+                {t('pulse.checkInSub', { defaultValue: 'Meet travelers nearby' })}
+              </Text>
+            </Pressable>
+          </View>
+        )}
+
         {/* ── Right Now Section ── */}
         <View style={styles.section}>
           <View style={styles.sectionHeaderRow}>
@@ -1106,6 +1153,45 @@ export default function PulseScreen() {
           </View>
           {localTimeString ? (
             <Text style={styles.sectionSubMono}>{localTimeString}</Text>
+          ) : null}
+
+          {/* ── Right now data pills ── */}
+          {(rightNowAQ || rightNowSun || rightNowGolden) ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={{ marginBottom: SPACING.md }}
+              contentContainerStyle={{ gap: SPACING.sm, paddingVertical: SPACING.xs }}
+            >
+              {rightNowAQ && (
+                <View style={[styles.rightNowPill, rightNowAQ.aqi > 100 && styles.rightNowPillAlert]}>
+                  <Text style={[styles.rightNowPillText, rightNowAQ.aqi > 100 && { color: COLORS.coral }]}>
+                    {t('pulse.airQuality', { defaultValue: 'Air' })} {rightNowAQ.label}
+                  </Text>
+                </View>
+              )}
+              {rightNowSun && (
+                <>
+                  <View style={styles.rightNowPill}>
+                    <Text style={styles.rightNowPillText}>
+                      {t('pulse.sunrise', { defaultValue: '☀ Rise' })} {rightNowSun.sunrise}
+                    </Text>
+                  </View>
+                  <View style={styles.rightNowPill}>
+                    <Text style={styles.rightNowPillText}>
+                      {t('pulse.sunset', { defaultValue: '🌇 Set' })} {rightNowSun.sunset}
+                    </Text>
+                  </View>
+                </>
+              )}
+              {rightNowGolden && (
+                <View style={styles.rightNowPill}>
+                  <Text style={styles.rightNowPillText}>
+                    {t('pulse.goldenHour', { defaultValue: '📸' })} {rightNowGolden.eveningGoldenStart}
+                  </Text>
+                </View>
+              )}
+            </ScrollView>
           ) : null}
 
           {/* Skeleton while Sonar loading (not on error/timeout) */}
@@ -1340,6 +1426,31 @@ export default function PulseScreen() {
             </View>
           </View>
         )}
+
+        {/* Local Eats Radar nav card */}
+        <View style={{ paddingHorizontal: SPACING.lg, marginBottom: SPACING.lg }}>
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push({ pathname: '/local-eats', params: { destination: selectedDest.label } } as never);
+            }}
+            style={({ pressed }) => [
+              styles.pulseNavCard,
+              { opacity: pressed ? 0.85 : 1 },
+            ]}
+            accessibilityLabel="Local Eats Radar"
+            accessibilityRole="button"
+          >
+            <View style={styles.pulseNavCardLeft}>
+              <MapPin size={20} color={COLORS.sage} strokeWidth={1.5} />
+              <View>
+                <Text style={styles.pulseNavCardTitle}>Local Eats Radar</Text>
+                <Text style={styles.pulseNavCardSub}>Authentic spots locals eat in {selectedDest.label}</Text>
+              </View>
+            </View>
+            <ChevronRight size={18} color={COLORS.muted} strokeWidth={1.5} />
+          </Pressable>
+        </View>
       </ScrollView>
     </View>
   );
@@ -1936,6 +2047,77 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.header,
     fontSize: 16,
     color: COLORS.bg,
+    letterSpacing: 0.3,
+  } as TextStyle,
+  checkInFloatBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.pill,
+    paddingVertical: SPACING.sm + 2,
+    paddingHorizontal: SPACING.lg,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+  } as ViewStyle,
+  checkInFloatBtnText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 15,
+    color: COLORS.cream,
+  } as TextStyle,
+  checkInFloatBtnSub: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.creamMuted,
+    letterSpacing: 0.3,
+    flex: 1,
+    textAlign: 'right',
+  } as TextStyle,
+  pulseNavCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingVertical: 14,
+    paddingHorizontal: SPACING.md,
+  } as ViewStyle,
+  pulseNavCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    flex: 1,
+  } as ViewStyle,
+  pulseNavCardTitle: {
+    fontFamily: FONTS.headerMedium,
+    fontSize: 15,
+    color: COLORS.cream,
+  } as TextStyle,
+  pulseNavCardSub: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.muted,
+    marginTop: 2,
+  } as TextStyle,
+  // Right now data pills
+  rightNowPill: {
+    backgroundColor: COLORS.surface1,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.pill,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+  } as ViewStyle,
+  rightNowPillAlert: {
+    borderColor: COLORS.coral + '40',
+    backgroundColor: COLORS.coralSubtle,
+  } as ViewStyle,
+  rightNowPillText: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.creamSoft,
     letterSpacing: 0.3,
   } as TextStyle,
 });

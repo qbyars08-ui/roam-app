@@ -35,6 +35,11 @@ const VALID_QUERY_TYPES = [
   "flights",
   "food",
   "local",
+  "health",
+  "hostels",
+  "local_eats",
+  "safety_detail",
+  "meetups",
 ] as const;
 
 type SonarQueryType = (typeof VALID_QUERY_TYPES)[number];
@@ -45,11 +50,14 @@ type SonarQueryType = (typeof VALID_QUERY_TYPES)[number];
 function buildQuery(
   destination: string,
   queryType: SonarQueryType,
-  context?: { dates?: string; budget?: string }
+  context?: { dates?: string; budget?: string; personaModifier?: string }
 ): { system: string; user: string } {
   const dateCtx = context?.dates ? ` Travel dates: ${context.dates}.` : "";
   const budgetCtx = context?.budget ? ` Budget: ${context.budget}.` : "";
-  const extra = dateCtx + budgetCtx;
+  const personaCtx = context?.personaModifier
+    ? ` Traveler persona context: ${context.personaModifier}`
+    : "";
+  const extra = dateCtx + budgetCtx + personaCtx;
 
   const templates: Record<SonarQueryType, { system: string; user: string }> = {
     urgent: {
@@ -91,6 +99,31 @@ function buildQuery(
       system:
         "You are a local intelligence agent. Provide the kind of tips only someone living in a city would know — current local sentiment, neighborhoods changing, new spots locals love, things tourists always get wrong. Be opinionated.",
       user: `What would a local in ${destination} want a visitor to know right now? Local-only tips, neighborhoods worth exploring, things tourists always get wrong, and current local sentiment about tourism.${extra}`,
+    },
+    health: {
+      system:
+        "You are a travel health intelligence agent. Provide practical, specific health information for travelers visiting a destination. Cover: (1) tap water safety — is it safe to drink? (2) required and recommended vaccines with timing e.g. '4 weeks before travel', (3) food safety rules specific to this destination, (4) any current health advisories or disease outbreaks. Be specific and actionable. No generic advice. Format as short, clear bullet points per section.",
+      user: `What are the current health and safety considerations for travelers visiting ${destination}? Cover tap water safety, required/recommended vaccines with timing, food safety rules, and any active health advisories.${extra}`,
+    },
+    hostels: {
+      system:
+        "You are a hostel intelligence agent for solo travelers. Find the best hostels in a destination specifically for meeting people and social experiences. Include specific hostel names, approximate price per night, social atmosphere rating, neighborhood location, and what makes each great for solo travelers wanting to meet other travelers. Focus on hostels with legendary common areas, organized events, rooftop bars, or strong social culture.",
+      user: `What are the best hostels in ${destination} for solo travelers who want to meet people? Include: hostel name, approximate price per night, social rating (how good for meeting people), neighborhood/location, and what specifically makes it great for solo travelers. Focus on places with great common areas and social atmosphere.${extra}`,
+    },
+    local_eats: {
+      system:
+        "You are a local food intelligence agent. Find authentic local food that residents actually eat — not tourist restaurants. Be specific about dishes, neighborhoods, and why locals go there. Include street food, market stalls, and family-run spots that tourists rarely find. Avoid any chain restaurants or tourist-facing establishments.",
+      user: `What do locals in ${destination} actually eat? Give me authentic local food spots that tourists miss. Include: specific dish names, neighborhood where to find it, price range, and why locals go there instead of tourist places. Focus on street food, market stalls, and family-run restaurants.${extra}`,
+    },
+    safety_detail: {
+      system:
+        "You are a detailed travel safety intelligence agent. Provide specific, actionable safety information for travelers. Be direct about which neighborhoods are safe vs risky at night, specific common scams with how they work and how to avoid them, emergency numbers, what to actually do if robbed, and which transportation options are safe vs unsafe. Do not give vague generic advice — be specific about areas, times, and tactics.",
+      user: `Give me detailed safety information for ${destination}. Include: which specific neighborhoods are safe at night vs which to avoid, the most common scams tourists fall for and exactly how they work, local emergency numbers (police, ambulance, fire), what to do step-by-step if you get robbed, and which transportation options (taxi, rideshare, local bus) are safe and which to avoid.${extra}`,
+    },
+    meetups: {
+      system:
+        "You are a solo traveler social events intelligence agent. Find current meetups, social events, and group activities specifically for travelers in a destination this week. Focus on events where solo travelers can meet other travelers. Include hostel events, pub crawls, walking tours, language exchanges, and coworking meetups. Provide specific names, dates, venues, and prices where available.",
+      user: `What are the current meetups, social events, and group activities for travelers in ${destination} this week? Include: hostel events, pub crawls, walking tours, language exchanges, coworking meetups, and any group activities where solo travelers can meet other travelers. Be specific with names, dates, venues, and prices.${extra}`,
     },
   };
 
@@ -253,7 +286,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const context = body.context as
-      | { dates?: string; budget?: string }
+      | { dates?: string; budget?: string; personaModifier?: string }
       | undefined;
 
     // ── Cache check ─────────────────────────────────────────────────────

@@ -32,8 +32,9 @@ import { isGuestUser, clearGuestMode } from '../lib/guest';
 import { logoutRevenueCat } from '../lib/revenue-cat';
 import {
   Sparkles, Repeat, Gift, Shield, ChevronRight, BarChart3,
-  CreditCard, LogOut, Globe, Camera, MapPin, ImageIcon, Heart, Scan,
+  CreditCard, LogOut, Globe, Camera, MapPin, ImageIcon, Heart, Scan, Backpack,
 } from 'lucide-react-native';
+import { getPersonaConfig } from '../lib/traveler-persona';
 import { hasEnoughData } from '../lib/travel-dna';
 import { track } from '../lib/analytics';
 import Button from '../components/ui/Button';
@@ -64,6 +65,11 @@ export default function ProfileScreen() {
   const isPro = useAppStore((s) => s.isPro);
   const tripsThisMonth = useAppStore((s) => s.tripsThisMonth);
   const trips = useAppStore((s) => s.trips);
+  const travelerPersona = useAppStore((s) => s.travelerPersona);
+  const activePersonaConfig = useMemo(
+    () => (travelerPersona ? getPersonaConfig(travelerPersona) : null),
+    [travelerPersona]
+  );
 
   const userEmail = session?.user?.email ?? t('common.guest');
 
@@ -231,6 +237,30 @@ export default function ProfileScreen() {
             <ChevronRight size={18} color={COLORS.creamDim} strokeWidth={1.5} />
           </Pressable>
         )}
+
+        {/* ── Traveler Persona ── */}
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push('/persona-picker' as never);
+          }}
+          style={({ pressed }) => [styles.dnaCard, { opacity: pressed ? 0.9 : 1 }]}
+        >
+          <View style={styles.dnaIconWrap}>
+            <Backpack size={22} color={COLORS.sage} strokeWidth={1.5} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.dnaTitle}>
+              {activePersonaConfig ? activePersonaConfig.label : 'Travel Style'}
+            </Text>
+            <Text style={styles.dnaSub}>
+              {activePersonaConfig
+                ? activePersonaConfig.description
+                : 'Set your traveler type to personalize trips'}
+            </Text>
+          </View>
+          <ChevronRight size={18} color={COLORS.creamDim} strokeWidth={1.5} />
+        </Pressable>
 
         {/* ── Travel Personality ── */}
         {personality && (

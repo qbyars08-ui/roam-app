@@ -9,6 +9,7 @@ import { supabase } from './supabase';
 import { useAppStore } from './store';
 import { trackEvent } from './analytics';
 import { CACHE_SONAR_PREFIX } from './storage-keys';
+import { getPersonaConfig } from './traveler-persona';
 import type {
   SonarQueryType,
   SonarCitation,
@@ -107,9 +108,19 @@ export async function fetchSonarResult(
   // 2. Ensure auth
   await ensureValidSession();
 
-  // 3. Call edge function
+  // 3. Inject persona modifier into context
+  const travelerPersona = useAppStore.getState().travelerPersona;
+  const personaModifier = travelerPersona
+    ? getPersonaConfig(travelerPersona).sonarPromptModifier
+    : undefined;
+
+  const enrichedContext = personaModifier
+    ? { ...context, personaModifier }
+    : context;
+
+  // 4. Call edge function
   const { data, error } = await supabase.functions.invoke('sonar-proxy', {
-    body: { destination, queryType, context },
+    body: { destination, queryType, context: enrichedContext },
   });
 
   if (error) {

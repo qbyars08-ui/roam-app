@@ -85,8 +85,10 @@ import { getMedicalGuideByDestination, type MedicalGuide } from '../../lib/medic
 import { getTimezoneByDestination } from '../../lib/timezone';
 import { getWeatherForecast, type DailyForecast } from '../../lib/weather-forecast';
 import { getExchangeRates } from '../../lib/exchange-rates';
-import { getCountryCode } from '../../lib/public-holidays';
+import { getCountryCode, getPublicHolidays, type PublicHoliday } from '../../lib/public-holidays';
+import { getDestinationCurrency } from '../../lib/currency-history';
 import { geocodeCity } from '../../lib/geocoding';
+import { CurrencySparkline } from '../../components/features/CurrencySparkline';
 import AirQualitySunCard from '../../components/prep/AirQualitySunCard';
 import EmergencyQuickCard from '../../components/prep/EmergencyQuickCard';
 import CurrencyQuickCard from '../../components/prep/CurrencyQuickCard';
@@ -1097,6 +1099,23 @@ function CurrencyTab({
   destination: string;
 }) {
   const { t } = useTranslation();
+  const [upcomingHolidays, setUpcomingHolidays] = useState<PublicHoliday[]>([]);
+
+  useEffect(() => {
+    const cc = getCountryCode(destination);
+    if (!cc) return;
+    let cancelled = false;
+    const now = new Date();
+    getPublicHolidays(cc, now.getFullYear()).then((holidays) => {
+      if (cancelled) return;
+      const upcoming = holidays.filter((h) => new Date(h.date) >= now).slice(0, 3);
+      setUpcomingHolidays(upcoming);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [destination]);
+
+  const targetCurrency = useMemo(() => getDestinationCurrency(destination), [destination]);
+
   if (!cultural) {
     return (
       <View style={styles.tabContent}>
@@ -1114,6 +1133,17 @@ function CurrencyTab({
         <Text style={styles.currencyCode}>{currency.code}</Text>
       </View>
 
+      {/* Live exchange rate sparkline (30-day) */}
+      {targetCurrency && targetCurrency !== 'USD' && (
+        <View style={{ marginBottom: SPACING.lg }}>
+          <CurrencySparkline
+            baseCurrency="USD"
+            targetCurrency={targetCurrency}
+            destinationName={destination}
+          />
+        </View>
+      )}
+
       <View style={styles.infoCard}>
         <View style={styles.infoCardRow}>
           <Banknote size={16} color={COLORS.sage} />
@@ -1129,6 +1159,21 @@ function CurrencyTab({
         </View>
         <Text style={styles.infoCardBody}>{tipping}</Text>
       </View>
+
+      {/* Upcoming public holidays */}
+      {upcomingHolidays.length > 0 && (
+        <>
+          <Text style={styles.currencySectionLabel}>{t('prep.upcomingHolidays', { defaultValue: 'Upcoming Holidays' })}</Text>
+          {upcomingHolidays.map((h, i) => (
+            <View key={i} style={styles.currencyTipRow}>
+              <View style={[styles.currencyTipDot, { backgroundColor: COLORS.gold }]} />
+              <Text style={styles.currencyTipText}>
+                {new Date(h.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} — {h.name}
+              </Text>
+            </View>
+          ))}
+        </>
+      )}
 
       <Text style={styles.currencySectionLabel}>{t('prep.paymentTips', { defaultValue: 'Payment Tips' })}</Text>
       {[
@@ -2456,6 +2501,52 @@ function PrepScreen() {
                   <View>
                     <Text style={styles.prepNavCardTitle}>Airport Guide</Text>
                     <Text style={styles.prepNavCardSub}>Layover tips, lounges, and terminal maps</Text>
+                  </View>
+                </View>
+                <ChevronRight size={18} color={COLORS.muted} strokeWidth={1.5} />
+              </Pressable>
+
+              {/* Hostel Hub */}
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push({ pathname: '/hostel-hub', params: { destination: selectedDest } } as never);
+                }}
+                style={({ pressed }) => [
+                  styles.prepNavCard,
+                  { opacity: pressed ? 0.85 : 1 },
+                ]}
+                accessibilityLabel="Hostel Hub"
+                accessibilityRole="button"
+              >
+                <View style={styles.prepNavCardLeft}>
+                  <BedDouble size={20} color={COLORS.sage} strokeWidth={1.5} />
+                  <View>
+                    <Text style={styles.prepNavCardTitle}>Hostel Hub</Text>
+                    <Text style={styles.prepNavCardSub}>Best social hostels for solo travelers</Text>
+                  </View>
+                </View>
+                <ChevronRight size={18} color={COLORS.muted} strokeWidth={1.5} />
+              </Pressable>
+
+              {/* Safety Intel */}
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push({ pathname: '/safety-intel', params: { destination: selectedDest } } as never);
+                }}
+                style={({ pressed }) => [
+                  styles.prepNavCard,
+                  { opacity: pressed ? 0.85 : 1 },
+                ]}
+                accessibilityLabel="Safety Intel"
+                accessibilityRole="button"
+              >
+                <View style={styles.prepNavCardLeft}>
+                  <Shield size={20} color={COLORS.sage} strokeWidth={1.5} />
+                  <View>
+                    <Text style={styles.prepNavCardTitle}>Safety Intel</Text>
+                    <Text style={styles.prepNavCardSub}>Neighborhoods, scams, and emergency numbers</Text>
                   </View>
                 </View>
                 <ChevronRight size={18} color={COLORS.muted} strokeWidth={1.5} />

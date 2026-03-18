@@ -20,7 +20,7 @@ import { useRouter } from 'expo-router';
 import { impactAsync as hapticImpact } from '../../lib/haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Bookmark, ExternalLink, UtensilsCrossed } from 'lucide-react-native';
+import { Bookmark, ChevronRight, ExternalLink, MapPin, UtensilsCrossed } from 'lucide-react-native';
 import * as Linking from 'expo-linking';
 
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
@@ -843,6 +843,29 @@ export default function FoodScreen() {
             </>
           ) : null}
         </Animated.View>}
+
+        {/* Local Eats Radar nav card */}
+        <Pressable
+          onPress={() => {
+            hapticImpact();
+            router.push({ pathname: '/local-eats', params: { destination } } as never);
+          }}
+          style={({ pressed }) => [
+            styles.localEatsNavCard,
+            { opacity: pressed ? 0.85 : 1 },
+          ]}
+          accessibilityLabel="Local Eats Radar"
+          accessibilityRole="button"
+        >
+          <View style={styles.localEatsNavLeft}>
+            <MapPin size={20} color={COLORS.sage} strokeWidth={1.5} />
+            <View>
+              <Text style={styles.localEatsNavTitle}>Local Eats Radar</Text>
+              <Text style={styles.localEatsNavSub}>Authentic spots locals actually eat at</Text>
+            </View>
+          </View>
+          <ChevronRight size={18} color={COLORS.muted} strokeWidth={1.5} />
+        </Pressable>
       </ScrollView>
 
       {/* Saved toast */}
@@ -1438,5 +1461,35 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 13,
     color: COLORS.creamDim,
+  } as TextStyle,
+  localEatsNavCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingVertical: 14,
+    paddingHorizontal: SPACING.md,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+  } as ViewStyle,
+  localEatsNavLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    flex: 1,
+  } as ViewStyle,
+  localEatsNavTitle: {
+    fontFamily: FONTS.headerMedium,
+    fontSize: 15,
+    color: COLORS.cream,
+  } as TextStyle,
+  localEatsNavSub: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.muted,
+    marginTop: 2,
   } as TextStyle,
 });

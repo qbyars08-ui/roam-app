@@ -10,10 +10,13 @@ import {
   DollarSign,
   Droplets,
   MapPin,
+  Phone,
   Plane,
   Shield,
   Star,
+  Sun,
   Utensils,
+  Wind,
 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -25,6 +28,10 @@ import type { TravelAdvisory } from '../../lib/travel-safety';
 import { getVisaStatusDisplay, type VisaResult } from '../../lib/visa-requirements';
 import type { TALocation } from '../../lib/apis/tripadvisor';
 import type { FSQPlace } from '../../lib/apis/foursquare';
+import type { AirQuality } from '../../lib/air-quality';
+import type { GoldenHourData } from '../../lib/golden-hour';
+import type { PublicHoliday } from '../../lib/public-holidays';
+import type { EmergencyNumbers } from '../../lib/emergency-numbers';
 
 // ---------------------------------------------------------------------------
 // Shared styles
@@ -63,17 +70,23 @@ export function Skeleton({ height = 80 }: { height?: number }) {
 }
 
 // ---------------------------------------------------------------------------
-// 2. Right Now — weather + time
+// 2. Right Now — weather + time + air quality + golden hour + holidays
 // ---------------------------------------------------------------------------
 export function RightNowSection({
   localTime,
   weather,
+  airQuality,
+  goldenHour,
+  holidaysThisMonth,
 }: {
   localTime: string | null;
   weather: CurrentWeather | null;
+  airQuality?: AirQuality | null;
+  goldenHour?: GoldenHourData | null;
+  holidaysThisMonth?: PublicHoliday[];
 }) {
   const { t } = useTranslation();
-  if (!localTime && !weather) return null;
+  if (!localTime && !weather && !airQuality && !goldenHour && (!holidaysThisMonth || holidaysThisMonth.length === 0)) return null;
 
   return (
     <View style={styles.section}>
@@ -104,6 +117,31 @@ export function RightNowSection({
               </Text>
             </View>
           </>
+        )}
+        {airQuality && (
+          <View style={styles.rightNowRow}>
+            <Wind size={16} color={airQuality.aqi > 100 ? COLORS.coral : COLORS.sage} strokeWidth={1.5} />
+            <Text style={[styles.rightNowValue, { color: airQuality.aqi > 100 ? COLORS.coral : COLORS.cream }]}>
+              {t('destination.airQuality', { defaultValue: 'Air quality:' })} {airQuality.label} (AQI {airQuality.aqi})
+            </Text>
+          </View>
+        )}
+        {goldenHour && (
+          <View style={styles.rightNowRow}>
+            <Sun size={16} color={COLORS.gold} strokeWidth={1.5} />
+            <Text style={styles.rightNowValue}>
+              {t('destination.goldenHour', { defaultValue: 'Golden hour:' })} {goldenHour.bestPhotoWindow}
+            </Text>
+          </View>
+        )}
+        {holidaysThisMonth && holidaysThisMonth.length > 0 && (
+          <View style={styles.rightNowRow}>
+            <Star size={16} color={COLORS.gold} strokeWidth={1.5} />
+            <Text style={styles.rightNowValue} numberOfLines={1}>
+              {t('destination.holidayThisMonth', { defaultValue: 'Holiday:' })} {holidaysThisMonth[0].name}
+              {holidaysThisMonth.length > 1 ? ` +${holidaysThisMonth.length - 1}` : ''}
+            </Text>
+          </View>
         )}
       </View>
     </View>
@@ -268,9 +306,11 @@ export function CostSection({
 export function SafetySection({
   advisory,
   loading,
+  emergencyNumbers,
 }: {
   advisory: TravelAdvisory | null;
   loading: boolean;
+  emergencyNumbers?: EmergencyNumbers | null;
 }) {
   const { t } = useTranslation();
 
@@ -293,6 +333,33 @@ export function SafetySection({
             </Text>
           </View>
           <Text style={styles.safetyAdvice}>{advisory.advice}</Text>
+          {emergencyNumbers && (
+            <View style={[styles.emergencyRow, { marginTop: SPACING.md }]}>
+              <Phone size={14} color={COLORS.coral} strokeWidth={1.5} />
+              <View style={{ flex: 1 }}>
+                {emergencyNumbers.police.length > 0 && (
+                  <Text style={styles.emergencyText}>
+                    {t('destination.police', { defaultValue: 'Police:' })} {emergencyNumbers.police[0]}
+                  </Text>
+                )}
+                {emergencyNumbers.ambulance.length > 0 && (
+                  <Text style={styles.emergencyText}>
+                    {t('destination.ambulance', { defaultValue: 'Ambulance:' })} {emergencyNumbers.ambulance[0]}
+                  </Text>
+                )}
+                {emergencyNumbers.fire.length > 0 && (
+                  <Text style={styles.emergencyText}>
+                    {t('destination.fire', { defaultValue: 'Fire:' })} {emergencyNumbers.fire[0]}
+                  </Text>
+                )}
+                {emergencyNumbers.isMember112 && (
+                  <Text style={[styles.emergencyText, { color: COLORS.sage }]}>
+                    {t('destination.eu112', { defaultValue: 'EU 112 applies' })}
+                  </Text>
+                )}
+              </View>
+            </View>
+          )}
         </View>
       ) : (
         <Text style={styles.empty}>
@@ -734,6 +801,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.creamDim,
     lineHeight: 20,
+  },
+  emergencyRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: SPACING.sm,
+    paddingTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  emergencyText: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.creamDim,
+    letterSpacing: 0.3,
+    lineHeight: 18,
   },
   // Visa
   visaType: {

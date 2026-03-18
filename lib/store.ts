@@ -11,6 +11,7 @@ import { DEFAULT_LOCATION_STATE } from './types/location-sharing';
 import { getHomeCurrency, setHomeCurrency as persistHomeCurrency, fetchExchangeRates } from './currency';
 import type { ExchangeRates } from './currency';
 import type { SocialProfile, SquadMatch, TripPresence } from './types/social';
+import type { TravelerPersona } from './traveler-persona';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -86,6 +87,8 @@ type AppState = {
   activePeopleTab: 'feed' | 'squad' | 'groups' | 'meetups' | 'matches';
   /** Last destination the user tapped in the Discover grid */
   lastViewedDestination: string | null;
+  /** Traveler persona — shapes trip generation, Sonar queries, and UI */
+  travelerPersona: TravelerPersona | null;
 
   // Actions
   setSession: (session: Session | null) => void;
@@ -127,6 +130,7 @@ type AppState = {
   setOpenToMeet: (open: boolean) => void;
   setActivePeopleTab: (tab: 'feed' | 'squad' | 'groups' | 'meetups' | 'matches') => void;
   setLastViewedDestination: (dest: string | null) => void;
+  setTravelerPersona: (persona: TravelerPersona | null) => void;
 };
 
 const defaultPlanWizard: PlanWizardState = {
@@ -147,6 +151,7 @@ const PROFILE_COMPLETED_KEY = 'roam_profile_completed';
 const BOOKMARKED_RESTAURANTS_KEY = 'roam_bookmarked_restaurants';
 const SOCIAL_PROFILE_KEY = 'roam_social_profile';
 const LAST_VIEWED_DESTINATION_KEY = 'roam_last_viewed_destination';
+const TRAVELER_PERSONA_KEY = '@roam/persona';
 
 function persistBookmarkedRestaurants(ids: string[]) {
   AsyncStorage.setItem(BOOKMARKED_RESTAURANTS_KEY, JSON.stringify(ids)).catch((err: unknown) => { console.warn('[ROAM] Persist failed:', err instanceof Error ? err.message : String(err)); });
@@ -198,6 +203,7 @@ export const useAppStore = create<AppState>((set) => ({
   openToMeet: false,
   activePeopleTab: 'feed',
   lastViewedDestination: null,
+  travelerPersona: null,
 
   setSession: (session) => set({ session }),
   addTrip: (trip) =>
@@ -362,6 +368,14 @@ export const useAppStore = create<AppState>((set) => ({
       AsyncStorage.setItem(LAST_VIEWED_DESTINATION_KEY, dest).catch((err: unknown) => { console.warn('[ROAM] Persist failed:', err instanceof Error ? err.message : String(err)); });
     }
     set({ lastViewedDestination: dest });
+  },
+  setTravelerPersona: (persona) => {
+    if (persona !== null) {
+      AsyncStorage.setItem(TRAVELER_PERSONA_KEY, persona).catch((err: unknown) => { console.warn('[ROAM] Persist failed:', err instanceof Error ? err.message : String(err)); });
+    } else {
+      AsyncStorage.removeItem(TRAVELER_PERSONA_KEY).catch((err: unknown) => { console.warn('[ROAM] Persist failed:', err instanceof Error ? err.message : String(err)); });
+    }
+    set({ travelerPersona: persona });
   },
 }));
 
@@ -538,6 +552,24 @@ export async function loadPersistedSocialProfile(): Promise<void> {
     if (raw) {
       const profile = JSON.parse(raw) as SocialProfile;
       useAppStore.setState({ socialProfile: profile, socialProfileLoaded: true });
+    }
+  } catch {
+    // silent — first launch or corrupt data
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Load persisted traveler persona on app start
+// ---------------------------------------------------------------------------
+export async function loadPersistedTravelerPersona(): Promise<void> {
+  try {
+    const raw = await AsyncStorage.getItem(TRAVELER_PERSONA_KEY);
+    if (raw) {
+      // Validate it's still a recognized persona value
+      const validPersonas = ['backpacker', 'luxury', 'family', 'business', 'romantic', 'adventure'];
+      if (validPersonas.includes(raw)) {
+        useAppStore.setState({ travelerPersona: raw as import('./traveler-persona').TravelerPersona });
+      }
     }
   } catch {
     // silent — first launch or corrupt data

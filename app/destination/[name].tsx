@@ -23,6 +23,10 @@ import { getCostOfLiving, type CostOfLiving } from '../../lib/cost-of-living';
 import { getTravelAdvisory, type TravelAdvisory } from '../../lib/travel-safety';
 import { checkVisaRequirements, type VisaResult } from '../../lib/visa-requirements';
 import { getTimezoneByDestination } from '../../lib/timezone';
+import { getAirQuality, resolveDestinationCoords, type AirQuality } from '../../lib/air-quality';
+import { getGoldenHour, type GoldenHourData } from '../../lib/golden-hour';
+import { getPublicHolidays, getCountryCode, type PublicHoliday } from '../../lib/public-holidays';
+import { getEmergencyNumbers, type EmergencyNumbers } from '../../lib/emergency-numbers';
 import { useAppStore } from '../../lib/store';
 import { useSavingsStore } from '../../lib/savings-store';
 import { supabase } from '../../lib/supabase';
@@ -120,6 +124,56 @@ export default function LivingDestinationPage(): React.JSX.Element {
       );
     }
   }, [destination]);
+
+  // -----------------------------------------------------------------------
+  // 2b. Right now extras — air quality, golden hour, public holidays
+  // -----------------------------------------------------------------------
+  const [airQuality, setAirQuality] = useState<AirQuality | null>(null);
+  const [goldenHour, setGoldenHour] = useState<GoldenHourData | null>(null);
+  const [holidaysThisMonth, setHolidaysThisMonth] = useState<PublicHoliday[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+
+    // Air quality + golden hour require coordinates
+    resolveDestinationCoords(destination).then((coords) => {
+      if (!coords || cancelled) return;
+      getAirQuality(coords.lat, coords.lng)
+        .then((aq) => { if (!cancelled && aq) setAirQuality(aq); })
+        .catch(() => {});
+      getGoldenHour(coords.lat, coords.lng)
+        .then((gh) => { if (!cancelled && gh) setGoldenHour(gh); })
+        .catch(() => {});
+    }).catch(() => {});
+
+    // Public holidays this month
+    const countryCode = destInfo?.country ? getCountryCode(destination) : null;
+    if (countryCode) {
+      const now = new Date();
+      const thisMonth = now.getMonth();
+      getPublicHolidays(countryCode, now.getFullYear()).then((holidays) => {
+        if (cancelled) return;
+        const thisMonthHolidays = holidays.filter((h) => {
+          const d = new Date(h.date);
+          return d.getMonth() === thisMonth;
+        });
+        setHolidaysThisMonth(thisMonthHolidays);
+      }).catch(() => {});
+    }
+
+    return () => { cancelled = true; };
+  }, [destination, destInfo]);
+
+  // -----------------------------------------------------------------------
+  // 2c. Emergency numbers for safety section
+  // -----------------------------------------------------------------------
+  const [emergencyNumbers, setEmergencyNumbers] = useState<EmergencyNumbers | null>(null);
+  useEffect(() => {
+    const countryCode = destInfo?.country ? getCountryCode(destination) : null;
+    if (!countryCode) return;
+    getEmergencyNumbers(countryCode)
+      .then((en) => { if (en) setEmergencyNumbers(en); })
+      .catch(() => {});
+  }, [destination, destInfo]);
 
   // -----------------------------------------------------------------------
   // 3. This week — Sonar pulse intel
@@ -356,7 +410,13 @@ export default function LivingDestinationPage(): React.JSX.Element {
         </View>
 
         {/* 2. RIGHT NOW */}
-        <RightNowSection localTime={localTime} weather={weather} />
+        <RightNowSection
+          localTime={localTime}
+          weather={weather}
+          airQuality={airQuality}
+          goldenHour={goldenHour}
+          holidaysThisMonth={holidaysThisMonth}
+        />
 
         {/* 3. THIS WEEK — Sonar pulse */}
         <View style={s.section}>
@@ -396,7 +456,7 @@ export default function LivingDestinationPage(): React.JSX.Element {
         <CostSection data={costData} onStartSaving={handleStartSaving} />
 
         {/* 6. SAFETY */}
-        <SafetySection advisory={advisory} loading={advisoryLoading} />
+        <SafetySection advisory={advisory} loading={advisoryLoading} emergencyNumbers={emergencyNumbers} />
 
         {/* 7. VISA */}
         <VisaSection visa={visa} loading={visaLoading} />

@@ -33,6 +33,7 @@ import {
   Send,
   Star,
   UserPlus,
+  Users,
   Utensils,
   Wallet,
 } from 'lucide-react-native';
@@ -1176,6 +1177,51 @@ export default function PeopleTab() {
         </View>
       </View>
 
+      {/* Social Discovery Nav Cards */}
+      <View style={styles.socialNavRow}>
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push('/nearby-travelers' as never);
+          }}
+          style={({ pressed }) => [styles.socialNavCard, pressed && styles.pressed]}
+          accessibilityLabel={t('people.whosHere', { defaultValue: "Who's here" })}
+          accessibilityRole="button"
+        >
+          <Users size={20} color={COLORS.sage} strokeWidth={1.5} />
+          <View style={styles.socialNavCardText}>
+            <Text style={styles.socialNavCardTitle}>
+              {t('people.whosHere', { defaultValue: "Who's here" })}
+            </Text>
+            <Text style={styles.socialNavCardSubtitle}>
+              {t('people.whosHereSubtitle', { defaultValue: 'Travelers nearby now' })}
+            </Text>
+          </View>
+          <ArrowRight size={16} color={COLORS.creamMuted} strokeWidth={1.5} />
+        </Pressable>
+
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push('/travel-meetups' as never);
+          }}
+          style={({ pressed }) => [styles.socialNavCard, pressed && styles.pressed]}
+          accessibilityLabel={t('people.meetPeople', { defaultValue: 'Meet people' })}
+          accessibilityRole="button"
+        >
+          <Calendar size={20} color={COLORS.sage} strokeWidth={1.5} />
+          <View style={styles.socialNavCardText}>
+            <Text style={styles.socialNavCardTitle}>
+              {t('people.meetPeople', { defaultValue: 'Meet people' })}
+            </Text>
+            <Text style={styles.socialNavCardSubtitle}>
+              {t('people.meetPeopleSubtitle', { defaultValue: 'Meetups, tours, events' })}
+            </Text>
+          </View>
+          <ArrowRight size={16} color={COLORS.creamMuted} strokeWidth={1.5} />
+        </Pressable>
+      </View>
+
       {/* Share Profile Link */}
       {socialProfile && (
         <Pressable
@@ -1586,6 +1632,41 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodyMedium,
     fontSize: 13,
     color: COLORS.sage,
+  },
+
+  // ---------------------------------------------------------------------------
+  // Social Discovery Nav Cards
+  // ---------------------------------------------------------------------------
+  socialNavRow: {
+    paddingHorizontal: MAGAZINE.padding,
+    paddingBottom: SPACING.md,
+    gap: SPACING.sm,
+  },
+  socialNavCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    minHeight: 60,
+  },
+  socialNavCardText: {
+    flex: 1,
+    gap: 2,
+  },
+  socialNavCardTitle: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 15,
+    color: COLORS.cream,
+  },
+  socialNavCardSubtitle: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.creamMuted,
+    letterSpacing: 0.3,
   },
 
   // ---------------------------------------------------------------------------
