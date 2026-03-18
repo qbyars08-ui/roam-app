@@ -846,8 +846,14 @@ export default function ItineraryScreen() {
         <View style={styles.headerRight}>
           {/* Realtime sync status */}
           <SyncIndicator isSynced={isSynced} lastSyncedAt={lastSyncedAt} syncError={syncError} />
-          {/* Currency toggle — subtle pill */}
-          <CurrencyToggle subtle />
+          {/* Currency toggle — subtle pill, long press opens full converter */}
+          <CurrencyToggle
+            subtle
+            onLongPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push({ pathname: '/currency-converter', params: { destination: parsed.destination } });
+            }}
+          />
           {/* Edit mode toggle */}
           {viewMode === 'list' && (
             <Pressable

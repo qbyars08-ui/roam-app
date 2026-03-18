@@ -1099,6 +1099,7 @@ function CurrencyTab({
   destination: string;
 }) {
   const { t } = useTranslation();
+  const router = useRouter();
   const [upcomingHolidays, setUpcomingHolidays] = useState<PublicHoliday[]>([]);
 
   useEffect(() => {
@@ -1187,6 +1188,26 @@ function CurrencyTab({
           <Text style={styles.currencyTipText}>{tip}</Text>
         </View>
       ))}
+
+      {/* Full Converter CTA */}
+      <Pressable
+        style={({ pressed }) => [
+          styles.fullConverterBtn,
+          { opacity: pressed ? 0.8 : 1 },
+        ]}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          router.push({ pathname: '/currency-converter', params: { destination } });
+        }}
+        accessibilityLabel={t('prep.fullConverter', { defaultValue: 'Full Converter' })}
+        accessibilityRole="button"
+      >
+        <Banknote size={16} color={COLORS.sage} strokeWidth={1.5} />
+        <Text style={styles.fullConverterText}>
+          {t('prep.fullConverter', { defaultValue: 'Full Converter' })}
+        </Text>
+        <ChevronRight size={16} color={COLORS.creamMuted} strokeWidth={1.5} />
+      </Pressable>
     </View>
   );
 }
@@ -2462,6 +2483,29 @@ function PrepScreen() {
                 </Pressable>
               )}
 
+              {/* Packing List — smart packing recommendations */}
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push({ pathname: '/packing-list', params: { destination: selectedDest } } as never);
+                }}
+                style={({ pressed }) => [
+                  styles.prepNavCard,
+                  { opacity: pressed ? 0.85 : 1 },
+                ]}
+                accessibilityLabel="Packing List"
+                accessibilityRole="button"
+              >
+                <View style={styles.prepNavCardLeft}>
+                  <Luggage size={20} color={COLORS.sage} strokeWidth={1.5} />
+                  <View>
+                    <Text style={styles.prepNavCardTitle}>Packing List</Text>
+                    <Text style={styles.prepNavCardSub}>Smart recommendations for {selectedDest}</Text>
+                  </View>
+                </View>
+                <ChevronRight size={18} color={COLORS.muted} strokeWidth={1.5} />
+              </Pressable>
+
               {/* Body Intel — health intelligence */}
               <Pressable
                 onPress={() => {
@@ -3618,6 +3662,25 @@ const styles = StyleSheet.create({
     color: COLORS.cream,
     flex: 1,
     lineHeight: 18,
+  } as TextStyle,
+  fullConverterBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.sageSubtle,
+    borderRadius: RADIUS.pill,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    marginTop: SPACING.lg,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+  } as ViewStyle,
+  fullConverterText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
+    color: COLORS.cream,
+    flex: 1,
   } as TextStyle,
 
   // Shared info card

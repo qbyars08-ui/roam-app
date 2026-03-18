@@ -32,12 +32,14 @@ interface CurrencyToggleProps {
   onCurrencyChange?: (code: string, rates: ExchangeRates) => void;
   /** Subtle variant: smaller pill for itinerary header */
   subtle?: boolean;
+  /** Called on long press — e.g. to navigate to full converter */
+  onLongPress?: () => void;
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-export default function CurrencyToggle({ onCurrencyChange, subtle }: CurrencyToggleProps) {
+export default function CurrencyToggle({ onCurrencyChange, subtle, onLongPress }: CurrencyToggleProps) {
   const { t } = useTranslation();
   const homeCurrency = useAppStore((s) => s.homeCurrency);
   const rates = useAppStore((s) => s.exchangeRates);
@@ -81,6 +83,7 @@ export default function CurrencyToggle({ onCurrencyChange, subtle }: CurrencyTog
           { opacity: pressed ? 0.8 : 1 },
         ]}
         onPress={() => setPickerVisible(true)}
+        onLongPress={onLongPress}
       >
         <Text style={subtle ? styles.toggleSymbolSubtle : styles.toggleSymbol}>
           {getCurrencySymbol(homeCurrency)}
