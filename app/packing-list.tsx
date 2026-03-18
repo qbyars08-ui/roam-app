@@ -544,7 +544,7 @@ export default function PackingListScreen() {
         </View>
 
         {/* Sonar intel card */}
-        {sonar.data && (
+        {sonar.data ? (
           <View style={styles.intelCard}>
             <View style={styles.intelHeader}>
               <Text style={styles.intelTitle}>
@@ -559,7 +559,11 @@ export default function PackingListScreen() {
               </View>
             )}
           </View>
-        )}
+        ) : !sonar.isLoading ? (
+          <View style={styles.fallbackContainer}>
+            <Text style={styles.fallbackText}>Packing intel unavailable</Text>
+          </View>
+        ) : null}
 
         {/* Pro Tips */}
         {packing.proTips.length > 0 && (
@@ -781,4 +785,6 @@ const styles = StyleSheet.create({
     opacity: 0.6,
     marginTop: SPACING.sm,
   } as TextStyle,
+  fallbackContainer: { paddingVertical: SPACING.md, alignItems: 'center' } as ViewStyle,
+  fallbackText: { color: COLORS.muted, fontSize: 14, fontFamily: FONTS.body } as TextStyle,
 });

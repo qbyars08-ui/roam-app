@@ -3,7 +3,8 @@
 // Extracted to keep [name].tsx under 800 lines
 // =============================================================================
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import * as Haptics from '../../lib/haptics';
 import {
   Clock,
   Cloud,
@@ -197,7 +198,7 @@ export function RoutesSection({
         </>
       ) : routes && routes.length > 0 ? (
         routes.slice(0, 4).map((route, i) => (
-          <View key={i} style={[CARD_BASE, { marginBottom: SPACING.sm }]}>
+          <Pressable key={i} style={[CARD_BASE, { marginBottom: SPACING.sm }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.rome2rio.com/`).catch(() => {}); }} accessibilityLabel={`${route.name} route, ${formatDuration(route.duration)}`} accessibilityRole="button">
             <View style={styles.routeRow}>
               {MODE_ICONS[route.mode] ?? (
                 <MapPin size={14} color={COLORS.sage} strokeWidth={1.5} />
@@ -214,7 +215,7 @@ export function RoutesSection({
                 </Text>
               )}
             </View>
-          </View>
+          </Pressable>
         ))
       ) : (
         <Text style={styles.empty}>
@@ -468,13 +469,16 @@ export function AttractionsSection({
         </>
       ) : attractions && attractions.length > 0 ? (
         attractions.slice(0, 5).map((a, i) => (
-          <View
+          <Pressable
             key={a.locationId}
             style={[
               CARD_BASE,
               styles.attractionRow,
               { marginBottom: SPACING.sm },
             ]}
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a.name)}`).catch(() => {}); }}
+            accessibilityLabel={`${a.name} on Google Maps`}
+            accessibilityRole="button"
           >
             <Text style={styles.rankText}>
               {String(i + 1).padStart(2, '0')}
@@ -509,7 +513,7 @@ export function AttractionsSection({
                 </View>
               )}
             </View>
-          </View>
+          </Pressable>
         ))
       ) : (
         <Text style={styles.empty}>
@@ -549,7 +553,7 @@ export function RestaurantsSection({
       ) : venues && venues.length > 0 ? (
         <View style={styles.venueGrid}>
           {venues.map((v) => (
-            <View key={v.fsqId} style={[CARD_BASE, styles.venueCard]}>
+            <Pressable key={v.fsqId} style={[CARD_BASE, styles.venueCard]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); const query = v.location ? `${v.location.lat},${v.location.lng}` : encodeURIComponent(v.name); Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${query}`).catch(() => {}); }} accessibilityLabel={`${v.name} on Google Maps`} accessibilityRole="button">
               <Utensils
                 size={14}
                 color={COLORS.sage}
@@ -573,7 +577,7 @@ export function RestaurantsSection({
                   </Text>
                 </View>
               )}
-            </View>
+            </Pressable>
           ))}
         </View>
       ) : (

@@ -2,7 +2,7 @@
 // ROAM — DestinationIntel (weather, events, Sonar intel block)
 // =============================================================================
 import React from 'react';
-import { Pressable, StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
+import { Linking, Pressable, StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 import * as Haptics from '../../lib/haptics';
@@ -55,31 +55,31 @@ export default function DestinationIntel({
       </Pressable>
 
       {weather && (
-        <View style={styles.destIntelCard}>
+        <Pressable style={({ pressed }) => [styles.destIntelCard, { opacity: pressed ? 0.85 : 1 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/destination/[name]', params: { name: destination } } as never); }} accessibilityLabel={`Weather in ${destination}: ${weather.temp}°C, ${weather.condition}`} accessibilityRole="button">
           <Text style={styles.destIntelCardTitle}>Weather Now</Text>
           <Text style={styles.destIntelWeather}>{weather.temp}°C · {weather.condition}</Text>
           <Text style={styles.destIntelMeta}>Humidity {weather.humidity}% · Wind {weather.windSpeed} km/h</Text>
-        </View>
+        </Pressable>
       )}
 
       {sonarData && (
-        <View style={styles.destIntelCard}>
+        <Pressable style={({ pressed }) => [styles.destIntelCard, { opacity: pressed ? 0.85 : 1 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/destination/[name]', params: { name: destination } } as never); }} accessibilityLabel={`Live intel for ${destination}`} accessibilityRole="button">
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Text style={styles.destIntelCardTitle}>Live Intel</Text>
             {sonarIsLive && <LiveBadge />}
           </View>
           <Text style={styles.destIntelBody}>{sonarData.answer}</Text>
           {sonarCitations.length > 0 && <SourceCitation citations={sonarCitations} />}
-        </View>
+        </Pressable>
       )}
 
       {events && events.length > 0 && (
-        <View style={styles.destIntelCard}>
+        <Pressable style={({ pressed }) => [styles.destIntelCard, { opacity: pressed ? 0.85 : 1 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.eventbrite.com/d/${encodeURIComponent(destination)}/events/`).catch(() => {}); }} accessibilityLabel={`Upcoming events in ${destination}`} accessibilityRole="button">
           <Text style={styles.destIntelCardTitle}>Upcoming Events</Text>
           {events.map((evt) => (
             <Text key={evt.id} style={styles.destIntelEvent}>· {evt.name}{evt.date ? ` — ${new Date(evt.date).toLocaleDateString()}` : ''}</Text>
           ))}
-        </View>
+        </Pressable>
       )}
     </View>
   );

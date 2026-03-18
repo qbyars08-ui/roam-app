@@ -4,6 +4,7 @@
 import React, { useCallback, useState } from 'react';
 import {
   Animated,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -104,7 +105,7 @@ export default function CountdownSection({
 
       {/* Daily brief card */}
       {brief && (
-        <View style={styles.briefCard}>
+        <Pressable style={({ pressed }) => [styles.briefCard, { opacity: pressed ? 0.85 : 1 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/destination/[name]', params: { name: activeTrip.destination } } as never); }} accessibilityLabel={`Daily brief: ${brief.headline}`} accessibilityRole="button">
           <View style={styles.briefHeader}>
             <Text style={[styles.briefHeadline, { flex: 1 }]}>{brief.headline}</Text>
             {isLive && <LiveBadge />}
@@ -127,12 +128,12 @@ export default function CountdownSection({
             </Pressable>
           </View>
           <Text style={styles.briefSubtext}>{brief.subtext}</Text>
-        </View>
+        </Pressable>
       )}
 
       {/* Weather during trip */}
       {weatherDays && weatherDays.length > 0 && (
-        <View style={styles.planDataCard}>
+        <Pressable style={({ pressed }) => [styles.planDataCard, { opacity: pressed ? 0.85 : 1 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/destination/[name]', params: { name: activeTrip.destination } } as never); }} accessibilityLabel="Weather forecast during trip" accessibilityRole="button">
           <Text style={styles.planDataLabel}>
             {t('plan.planning.weatherDuringTrip', { defaultValue: 'Weather during trip' })}
           </Text>
@@ -149,23 +150,23 @@ export default function CountdownSection({
               ))}
             </View>
           </ScrollView>
-        </View>
+        </Pressable>
       )}
 
       {/* Cost estimate */}
       {costData && (
-        <View style={styles.planDataCard}>
+        <Pressable style={({ pressed }) => [styles.planDataCard, { opacity: pressed ? 0.85 : 1 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.numbeo.com/cost-of-living/in/${encodeURIComponent(activeTrip.destination)}`).catch(() => {}); }} accessibilityLabel={`Estimated daily cost: ${costData.comfort.dailyTotal}`} accessibilityRole="button">
           <Text style={styles.planDataLabel}>
             {t('plan.planning.estimatedDailyCost', { defaultValue: 'Estimated daily cost' })}
           </Text>
           <Text style={styles.planDataValue}>{costData.comfort.dailyTotal}</Text>
           <Text style={styles.planDataSub}>{costData.tipping}</Text>
-        </View>
+        </Pressable>
       )}
 
       {/* Air quality alert (only if notable) */}
       {hasNotableAir && airQuality && (
-        <View style={[styles.planDataCard, { borderColor: COLORS.coral + '40' }]}>
+        <Pressable style={({ pressed }) => [styles.planDataCard, { borderColor: COLORS.coral + '40', opacity: pressed ? 0.85 : 1 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/destination/[name]', params: { name: activeTrip.destination } } as never); }} accessibilityLabel={`Air quality alert: ${airQuality.label}`} accessibilityRole="button">
           <Text style={[styles.planDataLabel, { color: COLORS.coral }]}>
             {t('plan.planning.airQualityAlert', { defaultValue: 'Air quality at destination' })}
           </Text>
@@ -173,7 +174,7 @@ export default function CountdownSection({
             {airQuality.label} (AQI {airQuality.aqi})
           </Text>
           <Text style={styles.planDataSub}>{airQuality.advice}</Text>
-        </View>
+        </Pressable>
       )}
 
       {/* Pre-trip checklist */}

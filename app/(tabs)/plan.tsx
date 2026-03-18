@@ -1,7 +1,4 @@
-// =============================================================================
 // ROAM — Plan Tab (orchestrator)
-// Generate + manage + edit all trips from one place
-// =============================================================================
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -36,10 +33,7 @@ import { getWeatherForecast, type DailyForecast } from '../../lib/weather-foreca
 import { getCostOfLiving } from '../../lib/cost-of-living';
 import { getAirQuality, resolveDestinationCoords, type AirQuality } from '../../lib/air-quality';
 import { geocodeCity } from '../../lib/geocoding';
-import { getCurrentWeather, type CurrentWeather } from '../../lib/apis/openweather';
-import { searchEvents, type EventResult } from '../../lib/apis/eventbrite';
-
-// ── Extracted components ──
+import { getCurrentWeather, type CurrentWeather } from '../../lib/apis/openweather'; import { searchEvents, type EventResult } from '../../lib/apis/eventbrite';
 import DreamingHero from '../../components/plan/DreamingHero';
 import CountdownSection from '../../components/plan/CountdownSection';
 import TravelingSection from '../../components/plan/TravelingSection';
@@ -47,27 +41,11 @@ import ReturnedSection from '../../components/plan/ReturnedSection';
 import { TripCard, NextTripHero } from '../../components/plan/TripCard';
 import QuickActions from '../../components/plan/QuickActions';
 import DestinationIntel from '../../components/plan/DestinationIntel';
-import DreamBoardBanner from '../../components/plan/DreamBoardBanner';
-import TripFundCard from '../../components/plan/TripFundCard';
-import PeopleNudgeBanner from '../../components/plan/PeopleNudgeBanner';
-import RateLimitModal from '../../components/plan/RateLimitModal';
+import DreamBoardBanner from '../../components/plan/DreamBoardBanner'; import TripFundCard from '../../components/plan/TripFundCard';
+import PeopleNudgeBanner from '../../components/plan/PeopleNudgeBanner'; import RateLimitModal from '../../components/plan/RateLimitModal';
 
-interface ConversationBrief {
-  destination?: string;
-  days?: number;
-  budget?: string;
-  groupSize?: number;
-  vibes: string[];
-}
-
-const RANDOM_CITIES = [
-  'Tokyo', 'Bali', 'Lisbon', 'Mexico City', 'Bangkok', 'Barcelona', 'Cape Town',
-  'Medellín', 'Kyoto', 'Marrakech', 'Budapest', 'Buenos Aires',
-];
-
-// =============================================================================
-// Main Component
-// =============================================================================
+interface ConversationBrief { destination?: string; days?: number; budget?: string; groupSize?: number; vibes: string[] }
+const RANDOM_CITIES = ['Tokyo', 'Bali', 'Lisbon', 'Mexico City', 'Bangkok', 'Barcelona', 'Cape Town', 'Medellín', 'Kyoto', 'Marrakech', 'Budapest', 'Buenos Aires'];
 export default function PlanScreen() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -296,14 +274,9 @@ export default function PlanScreen() {
   );
 }
 
-// =============================================================================
-// Styles
-// =============================================================================
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg } as ViewStyle,
-  fill: { flex: 1 } as ViewStyle,
-  scrollContent: { paddingHorizontal: 20, paddingBottom: 120 } as ViewStyle,
-  header: { paddingTop: 24, paddingBottom: 20 } as ViewStyle,
+  container: { flex: 1, backgroundColor: COLORS.bg } as ViewStyle, fill: { flex: 1 } as ViewStyle,
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 120 } as ViewStyle, header: { paddingTop: 24, paddingBottom: 20 } as ViewStyle,
   headerTitle: { fontFamily: FONTS.header, fontSize: 36, color: COLORS.cream, letterSpacing: -0.5 } as TextStyle,
   headerSub: { fontFamily: FONTS.mono, fontSize: 12, color: COLORS.creamDim, marginTop: 6, letterSpacing: 0.5 } as TextStyle,
   newTripBtn: { marginBottom: SPACING.lg, borderRadius: RADIUS.pill, overflow: 'hidden' } as ViewStyle,
@@ -320,11 +293,8 @@ const styles = StyleSheet.create({
   continueSectionLabel: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.creamDim, marginBottom: SPACING.sm } as TextStyle,
   continueCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.goldBorder, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, marginBottom: SPACING.sm } as ViewStyle,
   continueCardDest: { flex: 1, fontFamily: FONTS.bodySemiBold, fontSize: 16, color: COLORS.cream } as TextStyle,
-  continueCardDate: { fontFamily: FONTS.mono, fontSize: 12, color: COLORS.creamDim, marginRight: SPACING.sm } as TextStyle,
-  continueCardArrow: {} as ViewStyle,
+  continueCardDate: { fontFamily: FONTS.mono, fontSize: 12, color: COLORS.creamDim, marginRight: SPACING.sm } as TextStyle, continueCardArrow: {} as ViewStyle,
   errorBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: COLORS.coralSubtle, borderLeftWidth: 4, borderLeftColor: COLORS.coral, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, marginHorizontal: SPACING.md, marginTop: SPACING.sm, marginBottom: SPACING.sm, borderRadius: RADIUS.md } as ViewStyle,
-  errorBannerText: { flex: 1, fontFamily: FONTS.body, fontSize: 14, color: COLORS.cream } as TextStyle,
-  errorBannerRetry: { fontFamily: FONTS.bodySemiBold, fontSize: 14, color: COLORS.coral } as TextStyle,
-  errorBannerDismissBtn: { minHeight: 44, minWidth: 44, alignItems: 'center', justifyContent: 'center' } as ViewStyle,
-  loaderOverlay: { ...StyleSheet.absoluteFillObject, zIndex: 100, backgroundColor: COLORS.bg } as ViewStyle,
+  errorBannerText: { flex: 1, fontFamily: FONTS.body, fontSize: 14, color: COLORS.cream } as TextStyle, errorBannerRetry: { fontFamily: FONTS.bodySemiBold, fontSize: 14, color: COLORS.coral } as TextStyle,
+  errorBannerDismissBtn: { minHeight: 44, minWidth: 44, alignItems: 'center', justifyContent: 'center' } as ViewStyle, loaderOverlay: { ...StyleSheet.absoluteFillObject, zIndex: 100, backgroundColor: COLORS.bg } as ViewStyle,
 });

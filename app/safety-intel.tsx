@@ -268,6 +268,10 @@ function SafetyIntelScreen() {
               </Text>
             ) : null}
           </View>
+        ) : !dataLoading ? (
+          <View style={styles.fallbackContainer}>
+            <Text style={styles.fallbackText}>Travel advisory data unavailable</Text>
+          </View>
         ) : null}
 
         {/* Sonar detailed safety intel */}
@@ -387,7 +391,11 @@ function SafetyIntelScreen() {
           </View>
         ) : dataLoading ? (
           <SkeletonCard height={100} style={{ marginBottom: SPACING.md }} />
-        ) : null}
+        ) : (
+          <View style={styles.fallbackContainer}>
+            <Text style={styles.fallbackText}>Emergency numbers unavailable</Text>
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -597,6 +605,8 @@ const styles = StyleSheet.create({
     color: COLORS.sage,
     textAlign: 'center',
   } as TextStyle,
+  fallbackContainer: { paddingVertical: SPACING.md, alignItems: 'center' } as ViewStyle,
+  fallbackText: { color: COLORS.muted, fontSize: 14, fontFamily: FONTS.body } as TextStyle,
 });
 
 export default SafetyIntelScreen;

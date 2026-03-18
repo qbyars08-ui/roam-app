@@ -3,9 +3,10 @@
 // Offline data from lib/cost-of-living.ts — no API call
 // =============================================================================
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Linking, StyleSheet } from 'react-native';
 import { Wallet, TrendingDown, TrendingUp } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { getCostOfLiving, type CostOfLiving } from '../../lib/cost-of-living';
 
@@ -33,11 +34,11 @@ export default function CostOfLivingCard({ destination }: Props) {
       <Text style={s.sectionTitle}>{t('costOfLiving.dailyBudget', { defaultValue: 'Daily Budget' })}</Text>
       <View style={s.row}>
         {tiers.map((tier) => (
-          <View key={tier.label} style={s.card}>
+          <Pressable key={tier.label} style={s.card} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.numbeo.com/cost-of-living/in/${encodeURIComponent(destination)}`).catch(() => {}); }} accessibilityLabel={`${tier.label} budget: ${tier.total} per day`} accessibilityRole="button">
             <tier.icon size={16} color={tier.color} strokeWidth={1.5} />
             <Text style={s.tierTotal}>{tier.total}</Text>
             <Text style={s.tierLabel}>{tier.label}</Text>
-          </View>
+          </Pressable>
         ))}
       </View>
       {data.tipping ? (

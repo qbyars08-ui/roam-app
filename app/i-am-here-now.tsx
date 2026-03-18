@@ -352,6 +352,10 @@ export default function IAmHereNow(): React.JSX.Element {
           <View style={styles.weatherRow}>
             <WeatherPill weather={weather} />
           </View>
+        ) : destination ? (
+          <View style={styles.fallbackContainer}>
+            <Text style={styles.fallbackText}>Weather data unavailable</Text>
+          </View>
         ) : null}
 
         {/* Primary action buttons */}
@@ -1075,4 +1079,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
+  fallbackContainer: { paddingVertical: SPACING.md, alignItems: 'center' } as ViewStyle,
+  fallbackText: { color: COLORS.muted, fontSize: 14, fontFamily: FONTS.body } as TextStyle,
 });

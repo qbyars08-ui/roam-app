@@ -2,8 +2,10 @@
 // IntelligenceGrid — 2x2 magazine-style intelligence cards
 // =============================================================================
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
+import { View, Text, Pressable, Linking, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import type { SafetyData } from '../../lib/prep/safety-data';
 import type { DailyForecast } from '../../lib/weather-forecast';
@@ -32,6 +34,7 @@ const COUNTRY_CURRENCY: Record<string, string> = {
 
 export default function IntelligenceGrid({ destination, safety, visaReqs, passportCode }: Props) {
   const { t } = useTranslation();
+  const router = useRouter();
   const [weather, setWeather] = useState<DailyForecast | null>(null);
   const [exchangeRate, setExchangeRate] = useState<string | null>(null);
   const [currencyCode, setCurrencyCode] = useState<string | null>(null);
@@ -94,16 +97,16 @@ export default function IntelligenceGrid({ destination, safety, visaReqs, passpo
     <View style={styles.container}>
       <View style={styles.row}>
         {/* Safety card */}
-        <View style={styles.card}>
+        <Pressable style={styles.card} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/safety-intel', params: { destination } } as never); }} accessibilityLabel={`Safety score ${score ?? 'unknown'} for ${destination}`} accessibilityRole="button">
           <Text style={[styles.bigNumber, { color: safetyColor }]}>
             {score ?? '\u2014'}
           </Text>
           <Text style={styles.cardDesc}>{safetyDesc}</Text>
           <Text style={styles.cardLabel}>{t('prep.safetyScoreLabel', { defaultValue: 'SAFETY SCORE' })}</Text>
-        </View>
+        </Pressable>
 
         {/* Currency card */}
-        <View style={styles.card}>
+        <Pressable style={styles.card} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.xe.com/currencyconverter/convert/?From=USD&To=${currencyCode ?? 'EUR'}`).catch(() => {}); }} accessibilityLabel={`Currency rate for ${destination}`} accessibilityRole="button">
           <Text style={[styles.bigRate, { color: COLORS.cream }]}>
             {exchangeRate ?? '\u2014'}
           </Text>
@@ -111,12 +114,12 @@ export default function IntelligenceGrid({ destination, safety, visaReqs, passpo
             {currencyTip ?? (currencyCode ? `1 USD = ${currencyCode}` : t('prep.exchangeRate', { defaultValue: 'Exchange rate' }))}
           </Text>
           <Text style={styles.cardLabel}>{t('prep.currencyLabel', { defaultValue: 'CURRENCY' })}</Text>
-        </View>
+        </Pressable>
       </View>
 
       <View style={styles.row}>
         {/* Weather card */}
-        <View style={styles.card}>
+        <Pressable style={styles.card} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/destination/[name]', params: { name: destination } } as never); }} accessibilityLabel={`Weather for ${destination}`} accessibilityRole="button">
           {weather ? (
             <>
               <Text style={[styles.bigNumber, { color: COLORS.cream }]}>
@@ -133,10 +136,10 @@ export default function IntelligenceGrid({ destination, safety, visaReqs, passpo
             <Text style={[styles.bigNumber, { color: COLORS.creamMuted }]}>{'\u2014'}</Text>
           )}
           <Text style={styles.cardLabel}>{t('prep.weatherLabel', { defaultValue: 'WEATHER' })}</Text>
-        </View>
+        </Pressable>
 
         {/* Visa card */}
-        <View style={styles.card}>
+        <Pressable style={styles.card} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.google.com/search?q=visa+requirements+${encodeURIComponent(destination)}+from+${passportCode ?? 'US'}`).catch(() => {}); }} accessibilityLabel={`Visa requirements for ${destination}`} accessibilityRole="button">
           {visaLabel ? (
             <>
               <Text style={[styles.visaStatus, { color: visaColor }]}>
@@ -150,7 +153,7 @@ export default function IntelligenceGrid({ destination, safety, visaReqs, passpo
             <Text style={[styles.cardDesc, { color: COLORS.creamMuted }]}>{t('prep.checkRequirements', { defaultValue: 'Check requirements' })}</Text>
           )}
           <Text style={styles.cardLabel}>{t('prep.visaLabel', { defaultValue: 'VISA' })}</Text>
-        </View>
+        </Pressable>
       </View>
     </View>
   );

@@ -1028,7 +1028,7 @@ export default function FlightsScreen() {
         )}
 
         {/* ── Sonar Flight Intel ── */}
-        {sonarFlights.data && (
+        {sonarFlights.data ? (
           <View style={styles.sonarSection}>
             <View style={styles.sonarSectionHeader}>
               <Text style={styles.sectionLabel}>{t('flights.sonarLabel', { defaultValue: 'LIVE INTEL' })}</Text>
@@ -1037,19 +1037,26 @@ export default function FlightsScreen() {
             <Text style={styles.sectionTitle}>
               {t('flights.sonarTitle', { defaultValue: 'What Sonar found' })}
             </Text>
-            <View style={styles.sonarCard}>
+            <Pressable style={({ pressed }) => [styles.sonarCard, { opacity: pressed ? 0.85 : 1 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); const dest = toText?.trim() || 'anywhere'; Linking.openURL(`https://www.skyscanner.com/transport/flights/${encodeURIComponent(fromCode || fromText?.trim() || 'anywhere')}/${encodeURIComponent(toCode || dest)}/`).catch(() => {}); }} accessibilityLabel="View flight intel on Skyscanner" accessibilityRole="button">
               <Text style={styles.sonarAnswer}>{sonarFlights.data.answer}</Text>
               {sonarFlights.citations.length > 0 && (
                 <View style={{ marginTop: SPACING.sm }}>
                   <SourceCitation citations={sonarFlights.citations} />
                 </View>
               )}
+            </Pressable>
+          </View>
+        ) : !sonarFlights.isLoading && !sonarFlights.error ? (
+          <View style={styles.sonarSection}>
+            <Text style={styles.sectionLabel}>{t('flights.sonarLabel', { defaultValue: 'LIVE INTEL' })}</Text>
+            <View style={styles.fallbackContainer}>
+              <Text style={styles.fallbackText}>Live flight intel unavailable</Text>
             </View>
           </View>
-        )}
+        ) : null}
 
         {/* ── Alternative Routes (Rome2Rio) ── */}
-        {altRoutes && altRoutes.length > 0 && (
+        {altRoutes && altRoutes.length > 0 ? (
           <View style={styles.apiSection}>
             <Text style={styles.apiSectionLabel}>ALTERNATIVE ROUTES</Text>
             <Text style={styles.apiSectionHeading}>Other ways to get there</Text>
@@ -1065,18 +1072,25 @@ export default function FlightsScreen() {
                   : null;
                 const operator = route.segments?.[0]?.operator ?? null;
                 return (
-                  <View key={i} style={styles.apiCard}>
+                  <Pressable key={i} style={({ pressed }) => [styles.apiCard, { opacity: pressed ? 0.85 : 1 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.rome2rio.com/map/${encodeURIComponent(fromText?.trim() || '')}/${encodeURIComponent(toText?.trim() || '')}`).catch(() => {}); }} accessibilityLabel={`${route.name} route, ${durationStr}`} accessibilityRole="button">
                     <Text style={styles.apiCardName}>{route.name}</Text>
                     <Text style={styles.apiCardMeta}>
                       {durationStr}{priceStr ? ` · ${priceStr}` : ''}
                     </Text>
                     {operator && <Text style={styles.apiCardSub}>via {operator}</Text>}
-                  </View>
+                  </Pressable>
                 );
               })}
             </View>
           </View>
-        )}
+        ) : altRoutes !== null && altRoutes.length === 0 ? (
+          <View style={styles.apiSection}>
+            <Text style={styles.apiSectionLabel}>ALTERNATIVE ROUTES</Text>
+            <View style={styles.fallbackContainer}>
+              <Text style={styles.fallbackText}>Couldn't load alternative routes</Text>
+            </View>
+          </View>
+        ) : null}
 
         {/* ── Popular Routes ── */}
         <View style={[styles.sectionHeader, { marginTop: SPACING.xxl }]}>
@@ -1627,4 +1641,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.cream,
   } as TextStyle,
+  fallbackContainer: { paddingVertical: SPACING.md, alignItems: 'center' } as ViewStyle,
+  fallbackText: { color: COLORS.muted, fontSize: 14, fontFamily: FONTS.body } as TextStyle,
 });

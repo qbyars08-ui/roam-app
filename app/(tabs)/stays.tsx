@@ -557,58 +557,85 @@ export default function StaysScreen() {
         </View>
 
         {/* Sonar Stays Intel */}
-        {sonarStays.data && (
-          <View style={styles.apiSection}>
-            <View style={styles.apiSectionHeader}>
+        {destinationText.trim() ? (
+          sonarStays.data ? (
+            <View style={styles.apiSection}>
+              <View style={styles.apiSectionHeader}>
+                <Text style={styles.apiSectionLabel}>LIVE INTEL</Text>
+                {sonarStays.isLive && <LiveBadge />}
+              </View>
+              <Pressable style={({ pressed }) => [styles.apiCard, { opacity: pressed ? 0.85 : 1 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.booking.com/searchresults.html?ss=${encodeURIComponent(destinationText.trim())}`).catch(() => {}); }} accessibilityLabel="View stays intel on Booking.com" accessibilityRole="button">
+                <Text style={styles.apiCardBody}>{sonarStays.data.answer}</Text>
+                {sonarStays.citations.length > 0 && <SourceCitation citations={sonarStays.citations} />}
+              </Pressable>
+            </View>
+          ) : !sonarStays.isLoading ? (
+            <View style={styles.apiSection}>
               <Text style={styles.apiSectionLabel}>LIVE INTEL</Text>
-              {sonarStays.isLive && <LiveBadge />}
+              <View style={styles.fallbackContainer}>
+                <Text style={styles.fallbackText}>Live intel unavailable</Text>
+              </View>
             </View>
-            <View style={styles.apiCard}>
-              <Text style={styles.apiCardBody}>{sonarStays.data.answer}</Text>
-              {sonarStays.citations.length > 0 && <SourceCitation citations={sonarStays.citations} />}
-            </View>
-          </View>
-        )}
+          ) : null
+        ) : null}
 
         {/* Google Places Nearby Hotels */}
-        {nearbyHotels && nearbyHotels.length > 0 && (
-          <View style={styles.apiSection}>
-            <Text style={styles.apiSectionLabel}>NEARBY HOTELS</Text>
-            <Text style={styles.apiSectionHeading}>Real hotels near {destinationText.trim()}</Text>
-            <View style={styles.apiCardStack}>
-              {nearbyHotels.map((h) => (
-                <View key={h.placeId} style={styles.apiCard}>
-                  <Text style={styles.apiCardName}>{h.name}</Text>
-                  <Text style={styles.apiCardMeta}>
-                    {h.rating ? `${h.rating} ★` : ''}{h.priceLevel ? ` · ${'$'.repeat(h.priceLevel)}` : ''}
-                  </Text>
-                  {h.vicinity && <Text style={styles.apiCardSub}>{h.vicinity}</Text>}
-                </View>
-              ))}
+        {destinationText.trim() ? (
+          nearbyHotels && nearbyHotels.length > 0 ? (
+            <View style={styles.apiSection}>
+              <Text style={styles.apiSectionLabel}>NEARBY HOTELS</Text>
+              <Text style={styles.apiSectionHeading}>Real hotels near {destinationText.trim()}</Text>
+              <View style={styles.apiCardStack}>
+                {nearbyHotels.map((h) => (
+                  <Pressable key={h.placeId} style={({ pressed }) => [styles.apiCard, { opacity: pressed ? 0.85 : 1 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(h.name + (h.vicinity ? ' ' + h.vicinity : ''))}`).catch(() => {}); }} accessibilityLabel={`${h.name} on Google Maps`} accessibilityRole="button">
+                    <Text style={styles.apiCardName}>{h.name}</Text>
+                    <Text style={styles.apiCardMeta}>
+                      {h.rating ? `${h.rating} ★` : ''}{h.priceLevel ? ` · ${'$'.repeat(h.priceLevel)}` : ''}
+                    </Text>
+                    {h.vicinity && <Text style={styles.apiCardSub}>{h.vicinity}</Text>}
+                  </Pressable>
+                ))}
+              </View>
             </View>
-          </View>
-        )}
+          ) : nearbyHotels !== null ? (
+            <View style={styles.apiSection}>
+              <Text style={styles.apiSectionLabel}>NEARBY HOTELS</Text>
+              <View style={styles.fallbackContainer}>
+                <Text style={styles.fallbackText}>Couldn't load nearby hotels</Text>
+              </View>
+            </View>
+          ) : null
+        ) : null}
 
         {/* TripAdvisor Top Hotels */}
-        {taHotels && taHotels.length > 0 && (
-          <View style={styles.apiSection}>
-            <Text style={styles.apiSectionLabel}>TOP RATED</Text>
-            <Text style={styles.apiSectionHeading}>Highest rated stays</Text>
-            <View style={styles.apiCardStack}>
-              {taHotels.map((h) => (
-                <Pressable
-                  key={h.locationId}
-                  style={styles.apiCard}
-                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-                >
-                  <Text style={styles.apiCardName}>{h.name}</Text>
-                  {h.rating && <Text style={styles.apiCardMeta}>{h.rating} ★ · {h.numReviews ?? 0} reviews</Text>}
-                  {h.address && <Text style={styles.apiCardSub}>{h.address}</Text>}
-                </Pressable>
-              ))}
+        {destinationText.trim() ? (
+          taHotels && taHotels.length > 0 ? (
+            <View style={styles.apiSection}>
+              <Text style={styles.apiSectionLabel}>TOP RATED</Text>
+              <Text style={styles.apiSectionHeading}>Highest rated stays</Text>
+              <View style={styles.apiCardStack}>
+                {taHotels.map((h) => (
+                  <Pressable
+                    key={h.locationId}
+                    style={styles.apiCard}
+                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.tripadvisor.com/Search?q=${encodeURIComponent(h.name + ' ' + destinationText.trim())}`).catch(() => {}); }}
+                  >
+                    <Text style={styles.apiCardName}>{h.name}</Text>
+                    {h.rating && <Text style={styles.apiCardMeta}>{h.rating} ★ · {h.numReviews ?? 0} reviews</Text>}
+                    {h.address && <Text style={styles.apiCardSub}>{h.address}</Text>}
+                  </Pressable>
+                ))}
+              </View>
             </View>
-          </View>
-        )}
+          ) : taHotels !== null ? (
+            <View style={styles.apiSection}>
+              <Text style={styles.apiSectionLabel}>TOP RATED</Text>
+              <View style={styles.fallbackContainer}>
+                <Text style={styles.fallbackText}>Couldn't load top-rated stays</Text>
+              </View>
+            </View>
+          ) : null
+        ) : null}
 
         {/* Stay Inspiration */}
         <View style={styles.sectionHeader}>
@@ -905,4 +932,6 @@ const styles = StyleSheet.create({
   apiCardMeta: { fontFamily: FONTS.mono, fontSize: 12, color: COLORS.sage } as TextStyle,
   apiCardSub: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.creamDim } as TextStyle,
   apiCardBody: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.cream, lineHeight: 20 } as TextStyle,
+  fallbackContainer: { paddingVertical: SPACING.md, alignItems: 'center' } as ViewStyle,
+  fallbackText: { color: COLORS.muted, fontSize: 14, fontFamily: FONTS.body } as TextStyle,
 });

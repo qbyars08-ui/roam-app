@@ -179,12 +179,18 @@ function PrepScreen() {
             {weatherIntel && weatherIntel.days?.length > 0 && !weatherLoading ? <WeatherForecastDays weatherIntel={weatherIntel} /> : null}
             {weatherIntel && (weatherIntel.summary || (weatherIntel.packingAdvice?.length > 0)) && !weatherLoading ? <WeatherPackingAdvice weatherIntel={weatherIntel} /> : null}
 
-            {(sonarPrep.data || sonarSafety.data) && (
+            {(sonarPrep.data || sonarSafety.data) ? (
               <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}>
                 {sonarPrep.data && <View style={styles.sonarCard}><View style={styles.sonarCardHeader}><Text style={styles.sonarCardTitle}>{t('prep.currentConditions', { defaultValue: 'Current Conditions' })}</Text>{sonarPrep.isLive && <LiveBadge />}</View><Text style={styles.sonarCardBody}>{sonarPrep.data.answer}</Text>{sonarPrep.citations.length > 0 && <View style={{ marginTop: SPACING.sm }}><SourceCitation citations={sonarPrep.citations} /></View>}</View>}
                 {sonarSafety.data && <View style={[styles.sonarCard, { marginTop: SPACING.md }]}><View style={styles.sonarCardHeader}><Text style={styles.sonarCardTitle}>{t('prep.safetyUpdate', { defaultValue: 'Safety Update' })}</Text>{sonarSafety.isLive && <LiveBadge />}</View><Text style={styles.sonarCardBody}>{sonarSafety.data.answer}</Text>{sonarSafety.citations.length > 0 && <View style={{ marginTop: SPACING.sm }}><SourceCitation citations={sonarSafety.citations} /></View>}</View>}
               </View>
-            )}
+            ) : !sonarPrep.isLoading && !sonarSafety.isLoading ? (
+              <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}>
+                <View style={styles.fallbackContainer}>
+                  <Text style={styles.fallbackText}>Live conditions unavailable</Text>
+                </View>
+              </View>
+            ) : null}
 
             <PrepNavCards destination={selectedDest} activeTrip={activeTrip} />
             <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}><IAmHereNow destination={selectedDest} hotelName={parsedItinerary?.days?.[0]?.accommodation?.name ?? undefined} hotelAddress={undefined} /></View>
@@ -277,6 +283,8 @@ const styles = StyleSheet.create({
   destChipActive: { borderBottomColor: COLORS.sage } as ViewStyle,
   destChipText: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.creamSoft } as TextStyle,
   destChipTextActive: { color: COLORS.sage } as TextStyle,
+  fallbackContainer: { paddingVertical: SPACING.md, alignItems: 'center' } as ViewStyle,
+  fallbackText: { color: COLORS.muted, fontSize: 14, fontFamily: FONTS.body } as TextStyle,
 });
 
 export default PrepScreen;
