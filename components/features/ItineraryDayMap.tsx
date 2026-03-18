@@ -281,9 +281,9 @@ export default function ItineraryDayMap({
     // since the full map screen may be parameterized at runtime
     if (tripId) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (router as any).push(`/visited-map?tripId=${tripId}&day=${dayNumber}`);
+      (router as any).push(`/explore-map?tripId=${tripId}`);
     } else {
-      router.push('/visited-map');
+      router.push('/explore-map' as never);
     }
   }, [router, tripId, dayNumber]);
 
