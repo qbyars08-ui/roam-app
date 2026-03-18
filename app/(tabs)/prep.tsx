@@ -2773,25 +2773,13 @@ function PrepScreen() {
 
         {!hasNoData && (
           <Pressable
-            onPress={async () => {
+            onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              try {
-                const cacheKey = `@roam/prep_offline_${selectedDest}`;
-                const payload = {
-                  destination: selectedDest,
-                  emergency,
-                  safety,
-                  cultural,
-                  medicalGuide,
-                  savedAt: new Date().toISOString(),
-                };
-                await AsyncStorage.setItem(cacheKey, JSON.stringify(payload));
-                // eslint-disable-next-line no-alert
-                alert(`${selectedDest} prep data saved for offline use.`);
-              } catch {
-                // eslint-disable-next-line no-alert
-                alert(t('prep.offlineSaveError', { defaultValue: 'Could not save offline data. Try again.' }));
-              }
+              const tripId = activeTrip?.id ?? activeTripId ?? '';
+              router.push({
+                pathname: '/offline-pack',
+                params: { tripId },
+              } as never);
             }}
             style={({ pressed }) => [
               styles.bodyIntelCta,

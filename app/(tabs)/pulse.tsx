@@ -20,7 +20,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Radio, Clock, MapPin, ChevronRight, Users } from 'lucide-react-native';
+import { Radio, Clock, MapPin, ChevronRight, Users, GitCompare } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../../lib/constants';
@@ -1076,6 +1076,32 @@ export default function PulseScreen() {
             />
           ))}
         </ScrollView>
+
+        {/* ── Compare pill ── */}
+        <View style={{ paddingHorizontal: SPACING.lg, marginBottom: SPACING.lg, alignItems: 'flex-start' }}>
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              const dest = PULSE_DESTINATIONS.find((d) => d.key === selectedKey);
+              if (dest) {
+                router.push(`/compare?left=${encodeURIComponent(dest.label)}` as never);
+              } else {
+                router.push('/compare' as never);
+              }
+            }}
+            style={({ pressed }) => [
+              styles.comparePill,
+              { opacity: pressed ? 0.8 : 1 },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t('pulse.compare', { defaultValue: 'Compare destinations' })}
+          >
+            <GitCompare size={14} color={COLORS.sage} strokeWidth={1.5} />
+            <Text style={styles.comparePillText}>
+              {t('pulse.compare', { defaultValue: 'Compare' })}
+            </Text>
+          </Pressable>
+        </View>
 
         {/* ── Live Feed Ticker ── */}
         <View style={{ paddingHorizontal: SPACING.lg, marginBottom: SPACING.lg }}>
@@ -2169,5 +2195,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.creamSoft,
     letterSpacing: 0.3,
+  } as TextStyle,
+  comparePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.pill,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs + 2,
+  } as ViewStyle,
+  comparePillText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 13,
+    color: COLORS.sage,
   } as TextStyle,
 });

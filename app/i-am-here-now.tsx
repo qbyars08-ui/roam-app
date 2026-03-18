@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
   Animated,
+  Image,
   Linking,
   Modal,
   Pressable,
@@ -14,19 +15,21 @@ import {
   Text,
   TextInput,
   View,
+  type ImageStyle,
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Camera, ChevronLeft, Phone, X } from 'lucide-react-native';
+import { Camera, ChevronLeft, Image as ImageIcon, Phone, X } from 'lucide-react-native';
 import { COLORS, FONTS, RADIUS, SPACING } from '../lib/constants';
 import { useAppStore, type Trip } from '../lib/store';
 import * as Haptics from '../lib/haptics';
 import { getCurrentWeather, type CurrentWeather } from '../lib/apis/openweather';
 import { getEmergencyNumbers, type EmergencyNumbers } from '../lib/emergency-numbers';
-import { getContextualMessage, type HereNowContext } from '../lib/here-now-context';
+import { getContextualMessage, getTimeOfDay, type HereNowContext } from '../lib/here-now-context';
 import { getHotelForDriver } from '../lib/local-script';
 import { useSonarQuery } from '../lib/sonar';
 import { parseItinerary } from '../lib/types/itinerary';
@@ -86,6 +89,7 @@ export default function IAmHereNow(): React.JSX.Element {
   const [emergencyModalVisible, setEmergencyModalVisible] = useState(false);
   const [momentSheetVisible, setMomentSheetVisible] = useState(false);
   const [momentNote, setMomentNote] = useState('');
+  const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
   const [isSavingMoment, setIsSavingMoment] = useState(false);
 
   // Sonar "right now" pulse
@@ -176,7 +180,28 @@ export default function IAmHereNow(): React.JSX.Element {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     setMomentSheetVisible(false);
     setMomentNote('');
+    setSelectedImageUri(null);
   }, []);
+
+  const handlePickImage = useCallback(async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        t('hereNow.photoPermissionTitle', { defaultValue: 'Photo access needed' }),
+        t('hereNow.photoPermissionBody', { defaultValue: 'Allow photo library access to attach photos to moments.' }),
+      );
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: false,
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets.length > 0) {
+      setSelectedImageUri(result.assets[0].uri);
+    }
+  }, [t]);
 
   const handleSaveMoment = useCallback(async () => {
     if (!momentNote.trim()) return;
@@ -189,21 +214,34 @@ export default function IAmHereNow(): React.JSX.Element {
     }
     setIsSavingMoment(true);
     try {
+      const timeOfDay = getTimeOfDay(now.getHours());
+      const timeLabel = timeOfDay.charAt(0).toUpperCase() + timeOfDay.slice(1);
+      const weatherLabel = weather
+        ? `${Math.round(weather.temp)}°C, ${weather.condition}`
+        : null;
+      const metaPrefix = weatherLabel
+        ? `[${timeLabel}, ${weatherLabel}]`
+        : `[${timeLabel}]`;
+      const enrichedNote = `${metaPrefix} ${momentNote.trim()}`;
+
       await supabase.from('trip_moments').insert({
         user_id: session.user.id,
         trip_id: activeTrip?.id ?? null,
-        note: momentNote.trim(),
+        note: enrichedNote,
+        photo_url: selectedImageUri ?? null,
+        location: destination || null,
         destination: destination || null,
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       setMomentSheetVisible(false);
       setMomentNote('');
+      setSelectedImageUri(null);
     } catch {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
     } finally {
       setIsSavingMoment(false);
     }
-  }, [momentNote, session, activeTrip, destination]);
+  }, [momentNote, session, activeTrip, destination, now, weather, selectedImageUri, t]);
 
   const handleCall = useCallback((number: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
@@ -483,6 +521,27 @@ export default function IAmHereNow(): React.JSX.Element {
               autoFocus
               maxLength={500}
             />
+
+            <View style={styles.momentPhotoRow}>
+              <Pressable style={styles.photoPickerButton} onPress={handlePickImage} hitSlop={8}>
+                <ImageIcon size={18} color={COLORS.sage} strokeWidth={1.5} />
+              </Pressable>
+              {selectedImageUri ? (
+                <View style={styles.photoThumbnailWrap}>
+                  <Image
+                    source={{ uri: selectedImageUri }}
+                    style={styles.photoThumbnail}
+                  />
+                  <Pressable
+                    style={styles.photoThumbnailRemove}
+                    onPress={() => setSelectedImageUri(null)}
+                    hitSlop={6}
+                  >
+                    <X size={12} color={COLORS.bg} strokeWidth={2} />
+                  </Pressable>
+                </View>
+              ) : null}
+            </View>
 
             <Pressable
               style={[
@@ -975,4 +1034,45 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: COLORS.bg,
   } as TextStyle,
+
+  momentPhotoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  } as ViewStyle,
+
+  photoPickerButton: {
+    width: 36,
+    height: 36,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.sage,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
+
+  photoThumbnailWrap: {
+    width: 48,
+    height: 48,
+    position: 'relative',
+  } as ViewStyle,
+
+  photoThumbnail: {
+    width: 48,
+    height: 48,
+    borderRadius: RADIUS.sm,
+  } as ImageStyle,
+
+  photoThumbnailRemove: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: COLORS.muted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
 });
