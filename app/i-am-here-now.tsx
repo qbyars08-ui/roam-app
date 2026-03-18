@@ -4,6 +4,7 @@
 // =============================================================================
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   Animated,
   Linking,
   Modal,
@@ -178,7 +179,14 @@ export default function IAmHereNow(): React.JSX.Element {
   }, []);
 
   const handleSaveMoment = useCallback(async () => {
-    if (!momentNote.trim() || !session?.user?.id) return;
+    if (!momentNote.trim()) return;
+    if (!session?.user?.id) {
+      Alert.alert(
+        t('hereNow.signInTitle', { defaultValue: 'Sign in to save moments' }),
+        t('hereNow.signInBody', { defaultValue: 'Create an account to capture travel moments.' }),
+      );
+      return;
+    }
     setIsSavingMoment(true);
     try {
       await supabase.from('trip_moments').insert({

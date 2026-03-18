@@ -912,7 +912,7 @@ export default function PlanScreen() {
           <TravelingSection
             activeTrip={activeTrip}
             onHelpPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/i-am-here-now' as never); }}
-            onCapturePress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/trip-journal' as never); }}
+            onCapturePress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push(('/trip-journal?tripId=' + activeTrip.id) as never); }}
             onSplitPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/split-expenses' as never); }}
           />
         )}
@@ -921,67 +921,27 @@ export default function PlanScreen() {
           <ReturnedSection
             activeTrip={activeTrip}
             onWrappedPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/trip-wrapped' as never); }}
-            onJournalPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/trip-journal' as never); }}
+            onJournalPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(('/trip-journal?tripId=' + activeTrip.id) as never); }}
           />
         )}
 
-        {/* Countdown — when latest trip has departure date */}
-        {hasTrips && sortedTrips[0].startDate && (() => {
-          const start = new Date(sortedTrips[0].startDate);
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          start.setHours(0, 0, 0, 0);
-          const daysUntil = Math.max(0, Math.round((start.getTime() - today.getTime()) / (24 * 60 * 60 * 1000)));
-          const city = sortedTrips[0].destination;
-          const isUrgent = daysUntil > 0 && daysUntil < 7;
-          return (
-            <Pressable
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/itinerary' as never);
-              }}
-              accessibilityLabel={`${daysUntil} days until ${city}. Tap to view itinerary.`}
-              accessibilityRole="button"
-              style={({ pressed }) => [styles.countdownBanner, { opacity: pressed ? 0.85 : 1 }]}
-            >
-              <Text style={[styles.countdownText, isUrgent && styles.countdownTextGold]}>
-                {daysUntil === 0
-                  ? t('plan.countdownToday', { defaultValue: 'Today: {{city}}', city })
-                  : daysUntil === 1
-                    ? t('plan.countdownTomorrow', { defaultValue: '1 day until {{city}}', city })
-                    : t('plan.countdownDays', { defaultValue: '{{count}} days until {{city}}', count: daysUntil, city })}
-              </Text>
-            </Pressable>
-          );
-        })()}
-
-        {/* New Trip Button */}
-        <Pressable
-          onPress={handleNewTrip}
-          accessibilityLabel="Plan a new trip"
-          accessibilityRole="button"
-          style={({ pressed }) => [styles.newTripBtn, { transform: [{ scale: pressed ? 0.97 : 1 }] }]}
-        >
-          <LinearGradient
-            colors={[COLORS.sage, COLORS.sageStrong]}
-            style={styles.newTripGradient}
+        {/* New Trip Button — only in DREAMING or when user has existing trips */}
+        {(stage === 'DREAMING' || hasTrips) && (
+          <Pressable
+            onPress={handleNewTrip}
+            accessibilityLabel="Plan a new trip"
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.newTripBtn, { transform: [{ scale: pressed ? 0.97 : 1 }] }]}
           >
-            <Plus size={22} color={COLORS.bg} strokeWidth={1.5} />
-            <Text style={styles.newTripText}>{t('plan.planNewTrip')}</Text>
-          </LinearGradient>
-        </Pressable>
-        <Pressable
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setShowGenerator(true);
-            setGenerateMode('quick');
-          }}
-          accessibilityLabel={t('plan.orQuickTrip', { defaultValue: 'or try Quick Trip' })}
-          accessibilityRole="button"
-          style={({ pressed }) => [styles.quickTripLink, { opacity: pressed ? 0.6 : 1 }]}
-        >
-          <Text style={styles.quickTripLinkText}>{t('plan.orQuickTrip', { defaultValue: 'or try Quick Trip' })}</Text>
-        </Pressable>
+            <LinearGradient
+              colors={[COLORS.sage, COLORS.sageStrong]}
+              style={styles.newTripGradient}
+            >
+              <Plus size={22} color={COLORS.bg} strokeWidth={1.5} />
+              <Text style={styles.newTripText}>{t('plan.planNewTrip')}</Text>
+            </LinearGradient>
+          </Pressable>
+        )}
 
         {/* Dream Board link */}
         <DreamBoardBanner />
@@ -1017,8 +977,8 @@ export default function PlanScreen() {
           ))}
         </View>
 
-        {/* Destination Intel (shows when planning) */}
-        {planDestination && !showGenerator && (sonarDest.data || destWeather || destEvents) && (
+        {/* Destination Intel (shows when planning — hidden if PlanningSection already visible) */}
+        {planDestination && !showGenerator && stage === 'DREAMING' && (sonarDest.data || destWeather || destEvents) && (
           <View style={styles.destIntel}>
             <Pressable
               onPress={() => {
@@ -1075,11 +1035,6 @@ export default function PlanScreen() {
             />
           </View>
         )}
-
-        {/* Countdown hero — when latest trip has startDate */}
-        {sortedTrips.length > 0 && sortedTrips[0].startDate ? (
-          <CountdownHero trip={sortedTrips[0]} onPress={() => handleTripPress(sortedTrips[0])} />
-        ) : null}
 
         {/* Trip Cards */}
         <Text style={styles.sectionLabel}>{t('plan.sectionYourTrips')}</Text>

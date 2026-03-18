@@ -86,64 +86,70 @@ export function RightNowSection({
   holidaysThisMonth?: PublicHoliday[];
 }) {
   const { t } = useTranslation();
-  if (!localTime && !weather && !airQuality && !goldenHour && (!holidaysThisMonth || holidaysThisMonth.length === 0)) return null;
+  const hasData = !!(localTime || weather || airQuality || goldenHour || (holidaysThisMonth && holidaysThisMonth.length > 0));
 
   return (
     <View style={styles.section}>
       <SectionHeader
         title={t('destination.rightNow', { defaultValue: 'Right now' })}
       />
-      <View style={[CARD_BASE, styles.rightNowCard]}>
-        {localTime && (
-          <View style={styles.rightNowRow}>
-            <Clock size={16} color={COLORS.sage} strokeWidth={1.5} />
-            <Text style={styles.rightNowValue}>{localTime}</Text>
-          </View>
-        )}
-        {weather && (
-          <>
+      {!hasData ? (
+        <Text style={styles.empty}>
+          {t('destination.rightNowLoading', { defaultValue: 'Loading...' })}
+        </Text>
+      ) : (
+        <View style={[CARD_BASE, styles.rightNowCard]}>
+          {localTime && (
             <View style={styles.rightNowRow}>
-              <Cloud size={16} color={COLORS.sage} strokeWidth={1.5} />
-              <Text style={styles.rightNowValue}>
-                {weather.temp}° — {weather.condition}
+              <Clock size={16} color={COLORS.sage} strokeWidth={1.5} />
+              <Text style={styles.rightNowValue}>{localTime}</Text>
+            </View>
+          )}
+          {weather && (
+            <>
+              <View style={styles.rightNowRow}>
+                <Cloud size={16} color={COLORS.sage} strokeWidth={1.5} />
+                <Text style={styles.rightNowValue}>
+                  {weather.temp}° — {weather.condition}
+                </Text>
+              </View>
+              <View style={styles.rightNowRow}>
+                <Droplets size={16} color={COLORS.sage} strokeWidth={1.5} />
+                <Text style={styles.rightNowValue}>
+                  {t('destination.humidity', {
+                    defaultValue: `${weather.humidity}% humidity`,
+                  })}
+                </Text>
+              </View>
+            </>
+          )}
+          {airQuality && (
+            <View style={styles.rightNowRow}>
+              <Wind size={16} color={airQuality.aqi > 100 ? COLORS.coral : COLORS.sage} strokeWidth={1.5} />
+              <Text style={[styles.rightNowValue, { color: airQuality.aqi > 100 ? COLORS.coral : COLORS.cream }]}>
+                {t('destination.airQuality', { defaultValue: 'Air quality:' })} {airQuality.label} (AQI {airQuality.aqi})
               </Text>
             </View>
+          )}
+          {goldenHour && (
             <View style={styles.rightNowRow}>
-              <Droplets size={16} color={COLORS.sage} strokeWidth={1.5} />
+              <Sun size={16} color={COLORS.gold} strokeWidth={1.5} />
               <Text style={styles.rightNowValue}>
-                {t('destination.humidity', {
-                  defaultValue: `${weather.humidity}% humidity`,
-                })}
+                {t('destination.goldenHour', { defaultValue: 'Golden hour:' })} {goldenHour.bestPhotoWindow}
               </Text>
             </View>
-          </>
-        )}
-        {airQuality && (
-          <View style={styles.rightNowRow}>
-            <Wind size={16} color={airQuality.aqi > 100 ? COLORS.coral : COLORS.sage} strokeWidth={1.5} />
-            <Text style={[styles.rightNowValue, { color: airQuality.aqi > 100 ? COLORS.coral : COLORS.cream }]}>
-              {t('destination.airQuality', { defaultValue: 'Air quality:' })} {airQuality.label} (AQI {airQuality.aqi})
-            </Text>
-          </View>
-        )}
-        {goldenHour && (
-          <View style={styles.rightNowRow}>
-            <Sun size={16} color={COLORS.gold} strokeWidth={1.5} />
-            <Text style={styles.rightNowValue}>
-              {t('destination.goldenHour', { defaultValue: 'Golden hour:' })} {goldenHour.bestPhotoWindow}
-            </Text>
-          </View>
-        )}
-        {holidaysThisMonth && holidaysThisMonth.length > 0 && (
-          <View style={styles.rightNowRow}>
-            <Star size={16} color={COLORS.gold} strokeWidth={1.5} />
-            <Text style={styles.rightNowValue} numberOfLines={1}>
-              {t('destination.holidayThisMonth', { defaultValue: 'Holiday:' })} {holidaysThisMonth[0].name}
-              {holidaysThisMonth.length > 1 ? ` +${holidaysThisMonth.length - 1}` : ''}
-            </Text>
-          </View>
-        )}
-      </View>
+          )}
+          {holidaysThisMonth && holidaysThisMonth.length > 0 && (
+            <View style={styles.rightNowRow}>
+              <Star size={16} color={COLORS.gold} strokeWidth={1.5} />
+              <Text style={styles.rightNowValue} numberOfLines={1}>
+                {t('destination.holidayThisMonth', { defaultValue: 'Holiday:' })} {holidaysThisMonth[0].name}
+                {holidaysThisMonth.length > 1 ? ` +${holidaysThisMonth.length - 1}` : ''}
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
     </View>
   );
 }
@@ -171,11 +177,9 @@ function formatDuration(minutes: number): string {
 export function RoutesSection({
   routes,
   loading,
-  hasSession,
 }: {
   routes: RouteResult[] | null;
   loading: boolean;
-  hasSession: boolean | null;
 }) {
   const { t } = useTranslation();
 
@@ -186,11 +190,7 @@ export function RoutesSection({
           defaultValue: 'How to get there',
         })}
       />
-      {hasSession === false ? (
-        <Text style={styles.empty}>
-          {t('destination.signInForLiveData', { defaultValue: 'Sign in to see live route data.' })}
-        </Text>
-      ) : loading ? (
+      {loading ? (
         <>
           <Skeleton />
           <Skeleton />
@@ -238,7 +238,19 @@ export function CostSection({
   onStartSaving?: () => void;
 }) {
   const { t } = useTranslation();
-  if (!data) return null;
+
+  if (!data) {
+    return (
+      <View style={styles.section}>
+        <SectionHeader
+          title={t('destination.whatItCosts', { defaultValue: 'What it costs' })}
+        />
+        <Text style={styles.empty}>
+          {t('destination.noCostData', { defaultValue: 'No data available for this destination.' })}
+        </Text>
+      </View>
+    );
+  }
 
   const rows = [
     {
@@ -435,11 +447,9 @@ export function VisaSection({
 export function AttractionsSection({
   attractions,
   loading,
-  hasSession,
 }: {
   attractions: TALocation[] | null;
   loading: boolean;
-  hasSession: boolean | null;
 }) {
   const { t } = useTranslation();
 
@@ -450,11 +460,7 @@ export function AttractionsSection({
           defaultValue: 'Things to do',
         })}
       />
-      {hasSession === false ? (
-        <Text style={styles.empty}>
-          {t('destination.signInForLiveData', { defaultValue: 'Sign in to see top attractions.' })}
-        </Text>
-      ) : loading ? (
+      {loading ? (
         <>
           <Skeleton />
           <Skeleton />
@@ -522,11 +528,9 @@ export function AttractionsSection({
 export function RestaurantsSection({
   venues,
   loading,
-  hasSession,
 }: {
   venues: FSQPlace[] | null;
   loading: boolean;
-  hasSession: boolean | null;
 }) {
   const { t } = useTranslation();
 
@@ -537,11 +541,7 @@ export function RestaurantsSection({
           defaultValue: 'Where to eat',
         })}
       />
-      {hasSession === false ? (
-        <Text style={styles.empty}>
-          {t('destination.signInForLiveData', { defaultValue: 'Sign in to see restaurant recommendations.' })}
-        </Text>
-      ) : loading ? (
+      {loading ? (
         <>
           <Skeleton />
           <Skeleton />

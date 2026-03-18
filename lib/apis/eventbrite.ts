@@ -63,6 +63,10 @@ export async function searchEvents(
   const cached = await readCache<EventResult[]>(cacheKey);
   if (cached) return cached;
 
+  // Guard: edge function requires an authenticated session
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return null;
+
   try {
     const { data, error } = await supabase.functions.invoke('travel-proxy', {
       body: {

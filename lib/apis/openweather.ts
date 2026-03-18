@@ -77,6 +77,10 @@ export async function getWeatherIntel(destination: string): Promise<WeatherIntel
   const cached = await readCache<WeatherIntel>(cacheKey);
   if (cached) return cached;
 
+  // Guard: edge function requires an authenticated session
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return null;
+
   try {
     const { data, error } = await supabase.functions.invoke('weather-intel', {
       body: { destination },

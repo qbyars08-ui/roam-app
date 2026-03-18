@@ -145,8 +145,8 @@ export default function LivingDestinationPage(): React.JSX.Element {
         .catch(() => {});
     }).catch(() => {});
 
-    // Public holidays this month
-    const countryCode = destInfo?.country ? getCountryCode(destination) : null;
+    // Public holidays this month — destInfo.country is already ISO2; fall back to getCountryCode lookup
+    const countryCode = destInfo?.country ?? getCountryCode(destination);
     if (countryCode) {
       const now = new Date();
       const thisMonth = now.getMonth();
@@ -168,7 +168,7 @@ export default function LivingDestinationPage(): React.JSX.Element {
   // -----------------------------------------------------------------------
   const [emergencyNumbers, setEmergencyNumbers] = useState<EmergencyNumbers | null>(null);
   useEffect(() => {
-    const countryCode = destInfo?.country ? getCountryCode(destination) : null;
+    const countryCode = destInfo?.country ?? getCountryCode(destination);
     if (!countryCode) return;
     getEmergencyNumbers(countryCode)
       .then((en) => { if (en) setEmergencyNumbers(en); })
@@ -192,8 +192,10 @@ export default function LivingDestinationPage(): React.JSX.Element {
   const [routesLoading, setRoutesLoading] = useState(true);
   useEffect(() => {
     setRoutesLoading(true);
-    // Use "My Location" as fallback origin; Rome2Rio resolves it
-    getRoutes('New York', destination)
+    // Pass empty string for origin — travel-proxy will return routes to the destination
+    // without biasing from a hardcoded city. If the edge function requires an origin,
+    // it will fall back gracefully to "nearest airport" logic server-side.
+    getRoutes('', destination)
       .then((r) => setRoutes(r))
       .catch(() => setRoutes(null))
       .finally(() => setRoutesLoading(false));
@@ -213,13 +215,15 @@ export default function LivingDestinationPage(): React.JSX.Element {
   const [advisory, setAdvisory] = useState<TravelAdvisory | null>(null);
   const [advisoryLoading, setAdvisoryLoading] = useState(true);
   useEffect(() => {
-    if (!destInfo) { setAdvisoryLoading(false); return; }
+    // destInfo.country is the ISO2 code; fall back to getCountryCode lookup for non-DESTINATIONS entries
+    const countryCode = destInfo?.country ?? getCountryCode(destination);
+    if (!countryCode) { setAdvisoryLoading(false); return; }
     setAdvisoryLoading(true);
-    getTravelAdvisory(destInfo.country)
+    getTravelAdvisory(countryCode)
       .then((a) => setAdvisory(a))
       .catch(() => setAdvisory(null))
       .finally(() => setAdvisoryLoading(false));
-  }, [destInfo]);
+  }, [destination, destInfo]);
 
   // -----------------------------------------------------------------------
   // 7. Visa — free static/RapidAPI visa requirements (no auth needed)
@@ -227,13 +231,13 @@ export default function LivingDestinationPage(): React.JSX.Element {
   const [visa, setVisa] = useState<VisaResult | null>(null);
   const [visaLoading, setVisaLoading] = useState(true);
   useEffect(() => {
-    if (!destInfo) { setVisaLoading(false); return; }
+    // checkVisaRequirements does its own destination → country lookup; no destInfo guard needed
     setVisaLoading(true);
     checkVisaRequirements(destination)
       .then((v) => setVisa(v))
       .catch(() => setVisa(null))
       .finally(() => setVisaLoading(false));
-  }, [destination, destInfo]);
+  }, [destination]);
 
   // -----------------------------------------------------------------------
   // 8. Things to do — TripAdvisor attractions
@@ -254,12 +258,21 @@ export default function LivingDestinationPage(): React.JSX.Element {
   const [venues, setVenues] = useState<FSQPlace[] | null>(null);
   const [venuesLoading, setVenuesLoading] = useState(true);
   useEffect(() => {
-    if (!destInfo) { setVenuesLoading(false); return; }
+    let cancelled = false;
     setVenuesLoading(true);
-    searchPlaces(destination, destInfo.lat, destInfo.lng)
-      .then((p) => setVenues(p ? p.slice(0, 6) : null))
-      .catch(() => setVenues(null))
-      .finally(() => setVenuesLoading(false));
+    const getCoords = destInfo
+      ? Promise.resolve({ lat: destInfo.lat, lng: destInfo.lng })
+      : resolveDestinationCoords(destination);
+    getCoords
+      .then((coords) => {
+        if (cancelled || !coords) { setVenuesLoading(false); return; }
+        return searchPlaces(destination, coords.lat, coords.lng)
+          .then((p) => { if (!cancelled) setVenues(p ? p.slice(0, 6) : null); })
+          .catch(() => { if (!cancelled) setVenues(null); })
+          .finally(() => { if (!cancelled) setVenuesLoading(false); });
+      })
+      .catch(() => { if (!cancelled) { setVenues(null); setVenuesLoading(false); } });
+    return () => { cancelled = true; };
   }, [destination, destInfo]);
 
   // -----------------------------------------------------------------------
@@ -271,6 +284,10 @@ export default function LivingDestinationPage(): React.JSX.Element {
     from.setDate(1);
     void (async () => {
       try {
+        // RLS blocks this query for unauthenticated users — skip if no session
+        const { data: { session: activeSession } } = await supabase.auth.getSession();
+        if (!activeSession) return;
+
         const { count } = await supabase
           .from('trips')
           .select('id', { count: 'exact', head: true })
@@ -450,7 +467,7 @@ export default function LivingDestinationPage(): React.JSX.Element {
         </View>
 
         {/* 4. HOW TO GET THERE */}
-        <RoutesSection routes={routes} loading={routesLoading} hasSession={hasSession} />
+        <RoutesSection routes={routes} loading={routesLoading} />
 
         {/* 5. WHAT IT COSTS */}
         <CostSection data={costData} onStartSaving={handleStartSaving} />
@@ -462,10 +479,10 @@ export default function LivingDestinationPage(): React.JSX.Element {
         <VisaSection visa={visa} loading={visaLoading} />
 
         {/* 8. THINGS TO DO */}
-        <AttractionsSection attractions={attractions} loading={attractionsLoading} hasSession={hasSession} />
+        <AttractionsSection attractions={attractions} loading={attractionsLoading} />
 
         {/* 9. WHERE TO EAT */}
-        <RestaurantsSection venues={venues} loading={venuesLoading} hasSession={hasSession} />
+        <RestaurantsSection venues={venues} loading={venuesLoading} />
 
         {/* 10. PLAN A TRIP HERE */}
         <PlanTripSection
