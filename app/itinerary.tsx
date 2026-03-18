@@ -123,6 +123,8 @@ import PocketConcierge from '../components/features/PocketConcierge';
 import NarrationToggle from '../components/audio/NarrationToggle';
 import { getPlaceTips, type FSQTip } from '../lib/apis/foursquare';
 import { searchActivities, type GYGActivity } from '../lib/apis/getyourguide';
+import { useTripSync } from '../lib/realtime-sync';
+import SyncIndicator from '../components/ui/SyncIndicator';
 
 // =============================================================================
 // Component
@@ -180,6 +182,9 @@ export default function ItineraryScreen() {
 
   // Destination color theme — shifts accent colors per destination
   const destTheme = useDestinationTheme(trip?.destination);
+
+  // Realtime sync — keeps itinerary in sync with web edits and new moments
+  const { isSynced, lastSyncedAt, syncError } = useTripSync(trip?.id ?? null);
 
   // ---------------------------------------------------------------------------
   // Resolve trip from params
@@ -839,6 +844,8 @@ export default function ItineraryScreen() {
         </Text>
 
         <View style={styles.headerRight}>
+          {/* Realtime sync status */}
+          <SyncIndicator isSynced={isSynced} lastSyncedAt={lastSyncedAt} syncError={syncError} />
           {/* Currency toggle — subtle pill */}
           <CurrencyToggle subtle />
           {/* Edit mode toggle */}

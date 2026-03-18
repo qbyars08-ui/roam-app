@@ -32,6 +32,7 @@ import {
   ShieldCheck,
   Heart,
   Receipt,
+  Volume2,
 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
@@ -42,6 +43,7 @@ import { Flame, Sparkle } from 'lucide-react-native';
 import { generateItineraryStreaming, TripLimitReachedError } from '../../lib/claude';
 import { isGuestUser } from '../../lib/guest';
 import { scheduleDailyBrief, scheduleTripWrappedReminder } from '../../lib/notifications';
+import { playDailyBriefAudio } from '../../lib/daily-brief-audio';
 import type { QuickModeState } from '../../components/generate/GenerateQuickMode';
 import { BUDGET_TO_BACKEND } from '../../components/generate/GenerateQuickMode';
 import GenerateModeSelect from '../../components/generate/GenerateModeSelect';
@@ -1249,6 +1251,18 @@ function PlanningSection({
   const countdownColor = isImminent ? COLORS.gold : COLORS.cream;
   const hasNotableAir = airQuality != null && airQuality.aqi > 100;
 
+  const [audioPlaying, setAudioPlaying] = useState(false);
+
+  const handlePlayBriefAudio = useCallback(() => {
+    if (audioPlaying) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setAudioPlaying(true);
+    playDailyBriefAudio(activeTrip.destination, daysUntil, {
+      onEnd: () => setAudioPlaying(false),
+      onError: () => setAudioPlaying(false),
+    }).catch(() => setAudioPlaying(false));
+  }, [audioPlaying, activeTrip.destination, daysUntil]);
+
   return (
     <View style={stageStyles.planningContainer}>
       {/* Countdown number */}
@@ -1276,8 +1290,25 @@ function PlanningSection({
       {brief && (
         <View style={stageStyles.briefCard}>
           <View style={stageStyles.briefHeader}>
-            <Text style={stageStyles.briefHeadline}>{brief.headline}</Text>
+            <Text style={[stageStyles.briefHeadline, { flex: 1 }]}>{brief.headline}</Text>
             {isLive && <LiveBadge />}
+            <Pressable
+              onPress={handlePlayBriefAudio}
+              accessibilityLabel="Play daily brief audio"
+              accessibilityRole="button"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              style={({ pressed }) => [
+                stageStyles.briefAudioBtn,
+                audioPlaying && stageStyles.briefAudioBtnActive,
+                { opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <Volume2
+                size={16}
+                color={audioPlaying ? COLORS.sage : COLORS.muted}
+                strokeWidth={1.5}
+              />
+            </Pressable>
           </View>
           <Text style={stageStyles.briefSubtext}>{brief.subtext}</Text>
         </View>
@@ -1718,6 +1749,14 @@ const stageStyles = StyleSheet.create({
     color: COLORS.creamMuted,
     lineHeight: 19,
   } as TextStyle,
+  briefAudioBtn: {
+    marginLeft: SPACING.xs,
+    padding: 4,
+    borderRadius: RADIUS.sm,
+  } as ViewStyle,
+  briefAudioBtnActive: {
+    backgroundColor: COLORS.sageSubtle,
+  } as ViewStyle,
   checklistContainer: {
     backgroundColor: COLORS.surface1,
     borderRadius: RADIUS.lg,

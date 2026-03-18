@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Dimensions,
   Image,
+  Switch,
   View,
   Text,
   ScrollView,
@@ -33,6 +34,7 @@ import { logoutRevenueCat } from '../lib/revenue-cat';
 import {
   Sparkles, Repeat, Gift, Shield, ChevronRight, BarChart3,
   CreditCard, LogOut, Globe, Camera, MapPin, ImageIcon, Heart, Scan, Backpack,
+  Volume2,
 } from 'lucide-react-native';
 import { getPersonaConfig } from '../lib/traveler-persona';
 import { hasEnoughData } from '../lib/travel-dna';
@@ -49,7 +51,7 @@ import { getDestinationTheme } from '../lib/destination-themes';
 import { computeTravelPersonality } from '../lib/travel-personality';
 import type { TripPhoto, TripAlbum } from '../lib/types/trip-photos';
 
-import { EMERGENCY_CONTACT, ONBOARDING_COMPLETE } from '../lib/storage-keys';
+import { EMERGENCY_CONTACT, ONBOARDING_COMPLETE, TRIP_SOUNDS } from '../lib/storage-keys';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GALLERY_GAP = 3;
@@ -118,6 +120,23 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     track({ type: 'screen_view', screen: 'profile' });
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // Trip sounds (morning brief audio) preference
+  // ---------------------------------------------------------------------------
+  const [tripSoundsEnabled, setTripSoundsEnabled] = useState(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem(TRIP_SOUNDS).then((val) => {
+      setTripSoundsEnabled(val === 'true');
+    }).catch(() => {});
+  }, []);
+
+  const handleTripSoundsToggle = useCallback(async (next: boolean) => {
+    setTripSoundsEnabled(next);
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await AsyncStorage.setItem(TRIP_SOUNDS, next ? 'true' : 'false');
   }, []);
 
   // ---------------------------------------------------------------------------
@@ -656,6 +675,26 @@ export default function ProfileScreen() {
             </View>
             <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
           </Pressable>
+
+          <View style={styles.menuDivider} />
+
+          {/* Morning brief audio toggle */}
+          <View style={styles.menuItem}>
+            <View style={styles.menuIconWrap}>
+              <Volume2 size={18} color={COLORS.sage} strokeWidth={1.5} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.menuLabel}>Morning brief audio</Text>
+              <Text style={styles.menuSubtext}>Wake up to your daily brief read aloud</Text>
+            </View>
+            <Switch
+              value={tripSoundsEnabled}
+              onValueChange={handleTripSoundsToggle}
+              trackColor={{ false: COLORS.bgGlass, true: COLORS.sage }}
+              thumbColor={COLORS.cream}
+              ios_backgroundColor={COLORS.bgGlass}
+            />
+          </View>
 
           <View style={styles.menuDivider} />
 

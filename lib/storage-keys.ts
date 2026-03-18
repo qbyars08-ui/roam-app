@@ -108,3 +108,10 @@ export const LANGUAGE_SURVIVAL_CACHE = '@roam/language-survival-cache';
 // Locale / i18n
 // ---------------------------------------------------------------------------
 export const LOCALE = '@roam/locale';
+
+// ---------------------------------------------------------------------------
+// Audio preferences
+// ---------------------------------------------------------------------------
+
+/** AsyncStorage key for the "Trip sounds / morning brief audio" toggle. */
+export const TRIP_SOUNDS = 'roam_trip_sounds';
