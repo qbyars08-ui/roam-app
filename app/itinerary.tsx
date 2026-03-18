@@ -100,7 +100,7 @@ import {
   SAFETY_COLORS,
 } from '../lib/neighborhood-safety';
 import { formatDualPrice, formatLocalPrice, type ExchangeRates } from '../lib/currency';
-import { AlertTriangle, X, Pencil, Calendar, Link2, Share2, MapPin, Map as LucideMap, Receipt, Film, Wallet, Train, CreditCard, Plane, Heart, ShieldCheck, Droplets, Globe, Sun, Wind, PartyPopper, Camera, Clock, ChevronRight } from 'lucide-react-native';
+import { AlertTriangle, X, Pencil, Calendar, Link2, Share2, MapPin, Map as LucideMap, Receipt, Film, Wallet, Train, CreditCard, Plane, Heart, ShieldCheck, Droplets, Globe, Sun, Wind, PartyPopper, Camera, Clock, ChevronRight, Printer } from 'lucide-react-native';
 import { getTransitGuide, type TransitGuide } from '../lib/transit-data';
 import { getHomeAirport } from '../lib/flights';
 import { getMedicalGuideByDestination, type MedicalGuide } from '../lib/medical-abroad';
@@ -1012,6 +1012,23 @@ export default function ItineraryScreen() {
             ]}
           >
             <Text style={styles.headerBtnText}>Viral</Text>
+          </Pressable>
+
+          {/* Print trip pack */}
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push({ pathname: '/print-trip', params: { tripId: trip?.id } });
+            }}
+            hitSlop={12}
+            accessibilityLabel="Print trip pack"
+            accessibilityHint="Opens a printable summary of your trip"
+            style={({ pressed }) => [
+              styles.headerBtn,
+              { opacity: pressed ? 0.6 : 1 },
+            ]}
+          >
+            <Printer size={20} color={COLORS.cream} strokeWidth={1.5} />
           </Pressable>
         </View>
       </View>

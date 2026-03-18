@@ -41,8 +41,10 @@ import DestinationThemeOverlay from '../components/ui/DestinationThemeOverlay';
 import GrainOverlay from '../components/ui/GrainOverlay';
 import MilestoneModal from '../components/features/MilestoneModal';
 import DailyMoment from '../components/features/DailyMoment';
+import CommandKSearch from '../components/web/CommandKSearch';
 import { PostHogProvider } from 'posthog-react-native';
 import { initPostHog, identifyUser, resetIdentity, getPostHogClient } from '../lib/posthog';
+import { EnvironmentalProvider } from '../lib/environmental-ui';
 
 // ---------------------------------------------------------------------------
 // Auth guard — redirects based on session state
@@ -337,6 +339,7 @@ export default function RootLayout() {
   const posthogClient = getPostHogClient();
 
   const appContent = (
+    <EnvironmentalProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <GrainOverlay />
         <DestinationThemeOverlay destination={activeDestination} />
@@ -626,6 +629,7 @@ export default function RootLayout() {
           />
         </Stack>
         </PhoneFrame>
+        <CommandKSearch />
         <DailyMoment
           onComplete={() => setShowDailyMoment(false)}
           enabled={showDailyMoment && fontsLoaded && isReady}
@@ -636,6 +640,7 @@ export default function RootLayout() {
         />
         <StatusBar style="light" />
       </GestureHandlerRootView>
+    </EnvironmentalProvider>
   );
 
   return (
