@@ -424,7 +424,7 @@ export const DESTINATION_HERO_PHOTOS: Record<string, string> = {
 // ---------------------------------------------------------------------------
 // Free-tier limits
 // ---------------------------------------------------------------------------
-export const FREE_TRIPS_PER_MONTH = 1;
+export const FREE_TRIPS_PER_MONTH = 1; // Lifetime limit, not monthly — no reset
 
 // ---------------------------------------------------------------------------
 // Affiliate links

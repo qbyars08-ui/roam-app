@@ -121,7 +121,9 @@ export default function RootLayout() {
     initRevenueCat().catch(() => {});
     initPostHog().catch(() => {});
     // Register for push notifications on mount (requests permission + saves token)
-    registerForPushNotifications().catch(() => {});
+    if (typeof registerForPushNotifications === 'function') {
+      registerForPushNotifications().catch(() => {});
+    }
     checkStorageVersion().catch(() => {});
     captureRefOnLoad().catch(() => {}); // Web: track ?ref= for referral attribution
     // Restore persisted data (trips, pets, travel profile, currency) before session check

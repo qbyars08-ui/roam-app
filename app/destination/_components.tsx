@@ -22,7 +22,7 @@ import type { CurrentWeather } from '../../lib/apis/openweather';
 import type { RouteResult } from '../../lib/apis/rome2rio';
 import type { CostOfLiving } from '../../lib/cost-of-living';
 import type { TravelAdvisory } from '../../lib/travel-safety';
-import type { VisaResult } from '../../lib/apis/sherpa';
+import { getVisaStatusDisplay, type VisaResult } from '../../lib/visa-requirements';
 import type { TALocation } from '../../lib/apis/tripadvisor';
 import type { FSQPlace } from '../../lib/apis/foursquare';
 
@@ -133,9 +133,11 @@ function formatDuration(minutes: number): string {
 export function RoutesSection({
   routes,
   loading,
+  hasSession,
 }: {
   routes: RouteResult[] | null;
   loading: boolean;
+  hasSession: boolean | null;
 }) {
   const { t } = useTranslation();
 
@@ -146,7 +148,11 @@ export function RoutesSection({
           defaultValue: 'How to get there',
         })}
       />
-      {loading ? (
+      {hasSession === false ? (
+        <Text style={styles.empty}>
+          {t('destination.signInForLiveData', { defaultValue: 'Sign in to see live route data.' })}
+        </Text>
+      ) : loading ? (
         <>
           <Skeleton />
           <Skeleton />
@@ -302,13 +308,6 @@ export function SafetySection({
 // ---------------------------------------------------------------------------
 // 7. Visa
 // ---------------------------------------------------------------------------
-const VISA_LABELS: Record<string, string> = {
-  visa_free: 'Visa free',
-  visa_on_arrival: 'Visa on arrival',
-  e_visa: 'E-visa required',
-  visa_required: 'Visa required',
-};
-
 export function VisaSection({
   visa,
   loading,
@@ -317,6 +316,8 @@ export function VisaSection({
   loading: boolean;
 }) {
   const { t } = useTranslation();
+  const best = visa?.best ?? null;
+  const display = best ? getVisaStatusDisplay(best.status) : null;
 
   return (
     <View style={styles.section}>
@@ -325,21 +326,28 @@ export function VisaSection({
       />
       {loading ? (
         <Skeleton />
-      ) : visa ? (
+      ) : best && display ? (
         <View style={CARD_BASE}>
-          <Text style={styles.visaType}>
-            {VISA_LABELS[visa.visaType] ?? visa.visaType}
+          <Text style={[styles.visaType, { color: display.color }]}>
+            {display.label}
           </Text>
-          {visa.maxStay !== null && (
+          {best.maxStay !== null && (
             <Text style={styles.mono}>
               {t('destination.maxStay', {
-                defaultValue: `Up to ${visa.maxStay} days`,
+                defaultValue: `Up to ${best.maxStay}`,
               })}
             </Text>
           )}
-          {visa.notes && (
+          {best.notes && (
             <Text style={[styles.cardDetail, { marginTop: SPACING.xs }]}>
-              {visa.notes}
+              {best.notes}
+            </Text>
+          )}
+          {visa && visa.all.length > 1 && (
+            <Text style={[styles.mono, { marginTop: SPACING.xs }]}>
+              {t('destination.visaPassport', {
+                defaultValue: `Best passport: ${best.passportCountry}`,
+              })}
             </Text>
           )}
         </View>
@@ -360,9 +368,11 @@ export function VisaSection({
 export function AttractionsSection({
   attractions,
   loading,
+  hasSession,
 }: {
   attractions: TALocation[] | null;
   loading: boolean;
+  hasSession: boolean | null;
 }) {
   const { t } = useTranslation();
 
@@ -373,7 +383,11 @@ export function AttractionsSection({
           defaultValue: 'Things to do',
         })}
       />
-      {loading ? (
+      {hasSession === false ? (
+        <Text style={styles.empty}>
+          {t('destination.signInForLiveData', { defaultValue: 'Sign in to see top attractions.' })}
+        </Text>
+      ) : loading ? (
         <>
           <Skeleton />
           <Skeleton />
@@ -441,9 +455,11 @@ export function AttractionsSection({
 export function RestaurantsSection({
   venues,
   loading,
+  hasSession,
 }: {
   venues: FSQPlace[] | null;
   loading: boolean;
+  hasSession: boolean | null;
 }) {
   const { t } = useTranslation();
 
@@ -454,7 +470,11 @@ export function RestaurantsSection({
           defaultValue: 'Where to eat',
         })}
       />
-      {loading ? (
+      {hasSession === false ? (
+        <Text style={styles.empty}>
+          {t('destination.signInForLiveData', { defaultValue: 'Sign in to see restaurant recommendations.' })}
+        </Text>
+      ) : loading ? (
         <>
           <Skeleton />
           <Skeleton />

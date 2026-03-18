@@ -125,22 +125,7 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    const now = new Date();
-    const resetAt = new Date(profile.month_reset_at);
-    const needsReset =
-      now.getUTCFullYear() !== resetAt.getUTCFullYear() ||
-      now.getUTCMonth() !== resetAt.getUTCMonth();
-
-    if (needsReset) {
-      await supabaseAdmin
-        .from("profiles")
-        .update({
-          trips_generated_this_month: 0,
-          month_reset_at: now.toISOString(),
-        })
-        .eq("id", user.id);
-      profile.trips_generated_this_month = 0;
-    }
+    // No monthly reset — free tier = 1 trip lifetime, then paywall.
 
     // ── Admin bypass: skip rate limit for test accounts ──────────────
     const adminEmails = (Deno.env.get("ADMIN_TEST_EMAILS") || "").split(",").map((e: string) => e.trim().toLowerCase()).filter(Boolean);

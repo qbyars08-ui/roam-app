@@ -21,7 +21,7 @@ import { searchLocations, type TALocation } from '../../lib/apis/tripadvisor';
 import { getRoutes, type RouteResult } from '../../lib/apis/rome2rio';
 import { getCostOfLiving, type CostOfLiving } from '../../lib/cost-of-living';
 import { getTravelAdvisory, type TravelAdvisory } from '../../lib/travel-safety';
-import { getVisaRequirements, type VisaResult } from '../../lib/apis/sherpa';
+import { checkVisaRequirements, type VisaResult } from '../../lib/visa-requirements';
 import { getTimezoneByDestination } from '../../lib/timezone';
 import { useAppStore } from '../../lib/store';
 import { useSavingsStore } from '../../lib/savings-store';
@@ -88,6 +88,16 @@ export default function LivingDestinationPage(): React.JSX.Element {
     [destination],
   );
   const heroUrl = useMemo(() => getHeroUrl(destination), [destination]);
+
+  // -----------------------------------------------------------------------
+  // Auth session — used to gate live-data sections gracefully
+  // -----------------------------------------------------------------------
+  const [hasSession, setHasSession] = useState<boolean | null>(null);
+  useEffect(() => {
+    supabase.auth.getSession()
+      .then(({ data }) => setHasSession(!!data.session))
+      .catch(() => setHasSession(false));
+  }, []);
 
   // -----------------------------------------------------------------------
   // 2. Right now — Weather & time
@@ -158,18 +168,18 @@ export default function LivingDestinationPage(): React.JSX.Element {
   }, [destInfo]);
 
   // -----------------------------------------------------------------------
-  // 7. Visa — Sherpa visa requirements
+  // 7. Visa — free static/RapidAPI visa requirements (no auth needed)
   // -----------------------------------------------------------------------
   const [visa, setVisa] = useState<VisaResult | null>(null);
   const [visaLoading, setVisaLoading] = useState(true);
   useEffect(() => {
     if (!destInfo) { setVisaLoading(false); return; }
     setVisaLoading(true);
-    getVisaRequirements('US', destInfo.country)
+    checkVisaRequirements(destination)
       .then((v) => setVisa(v))
       .catch(() => setVisa(null))
       .finally(() => setVisaLoading(false));
-  }, [destInfo]);
+  }, [destination, destInfo]);
 
   // -----------------------------------------------------------------------
   // 8. Things to do — TripAdvisor attractions
@@ -356,7 +366,11 @@ export default function LivingDestinationPage(): React.JSX.Element {
             })}
             badge={pulseData?.isLive ? <LiveBadge /> : undefined}
           />
-          {pulseLoading && !pulseError ? (
+          {hasSession === false ? (
+            <Text style={s.empty}>
+              {t('destination.signInForLiveData', { defaultValue: 'Sign in to see live updates.' })}
+            </Text>
+          ) : pulseLoading && !pulseError ? (
             <>
               <Skeleton />
               <Skeleton />
@@ -376,7 +390,7 @@ export default function LivingDestinationPage(): React.JSX.Element {
         </View>
 
         {/* 4. HOW TO GET THERE */}
-        <RoutesSection routes={routes} loading={routesLoading} />
+        <RoutesSection routes={routes} loading={routesLoading} hasSession={hasSession} />
 
         {/* 5. WHAT IT COSTS */}
         <CostSection data={costData} onStartSaving={handleStartSaving} />
@@ -388,10 +402,10 @@ export default function LivingDestinationPage(): React.JSX.Element {
         <VisaSection visa={visa} loading={visaLoading} />
 
         {/* 8. THINGS TO DO */}
-        <AttractionsSection attractions={attractions} loading={attractionsLoading} />
+        <AttractionsSection attractions={attractions} loading={attractionsLoading} hasSession={hasSession} />
 
         {/* 9. WHERE TO EAT */}
-        <RestaurantsSection venues={venues} loading={venuesLoading} />
+        <RestaurantsSection venues={venues} loading={venuesLoading} hasSession={hasSession} />
 
         {/* 10. PLAN A TRIP HERE */}
         <PlanTripSection

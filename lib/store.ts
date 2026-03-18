@@ -236,8 +236,8 @@ export const useAppStore = create<AppState>((set) => ({
   },
   setIsPro: (isPro) => set({ isPro }),
   setTripsThisMonth: (tripsThisMonth) => {
-    const monthData = { count: tripsThisMonth, month: new Date().toISOString().slice(0, 7) };
-    AsyncStorage.setItem(TRIPS_MONTH_KEY, JSON.stringify(monthData)).catch((err: unknown) => { console.warn('[ROAM] Persist failed:', err instanceof Error ? err.message : String(err)); });
+    // No monthly reset — free tier = 1 trip lifetime, then paywall
+    AsyncStorage.setItem(TRIPS_MONTH_KEY, JSON.stringify(tripsThisMonth)).catch((err: unknown) => { console.warn('[ROAM] Persist failed:', err instanceof Error ? err.message : String(err)); });
     set({ tripsThisMonth });
   },
   setChatMessages: (chatMessages) => {
@@ -446,13 +446,11 @@ export async function loadPersistedTrips(): Promise<void> {
     }
     if (monthRaw) {
       const parsed: unknown = JSON.parse(monthRaw);
-      const currentMonth = new Date().toISOString().slice(0, 7);
-      if (typeof parsed === 'object' && parsed !== null && 'count' in parsed && 'month' in parsed) {
-        const { count, month } = parsed as { count: number; month: string };
-        store.setTripsThisMonth(month === currentMonth ? count : 0);
-      } else if (typeof parsed === 'number') {
-        // Legacy format (bare number) — reset since we can't verify the month
-        store.setTripsThisMonth(0);
+      // No monthly reset — lifetime count persists
+      if (typeof parsed === 'number') {
+        store.setTripsThisMonth(parsed);
+      } else if (typeof parsed === 'object' && parsed !== null && 'count' in parsed) {
+        store.setTripsThisMonth((parsed as { count: number }).count);
       }
     }
     if (chatRaw) {
