@@ -629,7 +629,7 @@ function EmbassyCard({ data }: { data: EmergencyData }) {
   return (
     <View style={styles.embassyCard}>
       <Text style={styles.embassyLabel}>{t('prep.nearestEmbassy', { defaultValue: 'Nearest Embassy' })}</Text>
-      <Text style={styles.embassyName}>{t('prep.usEmbassy', { defaultValue: 'US Embassy — {{city}}', city: data.usEmbassy.city })}</Text>
+      <Text style={styles.embassyName}>{`US Embassy — ${data.usEmbassy.city}`}</Text>
       <TouchableOpacity
         style={styles.embassyAddressRow}
         onPress={openMap}
@@ -1005,13 +1005,13 @@ function VisaTab({
       </View>
 
       {info.stayDays != null && info.stayDays < 999 && (
-        <Text style={styles.visaDetail}>{t('prep.stayUpTo', { defaultValue: 'Stay up to {{days}} days', days: info.stayDays })}</Text>
+        <Text style={styles.visaDetail}>{`Stay up to ${info.stayDays} days`}</Text>
       )}
       {info.notes && (
         <Text style={styles.visaMeta}>{info.notes}</Text>
       )}
       {info.cost != null && (
-        <Text style={styles.visaMeta}>{t('prep.applicationFee', { defaultValue: 'Application fee: ${{cost}}', cost: info.cost })}</Text>
+        <Text style={styles.visaMeta}>{`Application fee: $${info.cost}`}</Text>
       )}
 
       {isRequired && applyUrl && (
@@ -1043,7 +1043,7 @@ function VisaTab({
         <View style={styles.sherpaVisaSection}>
           <Text style={styles.sherpaVisaHeading}>{t('prep.sherpaDetails', { defaultValue: 'Detailed Requirements (Sherpa)' })}</Text>
           {visaReqs.maxStay != null && (
-            <Text style={styles.sherpaVisaDetail}>{t('prep.maxStay', { defaultValue: 'Max stay: {{days}} days', days: visaReqs.maxStay })}</Text>
+            <Text style={styles.sherpaVisaDetail}>{`Max stay: ${visaReqs.maxStay} days`}</Text>
           )}
           {visaReqs.processingTime && (
             <Text style={styles.sherpaVisaDetail}>{`Processing: ${visaReqs.processingTime}`}</Text>
@@ -1205,7 +1205,7 @@ function ConnectivityTab({
   if (!cultural) {
     return (
       <View style={styles.tabContent}>
-        <Text style={styles.noDataText}>{t('prep.connectivityNotAvailable', { defaultValue: 'Connectivity info not available for {{destination}}.', destination })}</Text>
+        <Text style={styles.noDataText}>{`Connectivity info not available for ${destination}.`}</Text>
       </View>
     );
   }
@@ -1254,7 +1254,7 @@ function ConnectivityTab({
           <Wifi size={16} color={COLORS.gold} />
           <Text style={styles.infoCardLabel}>{t('prep.wifiAndPower', { defaultValue: 'WiFi & Power' })}</Text>
         </View>
-        <Text style={styles.infoCardBody}>{t('prep.plugType', { defaultValue: 'Plug type: {{plugType}}', plugType })}</Text>
+        <Text style={styles.infoCardBody}>{`Plug type: ${plugType}`}</Text>
         <Text style={styles.connTip}>
           {t('prep.wifiTip', { defaultValue: 'Hit a cafe or co-working spot for reliable WiFi. Download offline maps before you leave — not when you land.' })}
         </Text>
@@ -1277,7 +1277,7 @@ function CultureTab({
   if (!cultural) {
     return (
       <View style={styles.tabContent}>
-        <Text style={styles.noDataText}>{t('prep.culturalNotAvailable', { defaultValue: 'Cultural guide not available for {{destination}}.', destination })}</Text>
+        <Text style={styles.noDataText}>{`Cultural guide not available for ${destination}.`}</Text>
       </View>
     );
   }
@@ -1438,7 +1438,7 @@ function JetLagTab({ destination }: { destination: string }) {
           <Coffee size={24} color={COLORS.sage} />
           <Text style={jetLagStyles.noLagTitle}>{t('prep.noJetLag', { defaultValue: 'No jet lag expected' })}</Text>
           <Text style={styles.noDataText}>
-            {t('prep.noJetLagDesc', { defaultValue: '{{destination}} is in a similar timezone — no adjustment needed.', destination })}
+            {`${destination} is in a similar timezone — no adjustment needed.`}
           </Text>
         </View>
       </View>
@@ -1466,7 +1466,7 @@ function JetLagTab({ destination }: { destination: string }) {
           <View style={jetLagStyles.recoveryBadge}>
             <BedDouble size={16} color={COLORS.cream} />
             <Text style={jetLagStyles.recoveryText}>
-              {t('prep.daysToAdjust', { defaultValue: '~{{days}} days to adjust', days: jetLag.recoveryDays })}
+              {`~${jetLag.recoveryDays} days to adjust`}
             </Text>
           </View>
         </View>
@@ -1667,7 +1667,7 @@ function CrowdsTab({
         <Text style={crowdsStyles.title}>{t('prep.crowdForecast', { defaultValue: 'Crowd Forecast' })}</Text>
       </View>
       <Text style={crowdsStyles.subtitle}>
-        {t('prep.howBusy', { defaultValue: 'How busy {{destination}} will be during your trip', destination })}
+        {`How busy ${destination} will be during your trip`}
       </Text>
       <HolidayCrowdCalendar
         destination={destination}
@@ -1707,7 +1707,7 @@ function NoDataState({ destination }: { destination: string }) {
     <View style={styles.noDataWrap}>
       <Text style={styles.noDataTitle}>{t('prep.dataNotAvailable', { defaultValue: 'Data not available for this destination' })}</Text>
       <Text style={styles.noDataText}>
-        {t('prep.stillBuildingIntel', { defaultValue: "No intel for {{destination}} yet. Try a nearby major city.", destination })}
+        {`No intel for ${destination} yet. Try a nearby major city.`}
       </Text>
     </View>
   );
@@ -1941,10 +1941,12 @@ function IntelligenceCardsGrid({
   destination,
   safety,
   visaReqs,
+  passportCode,
 }: {
   destination: string;
   safety: SafetyData | null;
   visaReqs?: VisaResult | null;
+  passportCode?: PassportNationality;
 }) {
   const { t } = useTranslation();
   const [weather, setWeather] = useState<DailyForecast | null>(null);
@@ -1999,7 +2001,7 @@ function IntelligenceCardsGrid({
   const safetyColor = score == null ? COLORS.creamMuted : score > 70 ? COLORS.sage : score >= 40 ? COLORS.gold : COLORS.coral;
   const safetyDesc = score == null ? '—' : score > 70 ? t('prep.safeForTravelers', { defaultValue: 'Safe for travelers' }) : score >= 40 ? t('prep.useCaution', { defaultValue: 'Use caution' }) : t('prep.highRiskArea', { defaultValue: 'High risk area' });
 
-  const visa = getVisaInfo(destination, 'US');
+  const visa = getVisaInfo(destination, passportCode ?? 'US');
   const sherpaType = visaReqs?.visaType;
   const visaStatus = sherpaType ?? visa?.info?.status ?? null;
   const visaLabel = visaStatus === 'visa_free' ? t('prep.noVisaRequired', { defaultValue: 'Visa free' })
@@ -2066,7 +2068,7 @@ function IntelligenceCardsGrid({
                 {visaLabel}
               </Text>
               {stayDays != null && stayDays < 999 && (
-                <Text style={intelGridStyles.cardDesc}>{t('prep.upToDays', { defaultValue: 'Up to {{days}} days', days: stayDays })}</Text>
+                <Text style={intelGridStyles.cardDesc}>{`Up to ${stayDays} days`}</Text>
               )}
             </>
           ) : (
@@ -2440,7 +2442,7 @@ function PrepScreen() {
                 <Pressable
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    router.push('/before-you-land' as never);
+                    router.push({ pathname: '/before-you-land', params: { destination: selectedDest } } as never);
                   }}
                   style={({ pressed }) => [
                     styles.prepNavCard,
@@ -2566,6 +2568,7 @@ function PrepScreen() {
               destination={selectedDest}
               safety={safety}
               visaReqs={visaReqs}
+              passportCode={passport}
             />
 
             <View style={{ paddingHorizontal: 20, marginBottom: 40 }}>
@@ -2625,6 +2628,12 @@ function PrepScreen() {
               <OverviewTab safety={safety} />
             )}
 
+            {activeSection === 'overview' && !safety && (
+              <View style={styles.tabContent}>
+                <Text style={styles.noDataText}>No overview data available for this destination.</Text>
+              </View>
+            )}
+
             {activeSection === 'packing' && (
               <PackingTab
                 destination={selectedDest}
@@ -2643,13 +2652,6 @@ function PrepScreen() {
 
             {activeSection === 'emergency' && (
               <View style={styles.tabContent}>
-                {/* I Am Here Now — lifeline card with big tap-to-call buttons */}
-                <IAmHereNow
-                  destination={selectedDest}
-                  hotelName={parsedItinerary?.days?.[0]?.accommodation?.name ?? undefined}
-                  hotelAddress={undefined}
-                />
-
                 <SOSButton
                   onActivate={() => {}}
                   emergency={emergency}
@@ -2661,7 +2663,7 @@ function PrepScreen() {
                   </>
                 ) : (
                   <Text style={styles.noDataText}>
-                    {t('prep.emergencyNotAvailable', { defaultValue: 'Emergency numbers not available for {{destination}}. Select another destination.', destination: selectedDest })}
+                    {`Emergency numbers not available for ${selectedDest}. Select another destination.`}
                   </Text>
                 )}
 
@@ -2719,7 +2721,7 @@ function PrepScreen() {
                   <LanguageTab pack={langPack} />
                 ) : (
                   <Text style={styles.noDataText}>
-                    {t('prep.languageNotAvailable', { defaultValue: 'Language pack not available for {{destination}}. English may be widely spoken.', destination: selectedDest })}
+                    {`Language pack not available for ${selectedDest}. English may be widely spoken.`}
                   </Text>
                 )}
               </View>
@@ -2769,32 +2771,6 @@ function PrepScreen() {
           </Pressable>
         )}
 
-        {/* Before You Land — quick action */}
-        {!hasNoData && (
-          <Pressable
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              router.push({ pathname: '/before-you-land', params: { destination: selectedDest } } as never);
-            }}
-            style={({ pressed }) => [
-              styles.bodyIntelCta,
-              { borderLeftColor: COLORS.gold, marginTop: SPACING.lg },
-              pressed && { opacity: 0.7 },
-            ]}
-            accessibilityLabel="Open Before You Land — pre-departure brief with weather, currency and time zone"
-            accessibilityRole="button"
-          >
-            <Plane size={20} color={COLORS.gold} />
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.bodyIntelCtaTitle, { color: COLORS.gold }]}>{t('prep.beforeYouLand', { defaultValue: 'Before You Land' })}</Text>
-              <Text style={styles.bodyIntelCtaSubtitle}>
-                {t('prep.beforeYouLandDesc', { defaultValue: 'Pre-departure brief: weather, currency, time zone & essentials' })}
-              </Text>
-            </View>
-            <ChevronRight size={18} color={COLORS.creamMuted} />
-          </Pressable>
-        )}
-
         {!hasNoData && (
           <Pressable
             onPress={async () => {
@@ -2811,7 +2787,7 @@ function PrepScreen() {
                 };
                 await AsyncStorage.setItem(cacheKey, JSON.stringify(payload));
                 // eslint-disable-next-line no-alert
-                alert(t('prep.offlineSaved', { defaultValue: '{{destination}} prep data saved for offline use.', destination: selectedDest }));
+                alert(`${selectedDest} prep data saved for offline use.`);
               } catch {
                 // eslint-disable-next-line no-alert
                 alert(t('prep.offlineSaveError', { defaultValue: 'Could not save offline data. Try again.' }));
@@ -2829,7 +2805,7 @@ function PrepScreen() {
             <View style={{ flex: 1 }}>
               <Text style={[styles.bodyIntelCtaTitle, { color: COLORS.sage }]}>{t('prep.downloadForOffline', { defaultValue: 'Download for Offline' })}</Text>
               <Text style={styles.bodyIntelCtaSubtitle}>
-                {t('prep.downloadForOfflineDesc', { defaultValue: 'Save {{destination}} intel to your device — no WiFi needed later', destination: selectedDest })}
+                {`Save ${selectedDest} intel to your device — no WiFi needed later`}
               </Text>
             </View>
             <ChevronRight size={18} color={COLORS.creamMuted} />
