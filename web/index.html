@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>ROAM</title>
+    <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
+    <style id="expo-reset">
+      /* These styles make the body full-height */
+      html,
+      body {
+        height: 100%;
+      }
+      /* These styles disable body scrolling if you are using <ScrollView> */
+      body {
+        overflow: hidden;
+      }
+      /* These styles make the root element full-height */
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+    </style>
+    <style>
+      @keyframes roam-spin {
+        to { transform: rotate(360deg); }
+      }
+      @keyframes roam-fade {
+        0% { opacity: 1; }
+        100% { opacity: 0; pointer-events: none; }
+      }
+      #roam-splash {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        background: #0A0A0A;
+        z-index: 9999;
+      }
+      #roam-splash.fade-out {
+        animation: roam-fade 0.3s ease-out forwards;
+      }
+      #roam-splash-wordmark {
+        color: #E8F5E1;
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 32px;
+        font-weight: 700;
+        letter-spacing: 6px;
+        text-transform: uppercase;
+      }
+      #roam-splash-spinner {
+        margin-top: 20px;
+        width: 36px;
+        height: 36px;
+        border: 2px solid #1C1C1C;
+        border-top-color: #5B9E6F;
+        border-radius: 50%;
+        animation: roam-spin 0.9s linear infinite;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Inline splash: shows immediately with zero JS, removed when React mounts -->
+    <div id="roam-splash">
+      <div id="roam-splash-wordmark">ROAM</div>
+      <div id="roam-splash-spinner"></div>
+    </div>
+
+    <!-- Use static rendering with Expo Router to support running without JavaScript. -->
+    <noscript>
+      You need to enable JavaScript to run this app.
+    </noscript>
+    <!-- The root element for your Expo app. -->
+    <div id="root"></div>
+
+    <script>
+      // Remove splash once React has painted at least one frame
+      (function () {
+        var splash = document.getElementById('roam-splash');
+        if (!splash) return;
+
+        function removeSplash() {
+          splash.classList.add('fade-out');
+          splash.addEventListener('animationend', function () {
+            splash.parentNode && splash.parentNode.removeChild(splash);
+          });
+        }
+
+        // MutationObserver watches for React adding children to #root
+        var root = document.getElementById('root');
+        if (root && window.MutationObserver) {
+          var observer = new MutationObserver(function (mutations) {
+            for (var i = 0; i < mutations.length; i++) {
+              if (mutations[i].addedNodes.length > 0) {
+                observer.disconnect();
+                // One rAF to let React finish painting before fading
+                requestAnimationFrame(removeSplash);
+                return;
+              }
+            }
+          });
+          observer.observe(root, { childList: true, subtree: false });
+        }
+
+        // Hard fallback: remove after 12 s even if React never mounts
+        setTimeout(removeSplash, 12000);
+      })();
+    </script>
+  </body>
+</html>
