@@ -24,7 +24,6 @@ import { geocodeCity } from '../../lib/geocoding';
 import { getWeatherForecast } from '../../lib/weather-forecast';
 import { useSonarQuery } from '../../lib/sonar';
 import LiveBadge from '../../components/ui/LiveBadge';
-import SourceCitation from '../../components/ui/SourceCitation';
 import SonarCard, { SonarFallback } from '../../components/ui/SonarCard';
 import { getEntryRequirements } from '../../lib/apis/sherpa';
 import { getCurrentWeather, getWeatherIntel, type CurrentWeather, type WeatherIntel } from '../../lib/apis/openweather';

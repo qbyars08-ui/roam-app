@@ -28,8 +28,6 @@ import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
 import { useSonarQuery } from '../../lib/sonar';
-import LiveBadge from '../../components/ui/LiveBadge';
-import SourceCitation from '../../components/ui/SourceCitation';
 import SonarCard, { SonarFallback, APIDataCard } from '../../components/ui/SonarCard';
 import { searchNearby, type PlaceResult } from '../../lib/apis/google-places';
 import { searchLocations, type TALocation } from '../../lib/apis/tripadvisor';

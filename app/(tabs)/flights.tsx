@@ -49,8 +49,6 @@ import { getRoutes, type RouteResult } from '../../lib/apis/rome2rio';
 import GoNowFeed from '../../components/features/GoNowFeed';
 import FlightPriceCalendar from '../../components/features/FlightPriceCalendar';
 import { useSonarQuery } from '../../lib/sonar';
-import LiveBadge from '../../components/ui/LiveBadge';
-import SourceCitation from '../../components/ui/SourceCitation';
 import SonarCard, { SonarFallback, APIDataCard } from '../../components/ui/SonarCard';
 import { styles } from '../../components/flights/flights-styles';
 import { POPULAR_ROUTES, INSPIRATION, type PopularRoute, type InspirationCard } from '../../components/flights/flights-data';

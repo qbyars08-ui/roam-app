@@ -33,8 +33,6 @@ import { searchLocations, type TALocation } from '../../lib/apis/tripadvisor';
 import { track } from '../../lib/analytics';
 import { captureEvent } from '../../lib/posthog';
 import { useSonarQuery } from '../../lib/sonar';
-import LiveBadge from '../../components/ui/LiveBadge';
-import SourceCitation from '../../components/ui/SourceCitation';
 import SonarCard, { SonarFallback, APIDataCard } from '../../components/ui/SonarCard';
 import { styles } from '../../components/food/food-styles';
 
