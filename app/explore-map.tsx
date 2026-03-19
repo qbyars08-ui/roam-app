@@ -22,6 +22,7 @@ import {
   StyleSheet,
   Text,
   View,
+  type ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -1498,7 +1499,7 @@ const styles = StyleSheet.create({
     width: '100%',
     minHeight: 400,
     position: 'relative',
-  } as ViewStyle,
+  },
   webStaticMap: {
     width: '100%',
     height: 400,
@@ -1518,7 +1519,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 1,
-  } as ViewStyle,
+  },
   webMapFallback: {
     width: '100%',
     height: 400,
