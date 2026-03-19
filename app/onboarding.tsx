@@ -1,7 +1,6 @@
 // =============================================================================
 // ROAM — Onboarding: Single Screen
-// "Where do you want to go?" + destination chips + go.
-// No slides. No features list. Just: where and go.
+// "Where do you want to go?" + input + 6 chips + go button. Nothing else.
 // =============================================================================
 import React, { useCallback, useRef, useState } from 'react';
 import {
@@ -27,7 +26,7 @@ const HAS_SEEN_ONBOARDING = '@roam/hasSeenOnboarding';
 export { HAS_SEEN_ONBOARDING };
 
 // ---------------------------------------------------------------------------
-// Destination quick-pick chips — 6 cities, 2 rows of 3
+// Destination quick-pick chips
 // ---------------------------------------------------------------------------
 const DESTINATION_CHIPS = [
   'Tokyo',
@@ -47,10 +46,13 @@ export default function OnboardingScreen() {
   const inputRef = useRef<TextInput>(null);
   const [destination, setDestination] = useState('');
 
-  const handleChipPress = useCallback((name: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setDestination(name);
-  }, []);
+  const handleChipPress = useCallback(
+    (name: string) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setDestination(name);
+    },
+    [],
+  );
 
   const handlePlan = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -71,7 +73,7 @@ export default function OnboardingScreen() {
       {/* Header */}
       <Text style={styles.title}>Where do you{'\n'}want to go?</Text>
 
-      {/* Input */}
+      {/* Large text input — pill shape, sage border */}
       <TextInput
         ref={inputRef}
         style={styles.input}
@@ -85,7 +87,7 @@ export default function OnboardingScreen() {
         onSubmitEditing={handlePlan}
       />
 
-      {/* Destination chips — 2 rows of 3 */}
+      {/* 6 destination chips */}
       <View style={styles.chipGrid}>
         {DESTINATION_CHIPS.map((name) => {
           const isSelected = destination === name;
@@ -123,7 +125,7 @@ export default function OnboardingScreen() {
           { transform: [{ scale: pressed ? 0.97 : 1 }] },
         ]}
       >
-        <Text style={styles.ctaText}>Plan it \u2192</Text>
+        <Text style={styles.ctaText}>Plan it {'\u2192'}</Text>
       </Pressable>
     </View>
   );
@@ -149,12 +151,12 @@ const styles = StyleSheet.create({
 
   input: {
     width: '100%',
+    height: 48,
     backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.pill,
     borderWidth: 1,
     borderColor: COLORS.sageBorder,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
     fontFamily: FONTS.body,
     fontSize: 18,
     color: COLORS.cream,

@@ -1,7 +1,6 @@
 // =============================================================================
-// ROAM — Flights Tab
-// Clean hero search + popular routes + inspiration. Skyscanner affiliate links.
-// Zero broken APIs. Zero loading states that never resolve.
+// ROAM — Flights Tab (Premium Redesign)
+// Pill inputs, sage-bordered Sonar card, compact alt routes, clean sections.
 // =============================================================================
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
@@ -10,8 +9,6 @@ import {
   TextInput,
   Pressable,
   ScrollView,
-  StyleSheet,
-  Image,
   Linking,
   Animated,
   type ViewStyle,
@@ -23,7 +20,6 @@ import { useRouter } from 'expo-router';
 import {
   MapPin,
   ArrowLeftRight,
-  Calendar,
   Plane,
   Minus,
   Plus,
@@ -31,16 +27,14 @@ import {
   ChevronRight,
   ExternalLink,
 } from 'lucide-react-native';
-import { addDays, format, isSameDay, startOfDay } from 'date-fns';
+import { addDays, format, startOfDay } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS, MAGAZINE } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
 import { track } from '../../lib/analytics';
 import { captureEvent } from '../../lib/posthog';
 import {
-  US_AIRPORTS,
   getDestinationAirport,
   getSkyscannerFlightUrl,
 } from '../../lib/flights';
@@ -117,7 +111,6 @@ export default function FlightsScreen() {
       setAmadeusLoading(true);
       setAmadeusFlights(null);
 
-      // Animate skeleton pulse
       Animated.loop(
         Animated.sequence([
           Animated.timing(skeletonAnim, {
@@ -133,7 +126,6 @@ export default function FlightsScreen() {
         ]),
       ).start();
 
-      // Safety timeout — never show skeleton forever
       const timeout = setTimeout(() => {
         if (!cancelled) {
           setAmadeusLoading(false);
@@ -292,31 +284,6 @@ export default function FlightsScreen() {
           </Text>
         </View>
 
-        {/* ── Airport Guide ── */}
-        <View style={{ paddingHorizontal: SPACING.lg, marginBottom: SPACING.lg }}>
-          <Pressable
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push('/airport-guide' as never);
-            }}
-            style={({ pressed }) => [
-              styles.airportGuideBtn,
-              { opacity: pressed ? 0.85 : 1 },
-            ]}
-            accessibilityLabel="Airport Guide"
-            accessibilityRole="button"
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm }}>
-              <Plane size={18} color={COLORS.sage} strokeWidth={1.5} />
-              <Text style={styles.airportGuideBtnTitle}>{t('flights.airportGuide', { defaultValue: 'Airport Guide' })}</Text>
-            </View>
-            <ChevronRight size={16} color={COLORS.muted} strokeWidth={1.5} />
-          </Pressable>
-        </View>
-
-        {/* ── Go Now Deal Feed ── */}
-        <GoNowFeed />
-
         {/* ── Search Form ── */}
         <View style={styles.searchCard}>
           {/* From / To */}
@@ -328,8 +295,8 @@ export default function FlightsScreen() {
                 <TextInput
                   style={styles.input}
                   value={fromText}
-                  onChangeText={(t) => {
-                    setFromText(t);
+                  onChangeText={(text) => {
+                    setFromText(text);
                     setFromCode('');
                   }}
                   placeholder={t('flights.cityOrAirport', { defaultValue: 'City or airport' })}
@@ -375,8 +342,8 @@ export default function FlightsScreen() {
                 <TextInput
                   style={styles.input}
                   value={toText}
-                  onChangeText={(t) => {
-                    setToText(t);
+                  onChangeText={(text) => {
+                    setToText(text);
                     setToCode('');
                   }}
                   placeholder={t('flights.cityOrAirport', { defaultValue: 'City or airport' })}
@@ -469,9 +436,25 @@ export default function FlightsScreen() {
           </Pressable>
         </View>
 
+        {/* ── Sonar Flight Intel (below search) ── */}
+        {sonarFlights.data ? (
+          <View style={styles.sonarSection}>
+            <Text style={styles.sectionTitle}>
+              {t('flights.sonarTitle', { defaultValue: 'What we found' })}
+            </Text>
+            <SonarCard
+              answer={sonarFlights.data.answer}
+              isLive={sonarFlights.isLive}
+              citations={sonarFlights.citations}
+              timestamp={sonarFlights.data.timestamp}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); const dest = toText?.trim() || 'anywhere'; Linking.openURL(`https://www.skyscanner.com/transport/flights/${encodeURIComponent(fromCode || fromText?.trim() || 'anywhere')}/${encodeURIComponent(toCode || dest)}/`).catch(() => {}); }}
+            />
+          </View>
+        ) : null}
+
         {/* ── Price Calendar ── */}
         {fromText.length > 1 && toText.length > 1 && (
-          <View style={{ paddingHorizontal: SPACING.md, marginBottom: SPACING.md }}>
+          <View style={{ paddingHorizontal: SPACING.lg, marginBottom: SPACING.md, marginTop: SPACING.xl }}>
             <FlightPriceCalendar
               origin={fromCode || fromText.trim()}
               destination={toCode || toText.trim()}
@@ -484,17 +467,13 @@ export default function FlightsScreen() {
         {(amadeusLoading || (amadeusFlights && amadeusFlights.length > 0)) && (
           <View style={styles.amadeusSection}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionLabel}>
-                {t('flights.realtimePricesLabel', { defaultValue: 'REAL-TIME PRICES' })}
-              </Text>
               <Text style={styles.sectionTitle}>
-                {t('flights.realtimePricesTitle', { defaultValue: 'Live fares for your route.' })}
+                {t('flights.realtimePricesTitle', { defaultValue: 'Live fares for your route' })}
               </Text>
             </View>
 
             {amadeusLoading
-              ? // Skeleton placeholder cards
-                [0, 1, 2].map((i) => (
+              ? [0, 1, 2].map((i) => (
                   <Animated.View
                     key={`skeleton-${i}`}
                     style={[styles.amadeusCard, { opacity: skeletonAnim }]}
@@ -521,7 +500,6 @@ export default function FlightsScreen() {
                       Linking.openURL(offer.bookingLink).catch(() => {});
                     }}
                   >
-                    {/* Top row: airline | route times | price */}
                     <View style={styles.amadeusCardRow}>
                       <Text style={styles.amadeusAirlineCode}>{offer.airline}</Text>
                       <View style={styles.amadeusRouteCol}>
@@ -532,7 +510,7 @@ export default function FlightsScreen() {
                         </View>
                         <Text style={styles.amadeusMeta}>
                           {offer.duration}
-                          {'  ·  '}
+                          {'  \u00B7  '}
                           {offer.stops === 0
                             ? t('flights.nonstop', { defaultValue: 'Nonstop' })
                             : t('flights.stops', {
@@ -554,36 +532,14 @@ export default function FlightsScreen() {
           </View>
         )}
 
-        {/* ── Sonar Flight Intel ── */}
-        {sonarFlights.data ? (
-          <View style={styles.sonarSection}>
-            <View style={styles.sonarSectionHeader}>
-              <Text style={styles.sectionLabel}>{t('flights.sonarLabel', { defaultValue: 'LIVE INTEL' })}</Text>
-            </View>
-            <Text style={styles.sectionTitle}>
-              {t('flights.sonarTitle', { defaultValue: 'What we found' })}
-            </Text>
-            <SonarCard
-              answer={sonarFlights.data.answer}
-              isLive={sonarFlights.isLive}
-              citations={sonarFlights.citations}
-              timestamp={sonarFlights.data.timestamp}
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); const dest = toText?.trim() || 'anywhere'; Linking.openURL(`https://www.skyscanner.com/transport/flights/${encodeURIComponent(fromCode || fromText?.trim() || 'anywhere')}/${encodeURIComponent(toCode || dest)}/`).catch(() => {}); }}
-            />
-          </View>
-        ) : !sonarFlights.isLoading && !sonarFlights.error ? (
-          <View style={styles.sonarSection}>
-            <Text style={styles.sectionLabel}>{t('flights.sonarLabel', { defaultValue: 'LIVE INTEL' })}</Text>
-            <SonarFallback label={t('flights.sonarFallback', { defaultValue: 'Enter a destination above for live flight tips' })} />
-          </View>
-        ) : null}
+        {/* ── Go Now Deal Feed ── */}
+        <GoNowFeed />
 
-        {/* ── Alternative Routes (Rome2Rio) ── */}
+        {/* ── Alternative Routes (Rome2Rio) — compact list ── */}
         {altRoutes && altRoutes.length > 0 ? (
           <View style={styles.apiSection}>
-            <Text style={styles.apiSectionLabel}>{t('flights.altRoutesLabel', { defaultValue: 'ALTERNATIVE ROUTES' })}</Text>
-            <Text style={styles.apiSectionHeading}>{t('flights.altRoutesHeading', { defaultValue: 'Other ways to get there' })}</Text>
-            <View style={styles.apiCardStack}>
+            <Text style={styles.sectionTitle}>{t('flights.altRoutesHeading', { defaultValue: 'Other ways to get there' })}</Text>
+            <View style={[styles.apiCardStack, { marginTop: SPACING.md }]}>
               {altRoutes.map((route, i) => {
                 const hrs = Math.floor(route.duration / 60);
                 const mins = route.duration % 60;
@@ -591,34 +547,66 @@ export default function FlightsScreen() {
                   ? `${hrs}h${mins > 0 ? ` ${mins}m` : ''}`
                   : `${mins}m`;
                 const priceStr = route.price
-                  ? `${route.price.currency} ${route.price.low}–${route.price.high}`
+                  ? `${route.price.currency} ${route.price.low}\u2013${route.price.high}`
                   : null;
                 const operator = route.segments?.[0]?.operator ?? null;
                 return (
-                  <APIDataCard
+                  <Pressable
                     key={i}
-                    name={route.name}
-                    rating={null}
-                    reviewCount={null}
-                    address={operator ? `via ${operator}` : null}
-                    category={priceStr ? `${durationStr} · ${priceStr}` : durationStr}
                     onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.rome2rio.com/map/${encodeURIComponent(fromText?.trim() || '')}/${encodeURIComponent(toText?.trim() || '')}`).catch(() => {}); }}
-                  />
+                    style={({ pressed }) => [{
+                      flexDirection: 'row' as const,
+                      alignItems: 'center' as const,
+                      justifyContent: 'space-between' as const,
+                      backgroundColor: COLORS.surface1,
+                      borderRadius: RADIUS.xl,
+                      borderWidth: 1,
+                      borderColor: COLORS.border,
+                      paddingVertical: SPACING.md,
+                      paddingHorizontal: SPACING.lg,
+                      opacity: pressed ? 0.8 : 1,
+                    }]}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontFamily: FONTS.bodyMedium, fontSize: 15, color: COLORS.cream }}>{route.name}</Text>
+                      {operator ? <Text style={{ fontFamily: FONTS.body, fontSize: 12, color: COLORS.creamDim, marginTop: 2 }}>via {operator}</Text> : null}
+                    </View>
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Text style={{ fontFamily: FONTS.mono, fontSize: 13, color: COLORS.cream }}>{durationStr}</Text>
+                      {priceStr ? <Text style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.creamDim }}>{priceStr}</Text> : null}
+                    </View>
+                  </Pressable>
                 );
               })}
             </View>
           </View>
-        ) : altRoutes !== null && altRoutes.length === 0 ? (
-          <View style={styles.apiSection}>
-            <Text style={styles.apiSectionLabel}>{t('flights.altRoutesLabel', { defaultValue: 'ALTERNATIVE ROUTES' })}</Text>
-            <SonarFallback label={t('flights.altRoutesFallback', { defaultValue: 'Route options appear once you pick two cities' })} />
-          </View>
         ) : null}
 
+        {/* ── Airport Guide ── */}
+        <View style={{ paddingHorizontal: SPACING.lg, marginTop: SPACING.xl }}>
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/airport-guide' as never);
+            }}
+            style={({ pressed }) => [
+              styles.airportGuideBtn,
+              { opacity: pressed ? 0.85 : 1 },
+            ]}
+            accessibilityLabel="Airport Guide"
+            accessibilityRole="button"
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm }}>
+              <Plane size={18} color={COLORS.sage} strokeWidth={1.5} />
+              <Text style={styles.airportGuideBtnTitle}>{t('flights.airportGuide', { defaultValue: 'Airport Guide' })}</Text>
+            </View>
+            <ChevronRight size={16} color={COLORS.muted} strokeWidth={1.5} />
+          </Pressable>
+        </View>
+
         {/* ── Popular Routes ── */}
-        <View style={[styles.sectionHeader, { marginTop: SPACING.xxl }]}>
-          <Text style={styles.sectionLabel}>{t('flights.popularRoutesLabel', { defaultValue: 'POPULAR ROUTES' })}</Text>
-          <Text style={styles.sectionTitle}>{t('flights.popularRoutesTitle', { defaultValue: "Cheap routes right now." })}</Text>
+        <View style={[styles.sectionHeader, { marginTop: SPACING.xl }]}>
+          <Text style={styles.sectionTitle}>{t('flights.popularRoutesTitle', { defaultValue: "Cheap routes right now" })}</Text>
         </View>
 
         <ScrollView
@@ -636,9 +624,8 @@ export default function FlightsScreen() {
         </ScrollView>
 
         {/* ── Best Time to Fly ── */}
-        <View style={[styles.sectionHeader, { marginTop: SPACING.xxl }]}>
-          <Text style={styles.sectionLabel}>{t('flights.timingLabel', { defaultValue: 'TIMING IS EVERYTHING' })}</Text>
-          <Text style={styles.sectionTitle}>{t('flights.timingTitle', { defaultValue: 'Go when it actually matters.' })}</Text>
+        <View style={[styles.sectionHeader, { marginTop: SPACING.xl }]}>
+          <Text style={styles.sectionTitle}>{t('flights.timingTitle', { defaultValue: 'Go when it actually matters' })}</Text>
         </View>
 
         <ScrollView
@@ -684,7 +671,3 @@ export default function FlightsScreen() {
     </View>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Styles
-

@@ -1,5 +1,5 @@
 // =============================================================================
-// ROAM — TripFundCard (savings goal progress card)
+// ROAM — TripFundCard (savings goal progress — clean, minimal)
 // =============================================================================
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 import { ChevronRight, Wallet } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS, CARD_SHADOW } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useSavingsStore } from '../../lib/savings-store';
 
 // ---------------------------------------------------------------------------
@@ -32,17 +32,17 @@ export default function TripFundCard() {
       }}
       accessibilityLabel={t('plan.tripFund', { defaultValue: 'Trip Fund' })}
       accessibilityRole="button"
-      style={({ pressed }) => [styles.tripFundBanner, { opacity: pressed ? 0.8 : 1 }]}
+      style={({ pressed }) => [styles.card, { opacity: pressed ? 0.8 : 1 }]}
     >
       <Wallet size={16} color={COLORS.sage} strokeWidth={1.5} />
-      <View style={{ flex: 1, marginHorizontal: SPACING.sm }}>
-        <Text style={styles.tripFundBannerText}>
+      <View style={styles.content}>
+        <Text style={styles.label}>
           {t('plan.tripFundLabel', {
             defaultValue: `Trip Fund \u00B7 $${totalSaved.toLocaleString()} of $${totalTarget.toLocaleString()}`,
           })}
         </Text>
-        <View style={{ height: 3, borderRadius: 2, backgroundColor: COLORS.surface2, marginTop: 4, overflow: 'hidden' }}>
-          <View style={{ height: 3, borderRadius: 2, backgroundColor: COLORS.sage, width: `${pct}%` }} />
+        <View style={styles.progressTrack}>
+          <View style={[styles.progressFill, { width: `${pct}%` }]} />
         </View>
       </View>
       <ChevronRight size={16} color={COLORS.sage} strokeWidth={1.5} />
@@ -54,23 +54,36 @@ export default function TripFundCard() {
 // Styles
 // ---------------------------------------------------------------------------
 const styles = StyleSheet.create({
-  tripFundBanner: {
+  card: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    paddingVertical: SPACING.sm + 2,
-    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
     marginTop: SPACING.md,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.sageSubtle,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.surface1,
     borderWidth: 1,
-    borderColor: COLORS.sageBorder,
-    ...CARD_SHADOW,
+    borderColor: COLORS.border,
   } as ViewStyle,
-  tripFundBannerText: {
+  content: {
+    flex: 1,
+  } as ViewStyle,
+  label: {
     fontFamily: FONTS.bodyMedium,
     fontSize: 14,
     color: COLORS.sage,
-    flex: 1,
+    marginBottom: SPACING.xs,
   } as TextStyle,
+  progressTrack: {
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: COLORS.surface2,
+    overflow: 'hidden',
+  } as ViewStyle,
+  progressFill: {
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: COLORS.sage,
+  } as ViewStyle,
 });

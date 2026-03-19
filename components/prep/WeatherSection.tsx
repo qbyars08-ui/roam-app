@@ -1,17 +1,17 @@
 // =============================================================================
-// WeatherSection — current weather card, entry requirements, 7-day forecast
+// WeatherSection — current weather card, entry requirements, 5-day forecast
+// Premium feel: large temp in Space Grotesk 36px, compact forecast row
 // =============================================================================
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, CheckCircle, Droplets, Wifi } from 'lucide-react-native';
-import { COLORS, SPACING, RADIUS } from '../../lib/constants';
+import { AlertTriangle, CheckCircle, Droplets, Wind } from 'lucide-react-native';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import type { CurrentWeather } from '../../lib/apis/openweather';
 import type { WeatherIntel } from '../../lib/apis/openweather';
 import type { EntryRequirements } from '../../lib/apis/sherpa';
 import { SkeletonCard } from '../premium/LoadingStates';
 import WeatherDayStrip from '../features/WeatherDayStrip';
-import { apiCardStyles } from './prep-shared';
 
 // ---------------------------------------------------------------------------
 // weatherEmoji helper
@@ -41,60 +41,50 @@ function currentWeatherUpdatedMinutes(updatedAt: number | null): string {
 }
 
 // ---------------------------------------------------------------------------
-// CurrentWeatherCard
+// CurrentWeatherCard — large temp, condition below, compact stats
 // ---------------------------------------------------------------------------
 export function CurrentWeatherCard({ data, updatedAt }: { data: CurrentWeather; updatedAt?: number | null }) {
-  const { t } = useTranslation();
   const emoji = weatherEmoji(data.condition);
   const updatedLabel = currentWeatherUpdatedMinutes(updatedAt ?? null);
-  return (
-    <View style={apiCardStyles.card}>
-      <Text style={apiCardStyles.sectionLabel}>
-        {t('prep.currentWeather', { defaultValue: 'CURRENT WEATHER' })}
-      </Text>
 
-      <View style={apiCardStyles.weatherHero}>
-        <Text style={apiCardStyles.weatherEmoji}>{emoji}</Text>
+  return (
+    <View style={cardStyles.card}>
+      <View style={cardStyles.weatherHero}>
+        <Text style={cardStyles.weatherEmoji}>{emoji}</Text>
         <View>
-          <Text style={apiCardStyles.weatherTemp}>{Math.round(data.temp)}&deg;C</Text>
-          <Text style={apiCardStyles.weatherCondition}>{data.condition}</Text>
+          <Text style={cardStyles.weatherTemp}>{Math.round(data.temp)}&deg;</Text>
+          <Text style={cardStyles.weatherCondition}>{data.condition}</Text>
         </View>
       </View>
 
-      <View style={apiCardStyles.weatherGrid}>
-        <View style={apiCardStyles.weatherStat}>
-          <Droplets size={14} color={COLORS.sage} />
-          <Text style={apiCardStyles.weatherStatLabel}>
-            {t('prep.humidity', { defaultValue: 'Humidity' })}
-          </Text>
-          <Text style={apiCardStyles.weatherStatValue}>{data.humidity}%</Text>
+      <View style={cardStyles.weatherGrid}>
+        <View style={cardStyles.weatherStat}>
+          <Droplets size={14} color={COLORS.sage} strokeWidth={1.5} />
+          <Text style={cardStyles.weatherStatValue}>{data.humidity}%</Text>
+          <Text style={cardStyles.weatherStatLabel}>Humidity</Text>
         </View>
 
-        <View style={apiCardStyles.weatherStat}>
-          <Wifi size={14} color={COLORS.sage} />
-          <Text style={apiCardStyles.weatherStatLabel}>
-            {t('prep.wind', { defaultValue: 'Wind' })}
-          </Text>
-          <Text style={apiCardStyles.weatherStatValue}>{Math.round(data.windSpeed)} km/h</Text>
+        <View style={cardStyles.weatherStat}>
+          <Wind size={14} color={COLORS.sage} strokeWidth={1.5} />
+          <Text style={cardStyles.weatherStatValue}>{Math.round(data.windSpeed)}</Text>
+          <Text style={cardStyles.weatherStatLabel}>km/h</Text>
         </View>
 
         {data.uvIndex != null && (
-          <View style={apiCardStyles.weatherStat}>
+          <View style={cardStyles.weatherStat}>
             <AlertTriangle
               size={14}
               color={data.uvIndex >= 8 ? COLORS.coral : data.uvIndex >= 3 ? COLORS.gold : COLORS.sage}
+              strokeWidth={1.5}
             />
-            <Text style={apiCardStyles.weatherStatLabel}>
-              {t('prep.uvIndex', { defaultValue: 'UV Index' })}
-            </Text>
-            <Text style={apiCardStyles.weatherStatValue}>{data.uvIndex}</Text>
+            <Text style={cardStyles.weatherStatValue}>{data.uvIndex}</Text>
+            <Text style={cardStyles.weatherStatLabel}>UV</Text>
           </View>
         )}
       </View>
+
       {updatedLabel ? (
-        <Text style={[apiCardStyles.weatherStatLabel, { marginTop: SPACING.sm, fontSize: 11 }]}>
-          {updatedLabel}
-        </Text>
+        <Text style={cardStyles.updatedLabel}>{updatedLabel}</Text>
       ) : null}
     </View>
   );
@@ -106,36 +96,38 @@ export function CurrentWeatherCard({ data, updatedAt }: { data: CurrentWeather; 
 export function EntryRequirementsCard({ data }: { data: EntryRequirements }) {
   const { t } = useTranslation();
   return (
-    <View style={apiCardStyles.card}>
-      <Text style={apiCardStyles.sectionLabel}>
+    <View style={cardStyles.card}>
+      <Text style={cardStyles.sectionLabel}>
         {t('prep.entryRequirements', { defaultValue: 'ENTRY REQUIREMENTS' })}
       </Text>
 
       {data.covidRestrictions ? (
-        <View style={apiCardStyles.row}>
-          <AlertTriangle size={14} color={COLORS.gold} />
-          <Text style={apiCardStyles.rowText}>{data.covidRestrictions}</Text>
+        <View style={cardStyles.row}>
+          <AlertTriangle size={14} color={COLORS.gold} strokeWidth={1.5} />
+          <Text style={cardStyles.rowText}>{data.covidRestrictions}</Text>
         </View>
       ) : null}
 
-      <View style={apiCardStyles.row}>
+      <View style={cardStyles.row}>
         <CheckCircle
           size={14}
           color={data.healthDeclaration ? COLORS.gold : COLORS.sage}
+          strokeWidth={1.5}
         />
-        <Text style={apiCardStyles.rowText}>
+        <Text style={cardStyles.rowText}>
           {data.healthDeclaration
             ? t('prep.healthDeclarationRequired', { defaultValue: 'Health declaration required' })
             : t('prep.noHealthDeclaration', { defaultValue: 'No health declaration required' })}
         </Text>
       </View>
 
-      <View style={apiCardStyles.row}>
+      <View style={cardStyles.row}>
         <CheckCircle
           size={14}
           color={data.insuranceRequired ? COLORS.gold : COLORS.sage}
+          strokeWidth={1.5}
         />
-        <Text style={apiCardStyles.rowText}>
+        <Text style={cardStyles.rowText}>
           {data.insuranceRequired
             ? t('prep.travelInsuranceRequired', { defaultValue: 'Travel insurance required' })
             : t('prep.travelInsuranceOptional', { defaultValue: 'Travel insurance not required' })}
@@ -143,9 +135,9 @@ export function EntryRequirementsCard({ data }: { data: EntryRequirements }) {
       </View>
 
       {data.notes.map((note, i) => (
-        <View key={i} style={apiCardStyles.row}>
-          <View style={apiCardStyles.dot} />
-          <Text style={apiCardStyles.rowText}>{note}</Text>
+        <View key={i} style={cardStyles.row}>
+          <View style={cardStyles.dot} />
+          <Text style={cardStyles.rowText}>{note}</Text>
         </View>
       ))}
     </View>
@@ -158,40 +150,34 @@ export function EntryRequirementsCard({ data }: { data: EntryRequirements }) {
 export function WeatherLoadingSkeleton() {
   return (
     <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}>
-      <View style={apiCardStyles.card}>
-        <SkeletonCard width={140} height={14} borderRadius={4} style={{ marginBottom: SPACING.md }} />
+      <View style={cardStyles.card}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.md }}>
           <SkeletonCard width={48} height={48} borderRadius={RADIUS.sm} />
           <View style={{ gap: SPACING.xs }}>
-            <SkeletonCard width={80} height={28} borderRadius={4} />
-            <SkeletonCard width={120} height={16} borderRadius={4} />
+            <SkeletonCard width={80} height={36} borderRadius={4} />
+            <SkeletonCard width={120} height={14} borderRadius={4} />
           </View>
         </View>
-        <View style={{ flexDirection: 'row', gap: SPACING.lg }}>
+        <View style={{ flexDirection: 'row', gap: SPACING.sm }}>
           {[1, 2, 3].map((i) => (
-            <SkeletonCard key={i} width={72} height={40} borderRadius={RADIUS.sm} />
+            <SkeletonCard key={i} width={72} height={56} borderRadius={RADIUS.md} />
           ))}
         </View>
-        <SkeletonCard width={100} height={12} borderRadius={4} style={{ marginTop: SPACING.md }} />
-      </View>
-      <View style={{ marginTop: SPACING.sm, gap: SPACING.sm }}>
-        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-          <SkeletonCard key={i} width="100%" height={52} borderRadius={RADIUS.md} />
-        ))}
       </View>
     </View>
   );
 }
 
 // ---------------------------------------------------------------------------
-// WeatherForecastDays — 7-day strip cards
+// WeatherForecastDays — compact 5-day strip
 // ---------------------------------------------------------------------------
 export function WeatherForecastDays({ weatherIntel }: { weatherIntel: WeatherIntel }) {
   if (!weatherIntel.days?.length) return null;
+  const days = weatherIntel.days.slice(0, 5);
   return (
     <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}>
-      <View style={{ marginBottom: SPACING.sm, gap: SPACING.xs }}>
-        {weatherIntel.days.map((day) => (
+      <View style={{ gap: SPACING.xs }}>
+        {days.map((day) => (
           <WeatherDayStrip
             key={day.date}
             day={{
@@ -220,17 +206,17 @@ export function WeatherPackingAdvice({ weatherIntel }: { weatherIntel: WeatherIn
 
   return (
     <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}>
-      <View style={apiCardStyles.card}>
-        <Text style={{ fontFamily: 'DM Mono', fontSize: 10, color: COLORS.sage, letterSpacing: 1.5, marginTop: SPACING.xs }}>
-          {t('prep.weatherForecast', { defaultValue: '7-DAY WEATHER' })}
+      <View style={cardStyles.card}>
+        <Text style={cardStyles.sectionLabel}>
+          {t('prep.weatherForecast', { defaultValue: 'PACKING FORECAST' })}
         </Text>
         {weatherIntel.summary ? (
-          <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: COLORS.creamSoft, lineHeight: 16 }}>{weatherIntel.summary}</Text>
+          <Text style={cardStyles.rowText}>{weatherIntel.summary}</Text>
         ) : null}
         {weatherIntel.packingAdvice?.length > 0 ? (
-          <View style={{ marginTop: SPACING.sm }}>
+          <View style={{ marginTop: SPACING.sm, gap: 4 }}>
             {weatherIntel.packingAdvice.map((line, i) => (
-              <Text key={i} style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: COLORS.creamSoft, lineHeight: 16, marginTop: 4 }}>{line}</Text>
+              <Text key={i} style={cardStyles.rowText}>{line}</Text>
             ))}
           </View>
         ) : null}
@@ -238,3 +224,96 @@ export function WeatherPackingAdvice({ weatherIntel }: { weatherIntel: WeatherIn
     </View>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Card styles — shared by all weather/entry cards
+// ---------------------------------------------------------------------------
+const cardStyles = StyleSheet.create({
+  card: {
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.lg,
+  } as ViewStyle,
+  sectionLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.sage,
+    letterSpacing: 1.5,
+    marginBottom: SPACING.md,
+  } as TextStyle,
+  row: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
+  } as ViewStyle,
+  rowText: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.cream,
+    flex: 1,
+    lineHeight: 18,
+  } as TextStyle,
+  dot: {
+    width: 5,
+    height: 5,
+    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.sage,
+    marginTop: 6,
+  } as ViewStyle,
+  weatherHero: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    marginBottom: SPACING.lg,
+  } as ViewStyle,
+  weatherEmoji: {
+    fontSize: 40,
+    lineHeight: 48,
+  } as TextStyle,
+  weatherTemp: {
+    fontFamily: FONTS.header,
+    fontSize: 36,
+    color: COLORS.cream,
+    lineHeight: 40,
+  } as TextStyle,
+  weatherCondition: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.creamMuted,
+    marginTop: 2,
+  } as TextStyle,
+  weatherGrid: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  } as ViewStyle,
+  weatherStat: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 2,
+    backgroundColor: COLORS.bgElevated,
+    borderRadius: RADIUS.md,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.xs,
+  } as ViewStyle,
+  weatherStatLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.creamMuted,
+    letterSpacing: 0.5,
+  } as TextStyle,
+  weatherStatValue: {
+    fontFamily: FONTS.mono,
+    fontSize: 14,
+    color: COLORS.cream,
+  } as TextStyle,
+  updatedLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.creamMuted,
+    letterSpacing: 0.5,
+    marginTop: SPACING.sm,
+  } as TextStyle,
+});

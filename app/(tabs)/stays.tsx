@@ -1,7 +1,6 @@
 // =============================================================================
 // ROAM — Stays Tab
-// Hero + curated destinations + Booking.com deep links. Zero broken APIs.
-// Same pattern as Flights tab.
+// Clean search form + horizontal scroll cards + subtle booking link
 // =============================================================================
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
@@ -37,8 +36,9 @@ import { captureEvent } from '../../lib/posthog';
 import { getHotelLink, openBookingLink } from '../../lib/booking-links';
 import { DatePickerInline } from '../../components/stays/StaysDatePicker';
 import { SkeletonCard } from '../../components/premium/LoadingStates';
+
 // ---------------------------------------------------------------------------
-// Curated destination data (no APIs)
+// Curated destination data
 // ---------------------------------------------------------------------------
 interface PopularStay {
   destination: string;
@@ -116,7 +116,7 @@ const STAY_INSPIRATION: StayInspiration[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// Popular Stay Card
+// Popular Stay Card — horizontal scroll
 // ---------------------------------------------------------------------------
 const StayCard = React.memo(function StayCard({
   stay,
@@ -157,12 +157,7 @@ const StayCard = React.memo(function StayCard({
         <Text style={styles.stayVibe} numberOfLines={2}>
           {stay.vibe}
         </Text>
-        <View style={styles.stayBottom}>
-          <Text style={styles.stayPrice}>{stay.price}</Text>
-          <View style={styles.staySearchBadge}>
-            <Text style={styles.staySearchText}>Search</Text>
-          </View>
-        </View>
+        <Text style={styles.stayPrice}>{stay.price}</Text>
       </View>
     </Pressable>
   );
@@ -227,24 +222,29 @@ export default function StaysScreen() {
   // Live API data
   const sonarStays = useSonarQuery(destinationText.trim() || undefined, 'prep');
   const [nearbyHotels, setNearbyHotels] = useState<PlaceResult[] | null>(null);
+  const [nearbyLoading, setNearbyLoading] = useState(false);
   const [taHotels, setTaHotels] = useState<TALocation[] | null>(null);
+  const [taLoading, setTaLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     const dest = destinationText.trim();
     if (!dest) { setNearbyHotels(null); setTaHotels(null); return; }
 
-    // Google Places hotels
-    geocode(dest).then(async (geo) => {
-      if (cancelled || !geo) return;
-      const results = await searchNearby(geo.lat, geo.lng, 'lodging', 2000);
-      if (!cancelled) setNearbyHotels(results?.slice(0, 6) ?? null);
-    });
+    setNearbyLoading(true);
+    setTaLoading(true);
 
-    // TripAdvisor hotels
+    // Hotels nearby
+    geocode(dest).then(async (geo) => {
+      if (cancelled || !geo) { if (!cancelled) { setNearbyHotels(null); setNearbyLoading(false); } return; }
+      const results = await searchNearby(geo.lat, geo.lng, 'lodging', 2000);
+      if (!cancelled) { setNearbyHotels(results?.slice(0, 6) ?? null); setNearbyLoading(false); }
+    }).catch(() => { if (!cancelled) { setNearbyHotels(null); setNearbyLoading(false); } });
+
+    // Top rated hotels
     searchLocations(dest, 'hotels').then((results) => {
-      if (!cancelled) setTaHotels(results?.slice(0, 5) ?? null);
-    });
+      if (!cancelled) { setTaHotels(results?.slice(0, 5) ?? null); setTaLoading(false); }
+    }).catch(() => { if (!cancelled) { setTaHotels(null); setTaLoading(false); } });
 
     return () => { cancelled = true; };
   }, [destinationText]);
@@ -318,11 +318,11 @@ export default function StaysScreen() {
         <View style={styles.hero}>
           <Text style={styles.heroTitle}>{t('stays.heroTitle', { defaultValue: 'Find your stay.' })}</Text>
           <Text style={styles.heroSub}>
-            {t('stays.heroSub', { defaultValue: 'We search Booking.com so you get the best price, every time.' })}
+            {t('stays.heroSub', { defaultValue: 'Search and compare the best prices.' })}
           </Text>
         </View>
 
-        {/* Search Form */}
+        {/* Search Form — clean, large inputs */}
         <View style={styles.searchCard}>
           <View style={styles.inputWrap}>
             <MapPin size={18} color={COLORS.sage} strokeWidth={1.5} />
@@ -386,7 +386,7 @@ export default function StaysScreen() {
             onPress={handleSearch}
           >
             <ExternalLink size={18} color={COLORS.bg} strokeWidth={1.5} />
-            <Text style={styles.searchBtnText}>{t('stays.searchBooking', { defaultValue: 'Search on Booking.com' })}</Text>
+            <Text style={styles.searchBtnText}>{t('stays.searchBooking', { defaultValue: 'Search stays' })}</Text>
           </Pressable>
         </View>
 
@@ -401,7 +401,7 @@ export default function StaysScreen() {
           </Pressable>
         )}
 
-        {/* Popular Destinations */}
+        {/* Popular Destinations — horizontal scroll */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{t('stays.popularDestinations', { defaultValue: 'Popular destinations' })}</Text>
           <Text style={styles.sectionSub}>
@@ -409,7 +409,11 @@ export default function StaysScreen() {
           </Text>
         </View>
 
-        <View style={styles.stayGrid}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.stayScroll}
+        >
           {POPULAR_STAYS.map((stay) => (
             <StayCard
               key={stay.destination}
@@ -417,99 +421,70 @@ export default function StaysScreen() {
               onPress={() => handleStayPress(stay)}
             />
           ))}
-        </View>
+        </ScrollView>
 
-        {/* Sonar Stays Intel */}
-        {destinationText.trim() ? (
-          sonarStays.data ? (
-            <View style={styles.apiSection}>
-              <View style={styles.apiSectionHeader}>
-                <Text style={styles.apiSectionLabel}>{t('stays.liveIntel', { defaultValue: 'LIVE INTEL' })}</Text>
-              </View>
-              <SonarCard
-                answer={sonarStays.data.answer}
-                isLive={sonarStays.isLive}
-                citations={sonarStays.citations}
-                timestamp={sonarStays.data.timestamp}
-                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.booking.com/searchresults.html?ss=${encodeURIComponent(destinationText.trim())}`).catch(() => {}); }}
-              />
-            </View>
-          ) : !sonarStays.isLoading ? (
-            <View style={styles.apiSection}>
-              <Text style={styles.apiSectionLabel}>{t('stays.liveIntel', { defaultValue: 'LIVE INTEL' })}</Text>
-              <SonarFallback label={t('stays.liveIntelFallback', { defaultValue: 'Enter a destination to see stay recommendations' })} />
-            </View>
-          ) : null
+        {/* Sonar Stays Intel — only if destination entered and data available */}
+        {destinationText.trim() && sonarStays.data ? (
+          <View style={styles.apiSection}>
+            <SonarCard
+              answer={sonarStays.data.answer}
+              isLive={sonarStays.isLive}
+              citations={sonarStays.citations}
+              timestamp={sonarStays.data.timestamp}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.booking.com/searchresults.html?ss=${encodeURIComponent(destinationText.trim())}`).catch(() => {}); }}
+            />
+          </View>
         ) : null}
 
-        {/* Google Places Nearby Hotels */}
-        {destinationText.trim() ? (
-          nearbyHotels && nearbyHotels.length > 0 ? (
-            <View style={styles.apiSection}>
-              <Text style={styles.apiSectionLabel}>{t('stays.nearbyHotels', { defaultValue: 'NEARBY HOTELS' })}</Text>
-              <Text style={styles.apiSectionHeading}>{t('stays.nearbyHeading', { defaultValue: `Hotels near ${destinationText.trim()}`, destination: destinationText.trim() })}</Text>
-              <View style={styles.apiCardStack}>
-                {nearbyHotels.map((h) => (
-                  <APIDataCard
-                    key={h.placeId}
-                    name={h.name}
-                    rating={h.rating ?? null}
-                    reviewCount={null}
-                    address={h.vicinity ?? null}
-                    category={h.priceLevel != null ? '$'.repeat(h.priceLevel) : null}
-                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(h.name + (h.vicinity ? ' ' + h.vicinity : ''))}`).catch(() => {}); }}
-                  />
-                ))}
-              </View>
+        {/* Nearby Hotels — only show if we have data */}
+        {destinationText.trim() && nearbyHotels && nearbyHotels.length > 0 ? (
+          <View style={styles.apiSection}>
+            <Text style={styles.apiSectionTitle}>{t('stays.nearbyHeading', { defaultValue: 'Nearby hotels' })}</Text>
+            <View style={styles.apiCardStack}>
+              {nearbyHotels.map((h) => (
+                <APIDataCard
+                  key={h.placeId}
+                  name={h.name}
+                  rating={h.rating ?? null}
+                  reviewCount={null}
+                  address={h.vicinity ?? null}
+                  category={h.priceLevel != null ? '$'.repeat(h.priceLevel) : null}
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(h.name + (h.vicinity ? ' ' + h.vicinity : ''))}`).catch(() => {}); }}
+                />
+              ))}
             </View>
-          ) : nearbyHotels !== null ? (
-            <View style={styles.apiSection}>
-              <Text style={styles.apiSectionLabel}>{t('stays.nearbyHotels', { defaultValue: 'NEARBY HOTELS' })}</Text>
-              <SonarFallback label={t('stays.nearbyFallback', { defaultValue: 'Nearby hotels appear once you pick a destination' })} />
-            </View>
-          ) : (
-            <View style={styles.apiSection}>
-              <Text style={styles.apiSectionLabel}>{t('stays.nearbyHotels', { defaultValue: 'NEARBY HOTELS' })}</Text>
-              <SkeletonCard height={72} borderRadius={RADIUS.md} style={{ marginBottom: 8 }} />
-              <SkeletonCard height={72} borderRadius={RADIUS.md} style={{ marginBottom: 8 }} />
-              <SkeletonCard height={72} borderRadius={RADIUS.md} />
-            </View>
-          )
+          </View>
+        ) : destinationText.trim() && nearbyLoading ? (
+          <View style={styles.apiSection}>
+            <SkeletonCard height={72} borderRadius={RADIUS.lg} style={{ marginBottom: 8 }} />
+            <SkeletonCard height={72} borderRadius={RADIUS.lg} style={{ marginBottom: 8 }} />
+            <SkeletonCard height={72} borderRadius={RADIUS.lg} />
+          </View>
         ) : null}
 
-        {/* TripAdvisor Top Hotels */}
-        {destinationText.trim() ? (
-          taHotels && taHotels.length > 0 ? (
-            <View style={styles.apiSection}>
-              <Text style={styles.apiSectionLabel}>{t('stays.topRated', { defaultValue: 'TOP RATED' })}</Text>
-              <Text style={styles.apiSectionHeading}>{t('stays.topRatedHeading', { defaultValue: 'Highest rated stays' })}</Text>
-              <View style={styles.apiCardStack}>
-                {taHotels.map((h) => (
-                  <APIDataCard
-                    key={h.locationId}
-                    name={h.name}
-                    rating={h.rating ?? null}
-                    reviewCount={h.numReviews ?? null}
-                    address={h.address ?? null}
-                    category={null}
-                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.tripadvisor.com/Search?q=${encodeURIComponent(h.name + ' ' + destinationText.trim())}`).catch(() => {}); }}
-                  />
-                ))}
-              </View>
+        {/* Top Rated Hotels — only show if we have data */}
+        {destinationText.trim() && taHotels && taHotels.length > 0 ? (
+          <View style={styles.apiSection}>
+            <Text style={styles.apiSectionTitle}>{t('stays.topRatedHeading', { defaultValue: 'Highest rated' })}</Text>
+            <View style={styles.apiCardStack}>
+              {taHotels.map((h) => (
+                <APIDataCard
+                  key={h.locationId}
+                  name={h.name}
+                  rating={h.rating ?? null}
+                  reviewCount={h.numReviews ?? null}
+                  address={h.address ?? null}
+                  category={null}
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.tripadvisor.com/Search?q=${encodeURIComponent(h.name + ' ' + destinationText.trim())}`).catch(() => {}); }}
+                />
+              ))}
             </View>
-          ) : taHotels !== null ? (
-            <View style={styles.apiSection}>
-              <Text style={styles.apiSectionLabel}>{t('stays.topRated', { defaultValue: 'TOP RATED' })}</Text>
-              <SonarFallback label={t('stays.topRatedFallback', { defaultValue: 'Top-rated stays appear once you pick a destination' })} />
-            </View>
-          ) : (
-            <View style={styles.apiSection}>
-              <Text style={styles.apiSectionLabel}>{t('stays.topRated', { defaultValue: 'TOP RATED' })}</Text>
-              <SkeletonCard height={72} borderRadius={RADIUS.md} style={{ marginBottom: 8 }} />
-              <SkeletonCard height={72} borderRadius={RADIUS.md} style={{ marginBottom: 8 }} />
-              <SkeletonCard height={72} borderRadius={RADIUS.md} />
-            </View>
-          )
+          </View>
+        ) : destinationText.trim() && taLoading ? (
+          <View style={styles.apiSection}>
+            <SkeletonCard height={72} borderRadius={RADIUS.lg} style={{ marginBottom: 8 }} />
+            <SkeletonCard height={72} borderRadius={RADIUS.lg} />
+          </View>
         ) : null}
 
         {/* Stay Inspiration */}
@@ -534,7 +509,7 @@ export default function StaysScreen() {
           ))}
         </ScrollView>
 
-        {/* Affiliate disclaimer */}
+        {/* Subtle affiliate note — not a giant CTA */}
         <Text style={styles.disclaimer}>
           {t('stays.disclaimer', { defaultValue: 'ROAM earns a small commission when you book through Booking.com. This keeps the app free.' })}
         </Text>
@@ -554,16 +529,17 @@ const styles = StyleSheet.create({
   fill: { flex: 1 } as ViewStyle,
   scrollContent: { paddingBottom: 120 } as ViewStyle,
 
+  // Hero
   hero: {
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.lg,
-    paddingBottom: SPACING.md,
+    paddingBottom: SPACING.lg,
   } as ViewStyle,
   heroTitle: {
     fontFamily: FONTS.header,
-    fontSize: 40,
+    fontSize: 32,
     color: COLORS.cream,
-    lineHeight: 46,
+    lineHeight: 38,
   } as TextStyle,
   heroSub: {
     fontFamily: FONTS.body,
@@ -573,14 +549,15 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   } as TextStyle,
 
+  // Search card — clean, spacious
   searchCard: {
     marginHorizontal: SPACING.lg,
     marginBottom: SPACING.xl,
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.border,
-    padding: SPACING.md,
+    padding: SPACING.lg,
     gap: SPACING.md,
   } as ViewStyle,
   inputWrap: {
@@ -588,16 +565,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: SPACING.sm,
     backgroundColor: COLORS.bg,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.border,
     paddingHorizontal: SPACING.md,
-    height: 48,
+    height: 52,
   } as ViewStyle,
   input: {
     flex: 1,
     fontFamily: FONTS.body,
-    fontSize: 14,
+    fontSize: 15,
     color: COLORS.cream,
     padding: 0,
   } as TextStyle,
@@ -621,9 +598,9 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   } as ViewStyle,
   counterBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: RADIUS.sm,
+    width: 36,
+    height: 36,
+    borderRadius: RADIUS.md,
     backgroundColor: COLORS.bg,
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -643,40 +620,44 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: SPACING.sm,
     height: 52,
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.pill,
     backgroundColor: COLORS.sage,
   } as ViewStyle,
   searchBtnText: {
     fontFamily: FONTS.header,
-    fontSize: 20,
+    fontSize: 18,
     color: COLORS.bg,
   } as TextStyle,
 
+  // Plan CTA
   planCta: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
     marginHorizontal: SPACING.lg,
     marginBottom: SPACING.xl,
-    padding: SPACING.md,
-    backgroundColor: COLORS.gold + '14',
+    padding: SPACING.lg,
+    backgroundColor: COLORS.goldSubtle,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
-    borderColor: COLORS.gold + '30',
+    borderColor: COLORS.goldBorder,
   } as ViewStyle,
   planCtaText: {
     fontFamily: FONTS.body,
     fontSize: 14,
     color: COLORS.gold,
+    flex: 1,
   } as TextStyle,
 
+  // Section headers
   sectionHeader: {
     paddingHorizontal: SPACING.lg,
     marginBottom: SPACING.md,
+    marginTop: SPACING.lg,
   } as ViewStyle,
   sectionTitle: {
     fontFamily: FONTS.header,
-    fontSize: 24,
+    fontSize: 20,
     color: COLORS.cream,
   } as TextStyle,
   sectionSub: {
@@ -686,16 +667,15 @@ const styles = StyleSheet.create({
     marginTop: 2,
   } as TextStyle,
 
-  stayGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  // Popular stays — horizontal scroll
+  stayScroll: {
     paddingHorizontal: SPACING.lg,
-    gap: SPACING.sm,
-    marginBottom: SPACING.xl,
+    gap: SPACING.md,
+    paddingBottom: SPACING.lg,
   } as ViewStyle,
   stayCard: {
-    width: '48.5%' as unknown as number,
-    height: 180,
+    width: 160,
+    height: 200,
     borderRadius: RADIUS.lg,
     overflow: 'hidden',
     borderWidth: 1,
@@ -711,11 +691,11 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: SPACING.sm,
+    padding: SPACING.md,
   } as ViewStyle,
   stayDest: {
     fontFamily: FONTS.header,
-    fontSize: 20,
+    fontSize: 18,
     color: COLORS.white,
     marginBottom: 2,
   } as TextStyle,
@@ -725,38 +705,22 @@ const styles = StyleSheet.create({
     color: COLORS.creamSoft,
     marginBottom: 4,
   } as TextStyle,
-  stayBottom: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  } as ViewStyle,
   stayPrice: {
     fontFamily: FONTS.mono,
-    fontSize: 12,
+    fontSize: 11,
     color: COLORS.gold,
   } as TextStyle,
-  staySearchBadge: {
-    backgroundColor: COLORS.sage,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 3,
-    borderRadius: RADIUS.sm,
-  } as ViewStyle,
-  staySearchText: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.bg,
-    letterSpacing: 0.5,
-  } as TextStyle,
 
+  // Inspiration — horizontal scroll
   inspirationScroll: {
     paddingHorizontal: SPACING.lg,
     gap: SPACING.md,
-    paddingBottom: SPACING.xl,
+    paddingBottom: SPACING.lg,
   } as ViewStyle,
   inspirationCard: {
-    width: 200,
-    height: 260,
-    borderRadius: RADIUS.xl,
+    width: 180,
+    height: 240,
+    borderRadius: RADIUS.lg,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -775,7 +739,7 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   inspirationDest: {
     fontFamily: FONTS.header,
-    fontSize: 22,
+    fontSize: 18,
     color: COLORS.white,
   } as TextStyle,
   inspirationReason: {
@@ -786,6 +750,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   } as TextStyle,
 
+  // Disclaimer — subtle
   disclaimer: {
     fontFamily: FONTS.body,
     fontSize: 11,
@@ -796,16 +761,19 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   } as TextStyle,
 
-  apiSection: { paddingHorizontal: 20, paddingTop: SPACING.xl, gap: SPACING.sm } as ViewStyle,
-  apiSectionHeader: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm } as ViewStyle,
-  apiSectionLabel: { fontFamily: FONTS.mono, fontSize: 11, color: COLORS.sage, letterSpacing: 2 } as TextStyle,
-  apiSectionHeading: { fontFamily: FONTS.header, fontSize: 22, color: COLORS.cream, letterSpacing: -0.5, marginBottom: SPACING.md } as TextStyle,
-  apiCardStack: { gap: SPACING.sm } as ViewStyle,
-  apiCard: { backgroundColor: COLORS.surface1, borderRadius: RADIUS.lg, padding: SPACING.md, gap: 4 } as ViewStyle,
-  apiCardName: { fontFamily: FONTS.bodyMedium, fontSize: 15, color: COLORS.cream } as TextStyle,
-  apiCardMeta: { fontFamily: FONTS.mono, fontSize: 12, color: COLORS.sage } as TextStyle,
-  apiCardSub: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.creamDim } as TextStyle,
-  apiCardBody: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.cream, lineHeight: 20 } as TextStyle,
-  fallbackContainer: { paddingVertical: SPACING.md, alignItems: 'center' } as ViewStyle,
-  fallbackText: { color: COLORS.muted, fontSize: 14, fontFamily: FONTS.body } as TextStyle,
+  // API sections — no source labels
+  apiSection: {
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.lg,
+    gap: SPACING.sm,
+  } as ViewStyle,
+  apiSectionTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 20,
+    color: COLORS.cream,
+    marginBottom: SPACING.sm,
+  } as TextStyle,
+  apiCardStack: {
+    gap: SPACING.sm,
+  } as ViewStyle,
 });

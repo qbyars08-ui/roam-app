@@ -422,12 +422,12 @@ export default function FoodScreen() {
           </ScrollView>
         )}
 
-        {/* ── Foursquare: Nearby Restaurants ── */}
+        {/* ── Nearby Restaurants ── */}
         {(fsqLoading || fsqPlaces.length > 0) && (
           <View style={styles.fsqSection}>
             <View style={styles.fsqSectionHeader}>
               <Text style={styles.fsqSectionLabel}>
-                {t('food.nearbyRestaurants', { defaultValue: 'NEARBY RESTAURANTS' })}
+                {t('food.nearbyRestaurants', { defaultValue: 'Nearby' })}
               </Text>
               {fsqLoading && (
                 <SkeletonCard height={12} width={60} borderRadius={RADIUS.sm} />
@@ -488,11 +488,11 @@ export default function FoodScreen() {
           </View>
         )}
 
-        {/* ── Google Places: Nearby Restaurants ── */}
+        {/* ── Highly rated nearby ── */}
         {googleRestaurants && googleRestaurants.length > 0 ? (
           <View style={styles.apiSection}>
-            <Text style={styles.apiSectionLabel}>{t('food.highlyRatedLabel', { defaultValue: 'HIGHLY RATED' })}</Text>
-            <Text style={styles.apiSectionHeading}>{t('food.highlyRated', { defaultValue: 'Highly rated nearby' })}</Text>
+            <Text style={styles.apiSectionLabel}>{t('food.highlyRated', { defaultValue: 'Highly rated' })}</Text>
+            <Text style={styles.apiSectionHeading}>{t('food.highlyRatedSub', { defaultValue: 'Top spots near you' })}</Text>
             <View style={styles.apiCardStack}>
               {googleRestaurants.map((place, i) => (
                 <APIDataCard
@@ -507,18 +507,13 @@ export default function FoodScreen() {
               ))}
             </View>
           </View>
-        ) : googleTaLoaded && !googleRestaurants ? (
-          <View style={styles.apiSection}>
-            <Text style={styles.apiSectionLabel}>{t('food.highlyRatedLabel', { defaultValue: 'HIGHLY RATED' })}</Text>
-            <SonarFallback label={t('food.googlePlacesFallback', { defaultValue: 'Nearby spots load when you get closer to your trip' })} />
-          </View>
         ) : null}
 
-        {/* ── TripAdvisor: Top Restaurants ── */}
+        {/* ── Top reviewed ── */}
         {taRestaurants && taRestaurants.length > 0 ? (
           <View style={styles.apiSection}>
-            <Text style={styles.apiSectionLabel}>{t('food.topReviewedLabel', { defaultValue: 'TOP REVIEWED' })}</Text>
-            <Text style={styles.apiSectionHeading}>{t('food.topReviewed', { defaultValue: 'Top reviewed restaurants' })}</Text>
+            <Text style={styles.apiSectionLabel}>{t('food.topReviewed', { defaultValue: 'Top reviewed' })}</Text>
+            <Text style={styles.apiSectionHeading}>{t('food.topReviewedSub', { defaultValue: 'Highest rated restaurants' })}</Text>
             <View style={styles.apiCardStack}>
               {taRestaurants.map((loc, i) => (
                 <APIDataCard
@@ -532,11 +527,6 @@ export default function FoodScreen() {
                 />
               ))}
             </View>
-          </View>
-        ) : googleTaLoaded && !taRestaurants ? (
-          <View style={styles.apiSection}>
-            <Text style={styles.apiSectionLabel}>{t('food.topReviewedLabel', { defaultValue: 'TOP REVIEWED' })}</Text>
-            <SonarFallback label={t('food.tripAdvisorFallback', { defaultValue: 'Top picks refresh closer to your trip' })} />
           </View>
         ) : null}
 

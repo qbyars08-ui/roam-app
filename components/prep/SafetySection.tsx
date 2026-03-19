@@ -1,5 +1,5 @@
 // =============================================================================
-// SafetySection — Overview tab: advisory, risks, metrics
+// SafetySection — Overview tab: single compact card with advisory + metrics
 // =============================================================================
 import React from 'react';
 import { View, Text, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
@@ -44,7 +44,7 @@ function MetricRow({
 }
 
 // ---------------------------------------------------------------------------
-// OverviewTab
+// SafetySection — compact card: dot + level + score, then metrics
 // ---------------------------------------------------------------------------
 type Props = {
   safety: SafetyData;
@@ -58,36 +58,35 @@ export default function SafetySection({ safety }: Props) {
       : safety.advisoryLevel === 2
         ? COLORS.gold
         : COLORS.coral;
-  const isDoNotTravel = safety.advisoryLevel === 4;
 
   return (
     <View style={sharedStyles.tabContent}>
-      <View style={styles.overviewRow}>
-        <Text style={styles.overviewLabel}>{t('prep.travelAdvisory', { defaultValue: 'Travel Advisory' })}</Text>
-        <View style={[styles.advisoryBadge, { backgroundColor: advisoryColor + '1A', borderColor: advisoryColor }]}>
-          <Text
-            style={[
-              styles.advisoryBadgeText,
-              { color: advisoryColor },
-              isDoNotTravel && styles.advisoryBold,
-            ]}
-          >
+      {/* Advisory card — compact */}
+      <View style={styles.advisoryCard}>
+        <View style={styles.advisoryRow}>
+          <View style={[styles.advisoryDot, { backgroundColor: advisoryColor }]} />
+          <Text style={[styles.advisoryLevel, { color: advisoryColor }]}>
             {safety.advisoryLabel}
+          </Text>
+          <Text style={styles.advisoryScore}>
+            {safety.safetyScore}
           </Text>
         </View>
       </View>
 
+      {/* Risks */}
       {safety.topRisks.length > 0 && (
         <View style={styles.risksWrap}>
           {safety.topRisks.slice(0, 3).map((risk, i) => (
             <View key={i} style={styles.riskRow}>
-              <AlertTriangle size={14} color={COLORS.coral} />
+              <AlertTriangle size={14} color={COLORS.coral} strokeWidth={1.5} />
               <Text style={styles.riskText}>{risk}</Text>
             </View>
           ))}
         </View>
       )}
 
+      {/* Metrics */}
       <View style={styles.metricsWrap}>
         <MetricRow
           label={t('prep.crimeIndex', { defaultValue: 'Crime Index' })}
@@ -112,27 +111,33 @@ export default function SafetySection({ safety }: Props) {
 }
 
 const styles = StyleSheet.create({
-  overviewRow: {
+  advisoryCard: {
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+  } as ViewStyle,
+  advisoryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 18,
+    gap: SPACING.sm,
   } as ViewStyle,
-  overviewLabel: {
-    fontFamily: FONTS.body,
-    fontSize: 12,
-    color: COLORS.creamMuted,
-  } as TextStyle,
-  advisoryBadge: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
+  advisoryDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   } as ViewStyle,
-  advisoryBadgeText: {
+  advisoryLevel: {
     fontFamily: FONTS.bodyMedium,
-    fontSize: 12,
+    fontSize: 15,
+    flex: 1,
   } as TextStyle,
-  advisoryBold: {
-    fontFamily: FONTS.bodySemiBold,
+  advisoryScore: {
+    fontFamily: FONTS.mono,
+    fontSize: 20,
+    color: COLORS.cream,
   } as TextStyle,
   risksWrap: {
     gap: SPACING.sm,
@@ -167,7 +172,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 4,
     borderRadius: RADIUS.sm,
-    backgroundColor: COLORS.bgMagazine,
+    backgroundColor: COLORS.surface1,
     overflow: 'hidden',
   } as ViewStyle,
   metricBarFill: {

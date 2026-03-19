@@ -79,14 +79,15 @@ function EditorialHeader({ safety, destination, countryName }: { safety: ReturnT
     })();
     return () => { cancelled = true; };
   }, [destination]);
-  const { t } = useTranslation();
-  const score = safety?.safetyScore ?? null;
-  const safetyLabel = score == null ? null : score > 70 ? t('prep.safeForTravelers', { defaultValue: 'Safe for travelers' }) : score >= 40 ? t('prep.useCaution', { defaultValue: 'Use caution' }) : t('prep.highRisk', { defaultValue: 'High risk' });
+
   return (
     <View style={headerStyles.container}>
       <Text style={headerStyles.destination}>{countryName}</Text>
-      {(localDateTime || tempC != null) && <Text style={headerStyles.meta}>{[localDateTime, tempC != null ? `${tempC}\u00B0C` : null].filter(Boolean).join(' \u00B7 ')}</Text>}
-      {score != null && <Text style={headerStyles.safetyLine}>{t('prep.safetyScore', { defaultValue: 'Safety' })} {score} — {safetyLabel}</Text>}
+      {(localDateTime || tempC != null) && (
+        <Text style={headerStyles.meta}>
+          {[localDateTime, tempC != null ? `${tempC}\u00B0C` : null].filter(Boolean).join(' \u00B7 ')}
+        </Text>
+      )}
     </View>
   );
 }
@@ -158,49 +159,77 @@ function PrepScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <ScrollView style={styles.scroll} contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + SPACING.xxl }]} showsVerticalScrollIndicator={false}>
-        {!isConnected && <View style={styles.offlineBanner}><WifiOff size={14} color={COLORS.bg} /><Text style={styles.offlineText}>{t('prep.offlineBanner', { defaultValue: 'Everything you need, no signal required' })}</Text></View>}
+        {!isConnected && (
+          <View style={styles.offlineBanner}>
+            <WifiOff size={14} color={COLORS.bg} />
+            <Text style={styles.offlineText}>{t('prep.offlineBanner', { defaultValue: 'Everything you need, no signal required' })}</Text>
+          </View>
+        )}
 
         {selectedDest && sonarUrgent.data?.answer?.trim() && (
           <View style={styles.urgentBanner}>
             <Flame size={18} color={COLORS.gold} strokeWidth={1.5} />
-            <Text style={styles.urgentBannerText} numberOfLines={2}>{(() => { const raw = sonarUrgent.data.answer.trim().replace(/^["']|["']$/g, ''); const first = raw.split(/[.!?]/)[0]?.trim(); return first ? `${first}.` : raw.slice(0, 120); })()}</Text>
+            <Text style={styles.urgentBannerText} numberOfLines={2}>
+              {(() => { const raw = sonarUrgent.data.answer.trim().replace(/^["']|["']$/g, ''); const first = raw.split(/[.!?]/)[0]?.trim(); return first ? `${first}.` : raw.slice(0, 120); })()}
+            </Text>
             {sonarUrgent.data.isLive && <LiveBadge />}
           </View>
         )}
 
         {/* Nudge: plan a trip to get personalized prep */}
         {!activeTrip && (
-          <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/(tabs)/plan' as never); }} accessibilityLabel={t('prep.planTripCta', { defaultValue: 'Plan a trip for personalized prep' })} accessibilityRole="button" style={({ pressed }) => [{ flexDirection: 'row' as const, alignItems: 'center' as const, marginHorizontal: 20, marginBottom: SPACING.lg, paddingVertical: SPACING.md, paddingHorizontal: SPACING.lg, backgroundColor: COLORS.sageSubtle, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.sageBorder, gap: SPACING.md, opacity: pressed ? 0.85 : 1 }]}>
-            <View style={{ width: 40, height: 40, borderRadius: RADIUS.md, backgroundColor: COLORS.sageSoft, alignItems: 'center' as const, justifyContent: 'center' as const }}>
+          <Pressable
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/(tabs)/plan' as never); }}
+            accessibilityLabel={t('prep.planTripCta', { defaultValue: 'Plan a trip for personalized prep' })}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.planNudge, pressed && { opacity: 0.85 }]}
+          >
+            <View style={styles.planNudgeIcon}>
               <Flame size={20} color={COLORS.sage} strokeWidth={1.5} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: FONTS.bodyMedium, fontSize: 15, color: COLORS.cream }}>{t('prep.planTripTitle', { defaultValue: 'Build a trip for personalized prep' })}</Text>
-              <Text style={{ fontFamily: FONTS.body, fontSize: 12, color: COLORS.creamDim, marginTop: 2 }}>{t('prep.planTripSub', { defaultValue: 'Browsing general intel below. Plan a trip for tailored checklists.' })}</Text>
+              <Text style={styles.planNudgeTitle}>{t('prep.planTripTitle', { defaultValue: 'Build a trip for personalized prep' })}</Text>
+              <Text style={styles.planNudgeSub}>{t('prep.planTripSub', { defaultValue: 'Browsing general intel below. Plan a trip for tailored checklists.' })}</Text>
             </View>
             <ChevronRight size={18} color={COLORS.sage} strokeWidth={1.5} />
           </Pressable>
         )}
 
         {hasNoData ? (
-          <View style={sharedStyles.noDataWrap}><Text style={sharedStyles.noDataTitle}>{t('prep.dataNotAvailable', { defaultValue: 'We don\u2019t have intel for this destination yet' })}</Text><Text style={sharedStyles.noDataText}>{t('prep.tryNearbyCity', { defaultValue: 'Try a nearby major city instead' })}</Text></View>
+          <View style={sharedStyles.noDataWrap}>
+            <Text style={sharedStyles.noDataTitle}>{t('prep.dataNotAvailable', { defaultValue: 'We don\u2019t have intel for this destination yet' })}</Text>
+            <Text style={sharedStyles.noDataText}>{t('prep.tryNearbyCity', { defaultValue: 'Try a nearby major city instead' })}</Text>
+          </View>
         ) : (
           <>
             <EditorialHeader safety={safety} destination={selectedDest} countryName={countryName} />
-            {entryRequirements && <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}><EntryRequirementsCard data={entryRequirements} /></View>}
+
+            {/* Entry requirements */}
+            {entryRequirements && (
+              <View style={styles.sectionWrap}>
+                <EntryRequirementsCard data={entryRequirements} />
+              </View>
+            )}
+
+            {/* Weather */}
             {weatherLoading ? <WeatherLoadingSkeleton /> : null}
-            {currentWeather && !weatherLoading && <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}><CurrentWeatherCard data={currentWeather} updatedAt={weatherFetchedAt} /></View>}
+            {currentWeather && !weatherLoading && (
+              <View style={styles.sectionWrap}>
+                <CurrentWeatherCard data={currentWeather} updatedAt={weatherFetchedAt} />
+              </View>
+            )}
             {weatherIntel && weatherIntel.days?.length > 0 && !weatherLoading ? <WeatherForecastDays weatherIntel={weatherIntel} /> : null}
             {weatherIntel && (weatherIntel.summary || (weatherIntel.packingAdvice?.length > 0)) && !weatherLoading ? <WeatherPackingAdvice weatherIntel={weatherIntel} /> : null}
 
+            {/* Sonar live intel — no "CURRENT CONDITIONS" header clutter */}
             {(sonarPrep.data || sonarSafety.data) ? (
-              <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg, gap: SPACING.md }}>
+              <View style={styles.sonarWrap}>
                 {sonarPrep.data && (
                   <SonarCard
                     answer={sonarPrep.data.answer}
                     isLive={sonarPrep.isLive}
                     citations={sonarPrep.citations}
-                    title={t('prep.currentConditions', { defaultValue: 'Current Conditions' })}
+                    title={t('prep.latestIntel', { defaultValue: 'Latest Intel' })}
                     timestamp={sonarPrep.data.timestamp}
                   />
                 )}
@@ -215,23 +244,48 @@ function PrepScreen() {
                 )}
               </View>
             ) : !sonarPrep.isLoading && !sonarSafety.isLoading ? (
-              <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}>
+              <View style={styles.sectionWrap}>
                 <SonarFallback label={t('prep.conditionsLater', { defaultValue: 'Conditions update when your trip gets closer' })} />
               </View>
             ) : null}
 
-            <PrepNavCards destination={selectedDest} activeTrip={activeTrip} />
-            <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}><IAmHereNow destination={selectedDest} hotelName={parsedItinerary?.days?.[0]?.accommodation?.name ?? undefined} hotelAddress={undefined} /></View>
+            {/* Intelligence grid (2x2) */}
             <IntelligenceGrid destination={selectedDest} safety={safety} visaReqs={visaReqs} passportCode={passport} />
-            <View style={{ paddingHorizontal: 20, marginBottom: 40 }}><AirQualitySunCard destination={selectedDest} /></View>
-            <View style={{ paddingHorizontal: 20, marginTop: SPACING.lg, marginBottom: 40 }}><CostOfLivingCard destination={selectedDest} /></View>
-            <View style={{ paddingHorizontal: 20, marginBottom: 40 }}><EmergencyQuickCard destination={selectedDest} /></View>
-            <View style={{ paddingHorizontal: 20, marginBottom: 40 }}><CurrencyQuickCard destination={selectedDest} /></View>
 
+            {/* Nav cards */}
+            <PrepNavCards destination={selectedDest} activeTrip={activeTrip} />
+
+            {/* I Am Here Now */}
+            <View style={styles.sectionWrap}>
+              <IAmHereNow destination={selectedDest} hotelName={parsedItinerary?.days?.[0]?.accommodation?.name ?? undefined} hotelAddress={undefined} />
+            </View>
+
+            {/* Quick cards */}
+            <View style={styles.sectionWrap}><AirQualitySunCard destination={selectedDest} /></View>
+            <View style={styles.sectionWrap}><CostOfLivingCard destination={selectedDest} /></View>
+            <View style={styles.sectionWrap}><EmergencyQuickCard destination={selectedDest} /></View>
+            <View style={styles.sectionWrap}><CurrencyQuickCard destination={selectedDest} /></View>
+
+            {/* Pill tab bar */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillsScroll} contentContainerStyle={styles.pillsContent}>
-              {SECTIONS.map((s) => { const isActive = activeSection === s.id; return (<Pressable key={s.id} onPress={() => handleSectionChange(s.id)} style={[styles.pill, isActive && styles.pillActive]} accessibilityLabel={`${s.label} section${isActive ? ', selected' : ''}`} accessibilityRole="tab" accessibilityState={{ selected: isActive }}><Text style={[styles.pillText, isActive && styles.pillTextActive]}>{s.label}</Text></Pressable>); })}
+              {SECTIONS.map((s) => {
+                const isActive = activeSection === s.id;
+                return (
+                  <Pressable
+                    key={s.id}
+                    onPress={() => handleSectionChange(s.id)}
+                    style={[styles.pill, isActive && styles.pillActive]}
+                    accessibilityLabel={`${s.label} section${isActive ? ', selected' : ''}`}
+                    accessibilityRole="tab"
+                    accessibilityState={{ selected: isActive }}
+                  >
+                    <Text style={[styles.pillText, isActive && styles.pillTextActive]}>{s.label}</Text>
+                  </Pressable>
+                );
+              })}
             </ScrollView>
 
+            {/* Section content */}
             {activeSection === 'schedule' && <ScheduleSection itinerary={parsedItinerary} />}
             {activeSection === 'overview' && safety && <SafetySection safety={safety} />}
             {activeSection === 'overview' && !safety && <View style={sharedStyles.tabContent}><Text style={sharedStyles.noDataText}>{t('prep.noOverviewYet', { defaultValue: 'We don\u2019t have overview intel for this destination yet. Try a nearby major city.' })}</Text></View>}
@@ -249,25 +303,58 @@ function PrepScreen() {
           </>
         )}
 
+        {/* Bottom CTAs */}
         {!hasNoData && (
-          <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/body-intel' as never); }} style={({ pressed }) => [sharedStyles.bodyIntelCta, { borderLeftColor: COLORS.sage, marginTop: SPACING.lg }, pressed && { opacity: 0.7 }]} accessibilityLabel="Open Health Intel" accessibilityRole="button">
-            <Stethoscope size={20} color={COLORS.sage} />
-            <View style={{ flex: 1 }}><Text style={[sharedStyles.bodyIntelCtaTitle, { color: COLORS.sage }]}>{t('prep.healthIntel', { defaultValue: 'Health Intel' })}</Text><Text style={sharedStyles.bodyIntelCtaSubtitle}>{t('prep.healthIntelDesc', { defaultValue: 'Destination health & body intel' })}</Text></View>
-            <ChevronRight size={18} color={COLORS.creamMuted} />
+          <Pressable
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/body-intel' as never); }}
+            style={({ pressed }) => [styles.bottomCta, pressed && { opacity: 0.7 }]}
+            accessibilityLabel="Open Health Intel"
+            accessibilityRole="button"
+          >
+            <Stethoscope size={20} color={COLORS.sage} strokeWidth={1.5} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.bottomCtaTitle}>{t('prep.healthIntel', { defaultValue: 'Health Intel' })}</Text>
+              <Text style={styles.bottomCtaSub}>{t('prep.healthIntelDesc', { defaultValue: 'Destination health & body intel' })}</Text>
+            </View>
+            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
           </Pressable>
         )}
         {!hasNoData && (
-          <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push({ pathname: '/offline-pack', params: { tripId: activeTrip?.id ?? activeTripId ?? '' } } as never); }} style={({ pressed }) => [sharedStyles.bodyIntelCta, { borderLeftColor: COLORS.sage, marginTop: SPACING.md }, pressed && { opacity: 0.7 }]} accessibilityLabel={`Download ${selectedDest} prep data for offline use`} accessibilityRole="button">
-            <Download size={20} color={COLORS.sage} />
-            <View style={{ flex: 1 }}><Text style={[sharedStyles.bodyIntelCtaTitle, { color: COLORS.sage }]}>{t('prep.downloadForOffline', { defaultValue: 'Download for Offline' })}</Text><Text style={sharedStyles.bodyIntelCtaSubtitle}>{t('prep.saveOfflineSub', { defaultValue: `Save ${selectedDest} intel to your device \u2014 no WiFi needed later`, destination: selectedDest })}</Text></View>
-            <ChevronRight size={18} color={COLORS.creamMuted} />
+          <Pressable
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push({ pathname: '/offline-pack', params: { tripId: activeTrip?.id ?? activeTripId ?? '' } } as never); }}
+            style={({ pressed }) => [styles.bottomCta, { marginTop: SPACING.sm }, pressed && { opacity: 0.7 }]}
+            accessibilityLabel={`Download ${selectedDest} prep data for offline use`}
+            accessibilityRole="button"
+          >
+            <Download size={20} color={COLORS.sage} strokeWidth={1.5} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.bottomCtaTitle}>{t('prep.downloadForOffline', { defaultValue: 'Download for Offline' })}</Text>
+              <Text style={styles.bottomCtaSub}>{t('prep.saveOfflineSub', { defaultValue: `Save ${selectedDest} intel to your device \u2014 no WiFi needed later`, destination: selectedDest })}</Text>
+            </View>
+            <ChevronRight size={18} color={COLORS.creamMuted} strokeWidth={1.5} />
           </Pressable>
         )}
+
+        {/* Destination picker */}
         {!hasNoData && (
           <View style={styles.destPickerWrap}>
             <Text style={styles.destPickerLabel}>{t('prep.destination', { defaultValue: 'DESTINATION' })}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.destPickerScroll}>
-              {popularDests.map((d) => { const isActive = selectedDest === d.label; return (<Pressable key={d.label} onPress={() => { Haptics.selectionAsync(); setSelectedDest(d.label); }} style={[styles.destChip, isActive && styles.destChipActive]} accessibilityLabel={`Select ${d.label}${isActive ? ', currently selected' : ''}`} accessibilityRole="button" accessibilityState={{ selected: isActive }}><Text style={[styles.destChipText, isActive && styles.destChipTextActive]}>{d.label}</Text></Pressable>); })}
+              {popularDests.map((d) => {
+                const isActive = selectedDest === d.label;
+                return (
+                  <Pressable
+                    key={d.label}
+                    onPress={() => { Haptics.selectionAsync(); setSelectedDest(d.label); }}
+                    style={[styles.destChip, isActive && styles.destChipActive]}
+                    accessibilityLabel={`Select ${d.label}${isActive ? ', currently selected' : ''}`}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isActive }}
+                  >
+                    <Text style={[styles.destChipText, isActive && styles.destChipTextActive]}>{d.label}</Text>
+                  </Pressable>
+                );
+              })}
             </ScrollView>
           </View>
         )}
@@ -280,39 +367,209 @@ function PrepScreen() {
 // Styles
 // ---------------------------------------------------------------------------
 const headerStyles = StyleSheet.create({
-  container: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: SPACING.lg, gap: SPACING.sm } as ViewStyle,
-  destination: { fontFamily: FONTS.header, fontSize: 38, letterSpacing: -1.2, color: COLORS.cream, lineHeight: 42 } as TextStyle,
-  meta: { fontFamily: FONTS.mono, fontSize: 12, color: COLORS.creamMuted, letterSpacing: 1 } as TextStyle,
-  safetyLine: { fontFamily: FONTS.mono, fontSize: 12, color: COLORS.sage, letterSpacing: 0.5 } as TextStyle,
+  container: {
+    paddingHorizontal: 20,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.lg,
+    gap: SPACING.xs,
+  } as ViewStyle,
+  destination: {
+    fontFamily: FONTS.header,
+    fontSize: 38,
+    letterSpacing: -1.2,
+    color: COLORS.cream,
+    lineHeight: 42,
+  } as TextStyle,
+  meta: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+    letterSpacing: 1,
+    marginTop: SPACING.xs,
+  } as TextStyle,
 });
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg } as ViewStyle,
   scroll: { flex: 1 } as ViewStyle,
   scrollContent: { paddingHorizontal: 0 } as ViewStyle,
-  offlineBanner: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, backgroundColor: COLORS.coral, padding: SPACING.sm, marginBottom: SPACING.md, borderRadius: RADIUS.sm } as ViewStyle,
-  offlineText: { fontFamily: FONTS.body, fontSize: 12, color: COLORS.bg } as TextStyle,
-  urgentBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: SPACING.sm, backgroundColor: COLORS.sageSubtle, borderLeftWidth: 4, borderLeftColor: COLORS.sage, paddingVertical: SPACING.md, paddingHorizontal: SPACING.lg, marginHorizontal: 20, marginBottom: SPACING.lg, borderRadius: RADIUS.md } as ViewStyle,
-  urgentBannerText: { flex: 1, fontFamily: FONTS.bodyMedium, fontSize: 15, color: COLORS.cream, lineHeight: 22 } as TextStyle,
-  pillsScroll: { marginBottom: SPACING.lg, borderBottomWidth: 1, borderBottomColor: COLORS.sageBorder } as ViewStyle,
-  pillsContent: { flexDirection: 'row', paddingHorizontal: 20, gap: 0 } as ViewStyle,
-  pill: { paddingHorizontal: 14, paddingVertical: 12, borderBottomWidth: 2, borderBottomColor: 'transparent' } as ViewStyle,
-  pillActive: { borderBottomColor: COLORS.sage } as ViewStyle,
-  pillText: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.cream } as TextStyle,
-  pillTextActive: { color: COLORS.sage } as TextStyle,
-  sonarCard: { backgroundColor: COLORS.surface1, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, padding: SPACING.md } as ViewStyle,
-  sonarCardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: SPACING.sm } as ViewStyle,
-  sonarCardTitle: { fontFamily: FONTS.headerMedium, fontSize: 16, color: COLORS.cream } as TextStyle,
-  sonarCardBody: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.cream, lineHeight: 21 } as TextStyle,
-  destPickerWrap: { marginTop: SPACING.lg, paddingHorizontal: 20 } as ViewStyle,
-  destPickerLabel: { fontFamily: FONTS.mono, fontSize: 10, color: COLORS.sage, letterSpacing: 1.5, marginBottom: SPACING.sm } as TextStyle,
-  destPickerScroll: { flexDirection: 'row' } as ViewStyle,
-  destChip: { paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 2, borderBottomColor: 'transparent', marginRight: SPACING.xs } as ViewStyle,
-  destChipActive: { borderBottomColor: COLORS.sage } as ViewStyle,
-  destChipText: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.creamSoft } as TextStyle,
-  destChipTextActive: { color: COLORS.sage } as TextStyle,
-  fallbackContainer: { paddingVertical: SPACING.md, alignItems: 'center' } as ViewStyle,
-  fallbackText: { color: COLORS.muted, fontSize: 14, fontFamily: FONTS.body } as TextStyle,
+
+  offlineBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.coral,
+    padding: SPACING.sm,
+    marginHorizontal: 20,
+    marginBottom: SPACING.md,
+    borderRadius: RADIUS.sm,
+  } as ViewStyle,
+  offlineText: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.bg,
+  } as TextStyle,
+
+  urgentBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.sageSubtle,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.sage,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    marginHorizontal: 20,
+    marginBottom: SPACING.lg,
+    borderRadius: RADIUS.md,
+  } as ViewStyle,
+  urgentBannerText: {
+    flex: 1,
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 15,
+    color: COLORS.cream,
+    lineHeight: 22,
+  } as TextStyle,
+
+  planNudge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginBottom: SPACING.lg,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    backgroundColor: COLORS.sageSubtle,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+    gap: SPACING.md,
+  } as ViewStyle,
+  planNudgeIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.sageSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
+  planNudgeTitle: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 15,
+    color: COLORS.cream,
+  } as TextStyle,
+  planNudgeSub: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamDim,
+    marginTop: 2,
+  } as TextStyle,
+
+  // Consistent section wrapper: 20px horizontal, 24px bottom gap
+  sectionWrap: {
+    paddingHorizontal: 20,
+    marginBottom: SPACING.lg,
+  } as ViewStyle,
+
+  sonarWrap: {
+    paddingHorizontal: 20,
+    marginBottom: SPACING.lg,
+    gap: SPACING.md,
+  } as ViewStyle,
+
+  // Pill tab bar — compact, sage fill on active
+  pillsScroll: {
+    marginBottom: SPACING.lg,
+  } as ViewStyle,
+  pillsContent: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    gap: SPACING.sm,
+  } as ViewStyle,
+  pill: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: RADIUS.pill,
+    backgroundColor: COLORS.surface1,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  } as ViewStyle,
+  pillActive: {
+    backgroundColor: COLORS.sageSoft,
+    borderColor: COLORS.sageBorder,
+  } as ViewStyle,
+  pillText: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.muted,
+  } as TextStyle,
+  pillTextActive: {
+    color: COLORS.sage,
+    fontFamily: FONTS.bodyMedium,
+  } as TextStyle,
+
+  // Bottom CTAs
+  bottomCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginHorizontal: 20,
+    marginTop: SPACING.lg,
+    padding: SPACING.lg,
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  } as ViewStyle,
+  bottomCtaTitle: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
+    color: COLORS.cream,
+  } as TextStyle,
+  bottomCtaSub: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamMuted,
+    marginTop: 2,
+  } as TextStyle,
+
+  // Destination picker
+  destPickerWrap: {
+    marginTop: SPACING.xl,
+    paddingHorizontal: 20,
+  } as ViewStyle,
+  destPickerLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.sage,
+    letterSpacing: 1.5,
+    marginBottom: SPACING.sm,
+  } as TextStyle,
+  destPickerScroll: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  } as ViewStyle,
+  destChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: RADIUS.pill,
+    backgroundColor: COLORS.surface1,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  } as ViewStyle,
+  destChipActive: {
+    backgroundColor: COLORS.sageSoft,
+    borderColor: COLORS.sageBorder,
+  } as ViewStyle,
+  destChipText: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamSoft,
+  } as TextStyle,
+  destChipTextActive: {
+    color: COLORS.sage,
+    fontFamily: FONTS.bodyMedium,
+  } as TextStyle,
 });
 
 export default PrepScreen;

@@ -1,5 +1,5 @@
 // =============================================================================
-// ROAM — DreamBoardBanner (dream board link/CTA)
+// ROAM — DreamBoardBanner (clean, minimal dream board link)
 // =============================================================================
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 import { ChevronRight, Heart } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS, CARD_SHADOW } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useDreamStore } from '../../lib/dream-store';
 
 // ---------------------------------------------------------------------------
@@ -26,17 +26,19 @@ export default function DreamBoardBanner() {
       }}
       accessibilityLabel={t('plan.dreamBoard', { defaultValue: 'Dream Board' })}
       accessibilityRole="button"
-      style={({ pressed }) => [styles.dreamBoardBanner, { opacity: pressed ? 0.8 : 1 }]}
+      style={({ pressed }) => [styles.banner, { opacity: pressed ? 0.8 : 1 }]}
     >
       <Heart size={16} color={COLORS.sage} strokeWidth={1.5} />
-      <Text style={styles.dreamBoardBannerText}>
-        {dreamCount > 0
-          ? t('plan.dreamBoardCount', {
-              defaultValue: `Dream Board \u00B7 ${dreamCount} destinations saved`,
-              count: dreamCount,
-            })
-          : t('plan.dreamBoardCta', { defaultValue: 'Your dream destinations' })}
-      </Text>
+      <View style={styles.textWrap}>
+        <Text style={styles.bannerText}>
+          {dreamCount > 0
+            ? t('plan.dreamBoardCount', {
+                defaultValue: `Dream Board \u00B7 ${dreamCount} destinations saved`,
+                count: dreamCount,
+              })
+            : t('plan.dreamBoardCta', { defaultValue: 'Your dream destinations' })}
+        </Text>
+      </View>
       <ChevronRight size={16} color={COLORS.sage} strokeWidth={1.5} />
     </Pressable>
   );
@@ -46,23 +48,24 @@ export default function DreamBoardBanner() {
 // Styles
 // ---------------------------------------------------------------------------
 const styles = StyleSheet.create({
-  dreamBoardBanner: {
+  banner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    paddingVertical: SPACING.sm + 2,
-    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
     marginTop: SPACING.md,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.sageSubtle,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.surface1,
     borderWidth: 1,
-    borderColor: COLORS.sageBorder,
-    ...CARD_SHADOW,
+    borderColor: COLORS.border,
   } as ViewStyle,
-  dreamBoardBannerText: {
+  textWrap: {
+    flex: 1,
+  } as ViewStyle,
+  bannerText: {
     fontFamily: FONTS.bodyMedium,
     fontSize: 14,
     color: COLORS.sage,
-    flex: 1,
   } as TextStyle,
 });

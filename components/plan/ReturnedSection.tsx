@@ -1,11 +1,24 @@
 // =============================================================================
-// ROAM — ReturnedSection (RETURNED state — Trip Wrapped, journal links)
+// ROAM — ReturnedSection (RETURNED state — welcome back, wrapped, journal)
+// Clean, warm, minimal. One headline, two clear actions.
 // =============================================================================
 import React from 'react';
-import { Pressable, StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
+import {
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type ImageStyle,
+  type TextStyle,
+  type ViewStyle,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { ChevronRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { COLORS, FONTS, SPACING, RADIUS, CARD_SHADOW } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import type { Trip } from '../../lib/store';
+import { DEST_IMAGES, FALLBACK_IMAGE } from './plan-helpers';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -21,33 +34,54 @@ export interface ReturnedSectionProps {
 // ---------------------------------------------------------------------------
 export default function ReturnedSection({ activeTrip, onWrappedPress, onJournalPress }: ReturnedSectionProps) {
   const { t } = useTranslation();
+  const imageUrl = DEST_IMAGES[activeTrip.destination] ?? FALLBACK_IMAGE;
 
   return (
-    <View style={styles.returnedContainer}>
-      <Text style={styles.returnedHeader}>
-        {t('plan.returned.welcome', { defaultValue: 'Welcome back from {{destination}}', destination: activeTrip.destination })}
+    <View style={styles.container}>
+      {/* Headline */}
+      <Text style={styles.headline}>
+        {t('plan.returned.welcome', {
+          defaultValue: 'Welcome back from {{destination}}.',
+          destination: activeTrip.destination,
+        })}
       </Text>
+
+      {/* Trip Wrapped card */}
       <Pressable
         onPress={onWrappedPress}
-        accessibilityLabel={t('plan.returned.wrapped', { defaultValue: 'See your trip wrapped' })}
+        accessibilityLabel={t('plan.returned.wrapped', { defaultValue: 'Relive your trip' })}
         accessibilityRole="button"
-        style={({ pressed }) => [styles.returnedLink, { opacity: pressed ? 0.75 : 1 }]}
+        style={({ pressed }) => [styles.wrappedCard, { transform: [{ scale: pressed ? 0.98 : 1 }] }]}
       >
-        <Text style={styles.returnedLinkText}>
-          {t('plan.returned.wrapped', { defaultValue: 'See your trip wrapped' })}
-          {' \u2192'}
-        </Text>
+        <Image
+          source={{ uri: imageUrl }}
+          style={styles.wrappedImage}
+          resizeMode="cover"
+        />
+        <LinearGradient
+          colors={['transparent', COLORS.overlayStrong]}
+          locations={[0.3, 1]}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={styles.wrappedContent}>
+          <Text style={styles.wrappedLabel}>
+            {t('plan.returned.relive', { defaultValue: 'Relive your trip' })}
+          </Text>
+          <ChevronRight size={18} color={COLORS.cream} strokeWidth={1.5} />
+        </View>
       </Pressable>
+
+      {/* Journal link */}
       <Pressable
         onPress={onJournalPress}
         accessibilityLabel={t('plan.returned.journal', { defaultValue: 'Read your story' })}
         accessibilityRole="button"
-        style={({ pressed }) => [styles.returnedLink, { opacity: pressed ? 0.75 : 1 }]}
+        style={({ pressed }) => [styles.journalLink, { opacity: pressed ? 0.7 : 1 }]}
       >
-        <Text style={styles.returnedLinkText}>
+        <Text style={styles.journalLinkText}>
           {t('plan.returned.journal', { defaultValue: 'Read your story' })}
-          {' \u2192'}
         </Text>
+        <ChevronRight size={16} color={COLORS.muted} strokeWidth={1.5} />
       </Pressable>
     </View>
   );
@@ -57,29 +91,56 @@ export default function ReturnedSection({ activeTrip, onWrappedPress, onJournalP
 // Styles
 // ---------------------------------------------------------------------------
 const styles = StyleSheet.create({
-  returnedContainer: {
-    marginBottom: SPACING.lg,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.md,
-    borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.surface1,
-    borderLeftWidth: 3,
-    borderLeftColor: COLORS.gold,
-    ...CARD_SHADOW,
+  container: {
+    marginBottom: SPACING.xxl,
+    gap: SPACING.lg,
   } as ViewStyle,
-  returnedHeader: {
+
+  headline: {
     fontFamily: FONTS.header,
-    fontSize: 22,
+    fontSize: 24,
     color: COLORS.cream,
     letterSpacing: -0.3,
-    marginBottom: SPACING.md,
+    lineHeight: 30,
   } as TextStyle,
-  returnedLink: {
-    paddingVertical: SPACING.sm,
+
+  wrappedCard: {
+    height: 200,
+    borderRadius: RADIUS.lg,
+    overflow: 'hidden',
   } as ViewStyle,
-  returnedLinkText: {
+  wrappedImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  } as ImageStyle,
+  wrappedContent: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: SPACING.lg,
+  } as ViewStyle,
+  wrappedLabel: {
+    fontFamily: FONTS.header,
+    fontSize: 18,
+    color: COLORS.cream,
+  } as TextStyle,
+
+  journalLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  } as ViewStyle,
+  journalLinkText: {
     fontFamily: FONTS.bodyMedium,
     fontSize: 15,
-    color: COLORS.gold,
+    color: COLORS.muted,
   } as TextStyle,
 });

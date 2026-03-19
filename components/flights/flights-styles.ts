@@ -1,6 +1,6 @@
 // =============================================================================
-// ROAM — Extracted Styles
-// From app/(tabs)/flights.tsx for file size management.
+// ROAM — Flights Tab Styles (Premium Redesign)
+// Generous whitespace, clear hierarchy, consistent cards.
 // =============================================================================
 import { Dimensions, StyleSheet, type ImageStyle, type TextStyle, type ViewStyle } from 'react-native';
 import { COLORS, FONTS, SPACING, RADIUS, MAGAZINE } from '../../lib/constants';
@@ -21,31 +21,31 @@ export const styles = StyleSheet.create({
 
   // ── Hero ──
   hero: {
-    paddingHorizontal: MAGAZINE.padding,
+    paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.xl,
-    paddingBottom: SPACING.lg,
+    paddingBottom: SPACING.xl,
   } as ViewStyle,
   heroTitle: {
     fontFamily: FONTS.header,
-    fontSize: 44,
+    fontSize: 36,
     color: COLORS.cream,
-    lineHeight: 48,
-    letterSpacing: -1.5,
+    lineHeight: 42,
+    letterSpacing: -1,
   } as TextStyle,
   heroSub: {
     fontFamily: FONTS.body,
-    fontSize: 15,
+    fontSize: 16,
     color: COLORS.creamDim,
     marginTop: SPACING.sm,
-    lineHeight: 22,
-    maxWidth: '80%',
+    lineHeight: 24,
+    maxWidth: '85%',
   } as TextStyle,
 
   // ── Search Card ──
   searchCard: {
-    paddingHorizontal: MAGAZINE.padding,
-    marginBottom: MAGAZINE.sectionGap,
-    gap: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.xl,
+    gap: SPACING.lg,
   } as ViewStyle,
   fromToRow: {
     flexDirection: 'row',
@@ -67,15 +67,17 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.sage,
-    paddingBottom: SPACING.sm,
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.pill,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: SPACING.md,
     height: 48,
     position: 'relative',
     zIndex: 10,
   } as ViewStyle,
   inputFocused: {
-    borderBottomColor: COLORS.cream,
+    borderColor: COLORS.sage,
   } as ViewStyle,
   input: {
     flex: 1,
@@ -87,11 +89,13 @@ export const styles = StyleSheet.create({
   swapBtn: {
     width: 44,
     height: 44,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.bgMagazine,
+    borderRadius: RADIUS.pill,
+    backgroundColor: COLORS.surface1,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: SPACING.xs,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   } as ViewStyle,
   dateRow: {
     flexDirection: 'row',
@@ -116,10 +120,12 @@ export const styles = StyleSheet.create({
   counterBtn: {
     width: 44,
     height: 44,
-    borderRadius: RADIUS.sm,
-    backgroundColor: COLORS.bgMagazine,
+    borderRadius: RADIUS.pill,
+    backgroundColor: COLORS.surface1,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
   } as ViewStyle,
   counterValue: {
     fontFamily: FONTS.mono,
@@ -145,7 +151,7 @@ export const styles = StyleSheet.create({
 
   // ── Section Headers ──
   sectionHeader: {
-    paddingHorizontal: MAGAZINE.padding,
+    paddingHorizontal: SPACING.lg,
     marginBottom: SPACING.md,
   } as ViewStyle,
   sectionLabel: {
@@ -157,23 +163,23 @@ export const styles = StyleSheet.create({
   } as TextStyle,
   sectionTitle: {
     fontFamily: FONTS.header,
-    fontSize: 24,
+    fontSize: 20,
     color: COLORS.cream,
-    letterSpacing: -0.5,
-    lineHeight: 30,
+    letterSpacing: -0.3,
+    lineHeight: 26,
   } as TextStyle,
 
   // ── Popular Routes ──
   routeScroll: {
-    paddingHorizontal: MAGAZINE.padding,
-    gap: MAGAZINE.cardGap,
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.md,
     paddingBottom: SPACING.sm,
-    marginBottom: MAGAZINE.sectionGap,
+    marginBottom: SPACING.xl,
   } as ViewStyle,
   routeCard: {
-    width: 260,
-    height: 200,
-    borderRadius: RADIUS.lg,
+    width: (SCREEN_WIDTH - SPACING.lg * 2 - SPACING.md * 2) / 3,
+    height: 160,
+    borderRadius: RADIUS.xl,
     overflow: 'hidden',
   } as ViewStyle,
   routeImage: {
@@ -186,7 +192,7 @@ export const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: SPACING.md,
+    padding: SPACING.sm,
   } as ViewStyle,
   routeCodeRow: {
     flexDirection: 'row',
@@ -196,13 +202,13 @@ export const styles = StyleSheet.create({
   } as ViewStyle,
   routeCode: {
     fontFamily: FONTS.mono,
-    fontSize: 16,
+    fontSize: 12,
     color: COLORS.cream,
     letterSpacing: 1,
   } as TextStyle,
   routeLabel: {
     fontFamily: FONTS.body,
-    fontSize: 13,
+    fontSize: 11,
     color: COLORS.creamSoft,
     marginBottom: SPACING.xs,
   } as TextStyle,
@@ -212,28 +218,28 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
   } as ViewStyle,
   routePrice: {
-    fontFamily: FONTS.header,
-    fontSize: 24,
-    color: COLORS.gold,
-    lineHeight: 32,
+    fontFamily: FONTS.mono,
+    fontSize: 16,
+    color: COLORS.cream,
+    lineHeight: 20,
   } as TextStyle,
   routeSearchText: {
     fontFamily: FONTS.body,
-    fontSize: 12,
+    fontSize: 10,
     color: COLORS.sage,
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   } as TextStyle,
 
   // ── Inspiration ──
   inspirationScroll: {
-    paddingHorizontal: MAGAZINE.padding,
-    gap: MAGAZINE.cardGap,
-    paddingBottom: MAGAZINE.sectionGap,
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.md,
+    paddingBottom: SPACING.xl,
   } as ViewStyle,
   inspirationCard: {
     width: 200,
     height: 260,
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.xl,
     overflow: 'hidden',
   } as ViewStyle,
   inspirationImage: {
@@ -262,7 +268,7 @@ export const styles = StyleSheet.create({
   } as TextStyle,
   inspirationDest: {
     fontFamily: FONTS.header,
-    fontSize: 22,
+    fontSize: 20,
     color: COLORS.cream,
   } as TextStyle,
   inspirationReason: {
@@ -287,11 +293,11 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.md,
-    marginHorizontal: MAGAZINE.padding,
-    marginTop: SPACING.lg,
-    padding: MAGAZINE.padding,
-    backgroundColor: COLORS.bgMagazine,
-    borderRadius: RADIUS.lg,
+    marginHorizontal: SPACING.lg,
+    marginTop: SPACING.xl,
+    padding: SPACING.lg,
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.xl,
     borderWidth: 1,
     borderColor: COLORS.border,
     borderLeftWidth: 3,
@@ -311,17 +317,17 @@ export const styles = StyleSheet.create({
 
   // ── Amadeus Real-Time Prices ──
   amadeusSection: {
-    paddingHorizontal: MAGAZINE.padding,
-    marginTop: SPACING.xxl,
+    paddingHorizontal: SPACING.lg,
+    marginTop: SPACING.xl,
     marginBottom: SPACING.md,
     gap: SPACING.sm,
   } as ViewStyle,
   amadeusCard: {
     backgroundColor: COLORS.surface1,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.xl,
     borderWidth: 1,
     borderColor: COLORS.border,
-    padding: SPACING.md,
+    padding: SPACING.lg,
   } as ViewStyle,
   amadeusCardRow: {
     flexDirection: 'row',
@@ -344,7 +350,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   } as ViewStyle,
   amadeusTime: {
-    fontFamily: FONTS.bodyMedium,
+    fontFamily: FONTS.mono,
     fontSize: 14,
     color: COLORS.cream,
   } as TextStyle,
@@ -360,10 +366,10 @@ export const styles = StyleSheet.create({
     gap: SPACING.xs,
   } as ViewStyle,
   amadeusPrice: {
-    fontFamily: FONTS.header,
-    fontSize: 20,
-    color: COLORS.gold,
-    letterSpacing: -0.5,
+    fontFamily: FONTS.mono,
+    fontSize: 18,
+    color: COLORS.cream,
+    letterSpacing: -0.3,
   } as TextStyle,
   // Skeleton
   amadeusSkeletonRow: {
@@ -398,10 +404,10 @@ export const styles = StyleSheet.create({
     marginTop: 2,
   } as ViewStyle,
 
-  // Sonar flight intel
+  // ── Sonar flight intel ──
   sonarSection: {
     paddingHorizontal: SPACING.lg,
-    marginTop: SPACING.xxl,
+    marginTop: SPACING.xl,
   } as ViewStyle,
   sonarSectionHeader: {
     flexDirection: 'row',
@@ -411,36 +417,38 @@ export const styles = StyleSheet.create({
   } as ViewStyle,
   sonarCard: {
     backgroundColor: COLORS.surface1,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.xl,
     borderWidth: 1,
     borderColor: COLORS.border,
-    padding: SPACING.md,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.sage,
+    padding: SPACING.lg,
     marginTop: SPACING.md,
   } as ViewStyle,
   sonarAnswer: {
     fontFamily: FONTS.body,
-    fontSize: 14,
+    fontSize: 16,
     color: COLORS.cream,
-    lineHeight: 21,
+    lineHeight: 24,
   } as TextStyle,
 
-  // ── Alternative routes (Rome2Rio) ──
+  // ── Alternative routes (Rome2Rio) — compact list ──
   apiSection: {
-    paddingHorizontal: 20,
+    paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.xl,
-    gap: SPACING.sm,
   } as ViewStyle,
   apiSectionLabel: {
     fontFamily: FONTS.mono,
     fontSize: 11,
     color: COLORS.sage,
     letterSpacing: 2,
+    marginBottom: SPACING.xs,
   } as TextStyle,
   apiSectionHeading: {
     fontFamily: FONTS.header,
-    fontSize: 22,
+    fontSize: 20,
     color: COLORS.cream,
-    letterSpacing: -0.5,
+    letterSpacing: -0.3,
     marginBottom: SPACING.md,
   } as TextStyle,
   apiCardStack: {
@@ -448,13 +456,15 @@ export const styles = StyleSheet.create({
   } as ViewStyle,
   apiCard: {
     backgroundColor: COLORS.surface1,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.lg,
     gap: 4,
   } as ViewStyle,
   apiCardName: {
     fontFamily: FONTS.bodyMedium,
-    fontSize: 15,
+    fontSize: 16,
     color: COLORS.cream,
   } as TextStyle,
   apiCardMeta: {
@@ -472,11 +482,11 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: COLORS.surface1,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.xl,
     borderWidth: 1,
     borderColor: COLORS.border,
-    paddingVertical: 12,
-    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
   } as ViewStyle,
   airportGuideBtnTitle: {
     fontFamily: FONTS.headerMedium,

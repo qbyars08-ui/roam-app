@@ -1,12 +1,12 @@
 // =============================================================================
-// ROAM — DestinationIntel (weather, events, Sonar intel block)
+// ROAM — DestinationIntel (weather, events, Sonar intel — clean cards)
 // =============================================================================
 import React from 'react';
 import { Linking, Pressable, StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS, CARD_SHADOW } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import type { CurrentWeather } from '../../lib/apis/openweather';
 import type { EventResult } from '../../lib/apis/eventbrite';
 import type { SonarCitation } from '../../lib/types/sonar';
@@ -39,45 +39,71 @@ export default function DestinationIntel({
   const router = useRouter();
 
   return (
-    <View style={styles.destIntel}>
+    <View style={styles.container}>
       <Pressable
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           router.push({ pathname: '/destination/[name]', params: { name: destination } } as never);
         }}
-        style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
+        style={({ pressed }) => [styles.headerPress, { opacity: pressed ? 0.8 : 1 }]}
       >
-        <Text style={styles.destIntelLabel}>DESTINATION INTEL</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.xs }}>
-          <Text style={styles.destIntelHeading}>{destination}</Text>
+        <Text style={styles.sectionLabel}>DESTINATION INTEL</Text>
+        <View style={styles.headingRow}>
+          <Text style={styles.heading}>{destination}</Text>
           <ChevronRight size={18} color={COLORS.sage} strokeWidth={1.5} />
         </View>
       </Pressable>
 
       {weather && (
-        <Pressable style={({ pressed }) => [styles.destIntelCard, { opacity: pressed ? 0.85 : 1 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/destination/[name]', params: { name: destination } } as never); }} accessibilityLabel={`Weather in ${destination}: ${weather.temp}°C, ${weather.condition}`} accessibilityRole="button">
-          <Text style={styles.destIntelCardTitle}>Weather Now</Text>
-          <Text style={styles.destIntelWeather}>{weather.temp}°C · {weather.condition}</Text>
-          <Text style={styles.destIntelMeta}>Humidity {weather.humidity}% · Wind {weather.windSpeed} km/h</Text>
+        <Pressable
+          style={({ pressed }) => [styles.card, { opacity: pressed ? 0.85 : 1 }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push({ pathname: '/destination/[name]', params: { name: destination } } as never);
+          }}
+          accessibilityLabel={`Weather in ${destination}: ${weather.temp} C, ${weather.condition}`}
+          accessibilityRole="button"
+        >
+          <Text style={styles.cardTitle}>Weather Now</Text>
+          <Text style={styles.weatherValue}>{weather.temp}°C · {weather.condition}</Text>
+          <Text style={styles.cardMeta}>Humidity {weather.humidity}% · Wind {weather.windSpeed} km/h</Text>
         </Pressable>
       )}
 
       {sonarData && (
-        <Pressable style={({ pressed }) => [styles.destIntelCard, { opacity: pressed ? 0.85 : 1 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/destination/[name]', params: { name: destination } } as never); }} accessibilityLabel={`Live intel for ${destination}`} accessibilityRole="button">
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text style={styles.destIntelCardTitle}>Live Intel</Text>
+        <Pressable
+          style={({ pressed }) => [styles.card, { opacity: pressed ? 0.85 : 1 }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push({ pathname: '/destination/[name]', params: { name: destination } } as never);
+          }}
+          accessibilityLabel={`Live intel for ${destination}`}
+          accessibilityRole="button"
+        >
+          <View style={styles.liveRow}>
+            <Text style={styles.cardTitle}>Live Intel</Text>
             {sonarIsLive && <LiveBadge />}
           </View>
-          <Text style={styles.destIntelBody}>{sonarData.answer}</Text>
+          <Text style={styles.cardBody}>{sonarData.answer}</Text>
           {sonarCitations.length > 0 && <SourceCitation citations={sonarCitations} />}
         </Pressable>
       )}
 
       {events && events.length > 0 && (
-        <Pressable style={({ pressed }) => [styles.destIntelCard, { opacity: pressed ? 0.85 : 1 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.eventbrite.com/d/${encodeURIComponent(destination)}/events/`).catch(() => {}); }} accessibilityLabel={`Upcoming events in ${destination}`} accessibilityRole="button">
-          <Text style={styles.destIntelCardTitle}>Upcoming Events</Text>
+        <Pressable
+          style={({ pressed }) => [styles.card, { opacity: pressed ? 0.85 : 1 }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            Linking.openURL(`https://www.eventbrite.com/d/${encodeURIComponent(destination)}/events/`).catch(() => {});
+          }}
+          accessibilityLabel={`Upcoming events in ${destination}`}
+          accessibilityRole="button"
+        >
+          <Text style={styles.cardTitle}>Upcoming Events</Text>
           {events.map((evt) => (
-            <Text key={evt.id} style={styles.destIntelEvent}>· {evt.name}{evt.date ? ` — ${new Date(evt.date).toLocaleDateString()}` : ''}</Text>
+            <Text key={evt.id} style={styles.eventItem}>
+              · {evt.name}{evt.date ? ` \u2014 ${new Date(evt.date).toLocaleDateString()}` : ''}
+            </Text>
           ))}
         </Pressable>
       )}
@@ -89,57 +115,70 @@ export default function DestinationIntel({
 // Styles
 // ---------------------------------------------------------------------------
 const styles = StyleSheet.create({
-  destIntel: {
-    paddingTop: SPACING.xl,
-    gap: SPACING.sm,
-    marginBottom: SPACING.lg,
+  container: {
+    paddingTop: SPACING.xxl,
+    gap: SPACING.md,
+    marginBottom: SPACING.xxl,
   } as ViewStyle,
-  destIntelLabel: {
+  headerPress: {} as ViewStyle,
+  sectionLabel: {
     fontFamily: FONTS.mono,
     fontSize: 11,
     color: COLORS.sage,
     letterSpacing: 2,
   } as TextStyle,
-  destIntelHeading: {
+  headingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    marginTop: 2,
+  } as ViewStyle,
+  heading: {
     fontFamily: FONTS.header,
     fontSize: 26,
     color: COLORS.cream,
     letterSpacing: -0.5,
   } as TextStyle,
-  destIntelCard: {
+
+  card: {
     backgroundColor: COLORS.surface1,
     borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    gap: 6,
-    marginTop: SPACING.sm,
-    ...CARD_SHADOW,
+    padding: SPACING.lg,
+    gap: SPACING.xs,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   } as ViewStyle,
-  destIntelCardTitle: {
+  cardTitle: {
     fontFamily: FONTS.bodyMedium,
     fontSize: 13,
     color: COLORS.sage,
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   } as TextStyle,
-  destIntelWeather: {
+  weatherValue: {
     fontFamily: FONTS.header,
     fontSize: 20,
     color: COLORS.cream,
   } as TextStyle,
-  destIntelMeta: {
+  cardMeta: {
     fontFamily: FONTS.mono,
     fontSize: 11,
-    color: COLORS.creamDim,
+    color: COLORS.muted,
   } as TextStyle,
-  destIntelBody: {
+  liveRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  } as ViewStyle,
+  cardBody: {
     fontFamily: FONTS.body,
     fontSize: 14,
     color: COLORS.cream,
     lineHeight: 20,
   } as TextStyle,
-  destIntelEvent: {
+  eventItem: {
     fontFamily: FONTS.body,
     fontSize: 13,
-    color: COLORS.creamDim,
+    color: COLORS.muted,
     lineHeight: 18,
   } as TextStyle,
 });

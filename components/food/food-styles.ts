@@ -1,6 +1,6 @@
 // =============================================================================
-// ROAM — Extracted Styles
-// From app/(tabs)/food.tsx for file size management.
+// ROAM — Food Tab Styles
+// Premium, Instagram-like feel. Compact pills, no source labels.
 // =============================================================================
 import { Dimensions, StyleSheet, type ImageStyle, type TextStyle, type ViewStyle } from 'react-native';
 import { COLORS, FONTS, SPACING, RADIUS, MAGAZINE } from '../../lib/constants';
@@ -17,32 +17,38 @@ export const styles = StyleSheet.create({
   } as ViewStyle,
   scrollContent: {
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.md,
+    paddingTop: SPACING.lg,
   } as ViewStyle,
+
+  // Hero
   hero: {
-    paddingBottom: SPACING.md,
+    paddingBottom: SPACING.lg,
+    alignItems: 'center',
   } as ViewStyle,
   heroTitle: {
     fontFamily: FONTS.header,
-    fontSize: 40,
+    fontSize: 24,
     color: COLORS.cream,
-    lineHeight: 46,
+    textAlign: 'center',
   } as TextStyle,
   heroSub: {
     fontFamily: FONTS.body,
-    fontSize: 15,
+    fontSize: 14,
     color: COLORS.creamMuted,
     marginTop: SPACING.xs,
-    lineHeight: 22,
+    textAlign: 'center',
+    lineHeight: 20,
   } as TextStyle,
+
+  // Section headers
   sectionHeader: {
     marginBottom: SPACING.md,
   } as ViewStyle,
   sectionTitle: {
     fontFamily: FONTS.header,
-    fontSize: 24,
+    fontSize: 20,
     color: COLORS.cream,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
   } as TextStyle,
   sectionSub: {
     fontFamily: FONTS.body,
@@ -50,14 +56,16 @@ export const styles = StyleSheet.create({
     color: COLORS.creamMuted,
     marginTop: 2,
   } as TextStyle,
+
+  // Popular cities horizontal scroll
   popularCitiesScroll: {
     gap: SPACING.md,
     paddingBottom: SPACING.xl,
   } as ViewStyle,
   popularCityCard: {
-    width: 180,
+    width: 160,
     height: 200,
-    borderRadius: RADIUS.xl,
+    borderRadius: RADIUS.lg,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -76,7 +84,7 @@ export const styles = StyleSheet.create({
   } as ViewStyle,
   popularCityName: {
     fontFamily: FONTS.header,
-    fontSize: 22,
+    fontSize: 20,
     color: COLORS.white,
   } as TextStyle,
   popularCityVibe: {
@@ -85,6 +93,8 @@ export const styles = StyleSheet.create({
     color: COLORS.creamSoft,
     marginTop: 2,
   } as TextStyle,
+
+  // Category filter pills — compact, not bloated
   categoryScroll: {
     marginHorizontal: -SPACING.lg,
     marginBottom: SPACING.lg,
@@ -95,42 +105,44 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
   } as ViewStyle,
   categoryPill: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 9,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.bgCard,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: RADIUS.pill,
+    backgroundColor: COLORS.surface1,
     borderWidth: 1,
-    borderColor: COLORS.creamDim,
-    marginRight: SPACING.sm,
+    borderColor: COLORS.border,
   } as ViewStyle,
   categoryPillSelected: {
-    backgroundColor: COLORS.coral,
-    borderColor: COLORS.coral,
+    backgroundColor: COLORS.sageSoft,
+    borderColor: COLORS.sageBorder,
   } as ViewStyle,
   categoryPillText: {
     fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.cream,
+    fontSize: 12,
+    color: COLORS.muted,
   } as TextStyle,
   categoryPillTextSelected: {
-    color: COLORS.bg,
+    color: COLORS.sage,
+    fontFamily: FONTS.bodyMedium,
   } as TextStyle,
+
+  // AI Pick hero card
   heroCard: {
-    borderRadius: RADIUS.xl,
+    borderRadius: RADIUS.lg,
     padding: SPACING.lg,
     marginBottom: SPACING.lg,
     overflow: 'hidden',
-    borderLeftWidth: 3,
-    borderLeftColor: COLORS.sage,
     position: 'relative',
+    backgroundColor: COLORS.surface1,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
   } as ViewStyle,
   heroBorder: {
     position: 'absolute',
     left: 0,
     top: 0,
     bottom: 0,
-    width: 3,
-    backgroundColor: COLORS.sage,
+    width: 0,
   } as ViewStyle,
   heroTopRow: {
     flexDirection: 'row',
@@ -140,14 +152,15 @@ export const styles = StyleSheet.create({
   } as ViewStyle,
   aiPickBadge: {
     backgroundColor: COLORS.gold,
-    borderRadius: RADIUS.sm,
+    borderRadius: RADIUS.pill,
     paddingHorizontal: SPACING.sm,
     paddingVertical: 3,
   } as ViewStyle,
   aiPickBadgeText: {
     fontFamily: FONTS.mono,
-    fontSize: 11,
+    fontSize: 10,
     color: COLORS.bg,
+    letterSpacing: 0.5,
   } as TextStyle,
   updatedToday: {
     fontFamily: FONTS.body,
@@ -156,7 +169,7 @@ export const styles = StyleSheet.create({
   } as TextStyle,
   heroName: {
     fontFamily: FONTS.header,
-    fontSize: 26,
+    fontSize: 22,
     color: COLORS.cream,
     marginBottom: SPACING.xs,
   } as TextStyle,
@@ -174,12 +187,13 @@ export const styles = StyleSheet.create({
   } as ViewStyle,
   mustTryLabel: {
     fontFamily: FONTS.mono,
-    fontSize: 11,
+    fontSize: 10,
     color: COLORS.sage,
+    letterSpacing: 0.5,
   } as TextStyle,
   mustTryDish: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 15,
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
     color: COLORS.cream,
   } as TextStyle,
   insiderTip: {
@@ -188,6 +202,7 @@ export const styles = StyleSheet.create({
     color: COLORS.creamSoft,
     marginBottom: SPACING.md,
     maxWidth: '95%',
+    lineHeight: 18,
   } as TextStyle,
   heroBottomRow: {
     flexDirection: 'row',
@@ -210,8 +225,8 @@ export const styles = StyleSheet.create({
     color: COLORS.cream,
   } as TextStyle,
   heroDistance: {
-    fontFamily: FONTS.body,
-    fontSize: 12,
+    fontFamily: FONTS.mono,
+    fontSize: 11,
     color: COLORS.creamDim,
   } as TextStyle,
   statusDot: {
@@ -234,14 +249,18 @@ export const styles = StyleSheet.create({
     color: COLORS.sage,
     textDecorationLine: 'underline',
   } as TextStyle,
+
+  // Restaurant cards
   restaurantCard: {
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.xl,
-    padding: SPACING.sm + 6,
-    marginBottom: 10,
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.sm,
     flexDirection: 'row',
     flexWrap: 'wrap',
     position: 'relative',
+    borderWidth: 1,
+    borderColor: COLORS.border,
   } as ViewStyle,
   cardAccent: {
     position: 'absolute',
@@ -249,12 +268,12 @@ export const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 3,
-    borderTopLeftRadius: 14,
-    borderBottomLeftRadius: 14,
+    borderTopLeftRadius: RADIUS.lg,
+    borderBottomLeftRadius: RADIUS.lg,
   } as ViewStyle,
   cardName: {
     fontFamily: FONTS.header,
-    fontSize: 18,
+    fontSize: 17,
     color: COLORS.cream,
     width: '100%',
     marginBottom: 2,
@@ -274,8 +293,9 @@ export const styles = StyleSheet.create({
   } as ViewStyle,
   tryLabel: {
     fontFamily: FONTS.mono,
-    fontSize: 11,
+    fontSize: 10,
     color: COLORS.sage,
+    letterSpacing: 0.5,
   } as TextStyle,
   tryDish: {
     fontFamily: FONTS.body,
@@ -287,6 +307,7 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.creamMuted,
     marginBottom: SPACING.sm,
+    lineHeight: 18,
   } as TextStyle,
   cardBottomRow: {
     flexDirection: 'row',
@@ -312,6 +333,8 @@ export const styles = StyleSheet.create({
   bookmarkBtn: {
     padding: 4,
   } as ViewStyle,
+
+  // Empty states
   emptyState: {
     flex: 1,
     justifyContent: 'center',
@@ -357,10 +380,12 @@ export const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
     lineHeight: 22,
   } as TextStyle,
+
+  // Food category cards
   foodCategoryCard: {
     marginHorizontal: SPACING.lg,
     marginBottom: SPACING.sm + 4,
-    borderRadius: RADIUS.xl,
+    borderRadius: RADIUS.lg,
     overflow: 'hidden',
     height: 140,
     position: 'relative',
@@ -388,6 +413,8 @@ export const styles = StyleSheet.create({
     color: COLORS.creamSoft,
     marginTop: 2,
   } as TextStyle,
+
+  // Toast
   toastWrap: {
     position: 'absolute',
     bottom: 100,
@@ -395,30 +422,29 @@ export const styles = StyleSheet.create({
     backgroundColor: COLORS.sage,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.pill,
   } as ViewStyle,
   toastText: {
-    fontFamily: FONTS.bodySemiBold,
+    fontFamily: FONTS.bodyMedium,
     fontSize: 14,
     color: COLORS.bg,
   } as TextStyle,
 
-  // ── Skeleton loaders ──
+  // Skeleton loaders
   skeletonWrap: {
     gap: SPACING.md,
     marginTop: SPACING.md,
   } as ViewStyle,
 
-  // ── Card actions ──
+  // Card actions
   cardActionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
   } as ViewStyle,
 
-  // Sonar live food intel
+  // Sonar section — no source labels
   sonarSection: {
-    paddingHorizontal: SPACING.lg,
     marginBottom: SPACING.lg,
   } as ViewStyle,
   sonarHeader: {
@@ -429,16 +455,16 @@ export const styles = StyleSheet.create({
   } as ViewStyle,
   sonarLabel: {
     fontFamily: FONTS.mono,
-    fontSize: 11,
+    fontSize: 10,
     color: COLORS.sage,
-    letterSpacing: 1,
+    letterSpacing: 1.5,
   } as TextStyle,
   sonarCard: {
     backgroundColor: COLORS.surface1,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.border,
-    padding: SPACING.md,
+    padding: SPACING.lg,
   } as ViewStyle,
   sonarAnswer: {
     fontFamily: FONTS.body,
@@ -447,7 +473,7 @@ export const styles = StyleSheet.create({
     lineHeight: 21,
   } as TextStyle,
 
-  // ── Foursquare nearby restaurants ──
+  // Foursquare nearby restaurants — no "NEARBY RESTAURANTS" label
   fsqSection: {
     marginBottom: SPACING.lg,
   } as ViewStyle,
@@ -458,10 +484,9 @@ export const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   } as ViewStyle,
   fsqSectionLabel: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.sage,
-    letterSpacing: 1,
+    fontFamily: FONTS.header,
+    fontSize: 20,
+    color: COLORS.cream,
   } as TextStyle,
   fsqLoadingText: {
     fontFamily: FONTS.body,
@@ -472,14 +497,16 @@ export const styles = StyleSheet.create({
     gap: 8,
   } as ViewStyle,
   fsqCard: {
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.md,
-    padding: SPACING.sm + 4,
-    marginBottom: 8,
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
     flexDirection: 'row',
     alignItems: 'center',
     position: 'relative',
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: COLORS.border,
   } as ViewStyle,
   fsqCardAccent: {
     position: 'absolute',
@@ -488,8 +515,8 @@ export const styles = StyleSheet.create({
     bottom: 0,
     width: 3,
     backgroundColor: COLORS.sage,
-    borderTopLeftRadius: RADIUS.md,
-    borderBottomLeftRadius: RADIUS.md,
+    borderTopLeftRadius: RADIUS.lg,
+    borderBottomLeftRadius: RADIUS.lg,
   } as ViewStyle,
   fsqCardContent: {
     flex: 1,
@@ -503,8 +530,8 @@ export const styles = StyleSheet.create({
     marginBottom: 2,
   } as ViewStyle,
   fsqCardName: {
-    fontFamily: FONTS.header,
-    fontSize: 16,
+    fontFamily: FONTS.headerMedium,
+    fontSize: 15,
     color: COLORS.cream,
     flex: 1,
   } as TextStyle,
@@ -519,8 +546,8 @@ export const styles = StyleSheet.create({
     color: COLORS.creamDim,
   } as TextStyle,
   fsqRatingBadge: {
-    backgroundColor: COLORS.sageLight,
-    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.sageSoft,
+    borderRadius: RADIUS.pill,
     paddingHorizontal: 6,
     paddingVertical: 2,
   } as ViewStyle,
@@ -536,7 +563,7 @@ export const styles = StyleSheet.create({
     marginBottom: 2,
   } as TextStyle,
   fsqCardDistance: {
-    fontFamily: FONTS.body,
+    fontFamily: FONTS.mono,
     fontSize: 11,
     color: COLORS.creamDim,
   } as TextStyle,
@@ -545,24 +572,21 @@ export const styles = StyleSheet.create({
     flexShrink: 0,
   } as ViewStyle,
 
-  // ── Google Places + TripAdvisor ──
+  // API sections — no source labels visible to users
   apiSection: {
-    paddingHorizontal: 20,
-    paddingTop: SPACING.xl,
+    paddingTop: SPACING.lg,
     gap: SPACING.sm,
   } as ViewStyle,
   apiSectionLabel: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.sage,
-    letterSpacing: 2,
+    fontFamily: FONTS.header,
+    fontSize: 20,
+    color: COLORS.cream,
   } as TextStyle,
   apiSectionHeading: {
-    fontFamily: FONTS.header,
-    fontSize: 22,
-    color: COLORS.cream,
-    letterSpacing: -0.5,
-    marginBottom: SPACING.md,
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.creamMuted,
+    marginBottom: SPACING.sm,
   } as TextStyle,
   apiCardStack: {
     gap: SPACING.sm,
@@ -570,8 +594,10 @@ export const styles = StyleSheet.create({
   apiCard: {
     backgroundColor: COLORS.surface1,
     borderRadius: RADIUS.lg,
-    padding: SPACING.md,
+    padding: SPACING.lg,
     gap: 4,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   } as ViewStyle,
   apiCardName: {
     fontFamily: FONTS.bodyMedium,
@@ -588,17 +614,19 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.creamDim,
   } as TextStyle,
+
+  // Local Eats nav card
   localEatsNavCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: COLORS.surface1,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.border,
-    paddingVertical: 14,
-    paddingHorizontal: SPACING.md,
-    marginTop: SPACING.md,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    marginTop: SPACING.lg,
     marginBottom: SPACING.sm,
   } as ViewStyle,
   localEatsNavLeft: {

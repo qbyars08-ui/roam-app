@@ -1,11 +1,13 @@
 // =============================================================================
-// ROAM — TravelingSection (TRAVELING state — I Am Here Now, daily brief, expenses)
+// ROAM — TravelingSection (TRAVELING state — companion mode)
+// During a trip, the app should feel like a companion, not a dashboard.
+// Hero text, two big buttons, budget mini card if available. Nothing else.
 // =============================================================================
 import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
-import { ChevronRight, Receipt, TrendingUp } from 'lucide-react-native';
+import { ChevronRight, TrendingUp } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { COLORS, FONTS, SPACING, RADIUS, CARD_SHADOW } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import type { Trip } from '../../lib/store';
 import type { BudgetComparison } from '../../lib/budget-tracker';
 
@@ -28,15 +30,23 @@ export default function TravelingSection({
   activeTrip,
   onHelpPress,
   onCapturePress,
-  onSplitPress,
   onBudgetPress,
   budgetComparison,
 }: TravelingSectionProps) {
   const { t } = useTranslation();
 
+  // Compute current day number
+  const dayNumber = useMemo(() => {
+    if (!activeTrip.startDate) return 1;
+    const start = new Date(activeTrip.startDate);
+    const now = new Date();
+    const diff = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.max(1, diff + 1);
+  }, [activeTrip.startDate]);
+
   const budgetStatus = useMemo(() => {
     if (!budgetComparison) return null;
-    const { percentUsed, remaining, daysLeft, totalDays, budget } = budgetComparison;
+    const { percentUsed, remaining, daysLeft, totalDays } = budgetComparison;
     const expectedPercent = totalDays > 0
       ? ((totalDays - daysLeft) / totalDays) * 100
       : 0;
@@ -57,7 +67,7 @@ export default function TravelingSection({
       color = COLORS.sage;
     }
 
-    return { remaining, percentUsed, label, color, budget };
+    return { remaining, percentUsed, label, color };
   }, [budgetComparison]);
 
   const formatBudget = (amount: number): string => {
@@ -70,35 +80,36 @@ export default function TravelingSection({
   };
 
   return (
-    <View style={styles.travelingContainer}>
-      <Text style={styles.travelingHeader}>
-        {t('plan.traveling.youreIn', { defaultValue: "You're in {{destination}}", destination: activeTrip.destination })}
+    <View style={styles.container}>
+      {/* ── Hero text ── */}
+      <Text style={styles.hero}>
+        {activeTrip.destination}. {t('plan.traveling.dayX', { defaultValue: 'Day {{day}}.', day: dayNumber })}
       </Text>
-      <View style={styles.travelingActions}>
-        <Pressable
-          onPress={onHelpPress}
-          accessibilityLabel={t('plan.traveling.needHelp', { defaultValue: 'Need help?' })}
-          accessibilityRole="button"
-          style={({ pressed }) => [styles.travelingBtn, styles.travelingBtnSage, { opacity: pressed ? 0.85 : 1 }]}
-        >
-          <Text style={styles.travelingBtnText}>
-            {t('plan.traveling.needHelp', { defaultValue: 'Need help?' })}
-            {' \u2192'}
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={onCapturePress}
-          accessibilityLabel={t('plan.traveling.captureBtn', { defaultValue: 'Capture moment' })}
-          accessibilityRole="button"
-          style={({ pressed }) => [styles.travelingBtn, styles.travelingBtnGold, { opacity: pressed ? 0.85 : 1 }]}
-        >
-          <Text style={styles.travelingBtnText}>
-            {t('plan.traveling.captureBtn', { defaultValue: 'Capture moment' })}
-          </Text>
-        </Pressable>
-      </View>
 
-      {/* Budget Tracker Card */}
+      {/* ── Two big buttons ── */}
+      <Pressable
+        onPress={onHelpPress}
+        accessibilityLabel={t('plan.traveling.iAmHereNow', { defaultValue: 'I Am Here Now' })}
+        accessibilityRole="button"
+        style={({ pressed }) => [styles.primaryBtn, { opacity: pressed ? 0.85 : 1 }]}
+      >
+        <Text style={styles.primaryBtnText}>
+          {t('plan.traveling.iAmHereNow', { defaultValue: 'I Am Here Now' })}
+        </Text>
+      </Pressable>
+
+      <Pressable
+        onPress={onCapturePress}
+        accessibilityLabel={t('plan.traveling.captureBtn', { defaultValue: 'Capture Moment' })}
+        accessibilityRole="button"
+        style={({ pressed }) => [styles.outlineBtn, { opacity: pressed ? 0.85 : 1 }]}
+      >
+        <Text style={styles.outlineBtnText}>
+          {t('plan.traveling.captureBtn', { defaultValue: 'Capture Moment' })}
+        </Text>
+      </Pressable>
+
+      {/* ── Budget tracker mini card ── */}
       {budgetStatus && (
         <Pressable
           onPress={onBudgetPress}
@@ -106,25 +117,23 @@ export default function TravelingSection({
           accessibilityRole="button"
           style={({ pressed }) => [styles.budgetCard, { opacity: pressed ? 0.85 : 1 }]}
         >
-          <View style={styles.budgetCardIcon}>
-            <TrendingUp size={18} color={budgetStatus.color} strokeWidth={1.5} />
-          </View>
-          <View style={styles.budgetCardContent}>
-            <View style={styles.budgetCardRow}>
-              <Text style={[styles.budgetCardAmount, { color: budgetStatus.color }]}>
+          <TrendingUp size={16} color={budgetStatus.color} strokeWidth={1.5} />
+          <View style={styles.budgetContent}>
+            <View style={styles.budgetRow}>
+              <Text style={[styles.budgetAmount, { color: budgetStatus.color }]}>
                 {formatBudget(budgetStatus.remaining)}
                 {budgetStatus.remaining < 0 ? ' over' : ' left'}
               </Text>
-              <View style={[styles.budgetStatusBadge, { backgroundColor: budgetStatus.color === COLORS.sage ? COLORS.sageSoft : COLORS.coralSubtle }]}>
-                <Text style={[styles.budgetStatusText, { color: budgetStatus.color }]}>
+              <View style={[styles.budgetBadge, { backgroundColor: budgetStatus.color === COLORS.sage ? COLORS.sageSoft : COLORS.coralSubtle }]}>
+                <Text style={[styles.budgetBadgeText, { color: budgetStatus.color }]}>
                   {budgetStatus.label}
                 </Text>
               </View>
             </View>
-            <View style={styles.budgetProgressTrack}>
+            <View style={styles.progressTrack}>
               <View
                 style={[
-                  styles.budgetProgressFill,
+                  styles.progressFill,
                   {
                     width: `${Math.min(100, budgetStatus.percentUsed)}%` as unknown as number,
                     backgroundColor: budgetStatus.color,
@@ -133,29 +142,9 @@ export default function TravelingSection({
               />
             </View>
           </View>
-          <ChevronRight size={16} color={COLORS.muted} strokeWidth={1.5} />
+          <ChevronRight size={14} color={COLORS.muted} strokeWidth={1.5} />
         </Pressable>
       )}
-
-      <Pressable
-        onPress={onSplitPress}
-        accessibilityLabel={t('plan.traveling.splitCosts', { defaultValue: 'Split costs' })}
-        accessibilityRole="button"
-        style={({ pressed }) => [styles.splitCostsCard, { opacity: pressed ? 0.85 : 1 }]}
-      >
-        <View style={styles.splitCostsIcon}>
-          <Receipt size={18} color={COLORS.sage} strokeWidth={1.5} />
-        </View>
-        <View style={styles.splitCostsText}>
-          <Text style={styles.splitCostsTitle}>
-            {t('plan.traveling.splitCosts', { defaultValue: 'Split costs' })}
-          </Text>
-          <Text style={styles.splitCostsSub}>
-            {t('plan.traveling.splitCostsSub', { defaultValue: 'Track expenses & settle up' })}
-          </Text>
-        </View>
-        <ChevronRight size={16} color={COLORS.muted} strokeWidth={1.5} />
-      </Pressable>
     </View>
   );
 }
@@ -164,140 +153,89 @@ export default function TravelingSection({
 // Styles
 // ---------------------------------------------------------------------------
 const styles = StyleSheet.create({
-  travelingContainer: {
-    marginBottom: SPACING.lg,
-    paddingVertical: SPACING.md,
-    borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.surface1,
-    borderLeftWidth: 3,
-    borderLeftColor: COLORS.sage,
-    paddingHorizontal: SPACING.md,
-    ...CARD_SHADOW,
+  container: {
+    marginBottom: SPACING.xxl,
+    gap: SPACING.md,
   } as ViewStyle,
-  travelingHeader: {
+
+  hero: {
     fontFamily: FONTS.header,
-    fontSize: 24,
+    fontSize: 28,
     color: COLORS.cream,
-    letterSpacing: -0.3,
+    letterSpacing: -0.5,
     marginBottom: SPACING.md,
   } as TextStyle,
-  travelingActions: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-  } as ViewStyle,
-  travelingBtn: {
+
+  primaryBtn: {
+    backgroundColor: COLORS.sage,
     borderRadius: RADIUS.pill,
-    paddingVertical: 10,
-    paddingHorizontal: SPACING.md,
-    flex: 1,
+    paddingVertical: 16,
     alignItems: 'center',
   } as ViewStyle,
-  travelingBtnSage: {
-    backgroundColor: COLORS.sageLight,
-    borderWidth: 1,
-    borderColor: COLORS.sageBorder,
+  primaryBtnText: {
+    fontFamily: FONTS.header,
+    fontSize: 17,
+    color: COLORS.bg,
+  } as TextStyle,
+
+  outlineBtn: {
+    borderRadius: RADIUS.pill,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: COLORS.cream,
   } as ViewStyle,
-  travelingBtnGold: {
-    backgroundColor: COLORS.goldSubtle,
-    borderWidth: 1,
-    borderColor: COLORS.goldBorder,
-  } as ViewStyle,
-  travelingBtnText: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 13,
+  outlineBtnText: {
+    fontFamily: FONTS.header,
+    fontSize: 17,
     color: COLORS.cream,
   } as TextStyle,
-  // ── Budget card ──
+
   budgetCard: {
     marginTop: SPACING.sm,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surface2,
-    borderRadius: RADIUS.md,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.sm,
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.lg,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
     borderWidth: 1,
     borderColor: COLORS.border,
     gap: SPACING.sm,
-    ...CARD_SHADOW,
   } as ViewStyle,
-  budgetCardIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.sageSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  } as ViewStyle,
-  budgetCardContent: {
+  budgetContent: {
     flex: 1,
     gap: SPACING.xs,
   } as ViewStyle,
-  budgetCardRow: {
+  budgetRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   } as ViewStyle,
-  budgetCardAmount: {
+  budgetAmount: {
     fontFamily: FONTS.mono,
     fontSize: 16,
     letterSpacing: -0.3,
   } as TextStyle,
-  budgetStatusBadge: {
+  budgetBadge: {
     paddingHorizontal: SPACING.sm,
     paddingVertical: 2,
     borderRadius: RADIUS.pill,
   } as ViewStyle,
-  budgetStatusText: {
+  budgetBadgeText: {
     fontFamily: FONTS.mono,
     fontSize: 10,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   } as TextStyle,
-  budgetProgressTrack: {
+  progressTrack: {
     height: 4,
-    backgroundColor: COLORS.surface1,
+    backgroundColor: COLORS.surface2,
     borderRadius: RADIUS.pill,
     overflow: 'hidden',
   } as ViewStyle,
-  budgetProgressFill: {
+  progressFill: {
     height: '100%',
     borderRadius: RADIUS.pill,
   } as ViewStyle,
-
-  splitCostsCard: {
-    marginTop: SPACING.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.sageFaint,
-    borderRadius: RADIUS.md,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.sm,
-    borderWidth: 1,
-    borderColor: COLORS.sageBorder,
-    gap: SPACING.sm,
-    ...CARD_SHADOW,
-  } as ViewStyle,
-  splitCostsIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.sageLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  } as ViewStyle,
-  splitCostsText: {
-    flex: 1,
-  } as ViewStyle,
-  splitCostsTitle: {
-    fontFamily: FONTS.bodyMedium,
-    fontSize: 14,
-    color: COLORS.cream,
-  } as TextStyle,
-  splitCostsSub: {
-    fontFamily: FONTS.body,
-    fontSize: 12,
-    color: COLORS.muted,
-    marginTop: 1,
-  } as TextStyle,
 });

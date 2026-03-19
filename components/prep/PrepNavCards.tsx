@@ -1,5 +1,5 @@
 // =============================================================================
-// PrepNavCards — quick navigation cards (Before You Land, Packing, Body Intel, etc.)
+// PrepNavCards — navigation cards with consistent style, sage border on press
 // =============================================================================
 import React from 'react';
 import { View, Pressable, Text, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
@@ -50,14 +50,6 @@ export default function PrepNavCards({ destination, activeTrip }: Props) {
       haptic: Haptics.ImpactFeedbackStyle.Light,
     },
     {
-      key: 'airport-guide',
-      icon: Luggage,
-      title: 'Airport Guide',
-      sub: 'Layover tips, lounges, and terminal maps',
-      onPress: () => router.push('/airport-guide' as never),
-      haptic: Haptics.ImpactFeedbackStyle.Light,
-    },
-    {
       key: 'hostel-hub',
       icon: BedDouble,
       title: 'Hostel Hub',
@@ -85,17 +77,17 @@ export default function PrepNavCards({ destination, activeTrip }: Props) {
             card.onPress();
           }}
           style={({ pressed }) => [
-            styles.prepNavCard,
-            { opacity: pressed ? 0.85 : 1 },
+            styles.navCard,
+            pressed && styles.navCardPressed,
           ]}
           accessibilityLabel={card.title}
           accessibilityRole="button"
         >
-          <View style={styles.prepNavCardLeft}>
+          <View style={styles.navCardLeft}>
             <card.icon size={20} color={COLORS.sage} strokeWidth={1.5} />
-            <View>
-              <Text style={styles.prepNavCardTitle}>{card.title}</Text>
-              <Text style={styles.prepNavCardSub}>{card.sub}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.navCardTitle}>{card.title}</Text>
+              <Text style={styles.navCardSub}>{card.sub}</Text>
             </View>
           </View>
           <ChevronRight size={18} color={COLORS.muted} strokeWidth={1.5} />
@@ -111,29 +103,32 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
     gap: SPACING.sm,
   } as ViewStyle,
-  prepNavCard: {
+  navCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: COLORS.surface1,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.border,
-    paddingVertical: 14,
-    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
   } as ViewStyle,
-  prepNavCardLeft: {
+  navCardPressed: {
+    borderColor: COLORS.sageBorder,
+  } as ViewStyle,
+  navCardLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.md,
     flex: 1,
   } as ViewStyle,
-  prepNavCardTitle: {
+  navCardTitle: {
     fontFamily: FONTS.headerMedium,
     fontSize: 15,
     color: COLORS.cream,
   } as TextStyle,
-  prepNavCardSub: {
+  navCardSub: {
     fontFamily: FONTS.body,
     fontSize: 12,
     color: COLORS.muted,

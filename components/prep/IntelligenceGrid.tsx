@@ -1,10 +1,12 @@
 // =============================================================================
-// IntelligenceGrid — 2x2 magazine-style intelligence cards
+// IntelligenceGrid — 2x2 intelligence cards
+// Clean icon + label + value. Equal height. No cramming.
 // =============================================================================
 import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, Linking, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { Shield, Banknote, Cloud, FileCheck } from 'lucide-react-native';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import type { SafetyData } from '../../lib/prep/safety-data';
@@ -77,82 +79,97 @@ export default function IntelligenceGrid({ destination, safety, visaReqs, passpo
 
   const score = safety?.safetyScore ?? null;
   const safetyColor = score == null ? COLORS.creamMuted : score > 70 ? COLORS.sage : score >= 40 ? COLORS.gold : COLORS.coral;
-  const safetyDesc = score == null ? '\u2014' : score > 70 ? t('prep.safeForTravelers', { defaultValue: 'Safe for travelers' }) : score >= 40 ? t('prep.useCaution', { defaultValue: 'Use caution' }) : t('prep.highRiskArea', { defaultValue: 'High risk area' });
+  const safetyDesc = score == null ? '\u2014' : score > 70 ? t('prep.safeForTravelers', { defaultValue: 'Safe' }) : score >= 40 ? t('prep.useCaution', { defaultValue: 'Caution' }) : t('prep.highRiskArea', { defaultValue: 'High risk' });
 
   const visa = getVisaInfo(destination, passportCode ?? 'US');
   const sherpaType = visaReqs?.visaType;
   const visaStatus = sherpaType ?? visa?.info?.status ?? null;
   const visaLabel = visaStatus === 'visa_free' ? t('prep.noVisaRequired', { defaultValue: 'Visa free' })
     : visaStatus === 'visa_on_arrival' ? t('prep.visaOnArrivalShort', { defaultValue: 'On arrival' })
-    : visaStatus === 'e_visa' ? t('prep.eVisaRequired', { defaultValue: 'e-Visa required' })
+    : visaStatus === 'e_visa' ? t('prep.eVisaRequired', { defaultValue: 'e-Visa' })
     : visaStatus === 'eta' ? t('prep.etaRequired', { defaultValue: 'ETA required' })
     : visaStatus === 'visa_required' ? t('prep.visaRequiredShort', { defaultValue: 'Visa required' })
     : null;
-  const visaColor = visaStatus === 'visa_free' ? COLORS.sage
-    : visaStatus === 'visa_on_arrival' ? COLORS.sage
-    : COLORS.coral;
+  const visaColor = visaStatus === 'visa_free' || visaStatus === 'visa_on_arrival' ? COLORS.sage : COLORS.coral;
   const stayDays = visaReqs?.maxStay ?? visa?.info?.stayDays;
 
   return (
     <View style={styles.container}>
       <View style={styles.row}>
         {/* Safety card */}
-        <Pressable style={styles.card} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/safety-intel', params: { destination } } as never); }} accessibilityLabel={`Safety score ${score ?? 'unknown'} for ${destination}`} accessibilityRole="button">
-          <Text style={[styles.bigNumber, { color: safetyColor }]}>
+        <Pressable
+          style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/safety-intel', params: { destination } } as never); }}
+          accessibilityLabel={`Safety score ${score ?? 'unknown'} for ${destination}`}
+          accessibilityRole="button"
+        >
+          <Shield size={18} color={safetyColor} strokeWidth={1.5} />
+          <Text style={styles.cardLabel}>{t('prep.safetyScoreLabel', { defaultValue: 'Safety' })}</Text>
+          <Text style={[styles.cardValue, { color: safetyColor }]}>
             {score ?? '\u2014'}
           </Text>
           <Text style={styles.cardDesc}>{safetyDesc}</Text>
-          <Text style={styles.cardLabel}>{t('prep.safetyScoreLabel', { defaultValue: 'SAFETY SCORE' })}</Text>
         </Pressable>
 
         {/* Currency card */}
-        <Pressable style={styles.card} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.xe.com/currencyconverter/convert/?From=USD&To=${currencyCode ?? 'EUR'}`).catch(() => {}); }} accessibilityLabel={`Currency rate for ${destination}`} accessibilityRole="button">
-          <Text style={[styles.bigRate, { color: COLORS.cream }]}>
+        <Pressable
+          style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.xe.com/currencyconverter/convert/?From=USD&To=${currencyCode ?? 'EUR'}`).catch(() => {}); }}
+          accessibilityLabel={`Currency rate for ${destination}`}
+          accessibilityRole="button"
+        >
+          <Banknote size={18} color={COLORS.cream} strokeWidth={1.5} />
+          <Text style={styles.cardLabel}>{t('prep.currencyLabel', { defaultValue: 'Currency' })}</Text>
+          <Text style={styles.cardValue}>
             {exchangeRate ?? '\u2014'}
           </Text>
-          <Text style={styles.cardDesc}>
-            {currencyTip ?? (currencyCode ? `1 USD = ${currencyCode}` : t('prep.exchangeRate', { defaultValue: 'Exchange rate' }))}
+          <Text style={styles.cardDesc} numberOfLines={1}>
+            {currencyCode ?? t('prep.exchangeRate', { defaultValue: 'Rate' })}
           </Text>
-          <Text style={styles.cardLabel}>{t('prep.currencyLabel', { defaultValue: 'CURRENCY' })}</Text>
         </Pressable>
       </View>
 
       <View style={styles.row}>
         {/* Weather card */}
-        <Pressable style={styles.card} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/destination/[name]', params: { name: destination } } as never); }} accessibilityLabel={`Weather for ${destination}`} accessibilityRole="button">
+        <Pressable
+          style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/destination/[name]', params: { name: destination } } as never); }}
+          accessibilityLabel={`Weather for ${destination}`}
+          accessibilityRole="button"
+        >
+          <Cloud size={18} color={COLORS.cream} strokeWidth={1.5} />
+          <Text style={styles.cardLabel}>{t('prep.weatherLabel', { defaultValue: 'Weather' })}</Text>
           {weather ? (
             <>
-              <Text style={[styles.bigNumber, { color: COLORS.cream }]}>
-                {Math.round(weather.tempMax)}&deg;
-              </Text>
+              <Text style={styles.cardValue}>{Math.round(weather.tempMax)}&deg;</Text>
               <Text style={styles.cardDesc}>{weather.weatherLabel}</Text>
-              {weather.precipitationChance > 0 && (
-                <Text style={[styles.cardDesc, { color: COLORS.creamMuted }]}>
-                  {weather.precipitationChance}% {t('prep.rain', { defaultValue: 'rain' })}
-                </Text>
-              )}
             </>
           ) : (
-            <Text style={[styles.bigNumber, { color: COLORS.creamMuted }]}>{'\u2014'}</Text>
+            <Text style={[styles.cardValue, { color: COLORS.creamMuted }]}>{'\u2014'}</Text>
           )}
-          <Text style={styles.cardLabel}>{t('prep.weatherLabel', { defaultValue: 'WEATHER' })}</Text>
         </Pressable>
 
         {/* Visa card */}
-        <Pressable style={styles.card} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.google.com/search?q=visa+requirements+${encodeURIComponent(destination)}+from+${passportCode ?? 'US'}`).catch(() => {}); }} accessibilityLabel={`Visa requirements for ${destination}`} accessibilityRole="button">
+        <Pressable
+          style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.google.com/search?q=visa+requirements+${encodeURIComponent(destination)}+from+${passportCode ?? 'US'}`).catch(() => {}); }}
+          accessibilityLabel={`Visa requirements for ${destination}`}
+          accessibilityRole="button"
+        >
+          <FileCheck size={18} color={visaLabel ? visaColor : COLORS.creamMuted} strokeWidth={1.5} />
+          <Text style={styles.cardLabel}>{t('prep.visaLabel', { defaultValue: 'Visa' })}</Text>
           {visaLabel ? (
             <>
-              <Text style={[styles.visaStatus, { color: visaColor }]}>
-                {visaLabel}
-              </Text>
+              <Text style={[styles.cardValueSmall, { color: visaColor }]}>{visaLabel}</Text>
               {stayDays != null && stayDays < 999 && (
-                <Text style={styles.cardDesc}>{`Up to ${stayDays} days`}</Text>
+                <Text style={styles.cardDesc}>{`${stayDays} days`}</Text>
               )}
             </>
           ) : (
-            <Text style={[styles.cardDesc, { color: COLORS.creamMuted }]}>{t('prep.checkRequirements', { defaultValue: 'Check requirements' })}</Text>
+            <Text style={[styles.cardDesc, { color: COLORS.creamMuted }]}>
+              {t('prep.checkRequirements', { defaultValue: 'Check' })}
+            </Text>
           )}
-          <Text style={styles.cardLabel}>{t('prep.visaLabel', { defaultValue: 'VISA' })}</Text>
         </Pressable>
       </View>
     </View>
@@ -162,37 +179,44 @@ export default function IntelligenceGrid({ destination, safety, visaReqs, passpo
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 20,
-    gap: SPACING.md,
-    marginBottom: 40,
+    gap: SPACING.sm,
+    marginBottom: SPACING.lg,
   } as ViewStyle,
   row: {
     flexDirection: 'row',
-    gap: SPACING.md,
+    gap: SPACING.sm,
   } as ViewStyle,
   card: {
     flex: 1,
-    backgroundColor: COLORS.bgMagazine,
+    backgroundColor: COLORS.surface1,
     borderRadius: RADIUS.lg,
-    borderLeftWidth: 3,
-    borderLeftColor: COLORS.sage,
-    padding: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.lg,
     gap: SPACING.xs,
-    minHeight: 100,
-    justifyContent: 'flex-end',
+    minHeight: 120,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
   } as ViewStyle,
-  bigNumber: {
+  cardPressed: {
+    borderColor: COLORS.sageBorder,
+  } as ViewStyle,
+  cardLabel: {
     fontFamily: FONTS.mono,
-    fontSize: 36,
-    lineHeight: 40,
+    fontSize: 10,
+    color: COLORS.muted,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginTop: SPACING.xs,
+  } as TextStyle,
+  cardValue: {
+    fontFamily: FONTS.mono,
+    fontSize: 28,
+    lineHeight: 32,
     color: COLORS.cream,
   } as TextStyle,
-  bigRate: {
-    fontFamily: FONTS.mono,
-    fontSize: 18,
-    lineHeight: 22,
-  } as TextStyle,
-  visaStatus: {
-    fontFamily: FONTS.header,
+  cardValueSmall: {
+    fontFamily: FONTS.headerMedium,
     fontSize: 16,
     lineHeight: 20,
   } as TextStyle,
@@ -201,12 +225,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.creamSoft,
     lineHeight: 16,
-  } as TextStyle,
-  cardLabel: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.sage,
-    letterSpacing: 1.5,
-    marginTop: SPACING.xs,
   } as TextStyle,
 });

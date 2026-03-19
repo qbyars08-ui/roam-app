@@ -1,5 +1,6 @@
 // =============================================================================
-// ROAM — CountdownSection (PLANNING/IMMINENT countdown, daily brief, checklist)
+// ROAM — CountdownSection (PLANNING/IMMINENT state)
+// Big countdown number, clean daily brief, minimal data cards.
 // =============================================================================
 import React, { useCallback, useState } from 'react';
 import {
@@ -17,7 +18,7 @@ import { useRouter } from 'expo-router';
 import { Volume2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS, CARD_SHADOW } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import type { Trip } from '../../lib/store';
 import type { TravelStage } from '../../lib/travel-state';
 import type { DailyBrief, ChecklistItem } from '../../lib/daily-brief';
@@ -81,8 +82,8 @@ export default function CountdownSection({
   }, [audioPlaying, activeTrip.destination, daysUntil]);
 
   return (
-    <View style={styles.planningContainer}>
-      {/* Countdown number */}
+    <View style={styles.container}>
+      {/* ── Countdown ── */}
       <Pressable
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -91,7 +92,7 @@ export default function CountdownSection({
         accessibilityLabel={`${daysUntil} days until ${activeTrip.destination}. Tap to view itinerary.`}
         accessibilityRole="button"
       >
-        <Animated.View style={{ transform: [{ scale: pulseAnim }], alignItems: 'center', marginBottom: SPACING.xs }}>
+        <Animated.View style={[styles.countdownWrap, { transform: [{ scale: pulseAnim }] }]}>
           <Text style={[styles.countdownNumber, { color: countdownColor }]}>
             {daysUntil}
           </Text>
@@ -103,11 +104,19 @@ export default function CountdownSection({
         </Animated.View>
       </Pressable>
 
-      {/* Daily brief card */}
+      {/* ── Daily brief card ── */}
       {brief && (
-        <Pressable style={({ pressed }) => [styles.briefCard, { opacity: pressed ? 0.85 : 1 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/destination/[name]', params: { name: activeTrip.destination } } as never); }} accessibilityLabel={`Daily brief: ${brief.headline}`} accessibilityRole="button">
+        <Pressable
+          style={({ pressed }) => [styles.briefCard, { opacity: pressed ? 0.85 : 1 }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push({ pathname: '/destination/[name]', params: { name: activeTrip.destination } } as never);
+          }}
+          accessibilityLabel={`Daily brief: ${brief.headline}`}
+          accessibilityRole="button"
+        >
           <View style={styles.briefHeader}>
-            <Text style={[styles.briefHeadline, { flex: 1 }]}>{brief.headline}</Text>
+            <Text style={styles.briefText}>{brief.headline}</Text>
             {isLive && <LiveBadge />}
             <Pressable
               onPress={handlePlayBriefAudio}
@@ -127,25 +136,33 @@ export default function CountdownSection({
               />
             </Pressable>
           </View>
-          <Text style={styles.briefSubtext}>{brief.subtext}</Text>
+          <Text style={styles.briefSub}>{brief.subtext}</Text>
         </Pressable>
       )}
 
-      {/* Weather during trip */}
+      {/* ── Weather forecast ── */}
       {weatherDays && weatherDays.length > 0 && (
-        <Pressable style={({ pressed }) => [styles.planDataCard, { opacity: pressed ? 0.85 : 1 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/destination/[name]', params: { name: activeTrip.destination } } as never); }} accessibilityLabel="Weather forecast during trip" accessibilityRole="button">
-          <Text style={styles.planDataLabel}>
+        <Pressable
+          style={({ pressed }) => [styles.dataCard, { opacity: pressed ? 0.85 : 1 }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push({ pathname: '/destination/[name]', params: { name: activeTrip.destination } } as never);
+          }}
+          accessibilityLabel="Weather forecast during trip"
+          accessibilityRole="button"
+        >
+          <Text style={styles.dataLabel}>
             {t('plan.planning.weatherDuringTrip', { defaultValue: 'Weather during trip' })}
           </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: SPACING.sm }}>
-            <View style={{ flexDirection: 'row', gap: SPACING.sm }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.weatherScroll}>
+            <View style={styles.weatherRow}>
               {weatherDays.slice(0, 5).map((day, i) => (
                 <View key={i} style={styles.weatherPill}>
-                  <Text style={styles.weatherPillDate}>
+                  <Text style={styles.weatherDate}>
                     {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' })}
                   </Text>
-                  <Text style={styles.weatherPillTemp}>{Math.round(day.tempMax)}° / {Math.round(day.tempMin)}°</Text>
-                  <Text style={styles.weatherPillLabel} numberOfLines={1}>{day.weatherLabel}</Text>
+                  <Text style={styles.weatherTemp}>{Math.round(day.tempMax)}° / {Math.round(day.tempMin)}°</Text>
+                  <Text style={styles.weatherLabel} numberOfLines={1}>{day.weatherLabel}</Text>
                 </View>
               ))}
             </View>
@@ -153,31 +170,47 @@ export default function CountdownSection({
         </Pressable>
       )}
 
-      {/* Cost estimate */}
+      {/* ── Cost estimate ── */}
       {costData && (
-        <Pressable style={({ pressed }) => [styles.planDataCard, { opacity: pressed ? 0.85 : 1 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.numbeo.com/cost-of-living/in/${encodeURIComponent(activeTrip.destination)}`).catch(() => {}); }} accessibilityLabel={`Estimated daily cost: ${costData.comfort.dailyTotal}`} accessibilityRole="button">
-          <Text style={styles.planDataLabel}>
+        <Pressable
+          style={({ pressed }) => [styles.dataCard, { opacity: pressed ? 0.85 : 1 }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            Linking.openURL(`https://www.numbeo.com/cost-of-living/in/${encodeURIComponent(activeTrip.destination)}`).catch(() => {});
+          }}
+          accessibilityLabel={`Estimated daily cost: ${costData.comfort.dailyTotal}`}
+          accessibilityRole="button"
+        >
+          <Text style={styles.dataLabel}>
             {t('plan.planning.estimatedDailyCost', { defaultValue: 'Estimated daily cost' })}
           </Text>
-          <Text style={styles.planDataValue}>{costData.comfort.dailyTotal}</Text>
-          <Text style={styles.planDataSub}>{costData.tipping}</Text>
+          <Text style={styles.dataValue}>{costData.comfort.dailyTotal}</Text>
+          <Text style={styles.dataSub}>{costData.tipping}</Text>
         </Pressable>
       )}
 
-      {/* Air quality alert (only if notable) */}
+      {/* ── Air quality alert ── */}
       {hasNotableAir && airQuality && (
-        <Pressable style={({ pressed }) => [styles.planDataCard, { borderColor: COLORS.coral + '40', opacity: pressed ? 0.85 : 1 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/destination/[name]', params: { name: activeTrip.destination } } as never); }} accessibilityLabel={`Air quality alert: ${airQuality.label}`} accessibilityRole="button">
-          <Text style={[styles.planDataLabel, { color: COLORS.coral }]}>
+        <Pressable
+          style={({ pressed }) => [styles.dataCard, styles.dataCardAlert, { opacity: pressed ? 0.85 : 1 }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push({ pathname: '/destination/[name]', params: { name: activeTrip.destination } } as never);
+          }}
+          accessibilityLabel={`Air quality alert: ${airQuality.label}`}
+          accessibilityRole="button"
+        >
+          <Text style={[styles.dataLabel, { color: COLORS.coral }]}>
             {t('plan.planning.airQualityAlert', { defaultValue: 'Air quality at destination' })}
           </Text>
-          <Text style={[styles.planDataValue, { color: COLORS.coral }]}>
+          <Text style={[styles.dataValue, { color: COLORS.coral }]}>
             {airQuality.label} (AQI {airQuality.aqi})
           </Text>
-          <Text style={styles.planDataSub}>{airQuality.advice}</Text>
+          <Text style={styles.dataSub}>{airQuality.advice}</Text>
         </Pressable>
       )}
 
-      {/* Pre-trip checklist */}
+      {/* ── Pre-trip checklist ── */}
       {checklist.length > 0 && (
         <View style={styles.checklistContainer}>
           <Text style={styles.checklistTitle}>
@@ -192,12 +225,16 @@ export default function CountdownSection({
                 accessibilityLabel={`${checked ? 'Uncheck' : 'Check'}: ${item.label}`}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked }}
-                style={({ pressed }) => [styles.checklistRow, checked && styles.checklistRowChecked, { opacity: pressed ? 0.8 : 1 }]}
+                style={({ pressed }) => [
+                  styles.checklistRow,
+                  checked && styles.checklistRowChecked,
+                  { opacity: pressed ? 0.8 : 1 },
+                ]}
               >
                 <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
-                  {checked && <Text style={styles.checkboxMark}>✓</Text>}
+                  {checked && <Text style={styles.checkMark}>&#10003;</Text>}
                 </View>
-                <Text style={[styles.checklistLabel, checked && styles.checklistLabelChecked]}>
+                <Text style={[styles.checklistLabel, checked && styles.checklistLabelDone]}>
                   {item.label}
                 </Text>
               </Pressable>
@@ -213,122 +250,138 @@ export default function CountdownSection({
 // Styles
 // ---------------------------------------------------------------------------
 const styles = StyleSheet.create({
-  planningContainer: {
+  container: {
+    marginBottom: SPACING.xxl,
+    gap: SPACING.md,
+  } as ViewStyle,
+
+  // Countdown
+  countdownWrap: {
+    alignItems: 'center',
     marginBottom: SPACING.lg,
   } as ViewStyle,
   countdownNumber: {
-    fontFamily: FONTS.mono,
+    fontFamily: FONTS.header,
     fontSize: 72,
     letterSpacing: -2,
     lineHeight: 80,
   } as TextStyle,
   countdownSub: {
-    fontFamily: FONTS.mono,
+    fontFamily: FONTS.body,
     fontSize: 16,
-    color: COLORS.creamDim,
+    color: COLORS.muted,
     textAlign: 'center',
-    marginTop: 4,
-    marginBottom: SPACING.md,
+    marginTop: SPACING.xs,
   } as TextStyle,
+
+  // Brief card
   briefCard: {
     backgroundColor: COLORS.surface1,
     borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    gap: SPACING.xs,
-    marginBottom: SPACING.md,
-    borderLeftWidth: 3,
+    padding: SPACING.lg,
+    borderLeftWidth: 2,
     borderLeftColor: COLORS.sage,
-    ...CARD_SHADOW,
   } as ViewStyle,
   briefHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    flexWrap: 'wrap',
+    marginBottom: SPACING.xs,
   } as ViewStyle,
-  briefHeadline: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 14,
+  briefText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 16,
     color: COLORS.cream,
     flex: 1,
+    lineHeight: 22,
+  } as TextStyle,
+  briefSub: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.muted,
     lineHeight: 20,
   } as TextStyle,
-  briefSubtext: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.creamMuted,
-    lineHeight: 19,
-  } as TextStyle,
   briefAudioBtn: {
-    marginLeft: SPACING.xs,
-    padding: 4,
+    padding: 6,
     borderRadius: RADIUS.sm,
   } as ViewStyle,
   briefAudioBtnActive: {
     backgroundColor: COLORS.sageSubtle,
   } as ViewStyle,
-  planDataCard: {
+
+  // Data cards
+  dataCard: {
     backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    marginBottom: SPACING.sm,
-    ...CARD_SHADOW,
   } as ViewStyle,
-  planDataLabel: {
+  dataCardAlert: {
+    borderColor: COLORS.coralBorder,
+  } as ViewStyle,
+  dataLabel: {
     fontFamily: FONTS.mono,
     fontSize: 10,
     color: COLORS.muted,
     letterSpacing: 0.8,
     textTransform: 'uppercase',
-    marginBottom: SPACING.xs,
+    marginBottom: SPACING.sm,
   } as TextStyle,
-  planDataValue: {
+  dataValue: {
     fontFamily: FONTS.header,
-    fontSize: 18,
+    fontSize: 20,
     color: COLORS.cream,
     marginBottom: 2,
   } as TextStyle,
-  planDataSub: {
+  dataSub: {
     fontFamily: FONTS.body,
-    fontSize: 12,
-    color: COLORS.creamDim,
+    fontSize: 13,
+    color: COLORS.muted,
     lineHeight: 18,
   } as TextStyle,
+
+  // Weather
+  weatherScroll: {
+    marginTop: SPACING.sm,
+  } as ViewStyle,
+  weatherRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  } as ViewStyle,
   weatherPill: {
     backgroundColor: COLORS.surface2,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: RADIUS.sm,
+    borderRadius: RADIUS.md,
     padding: SPACING.sm,
     minWidth: 90,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
   } as ViewStyle,
-  weatherPillDate: {
+  weatherDate: {
     fontFamily: FONTS.mono,
     fontSize: 9,
     color: COLORS.muted,
     letterSpacing: 0.3,
     marginBottom: 2,
   } as TextStyle,
-  weatherPillTemp: {
+  weatherTemp: {
     fontFamily: FONTS.bodyMedium,
-    fontSize: 13,
+    fontSize: 14,
     color: COLORS.cream,
   } as TextStyle,
-  weatherPillLabel: {
+  weatherLabel: {
     fontFamily: FONTS.body,
     fontSize: 11,
-    color: COLORS.creamDim,
+    color: COLORS.muted,
     marginTop: 2,
   } as TextStyle,
+
+  // Checklist
   checklistContainer: {
     backgroundColor: COLORS.surface1,
     borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    gap: SPACING.xs,
-    ...CARD_SHADOW,
+    padding: SPACING.lg,
   } as ViewStyle,
   checklistTitle: {
     fontFamily: FONTS.mono,
@@ -336,25 +389,25 @@ const styles = StyleSheet.create({
     color: COLORS.sage,
     letterSpacing: 1.5,
     textTransform: 'uppercase',
-    marginBottom: SPACING.xs,
+    marginBottom: SPACING.md,
   } as TextStyle,
   checklistRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   } as ViewStyle,
   checklistRowChecked: {
-    opacity: 0.55,
+    opacity: 0.5,
   } as ViewStyle,
   checkbox: {
-    width: 20,
-    height: 20,
+    width: 22,
+    height: 22,
     borderRadius: 6,
     borderWidth: 1.5,
-    borderColor: COLORS.creamDim,
+    borderColor: COLORS.muted,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
@@ -363,20 +416,20 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.sage,
     borderColor: COLORS.sage,
   } as ViewStyle,
-  checkboxMark: {
+  checkMark: {
     fontFamily: FONTS.mono,
-    fontSize: 11,
+    fontSize: 12,
     color: COLORS.bg,
   } as TextStyle,
   checklistLabel: {
     fontFamily: FONTS.body,
-    fontSize: 14,
+    fontSize: 15,
     color: COLORS.cream,
     flex: 1,
-    lineHeight: 19,
+    lineHeight: 20,
   } as TextStyle,
-  checklistLabelChecked: {
+  checklistLabelDone: {
     textDecorationLine: 'line-through',
-    color: COLORS.creamDim,
+    color: COLORS.muted,
   } as TextStyle,
 });

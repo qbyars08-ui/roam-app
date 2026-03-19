@@ -1,7 +1,7 @@
 // =============================================================================
 // ROAM — Splash Screen
-// One job: make someone tap "Plan a trip" in under 5 seconds.
-// Live demo cycles through real itinerary snippets. No stock photos.
+// Full viewport, ROAM 72px, animated itinerary lines, spring-in CTAs.
+// This should feel like the login screen of a $100M app.
 // =============================================================================
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -20,43 +20,18 @@ import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, RADIUS, SPACING } from '../../lib/constants';
 
 // ---------------------------------------------------------------------------
-// Itinerary demo snippets — real output samples that cycle every 8s
+// Itinerary demo lines — 3 cities, one line each, cycling
 // ---------------------------------------------------------------------------
-interface DemoSnippet {
-  readonly dayHeader: string;
-  readonly lines: readonly string[];
-}
-
-const DEMO_SNIPPETS: readonly DemoSnippet[] = [
-  {
-    dayHeader: 'Day 1 \u2014 Shibuya',
-    lines: [
-      'Morning: Tsukiji Outer Market. Get there by 7.',
-      'The tuna auction tourists are gone by then.',
-      '\u00A52,400 for the best sushi of your life.',
-    ],
-  },
-  {
-    dayHeader: 'Day 3 \u2014 Trastevere',
-    lines: [
-      'Skip the tourist restaurants on the main drag.',
-      'Walk to Da Enzo. No reservation. Line moves fast.',
-      'Get the cacio e pepe. \u20AC12.',
-    ],
-  },
-  {
-    dayHeader: 'Day 2 \u2014 Canggu',
-    lines: [
-      'Rent the scooter from Jl Pantai Berawa, not the resort.',
-      'Half the price. Ride to Tanah Lot at 4pm.',
-      'Golden hour. Free entry after 5.',
-    ],
-  },
+const DEMO_LINES = [
+  'Day 1 \u2014 Shibuya at dusk. The vinyl shops close at 8.',
+  'Day 2 \u2014 Trastevere. Ask for the cacio e pepe.',
+  'Day 3 \u2014 Canggu. Rent a scooter. Trust me.',
 ] as const;
 
-const CYCLE_INTERVAL_MS = 8000;
-const LINE_STAGGER_MS = 300;
-const LINES_PER_SNIPPET = 4; // 1 header + 3 content lines
+const HOLD_MS = 6000;
+const FADE_IN_MS = 400;
+const STAGGER_MS = 400;
+const FADE_OUT_MS = 300;
 
 // ---------------------------------------------------------------------------
 // Component
@@ -68,46 +43,84 @@ export default function SplashScreen() {
   // --- Animation values ---
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const subtitleOpacity = useRef(new Animated.Value(0)).current;
-  const buttonsTranslateY = useRef(new Animated.Value(30)).current;
   const buttonsOpacity = useRef(new Animated.Value(0)).current;
+  const buttonsTranslateY = useRef(new Animated.Value(24)).current;
 
-  // One animated value per line (header + 3 content lines)
+  // One opacity per demo line
   const lineOpacities = useRef(
-    Array.from({ length: LINES_PER_SNIPPET }, () => new Animated.Value(0))
+    DEMO_LINES.map(() => new Animated.Value(0)),
   ).current;
 
-  const [snippetIndex, setSnippetIndex] = useState(0);
-  const snippetIndexRef = useRef(0);
+  const [cycleIndex, setCycleIndex] = useState(0);
+  const cycleRef = useRef(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // --- Fade in demo lines for a given snippet ---
-  const animateDemoLines = useCallback(() => {
-    // Reset all line opacities
-    lineOpacities.forEach((val) => val.setValue(0));
-
-    // Stagger fade-in for each line
+  // --- Animate 3 lines in with stagger ---
+  const animateLinesIn = useCallback(() => {
+    lineOpacities.forEach((v) => v.setValue(0));
     const animations = lineOpacities.map((opacity, i) =>
       Animated.sequence([
-        Animated.delay(i * LINE_STAGGER_MS),
+        Animated.delay(i * STAGGER_MS),
         Animated.timing(opacity, {
           toValue: 1,
-          duration: 400,
+          duration: FADE_IN_MS,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
     Animated.parallel(animations).start();
   }, [lineOpacities]);
 
-  // --- Cycle snippets ---
-  useEffect(() => {
-    // Animate first snippet immediately after demo area appears
-    const firstDemoTimer = setTimeout(() => {
-      animateDemoLines();
-    }, 800);
+  // --- Fade all lines out ---
+  const animateLinesOut = useCallback(
+    () =>
+      new Promise<void>((resolve) => {
+        Animated.parallel(
+          lineOpacities.map((opacity) =>
+            Animated.timing(opacity, {
+              toValue: 0,
+              duration: FADE_OUT_MS,
+              useNativeDriver: true,
+            }),
+          ),
+        ).start(() => resolve());
+      }),
+    [lineOpacities],
+  );
 
-    // Show buttons after demo text settles (~2s into the experience)
-    const buttonTimer = setTimeout(() => {
+  // --- Logo + subtitle entrance ---
+  useEffect(() => {
+    Animated.sequence([
+      Animated.delay(100),
+      Animated.timing(logoOpacity, {
+        toValue: 1,
+        duration: 600,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    const sub = setTimeout(() => {
+      Animated.timing(subtitleOpacity, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+    }, 500);
+
+    return () => clearTimeout(sub);
+  }, [logoOpacity, subtitleOpacity]);
+
+  // --- Demo lines cycling ---
+  useEffect(() => {
+    // First set fades in after subtitle
+    const firstTimer = setTimeout(() => {
+      animateLinesIn();
+    }, 900);
+
+    // Buttons appear after 2s with spring
+    const btnTimer = setTimeout(() => {
       Animated.parallel([
         Animated.spring(buttonsTranslateY, {
           toValue: 0,
@@ -123,57 +136,22 @@ export default function SplashScreen() {
       ]).start();
     }, 2000);
 
-    // Cycle through snippets every 8s
-    const cycleTimer = setInterval(() => {
-      // Fade out all lines first
-      Animated.parallel(
-        lineOpacities.map((opacity) =>
-          Animated.timing(opacity, {
-            toValue: 0,
-            duration: 250,
-            useNativeDriver: true,
-          })
-        )
-      ).start(() => {
-        const nextIndex =
-          (snippetIndexRef.current + 1) % DEMO_SNIPPETS.length;
-        snippetIndexRef.current = nextIndex;
-        setSnippetIndex(nextIndex);
-        animateDemoLines();
-      });
-    }, CYCLE_INTERVAL_MS);
+    // Cycle every HOLD_MS
+    timerRef.current = setInterval(async () => {
+      await animateLinesOut();
+      cycleRef.current = (cycleRef.current + 1) % DEMO_LINES.length;
+      setCycleIndex(cycleRef.current);
+      animateLinesIn();
+    }, HOLD_MS);
 
     return () => {
-      clearTimeout(firstDemoTimer);
-      clearTimeout(buttonTimer);
-      clearInterval(cycleTimer);
+      clearTimeout(firstTimer);
+      clearTimeout(btnTimer);
+      if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [animateDemoLines, buttonsOpacity, buttonsTranslateY, lineOpacities]);
+  }, [animateLinesIn, animateLinesOut, buttonsOpacity, buttonsTranslateY]);
 
-  // --- Logo + subtitle entrance ---
-  useEffect(() => {
-    Animated.sequence([
-      Animated.delay(100),
-      Animated.timing(logoOpacity, {
-        toValue: 1,
-        duration: 600,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    const subtitleTimer = setTimeout(() => {
-      Animated.timing(subtitleOpacity, {
-        toValue: 1,
-        duration: 500,
-        useNativeDriver: true,
-      }).start();
-    }, 500);
-
-    return () => clearTimeout(subtitleTimer);
-  }, [logoOpacity, subtitleOpacity]);
-
-  // --- Navigation handlers ---
+  // --- Navigation ---
   const handlePlanTrip = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.replace('/onboarding');
@@ -184,41 +162,41 @@ export default function SplashScreen() {
     router.replace('/(auth)/signin');
   }, [router]);
 
-  const snippet = DEMO_SNIPPETS[snippetIndex];
+  // We show 3 lines offset by cycleIndex so lines rotate through cities
+  const visibleLines = DEMO_LINES.map(
+    (_, i) => DEMO_LINES[(i + cycleIndex) % DEMO_LINES.length],
+  );
 
   return (
-    <View style={styles.container}>
-      {/* ---- Top 40%: Logo + subtitle ---- */}
-      <View style={styles.topSection}>
+    <View style={[styles.root, { paddingBottom: insets.bottom + 32 }]}>
+      {/* ---- Center block: logo + subtitle + demo ---- */}
+      <View style={styles.centerBlock}>
         <Animated.Text style={[styles.logo, { opacity: logoOpacity }]}>
           ROAM
         </Animated.Text>
+
         <Animated.Text style={[styles.subtitle, { opacity: subtitleOpacity }]}>
           Plan any trip in 30 seconds.
         </Animated.Text>
+
+        {/* Animated itinerary preview */}
+        <View style={styles.demoWrap}>
+          {visibleLines.map((line, i) => (
+            <Animated.Text
+              key={`${cycleIndex}-${i}`}
+              style={[styles.demoLine, { opacity: lineOpacities[i] }]}
+            >
+              {line}
+            </Animated.Text>
+          ))}
+        </View>
       </View>
 
-      {/* ---- Middle: Live demo snippet ---- */}
-      <View style={styles.demoSection}>
-        <Animated.Text style={[styles.demoHeader, { opacity: lineOpacities[0] }]}>
-          {snippet.dayHeader}
-        </Animated.Text>
-        {snippet.lines.map((line, i) => (
-          <Animated.Text
-            key={`${snippetIndex}-${i}`}
-            style={[styles.demoLine, { opacity: lineOpacities[i + 1] }]}
-          >
-            {line}
-          </Animated.Text>
-        ))}
-      </View>
-
-      {/* ---- Bottom: CTAs ---- */}
+      {/* ---- Bottom CTAs ---- */}
       <Animated.View
         style={[
-          styles.bottomSection,
+          styles.bottomCtas,
           {
-            paddingBottom: insets.bottom + 32,
             opacity: buttonsOpacity,
             transform: [{ translateY: buttonsTranslateY }],
           },
@@ -227,17 +205,15 @@ export default function SplashScreen() {
         <Pressable
           onPress={handlePlanTrip}
           style={({ pressed }) => [
-            styles.primaryButton,
+            styles.primaryBtn,
             { transform: [{ scale: pressed ? 0.97 : 1 }] },
           ]}
         >
-          <Text style={styles.primaryButtonText}>Plan a trip \u2014 free</Text>
+          <Text style={styles.primaryBtnText}>Plan a trip \u2014 free</Text>
         </Pressable>
 
         <Pressable onPress={handleSignIn} hitSlop={12}>
-          <Text style={styles.secondaryButtonText}>
-            I already have an account
-          </Text>
+          <Text style={styles.signInText}>Sign in</Text>
         </Pressable>
       </Animated.View>
     </View>
@@ -248,81 +224,76 @@ export default function SplashScreen() {
 // Styles
 // ---------------------------------------------------------------------------
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    backgroundColor: COLORS.black,
+    backgroundColor: COLORS.bg,
+    justifyContent: 'center',
+    alignItems: 'center',
   } as ViewStyle,
 
-  // Top 40% — logo and tagline
-  topSection: {
-    flex: 4,
-    alignItems: 'center',
+  centerBlock: {
+    flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.xl,
   } as ViewStyle,
 
   logo: {
     fontFamily: FONTS.header,
-    fontSize: 64,
+    fontSize: 72,
     color: COLORS.cream,
-    letterSpacing: 8,
+    letterSpacing: 4,
   } as TextStyle,
 
   subtitle: {
     fontFamily: FONTS.body,
-    fontSize: 18,
-    color: COLORS.creamDim,
+    fontSize: 20,
+    color: COLORS.muted,
     marginTop: 12,
   } as TextStyle,
 
-  // Middle — live demo
-  demoSection: {
-    flex: 3,
-    paddingHorizontal: SPACING.xl,
-    justifyContent: 'center',
+  demoWrap: {
+    marginTop: 40,
+    minHeight: 80,
+    alignItems: 'center',
   } as ViewStyle,
 
-  demoHeader: {
-    fontFamily: FONTS.mono,
-    fontSize: 16,
-    color: COLORS.sage,
-    marginBottom: 12,
-    letterSpacing: 0.5,
-  } as TextStyle,
-
   demoLine: {
-    fontFamily: FONTS.body,
-    fontSize: 16,
-    color: COLORS.creamSoft,
-    lineHeight: 26,
+    fontFamily: FONTS.mono,
+    fontSize: 14,
+    color: COLORS.sage,
+    opacity: 0.6,
+    lineHeight: 24,
+    textAlign: 'center',
   } as TextStyle,
 
-  // Bottom — CTAs
-  bottomSection: {
-    flex: 2,
+  bottomCtas: {
+    width: '100%',
+    maxWidth: 400,
     paddingHorizontal: SPACING.lg,
-    justifyContent: 'flex-end',
     alignItems: 'center',
     gap: SPACING.md,
   } as ViewStyle,
 
-  primaryButton: {
+  primaryBtn: {
     backgroundColor: COLORS.sage,
     borderRadius: RADIUS.pill,
-    paddingVertical: SPACING.md + 2,
+    height: 48,
     width: '100%',
     alignItems: 'center',
+    justifyContent: 'center',
   } as ViewStyle,
 
-  primaryButtonText: {
+  primaryBtnText: {
     fontFamily: FONTS.bodyMedium,
     fontSize: 18,
     color: COLORS.bg,
   } as TextStyle,
 
-  secondaryButtonText: {
+  signInText: {
     fontFamily: FONTS.body,
     fontSize: 14,
-    color: COLORS.creamDim,
+    color: COLORS.muted,
     paddingVertical: SPACING.sm,
   } as TextStyle,
 });

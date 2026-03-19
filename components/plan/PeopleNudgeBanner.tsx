@@ -1,11 +1,11 @@
 // =============================================================================
-// ROAM — PeopleNudgeBanner (social proof for latest destination)
+// ROAM — PeopleNudgeBanner (clean social proof nudge)
 // =============================================================================
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
-import { Users } from 'lucide-react-native';
+import { Users, X } from 'lucide-react-native';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS, CARD_SHADOW } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -28,26 +28,24 @@ export default function PeopleNudgeBanner({ destination, onTap, onDismiss }: Peo
       }}
       accessibilityLabel={`See who else is heading to ${destination}`}
       accessibilityRole="button"
-      style={({ pressed }) => [styles.peopleBanner, { opacity: pressed ? 0.85 : 1 }]}
+      style={({ pressed }) => [styles.banner, { opacity: pressed ? 0.85 : 1 }]}
     >
-      <View style={styles.peopleBannerLeft}>
-        <Users size={16} color={COLORS.sage} strokeWidth={1.5} />
-        <Text style={styles.peopleBannerText}>
-          See who else is heading to{' '}
-          <Text style={styles.peopleBannerBold}>{destination}</Text>
-        </Text>
-      </View>
+      <Users size={16} color={COLORS.sage} strokeWidth={1.5} />
+      <Text style={styles.text}>
+        See who else is heading to{' '}
+        <Text style={styles.bold}>{destination}</Text>
+      </Text>
       <Pressable
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           onDismiss();
         }}
         hitSlop={12}
-        accessibilityLabel="Dismiss people nudge"
+        accessibilityLabel="Dismiss"
         accessibilityRole="button"
-        style={styles.peopleBannerDismiss}
+        style={styles.dismiss}
       >
-        <Text style={styles.peopleBannerDismissText}>✕</Text>
+        <X size={14} color={COLORS.muted} strokeWidth={1.5} />
       </Pressable>
     </Pressable>
   );
@@ -57,41 +55,30 @@ export default function PeopleNudgeBanner({ destination, onTap, onDismiss }: Peo
 // Styles
 // ---------------------------------------------------------------------------
 const styles = StyleSheet.create({
-  peopleBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: COLORS.bgMagazine,
-    borderRadius: RADIUS.lg,
-    borderLeftWidth: 3,
-    borderLeftColor: COLORS.sage,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    marginBottom: SPACING.lg,
-    ...CARD_SHADOW,
-  } as ViewStyle,
-  peopleBannerLeft: {
+  banner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    flex: 1,
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    marginBottom: SPACING.lg,
   } as ViewStyle,
-  peopleBannerText: {
+  text: {
     fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.creamMuted,
+    fontSize: 14,
+    color: COLORS.muted,
     flex: 1,
+    lineHeight: 20,
   } as TextStyle,
-  peopleBannerBold: {
-    fontFamily: FONTS.bodySemiBold,
+  bold: {
+    fontFamily: FONTS.bodyMedium,
     color: COLORS.sage,
   } as TextStyle,
-  peopleBannerDismiss: {
-    paddingLeft: SPACING.sm,
+  dismiss: {
+    padding: SPACING.xs,
   } as ViewStyle,
-  peopleBannerDismissText: {
-    fontFamily: FONTS.mono,
-    fontSize: 12,
-    color: COLORS.creamMuted,
-  } as TextStyle,
 });
