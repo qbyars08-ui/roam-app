@@ -50,6 +50,7 @@ import JetLagSection from '../../components/prep/JetLagSection';
 import CrowdsSection from '../../components/prep/CrowdsSection';
 import PrepNavCards from '../../components/prep/PrepNavCards';
 import IntelligenceGrid from '../../components/prep/IntelligenceGrid';
+import FadeIn from '../../components/ui/FadeIn';
 
 // ---------------------------------------------------------------------------
 // Editorial Intelligence Header
@@ -214,15 +215,18 @@ function PrepScreen() {
             {/* Weather */}
             {weatherLoading ? <WeatherLoadingSkeleton /> : null}
             {currentWeather && !weatherLoading && (
-              <View style={styles.sectionWrap}>
-                <CurrentWeatherCard data={currentWeather} updatedAt={weatherFetchedAt} />
-              </View>
+              <FadeIn duration={300}>
+                <View style={styles.sectionWrap}>
+                  <CurrentWeatherCard data={currentWeather} updatedAt={weatherFetchedAt} />
+                </View>
+              </FadeIn>
             )}
-            {weatherIntel && weatherIntel.days?.length > 0 && !weatherLoading ? <WeatherForecastDays weatherIntel={weatherIntel} /> : null}
-            {weatherIntel && (weatherIntel.summary || (weatherIntel.packingAdvice?.length > 0)) && !weatherLoading ? <WeatherPackingAdvice weatherIntel={weatherIntel} /> : null}
+            {weatherIntel && weatherIntel.days?.length > 0 && !weatherLoading ? <FadeIn duration={300} delay={100}><WeatherForecastDays weatherIntel={weatherIntel} /></FadeIn> : null}
+            {weatherIntel && (weatherIntel.summary || (weatherIntel.packingAdvice?.length > 0)) && !weatherLoading ? <FadeIn duration={300} delay={150}><WeatherPackingAdvice weatherIntel={weatherIntel} /></FadeIn> : null}
 
             {/* Sonar live intel — no "CURRENT CONDITIONS" header clutter */}
             {(sonarPrep.data || sonarSafety.data) ? (
+              <FadeIn duration={300}>
               <View style={styles.sonarWrap}>
                 {sonarPrep.data && (
                   <SonarCard
@@ -243,6 +247,7 @@ function PrepScreen() {
                   />
                 )}
               </View>
+              </FadeIn>
             ) : !sonarPrep.isLoading && !sonarSafety.isLoading ? (
               <View style={styles.sectionWrap}>
                 <SonarFallback label={t('prep.conditionsLater', { defaultValue: 'Conditions update when your trip gets closer' })} />

@@ -1,16 +1,43 @@
 // =============================================================================
 // ROAM — Tab Navigator Layout
-// Web: sidebar navigation. Native: floating pill nav.
+// Web: sidebar navigation + fade transition. Native: floating pill nav.
 // =============================================================================
-import React from 'react';
-import { Platform, View } from 'react-native';
-import { Tabs } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, Platform, View } from 'react-native';
+import { Tabs, usePathname } from 'expo-router';
 import { COLORS } from '../../lib/constants';
 import FloatingPillNav from '../../components/ui/FloatingPillNav';
 import LiveCompanionFAB from '../../components/features/LiveCompanionFAB';
 import Sidebar from '../../components/web/Sidebar';
 
 const isWeb = Platform.OS === 'web';
+
+// ---------------------------------------------------------------------------
+// Web fade wrapper — 150ms opacity transition on tab change
+// ---------------------------------------------------------------------------
+function WebFadeWrapper({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const opacity = useRef(new Animated.Value(1)).current;
+  const prevPathname = useRef(pathname);
+
+  useEffect(() => {
+    if (prevPathname.current !== pathname) {
+      prevPathname.current = pathname;
+      opacity.setValue(0);
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [pathname, opacity]);
+
+  return (
+    <Animated.View style={{ flex: 1, opacity }}>
+      {children}
+    </Animated.View>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Tabs Layout — sidebar on web, floating pill on native
@@ -48,7 +75,9 @@ export default function TabsLayout() {
       <View style={{ flex: 1, flexDirection: 'row', backgroundColor: COLORS.bg }}>
         <Sidebar />
         <View style={{ flex: 1, maxWidth: 1200 }}>
-          {tabContent}
+          <WebFadeWrapper>
+            {tabContent}
+          </WebFadeWrapper>
         </View>
       </View>
     );

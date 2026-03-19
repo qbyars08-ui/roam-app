@@ -1,8 +1,8 @@
 // =============================================================================
 // ROAM — Floating pill navigation (5 tabs, frosted glass)
 // =============================================================================
-import React, { useEffect, useRef } from 'react';
-import { View, Text, Pressable, StyleSheet, Platform, Animated, type ViewStyle } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { View, Text, Pressable, StyleSheet, Platform, Animated, type ViewStyle, type LayoutChangeEvent } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,6 +13,7 @@ import { captureEvent } from '../../lib/posthog';
 import * as Haptics from '../../lib/haptics';
 
 const TAB_ORDER = ['plan', 'pulse', 'flights', 'people', 'prep'] as const;
+const TAB_COUNT = TAB_ORDER.length;
 const TAB_CONFIG: Record<string, { i18nKey: string; Icon: LucideIcon }> = {
   plan: { i18nKey: 'tabs.plan', Icon: Map },
   pulse: { i18nKey: 'tabs.pulse', Icon: Radio },
@@ -22,7 +23,7 @@ const TAB_CONFIG: Record<string, { i18nKey: string; Icon: LucideIcon }> = {
 };
 
 // ---------------------------------------------------------------------------
-// Animated Tab Item
+// Tab Item (no per-tab bg animation — bar-level sliding indicator instead)
 // ---------------------------------------------------------------------------
 function PillTabItem({
   route,
@@ -31,6 +32,7 @@ function PillTabItem({
   label,
   config,
   onPress,
+  onLayout,
 }: {
   route: { key: string; name: string };
   isFocused: boolean;
@@ -38,18 +40,9 @@ function PillTabItem({
   label: string;
   config: { Icon: LucideIcon };
   onPress: () => void;
+  onLayout: (e: LayoutChangeEvent) => void;
 }) {
   const scale = useRef(new Animated.Value(1)).current;
-  const bgOpacity = useRef(new Animated.Value(isFocused ? 1 : 0)).current;
-
-  useEffect(() => {
-    Animated.spring(bgOpacity, {
-      toValue: isFocused ? 1 : 0,
-      useNativeDriver: true,
-      tension: 120,
-      friction: 14,
-    }).start();
-  }, [isFocused, bgOpacity]);
 
   const handlePressIn = () => {
     Animated.spring(scale, {
@@ -79,13 +72,13 @@ function PillTabItem({
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      onLayout={onLayout}
       style={styles.tab}
       accessibilityRole="button"
       accessibilityState={isFocused ? { selected: true } : {}}
       accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
     >
       <Animated.View style={[styles.tabContent, { transform: [{ scale }] }]}>
-        <Animated.View style={[styles.activeBg, { opacity: bgOpacity }]} />
         <IconComponent size={20} color={iconColor} strokeWidth={1.5} />
         <Text style={[styles.label, { color: labelColor }]} numberOfLines={1}>
           {label}
@@ -106,13 +99,69 @@ export default function FloatingPillNav({ state, descriptors, navigation }: Bott
   const tabEntryRef = useRef<{ tab: string; enteredAt: number } | null>(null);
   const currentTabName = state.routes[state.index]?.name ?? '';
 
+  // Track tab layouts for sliding indicator
+  const tabLayouts = useRef<{ x: number; width: number }[]>(new Array(TAB_COUNT).fill({ x: 0, width: 0 })).current;
+  const [layoutsReady, setLayoutsReady] = useState(false);
+  const layoutCount = useRef(0);
+
+  const activeIndex = visibleRoutes.findIndex((r) => state.routes[state.index]?.key === r.key);
+  const indicatorX = useRef(new Animated.Value(0)).current;
+  const indicatorWidth = useRef(new Animated.Value(0)).current;
+
+  const handleTabLayout = useCallback((index: number, e: LayoutChangeEvent) => {
+    const { x, width } = e.nativeEvent.layout;
+    tabLayouts[index] = { x, width };
+    layoutCount.current += 1;
+    if (layoutCount.current >= visibleRoutes.length) {
+      setLayoutsReady(true);
+      // Set initial position without animation
+      const layout = tabLayouts[activeIndex >= 0 ? activeIndex : 0];
+      if (layout) {
+        indicatorX.setValue(layout.x);
+        indicatorWidth.setValue(layout.width);
+      }
+    }
+  }, [activeIndex, indicatorX, indicatorWidth, tabLayouts, visibleRoutes.length]);
+
+  useEffect(() => {
+    if (!layoutsReady || activeIndex < 0) return;
+    const layout = tabLayouts[activeIndex];
+    if (!layout) return;
+    Animated.parallel([
+      Animated.spring(indicatorX, {
+        toValue: layout.x,
+        useNativeDriver: true,
+        tension: 180,
+        friction: 18,
+      }),
+      Animated.spring(indicatorWidth, {
+        toValue: layout.width,
+        useNativeDriver: false,
+        tension: 180,
+        friction: 18,
+      }),
+    ]).start();
+  }, [activeIndex, layoutsReady, indicatorX, indicatorWidth, tabLayouts]);
+
   useEffect(() => {
     tabEntryRef.current = { tab: currentTabName, enteredAt: Date.now() };
   }, [currentTabName]);
 
   const barContent = (
     <View style={styles.bar}>
-      {visibleRoutes.map((route) => {
+      {/* Sliding indicator behind tabs */}
+      {layoutsReady && (
+        <Animated.View
+          style={[
+            styles.slidingIndicator,
+            {
+              width: indicatorWidth,
+              transform: [{ translateX: indicatorX }],
+            },
+          ]}
+        />
+      )}
+      {visibleRoutes.map((route, index) => {
         const { options } = descriptors[route.key];
         const isFocused = state.routes[state.index]?.key === route.key;
         const config = TAB_CONFIG[route.name as keyof typeof TAB_CONFIG];
@@ -150,6 +199,7 @@ export default function FloatingPillNav({ state, descriptors, navigation }: Bott
             label={label}
             config={config}
             onPress={onPress}
+            onLayout={(e) => handleTabLayout(index, e)}
           />
         );
       })}
@@ -216,6 +266,13 @@ const styles = StyleSheet.create({
     height: 56,
     gap: SPACING.xs,
   },
+  slidingIndicator: {
+    position: 'absolute',
+    top: 8,
+    bottom: 8,
+    backgroundColor: COLORS.sageLight,
+    borderRadius: RADIUS.pill,
+  },
   tab: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -228,11 +285,6 @@ const styles = StyleSheet.create({
     position: 'relative',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: RADIUS.pill,
-  },
-  activeBg: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: COLORS.sageLight,
     borderRadius: RADIUS.pill,
   },
   label: {

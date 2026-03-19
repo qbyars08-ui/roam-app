@@ -54,7 +54,7 @@ const en = {
     food: 'Food',
     prep: 'Prep',
     health: 'Health',
-    pulse: 'Pulse',
+    pulse: 'Live',
     pets: 'Pets',
   },
 

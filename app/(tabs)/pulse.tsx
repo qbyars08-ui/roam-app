@@ -57,6 +57,7 @@ import {
   LiveEventCard,
 } from '../../components/pulse/PulseCards';
 import { styles } from '../../components/pulse/pulse-styles';
+import FadeIn from '../../components/ui/FadeIn';
 
 // ---------------------------------------------------------------------------
 // Destination Pill Chip
@@ -385,15 +386,17 @@ export default function PulseScreen() {
 
           {/* Live Sonar intel card */}
           {sonarPulse.data && !sonarPulse.isLoading ? (
-            <View style={{ marginTop: SPACING.md }}>
-              <SonarCard
-                answer={sonarPulse.data.answer}
-                isLive={sonarPulse.data.isLive ?? sonarPulse.isLive}
-                citations={sonarPulse.citations}
-                title={t('pulse.rightNow', { defaultValue: 'Right now' })}
-                timestamp={sonarPulse.data.timestamp}
-              />
-            </View>
+            <FadeIn duration={300}>
+              <View style={{ marginTop: SPACING.md }}>
+                <SonarCard
+                  answer={sonarPulse.data.answer}
+                  isLive={sonarPulse.data.isLive ?? sonarPulse.isLive}
+                  citations={sonarPulse.citations}
+                  title={t('pulse.rightNow', { defaultValue: 'Right now' })}
+                  timestamp={sonarPulse.data.timestamp}
+                />
+              </View>
+            </FadeIn>
           ) : null}
 
           {/* Time recs */}
@@ -474,6 +477,7 @@ export default function PulseScreen() {
 
         {/* ── Venue Cards — horizontal scroll ── */}
         {fsqPlaces && fsqPlaces.length > 0 ? (
+          <FadeIn duration={300} delay={100}>
           <View style={{ marginTop: SPACING.xl }}>
             <View style={{ paddingHorizontal: SPACING.lg, marginBottom: SPACING.md }}>
               <Text style={styles.sectionHeading}>{t('pulse.trendingVenues.heading', { defaultValue: `Popular in ${selectedDest.label}` })}</Text>
@@ -494,10 +498,12 @@ export default function PulseScreen() {
               })}
             </ScrollView>
           </View>
+          </FadeIn>
         ) : null}
 
         {/* ── Worth Your Time (TripAdvisor) ── */}
         {taAttractions && taAttractions.length > 0 ? (
+          <FadeIn duration={300} delay={150}>
           <View style={styles.apiSection}>
             <Text style={[styles.sectionHeading, { marginBottom: SPACING.md }]}>{t('pulse.trending.heading', { defaultValue: `Worth your time in ${selectedDest.label}` })}</Text>
             <View style={styles.apiCardStack}>
@@ -514,6 +520,7 @@ export default function PulseScreen() {
               ))}
             </View>
           </View>
+          </FadeIn>
         ) : null}
 
         {/* ── Experiences (GetYourGuide) ── */}

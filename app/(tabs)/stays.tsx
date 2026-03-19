@@ -36,6 +36,7 @@ import { captureEvent } from '../../lib/posthog';
 import { getHotelLink, openBookingLink } from '../../lib/booking-links';
 import { DatePickerInline } from '../../components/stays/StaysDatePicker';
 import { SkeletonCard } from '../../components/premium/LoadingStates';
+import FadeIn from '../../components/ui/FadeIn';
 
 // ---------------------------------------------------------------------------
 // Curated destination data
@@ -438,6 +439,7 @@ export default function StaysScreen() {
 
         {/* Nearby Hotels — only show if we have data */}
         {destinationText.trim() && nearbyHotels && nearbyHotels.length > 0 ? (
+          <FadeIn duration={300}>
           <View style={styles.apiSection}>
             <Text style={styles.apiSectionTitle}>{t('stays.nearbyHeading', { defaultValue: 'Nearby hotels' })}</Text>
             <View style={styles.apiCardStack}>
@@ -454,6 +456,7 @@ export default function StaysScreen() {
               ))}
             </View>
           </View>
+          </FadeIn>
         ) : destinationText.trim() && nearbyLoading ? (
           <View style={styles.apiSection}>
             <SkeletonCard height={72} borderRadius={RADIUS.lg} style={{ marginBottom: 8 }} />
@@ -464,6 +467,7 @@ export default function StaysScreen() {
 
         {/* Top Rated Hotels — only show if we have data */}
         {destinationText.trim() && taHotels && taHotels.length > 0 ? (
+          <FadeIn duration={300} delay={100}>
           <View style={styles.apiSection}>
             <Text style={styles.apiSectionTitle}>{t('stays.topRatedHeading', { defaultValue: 'Highest rated' })}</Text>
             <View style={styles.apiCardStack}>
@@ -480,6 +484,7 @@ export default function StaysScreen() {
               ))}
             </View>
           </View>
+          </FadeIn>
         ) : destinationText.trim() && taLoading ? (
           <View style={styles.apiSection}>
             <SkeletonCard height={72} borderRadius={RADIUS.lg} style={{ marginBottom: 8 }} />

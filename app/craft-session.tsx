@@ -52,6 +52,7 @@ import { recordGrowthEvent } from '../lib/growth-hooks';
 import { evaluateTrigger } from '../lib/smart-triggers';
 import TripLimitBanner from '../components/monetization/TripLimitBanner';
 import CraftSplitScreen from '../components/web/CraftSplitScreen';
+import { usePersonalization } from '../lib/auto-personalize';
 
 // User: right, sage dark bg, corners 16/16/4/16. ROAM: left, surface1, corners 16/16/16/4.
 const BUBBLE_RADIUS_USER = { borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomRightRadius: 4, borderBottomLeftRadius: 16 };
@@ -136,6 +137,9 @@ export default function CraftSessionScreen() {
   const trips = useAppStore((s) => s.trips);
   const isPro = useAppStore((s) => s.isPro);
   const tripsThisMonth = useAppStore((s) => s.tripsThisMonth);
+
+  // ── Auto-personalization defaults ──
+  const { defaults: personalizedDefaults, isPersonalized } = usePersonalization();
 
   const canGenerate = hasAllRequiredForGeneration(state);
   const isGathering = state.phase === 'gathering' && state.currentStepId !== null;
@@ -550,6 +554,13 @@ export default function CraftSessionScreen() {
             {welcomeBackMessage ? (
               <View style={styles.welcomeBackBlock}>
                 <Text style={styles.welcomeBackText}>{welcomeBackMessage}</Text>
+              </View>
+            ) : null}
+            {isPersonalized && !sessionId && !welcomeBackMessage ? (
+              <View style={styles.welcomeBackBlock}>
+                <Text style={styles.welcomeBackText}>
+                  Based on your previous trips, we've set some defaults — {personalizedDefaults.budgetRange} budget, {personalizedDefaults.flightClass} class.
+                </Text>
               </View>
             ) : null}
             {state.messages.map((msg, i) => (

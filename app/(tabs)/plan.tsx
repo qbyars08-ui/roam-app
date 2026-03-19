@@ -36,6 +36,8 @@ import { geocodeCity } from '../../lib/geocoding';
 import { getCurrentWeather, type CurrentWeather } from '../../lib/apis/openweather'; import { searchEvents, type EventResult } from '../../lib/apis/eventbrite';
 import DreamingHero from '../../components/plan/DreamingHero';
 import { useTravelerDNA, getPersonalizedGreeting, getQuickActions } from '../../lib/personalization-engine';
+import { usePersonalization } from '../../lib/auto-personalize';
+import { getGreeting } from '../../lib/personalized-copy';
 import CountdownSection from '../../components/plan/CountdownSection';
 import TravelingSection from '../../components/plan/TravelingSection';
 import ReturnedSection from '../../components/plan/ReturnedSection';
@@ -86,16 +88,20 @@ export default function PlanScreen() {
   const isPro = useAppStore((s) => s.isPro);
   const trips = useAppStore((s) => s.trips);
 
-  // ── Personalization ──
+  // ── Personalization (hooks — order matters) ──
   const { dna } = useTravelerDNA();
-  const personalizedGreeting = useMemo(
-    () => dna.confidence > 0.2 ? getPersonalizedGreeting(dna) : undefined,
-    [dna],
-  );
+  const { profile: autoProfile, contentOrder, isPersonalized } = usePersonalization();
   const personalizedActions = useMemo(() => getQuickActions(dna), [dna]);
 
   // ── Travel state ──
   const { stage, activeTrip, daysUntil } = useTravelStage();
+
+  // ── Personalized greeting (depends on travel state) ──
+  const personalizedGreeting = useMemo(() => {
+    if (isPersonalized) return getGreeting(autoProfile, stage, activeTrip?.destination);
+    if (dna.confidence > 0.2) return getPersonalizedGreeting(dna);
+    return undefined;
+  }, [dna, autoProfile, stage, activeTrip?.destination, isPersonalized]);
   const { brief, isLive } = useDailyBrief(activeTrip?.destination, daysUntil ?? 0);
   const checklist = useMemo(() => getChecklistItems(daysUntil ?? 999), [daysUntil]);
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());

@@ -38,6 +38,7 @@ import { styles } from '../../components/food/food-styles';
 
 import type { FoodCategory, Restaurant, AIPickRestaurant } from '../../components/food/food-types';
 import { CITY_FOOD, POPULAR_FOOD_CITIES, FOOD_CATEGORIES, getRestaurantsForCity, type CityFoodData } from '../../components/food/food-data';
+import FadeIn from '../../components/ui/FadeIn';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -361,6 +362,7 @@ export default function FoodScreen() {
 
         {/* ── Sonar Live Food Intel ── */}
         {sonarFood.data ? (
+          <FadeIn duration={300}>
           <View style={styles.sonarSection}>
             <View style={styles.sonarHeader}>
               <Text style={styles.sonarLabel}>{t('food.livePicks', { defaultValue: 'LIVE PICKS' })}</Text>
@@ -373,6 +375,7 @@ export default function FoodScreen() {
               onPress={() => { hapticImpact(); if (destination) Linking.openURL(`https://www.google.com/maps/search/restaurants+${encodeURIComponent(destination)}`).catch(() => {}); }}
             />
           </View>
+          </FadeIn>
         ) : !sonarFood.isLoading && !sonarFood.error ? (
           <View style={styles.sonarSection}>
             <Text style={styles.sonarLabel}>{t('food.livePicks', { defaultValue: 'LIVE PICKS' })}</Text>
@@ -441,7 +444,8 @@ export default function FoodScreen() {
                 ))}
               </View>
             ) : (
-              fsqPlaces.map((place) => (
+              <FadeIn duration={300}>
+              <>{fsqPlaces.map((place) => (
                 <Pressable
                   key={place.fsqId}
                   onPress={() => handleFsqPlacePress(place)}
@@ -483,7 +487,8 @@ export default function FoodScreen() {
                     style={styles.fsqExternalIcon}
                   />
                 </Pressable>
-              ))
+              ))}</>
+              </FadeIn>
             )}
           </View>
         )}
