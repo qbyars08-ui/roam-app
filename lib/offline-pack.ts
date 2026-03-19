@@ -49,6 +49,24 @@ export type OfflinePackProgressCallback = (
 ) => void;
 
 // ---------------------------------------------------------------------------
+// OfflinePack — simplified summary type for UI consumption
+// ---------------------------------------------------------------------------
+
+export interface OfflinePack {
+  tripId: string;
+  destination: string;
+  downloadedAt: string;
+  sizeKB: number;
+  includes: {
+    weather: boolean;
+    tips: boolean;
+    phrases: boolean;
+    maps: boolean;
+    emergency: boolean;
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
@@ -207,4 +225,47 @@ export function formatPackSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+/** Returns true if an offline pack exists for the given trip. */
+export async function isPackDownloaded(tripId: string): Promise<boolean> {
+  try {
+    const raw = await AsyncStorage.getItem(cacheKey(tripId));
+    return raw !== null;
+  } catch {
+    return false;
+  }
+}
+
+/** Returns approximate size in KB for a downloaded pack, or 0 if not found. */
+export async function getOfflinePackSize(tripId: string): Promise<number> {
+  try {
+    const raw = await AsyncStorage.getItem(cacheKey(tripId));
+    if (!raw) return 0;
+    const pack: OfflinePackData = JSON.parse(raw);
+    const bytes = pack.meta?.sizeBytes ?? new TextEncoder().encode(raw).length;
+    return Math.round(bytes / 1024);
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Converts a full OfflinePackData into the simplified OfflinePack summary.
+ * Useful for UI components that only need status info.
+ */
+export function toOfflinePack(pack: OfflinePackData): OfflinePack {
+  return {
+    tripId: pack.meta.tripId,
+    destination: pack.meta.destination,
+    downloadedAt: pack.meta.downloadedAt,
+    sizeKB: Math.round(pack.meta.sizeBytes / 1024),
+    includes: {
+      weather: pack.weatherForecast !== null,
+      tips: pack.costOfLiving !== null || pack.visaInfo !== null,
+      phrases: pack.survivalPhrases !== null,
+      maps: false, // Map tiles are not yet bundled offline
+      emergency: pack.emergencyNumbers !== null,
+    },
+  };
 }

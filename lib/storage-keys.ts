@@ -47,6 +47,7 @@ export const HOME_CURRENCY = 'roam_home_currency';
 export const OFFLINE_TRIPS = '@roam/trips';
 export const OFFLINE_ITINERARY_PREFIX = '@roam/itinerary/';
 export const OFFLINE_LAST_SYNC = '@roam/lastSync';
+export const OFFLINE_PACK_PREFIX = 'roam_offline_pack_';
 
 // ---------------------------------------------------------------------------
 // Caches (prefixes)

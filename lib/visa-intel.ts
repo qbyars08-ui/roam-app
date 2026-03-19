@@ -233,6 +233,402 @@ export function getVisaInfo(
 export { statusLabels, statusColors };
 
 // =============================================================================
+// Rich Visa Requirement Intelligence
+// Destination-level data with requirements lists, tips, cost, processing time.
+// For US passport holders visiting the 10 most popular ROAM destinations.
+// Sources: US State Dept, IATA Travel Centre, official embassy sites.
+// Last verified: March 2026
+// =============================================================================
+
+export type VisaType = 'visa-free' | 'visa-on-arrival' | 'e-visa' | 'embassy-visa';
+export type VisaComplexity = 'easy' | 'moderate' | 'complex';
+
+export interface RichVisaRequirement {
+  readonly destination: string;
+  readonly country: string;
+  readonly visaFree: boolean;
+  readonly maxStayDays: number;
+  readonly visaType: VisaType;
+  readonly cost: string;
+  readonly processingTime: string;
+  readonly requirements: readonly string[];
+  readonly tips: readonly string[];
+  readonly lastUpdated: string;
+}
+
+// ---------------------------------------------------------------------------
+// Curated visa data — US passport holders, single-entry unless noted
+// ---------------------------------------------------------------------------
+const RICH_VISA_DATA: Record<string, RichVisaRequirement> = {
+  japan: {
+    destination: 'Japan',
+    country: 'JP',
+    visaFree: true,
+    maxStayDays: 90,
+    visaType: 'visa-free',
+    cost: 'Free',
+    processingTime: 'Instant on arrival',
+    requirements: [
+      'Valid US passport (6+ months validity)',
+      'Return or onward ticket',
+      'Proof of sufficient funds',
+      'Address of first accommodation',
+    ],
+    tips: [
+      'Fill out the arrival card on the plane — have your hotel address ready before landing.',
+      'The 90-day limit is strict. Extensions are rarely granted and overstaying can result in an entry ban.',
+      'Japan does not have a digital nomad visa. Remote workers must exit by day 90.',
+    ],
+    lastUpdated: 'March 2026',
+  },
+
+  france: {
+    destination: 'France',
+    country: 'FR',
+    visaFree: true,
+    maxStayDays: 90,
+    visaType: 'visa-free',
+    cost: 'Free',
+    processingTime: 'Instant on arrival',
+    requirements: [
+      'Valid US passport (3+ months beyond intended stay)',
+      'Return or onward ticket',
+      'Proof of sufficient funds (~€100/day recommended)',
+      'Travel insurance covering the Schengen area',
+    ],
+    tips: [
+      '90 days applies across the entire Schengen Area — time in Germany, Spain, or Italy all count toward the same limit.',
+      'The 90/180 rule: 90 days within any rolling 180-day window. Track your days across all Schengen countries.',
+      'ETIAS (EU Travel Authorization) has been delayed past 2025 — confirm whether it is live before travel.',
+    ],
+    lastUpdated: 'March 2026',
+  },
+
+  thailand: {
+    destination: 'Thailand',
+    country: 'TH',
+    visaFree: true,
+    maxStayDays: 30,
+    visaType: 'visa-free',
+    cost: 'Free',
+    processingTime: 'Instant on arrival',
+    requirements: [
+      'Valid US passport (6+ months validity)',
+      'Return or onward ticket',
+      'Proof of funds (20,000 THB / ~$550 per person)',
+      'Completed TM6 arrival card (often distributed on the plane)',
+    ],
+    tips: [
+      'Thailand extended visa-free stays to 60 days in late 2024 — confirm the current allowance before booking.',
+      'You can extend your stay once at any immigration office for ~1,900 THB ($52). Maximum total: 60–90 days.',
+      'The Thailand LTR (Long-Term Resident) visa is available for remote workers at ~50,000 THB/year.',
+    ],
+    lastUpdated: 'March 2026',
+  },
+
+  indonesia: {
+    destination: 'Indonesia',
+    country: 'ID',
+    visaFree: false,
+    maxStayDays: 30,
+    visaType: 'visa-on-arrival',
+    cost: '$35 USD',
+    processingTime: '10–30 min at the airport',
+    requirements: [
+      'Valid US passport (6+ months validity)',
+      'Return or onward ticket',
+      '$35 USD cash or credit card for the VOA fee',
+      'Completed arrival card',
+    ],
+    tips: [
+      'Pay the VOA fee at the dedicated counter before the main immigration line — look for "Visa on Arrival" signs.',
+      'Extend the VOA once for another 30 days (total 60) for ~500,000 IDR ($32) at any Bali immigration office.',
+      'Credit cards are accepted at most major airports, but bring $35 USD cash as a backup.',
+    ],
+    lastUpdated: 'March 2026',
+  },
+
+  'united kingdom': {
+    destination: 'United Kingdom',
+    country: 'GB',
+    visaFree: true,
+    maxStayDays: 180,
+    visaType: 'visa-free',
+    cost: 'Free (ETA: ~£10)',
+    processingTime: 'ETA approved in minutes; instant at border',
+    requirements: [
+      'Valid US passport',
+      'UK Electronic Travel Authorisation (ETA) — required before travel as of 2025',
+      'Return or onward ticket (border agents may ask)',
+      'Proof of accommodation and sufficient funds',
+    ],
+    tips: [
+      'The UK ETA for US citizens rolled out in 2025. Apply online before booking (~£10). Approval is usually instant.',
+      'The UK is not in the Schengen Area. Your UK days are entirely separate from any EU country days.',
+      'US citizens can use the e-passport gates at most major UK airports — significantly faster than the standard queue.',
+    ],
+    lastUpdated: 'March 2026',
+  },
+
+  'south korea': {
+    destination: 'South Korea',
+    country: 'KR',
+    visaFree: true,
+    maxStayDays: 90,
+    visaType: 'visa-free',
+    cost: 'Free (K-ETA: ~$10)',
+    processingTime: 'K-ETA approved within 24–72 hours',
+    requirements: [
+      'Valid US passport (6+ months validity)',
+      'K-ETA (Korea Electronic Travel Authorization) — required before travel',
+      'Return or onward ticket',
+      'Proof of accommodation',
+    ],
+    tips: [
+      'K-ETA is mandatory for US citizens. Apply at k-eta.go.kr at least 72 hours before your flight.',
+      'Do not book your flight without K-ETA approval — airlines may deny boarding without it.',
+      'K-ETA costs ~$10, is valid for 2 years, and allows multiple entries.',
+    ],
+    lastUpdated: 'March 2026',
+  },
+
+  mexico: {
+    destination: 'Mexico',
+    country: 'MX',
+    visaFree: true,
+    maxStayDays: 180,
+    visaType: 'visa-free',
+    cost: 'Free',
+    processingTime: 'Instant on arrival',
+    requirements: [
+      'Valid US passport',
+      'Completed FMM tourist card (digital or paper)',
+      'Return or onward ticket',
+    ],
+    tips: [
+      'Mexico allows up to 180 days, but the officer sets your actual stay on arrival — explicitly request 180 days.',
+      'The FMM form is now mostly digital. Some airlines handle it; otherwise complete it at immigration.',
+      'Keep a copy of your FMM — you surrender it on exit. Losing it can cause delays and a fine.',
+    ],
+    lastUpdated: 'March 2026',
+  },
+
+  australia: {
+    destination: 'Australia',
+    country: 'AU',
+    visaFree: false,
+    maxStayDays: 90,
+    visaType: 'e-visa',
+    cost: '~$20 AUD (~$13 USD)',
+    processingTime: 'Usually instant; up to 48 hours',
+    requirements: [
+      'Valid US e-passport (must have biometric chip)',
+      'Electronic Travel Authority (ETA) — subclass 601, applied via the official app',
+      'Return or onward ticket',
+      'Proof of sufficient funds',
+    ],
+    tips: [
+      'Apply via the "Australian ETA" app on iOS or Android — fastest and cheapest at $20 AUD.',
+      'The ETA is linked digitally to your passport; no stamp required. Airlines verify it electronically at check-in.',
+      'ETA is valid for 12 months from approval date with unlimited entries, each stay up to 3 months.',
+      'Avoid third-party websites — they charge 3–5x the official price for the exact same authorization.',
+    ],
+    lastUpdated: 'March 2026',
+  },
+
+  india: {
+    destination: 'India',
+    country: 'IN',
+    visaFree: false,
+    maxStayDays: 90,
+    visaType: 'e-visa',
+    cost: '$25 (30-day) · $40 (1-year) · $80 (5-year)',
+    processingTime: '72–96 hours — apply at least 4 days before travel',
+    requirements: [
+      'Valid US passport (6+ months validity, 2 blank pages)',
+      'e-Visa applied at indianvisaonline.gov.in before departure',
+      'Recent passport-size photo (white background)',
+      'Return or onward ticket',
+      'Proof of accommodation',
+    ],
+    tips: [
+      'Apply at least 4 business days before your flight — processing takes 72–96 hours with no expediting option.',
+      'The official portal is indianvisaonline.gov.in — third-party sites charge $100+ for the same result.',
+      'The 30-day e-Tourist visa allows double entry. The 1-year is worth it for multiple trips.',
+      'Print your e-Visa confirmation — you\'ll need to show it at check-in and again on arrival.',
+    ],
+    lastUpdated: 'March 2026',
+  },
+
+  brazil: {
+    destination: 'Brazil',
+    country: 'BR',
+    visaFree: true,
+    maxStayDays: 90,
+    visaType: 'visa-free',
+    cost: 'Free',
+    processingTime: 'Instant on arrival',
+    requirements: [
+      'Valid US passport (6+ months validity)',
+      'Return or onward ticket',
+      'Proof of sufficient funds',
+      'Proof of accommodation',
+    ],
+    tips: [
+      'Brazil restored visa-free access for US citizens in June 2024 after years of reciprocal requirements.',
+      '90 days in any 180-day period. Extensions require an application to the Federal Police.',
+      'Yellow fever vaccination is required if arriving from or transiting through endemic countries — carry your card.',
+    ],
+    lastUpdated: 'March 2026',
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Destination name aliases → canonical key
+// ---------------------------------------------------------------------------
+const RICH_VISA_ALIASES: Record<string, string> = {
+  japan: 'japan',
+  tokyo: 'japan',
+  kyoto: 'japan',
+  osaka: 'japan',
+  france: 'france',
+  paris: 'france',
+  lyon: 'france',
+  nice: 'france',
+  thailand: 'thailand',
+  bangkok: 'thailand',
+  'chiang mai': 'thailand',
+  phuket: 'thailand',
+  indonesia: 'indonesia',
+  bali: 'indonesia',
+  jakarta: 'indonesia',
+  'united kingdom': 'united kingdom',
+  uk: 'united kingdom',
+  london: 'united kingdom',
+  england: 'united kingdom',
+  britain: 'united kingdom',
+  'south korea': 'south korea',
+  korea: 'south korea',
+  seoul: 'south korea',
+  mexico: 'mexico',
+  'mexico city': 'mexico',
+  oaxaca: 'mexico',
+  cancun: 'mexico',
+  australia: 'australia',
+  sydney: 'australia',
+  melbourne: 'australia',
+  india: 'india',
+  jaipur: 'india',
+  delhi: 'india',
+  mumbai: 'india',
+  goa: 'india',
+  brazil: 'brazil',
+  'sao paulo': 'brazil',
+  rio: 'brazil',
+};
+
+// ---------------------------------------------------------------------------
+// Rich API — public functions
+// ---------------------------------------------------------------------------
+
+/**
+ * Get full rich visa requirement data for a destination.
+ * Defaults to US passport. Returns null if not in curated dataset.
+ */
+export function getVisaRequirement(
+  destination: string,
+  _nationality = 'US'
+): RichVisaRequirement | null {
+  const key = destination.toLowerCase().trim();
+  const canonical = RICH_VISA_ALIASES[key] ?? key;
+  return RICH_VISA_DATA[canonical] ?? null;
+}
+
+/**
+ * Traffic-light complexity for a destination entry requirement.
+ * - 'easy'     → visa-free
+ * - 'moderate' → visa-on-arrival or e-visa (some online/airport process)
+ * - 'complex'  → embassy visa (in-person appointment, long processing)
+ */
+export function getVisaComplexity(destination: string): VisaComplexity {
+  const req = getVisaRequirement(destination);
+  if (!req) return 'moderate';
+
+  switch (req.visaType) {
+    case 'visa-free':
+      return 'easy';
+    case 'visa-on-arrival':
+    case 'e-visa':
+      return 'moderate';
+    case 'embassy-visa':
+      return 'complex';
+    default:
+      return 'moderate';
+  }
+}
+
+/**
+ * One-line entry summary for display in cards and lists.
+ * Example: "90 days visa-free for US citizens"
+ */
+export function getVisaSummary(destination: string): string {
+  const req = getVisaRequirement(destination);
+  if (!req) return 'Visa requirements unknown — check official sources';
+
+  switch (req.visaType) {
+    case 'visa-free':
+      return `${req.maxStayDays} days visa-free for US citizens`;
+    case 'visa-on-arrival':
+      return `${req.maxStayDays} days visa on arrival · ${req.cost}`;
+    case 'e-visa':
+      return `e-Visa required · ${req.cost} · ${req.processingTime}`;
+    case 'embassy-visa':
+      return `Embassy visa required · ${req.cost} · ${req.processingTime}`;
+    default:
+      return 'Check official sources for entry requirements';
+  }
+}
+
+/**
+ * Short badge label for UI chips.
+ * Examples: "VISA FREE", "VOA $35", "e-VISA $20"
+ */
+export function getVisaBadgeLabel(destination: string): string {
+  const req = getVisaRequirement(destination);
+  if (!req) return 'CHECK VISA';
+
+  switch (req.visaType) {
+    case 'visa-free':
+      return 'VISA FREE';
+    case 'visa-on-arrival':
+      return `VOA ${req.cost}`;
+    case 'e-visa':
+      return `e-VISA ${req.cost}`;
+    case 'embassy-visa':
+      return 'EMBASSY VISA';
+    default:
+      return 'CHECK VISA';
+  }
+}
+
+export const RICH_VISA_STATUS_COLORS: Record<VisaComplexity, string> = {
+  easy: '#4ADE80',      // green
+  moderate: '#F59E0B',  // amber
+  complex: '#E8614A',   // coral / danger
+} as const;
+
+export const VISA_TYPE_LABELS: Record<VisaType, string> = {
+  'visa-free': 'Visa Free',
+  'visa-on-arrival': 'Visa on Arrival',
+  'e-visa': 'e-Visa',
+  'embassy-visa': 'Embassy Visa',
+} as const;
+
+export function hasRichVisaData(destination: string): boolean {
+  return getVisaRequirement(destination) !== null;
+}
+
+// =============================================================================
 // Backward-compatible API (replaces visa-data.ts)
 // Consumers that need the simple { status, maxStay, notes, officialLink } shape
 // should use getSimpleVisaInfo() instead of getVisaInfo().
