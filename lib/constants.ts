@@ -271,6 +271,23 @@ export const COLORS = {
   bgMagazineElevated: '#1C1C1C', // surface2
   // Shadow
   shadowDark: 'rgba(0,0,0,0.4)',  // The one shadow: 0 4px 24px
+  // Premium palette — accent gradients, surfaces, text hierarchy
+  sageGradientStart: '#4A8B5C',
+  sageGradientEnd: '#2D5A3A',
+  surfaceElevated: '#1A1A1A',
+  surfaceGlass: 'rgba(255,255,255,0.04)',
+  textPrimary: '#F5F0E8',
+  textSecondary: 'rgba(245,240,232,0.6)',
+  textTertiary: 'rgba(245,240,232,0.3)',
+} as const;
+
+// Subtle card shadow for premium feel (use in card styles)
+export const CARD_SHADOW = {
+  shadowColor: COLORS.black,
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.3,
+  shadowRadius: 8,
+  elevation: 4,
 } as const;
 
 // ---------------------------------------------------------------------------

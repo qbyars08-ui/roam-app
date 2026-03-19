@@ -5,6 +5,7 @@
 // =============================================================================
 import React, { useState, useCallback, useMemo } from 'react';
 import {
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -12,6 +13,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Info } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import LiveBadge from './LiveBadge';
@@ -166,6 +168,18 @@ export default function SonarCard({
     </>
   );
 
+  const cardContent = (
+    <View style={[styles.cardWrapper, Platform.OS === 'web' && styles.cardWrapperWeb]}>
+      <LinearGradient
+        colors={[COLORS.sageGradientStart, COLORS.sageGradientEnd]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={styles.cardLeftBorder}
+      />
+      <View style={styles.cardInner}>{inner}</View>
+    </View>
+  );
+
   if (onPress) {
     return (
       <Pressable
@@ -173,12 +187,12 @@ export default function SonarCard({
         style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
         accessibilityRole="button"
       >
-        {inner}
+        {cardContent}
       </Pressable>
     );
   }
 
-  return <View style={styles.card}>{inner}</View>;
+  return <View style={styles.card}>{cardContent}</View>;
 }
 
 // ---------------------------------------------------------------------------
@@ -280,17 +294,40 @@ export function APIDataCard({
 const styles = StyleSheet.create({
   // ── SonarCard ──────────────────────────────────────────────────────────────
   card: {
-    backgroundColor: COLORS.surface1,
     borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderLeftWidth: 2,
-    borderLeftColor: COLORS.sage,
-    padding: SPACING.md,
-    gap: SPACING.xs,
   } as ViewStyle,
   cardPressed: {
     opacity: 0.85,
+  } as ViewStyle,
+  cardWrapper: {
+    flexDirection: 'row',
+    borderRadius: RADIUS.md,
+    overflow: 'hidden',
+    backgroundColor: COLORS.surface1,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  } as ViewStyle,
+  cardWrapperWeb: {
+    backgroundColor: COLORS.surfaceGlass,
+    ...(Platform.OS === 'web'
+      ? ({
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+        } as ViewStyle)
+      : {}),
+  } as ViewStyle,
+  cardLeftBorder: {
+    width: 3,
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+  } as ViewStyle,
+  cardInner: {
+    flex: 1,
+    padding: 16,
+    gap: SPACING.xs,
+    marginLeft: 3,
   } as ViewStyle,
   header: {
     flexDirection: 'row',

@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Animated,
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
@@ -41,7 +42,6 @@ import {
 } from '../lib/craft-profile';
 import { parseItinerary } from '../lib/types/itinerary';
 import type { Itinerary } from '../lib/types/itinerary';
-import CraftMessage from '../components/CraftMessage';
 import CraftItinerary from '../components/CraftItinerary';
 import { useAppStore } from '../lib/store';
 import { supabase } from '../lib/supabase';
@@ -52,6 +52,65 @@ import { recordGrowthEvent } from '../lib/growth-hooks';
 import { evaluateTrigger } from '../lib/smart-triggers';
 import TripLimitBanner from '../components/monetization/TripLimitBanner';
 import CraftSplitScreen from '../components/web/CraftSplitScreen';
+
+// User: right, sage dark bg, corners 16/16/4/16. ROAM: left, surface1, corners 16/16/16/4.
+const BUBBLE_RADIUS_USER = { borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomRightRadius: 4, borderBottomLeftRadius: 16 };
+const BUBBLE_RADIUS_ASSISTANT = { borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomRightRadius: 16, borderBottomLeftRadius: 4 };
+
+function CraftMessageBubble({ role, content }: { role: 'user' | 'assistant'; content: string }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }).start();
+  }, [opacity]);
+  const isUser = role === 'user';
+  return (
+    <Animated.View style={[styles.msgWrap, isUser ? styles.msgWrapUser : styles.msgWrapAssistant, { opacity }]}>
+      <View style={[styles.msgBubble, isUser ? styles.msgBubbleUser : styles.msgBubbleAssistant]}>
+        <Text style={[styles.msgText, isUser ? styles.msgTextUser : styles.msgTextAssistant]} selectable>{content}</Text>
+      </View>
+    </Animated.View>
+  );
+}
+
+function TypingIndicatorDots() {
+  const dot1 = useRef(new Animated.Value(0.3)).current;
+  const dot2 = useRef(new Animated.Value(0.3)).current;
+  const dot3 = useRef(new Animated.Value(0.3)).current;
+  useEffect(() => {
+    const pulse = (anim: Animated.Value, delay: number) => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(anim, { toValue: 1, duration: 400, useNativeDriver: true }),
+          Animated.timing(anim, { toValue: 0.3, duration: 400, useNativeDriver: true }),
+        ])
+      ).start();
+    };
+    pulse(dot1, 0);
+    pulse(dot2, 150);
+    pulse(dot3, 300);
+    return () => {};
+  }, [dot1, dot2, dot3]);
+  return (
+    <View style={styles.typingWrap}>
+      <View style={[styles.typingBubble, BUBBLE_RADIUS_ASSISTANT]}>
+        <View style={styles.typingDots}>
+          <Animated.View style={[styles.typingDot, { opacity: dot1 }]} />
+          <Animated.View style={[styles.typingDot, { opacity: dot2 }]} />
+          <Animated.View style={[styles.typingDot, { opacity: dot3 }]} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function RoamAvatar() {
+  return (
+    <View style={styles.roamAvatar}>
+      <Text style={styles.roamAvatarText}>R</Text>
+    </View>
+  );
+}
 
 export default function CraftSessionScreen() {
   const insets = useSafeAreaInsets();
@@ -66,7 +125,9 @@ export default function CraftSessionScreen() {
   const [parsedItinerary, setParsedItinerary] = useState<Itinerary | null>(null);
   const [welcomeBackMessage, setWelcomeBackMessage] = useState<string | null>(null);
   const [streamingText, setStreamingText] = useState('');
+  const [questionVisible, setQuestionVisible] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const inputRef = useRef<TextInput>(null);
   const loadedSessionRef = useRef(false);
 
   const session = useAppStore((s) => s.session);
@@ -311,6 +372,27 @@ export default function CraftSessionScreen() {
 
   const question = getCurrentQuestion(state);
 
+  // Question appears after 300ms so it feels like someone is typing
+  useEffect(() => {
+    if (!question) {
+      setQuestionVisible(false);
+      return;
+    }
+    const t = setTimeout(() => setQuestionVisible(true), 300);
+    return () => clearTimeout(t);
+  }, [question]);
+
+  // Auto-focus input after each ROAM response (follow-up done)
+  const prevFollowUpLen = useRef(state.followUpMessages.length);
+  useEffect(() => {
+    if (state.followUpMessages.length > prevFollowUpLen.current && !loading) {
+      prevFollowUpLen.current = state.followUpMessages.length;
+      setTimeout(() => inputRef.current?.focus(), 100);
+    } else {
+      prevFollowUpLen.current = state.followUpMessages.length;
+    }
+  }, [state.followUpMessages.length, loading]);
+
   // Paywall: redirect if over limit before we consume a generation
   const overLimit = !isPro && !isGuestUser() && tripsThisMonth >= FREE_TRIPS_PER_MONTH;
   const guestOverLimit = isGuestUser() && trips.length >= 1;
@@ -381,22 +463,22 @@ export default function CraftSessionScreen() {
             {state.followUpMessages.length > 0 ? (
               <View style={styles.followUpBlock}>
                 {state.followUpMessages.map((msg, i) => (
-                  <CraftMessage key={i} role={msg.role} content={msg.content} />
+                  <CraftMessageBubble key={i} role={msg.role} content={msg.content} />
                 ))}
               </View>
             ) : null}
             {streamingText ? (
               <View style={styles.followUpBlock}>
-                <CraftMessage role="assistant" content={
+                <CraftMessageBubble role="assistant" content={
                   streamingText.includes('<itinerary_json>')
                     ? streamingText.slice(0, streamingText.indexOf('<itinerary_json>')).trim()
                     : streamingText
                 } />
               </View>
             ) : null}
-            {loading && !streamingText ? (
+            {loading && isFollowUp && !streamingText ? (
               <View style={styles.followUpLoading}>
-                <ActivityIndicator size="small" color={COLORS.gold} />
+                <TypingIndicatorDots />
               </View>
             ) : null}
           </ScrollView>
@@ -417,7 +499,8 @@ export default function CraftSessionScreen() {
           ) : null}
           <View style={styles.inputRow}>
             <TextInput
-              style={styles.input}
+              ref={inputRef}
+              style={styles.inputCraft}
               placeholder="Ask anything about your trip — changes, more details, alternatives..."
               placeholderTextColor={COLORS.creamDim}
               value={input}
@@ -429,7 +512,11 @@ export default function CraftSessionScreen() {
             />
             <Pressable
               onPress={handleSubmit}
-              style={({ pressed }) => [styles.sendBtn, { opacity: pressed ? 0.8 : 1 }]}
+              style={({ pressed }) => [
+                styles.sendBtnSage,
+                input.trim().length > 0 && styles.sendBtnSagePulse,
+                { opacity: pressed ? 0.8 : 1 },
+              ]}
               accessibilityLabel="Send"
               accessibilityRole="button"
               disabled={loading}
@@ -465,14 +552,20 @@ export default function CraftSessionScreen() {
                 <Text style={styles.welcomeBackText}>{welcomeBackMessage}</Text>
               </View>
             ) : null}
-            {state.messages.length > 0 ? (
-              state.messages.map((msg, i) => (
-                <CraftMessage key={i} role={msg.role} content={msg.content} />
-              ))
+            {state.messages.map((msg, i) => (
+              <CraftMessageBubble key={i} role={msg.role} content={msg.content} />
+            ))}
+            {loading && isGathering ? (
+              <View style={styles.followUpLoading}>
+                <TypingIndicatorDots />
+              </View>
             ) : null}
-            <View style={styles.questionBlock}>
-              <Text style={styles.questionText}>{question}</Text>
-            </View>
+            {questionVisible && question ? (
+              <View style={styles.questionBlock}>
+                <RoamAvatar />
+                <Text style={styles.questionText}>{question}</Text>
+              </View>
+            ) : null}
           </ScrollView>
           {error ? (
             <View style={styles.errorBanner}>
@@ -481,7 +574,8 @@ export default function CraftSessionScreen() {
           ) : null}
           <View style={styles.inputRow}>
             <TextInput
-              style={styles.input}
+              ref={inputRef}
+              style={styles.inputCraft}
               placeholder="Your answer..."
               placeholderTextColor={COLORS.creamDim}
               value={input}
@@ -493,7 +587,11 @@ export default function CraftSessionScreen() {
             />
             <Pressable
               onPress={handleSubmit}
-              style={({ pressed }) => [styles.sendBtn, { opacity: pressed ? 0.8 : 1 }]}
+              style={({ pressed }) => [
+                styles.sendBtnSage,
+                input.trim().length > 0 && styles.sendBtnSagePulse,
+                { opacity: pressed ? 0.8 : 1 },
+              ]}
               accessibilityLabel="Send"
               accessibilityRole="button"
             >
@@ -535,15 +633,78 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.xxl,
   } as ViewStyle,
   questionBlock: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     marginTop: SPACING.xxl,
     marginBottom: SPACING.lg,
+    gap: SPACING.sm,
   } as ViewStyle,
   questionText: {
+    flex: 1,
     fontFamily: FONTS.header,
     fontSize: 26,
     color: COLORS.cream,
     lineHeight: 34,
-    textAlign: 'center',
+  } as TextStyle,
+  msgWrap: {
+    marginVertical: SPACING.xs,
+    flexDirection: 'row',
+  } as ViewStyle,
+  msgWrapUser: { justifyContent: 'flex-end' } as ViewStyle,
+  msgWrapAssistant: { justifyContent: 'flex-start' } as ViewStyle,
+  msgBubble: {
+    maxWidth: '88%',
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+  } as ViewStyle,
+  msgBubbleUser: {
+    backgroundColor: COLORS.sageDark,
+    ...BUBBLE_RADIUS_USER,
+  } as ViewStyle,
+  msgBubbleAssistant: {
+    backgroundColor: COLORS.surface1,
+    ...BUBBLE_RADIUS_ASSISTANT,
+  } as ViewStyle,
+  msgText: {
+    fontFamily: FONTS.body,
+    fontSize: 15,
+    lineHeight: 22,
+  } as TextStyle,
+  msgTextUser: { color: COLORS.cream } as TextStyle,
+  msgTextAssistant: { color: COLORS.creamMuted } as TextStyle,
+  typingWrap: {
+    marginVertical: SPACING.xs,
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  } as ViewStyle,
+  typingBubble: {
+    backgroundColor: COLORS.surface1,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+  } as ViewStyle,
+  typingDots: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  } as ViewStyle,
+  typingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.sage,
+  } as ViewStyle,
+  roamAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.sage,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
+  roamAvatarText: {
+    fontFamily: FONTS.header,
+    fontSize: 16,
+    color: COLORS.bg,
   } as TextStyle,
   inputRow: {
     flexDirection: 'row',
@@ -569,6 +730,20 @@ const styles = StyleSheet.create({
     minHeight: 48,
     maxHeight: 120,
   } as TextStyle,
+  inputCraft: {
+    flex: 1,
+    fontFamily: FONTS.body,
+    fontSize: 16,
+    color: COLORS.cream,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.whiteFaintBorder,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    minHeight: 48,
+    maxHeight: 120,
+  } as TextStyle,
   sendBtn: {
     width: 48,
     height: 48,
@@ -576,6 +751,21 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.gold,
     alignItems: 'center',
     justifyContent: 'center',
+  } as ViewStyle,
+  sendBtnSage: {
+    width: 48,
+    height: 48,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.sage,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
+  sendBtnSagePulse: {
+    shadowColor: COLORS.sage,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 4,
   } as ViewStyle,
   buildingText: {
     fontFamily: FONTS.body,

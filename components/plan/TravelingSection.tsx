@@ -5,7 +5,7 @@ import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
 import { ChevronRight, Receipt, TrendingUp } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, CARD_SHADOW } from '../../lib/constants';
 import type { Trip } from '../../lib/store';
 import type { BudgetComparison } from '../../lib/budget-tracker';
 
@@ -172,6 +172,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: COLORS.sage,
     paddingHorizontal: SPACING.md,
+    ...CARD_SHADOW,
   } as ViewStyle,
   travelingHeader: {
     fontFamily: FONTS.header,
@@ -218,6 +219,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     gap: SPACING.sm,
+    ...CARD_SHADOW,
   } as ViewStyle,
   budgetCardIcon: {
     width: 36,
@@ -274,6 +276,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.sageBorder,
     gap: SPACING.sm,
+    ...CARD_SHADOW,
   } as ViewStyle,
   splitCostsIcon: {
     width: 36,

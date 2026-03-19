@@ -19,8 +19,8 @@ const DARK_STYLE = 'mapbox/dark-v11';
 // Max URL length for Mapbox static images
 const MAX_URL_LENGTH = 7000;
 
-// Max pins before truncation
-const MAX_PINS = 15;
+// Max pins before truncation (keep under 10 for reliable URL lengths on web)
+const MAX_PINS = 10;
 
 // Pin colors for morning/afternoon/evening (Mapbox expects hex without #)
 const SLOT_COLORS: Record<string, string> = {
@@ -208,8 +208,8 @@ export function buildStaticMapUrl(params: {
   }
 
   if (url.length > MAX_URL_LENGTH) {
-    // Aggressively reduce pins
-    const reducedCount = Math.max(5, Math.floor(truncLocs.length / 2));
+    // Aggressively reduce pins to stay under the URL length limit
+    const reducedCount = Math.min(5, truncLocs.length);
     const reducedLocs = truncLocs.slice(0, reducedCount);
     const reducedMarkers = reducedLocs.map((loc, i) => {
       const color = SLOT_COLORS[truncSlots[i]] ?? COLORS.primary.slice(1);
@@ -535,6 +535,19 @@ export function buildVisitedMapUrl(params: {
 // ---------------------------------------------------------------------------
 // Check if Mapbox is configured
 // ---------------------------------------------------------------------------
+/**
+ * Check if Mapbox token is available and looks valid.
+ * On web, process.env values are string-replaced at build time by Expo/Metro.
+ * If the token is empty or the literal placeholder string, Mapbox is not configured.
+ */
 export function isMapboxConfigured(): boolean {
-  return TOKEN.length > 0;
+  // Must have a token and it should start with 'pk.' (public token prefix)
+  return TOKEN.length > 0 && TOKEN.startsWith('pk.');
+}
+
+/**
+ * Get the Mapbox token (for components that need it directly).
+ */
+export function getMapboxToken(): string {
+  return TOKEN;
 }

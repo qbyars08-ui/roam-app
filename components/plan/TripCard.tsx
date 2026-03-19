@@ -28,7 +28,7 @@ import {
 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, CARD_SHADOW } from '../../lib/constants';
 import type { Trip } from '../../lib/store';
 import { parseItinerary } from '../../lib/types/itinerary';
 import { DEST_IMAGES, FALLBACK_IMAGE, getDestinationMeta, isPerfectTiming } from './plan-helpers';
@@ -301,6 +301,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     overflow: 'hidden',
     marginBottom: SPACING.md,
+    ...CARD_SHADOW,
   } as ViewStyle,
   tripCardLatest: {
     height: 220,
@@ -419,6 +420,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.xl,
     overflow: 'hidden',
     marginBottom: SPACING.lg,
+    ...CARD_SHADOW,
   } as ViewStyle,
   heroImage: {
     ...StyleSheet.absoluteFillObject,

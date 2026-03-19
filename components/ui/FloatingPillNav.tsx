@@ -2,7 +2,7 @@
 // ROAM — Floating pill navigation (5 tabs, frosted glass)
 // =============================================================================
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Pressable, StyleSheet, Platform, Animated } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Platform, Animated, type ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -168,6 +168,15 @@ export default function FloatingPillNav({ state, descriptors, navigation }: Bott
     );
   }
 
+  if (Platform.OS === 'web') {
+    return (
+      <View style={pillStyle}>
+        <View style={[StyleSheet.absoluteFill, styles.glassWeb]} />
+        {barContent}
+      </View>
+    );
+  }
+
   return (
     <View style={[pillStyle, styles.wrapperAndroid]}>
       {barContent}
@@ -189,7 +198,15 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface2,
   },
   blurOverlay: {
-    backgroundColor: COLORS.bgGlass,
+    backgroundColor: COLORS.surfaceGlass,
+  },
+  glassWeb: {
+    backgroundColor: COLORS.surfaceGlass,
+    borderRadius: RADIUS.pill,
+    ...({
+      backdropFilter: 'blur(12px)',
+      WebkitBackdropFilter: 'blur(12px)',
+    } as ViewStyle),
   },
   bar: {
     flexDirection: 'row',

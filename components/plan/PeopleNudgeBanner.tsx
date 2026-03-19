@@ -5,7 +5,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
 import { Users } from 'lucide-react-native';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, CARD_SHADOW } from '../../lib/constants';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -68,6 +68,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
     marginBottom: SPACING.lg,
+    ...CARD_SHADOW,
   } as ViewStyle,
   peopleBannerLeft: {
     flexDirection: 'row',

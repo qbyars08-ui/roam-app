@@ -5,7 +5,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
 import { Bed, Utensils, Plane } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, CARD_SHADOW } from '../../lib/constants';
 
 // ---------------------------------------------------------------------------
 // Quick Action data
@@ -96,6 +96,7 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     alignItems: 'center',
     gap: SPACING.xs,
+    ...CARD_SHADOW,
   } as ViewStyle,
   quickActionIcon: {
     width: 40,

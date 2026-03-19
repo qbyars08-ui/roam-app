@@ -7,6 +7,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Animated,
   Image,
+  Linking,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -16,6 +18,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { MapPin, Navigation } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, RADIUS, SPACING } from '../../lib/constants';
@@ -233,10 +236,30 @@ export default function TripMapCard({
         accessibilityRole="button"
         accessibilityLabel={t('map.exploreMap', { defaultValue: 'Explore Map' })}
       >
-        <View style={[styles.fallbackInner, { height: mapHeight }]}>
+        <LinearGradient
+          colors={[COLORS.surface2, COLORS.surface1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.fallbackInner, { height: mapHeight }]}
+        >
           <MapPin color={COLORS.sage} size={28} strokeWidth={1.5} />
           <Text style={styles.fallbackText}>{destination}</Text>
-        </View>
+          {Platform.OS === 'web' && (
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation();
+                const query = encodeURIComponent(destination);
+                Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${query}`);
+              }}
+              style={styles.fallbackMapsBtn}
+            >
+              <Navigation size={12} color={COLORS.bg} strokeWidth={1.5} />
+              <Text style={styles.fallbackMapsBtnText}>
+                {t('map.openInMaps', { defaultValue: 'Open in Maps' })}
+              </Text>
+            </Pressable>
+          )}
+        </LinearGradient>
         <CTARow />
       </Pressable>
     );
@@ -340,13 +363,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.sm,
-    backgroundColor: COLORS.surface2,
   } as ViewStyle,
 
   fallbackText: {
     fontFamily: FONTS.header,
     fontSize: 16,
     color: COLORS.cream,
+  } as TextStyle,
+
+  fallbackMapsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: COLORS.sage,
+    borderRadius: RADIUS.pill,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 6,
+    marginTop: SPACING.xs,
+  } as ViewStyle,
+
+  fallbackMapsBtnText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 11,
+    color: COLORS.bg,
   } as TextStyle,
 
   // Map image area

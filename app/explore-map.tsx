@@ -369,8 +369,10 @@ export default function ExploreMapScreen() {
   const [selectedVenue, setSelectedVenue] = useState<SelectedVenue | null>(null);
   const [bottomSheetExpanded, setBottomSheetExpanded] = useState(false);
 
-  // Web-only static map URL
+  // Web-only static map state
   const [staticMapUrl, setStaticMapUrl] = useState<string | null>(null);
+  const [webMapLoading, setWebMapLoading] = useState(true);
+  const [webMapError, setWebMapError] = useState(false);
 
   // Map ref
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -392,6 +394,9 @@ export default function ExploreMapScreen() {
     let cancelled = false;
     setLoadingGeo(true);
     setPins([]);
+    setStaticMapUrl(null);
+    setWebMapLoading(true);
+    setWebMapError(false);
 
     async function geocodeAll() {
       if (!itinerary) return;
@@ -437,10 +442,13 @@ export default function ExploreMapScreen() {
           const url = buildStaticMapUrl({
             locations: allPins.map((p) => p.location),
             slots: slotLabels,
-            width: Math.round(SCREEN_WIDTH),
-            height: 300,
+            width: Math.min(Math.round(SCREEN_WIDTH * 2), 1200),
+            height: 800,
+            retina: true,
           });
           setStaticMapUrl(url);
+          setWebMapLoading(true);
+          setWebMapError(false);
         }
       }
     }
@@ -644,26 +652,78 @@ export default function ExploreMapScreen() {
             </View>
           </View>
 
-          {/* Static map image */}
-          {staticMapUrl ? (
-            <Image
-              source={{ uri: staticMapUrl }}
-              style={styles.webStaticMap}
-              resizeMode="cover"
-            />
-          ) : (
-            <View style={styles.webMapPlaceholder}>
-              {loadingGeo ? (
-                <ActivityIndicator color={COLORS.sage} />
-              ) : (
-                <>
-                  <MapPin size={32} color={COLORS.muted} strokeWidth={1.5} />
+          {/* Static map image with loading / error states */}
+          {staticMapUrl && !webMapError ? (
+            <View style={styles.webMapWrapper}>
+              {webMapLoading && (
+                <View style={[styles.webMapPlaceholder, styles.webMapSkeleton]}>
+                  <ActivityIndicator color={COLORS.sage} />
                   <Text style={styles.emptyText}>
-                    {t('exploreMap.noMapboxToken', { defaultValue: 'Map unavailable' })}
+                    {t('exploreMap.loadingMap', { defaultValue: 'Loading map...' })}
                   </Text>
-                </>
+                </View>
+              )}
+              <Image
+                source={{ uri: staticMapUrl }}
+                style={[styles.webStaticMap, webMapLoading && { position: 'absolute', opacity: 0 }]}
+                resizeMode="cover"
+                onLoad={() => setWebMapLoading(false)}
+                onError={() => { setWebMapError(true); setWebMapLoading(false); }}
+              />
+            </View>
+          ) : loadingGeo ? (
+            <View style={styles.webMapPlaceholder}>
+              <ActivityIndicator color={COLORS.sage} />
+              <Text style={styles.emptyText}>
+                {t('exploreMap.geocoding', { defaultValue: 'Finding venues on map...' })}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.webMapFallback}>
+              <MapPin size={32} color={COLORS.sage} strokeWidth={1.5} />
+              <Text style={styles.webMapFallbackTitle}>
+                {trip?.destination ?? t('exploreMap.map', { defaultValue: 'Map' })}
+              </Text>
+              <Text style={styles.emptyText}>
+                {visiblePins.length > 0
+                  ? t('exploreMap.mapImageFailed', { defaultValue: 'Map preview unavailable' })
+                  : t('exploreMap.noVenuesFound', { defaultValue: 'No venues to display' })}
+              </Text>
+              {visiblePins.length > 0 && (
+                <Pressable
+                  onPress={() => {
+                    const firstPin = visiblePins[0];
+                    Linking.openURL(
+                      `https://www.google.com/maps/search/?api=1&query=${firstPin.location.lat},${firstPin.location.lng}`
+                    );
+                  }}
+                  style={styles.webOpenMapsBtn}
+                >
+                  <Navigation size={14} color={COLORS.bg} strokeWidth={1.5} />
+                  <Text style={styles.webOpenMapsBtnText}>
+                    {t('exploreMap.openInMaps', { defaultValue: 'Open in Google Maps' })}
+                  </Text>
+                </Pressable>
               )}
             </View>
+          )}
+
+          {/* Open in Google Maps button (below map) */}
+          {visiblePins.length > 0 && staticMapUrl && !webMapError && !webMapLoading && (
+            <Pressable
+              onPress={() => {
+                const center = visiblePins[0];
+                Linking.openURL(
+                  `https://www.google.com/maps/search/?api=1&query=${center.location.lat},${center.location.lng}`
+                );
+              }}
+              style={styles.webOpenMapsBar}
+            >
+              <Navigation size={14} color={COLORS.sage} strokeWidth={1.5} />
+              <Text style={styles.webOpenMapsBarText}>
+                {t('exploreMap.openInMaps', { defaultValue: 'Open in Google Maps' })}
+              </Text>
+            </Pressable>
           )}
 
           {/* Color legend */}
@@ -672,12 +732,50 @@ export default function ExploreMapScreen() {
           {/* Venue list */}
           <View style={styles.webVenueList}>
             {visiblePins.map((pin) => (
-              <VenueListItem
+              <Pressable
                 key={pin.id}
-                pin={pin}
-                onPress={handleVenueTap}
-                t={t}
-              />
+                onPress={() => {
+                  Linking.openURL(
+                    `https://www.google.com/maps/search/?api=1&query=${pin.location.lat},${pin.location.lng}`
+                  );
+                }}
+                style={({ pressed }) => [
+                  styles.venueItem,
+                  pressed && styles.venueItemPressed,
+                ]}
+              >
+                <View style={[styles.venueSlotBar, { backgroundColor: SLOT_COLORS[pin.slot] }]} />
+                <View style={styles.venueItemContent}>
+                  <View style={styles.venueItemRow}>
+                    <Text style={styles.venueItemSlotLabel}>
+                      {t(`exploreMap.slot_${pin.slot}`, { defaultValue: pin.slot })}
+                      {' · '}
+                      {t('exploreMap.day', { defaultValue: 'Day' })} {pin.dayNumber}
+                    </Text>
+                    {pin.activity.time ? (
+                      <Text style={styles.venueItemTime}>{pin.activity.time}</Text>
+                    ) : null}
+                  </View>
+                  <Text style={styles.venueItemName} numberOfLines={1}>
+                    {pin.activity.location}
+                  </Text>
+                  <Text style={styles.venueItemActivity} numberOfLines={1}>
+                    {pin.activity.activity}
+                  </Text>
+                  <View style={styles.venueItemFooter}>
+                    {pin.location.fullAddress ? (
+                      <Text style={styles.venueItemNeighborhood} numberOfLines={1}>
+                        {pin.location.fullAddress}
+                      </Text>
+                    ) : pin.activity.neighborhood ? (
+                      <Text style={styles.venueItemNeighborhood}>
+                        {pin.activity.neighborhood}
+                      </Text>
+                    ) : null}
+                  </View>
+                </View>
+                <Navigation size={14} color={COLORS.sage} strokeWidth={1.5} />
+              </Pressable>
             ))}
           </View>
         </ScrollView>
@@ -1396,18 +1494,75 @@ const styles = StyleSheet.create({
   webScrollContent: {
     paddingBottom: SPACING.xxl,
   },
+  webMapWrapper: {
+    width: '100%',
+    minHeight: 400,
+    position: 'relative',
+  } as ViewStyle,
   webStaticMap: {
     width: '100%',
-    height: 300,
+    height: 400,
     backgroundColor: COLORS.surface2,
   },
   webMapPlaceholder: {
     width: '100%',
-    height: 300,
+    height: 400,
     backgroundColor: COLORS.surface2,
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.sm,
+  },
+  webMapSkeleton: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1,
+  } as ViewStyle,
+  webMapFallback: {
+    width: '100%',
+    height: 400,
+    backgroundColor: COLORS.surface2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
+  },
+  webMapFallbackTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 18,
+    color: COLORS.cream,
+  },
+  webOpenMapsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: COLORS.sage,
+    borderRadius: RADIUS.pill,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 10,
+    marginTop: SPACING.sm,
+  },
+  webOpenMapsBtnText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 13,
+    color: COLORS.bg,
+  },
+  webOpenMapsBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    backgroundColor: COLORS.surface1,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  webOpenMapsBarText: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.sage,
   },
   webVenueList: {
     padding: SPACING.md,

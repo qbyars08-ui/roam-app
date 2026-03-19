@@ -6,7 +6,7 @@ import { Modal, Pressable, StyleSheet, Text, View, type TextStyle, type ViewStyl
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS, FREE_TRIPS_PER_MONTH } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, CARD_SHADOW, FREE_TRIPS_PER_MONTH } from '../../lib/constants';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -86,6 +86,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
     maxWidth: 360,
+    ...CARD_SHADOW,
   } as ViewStyle,
   rateLimitDot: {
     width: 10,

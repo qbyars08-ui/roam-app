@@ -6,7 +6,7 @@ import { Linking, Pressable, StyleSheet, Text, View, type TextStyle, type ViewSt
 import { useRouter } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, CARD_SHADOW } from '../../lib/constants';
 import type { CurrentWeather } from '../../lib/apis/openweather';
 import type { EventResult } from '../../lib/apis/eventbrite';
 import type { SonarCitation } from '../../lib/types/sonar';
@@ -112,6 +112,7 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     gap: 6,
     marginTop: SPACING.sm,
+    ...CARD_SHADOW,
   } as ViewStyle,
   destIntelCardTitle: {
     fontFamily: FONTS.bodyMedium,

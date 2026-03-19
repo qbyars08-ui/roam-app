@@ -1292,6 +1292,7 @@ export default function ItineraryScreen() {
         </View>
       ) : (
         /* ── List view ──────────────────────────────────────────────────── */
+        <View style={{ flex: 1 }}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={[
@@ -1330,6 +1331,37 @@ export default function ItineraryScreen() {
               </LinearGradient>
             </ImageBackground>
           </View>
+
+          {/* Trip summary — destination, dates, budget, days */}
+          {parsed && trip && (
+            <View style={styles.tripSummaryBlock}>
+              <View style={styles.tripSummaryRow}>
+                <Text style={styles.tripSummaryLabel}>Destination</Text>
+                <Text style={styles.tripSummaryValue}>{parsed.destination}</Text>
+              </View>
+              <View style={styles.tripSummaryRow}>
+                <Text style={styles.tripSummaryLabel}>Dates</Text>
+                <Text style={styles.tripSummaryValue}>
+                  {(() => {
+                    const start = trip.startDate ? new Date(trip.startDate) : new Date(trip.createdAt);
+                    const end = new Date(start);
+                    end.setDate(end.getDate() + (trip.days ?? parsed.days.length) - 1);
+                    return `${start.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} – ${end.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
+                  })()}
+                </Text>
+              </View>
+              <View style={styles.tripSummaryRow}>
+                <Text style={styles.tripSummaryLabel}>Total budget</Text>
+                <Text style={styles.tripSummaryValue}>
+                  {currency !== 'USD' && rates ? formatLocalPrice(parsed.totalBudget, currency, rates) : parsed.totalBudget}
+                </Text>
+              </View>
+              <View style={[styles.tripSummaryRow, { marginBottom: 0 }]}>
+                <Text style={styles.tripSummaryLabel}>Days</Text>
+                <Text style={styles.tripSummaryValue}>{parsed.days.length}</Text>
+              </View>
+            </View>
+          )}
 
           {/* Steal this trip — when viewing a shared link */}
           {isSharedTrip && trip && (
@@ -1673,11 +1705,22 @@ export default function ItineraryScreen() {
             <FlightDealCard destination={trip.destination} />
           </View>
 
-          {/* Current day theme — editorial headline + weather badge */}
-          {currentDay && (
-            <View style={styles.dayThemeHero}>
-              <View style={styles.dayThemeHeaderRow}>
-                <Text style={styles.dayThemeNumber}>DAY {currentDay.day}</Text>
+          {/* Day divider (subtle line between days) */}
+          <View style={styles.dayDivider} />
+
+          {/* Current day theme — Day N, date, weather pill */}
+          {currentDay && trip && (
+            <View style={[styles.dayThemeHero, styles.daySectionSpacer]}>
+              <Text style={styles.dayTitle}>Day {currentDay.day}</Text>
+              <View style={styles.dayDateRow}>
+                <Text style={styles.dayDate}>
+                  {(() => {
+                    const start = trip.startDate ? new Date(trip.startDate) : new Date(trip.createdAt);
+                    const d = new Date(start);
+                    d.setDate(d.getDate() + activeDay);
+                    return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                  })()}
+                </Text>
                 {weather?.days[activeDay] && (
                   <View style={styles.dayWeatherBadge}>
                     <Text style={styles.dayWeatherBadgeText}>
@@ -1747,7 +1790,7 @@ export default function ItineraryScreen() {
                           <Text style={styles.dragHandleText}>{'\u2801\u2801\u2801'}</Text>
                         </View>
                         <View style={styles.draggableContent}>
-                          <TimeBlock slot={item.slot} data={item.data} currency={currency} rates={rates} />
+                          <TimeBlock slot={item.slot} data={item.data} currency={currency} rates={rates} onLocationPress={openMapsForPlace} />
                           {renderVenueCard(item.data.activity, { location: item.data.location, address: item.data.address, name: item.data.location })}
                         </View>
                       </Pressable>
@@ -1757,21 +1800,21 @@ export default function ItineraryScreen() {
               ) : (
                 <>
                   <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setEditingActivity({ slot: 'morning', data: currentDay.morning }); }}>
-                    <TimeBlock slot="morning" data={currentDay.morning} currency={currency} rates={rates} />
+                    <TimeBlock slot="morning" data={currentDay.morning} currency={currency} rates={rates} onLocationPress={openMapsForPlace} />
                   </Pressable>
                   {isGroupTrip && (
                     <ActivityVoteButtons dayIndex={activeDay} slot="morning" summary={groupVotes[`${activeDay}-morning`]} onVote={castGroupVote} />
                   )}
                   {renderVenueCard(currentDay.morning.activity, { location: currentDay.morning.location, address: currentDay.morning.address, name: currentDay.morning.location })}
                   <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setEditingActivity({ slot: 'afternoon', data: currentDay.afternoon }); }}>
-                    <TimeBlock slot="afternoon" data={currentDay.afternoon} currency={currency} rates={rates} />
+                    <TimeBlock slot="afternoon" data={currentDay.afternoon} currency={currency} rates={rates} onLocationPress={openMapsForPlace} />
                   </Pressable>
                   {isGroupTrip && (
                     <ActivityVoteButtons dayIndex={activeDay} slot="afternoon" summary={groupVotes[`${activeDay}-afternoon`]} onVote={castGroupVote} />
                   )}
                   {renderVenueCard(currentDay.afternoon.activity, { location: currentDay.afternoon.location, address: currentDay.afternoon.address, name: currentDay.afternoon.location })}
                   <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setEditingActivity({ slot: 'evening', data: currentDay.evening }); }}>
-                    <TimeBlock slot="evening" data={currentDay.evening} currency={currency} rates={rates} />
+                    <TimeBlock slot="evening" data={currentDay.evening} currency={currency} rates={rates} onLocationPress={openMapsForPlace} />
                   </Pressable>
                   {isGroupTrip && (
                     <ActivityVoteButtons dayIndex={activeDay} slot="evening" summary={groupVotes[`${activeDay}-evening`]} onVote={castGroupVote} />
@@ -1780,21 +1823,28 @@ export default function ItineraryScreen() {
                 </>
               )}
 
-              {/* Accommodation card */}
-              <View style={[styles.glassCard, styles.section]}>
+              {/* Accommodation card — tappable to open in Google Maps */}
+              <Pressable
+                onPress={() => openMapsForPlace(currentDay.accommodation.name, trip?.destination)}
+                style={[styles.glassCard, styles.section, styles.accommodationCard]}
+                accessibilityRole="button"
+                accessibilityLabel={`Open ${currentDay.accommodation.name} in Maps`}
+              >
                 <Text style={styles.sectionLabel}>ACCOMMODATION</Text>
-                <Text style={styles.accommodationName}>
-                  {currentDay.accommodation.name}
-                </Text>
+                <Text style={styles.accommodationName}>{currentDay.accommodation.name}</Text>
+                {currentDay.accommodation.neighborhood ? (
+                  <Text style={styles.accommodationNeighborhood}>{currentDay.accommodation.neighborhood}</Text>
+                ) : null}
                 <View style={styles.accommodationMeta}>
-                  <Text style={styles.accommodationType}>
-                    {currentDay.accommodation.type}
-                  </Text>
+                  <View style={styles.accommodationBadge}>
+                    <Text style={styles.accommodationBadgeText}>Suggested</Text>
+                  </View>
+                  <Text style={styles.accommodationType}>{currentDay.accommodation.type}</Text>
                   <Text style={styles.accommodationPrice}>
                     {currency !== 'USD' && rates ? formatLocalPrice(currentDay.accommodation.pricePerNight, currency, rates) : currentDay.accommodation.pricePerNight}/night
                   </Text>
                 </View>
-              </View>
+              </Pressable>
               {renderVenueCard(`accom::${currentDay.accommodation.name}`, { isHotel: true, name: currentDay.accommodation.name })}
 
               {/* Daily total */}
@@ -2056,6 +2106,19 @@ export default function ItineraryScreen() {
             </Pressable>
           </View>
         </ScrollView>
+
+        {/* Floating Share FAB — generates shareable link */}
+        {trip && (
+          <Pressable
+            style={[styles.shareFab, { bottom: (insets.bottom || 0) + SPACING.lg }]}
+            onPress={handleShareLink}
+            accessibilityRole="button"
+            accessibilityLabel="Share trip"
+          >
+            <Share2 size={24} color={COLORS.bg} strokeWidth={1.5} />
+          </Pressable>
+        )}
+        </View>
       )}
 
       {/* ── Emergency SOS ─────────────────────────────────────────────── */}
@@ -2127,16 +2190,24 @@ const SLOT_DEFAULT_TIMES: Record<string, string> = {
   evening: '6:00 PM',
 };
 
+const SLOT_BORDER_STYLES = {
+  morning: styles.venueCardWrapperMorning,
+  afternoon: styles.venueCardWrapperAfternoon,
+  evening: styles.venueCardWrapperEvening,
+} as const;
+
 const TimeBlock = React.memo(function TimeBlock({
   slot,
   data,
   currency,
   rates,
+  onLocationPress,
 }: {
   slot: 'morning' | 'afternoon' | 'evening';
   data: TimeSlotActivity;
   currency?: string;
   rates?: ExchangeRates | null;
+  onLocationPress?: (location: string, address?: string) => void;
 }) {
   const timeDisplay = data.time ?? SLOT_DEFAULT_TIMES[slot];
   const costDisplay = currency && currency !== 'USD' && rates
@@ -2144,17 +2215,21 @@ const TimeBlock = React.memo(function TimeBlock({
     : data.cost;
 
   return (
-    <View style={[styles.glassCard, styles.section]}>
-      <Text style={styles.timeSlotLabel}>
-        {timeDisplay}
-      </Text>
+    <View style={[styles.venueCardWrapper, SLOT_BORDER_STYLES[slot], styles.section]}>
+      <Text style={styles.timeSlotLabel}>{timeDisplay}</Text>
 
       <Text style={styles.activityTitle}>{data.activity}</Text>
 
       <View style={styles.activityMeta}>
         <View style={styles.neighborhoodRow}>
-          <Text style={styles.neighborhoodLabel}>Neighborhood</Text>
-          <Text style={styles.neighborhoodValue}>{data.location}</Text>
+          <Text style={styles.neighborhoodLabel}>Location</Text>
+          {onLocationPress && (data.location || data.address) ? (
+            <Pressable onPress={() => onLocationPress(data.location, data.address)} style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel={`Open ${data.location || 'address'} in Maps`}>
+              <Text style={[styles.neighborhoodValue, { textDecorationLine: 'underline', color: COLORS.sage }]} numberOfLines={1}>{data.location || data.address || ''}</Text>
+            </Pressable>
+          ) : (
+            <Text style={styles.neighborhoodValue}>{data.location || data.address || '—'}</Text>
+          )}
         </View>
         <View style={styles.costBadge}>
           <Text style={styles.costText}>{costDisplay}</Text>
@@ -2162,9 +2237,8 @@ const TimeBlock = React.memo(function TimeBlock({
       </View>
 
       {data.tip ? (
-        <View style={styles.tipCard}>
-          <Text style={styles.tipLabel}>Local tip</Text>
-          <Text style={styles.tipText}>{data.tip}</Text>
+        <View style={styles.tipPill}>
+          <Text style={styles.tipPillText}>{data.tip}</Text>
         </View>
       ) : null}
 

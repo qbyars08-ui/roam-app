@@ -7,6 +7,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Image,
+  Linking,
   Platform,
   Pressable,
   StyleSheet,
@@ -17,7 +18,7 @@ import {
   type ImageStyle,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Maximize2 } from 'lucide-react-native';
+import { MapPin, Maximize2, Navigation } from 'lucide-react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import {
   geocodePlaces,
@@ -174,6 +175,8 @@ export default function ItineraryDayMap({
   const [locations, setLocations] = useState<(GeocodedLocation | null)[]>([]);
   const [loading, setLoading] = useState(true);
   const [mapReady, setMapReady] = useState(false);
+  const [webImgLoaded, setWebImgLoaded] = useState(false);
+  const [webImgError, setWebImgError] = useState(false);
 
   // Typed ref for react-native-maps fitToCoordinates
   const mapRef = useRef<{ fitToCoordinates: (coords: Coordinate[], opts: object) => void } | null>(null);
@@ -385,16 +388,40 @@ export default function ItineraryDayMap({
             </View>
           </View>
         ) : isWeb ? (
-          // ---- Web: static Mapbox image ----
-          staticMapUrl != null ? (
-            <Image
-              source={{ uri: staticMapUrl }}
-              style={styles.staticImage}
-              resizeMode="cover"
-            />
+          // ---- Web: static Mapbox image with loading + error states ----
+          staticMapUrl != null && !webImgError ? (
+            <View style={{ flex: 1, position: 'relative' }}>
+              {!webImgLoaded && (
+                <View style={[styles.noMap, { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }]}>
+                  <View style={styles.skeleton} />
+                </View>
+              )}
+              <Image
+                source={{ uri: staticMapUrl }}
+                style={[styles.staticImage, !webImgLoaded && { opacity: 0 }]}
+                resizeMode="cover"
+                onLoad={() => setWebImgLoaded(true)}
+                onError={() => setWebImgError(true)}
+              />
+            </View>
           ) : (
-            <View style={styles.noMap}>
-              <Text style={styles.noMapText}>Map unavailable</Text>
+            <View style={styles.webFallback}>
+              <MapPin size={20} color={COLORS.sage} strokeWidth={1.5} />
+              <Text style={styles.webFallbackText}>Day {dayNumber}</Text>
+              {validLocations.length > 0 && (
+                <Pressable
+                  onPress={() => {
+                    const loc = validLocations[0];
+                    Linking.openURL(
+                      `https://www.google.com/maps/search/?api=1&query=${loc.lat},${loc.lng}`
+                    );
+                  }}
+                  style={styles.webMapsBtn}
+                >
+                  <Navigation size={10} color={COLORS.bg} strokeWidth={1.5} />
+                  <Text style={styles.webMapsBtnText}>Open in Maps</Text>
+                </Pressable>
+              )}
             </View>
           )
         ) : NativeMapView != null ? (
@@ -496,6 +523,39 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontSize: 13,
     color: COLORS.muted,
+  } as TextStyle,
+
+  // Web fallback card
+  webFallback: {
+    flex: 1,
+    backgroundColor: COLORS.surface2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    padding: SPACING.sm,
+  } as ViewStyle,
+
+  webFallbackText: {
+    fontFamily: FONTS.header,
+    fontSize: 13,
+    color: COLORS.cream,
+  } as TextStyle,
+
+  webMapsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: COLORS.sage,
+    borderRadius: RADIUS.pill,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    marginTop: 2,
+  } as ViewStyle,
+
+  webMapsBtnText: {
+    fontFamily: FONTS.mono,
+    fontSize: 9,
+    color: COLORS.bg,
   } as TextStyle,
 
   // Floating "Open Full Map" button

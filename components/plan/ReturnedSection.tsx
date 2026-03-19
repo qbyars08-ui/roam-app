@@ -4,7 +4,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, CARD_SHADOW } from '../../lib/constants';
 import type { Trip } from '../../lib/store';
 
 // ---------------------------------------------------------------------------
@@ -65,6 +65,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface1,
     borderLeftWidth: 3,
     borderLeftColor: COLORS.gold,
+    ...CARD_SHADOW,
   } as ViewStyle,
   returnedHeader: {
     fontFamily: FONTS.header,

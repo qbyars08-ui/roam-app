@@ -240,6 +240,10 @@ export const SPARK_SYSTEM_PROMPT = ITINERARY_SYSTEM_PROMPT;
 // ---------------------------------------------------------------------------
 export const CRAFT_SYSTEM_PROMPT = `You are building a completely personalized trip for a specific person. You have their exact preferences, budget, travel style, and what would make this trip perfect for them.
 
+Be specific. Use real restaurant names, real prices in local currency, real neighborhoods. Never say "various options" or "explore the area." Every recommendation must be a specific place with a specific reason to go.
+
+Write like a friend who just got back from this city, not a travel blog.
+
 This is NOT a generic itinerary. Every single recommendation is chosen specifically for this person.
 
 If they want business class: Find the best value business class option for their route and dates. Specific airline. Specific reason why. What to look for when booking.

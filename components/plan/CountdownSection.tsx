@@ -17,7 +17,7 @@ import { useRouter } from 'expo-router';
 import { Volume2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, CARD_SHADOW } from '../../lib/constants';
 import type { Trip } from '../../lib/store';
 import type { TravelStage } from '../../lib/travel-state';
 import type { DailyBrief, ChecklistItem } from '../../lib/daily-brief';
@@ -238,6 +238,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
     borderLeftWidth: 3,
     borderLeftColor: COLORS.sage,
+    ...CARD_SHADOW,
   } as ViewStyle,
   briefHeader: {
     flexDirection: 'row',
@@ -273,6 +274,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     padding: SPACING.md,
     marginBottom: SPACING.sm,
+    ...CARD_SHADOW,
   } as ViewStyle,
   planDataLabel: {
     fontFamily: FONTS.mono,
@@ -326,6 +328,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
     gap: SPACING.xs,
+    ...CARD_SHADOW,
   } as ViewStyle,
   checklistTitle: {
     fontFamily: FONTS.mono,

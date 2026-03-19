@@ -124,6 +124,62 @@ export const styles = StyleSheet.create({
     paddingTop: 0,
   } as ViewStyle,
 
+  // ── Trip summary header ─────────────────────────────────────────────────
+  tripSummaryBlock: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    marginBottom: SPACING.lg,
+    backgroundColor: COLORS.bgCard,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.lg,
+    marginHorizontal: SPACING.lg,
+  } as ViewStyle,
+  tripSummaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.xs,
+  } as ViewStyle,
+  tripSummaryLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.muted,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  } as TextStyle,
+  tripSummaryValue: {
+    fontFamily: FONTS.mono,
+    fontSize: 14,
+    color: COLORS.cream,
+  } as TextStyle,
+
+  // ── Share FAB ──────────────────────────────────────────────────────────
+  shareFab: {
+    position: 'absolute',
+    bottom: SPACING.xl,
+    right: SPACING.lg,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: COLORS.sage,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  } as ViewStyle,
+  shareFabText: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.bg,
+  } as TextStyle,
+  daySectionSpacer: {
+    marginBottom: 24,
+  } as ViewStyle,
+
   // ── Hero (cinematic) ────────────────────────────────────────────────────
   heroWrapper: {
     width: SCREEN_WIDTH,
@@ -344,11 +400,15 @@ export const styles = StyleSheet.create({
   } as TextStyle,
 
   // ── Day theme editorial headline ────────────────────────────────────────
+  dayDivider: {
+    height: 1,
+    backgroundColor: COLORS.border,
+    marginVertical: 0,
+    marginHorizontal: SPACING.lg,
+  } as ViewStyle,
   dayThemeHero: {
     paddingHorizontal: SPACING.lg,
     marginBottom: SPACING.lg,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
     paddingTop: SPACING.lg,
   } as ViewStyle,
   dayThemeHeaderRow: {
@@ -359,6 +419,24 @@ export const styles = StyleSheet.create({
     gap: SPACING.sm,
     marginBottom: SPACING.xs,
   } as ViewStyle,
+  dayTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 28,
+    color: COLORS.cream,
+    lineHeight: 34,
+    letterSpacing: -0.3,
+  } as TextStyle,
+  dayDateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.xs,
+  } as ViewStyle,
+  dayDate: {
+    fontFamily: FONTS.mono,
+    fontSize: 14,
+    color: COLORS.muted,
+  } as TextStyle,
   dayThemeNumber: {
     fontFamily: FONTS.mono,
     fontSize: 11,
@@ -369,7 +447,7 @@ export const styles = StyleSheet.create({
     backgroundColor: COLORS.sageSubtle,
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.sm,
+    borderRadius: RADIUS.pill,
     borderWidth: 1,
     borderColor: COLORS.sageBorder,
   } as ViewStyle,
@@ -549,13 +627,27 @@ export const styles = StyleSheet.create({
     color: COLORS.sage,
   } as TextStyle,
 
+  // ── Venue card (time block) — left border by slot ────────────────────────
+  venueCardWrapper: {
+    borderLeftWidth: 3,
+    marginBottom: SPACING.md,
+    overflow: 'hidden',
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.bgCard,
+    padding: SPACING.md,
+  } as ViewStyle,
+  venueCardWrapperMorning: { borderLeftColor: COLORS.sage } as ViewStyle,
+  venueCardWrapperAfternoon: { borderLeftColor: COLORS.gold } as ViewStyle,
+  venueCardWrapperEvening: { borderLeftColor: COLORS.coral } as ViewStyle,
+
   // ── Time slots ──────────────────────────────────────────────────────────
   timeSlotLabel: {
     fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.sage,
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
+    fontSize: 12,
+    color: COLORS.creamMuted,
+    letterSpacing: 0.5,
     marginBottom: SPACING.sm,
   } as TextStyle,
   activityTitle: {
@@ -602,6 +694,21 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.cream,
   } as TextStyle,
+  tipPill: {
+    backgroundColor: COLORS.sageSubtle,
+    borderRadius: RADIUS.pill,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    alignSelf: 'flex-start',
+    marginTop: SPACING.xs,
+  } as ViewStyle,
+  tipPillText: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamBright,
+    lineHeight: 19,
+    fontStyle: 'italic',
+  } as TextStyle,
   tipCard: {
     backgroundColor: COLORS.successFaint,
     borderRadius: RADIUS.md,
@@ -623,30 +730,55 @@ export const styles = StyleSheet.create({
     lineHeight: 19,
   } as TextStyle,
   costBadge: {
-    alignSelf: 'flex-start',
+    alignSelf: 'flex-end',
     backgroundColor: COLORS.bgGlass,
     borderRadius: RADIUS.sm,
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
   } as ViewStyle,
   costText: {
-    fontFamily: FONTS.monoMedium,
+    fontFamily: FONTS.mono,
     fontSize: 13,
-    color: COLORS.sage,
+    color: COLORS.gold,
   } as TextStyle,
 
   // ── Accommodation ───────────────────────────────────────────────────────
+  accommodationCard: {
+    marginBottom: SPACING.md,
+  } as ViewStyle,
   accommodationName: {
-    fontFamily: FONTS.headerMedium,
+    fontFamily: FONTS.header,
     fontSize: 18,
     color: COLORS.cream,
     marginBottom: SPACING.xs,
+  } as TextStyle,
+  accommodationNeighborhood: {
+    fontFamily: FONTS.mono,
+    fontSize: 13,
+    color: COLORS.muted,
+    marginBottom: SPACING.sm,
   } as TextStyle,
   accommodationMeta: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
   } as ViewStyle,
+  accommodationBadge: {
+    backgroundColor: COLORS.sageSubtle,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: RADIUS.pill,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+  } as ViewStyle,
+  accommodationBadgeText: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+    letterSpacing: 0.5,
+  } as TextStyle,
   accommodationType: {
     fontFamily: FONTS.body,
     fontSize: 14,

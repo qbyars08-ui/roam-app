@@ -20,7 +20,7 @@ import { ChevronRight, Heart, MapPin } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS, DESTINATION_HERO_PHOTOS } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, CARD_SHADOW, DESTINATION_HERO_PHOTOS } from '../../lib/constants';
 
 // ---------------------------------------------------------------------------
 // Hardcoded popular destinations — always visible, never blank
@@ -190,6 +190,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: COLORS.border,
+    ...CARD_SHADOW,
   } as ViewStyle,
   destCardImage: {
     ...StyleSheet.absoluteFillObject,
@@ -265,6 +266,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.sageSubtle,
     borderWidth: 1,
     borderColor: COLORS.sageBorder,
+    ...CARD_SHADOW,
   } as ViewStyle,
   dreamBoardLinkText: {
     fontFamily: FONTS.bodyMedium,

@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 import { ChevronRight, Heart } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, CARD_SHADOW } from '../../lib/constants';
 import { useDreamStore } from '../../lib/dream-store';
 
 // ---------------------------------------------------------------------------
@@ -57,6 +57,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.sageSubtle,
     borderWidth: 1,
     borderColor: COLORS.sageBorder,
+    ...CARD_SHADOW,
   } as ViewStyle,
   dreamBoardBannerText: {
     fontFamily: FONTS.bodyMedium,

@@ -2,7 +2,7 @@
 // ROAM — Web-only split-screen CRAFT experience
 // Left panel: full conversation | Right panel: live itinerary preview
 // =============================================================================
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   StyleSheet,
   Platform,
   ActivityIndicator,
+  Animated,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
@@ -20,7 +21,64 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { CRAFT_BUILDING_MESSAGE, CRAFT_ITINERARY_INTRO } from '../../lib/craft-prompts';
 import type { Itinerary, ItineraryDay, TimeSlotActivity } from '../../lib/types/itinerary';
 import type { CraftState } from '../../lib/craft-engine';
-import CraftMessage from '../CraftMessage';
+
+const BUBBLE_RADIUS_USER = { borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomRightRadius: 4, borderBottomLeftRadius: 16 };
+const BUBBLE_RADIUS_ASSISTANT = { borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomRightRadius: 16, borderBottomLeftRadius: 4 };
+
+function CraftMessageBubble({ role, content }: { role: 'user' | 'assistant'; content: string }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }).start();
+  }, [opacity]);
+  const isUser = role === 'user';
+  return (
+    <Animated.View style={[styles.msgWrap, isUser ? styles.msgWrapUser : styles.msgWrapAssistant, { opacity }]}>
+      <View style={[styles.msgBubble, isUser ? styles.msgBubbleUser : styles.msgBubbleAssistant]}>
+        <Text style={[styles.msgText, isUser ? styles.msgTextUser : styles.msgTextAssistant]} selectable>{content}</Text>
+      </View>
+    </Animated.View>
+  );
+}
+
+function TypingIndicatorDots() {
+  const dot1 = useRef(new Animated.Value(0.3)).current;
+  const dot2 = useRef(new Animated.Value(0.3)).current;
+  const dot3 = useRef(new Animated.Value(0.3)).current;
+  useEffect(() => {
+    const pulse = (anim: Animated.Value, delay: number) => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(anim, { toValue: 1, duration: 400, useNativeDriver: true }),
+          Animated.timing(anim, { toValue: 0.3, duration: 400, useNativeDriver: true }),
+        ])
+      ).start();
+    };
+    pulse(dot1, 0);
+    pulse(dot2, 150);
+    pulse(dot3, 300);
+    return () => {};
+  }, [dot1, dot2, dot3]);
+  return (
+    <View style={styles.typingWrap}>
+      <View style={[styles.typingBubble, BUBBLE_RADIUS_ASSISTANT]}>
+        <View style={styles.typingDots}>
+          <Animated.View style={[styles.typingDot, { opacity: dot1 }]} />
+          <Animated.View style={[styles.typingDot, { opacity: dot2 }]} />
+          <Animated.View style={[styles.typingDot, { opacity: dot3 }]} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function RoamAvatar() {
+  return (
+    <View style={styles.roamAvatar}>
+      <Text style={styles.roamAvatarText}>R</Text>
+    </View>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Props — mirrors the state from CraftSessionScreen
@@ -72,8 +130,31 @@ function CraftSplitScreenInner({
   onSaveTrip,
 }: CraftSplitScreenProps) {
   const chatScrollRef = useRef<ScrollView>(null);
+  const inputRef = useRef<TextInput>(null);
   const [dividerX, setDividerX] = useState(50); // percentage for left panel
   const [dragging, setDragging] = useState(false);
+  const [questionVisible, setQuestionVisible] = useState(false);
+  const prevFollowUpLen = useRef(state.followUpMessages.length);
+
+  // Question appears after 300ms
+  useEffect(() => {
+    if (!question) {
+      setQuestionVisible(false);
+      return;
+    }
+    const t = setTimeout(() => setQuestionVisible(true), 300);
+    return () => clearTimeout(t);
+  }, [question]);
+
+  // Auto-focus input after each ROAM response
+  useEffect(() => {
+    if (state.followUpMessages.length > prevFollowUpLen.current && !loading) {
+      prevFollowUpLen.current = state.followUpMessages.length;
+      setTimeout(() => inputRef.current?.focus(), 100);
+    } else {
+      prevFollowUpLen.current = state.followUpMessages.length;
+    }
+  }, [state.followUpMessages.length, loading]);
 
   // --- Draggable divider (web mouse events) ---
   const handleDividerMouseDown = useCallback(() => {
@@ -135,18 +216,26 @@ function CraftSplitScreenInner({
 
             {/* Gathering-phase messages */}
             {state.messages.map((msg, i) => (
-              <CraftMessage key={`msg-${i}`} role={msg.role} content={msg.content} />
+              <CraftMessageBubble key={`msg-${i}`} role={msg.role} content={msg.content} />
             ))}
 
-            {/* Current question */}
-            {isGathering && question ? (
+            {/* Typing indicator when waiting for response (gathering) */}
+            {loading && isGathering ? (
+              <View style={styles.followUpLoading}>
+                <TypingIndicatorDots />
+              </View>
+            ) : null}
+
+            {/* Current question with ROAM avatar */}
+            {isGathering && questionVisible && question ? (
               <View style={styles.questionBlock}>
+                <RoamAvatar />
                 <Text style={styles.questionText}>{question}</Text>
               </View>
             ) : null}
 
             {/* Building indicator in chat */}
-            {isBuilding || (loading && !isFollowUp) ? (
+            {isBuilding ? (
               <View style={styles.buildingInChat}>
                 <ActivityIndicator size="small" color={COLORS.gold} />
                 <Text style={styles.buildingChatText}>{CRAFT_BUILDING_MESSAGE}</Text>
@@ -164,18 +253,18 @@ function CraftSplitScreenInner({
 
             {/* Follow-up messages */}
             {state.followUpMessages.map((msg, i) => (
-              <CraftMessage key={`fu-${i}`} role={msg.role} content={msg.content} />
+              <CraftMessageBubble key={`fu-${i}`} role={msg.role} content={msg.content} />
             ))}
 
             {/* Streaming follow-up */}
             {visibleStreaming ? (
-              <CraftMessage role="assistant" content={visibleStreaming} />
+              <CraftMessageBubble role="assistant" content={visibleStreaming} />
             ) : null}
 
-            {/* Follow-up loading */}
+            {/* Follow-up loading — typing dots */}
             {loading && isFollowUp && !streamingText ? (
               <View style={styles.followUpLoading}>
-                <ActivityIndicator size="small" color={COLORS.gold} />
+                <TypingIndicatorDots />
               </View>
             ) : null}
           </ScrollView>
@@ -190,7 +279,8 @@ function CraftSplitScreenInner({
           {/* Input row */}
           <View style={styles.inputRow}>
             <TextInput
-              style={styles.input}
+              ref={inputRef}
+              style={styles.inputCraft}
               placeholder={
                 isFollowUp
                   ? 'Ask anything about your trip — changes, more details, alternatives...'
@@ -206,7 +296,11 @@ function CraftSplitScreenInner({
             />
             <Pressable
               onPress={onSubmit}
-              style={({ pressed }) => [styles.sendBtn, { opacity: pressed ? 0.8 : 1 }]}
+              style={({ pressed }) => [
+                styles.sendBtnSage,
+                input.trim().length > 0 && styles.sendBtnSagePulse,
+                { opacity: pressed ? 0.8 : 1 },
+              ]}
               accessibilityLabel="Send"
               accessibilityRole="button"
               disabled={loading}
@@ -469,14 +563,78 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.md,
   } as ViewStyle,
   questionBlock: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     marginTop: SPACING.xxl,
     marginBottom: SPACING.lg,
+    gap: SPACING.sm,
   } as ViewStyle,
   questionText: {
+    flex: 1,
     fontFamily: FONTS.header,
     fontSize: 24,
     color: COLORS.cream,
     lineHeight: 32,
+  } as TextStyle,
+  msgWrap: {
+    marginVertical: SPACING.xs,
+    flexDirection: 'row',
+  } as ViewStyle,
+  msgWrapUser: { justifyContent: 'flex-end' } as ViewStyle,
+  msgWrapAssistant: { justifyContent: 'flex-start' } as ViewStyle,
+  msgBubble: {
+    maxWidth: '88%',
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+  } as ViewStyle,
+  msgBubbleUser: {
+    backgroundColor: COLORS.sageDark,
+    ...BUBBLE_RADIUS_USER,
+  } as ViewStyle,
+  msgBubbleAssistant: {
+    backgroundColor: COLORS.surface1,
+    ...BUBBLE_RADIUS_ASSISTANT,
+  } as ViewStyle,
+  msgText: {
+    fontFamily: FONTS.body,
+    fontSize: 15,
+    lineHeight: 22,
+  } as TextStyle,
+  msgTextUser: { color: COLORS.cream } as TextStyle,
+  msgTextAssistant: { color: COLORS.creamMuted } as TextStyle,
+  typingWrap: {
+    marginVertical: SPACING.xs,
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  } as ViewStyle,
+  typingBubble: {
+    backgroundColor: COLORS.surface1,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+  } as ViewStyle,
+  typingDots: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  } as ViewStyle,
+  typingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.sage,
+  } as ViewStyle,
+  roamAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.sage,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
+  roamAvatarText: {
+    fontFamily: FONTS.header,
+    fontSize: 16,
+    color: COLORS.bg,
   } as TextStyle,
   buildingInChat: {
     flexDirection: 'row',
@@ -539,6 +697,20 @@ const styles = StyleSheet.create({
     minHeight: 48,
     maxHeight: 120,
   } as TextStyle,
+  inputCraft: {
+    flex: 1,
+    fontFamily: FONTS.body,
+    fontSize: 16,
+    color: COLORS.cream,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.whiteFaintBorder,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    minHeight: 48,
+    maxHeight: 120,
+  } as TextStyle,
   sendBtn: {
     width: 48,
     height: 48,
@@ -546,6 +718,21 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.gold,
     alignItems: 'center',
     justifyContent: 'center',
+  } as ViewStyle,
+  sendBtnSage: {
+    width: 48,
+    height: 48,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.sage,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
+  sendBtnSagePulse: {
+    shadowColor: COLORS.sage,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 4,
   } as ViewStyle,
   welcomeBack: {
     marginBottom: SPACING.lg,
