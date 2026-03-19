@@ -24,7 +24,7 @@ import type { SonarCitation } from '../../lib/types/sonar';
 // ---------------------------------------------------------------------------
 // Bullet parsing
 // ---------------------------------------------------------------------------
-const MAX_BULLETS_DEFAULT = 4;
+const MAX_BULLETS_DEFAULT = 3;
 
 /**
  * Parse a Sonar answer string into an array of bullet strings.
@@ -349,11 +349,11 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   } as ViewStyle,
   sageDot: {
-    width: 5,
-    height: 5,
+    width: 6,
+    height: 6,
     borderRadius: 3,
     backgroundColor: COLORS.sage,
-    marginTop: 8,
+    marginTop: 7,
     flexShrink: 0,
   } as ViewStyle,
   bulletText: {

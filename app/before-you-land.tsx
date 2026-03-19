@@ -97,7 +97,7 @@ interface SectionProps {
   defaultOpen?: boolean;
 }
 
-function CollapsibleSection({ title, icon, children, defaultOpen = false }: SectionProps) {
+function CollapsibleSection({ title, icon, children, defaultOpen = false, count }: SectionProps & { count?: number }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const rotation = useRef(new Animated.Value(defaultOpen ? 1 : 0)).current;
 
@@ -132,6 +132,11 @@ function CollapsibleSection({ title, icon, children, defaultOpen = false }: Sect
         <View style={styles.sectionHeaderLeft}>
           {icon}
           <Text style={styles.sectionTitle}>{title}</Text>
+          {count != null && count > 0 && (
+            <View style={styles.countBadge}>
+              <Text style={styles.countBadgeText}>{count}</Text>
+            </View>
+          )}
         </View>
         <Animated.View style={rotateStyle}>
           <ChevronDown size={20} color={COLORS.creamDim} strokeWidth={1.5} />
@@ -357,7 +362,7 @@ function BeforeYouLandScreen() {
         <CollapsibleSection
           title={t('beforeYouLand.sections.timezone', { defaultValue: 'Time Zone Intel' })}
           icon={<Clock size={20} color={COLORS.sage} strokeWidth={1.5} />}
-          defaultOpen
+          count={timezoneInfo ? 3 : 0}
         >
           {timezoneInfo ? (
             <>
@@ -392,7 +397,7 @@ function BeforeYouLandScreen() {
         <CollapsibleSection
           title={t('beforeYouLand.sections.weather', { defaultValue: 'Weather on Arrival' })}
           icon={<Sun size={20} color={COLORS.gold} strokeWidth={1.5} />}
-          defaultOpen
+          count={forecastDays.length}
         >
           {forecastDays.length > 0 ? (
             <>
@@ -510,6 +515,7 @@ function BeforeYouLandScreen() {
         <CollapsibleSection
           title={t('beforeYouLand.sections.emergency', { defaultValue: 'Emergency Essentials' })}
           icon={<Shield size={20} color={COLORS.coral} strokeWidth={1.5} />}
+          count={emergencyData ? 3 : 0}
         >
           {emergencyData ? (
             <>
@@ -584,6 +590,7 @@ function BeforeYouLandScreen() {
         <CollapsibleSection
           title={t('beforeYouLand.sections.cultural', { defaultValue: 'Cultural Quick Hits' })}
           icon={<Users size={20} color={COLORS.sage} strokeWidth={1.5} />}
+          count={culturalGuide ? (culturalGuide.etiquette.length + culturalGuide.dressCodes.length + culturalGuide.commonScams.length + 1) : 0}
         >
           {culturalGuide ? (
             <>
@@ -624,50 +631,58 @@ function BeforeYouLandScreen() {
           )}
         </CollapsibleSection>
 
-        {/* 5b. Entry Requirements (Sherpa) */}
+        {/* 5b. Entry Requirements (Sherpa) — with status badges */}
         {entryReqs ? (
           <CollapsibleSection
             title={t('beforeYouLand.sections.entryReqs', { defaultValue: 'Entry Requirements' })}
             icon={<Shield size={20} color={COLORS.gold} strokeWidth={1.5} />}
+            count={entryReqs.notes.length + 3}
           >
+            {/* Visa status badge */}
+            <View style={styles.entryBadgeRow}>
+              <View style={[
+                styles.entryBadge,
+                { backgroundColor: !entryReqs.healthDeclaration && !entryReqs.insuranceRequired ? COLORS.sageVeryFaint : COLORS.warningSubtle },
+                { borderColor: !entryReqs.healthDeclaration && !entryReqs.insuranceRequired ? COLORS.sageBorder : COLORS.warningBorder },
+              ]}>
+                <Text style={[
+                  styles.entryBadgeText,
+                  { color: !entryReqs.healthDeclaration && !entryReqs.insuranceRequired ? COLORS.sage : COLORS.gold },
+                ]}>
+                  {!entryReqs.healthDeclaration && !entryReqs.insuranceRequired ? 'Visa Free' : 'Requirements Apply'}
+                </Text>
+              </View>
+            </View>
+            {entryReqs.healthDeclaration && (
+              <View style={styles.entryRow}>
+                <View style={[styles.statusDot, { backgroundColor: COLORS.gold }]} />
+                <Text style={styles.entryLabel}>Health declaration required</Text>
+              </View>
+            )}
+            {entryReqs.insuranceRequired && (
+              <View style={styles.entryRow}>
+                <View style={[styles.statusDot, { backgroundColor: COLORS.coral }]} />
+                <Text style={styles.entryLabel}>Insurance required</Text>
+              </View>
+            )}
             {entryReqs.covidRestrictions ? (
-              <View style={styles.dataRow}>
-                <Text style={styles.dataLabel}>{t('beforeYouLand.covidRestrictions', { defaultValue: 'COVID restrictions' })}</Text>
-                <Text style={styles.dataValue}>{entryReqs.covidRestrictions}</Text>
+              <View style={styles.entryRow}>
+                <View style={[styles.statusDot, { backgroundColor: COLORS.gold }]} />
+                <Text style={styles.entryLabel}>{entryReqs.covidRestrictions}</Text>
               </View>
             ) : null}
-            <View style={styles.dataRow}>
-              <Text style={styles.dataLabel}>{t('beforeYouLand.healthDeclaration', { defaultValue: 'Health declaration required' })}</Text>
-              <Text style={[styles.dataValueMono, { color: entryReqs.healthDeclaration ? COLORS.gold : COLORS.sage }]}>
-                {entryReqs.healthDeclaration ? t('common.yes', { defaultValue: 'Yes' }) : t('common.no', { defaultValue: 'No' })}
-              </Text>
-            </View>
-            <View style={styles.dataRow}>
-              <Text style={styles.dataLabel}>{t('beforeYouLand.insuranceRequired', { defaultValue: 'Insurance required' })}</Text>
-              <Text style={[styles.dataValueMono, { color: entryReqs.insuranceRequired ? COLORS.coral : COLORS.sage }]}>
-                {entryReqs.insuranceRequired ? t('common.yes', { defaultValue: 'Yes' }) : t('common.no', { defaultValue: 'No' })}
-              </Text>
-            </View>
             {entryReqs.customsForms ? (
-              <View style={styles.dataRow}>
-                <Text style={styles.dataLabel}>{t('beforeYouLand.customsForms', { defaultValue: 'Customs forms' })}</Text>
-                <Text style={styles.dataValue}>{entryReqs.customsForms}</Text>
+              <View style={styles.entryRow}>
+                <View style={[styles.statusDot, { backgroundColor: COLORS.muted }]} />
+                <Text style={styles.entryLabel}>{entryReqs.customsForms}</Text>
               </View>
             ) : null}
-            {entryReqs.currencyRestrictions ? (
-              <View style={styles.dataRow}>
-                <Text style={styles.dataLabel}>{t('beforeYouLand.currencyRestrictions', { defaultValue: 'Currency restrictions' })}</Text>
-                <Text style={styles.dataValue}>{entryReqs.currencyRestrictions}</Text>
+            {entryReqs.notes.map((note) => (
+              <View key={note} style={styles.entryRow}>
+                <View style={[styles.statusDot, { backgroundColor: COLORS.muted }]} />
+                <Text style={styles.entryLabel}>{note}</Text>
               </View>
-            ) : null}
-            {entryReqs.notes.length > 0 ? (
-              <View style={styles.dataRow}>
-                <Text style={styles.dataLabel}>{t('beforeYouLand.notes', { defaultValue: 'Notes' })}</Text>
-                {entryReqs.notes.map((note) => (
-                  <Text key={note} style={styles.dataValue}>{note}</Text>
-                ))}
-              </View>
-            ) : null}
+            ))}
           </CollapsibleSection>
         ) : null}
 
@@ -676,6 +691,7 @@ function BeforeYouLandScreen() {
           title={t('beforeYouLand.sections.checklist', { defaultValue: 'Your Checklist' })}
           icon={<CheckSquare size={20} color={COLORS.sage} strokeWidth={1.5} />}
           defaultOpen
+          count={CHECKLIST_ITEMS.length}
         >
           {CHECKLIST_ITEMS.map((item) => {
             const isChecked = checkedItems[item.id] ?? false;
@@ -946,6 +962,53 @@ const styles = StyleSheet.create({
     flex: 1,
     lineHeight: 18,
   } as TextStyle,
+
+  // Count badge
+  countBadge: {
+    backgroundColor: COLORS.sageVeryFaint,
+    borderRadius: RADIUS.pill,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginLeft: SPACING.xs,
+  } as ViewStyle,
+  countBadgeText: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.sage,
+  } as TextStyle,
+
+  // Entry requirement badges
+  entryBadgeRow: {
+    flexDirection: 'row',
+    marginBottom: SPACING.sm,
+  } as ViewStyle,
+  entryBadge: {
+    borderRadius: RADIUS.pill,
+    borderWidth: 1,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+  } as ViewStyle,
+  entryBadgeText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 13,
+  } as TextStyle,
+  entryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.xs,
+  } as ViewStyle,
+  entryLabel: {
+    fontFamily: FONTS.body,
+    fontSize: 14,
+    color: COLORS.creamSoft,
+    flex: 1,
+  } as TextStyle,
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  } as ViewStyle,
 
   // Checklist
   checkRow: {

@@ -1,30 +1,16 @@
 // =============================================================================
-// ROAM — Safety Intel
-// Detailed safety information — Sonar + travel advisory + emergency numbers
+// ROAM — Safety Intel (visual-first rebuild)
+// Large score, icon scam cards, pill chips, tap-to-call buttons
 // =============================================================================
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  type TextStyle,
-  type ViewStyle,
+  Linking, Pressable, ScrollView, StyleSheet, Text, View,
+  type TextStyle, type ViewStyle,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  AlertTriangle,
-  ChevronLeft,
-  CheckCircle,
-  Flame,
-  MapPin,
-  Phone,
-  Shield,
-  ShieldAlert,
-  ShieldCheck,
-  Truck,
+  AlertTriangle, ChevronLeft, Flame, Phone, Shield, ShieldCheck, Truck,
 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../lib/constants';
@@ -34,123 +20,91 @@ import { getTravelAdvisory, formatSafetyScore, type TravelAdvisory } from '../li
 import { getEmergencyNumbers, type EmergencyNumbers } from '../lib/emergency-numbers';
 import { geocodeCity } from '../lib/geocoding';
 import { SkeletonCard } from '../components/premium/LoadingStates';
-import LiveBadge from '../components/ui/LiveBadge';
-import SourceCitation from '../components/ui/SourceCitation';
+import SonarCard from '../components/ui/SonarCard';
 import * as Haptics from '../lib/haptics';
 
 // ---------------------------------------------------------------------------
-// Risk color helper
+// Risk color + label
 // ---------------------------------------------------------------------------
 function getRiskColor(score: number): string {
-  if (score <= 2.5) return COLORS.sage;
-  if (score <= 3.5) return COLORS.gold;
-  if (score <= 4.5) return COLORS.coral;
-  return COLORS.emergencyRed;
+  if (score <= 2) return COLORS.sage;
+  if (score <= 3) return COLORS.gold;
+  return COLORS.coral;
+}
+function getRiskWord(score: number): string {
+  if (score <= 2) return 'Safe';
+  if (score <= 3) return 'Moderate';
+  if (score <= 4) return 'Caution';
+  return 'Danger';
 }
 
 // ---------------------------------------------------------------------------
-// Emergency number row
+// Extract sections from Sonar answer
 // ---------------------------------------------------------------------------
-interface EmergencyRowProps {
-  label: string;
-  numbers: string[];
-  icon: React.ReactNode;
+function extractSections(answer: string) {
+  const lines = answer.split('\n').map((l) => l.trim()).filter(Boolean);
+  const scams: string[] = [];
+  const safeAreas: string[] = [];
+  const avoidAreas: string[] = [];
+  let currentSection: 'scams' | 'safe' | 'avoid' | 'other' = 'other';
+
+  for (const line of lines) {
+    const lower = line.toLowerCase();
+    if (lower.includes('scam') && lower.length < 40) { currentSection = 'scams'; continue; }
+    if ((lower.includes('safe') && lower.includes('neighbor')) && lower.length < 40) { currentSection = 'safe'; continue; }
+    if ((lower.includes('avoid') || lower.includes('unsafe')) && lower.length < 50) { currentSection = 'avoid'; continue; }
+
+    const isBullet = /^[-*\u2022\d+.]/.test(line);
+    if (isBullet) {
+      const text = line.replace(/^[-*\u2022\d+.]\s*/, '');
+      if (currentSection === 'scams' || lower.includes('scam') || lower.includes('pickpocket')) {
+        scams.push(text);
+      } else if (currentSection === 'safe' || lower.includes('safe')) {
+        safeAreas.push(text);
+      } else if (currentSection === 'avoid' || lower.includes('avoid')) {
+        avoidAreas.push(text);
+      }
+    }
+  }
+  return { scams: scams.slice(0, 5), safeAreas: safeAreas.slice(0, 4), avoidAreas: avoidAreas.slice(0, 4) };
 }
 
-function EmergencyRow({ label, numbers, icon }: EmergencyRowProps) {
-  if (numbers.length === 0) return null;
+// ---------------------------------------------------------------------------
+// Scam icon card
+// ---------------------------------------------------------------------------
+function ScamCard({ text }: { text: string }) {
+  const parts = text.split(/[.!?–—:]\s*/);
+  const title = parts[0] ?? text;
+  const desc = parts.length > 1 ? parts.slice(1).join('. ').trim() : '';
   return (
-    <View style={styles.emergencyItem}>
-      {icon}
-      <View style={styles.emergencyItemBody}>
-        <Text style={styles.emergencyLabel}>{label}</Text>
-        <Text style={styles.emergencyNumber}>{numbers[0]}</Text>
+    <View style={s.scamCard}>
+      <AlertTriangle size={16} color={COLORS.gold} strokeWidth={1.5} />
+      <View style={s.scamBody}>
+        <Text style={s.scamTitle} numberOfLines={1}>{title}</Text>
+        {desc.length > 0 && <Text style={s.scamDesc} numberOfLines={1}>{desc}</Text>}
       </View>
     </View>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Extract sections from Sonar answer text
-// Heuristic: looks for bullet lines or numbered lines with keywords
+// Emergency tap-to-call button
 // ---------------------------------------------------------------------------
-function extractSections(answer: string): {
-  scams: string[];
-  safeAreas: string[];
-  avoidAreas: string[];
-  other: string;
-} {
-  const lines = answer
-    .split('\n')
-    .map((l) => l.trim())
-    .filter(Boolean);
+function EmergencyButton({ label, number, icon, color }: {
+  label: string; number: string; icon: React.ReactNode; color: string;
+}) {
+  const call = useCallback(() => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    void Linking.openURL(`tel:${number}`);
+  }, [number]);
 
-  const scams: string[] = [];
-  const safeAreas: string[] = [];
-  const avoidAreas: string[] = [];
-  const remainingLines: string[] = [];
-
-  let currentSection: 'scams' | 'safe' | 'avoid' | 'other' = 'other';
-
-  for (const line of lines) {
-    const lower = line.toLowerCase();
-
-    // Detect section headers
-    if (lower.includes('scam') && (lower.startsWith('#') || lower.endsWith(':') || lower.length < 40)) {
-      currentSection = 'scams';
-      continue;
-    }
-    if ((lower.includes('safe') && lower.includes('neighbor')) || (lower.includes('safe area') && lower.length < 40)) {
-      currentSection = 'safe';
-      continue;
-    }
-    if ((lower.includes('avoid') || lower.includes('unsafe') || lower.includes('danger')) && lower.length < 50) {
-      currentSection = 'avoid';
-      continue;
-    }
-
-    // Bullet/numbered line
-    const isBullet = /^[-*•\d+\.]/.test(line);
-
-    if (isBullet) {
-      const text = line.replace(/^[-*•\d+\.]\s*/, '');
-      if (
-        currentSection === 'scams' ||
-        lower.includes('scam') ||
-        lower.includes('pickpocket') ||
-        lower.includes('overcharge') ||
-        lower.includes('fake') ||
-        lower.includes('tourist trap')
-      ) {
-        scams.push(text);
-      } else if (
-        currentSection === 'safe' ||
-        lower.includes('safe') ||
-        lower.includes('tourist-friendly') ||
-        lower.includes('well-lit')
-      ) {
-        safeAreas.push(text);
-      } else if (
-        currentSection === 'avoid' ||
-        lower.includes('avoid') ||
-        lower.includes('unsafe') ||
-        lower.includes('caution')
-      ) {
-        avoidAreas.push(text);
-      } else {
-        remainingLines.push(line);
-      }
-    } else {
-      remainingLines.push(line);
-    }
-  }
-
-  return {
-    scams: scams.slice(0, 5),
-    safeAreas: safeAreas.slice(0, 4),
-    avoidAreas: avoidAreas.slice(0, 4),
-    other: remainingLines.join('\n'),
-  };
+  return (
+    <Pressable onPress={call} style={({ pressed }) => [s.emergBtn, { opacity: pressed ? 0.85 : 1, borderColor: color + '40' }]}>
+      {icon}
+      <Text style={[s.emergNum, { color }]}>{number}</Text>
+      <Text style={s.emergLabel}>{label}</Text>
+    </Pressable>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -161,18 +115,13 @@ function SafetyIntelScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const { destination: paramDest } = useLocalSearchParams<{ destination: string }>();
-  const trips = useAppStore((s) => s.trips);
+  const trips = useAppStore((st) => st.trips);
+  const destination = useMemo(
+    () => paramDest || (trips.length > 0 ? trips[0].destination : DESTINATIONS[0]?.label ?? 'Bangkok'),
+    [paramDest, trips],
+  );
 
-  const destination = useMemo((): string => {
-    if (paramDest) return paramDest;
-    if (trips.length > 0) return trips[0].destination;
-    return DESTINATIONS[0]?.label ?? 'Bangkok';
-  }, [paramDest, trips]);
-
-  // Sonar detailed safety intel
   const sonar = useSonarQuery(destination, 'safety_detail');
-
-  // Travel advisory
   const [advisory, setAdvisory] = useState<TravelAdvisory | null>(null);
   const [emergencyNumbers, setEmergencyNumbers] = useState<EmergencyNumbers | null>(null);
   const [dataLoading, setDataLoading] = useState(false);
@@ -181,31 +130,20 @@ function SafetyIntelScreen() {
     if (!destination) return;
     let cancelled = false;
     setDataLoading(true);
-
     (async () => {
       try {
         const geo = await geocodeCity(destination);
-        if (cancelled || !geo) return;
-
-        const countryCode = geo.countryCode;
-        if (!countryCode) return;
-
+        if (cancelled || !geo?.countryCode) return;
         const [adv, emerg] = await Promise.allSettled([
-          getTravelAdvisory(countryCode),
-          getEmergencyNumbers(countryCode),
+          getTravelAdvisory(geo.countryCode),
+          getEmergencyNumbers(geo.countryCode),
         ]);
-
         if (!cancelled) {
           if (adv.status === 'fulfilled' && adv.value) setAdvisory(adv.value);
           if (emerg.status === 'fulfilled' && emerg.value) setEmergencyNumbers(emerg.value);
         }
-      } catch {
-        // non-fatal
-      } finally {
-        if (!cancelled) setDataLoading(false);
-      }
+      } catch { /* non-fatal */ } finally { if (!cancelled) setDataLoading(false); }
     })();
-
     return () => { cancelled = true; };
   }, [destination]);
 
@@ -214,7 +152,6 @@ function SafetyIntelScreen() {
     router.back();
   }, [router]);
 
-  // Parse sonar answer into sections
   const sections = useMemo(
     () => (sonar.data ? extractSections(sonar.data.answer) : null),
     [sonar.data],
@@ -226,176 +163,120 @@ function SafetyIntelScreen() {
   );
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header */}
-      <View style={styles.headerBar}>
+    <View style={[s.container, { paddingTop: insets.top }]}>
+      <View style={s.headerBar}>
         <Pressable onPress={handleBack} hitSlop={12}>
           <ChevronLeft size={24} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
       </View>
 
-      <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + SPACING.xl }]}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={[s.scroll, { paddingBottom: insets.bottom + SPACING.xl }]} showsVerticalScrollIndicator={false}>
         {/* Hero */}
-        <View style={styles.heroBlock}>
+        <View style={s.heroBlock}>
           <Shield size={32} color={COLORS.sage} strokeWidth={1.5} />
-          <Text style={styles.heroTitle}>
-            {t('safetyIntel.heroTitle', { defaultValue: 'Stay safe in' })}
-          </Text>
-          <Text style={styles.heroDestination}>{destination}</Text>
+          <Text style={s.heroSub}>{t('safetyIntel.heroTitle', { defaultValue: 'Stay safe in' })}</Text>
+          <Text style={s.heroDest}>{destination}</Text>
         </View>
 
-        {/* Safety score from travel advisory */}
+        {/* Advisory score — large number */}
         {dataLoading && !advisory ? (
-          <SkeletonCard height={80} style={{ marginBottom: SPACING.md }} />
+          <SkeletonCard height={100} style={{ marginBottom: SPACING.xl }} />
         ) : advisory ? (
-          <View style={[styles.advisoryCard, { borderColor: riskColor + '40' }]}>
-            <View style={styles.advisoryTopRow}>
-              <ShieldAlert size={20} color={riskColor} strokeWidth={1.5} />
-              <Text style={[styles.advisoryLabel, { color: riskColor }]}>
-                {advisory.label}
+          <View style={[s.scoreCard, { borderColor: riskColor + '40' }]}>
+            <Text style={[s.scoreNum, { color: riskColor }]}>{formatSafetyScore(advisory.score)}</Text>
+            <Text style={[s.scoreWord, { color: riskColor }]}>{getRiskWord(advisory.score)}</Text>
+            {advisory.sourcesActive > 0 && (
+              <Text style={s.scoreMeta}>
+                {advisory.sourcesActive} {t('safetyIntel.govAdvisories', { defaultValue: 'government advisories' })}
               </Text>
-              <Text style={[styles.advisoryScore, { color: riskColor }]}>
-                {formatSafetyScore(advisory.score)}
-              </Text>
-            </View>
-            <Text style={styles.advisoryAdvice}>{advisory.advice}</Text>
-            {advisory.sourcesActive > 0 ? (
-              <Text style={styles.advisoryMeta}>
-                {t('safetyIntel.sourcesActive', { defaultValue: 'Based on' })} {advisory.sourcesActive} {t('safetyIntel.govAdvisories', { defaultValue: 'government advisories' })}
-              </Text>
-            ) : null}
-          </View>
-        ) : !dataLoading ? (
-          <View style={styles.fallbackContainer}>
-            <Text style={styles.fallbackText}>{t('safety.advisoryUnavailable', { defaultValue: 'Travel advisory info not available for this destination' })}</Text>
+            )}
           </View>
         ) : null}
 
-        {/* Sonar detailed safety intel */}
-        {sonar.isLoading && !sonar.error ? (
-          <SkeletonCard height={160} style={{ marginBottom: SPACING.md }} />
+        {/* Sonar detail — bullet cards */}
+        {sonar.isLoading ? (
+          <SkeletonCard height={140} style={{ marginBottom: SPACING.xl }} />
         ) : sonar.data ? (
-          <View style={styles.sonarCard}>
-            <View style={styles.sonarCardHeader}>
-              <Text style={styles.sonarCardLabel}>
-                {t('safetyIntel.sonarLabel', { defaultValue: 'DETAILED SAFETY INTEL' })}
-              </Text>
-              {sonar.isLive ? <LiveBadge size="sm" /> : null}
-            </View>
-            {/* Full answer */}
-            <Text style={styles.sonarAnswer}>{sonar.data.answer}</Text>
-            {sonar.citations.length > 0 ? (
-              <View style={{ marginTop: SPACING.sm }}>
-                <SourceCitation citations={sonar.citations} />
-              </View>
-            ) : null}
-          </View>
-        ) : sonar.error ? (
-          <View style={styles.errorCard}>
-            <Text style={styles.errorText}>
-              {t('safetyIntel.sonarError', { defaultValue: 'Safety intel unavailable. Check connection.' })}
-            </Text>
+          <View style={s.secGap}>
+            <SonarCard answer={sonar.data.answer} isLive={sonar.isLive} citations={sonar.citations} title="Safety Intel" maxBullets={3} />
           </View>
         ) : null}
 
-        {/* Extracted: Scams to watch for */}
-        {sections && sections.scams.length > 0 ? (
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeaderRow}>
-              <AlertTriangle size={16} color={COLORS.gold} strokeWidth={1.5} />
-              <Text style={styles.sectionTitle}>
-                {t('safetyIntel.scamsTitle', { defaultValue: 'Scams to watch for' })}
-              </Text>
-            </View>
-            {sections.scams.map((scam, i) => (
-              <View key={i} style={styles.bulletRow}>
-                <AlertTriangle size={12} color={COLORS.gold} strokeWidth={1.5} style={styles.bulletIcon} />
-                <Text style={styles.bulletText}>{scam}</Text>
-              </View>
-            ))}
+        {/* Scam warnings — icon cards */}
+        {sections && sections.scams.length > 0 && (
+          <View style={s.secGap}>
+            <Text style={s.secLabel}>{t('safetyIntel.scamsTitle', { defaultValue: 'SCAMS TO WATCH' })}</Text>
+            {sections.scams.map((scam, i) => <ScamCard key={i} text={scam} />)}
           </View>
-        ) : null}
+        )}
 
-        {/* Extracted: Safe neighborhoods */}
-        {sections && sections.safeAreas.length > 0 ? (
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeaderRow}>
-              <CheckCircle size={16} color={COLORS.sage} strokeWidth={1.5} />
-              <Text style={styles.sectionTitle}>
-                {t('safetyIntel.safeAreasTitle', { defaultValue: 'Safe neighborhoods' })}
-              </Text>
+        {/* Safe neighborhoods — green pill chips */}
+        {sections && sections.safeAreas.length > 0 && (
+          <View style={s.secGap}>
+            <Text style={s.secLabel}>{t('safetyIntel.safeAreasTitle', { defaultValue: 'SAFE NEIGHBORHOODS' })}</Text>
+            <View style={s.pillWrap}>
+              {sections.safeAreas.map((area, i) => (
+                <View key={i} style={s.pillSafe}>
+                  <Text style={s.pillSafeText} numberOfLines={1}>{area}</Text>
+                </View>
+              ))}
             </View>
-            {sections.safeAreas.map((area, i) => (
-              <View key={i} style={styles.bulletRow}>
-                <MapPin size={12} color={COLORS.sage} strokeWidth={1.5} style={styles.bulletIcon} />
-                <Text style={styles.bulletText}>{area}</Text>
-              </View>
-            ))}
           </View>
-        ) : null}
+        )}
 
-        {/* Extracted: Avoid at night */}
-        {sections && sections.avoidAreas.length > 0 ? (
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeaderRow}>
-              <ShieldAlert size={16} color={COLORS.coral} strokeWidth={1.5} />
-              <Text style={styles.sectionTitle}>
-                {t('safetyIntel.avoidAreasTitle', { defaultValue: 'Avoid at night' })}
-              </Text>
+        {/* Avoid areas — coral pill chips */}
+        {sections && sections.avoidAreas.length > 0 && (
+          <View style={s.secGap}>
+            <Text style={s.secLabel}>{t('safetyIntel.avoidAreasTitle', { defaultValue: 'AVOID AT NIGHT' })}</Text>
+            <View style={s.pillWrap}>
+              {sections.avoidAreas.map((area, i) => (
+                <View key={i} style={s.pillAvoid}>
+                  <Text style={s.pillAvoidText} numberOfLines={1}>{area}</Text>
+                </View>
+              ))}
             </View>
-            {sections.avoidAreas.map((area, i) => (
-              <View key={i} style={styles.bulletRow}>
-                <AlertTriangle size={12} color={COLORS.coral} strokeWidth={1.5} style={styles.bulletIcon} />
-                <Text style={styles.bulletText}>{area}</Text>
-              </View>
-            ))}
           </View>
-        ) : null}
+        )}
 
-        {/* Emergency numbers */}
+        {/* Emergency numbers — 3 large tap-to-call buttons */}
         {emergencyNumbers ? (
-          <View style={styles.emergencyCard}>
-            <View style={styles.sectionHeaderRow}>
-              <Phone size={16} color={COLORS.coral} strokeWidth={1.5} />
-              <Text style={styles.sectionTitle}>
-                {t('safetyIntel.emergencyTitle', { defaultValue: 'Emergency numbers' })}
-              </Text>
+          <View style={s.secGap}>
+            <Text style={s.secLabel}>{t('safetyIntel.emergencyTitle', { defaultValue: 'EMERGENCY NUMBERS' })}</Text>
+            <View style={s.emergGrid}>
+              {emergencyNumbers.police.length > 0 && (
+                <EmergencyButton
+                  label={t('safetyIntel.police', { defaultValue: 'Police' })}
+                  number={emergencyNumbers.police[0]}
+                  icon={<ShieldCheck size={20} color={COLORS.sage} strokeWidth={1.5} />}
+                  color={COLORS.sage}
+                />
+              )}
+              {emergencyNumbers.ambulance.length > 0 && (
+                <EmergencyButton
+                  label={t('safetyIntel.ambulance', { defaultValue: 'Ambulance' })}
+                  number={emergencyNumbers.ambulance[0]}
+                  icon={<Truck size={20} color={COLORS.coral} strokeWidth={1.5} />}
+                  color={COLORS.coral}
+                />
+              )}
+              {emergencyNumbers.fire.length > 0 && (
+                <EmergencyButton
+                  label={t('safetyIntel.fire', { defaultValue: 'Fire' })}
+                  number={emergencyNumbers.fire[0]}
+                  icon={<Flame size={20} color={COLORS.gold} strokeWidth={1.5} />}
+                  color={COLORS.gold}
+                />
+              )}
             </View>
-            <View style={styles.emergencyGrid}>
-              <EmergencyRow
-                label={t('safetyIntel.police', { defaultValue: 'Police' })}
-                numbers={emergencyNumbers.police}
-                icon={<ShieldCheck size={16} color={COLORS.sage} strokeWidth={1.5} />}
-              />
-              <EmergencyRow
-                label={t('safetyIntel.ambulance', { defaultValue: 'Ambulance' })}
-                numbers={emergencyNumbers.ambulance}
-                icon={<Truck size={16} color={COLORS.coral} strokeWidth={1.5} />}
-              />
-              <EmergencyRow
-                label={t('safetyIntel.fire', { defaultValue: 'Fire' })}
-                numbers={emergencyNumbers.fire}
-                icon={<Flame size={16} color={COLORS.gold} strokeWidth={1.5} />}
-              />
-            </View>
-            {emergencyNumbers.isMember112 ? (
-              <View style={styles.eu112Badge}>
-                <Text style={styles.eu112Text}>
-                  {t('safetyIntel.eu112', { defaultValue: 'EU 112 universal emergency number available' })}
-                </Text>
+            {emergencyNumbers.isMember112 && (
+              <View style={s.eu112}>
+                <Text style={s.eu112Text}>EU 112 available</Text>
               </View>
-            ) : null}
+            )}
           </View>
         ) : dataLoading ? (
           <SkeletonCard height={100} style={{ marginBottom: SPACING.md }} />
-        ) : (
-          <View style={styles.fallbackContainer}>
-            <Text style={styles.fallbackText}>Emergency numbers unavailable</Text>
-          </View>
-        )}
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -404,209 +285,44 @@ function SafetyIntelScreen() {
 // ---------------------------------------------------------------------------
 // Styles
 // ---------------------------------------------------------------------------
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.bg,
-  } as ViewStyle,
-  headerBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-  } as ViewStyle,
-  scroll: {
-    paddingHorizontal: SPACING.md,
-  } as ViewStyle,
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: COLORS.bg } as ViewStyle,
+  headerBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm } as ViewStyle,
+  scroll: { paddingHorizontal: SPACING.md } as ViewStyle,
+  secGap: { marginBottom: SPACING.xl } as ViewStyle,
+  secLabel: { fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, letterSpacing: 1.5, marginBottom: SPACING.sm } as TextStyle,
 
   // Hero
-  heroBlock: {
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
-    gap: SPACING.xs,
-    paddingTop: SPACING.sm,
-  } as ViewStyle,
-  heroTitle: {
-    fontFamily: FONTS.body,
-    fontSize: 16,
-    color: COLORS.creamDim,
-    marginTop: SPACING.sm,
-  } as TextStyle,
-  heroDestination: {
-    fontFamily: FONTS.header,
-    fontSize: 32,
-    color: COLORS.cream,
-    textAlign: 'center',
-  } as TextStyle,
+  heroBlock: { alignItems: 'center', marginBottom: SPACING.lg, gap: SPACING.xs, paddingTop: SPACING.sm } as ViewStyle,
+  heroSub: { fontFamily: FONTS.body, fontSize: 16, color: COLORS.creamDim, marginTop: SPACING.sm } as TextStyle,
+  heroDest: { fontFamily: FONTS.header, fontSize: 32, color: COLORS.cream, textAlign: 'center' } as TextStyle,
 
-  // Advisory card
-  advisoryCard: {
-    backgroundColor: COLORS.surface1,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-    gap: SPACING.xs,
-  } as ViewStyle,
-  advisoryTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-  } as ViewStyle,
-  advisoryLabel: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 15,
-    flex: 1,
-  } as TextStyle,
-  advisoryScore: {
-    fontFamily: FONTS.mono,
-    fontSize: 13,
-  } as TextStyle,
-  advisoryAdvice: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.creamSoft,
-    lineHeight: 20,
-  } as TextStyle,
-  advisoryMeta: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.muted,
-    letterSpacing: 0.3,
-    marginTop: 2,
-  } as TextStyle,
+  // Score card — large number
+  scoreCard: { backgroundColor: COLORS.surface1, borderRadius: RADIUS.lg, borderWidth: 1, padding: SPACING.lg, marginBottom: SPACING.xl, alignItems: 'center', gap: SPACING.xs } as ViewStyle,
+  scoreNum: { fontFamily: FONTS.mono, fontSize: 48 } as TextStyle,
+  scoreWord: { fontFamily: FONTS.bodyMedium, fontSize: 18 } as TextStyle,
+  scoreMeta: { fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, letterSpacing: 0.3, marginTop: 2 } as TextStyle,
 
-  // Sonar card
-  sonarCard: {
-    backgroundColor: COLORS.surface1,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-  } as ViewStyle,
-  sonarCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    marginBottom: SPACING.sm,
-  } as ViewStyle,
-  sonarCardLabel: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.sage,
-    letterSpacing: 1.5,
-  } as TextStyle,
-  sonarAnswer: {
-    fontFamily: FONTS.body,
-    fontSize: 14,
-    color: COLORS.creamSoft,
-    lineHeight: 22,
-  } as TextStyle,
+  // Scam cards
+  scamCard: { flexDirection: 'row', alignItems: 'flex-start', gap: SPACING.sm, backgroundColor: COLORS.surface1, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, padding: SPACING.md, marginBottom: SPACING.sm } as ViewStyle,
+  scamBody: { flex: 1 } as ViewStyle,
+  scamTitle: { fontFamily: FONTS.bodyMedium, fontSize: 14, color: COLORS.cream } as TextStyle,
+  scamDesc: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.creamBrightDim, marginTop: 2 } as TextStyle,
 
-  // Error
-  errorCard: {
-    backgroundColor: COLORS.surface1,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.dangerBorderLight,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-  } as ViewStyle,
-  errorText: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.coral,
-  } as TextStyle,
+  // Pills
+  pillWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm } as ViewStyle,
+  pillSafe: { backgroundColor: COLORS.sageVeryFaint, borderWidth: 1, borderColor: COLORS.sageBorder, borderRadius: RADIUS.pill, paddingHorizontal: SPACING.sm, paddingVertical: 6 } as ViewStyle,
+  pillSafeText: { fontFamily: FONTS.bodyMedium, fontSize: 13, color: COLORS.sage } as TextStyle,
+  pillAvoid: { backgroundColor: COLORS.coralSubtle, borderWidth: 1, borderColor: COLORS.coralBorder, borderRadius: RADIUS.pill, paddingHorizontal: SPACING.sm, paddingVertical: 6 } as ViewStyle,
+  pillAvoidText: { fontFamily: FONTS.bodyMedium, fontSize: 13, color: COLORS.coral } as TextStyle,
 
-  // Section card (scams, safe/avoid areas)
-  sectionCard: {
-    backgroundColor: COLORS.surface1,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-    gap: SPACING.xs,
-  } as ViewStyle,
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    marginBottom: SPACING.sm,
-  } as ViewStyle,
-  sectionTitle: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 15,
-    color: COLORS.cream,
-  } as TextStyle,
-  bulletRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: SPACING.xs,
-    marginBottom: SPACING.xs,
-  } as ViewStyle,
-  bulletIcon: {
-    marginTop: 2,
-    flexShrink: 0,
-  } as ViewStyle,
-  bulletText: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.creamSoft,
-    lineHeight: 20,
-    flex: 1,
-  } as TextStyle,
-
-  // Emergency card
-  emergencyCard: {
-    backgroundColor: COLORS.surface1,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-  } as ViewStyle,
-  emergencyGrid: {
-    gap: SPACING.sm,
-  } as ViewStyle,
-  emergencyItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    backgroundColor: COLORS.bgGlass,
-    borderRadius: RADIUS.sm,
-    padding: SPACING.sm,
-  } as ViewStyle,
-  emergencyItemBody: {
-    flex: 1,
-  } as ViewStyle,
-  emergencyLabel: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.muted,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  } as TextStyle,
-  emergencyNumber: {
-    fontFamily: FONTS.mono,
-    fontSize: 20,
-    color: COLORS.coral,
-  } as TextStyle,
-  eu112Badge: {
-    backgroundColor: COLORS.sageSubtle,
-    borderRadius: RADIUS.sm,
-    padding: SPACING.sm,
-    marginTop: SPACING.sm,
-  } as ViewStyle,
-  eu112Text: {
-    fontFamily: FONTS.bodyMedium,
-    fontSize: 12,
-    color: COLORS.sage,
-    textAlign: 'center',
-  } as TextStyle,
-  fallbackContainer: { paddingVertical: SPACING.md, alignItems: 'center' } as ViewStyle,
-  fallbackText: { color: COLORS.muted, fontSize: 14, fontFamily: FONTS.body } as TextStyle,
+  // Emergency buttons
+  emergGrid: { flexDirection: 'row', gap: SPACING.sm } as ViewStyle,
+  emergBtn: { flex: 1, backgroundColor: COLORS.surface1, borderRadius: RADIUS.lg, borderWidth: 1, padding: SPACING.md, alignItems: 'center', gap: SPACING.xs } as ViewStyle,
+  emergNum: { fontFamily: FONTS.mono, fontSize: 28 } as TextStyle,
+  emergLabel: { fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, letterSpacing: 0.5, textTransform: 'uppercase' } as TextStyle,
+  eu112: { backgroundColor: COLORS.sageSubtle, borderRadius: RADIUS.sm, padding: SPACING.sm, marginTop: SPACING.sm } as ViewStyle,
+  eu112Text: { fontFamily: FONTS.bodyMedium, fontSize: 12, color: COLORS.sage, textAlign: 'center' } as TextStyle,
 });
 
 export default SafetyIntelScreen;
