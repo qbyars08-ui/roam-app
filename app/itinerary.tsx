@@ -1322,7 +1322,7 @@ export default function ItineraryScreen() {
                     {parsed.days.length} days · {currency !== 'USD' && rates ? formatLocalPrice(parsed.totalBudget, currency, rates) : parsed.totalBudget}
                   </Text>
                 </View>
-                {trip?.isMockData && (
+                {__DEV__ && trip?.isMockData && (
                   <View style={styles.mockBadgeWrap}>
                     <MockDataBadge label="Using sample data" />
                   </View>

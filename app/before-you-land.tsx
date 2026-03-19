@@ -384,7 +384,7 @@ function BeforeYouLandScreen() {
               </View>
             </>
           ) : (
-            <Text style={styles.noData}>{t('beforeYouLand.noTimezone', { defaultValue: 'Timezone data unavailable for this destination' })}</Text>
+            <Text style={styles.noData}>{t('beforeYouLand.noTimezone', { defaultValue: 'Timezone info not available for this destination' })}</Text>
           )}
         </CollapsibleSection>
 
@@ -432,7 +432,7 @@ function BeforeYouLandScreen() {
               ) : null}
             </>
           ) : (
-            <Text style={styles.noData}>{t('beforeYouLand.noWeather', { defaultValue: 'Weather data unavailable' })}</Text>
+            <Text style={styles.noData}>{t('beforeYouLand.noWeather', { defaultValue: 'Weather info not available right now' })}</Text>
           )}
         </CollapsibleSection>
 
@@ -502,7 +502,7 @@ function BeforeYouLandScreen() {
             </>
           ) : null}
           {!exchangeRateLabel && !culturalGuide ? (
-            <Text style={styles.noData}>{t('beforeYouLand.noMoney', { defaultValue: 'Money data unavailable for this destination' })}</Text>
+            <Text style={styles.noData}>{t('beforeYouLand.noMoney', { defaultValue: 'Currency info not available for this destination' })}</Text>
           ) : null}
         </CollapsibleSection>
 
@@ -576,7 +576,7 @@ function BeforeYouLandScreen() {
             </>
           ) : null}
           {!emergencyData && !medicalGuide ? (
-            <Text style={styles.noData}>{t('beforeYouLand.noEmergency', { defaultValue: 'Emergency data unavailable for this destination' })}</Text>
+            <Text style={styles.noData}>{t('beforeYouLand.noEmergency', { defaultValue: 'Emergency info not available for this destination' })}</Text>
           ) : null}
         </CollapsibleSection>
 
@@ -620,7 +620,7 @@ function BeforeYouLandScreen() {
               ) : null}
             </>
           ) : (
-            <Text style={styles.noData}>{t('beforeYouLand.noCultural', { defaultValue: 'Cultural data unavailable for this destination' })}</Text>
+            <Text style={styles.noData}>{t('beforeYouLand.noCultural', { defaultValue: 'Cultural info not available for this destination' })}</Text>
           )}
         </CollapsibleSection>
 

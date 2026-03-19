@@ -354,7 +354,7 @@ export default function IAmHereNow(): React.JSX.Element {
           </View>
         ) : destination ? (
           <View style={styles.fallbackContainer}>
-            <Text style={styles.fallbackText}>Weather data unavailable</Text>
+            <Text style={styles.fallbackText}>{t('hereNow.weatherUnavailable', { defaultValue: 'Weather info not available right now' })}</Text>
           </View>
         ) : null}
 
@@ -421,7 +421,7 @@ export default function IAmHereNow(): React.JSX.Element {
               </>
             ) : sonarError ? (
               <Text style={styles.sonarLoading}>
-                {t('hereNow.liveUnavailable', { defaultValue: 'Live data unavailable' })}
+                {t('hereNow.liveUnavailable', { defaultValue: 'Check back in a bit for live updates' })}
               </Text>
             ) : null}
           </View>

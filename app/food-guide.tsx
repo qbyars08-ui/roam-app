@@ -338,7 +338,7 @@ export default function FoodGuideScreen() {
             )}
           </View>
         ) : (
-          <SonarFallback label="No price data available for this destination." />
+          <SonarFallback label="Price info updates when more data is available" />
         )}
 
         {/* Vegetarian guide */}

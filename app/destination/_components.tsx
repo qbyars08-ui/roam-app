@@ -22,6 +22,7 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { COLORS, FONTS, RADIUS, SPACING } from '../../lib/constants';
+import { SkeletonCard } from '../../components/premium/LoadingStates';
 import type { CurrentWeather } from '../../lib/apis/openweather';
 import type { RouteResult } from '../../lib/apis/rome2rio';
 import type { CostOfLiving } from '../../lib/cost-of-living';
@@ -95,9 +96,10 @@ export function RightNowSection({
         title={t('destination.rightNow', { defaultValue: 'Right now' })}
       />
       {!hasData ? (
-        <Text style={styles.empty}>
-          {t('destination.rightNowLoading', { defaultValue: 'Loading...' })}
-        </Text>
+        <View style={{ gap: SPACING.sm }}>
+          <SkeletonCard height={20} borderRadius={RADIUS.sm} />
+          <SkeletonCard height={60} borderRadius={RADIUS.md} />
+        </View>
       ) : (
         <View style={[CARD_BASE, styles.rightNowCard]}>
           {localTime && (
@@ -220,7 +222,7 @@ export function RoutesSection({
       ) : (
         <Text style={styles.empty}>
           {t('destination.noRoutes', {
-            defaultValue: 'No route data available.',
+            defaultValue: 'Route info will show up closer to your trip.',
           })}
         </Text>
       )}
@@ -247,7 +249,7 @@ export function CostSection({
           title={t('destination.whatItCosts', { defaultValue: 'What it costs' })}
         />
         <Text style={styles.empty}>
-          {t('destination.noCostData', { defaultValue: 'No data available for this destination.' })}
+          {t('destination.noCostData', { defaultValue: 'Cost info isn\u2019t available for this destination yet.' })}
         </Text>
       </View>
     );
@@ -377,7 +379,7 @@ export function SafetySection({
       ) : (
         <Text style={styles.empty}>
           {t('destination.noSafety', {
-            defaultValue: 'No safety data available.',
+            defaultValue: 'Safety info isn\u2019t available for this destination yet.',
           })}
         </Text>
       )}
@@ -434,7 +436,7 @@ export function VisaSection({
       ) : (
         <Text style={styles.empty}>
           {t('destination.noVisa', {
-            defaultValue: 'No visa data available.',
+            defaultValue: 'Visa info isn\u2019t available for this destination yet.',
           })}
         </Text>
       )}
@@ -518,7 +520,7 @@ export function AttractionsSection({
       ) : (
         <Text style={styles.empty}>
           {t('destination.noAttractions', {
-            defaultValue: 'No attraction data available.',
+            defaultValue: 'We don\u2019t have attraction info for this destination yet.',
           })}
         </Text>
       )}
@@ -583,7 +585,7 @@ export function RestaurantsSection({
       ) : (
         <Text style={styles.empty}>
           {t('destination.noVenues', {
-            defaultValue: 'No restaurant data available.',
+            defaultValue: 'Restaurant picks will appear once we have data for this destination.',
           })}
         </Text>
       )}

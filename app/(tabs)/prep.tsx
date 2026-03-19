@@ -168,8 +168,22 @@ function PrepScreen() {
           </View>
         )}
 
+        {/* Nudge: plan a trip to get personalized prep */}
+        {!activeTrip && (
+          <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/(tabs)/plan' as never); }} accessibilityLabel={t('prep.planTripCta', { defaultValue: 'Plan a trip for personalized prep' })} accessibilityRole="button" style={({ pressed }) => [{ flexDirection: 'row' as const, alignItems: 'center' as const, marginHorizontal: 20, marginBottom: SPACING.lg, paddingVertical: SPACING.md, paddingHorizontal: SPACING.lg, backgroundColor: COLORS.sageSubtle, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.sageBorder, gap: SPACING.md, opacity: pressed ? 0.85 : 1 }]}>
+            <View style={{ width: 40, height: 40, borderRadius: RADIUS.md, backgroundColor: COLORS.sageSoft, alignItems: 'center' as const, justifyContent: 'center' as const }}>
+              <Flame size={20} color={COLORS.sage} strokeWidth={1.5} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: FONTS.bodyMedium, fontSize: 15, color: COLORS.cream }}>{t('prep.planTripTitle', { defaultValue: 'Build a trip for personalized prep' })}</Text>
+              <Text style={{ fontFamily: FONTS.body, fontSize: 12, color: COLORS.creamDim, marginTop: 2 }}>{t('prep.planTripSub', { defaultValue: 'Browsing general intel below. Plan a trip for tailored checklists.' })}</Text>
+            </View>
+            <ChevronRight size={18} color={COLORS.sage} strokeWidth={1.5} />
+          </Pressable>
+        )}
+
         {hasNoData ? (
-          <View style={sharedStyles.noDataWrap}><Text style={sharedStyles.noDataTitle}>{t('prep.dataNotAvailable', { defaultValue: 'Data not available for this destination' })}</Text><Text style={sharedStyles.noDataText}>{`No intel for ${selectedDest} yet. Try a nearby major city.`}</Text></View>
+          <View style={sharedStyles.noDataWrap}><Text style={sharedStyles.noDataTitle}>{t('prep.dataNotAvailable', { defaultValue: 'We don\u2019t have intel for this destination yet' })}</Text><Text style={sharedStyles.noDataText}>{t('prep.tryNearbyCity', { defaultValue: 'Try a nearby major city instead' })}</Text></View>
         ) : (
           <>
             <EditorialHeader safety={safety} destination={selectedDest} countryName={countryName} />
@@ -202,7 +216,7 @@ function PrepScreen() {
               </View>
             ) : !sonarPrep.isLoading && !sonarSafety.isLoading ? (
               <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}>
-                <SonarFallback label="Live conditions unavailable" />
+                <SonarFallback label={t('prep.conditionsLater', { defaultValue: 'Conditions update when your trip gets closer' })} />
               </View>
             ) : null}
 
@@ -220,13 +234,13 @@ function PrepScreen() {
 
             {activeSection === 'schedule' && <ScheduleSection itinerary={parsedItinerary} />}
             {activeSection === 'overview' && safety && <SafetySection safety={safety} />}
-            {activeSection === 'overview' && !safety && <View style={sharedStyles.tabContent}><Text style={sharedStyles.noDataText}>No overview data available for this destination.</Text></View>}
+            {activeSection === 'overview' && !safety && <View style={sharedStyles.tabContent}><Text style={sharedStyles.noDataText}>{t('prep.noOverviewYet', { defaultValue: 'We don\u2019t have overview intel for this destination yet. Try a nearby major city.' })}</Text></View>}
             {activeSection === 'packing' && <PackingSection destination={selectedDest} trip={activeTrip} itinerary={parsedItinerary} />}
             {activeSection === 'jetlag' && <JetLagSection destination={selectedDest} />}
             {activeSection === 'crowds' && <CrowdsSection destination={selectedDest} trip={activeTrip} />}
             {activeSection === 'emergency' && <EmergencySection emergency={emergency} destination={selectedDest} />}
             {activeSection === 'health' && safety && <HealthSection safety={safety} tapWaterFromCultural={tapWaterFromCultural} medicalGuide={medicalGuide} destination={selectedDest} />}
-            {activeSection === 'health' && !safety && <View style={sharedStyles.tabContent}><View style={sharedStyles.noDataWrap}><Text style={sharedStyles.noDataTitle}>{t('prep.dataNotAvailable', { defaultValue: 'Data not available for this destination' })}</Text><Text style={sharedStyles.noDataText}>{`No intel for ${selectedDest} yet. Try a nearby major city.`}</Text></View></View>}
+            {activeSection === 'health' && !safety && <View style={sharedStyles.tabContent}><View style={sharedStyles.noDataWrap}><Text style={sharedStyles.noDataTitle}>{t('prep.dataNotAvailable', { defaultValue: 'We don\u2019t have intel for this destination yet' })}</Text><Text style={sharedStyles.noDataText}>{t('prep.tryNearbyCity', { defaultValue: 'Try a nearby major city instead' })}</Text></View></View>}
             {activeSection === 'language' && <LanguageSection langPack={langPack} destination={selectedDest} />}
             {activeSection === 'visa' && <VisaSection destination={selectedDest} passport={passport} visaReqs={visaReqs} geoCoords={geoCoords} />}
             {activeSection === 'currency' && <CurrencySection cultural={cultural} destination={selectedDest} />}
@@ -245,7 +259,7 @@ function PrepScreen() {
         {!hasNoData && (
           <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push({ pathname: '/offline-pack', params: { tripId: activeTrip?.id ?? activeTripId ?? '' } } as never); }} style={({ pressed }) => [sharedStyles.bodyIntelCta, { borderLeftColor: COLORS.sage, marginTop: SPACING.md }, pressed && { opacity: 0.7 }]} accessibilityLabel={`Download ${selectedDest} prep data for offline use`} accessibilityRole="button">
             <Download size={20} color={COLORS.sage} />
-            <View style={{ flex: 1 }}><Text style={[sharedStyles.bodyIntelCtaTitle, { color: COLORS.sage }]}>{t('prep.downloadForOffline', { defaultValue: 'Download for Offline' })}</Text><Text style={sharedStyles.bodyIntelCtaSubtitle}>{`Save ${selectedDest} intel to your device — no WiFi needed later`}</Text></View>
+            <View style={{ flex: 1 }}><Text style={[sharedStyles.bodyIntelCtaTitle, { color: COLORS.sage }]}>{t('prep.downloadForOffline', { defaultValue: 'Download for Offline' })}</Text><Text style={sharedStyles.bodyIntelCtaSubtitle}>{t('prep.saveOfflineSub', { defaultValue: `Save ${selectedDest} intel to your device \u2014 no WiFi needed later`, destination: selectedDest })}</Text></View>
             <ChevronRight size={18} color={COLORS.creamMuted} />
           </Pressable>
         )}

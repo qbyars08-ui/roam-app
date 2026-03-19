@@ -19,7 +19,7 @@ import { useRouter } from 'expo-router';
 import { Clock, Headphones, MapPin, ChevronRight, Users, GitCompare } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, SPACING, RADIUS } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import { useAppStore } from '../../lib/store';
 import { track } from '../../lib/analytics';
 import { getTimezoneByDestination } from '../../lib/timezone';
@@ -262,7 +262,7 @@ export default function PulseScreen() {
               accessibilityRole="button"
             >
               <Headphones size={18} color={COLORS.sage} strokeWidth={1.5} />
-              <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 15, color: COLORS.sage }}>{t('pulse.liveGuide', { defaultValue: 'Live Guide' })}</Text>
+              <Text style={{ fontFamily: FONTS.bodyMedium, fontSize: 15, color: COLORS.sage }}>{t('pulse.liveGuide', { defaultValue: 'Live Guide' })}</Text>
             </Pressable>
           </View>
         )}
@@ -278,16 +278,18 @@ export default function PulseScreen() {
           </View>
         )}
 
-        {/* No-trip CTA */}
+        {/* No-trip CTA — compelling, not a tiny afterthought */}
         {trips.length === 0 && (
           <View style={{ paddingHorizontal: SPACING.lg, marginBottom: SPACING.lg }}>
-            <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(tabs)/plan' as never); }} style={({ pressed }) => [styles.noTripCtaCard, { opacity: pressed ? 0.85 : 1 }]} accessibilityLabel={t('pulse.noTripCta', { defaultValue: 'Plan a trip to unlock live features' })} accessibilityRole="button">
-              <MapPin size={20} color={COLORS.sage} strokeWidth={1.5} />
-              <View style={{ flex: 1, marginLeft: SPACING.sm }}>
-                <Text style={styles.noTripCtaText}>{t('pulse.noTripCta', { defaultValue: 'Plan a trip to unlock live features' })}</Text>
-                <Text style={styles.noTripCtaSub}>{t('pulse.noTripCtaSub', { defaultValue: 'Check in, meet travelers, and go live when you arrive' })}</Text>
+            <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/(tabs)/plan' as never); }} style={({ pressed }) => [styles.noTripCtaCard, { opacity: pressed ? 0.85 : 1 }]} accessibilityLabel={t('pulse.noTripCta', { defaultValue: 'Plan a trip to unlock live features' })} accessibilityRole="button">
+              <View style={{ width: 48, height: 48, borderRadius: RADIUS.lg, backgroundColor: COLORS.sageSubtle, alignItems: 'center', justifyContent: 'center', marginRight: SPACING.md }}>
+                <MapPin size={24} color={COLORS.sage} strokeWidth={1.5} />
               </View>
-              <ChevronRight size={18} color={COLORS.muted} strokeWidth={1.5} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.noTripCtaText}>{t('pulse.noTripCtaHeadline', { defaultValue: 'Your trip, live' })}</Text>
+                <Text style={styles.noTripCtaSub}>{t('pulse.noTripCtaSub', { defaultValue: 'Plan a trip to unlock check-ins, live guides, and real-time intel for your destination' })}</Text>
+              </View>
+              <ChevronRight size={18} color={COLORS.sage} strokeWidth={1.5} />
             </Pressable>
           </View>
         )}
@@ -349,7 +351,7 @@ export default function PulseScreen() {
 
           {/* Time recs */}
           {recLabel ? (
-            <Text style={{ fontFamily: 'DMMono_400Regular', fontSize: 11, color: COLORS.sage, letterSpacing: 0.5, marginBottom: SPACING.sm, textTransform: 'uppercase' }}>{recLabel.text}</Text>
+            <Text style={{ fontFamily: FONTS.mono, fontSize: 11, color: COLORS.sage, letterSpacing: 0.5, marginBottom: SPACING.sm, textTransform: 'uppercase' }}>{recLabel.text}</Text>
           ) : null}
           {timeRecs.length > 0 ? (
             <View style={styles.editorialStack}>
@@ -358,7 +360,7 @@ export default function PulseScreen() {
           ) : !sonarPulse.data && !sonarPulse.isLoading ? (
             <View style={styles.emptyState}>
               <Clock size={24} color={COLORS.creamDim} strokeWidth={1.5} />
-              <Text style={styles.emptyText}>{t('pulse.emptyState', { defaultValue: `Nothing live for ${selectedDest.label} right now. Pick a destination above.`, destination: selectedDest.label })}</Text>
+              <Text style={styles.emptyText}>{t('pulse.emptyState', { defaultValue: `Waiting for live updates from ${selectedDest.label}. Try another destination above or check back later.`, destination: selectedDest.label })}</Text>
             </View>
           ) : null}
         </View>
@@ -408,10 +410,16 @@ export default function PulseScreen() {
             <Text style={styles.sectionHeading}>{t('pulse.liveEvents.heading', { defaultValue: `Happening in ${selectedDest.label}`, destination: selectedDest.label })}</Text>
             <View style={styles.liveEventsStack}>{liveEvents.map((evt) => (<LiveEventCard key={evt.id} event={evt} />))}</View>
           </View>
+        ) : liveEvents === null ? (
+          <View style={styles.section}>
+            <Text style={styles.liveEventsLabel}>{t('pulse.liveEvents.label', { defaultValue: 'LIVE EVENTS' })}</Text>
+            <SkeletonCard height={80} borderRadius={RADIUS.md} style={{ marginBottom: 8 }} />
+            <SkeletonCard height={80} borderRadius={RADIUS.md} />
+          </View>
         ) : null}
 
         {/* Foursquare trending venues */}
-        {fsqPlaces && fsqPlaces.length > 0 && (
+        {fsqPlaces && fsqPlaces.length > 0 ? (
           <View style={styles.apiSection}>
             <Text style={styles.apiSectionLabel}>{t('pulse.trendingVenues.label', { defaultValue: 'TRENDING VENUES' })}</Text>
             <Text style={styles.apiSectionHeading}>{t('pulse.trendingVenues.heading', { defaultValue: `Popular in ${selectedDest.label}` })}</Text>
@@ -431,10 +439,19 @@ export default function PulseScreen() {
               })}
             </ScrollView>
           </View>
-        )}
+        ) : fsqPlaces === null ? (
+          <View style={styles.apiSection}>
+            <Text style={styles.apiSectionLabel}>{t('pulse.trendingVenues.label', { defaultValue: 'TRENDING VENUES' })}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.fsqPlacesRow}>
+              <SkeletonCard width={140} height={180} borderRadius={RADIUS.lg} style={{ marginRight: 8 }} />
+              <SkeletonCard width={140} height={180} borderRadius={RADIUS.lg} style={{ marginRight: 8 }} />
+              <SkeletonCard width={140} height={180} borderRadius={RADIUS.lg} />
+            </ScrollView>
+          </View>
+        ) : null}
 
         {/* TripAdvisor Trending */}
-        {taAttractions && taAttractions.length > 0 && (
+        {taAttractions && taAttractions.length > 0 ? (
           <View style={styles.apiSection}>
             <Text style={styles.apiSectionLabel}>{t('pulse.trending.label', { defaultValue: 'TRENDING' })}</Text>
             <Text style={styles.apiSectionHeading}>{t('pulse.trending.heading', { defaultValue: `Worth your time in ${selectedDest.label}` })}</Text>
@@ -452,10 +469,16 @@ export default function PulseScreen() {
               ))}
             </View>
           </View>
-        )}
+        ) : taAttractions === null ? (
+          <View style={styles.apiSection}>
+            <Text style={styles.apiSectionLabel}>{t('pulse.trending.label', { defaultValue: 'TRENDING' })}</Text>
+            <SkeletonCard height={72} borderRadius={RADIUS.md} style={{ marginBottom: 8 }} />
+            <SkeletonCard height={72} borderRadius={RADIUS.md} />
+          </View>
+        ) : null}
 
         {/* GetYourGuide Experiences */}
-        {gygActivities && gygActivities.length > 0 && (
+        {gygActivities && gygActivities.length > 0 ? (
           <View style={styles.apiSection}>
             <Text style={styles.apiSectionLabel}>{t('pulse.experiences.label', { defaultValue: 'EXPERIENCES' })}</Text>
             <Text style={styles.apiSectionHeading}>{t('pulse.experiences.heading', { defaultValue: `Bookable in ${selectedDest.label}` })}</Text>
@@ -473,7 +496,13 @@ export default function PulseScreen() {
               ))}
             </View>
           </View>
-        )}
+        ) : gygActivities === null ? (
+          <View style={styles.apiSection}>
+            <Text style={styles.apiSectionLabel}>{t('pulse.experiences.label', { defaultValue: 'EXPERIENCES' })}</Text>
+            <SkeletonCard height={72} borderRadius={RADIUS.md} style={{ marginBottom: 8 }} />
+            <SkeletonCard height={72} borderRadius={RADIUS.md} />
+          </View>
+        ) : null}
 
         {/* Foursquare Insider Tips */}
         {fsqTips && fsqTips.length > 0 && (

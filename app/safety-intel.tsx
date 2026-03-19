@@ -270,7 +270,7 @@ function SafetyIntelScreen() {
           </View>
         ) : !dataLoading ? (
           <View style={styles.fallbackContainer}>
-            <Text style={styles.fallbackText}>Travel advisory data unavailable</Text>
+            <Text style={styles.fallbackText}>{t('safety.advisoryUnavailable', { defaultValue: 'Travel advisory info not available for this destination' })}</Text>
           </View>
         ) : null}
 

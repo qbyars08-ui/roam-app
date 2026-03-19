@@ -456,7 +456,7 @@ export default function LivingDestinationPage(): React.JSX.Element {
             pulseItems.map((item, i) => <EventCard key={i} text={item} />)
           ) : (
             <Text style={s.empty}>
-              {t('destination.noPulse', { defaultValue: 'No intel available.' })}
+              {t('destination.noPulse', { defaultValue: 'Live intel updates closer to your trip.' })}
             </Text>
           )}
           {pulseCitations.length > 0 && (

@@ -26,7 +26,8 @@ import { useSocialProfile } from '../../lib/hooks/useSocialProfile';
 import { useTripPresence } from '../../lib/hooks/useTripPresence';
 import { trackEvent, track } from '../../lib/analytics';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS, MAGAZINE } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { SkeletonCard } from '../../components/premium/LoadingStates';
 import type { SocialProfile, TripPresence as TripPresenceType } from '../../lib/types/social';
 import { DEFAULT_PRIVACY } from '../../lib/types/social';
 import { calculateChemistryScore } from '../../lib/social-chemistry';
@@ -173,14 +174,10 @@ export default function PeopleTab() {
 
   const handleCompleteProfile = useCallback(async () => {
     setSaving(true);
-    console.log('[People] Starting profile creation...');
-    console.log('[People] Draft:', JSON.stringify({ name: draft.name, homeCity: draft.homeCity, styles: draft.travelStyles, langs: draft.languages }));
     try {
       const session = useAppStore.getState().session;
-      console.log('[People] Session exists:', !!session, 'User ID:', session?.user?.id ?? 'none');
 
       const { travelStyle, vibeTags } = resolveProfileFromDraft(draft.travelStyles);
-      console.log('[People] Resolved style:', travelStyle, 'vibeTags:', vibeTags);
 
       const profileData: Partial<SocialProfile> = {
         displayName: draft.name.trim() || 'Traveler',
@@ -195,13 +192,10 @@ export default function PeopleTab() {
       let result: SocialProfile | null = null;
       try {
         result = await upsert(profileData);
-        console.log('[People] Supabase upsert result:', result ? 'SUCCESS' : 'NULL');
       } catch (upsertErr: unknown) {
         const msg = upsertErr instanceof Error ? upsertErr.message : String(upsertErr);
-        console.log('[People] Supabase upsert failed:', msg);
         // Fallback: save locally if Supabase fails (guest mode or no tables)
         if (msg.includes('Not authenticated') || msg.includes('sign in')) {
-          console.log('[People] Guest mode — saving profile locally');
           const localProfile: SocialProfile = {
             id: `local-${Date.now()}`,
             userId: session?.user?.id ?? `guest-${Date.now()}`,
@@ -228,7 +222,6 @@ export default function PeopleTab() {
       }
 
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      console.log('[People] Profile saved successfully!');
 
       trackEvent('profile_created', {
         name: draft.name.trim(),
@@ -249,9 +242,8 @@ export default function PeopleTab() {
             departureDate: departure,
             lookingFor: vibeTags,
           });
-          console.log('[People] Trip presence posted for', draft.firstTripDestination);
         } catch {
-          console.log('[People] Trip presence post failed (non-blocking)');
+          // non-blocking — trip presence post failed
         }
         trackEvent('trip_added_to_presence', {
           destination: draft.firstTripDestination.trim(),
@@ -280,13 +272,13 @@ export default function PeopleTab() {
     setConnections(updated);
     // Persist connections to AsyncStorage
     AsyncStorage.setItem('roam_connections', JSON.stringify(updated)).catch(() => {});
-    console.log('[People] Connection requested:', roamerId);
     trackEvent('connect_tapped', { roamerId }).catch(() => {});
   }, [connections]);
 
-  const handleDestinationChipPress = useCallback((_dest: string) => {
-    // Could navigate to destination-specific people view
-  }, []);
+  const handleDestinationChipPress = useCallback((dest: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push({ pathname: '/destination/[name]', params: { name: dest } } as never);
+  }, [router]);
 
   const handleAddTrip = useCallback(async () => {
     if (!tripDestInput.trim()) return;
@@ -323,8 +315,12 @@ export default function PeopleTab() {
   // RENDER: STATE 0 — Loading profile
   if (profileLoading) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top, justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ fontFamily: FONTS.mono, fontSize: 12, color: COLORS.creamMuted, letterSpacing: 1 }}>LOADING</Text>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={{ padding: SPACING.lg, gap: SPACING.md }}>
+          <SkeletonCard height={60} borderRadius={RADIUS.lg} />
+          <SkeletonCard height={120} borderRadius={RADIUS.lg} />
+          <SkeletonCard height={80} borderRadius={RADIUS.lg} />
+        </View>
       </View>
     );
   }
@@ -341,6 +337,21 @@ export default function PeopleTab() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {/* Hero intro — only on first step */}
+          {step === 0 && (
+            <View style={{ alignItems: 'center', paddingHorizontal: SPACING.lg, paddingTop: SPACING.xl, paddingBottom: SPACING.md }}>
+              <View style={{ width: 56, height: 56, borderRadius: RADIUS.full, backgroundColor: COLORS.sageSubtle, alignItems: 'center', justifyContent: 'center', marginBottom: SPACING.md }}>
+                <Users size={28} color={COLORS.sage} strokeWidth={1.5} />
+              </View>
+              <Text style={{ fontFamily: FONTS.header, fontSize: 26, color: COLORS.cream, textAlign: 'center', letterSpacing: -0.5, marginBottom: SPACING.xs }}>
+                {t('people.heroTitle', { defaultValue: 'Find travelers going\nwhere you\u2019re going' })}
+              </Text>
+              <Text style={{ fontFamily: FONTS.body, fontSize: 14, color: COLORS.creamDim, textAlign: 'center', lineHeight: 20 }}>
+                {t('people.heroSub', { defaultValue: 'Set up your profile in 30 seconds. Connect with people on the same trip.' })}
+              </Text>
+            </View>
+          )}
+
           <StepIndicator current={step} total={6} />
 
           <Animated.View style={[styles.stepContainer, { opacity: fadeAnim }]}>

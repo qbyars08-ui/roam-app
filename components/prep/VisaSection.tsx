@@ -28,7 +28,7 @@ export default function VisaSection({ destination, passport, visaReqs, geoCoords
   if (!visa) {
     return (
       <View style={sharedStyles.tabContent}>
-        <Text style={sharedStyles.noDataText}>{t('prep.visaDataNotAvailable', { defaultValue: 'Visa data not available for this destination.' })}</Text>
+        <Text style={sharedStyles.noDataText}>{t('prep.visaDataNotAvailable', { defaultValue: 'Visa info isn\u2019t available for this destination yet.' })}</Text>
         <Text style={styles.visaReminder}>
           {t('prep.visaIntelContact', { defaultValue: 'Contact your embassy for visa requirements.' })}
         </Text>

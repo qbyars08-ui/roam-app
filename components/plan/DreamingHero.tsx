@@ -1,14 +1,38 @@
 // =============================================================================
 // ROAM — DreamingSection (DREAMING state full-screen hero)
-// Typewriter cities, destination cards, CTA buttons
+// Typewriter cities, destination photo cards, CTA buttons.
+// Never shows blank space — always beautiful, always helpful.
 // =============================================================================
-import React from 'react';
-import { Pressable, StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
+import React, { useCallback } from 'react';
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  type ImageStyle,
+  type TextStyle,
+  type ViewStyle,
+} from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronRight, Heart } from 'lucide-react-native';
+import { ChevronRight, Heart, MapPin } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, DESTINATION_HERO_PHOTOS } from '../../lib/constants';
+
+// ---------------------------------------------------------------------------
+// Hardcoded popular destinations — always visible, never blank
+// ---------------------------------------------------------------------------
+const POPULAR_DESTINATIONS = [
+  { label: 'Tokyo', hook: 'Neon streets, ramen alleys', photo: DESTINATION_HERO_PHOTOS['Tokyo'] },
+  { label: 'Bali', hook: 'Temples, rice terraces, surf', photo: DESTINATION_HERO_PHOTOS['Bali'] },
+  { label: 'Paris', hook: 'Croissants, the Marais, light', photo: DESTINATION_HERO_PHOTOS['Paris'] },
+  { label: 'Barcelona', hook: 'Tapas at 10pm, beach days', photo: DESTINATION_HERO_PHOTOS['Barcelona'] },
+  { label: 'Lisbon', hook: 'Tiles, trams, pastel de nata', photo: DESTINATION_HERO_PHOTOS['Lisbon'] },
+  { label: 'Mexico City', hook: 'Mezcal, murals, mole', photo: DESTINATION_HERO_PHOTOS['Mexico City'] },
+];
 
 // ---------------------------------------------------------------------------
 // Props
@@ -30,12 +54,58 @@ export default function DreamingHero({ cityLabel, onQuickTrip, onPlanTogether, p
 
   const headline = personalizedGreeting ?? t('plan.dreaming.headline', { defaultValue: 'Where are you going?' });
 
+  const handleDestinationPress = useCallback((destination: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push({ pathname: '/destination/[name]', params: { name: destination } } as never);
+  }, [router]);
+
   return (
     <View style={styles.dreamingContainer}>
       <Text style={styles.dreamingHeadline}>
         {headline}
       </Text>
       <Text style={styles.dreamingTypewriter}>{cityLabel}</Text>
+
+      {/* ── Destination Photo Cards (always visible) ── */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.destCardsScroll}
+        style={styles.destCardsContainer}
+      >
+        {POPULAR_DESTINATIONS.map((dest) => (
+          <Pressable
+            key={dest.label}
+            onPress={() => handleDestinationPress(dest.label)}
+            accessibilityLabel={`${dest.label} - ${dest.hook}`}
+            accessibilityRole="button"
+            style={({ pressed }) => [
+              styles.destCard,
+              { transform: [{ scale: pressed ? 0.97 : 1 }] },
+            ]}
+          >
+            <Image
+              source={{ uri: dest.photo }}
+              style={styles.destCardImage}
+              resizeMode="cover"
+            />
+            <LinearGradient
+              colors={['transparent', COLORS.overlayDark]}
+              locations={[0.3, 1]}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.destCardContent}>
+              <View style={styles.destCardPinRow}>
+                <MapPin size={12} color={COLORS.sage} strokeWidth={1.5} />
+                <Text style={styles.destCardLabel}>{dest.label}</Text>
+              </View>
+              <Text style={styles.destCardHook} numberOfLines={1}>{dest.hook}</Text>
+            </View>
+          </Pressable>
+        ))}
+      </ScrollView>
+
+      {/* ── CTA Buttons ── */}
       <View style={styles.dreamingButtons}>
         <Pressable
           onPress={onPlanTogether}
@@ -103,6 +173,55 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
     letterSpacing: 0.5,
   } as TextStyle,
+
+  // Destination photo cards
+  destCardsContainer: {
+    marginBottom: SPACING.lg,
+    marginHorizontal: -20,
+  } as ViewStyle,
+  destCardsScroll: {
+    paddingHorizontal: 20,
+    gap: SPACING.sm,
+  } as ViewStyle,
+  destCard: {
+    width: 150,
+    height: 180,
+    borderRadius: RADIUS.lg,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  } as ViewStyle,
+  destCardImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  } as ImageStyle,
+  destCardContent: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: SPACING.sm,
+  } as ViewStyle,
+  destCardPinRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 2,
+  } as ViewStyle,
+  destCardLabel: {
+    fontFamily: FONTS.header,
+    fontSize: 16,
+    color: COLORS.white,
+  } as TextStyle,
+  destCardHook: {
+    fontFamily: FONTS.body,
+    fontSize: 11,
+    color: COLORS.creamSoft,
+    lineHeight: 14,
+  } as TextStyle,
+
+  // CTA buttons
   dreamingButtons: {
     flexDirection: 'row',
     gap: SPACING.md,

@@ -182,7 +182,8 @@ export default function SonarCard({
 }
 
 // ---------------------------------------------------------------------------
-// Fallback: "Live data unavailable" message with Info icon
+// Fallback: contextual message when live data is not available
+// Never says "Live data unavailable" — always helpful and warm.
 // ---------------------------------------------------------------------------
 export function SonarFallback({
   label,
@@ -190,11 +191,13 @@ export function SonarFallback({
   label?: string;
 }): React.JSX.Element {
   const { t } = useTranslation();
+  // Replace developer-style messages with user-friendly ones
+  const displayLabel = label ?? t('sonar.checkBack', { defaultValue: 'Check back closer to your trip for live updates' });
   return (
     <View style={styles.fallback}>
-      <Info size={14} color={COLORS.muted} strokeWidth={1.5} />
+      <Info size={14} color={COLORS.creamDim} strokeWidth={1.5} />
       <Text style={styles.fallbackText}>
-        {label ?? t('sonar.unavailable', { defaultValue: 'Live data unavailable' })}
+        {displayLabel}
       </Text>
     </View>
   );

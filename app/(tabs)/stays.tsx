@@ -36,6 +36,7 @@ import { track } from '../../lib/analytics';
 import { captureEvent } from '../../lib/posthog';
 import { getHotelLink, openBookingLink } from '../../lib/booking-links';
 import { DatePickerInline } from '../../components/stays/StaysDatePicker';
+import { SkeletonCard } from '../../components/premium/LoadingStates';
 // ---------------------------------------------------------------------------
 // Curated destination data (no APIs)
 // ---------------------------------------------------------------------------
@@ -315,9 +316,9 @@ export default function StaysScreen() {
       >
         {/* Hero */}
         <View style={styles.hero}>
-          <Text style={styles.heroTitle}>Find your stay.</Text>
+          <Text style={styles.heroTitle}>{t('stays.heroTitle', { defaultValue: 'Find your stay.' })}</Text>
           <Text style={styles.heroSub}>
-            We search Booking.com so you get the best price, every time.
+            {t('stays.heroSub', { defaultValue: 'We search Booking.com so you get the best price, every time.' })}
           </Text>
         </View>
 
@@ -329,19 +330,19 @@ export default function StaysScreen() {
               style={styles.input}
               value={destinationText}
               onChangeText={setDestinationText}
-              placeholder="Where are you staying?"
+              placeholder={t('stays.wherePlaceholder', { defaultValue: 'Where are you staying?' })}
               placeholderTextColor={COLORS.creamDim}
             />
           </View>
 
           <View style={styles.dateRow}>
             <DatePickerInline
-              label="CHECK-IN"
+              label={t('stays.checkIn', { defaultValue: 'CHECK-IN' })}
               value={checkIn}
               onSelect={setCheckIn}
             />
             <DatePickerInline
-              label="CHECK-OUT"
+              label={t('stays.checkOut', { defaultValue: 'CHECK-OUT' })}
               value={checkOut}
               onSelect={setCheckOut}
               minimumDate={checkIn}
@@ -349,7 +350,7 @@ export default function StaysScreen() {
           </View>
 
           <View style={styles.guestsRow}>
-            <Text style={styles.guestsLabel}>Guests</Text>
+            <Text style={styles.guestsLabel}>{t('stays.guests', { defaultValue: 'Guests' })}</Text>
             <View style={styles.counter}>
               <Pressable
                 style={({ pressed }) => [styles.counterBtn, { opacity: pressed ? 0.7 : 1 }]}
@@ -385,7 +386,7 @@ export default function StaysScreen() {
             onPress={handleSearch}
           >
             <ExternalLink size={18} color={COLORS.bg} strokeWidth={1.5} />
-            <Text style={styles.searchBtnText}>Search on Booking.com</Text>
+            <Text style={styles.searchBtnText}>{t('stays.searchBooking', { defaultValue: 'Search on Booking.com' })}</Text>
           </Pressable>
         </View>
 
@@ -396,15 +397,15 @@ export default function StaysScreen() {
             style={({ pressed }) => [styles.planCta, pressed && { opacity: 0.8 }]}
           >
             <Building2 size={20} color={COLORS.gold} strokeWidth={1.5} />
-            <Text style={styles.planCtaText}>Plan a trip first to get personalized stays</Text>
+            <Text style={styles.planCtaText}>{t('stays.planFirst', { defaultValue: 'Plan a trip to get personalized recommendations' })}</Text>
           </Pressable>
         )}
 
         {/* Popular Destinations */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Popular destinations</Text>
+          <Text style={styles.sectionTitle}>{t('stays.popularDestinations', { defaultValue: 'Popular destinations' })}</Text>
           <Text style={styles.sectionSub}>
-            Where travelers are booking right now
+            {t('stays.popularSub', { defaultValue: 'Where travelers are booking right now' })}
           </Text>
         </View>
 
@@ -423,7 +424,7 @@ export default function StaysScreen() {
           sonarStays.data ? (
             <View style={styles.apiSection}>
               <View style={styles.apiSectionHeader}>
-                <Text style={styles.apiSectionLabel}>LIVE INTEL</Text>
+                <Text style={styles.apiSectionLabel}>{t('stays.liveIntel', { defaultValue: 'LIVE INTEL' })}</Text>
               </View>
               <SonarCard
                 answer={sonarStays.data.answer}
@@ -435,8 +436,8 @@ export default function StaysScreen() {
             </View>
           ) : !sonarStays.isLoading ? (
             <View style={styles.apiSection}>
-              <Text style={styles.apiSectionLabel}>LIVE INTEL</Text>
-              <SonarFallback label="Live intel unavailable" />
+              <Text style={styles.apiSectionLabel}>{t('stays.liveIntel', { defaultValue: 'LIVE INTEL' })}</Text>
+              <SonarFallback label={t('stays.liveIntelFallback', { defaultValue: 'Enter a destination to see stay recommendations' })} />
             </View>
           ) : null
         ) : null}
@@ -445,8 +446,8 @@ export default function StaysScreen() {
         {destinationText.trim() ? (
           nearbyHotels && nearbyHotels.length > 0 ? (
             <View style={styles.apiSection}>
-              <Text style={styles.apiSectionLabel}>NEARBY HOTELS</Text>
-              <Text style={styles.apiSectionHeading}>Real hotels near {destinationText.trim()}</Text>
+              <Text style={styles.apiSectionLabel}>{t('stays.nearbyHotels', { defaultValue: 'NEARBY HOTELS' })}</Text>
+              <Text style={styles.apiSectionHeading}>{t('stays.nearbyHeading', { defaultValue: `Hotels near ${destinationText.trim()}`, destination: destinationText.trim() })}</Text>
               <View style={styles.apiCardStack}>
                 {nearbyHotels.map((h) => (
                   <APIDataCard
@@ -463,18 +464,25 @@ export default function StaysScreen() {
             </View>
           ) : nearbyHotels !== null ? (
             <View style={styles.apiSection}>
-              <Text style={styles.apiSectionLabel}>NEARBY HOTELS</Text>
-              <SonarFallback label="Couldn't load nearby hotels" />
+              <Text style={styles.apiSectionLabel}>{t('stays.nearbyHotels', { defaultValue: 'NEARBY HOTELS' })}</Text>
+              <SonarFallback label={t('stays.nearbyFallback', { defaultValue: 'Nearby hotels appear once you pick a destination' })} />
             </View>
-          ) : null
+          ) : (
+            <View style={styles.apiSection}>
+              <Text style={styles.apiSectionLabel}>{t('stays.nearbyHotels', { defaultValue: 'NEARBY HOTELS' })}</Text>
+              <SkeletonCard height={72} borderRadius={RADIUS.md} style={{ marginBottom: 8 }} />
+              <SkeletonCard height={72} borderRadius={RADIUS.md} style={{ marginBottom: 8 }} />
+              <SkeletonCard height={72} borderRadius={RADIUS.md} />
+            </View>
+          )
         ) : null}
 
         {/* TripAdvisor Top Hotels */}
         {destinationText.trim() ? (
           taHotels && taHotels.length > 0 ? (
             <View style={styles.apiSection}>
-              <Text style={styles.apiSectionLabel}>TOP RATED</Text>
-              <Text style={styles.apiSectionHeading}>Highest rated stays</Text>
+              <Text style={styles.apiSectionLabel}>{t('stays.topRated', { defaultValue: 'TOP RATED' })}</Text>
+              <Text style={styles.apiSectionHeading}>{t('stays.topRatedHeading', { defaultValue: 'Highest rated stays' })}</Text>
               <View style={styles.apiCardStack}>
                 {taHotels.map((h) => (
                   <APIDataCard
@@ -491,17 +499,24 @@ export default function StaysScreen() {
             </View>
           ) : taHotels !== null ? (
             <View style={styles.apiSection}>
-              <Text style={styles.apiSectionLabel}>TOP RATED</Text>
-              <SonarFallback label="Couldn't load top-rated stays" />
+              <Text style={styles.apiSectionLabel}>{t('stays.topRated', { defaultValue: 'TOP RATED' })}</Text>
+              <SonarFallback label={t('stays.topRatedFallback', { defaultValue: 'Top-rated stays appear once you pick a destination' })} />
             </View>
-          ) : null
+          ) : (
+            <View style={styles.apiSection}>
+              <Text style={styles.apiSectionLabel}>{t('stays.topRated', { defaultValue: 'TOP RATED' })}</Text>
+              <SkeletonCard height={72} borderRadius={RADIUS.md} style={{ marginBottom: 8 }} />
+              <SkeletonCard height={72} borderRadius={RADIUS.md} style={{ marginBottom: 8 }} />
+              <SkeletonCard height={72} borderRadius={RADIUS.md} />
+            </View>
+          )
         ) : null}
 
         {/* Stay Inspiration */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Stay inspiration</Text>
+          <Text style={styles.sectionTitle}>{t('stays.inspiration', { defaultValue: 'Stay inspiration' })}</Text>
           <Text style={styles.sectionSub}>
-            Unique stays by vibe and style
+            {t('stays.inspirationSub', { defaultValue: 'Unique stays by vibe and style' })}
           </Text>
         </View>
 
@@ -521,8 +536,7 @@ export default function StaysScreen() {
 
         {/* Affiliate disclaimer */}
         <Text style={styles.disclaimer}>
-          ROAM earns a small commission when you book through Booking.com. This
-          keeps the app free.
+          {t('stays.disclaimer', { defaultValue: 'ROAM earns a small commission when you book through Booking.com. This keeps the app free.' })}
         </Text>
       </Animated.ScrollView>
     </View>

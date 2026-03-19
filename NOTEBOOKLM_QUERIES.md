@@ -73,5 +73,40 @@ EXPECTED OUTPUT: The single most important Pro feature with psychological reason
 
 ---
 
+## QUERY 9 — Two Users, One App
+
+QUESTION: ROAM needs to serve two completely different users with one product:
+
+USER A: A 13-year-old who generates a Tokyo trip to show their parents. They'll never go. They just want to dream and share. They have zero budget. They want it to feel like TikTok — fast, visual, shareable.
+
+USER B: A 55-year-old dad planning a $20,000 family trip to Italy. Business class. Specific dietary needs. He wants to connect his airline loyalty program, track every expense, download a PDF for the hotel, and know exactly what visa requirements apply. He wants it to feel like a travel agent — thorough, trustworthy, complete.
+
+How does one app serve both without feeling like a toy to Dad or boring to the teenager? What are the specific UI/UX patterns that accommodate both? What does the onboarding look like for each? Which features does each user NEVER see?
+
+EXPECTED OUTPUT: Specific dual-persona design system with feature visibility rules.
+
+---
+
+## QUERY 10 — Making It Undetectable
+
+QUESTION: ROAM is built by one 17-year-old with a MacBook. The goal is to make it look and feel like a team of 20 built it at a Series A startup. What are the specific design patterns, UI details, and product decisions that separate "solo dev project" from "real product"? What do users notice first that makes something feel amateur? What are the easiest wins to look professional (loading animations, error states, onboarding, typography consistency, haptic feedback, micro-interactions)?
+
+EXPECTED OUTPUT: Top 20 "professionalism signals" ranked by user impact, with specific implementation guidance.
+
+---
+
+## QUERY 11 — Competitive Positioning
+
+QUESTION: ROAM's 3 closest competitors are Wanderlog, TripIt, and Google Travel. For each:
+1. What do they do better than ROAM?
+2. What does ROAM do that they can't?
+3. What's the one-sentence pitch that positions ROAM against each?
+
+Also consider: Hopper (flight deals), Rome2Rio (transport), Culture Trip (editorial), Lonely Planet (guides). Where does ROAM fit in this landscape? What's the unique angle nobody else owns?
+
+EXPECTED OUTPUT: Competitive matrix with ROAM's defensible position.
+
+---
+
 ## ANSWERS (paste NotebookLM responses below each question)
 

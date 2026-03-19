@@ -256,7 +256,7 @@ export default function LiveDestinationScreen(): React.JSX.Element {
             ))}
           </View>
         ) : (
-          <SonarFallback label={t('liveFeed.noTrending', { defaultValue: 'No trending venues found' })} />
+          <SonarFallback label={t('liveFeed.noTrending', { defaultValue: 'Trending spots will show up once we have more data here' })} />
         )}
 
         {/* Alert CTA */}

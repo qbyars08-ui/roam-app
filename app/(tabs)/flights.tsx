@@ -561,7 +561,7 @@ export default function FlightsScreen() {
               <Text style={styles.sectionLabel}>{t('flights.sonarLabel', { defaultValue: 'LIVE INTEL' })}</Text>
             </View>
             <Text style={styles.sectionTitle}>
-              {t('flights.sonarTitle', { defaultValue: 'What Sonar found' })}
+              {t('flights.sonarTitle', { defaultValue: 'What we found' })}
             </Text>
             <SonarCard
               answer={sonarFlights.data.answer}
@@ -574,15 +574,15 @@ export default function FlightsScreen() {
         ) : !sonarFlights.isLoading && !sonarFlights.error ? (
           <View style={styles.sonarSection}>
             <Text style={styles.sectionLabel}>{t('flights.sonarLabel', { defaultValue: 'LIVE INTEL' })}</Text>
-            <SonarFallback label="Live flight intel unavailable" />
+            <SonarFallback label={t('flights.sonarFallback', { defaultValue: 'Enter a destination above for live flight tips' })} />
           </View>
         ) : null}
 
         {/* ── Alternative Routes (Rome2Rio) ── */}
         {altRoutes && altRoutes.length > 0 ? (
           <View style={styles.apiSection}>
-            <Text style={styles.apiSectionLabel}>ALTERNATIVE ROUTES</Text>
-            <Text style={styles.apiSectionHeading}>Other ways to get there</Text>
+            <Text style={styles.apiSectionLabel}>{t('flights.altRoutesLabel', { defaultValue: 'ALTERNATIVE ROUTES' })}</Text>
+            <Text style={styles.apiSectionHeading}>{t('flights.altRoutesHeading', { defaultValue: 'Other ways to get there' })}</Text>
             <View style={styles.apiCardStack}>
               {altRoutes.map((route, i) => {
                 const hrs = Math.floor(route.duration / 60);
@@ -610,8 +610,8 @@ export default function FlightsScreen() {
           </View>
         ) : altRoutes !== null && altRoutes.length === 0 ? (
           <View style={styles.apiSection}>
-            <Text style={styles.apiSectionLabel}>ALTERNATIVE ROUTES</Text>
-            <SonarFallback label="Couldn't load alternative routes" />
+            <Text style={styles.apiSectionLabel}>{t('flights.altRoutesLabel', { defaultValue: 'ALTERNATIVE ROUTES' })}</Text>
+            <SonarFallback label={t('flights.altRoutesFallback', { defaultValue: 'Route options appear once you pick two cities' })} />
           </View>
         ) : null}
 
