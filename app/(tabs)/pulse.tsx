@@ -30,6 +30,7 @@ import WanderlustFeed from '../../components/features/WanderlustFeed';
 import { useSonarQuery } from '../../lib/sonar';
 import LiveBadge from '../../components/ui/LiveBadge';
 import SourceCitation from '../../components/ui/SourceCitation';
+import SonarCard, { SonarFallback, APIDataCard } from '../../components/ui/SonarCard';
 import { SkeletonCard } from '../../components/premium/LoadingStates';
 import { searchEvents, type EventResult } from '../../lib/apis/eventbrite';
 import { searchLocations, type TALocation } from '../../lib/apis/tripadvisor';
@@ -305,14 +306,14 @@ export default function PulseScreen() {
 
           {/* Live Sonar intel card */}
           {sonarPulse.data && !sonarPulse.isLoading ? (
-            <View style={styles.sonarCard}>
-              <View style={styles.sonarCardTitleRow}>
-                <Text style={styles.sonarCardTitle}>{t('pulse.rightNow', { defaultValue: 'Right now' })}</Text>
-                {(sonarPulse.data.isLive ?? sonarPulse.isLive) && <LiveBadge />}
-              </View>
-              <Text style={styles.sonarAnswer}>{sonarPulse.data.answer}</Text>
-              {sonarPulse.citations.length > 0 ? (<View style={{ marginTop: SPACING.sm }}><SourceCitation citations={sonarPulse.citations} /></View>) : null}
-              {sonarPulse.data.timestamp ? (<Text style={styles.sonarTimestamp}>{t('sonar.updated', { defaultValue: 'Updated' })}{' '}{new Date(sonarPulse.data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>) : null}
+            <View style={{ marginTop: SPACING.md }}>
+              <SonarCard
+                answer={sonarPulse.data.answer}
+                isLive={sonarPulse.data.isLive ?? sonarPulse.isLive}
+                citations={sonarPulse.citations}
+                title={t('pulse.rightNow', { defaultValue: 'Right now' })}
+                timestamp={sonarPulse.data.timestamp}
+              />
             </View>
           ) : null}
 
@@ -339,10 +340,12 @@ export default function PulseScreen() {
             {sonarLocal.isLive && <LiveBadge />}
           </View>
           {sonarLocal.data ? (
-            <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/destination/[name]', params: { name: selectedDest.label } } as never); }} style={({ pressed }) => [styles.sonarCard, { opacity: pressed ? 0.85 : 1 }]}>
-              <Text style={styles.sonarAnswer}>{sonarLocal.data.answer}</Text>
-              {sonarLocal.citations.length > 0 && (<View style={{ marginTop: SPACING.sm }}><SourceCitation citations={sonarLocal.citations} /></View>)}
-            </Pressable>
+            <SonarCard
+              answer={sonarLocal.data.answer}
+              isLive={sonarLocal.isLive}
+              citations={sonarLocal.citations}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/destination/[name]', params: { name: selectedDest.label } } as never); }}
+            />
           ) : null}
           <View style={styles.tipsStack}>
             {localTips.map((tip, i) => (<LocalTipRow key={i} tip={tip} destinationLabel={selectedDest.label} />))}
@@ -404,11 +407,15 @@ export default function PulseScreen() {
             <Text style={styles.apiSectionHeading}>{t('pulse.trending.heading', { defaultValue: `Worth your time in ${selectedDest.label}` })}</Text>
             <View style={styles.apiCardStack}>
               {taAttractions.map((loc) => (
-                <Pressable key={loc.locationId} style={styles.apiCard} onPress={() => { Haptics.selectionAsync(); Linking.openURL(`https://www.tripadvisor.com/Search?q=${encodeURIComponent(loc.name + ' ' + selectedDest.label)}`).catch(() => {}); }}>
-                  <Text style={styles.apiCardName}>{loc.name}</Text>
-                  {loc.rating != null && <Text style={styles.apiCardMeta}>{loc.rating} ★ · {loc.numReviews ?? 0} reviews</Text>}
-                  {loc.address ? <Text style={styles.apiCardSub}>{loc.address}</Text> : null}
-                </Pressable>
+                <APIDataCard
+                  key={loc.locationId}
+                  name={loc.name}
+                  rating={loc.rating ?? null}
+                  reviewCount={loc.numReviews ?? null}
+                  address={loc.address ?? null}
+                  category={null}
+                  onPress={() => { Haptics.selectionAsync(); Linking.openURL(`https://www.tripadvisor.com/Search?q=${encodeURIComponent(loc.name + ' ' + selectedDest.label)}`).catch(() => {}); }}
+                />
               ))}
             </View>
           </View>
@@ -421,11 +428,15 @@ export default function PulseScreen() {
             <Text style={styles.apiSectionHeading}>{t('pulse.experiences.heading', { defaultValue: `Bookable in ${selectedDest.label}` })}</Text>
             <View style={styles.apiCardStack}>
               {gygActivities.map((act) => (
-                <Pressable key={act.id} style={styles.apiCard} onPress={() => { Haptics.selectionAsync(); if (act.bookingUrl) Linking.openURL(act.bookingUrl); }}>
-                  <Text style={styles.apiCardName}>{act.name}</Text>
-                  {act.price != null && <Text style={styles.apiCardMeta}>From {act.currency ?? '$'} {act.price}</Text>}
-                  {act.rating != null && <Text style={styles.apiCardSub}>{act.rating} ★ · {act.duration ?? ''}</Text>}
-                </Pressable>
+                <APIDataCard
+                  key={act.id}
+                  name={act.name}
+                  rating={act.rating ?? null}
+                  reviewCount={null}
+                  address={act.duration ? `Duration: ${act.duration}` : null}
+                  category={act.price != null ? `From ${act.currency ?? '$'}${act.price}` : null}
+                  onPress={() => { Haptics.selectionAsync(); if (act.bookingUrl) Linking.openURL(act.bookingUrl); }}
+                />
               ))}
             </View>
           </View>

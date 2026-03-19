@@ -51,6 +51,7 @@ import FlightPriceCalendar from '../../components/features/FlightPriceCalendar';
 import { useSonarQuery } from '../../lib/sonar';
 import LiveBadge from '../../components/ui/LiveBadge';
 import SourceCitation from '../../components/ui/SourceCitation';
+import SonarCard, { SonarFallback, APIDataCard } from '../../components/ui/SonarCard';
 import { styles } from '../../components/flights/flights-styles';
 import { POPULAR_ROUTES, INSPIRATION, type PopularRoute, type InspirationCard } from '../../components/flights/flights-data';
 import { AirportDropdown, DatePickerInline, RouteCard, InspirationCardComponent, type AirportSuggestion } from '../../components/flights/FlightsCards';
@@ -560,26 +561,22 @@ export default function FlightsScreen() {
           <View style={styles.sonarSection}>
             <View style={styles.sonarSectionHeader}>
               <Text style={styles.sectionLabel}>{t('flights.sonarLabel', { defaultValue: 'LIVE INTEL' })}</Text>
-              <LiveBadge />
             </View>
             <Text style={styles.sectionTitle}>
               {t('flights.sonarTitle', { defaultValue: 'What Sonar found' })}
             </Text>
-            <Pressable style={({ pressed }) => [styles.sonarCard, { opacity: pressed ? 0.85 : 1 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); const dest = toText?.trim() || 'anywhere'; Linking.openURL(`https://www.skyscanner.com/transport/flights/${encodeURIComponent(fromCode || fromText?.trim() || 'anywhere')}/${encodeURIComponent(toCode || dest)}/`).catch(() => {}); }} accessibilityLabel="View flight intel on Skyscanner" accessibilityRole="button">
-              <Text style={styles.sonarAnswer}>{sonarFlights.data.answer}</Text>
-              {sonarFlights.citations.length > 0 && (
-                <View style={{ marginTop: SPACING.sm }}>
-                  <SourceCitation citations={sonarFlights.citations} />
-                </View>
-              )}
-            </Pressable>
+            <SonarCard
+              answer={sonarFlights.data.answer}
+              isLive={sonarFlights.isLive}
+              citations={sonarFlights.citations}
+              timestamp={sonarFlights.data.timestamp}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); const dest = toText?.trim() || 'anywhere'; Linking.openURL(`https://www.skyscanner.com/transport/flights/${encodeURIComponent(fromCode || fromText?.trim() || 'anywhere')}/${encodeURIComponent(toCode || dest)}/`).catch(() => {}); }}
+            />
           </View>
         ) : !sonarFlights.isLoading && !sonarFlights.error ? (
           <View style={styles.sonarSection}>
             <Text style={styles.sectionLabel}>{t('flights.sonarLabel', { defaultValue: 'LIVE INTEL' })}</Text>
-            <View style={styles.fallbackContainer}>
-              <Text style={styles.fallbackText}>Live flight intel unavailable</Text>
-            </View>
+            <SonarFallback label="Live flight intel unavailable" />
           </View>
         ) : null}
 
@@ -600,13 +597,15 @@ export default function FlightsScreen() {
                   : null;
                 const operator = route.segments?.[0]?.operator ?? null;
                 return (
-                  <Pressable key={i} style={({ pressed }) => [styles.apiCard, { opacity: pressed ? 0.85 : 1 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.rome2rio.com/map/${encodeURIComponent(fromText?.trim() || '')}/${encodeURIComponent(toText?.trim() || '')}`).catch(() => {}); }} accessibilityLabel={`${route.name} route, ${durationStr}`} accessibilityRole="button">
-                    <Text style={styles.apiCardName}>{route.name}</Text>
-                    <Text style={styles.apiCardMeta}>
-                      {durationStr}{priceStr ? ` · ${priceStr}` : ''}
-                    </Text>
-                    {operator && <Text style={styles.apiCardSub}>via {operator}</Text>}
-                  </Pressable>
+                  <APIDataCard
+                    key={i}
+                    name={route.name}
+                    rating={null}
+                    reviewCount={null}
+                    address={operator ? `via ${operator}` : null}
+                    category={priceStr ? `${durationStr} · ${priceStr}` : durationStr}
+                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.rome2rio.com/map/${encodeURIComponent(fromText?.trim() || '')}/${encodeURIComponent(toText?.trim() || '')}`).catch(() => {}); }}
+                  />
                 );
               })}
             </View>
@@ -614,9 +613,7 @@ export default function FlightsScreen() {
         ) : altRoutes !== null && altRoutes.length === 0 ? (
           <View style={styles.apiSection}>
             <Text style={styles.apiSectionLabel}>ALTERNATIVE ROUTES</Text>
-            <View style={styles.fallbackContainer}>
-              <Text style={styles.fallbackText}>Couldn't load alternative routes</Text>
-            </View>
+            <SonarFallback label="Couldn't load alternative routes" />
           </View>
         ) : null}
 

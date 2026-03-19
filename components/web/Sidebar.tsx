@@ -46,11 +46,11 @@ interface NavItem {
 }
 
 const NAV_ITEMS: readonly NavItem[] = [
-  { key: 'plan', label: 'Plan', icon: Compass, route: '/(tabs)/plan' },
-  { key: 'pulse', label: 'Discover', icon: Globe, route: '/(tabs)/pulse' },
-  { key: 'flights', label: 'Flights', icon: Plane, route: '/(tabs)/flights' },
-  { key: 'prep', label: 'Saved', icon: Bookmark, route: '/(tabs)/prep' },
-  { key: 'people', label: 'Account', icon: User, route: '/(tabs)/people' },
+  { key: 'plan', label: 'Plan', icon: Compass, route: '/plan' },
+  { key: 'pulse', label: 'Discover', icon: Globe, route: '/pulse' },
+  { key: 'flights', label: 'Flights', icon: Plane, route: '/flights' },
+  { key: 'prep', label: 'Saved', icon: Bookmark, route: '/prep' },
+  { key: 'people', label: 'Account', icon: User, route: '/people' },
 ] as const;
 
 const SIDEBAR_WIDTH_FULL = 240;
@@ -83,15 +83,23 @@ export default function Sidebar() {
   const isCollapsed = manualCollapse !== null ? manualCollapse : isTablet;
   const sidebarWidth = isCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_FULL;
 
-  // Determine active tab from segments
+  // Determine active tab from segments.
+  // On web, segments look like ['(tabs)', 'pulse'] for /pulse.
+  // We find the first segment that matches a known nav key.
   const activeTab = useMemo(() => {
-    const tabSegment = segments[1] as string | undefined;
-    return tabSegment ?? 'plan';
+    const knownKeys = NAV_ITEMS.map((item) => item.key);
+    for (const seg of segments) {
+      if (knownKeys.includes(seg as string)) {
+        return seg as string;
+      }
+    }
+    return 'plan';
   }, [segments]);
 
   const handleNavPress = useCallback(
     (route: string) => {
-      router.push(route as never);
+      // Use navigate (not push) so tab switches don't stack history entries
+      router.navigate(route as never);
     },
     [router],
   );

@@ -35,6 +35,7 @@ import { captureEvent } from '../../lib/posthog';
 import { useSonarQuery } from '../../lib/sonar';
 import LiveBadge from '../../components/ui/LiveBadge';
 import SourceCitation from '../../components/ui/SourceCitation';
+import SonarCard, { SonarFallback, APIDataCard } from '../../components/ui/SonarCard';
 import { styles } from '../../components/food/food-styles';
 
 import type { FoodCategory, Restaurant, AIPickRestaurant } from '../../components/food/food-types';
@@ -365,23 +366,19 @@ export default function FoodScreen() {
           <View style={styles.sonarSection}>
             <View style={styles.sonarHeader}>
               <Text style={styles.sonarLabel}>{t('food.livePicks', { defaultValue: 'LIVE PICKS' })}</Text>
-              <LiveBadge />
             </View>
-            <Pressable style={({ pressed }) => [styles.sonarCard, { opacity: pressed ? 0.85 : 1 }]} onPress={() => { hapticImpact(); if (destination) Linking.openURL(`https://www.google.com/maps/search/restaurants+${encodeURIComponent(destination)}`).catch(() => {}); }} accessibilityLabel="View food recommendations" accessibilityRole="button">
-              <Text style={styles.sonarAnswer}>{sonarFood.data.answer}</Text>
-              {sonarFood.citations.length > 0 && (
-                <View style={{ marginTop: SPACING.sm }}>
-                  <SourceCitation citations={sonarFood.citations} />
-                </View>
-              )}
-            </Pressable>
+            <SonarCard
+              answer={sonarFood.data.answer}
+              isLive={sonarFood.isLive}
+              citations={sonarFood.citations}
+              timestamp={sonarFood.data.timestamp}
+              onPress={() => { hapticImpact(); if (destination) Linking.openURL(`https://www.google.com/maps/search/restaurants+${encodeURIComponent(destination)}`).catch(() => {}); }}
+            />
           </View>
         ) : !sonarFood.isLoading && !sonarFood.error ? (
           <View style={styles.sonarSection}>
             <Text style={styles.sonarLabel}>{t('food.livePicks', { defaultValue: 'LIVE PICKS' })}</Text>
-            <View style={styles.fallbackContainer}>
-              <Text style={styles.fallbackText}>Live food intel unavailable</Text>
-            </View>
+            <SonarFallback label="Live food intel unavailable" />
           </View>
         ) : null}
 
@@ -502,24 +499,22 @@ export default function FoodScreen() {
             <Text style={styles.apiSectionHeading}>Highly rated nearby</Text>
             <View style={styles.apiCardStack}>
               {googleRestaurants.map((place, i) => (
-                <Pressable key={place.placeId ?? i} style={({ pressed }) => [styles.apiCard, { opacity: pressed ? 0.85 : 1 }]} onPress={() => { hapticImpact(); Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name + (place.vicinity ? ' ' + place.vicinity : ''))}`).catch(() => {}); }} accessibilityLabel={`${place.name} on Google Maps`} accessibilityRole="button">
-                  <Text style={styles.apiCardName}>{place.name}</Text>
-                  <Text style={styles.apiCardMeta}>
-                    {place.rating != null ? `${place.rating.toFixed(1)} \u2605` : ''}
-                    {place.userRatingsTotal ? ` (${place.userRatingsTotal})` : ''}
-                    {place.priceLevel != null ? ` · ${'$'.repeat(place.priceLevel)}` : ''}
-                  </Text>
-                  {place.vicinity ? <Text style={styles.apiCardSub}>{place.vicinity}</Text> : null}
-                </Pressable>
+                <APIDataCard
+                  key={place.placeId ?? i}
+                  name={place.name}
+                  rating={place.rating ?? null}
+                  reviewCount={place.userRatingsTotal ?? null}
+                  address={place.vicinity ?? null}
+                  category={place.priceLevel != null ? '$'.repeat(place.priceLevel) : null}
+                  onPress={() => { hapticImpact(); Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name + (place.vicinity ? ' ' + place.vicinity : ''))}`).catch(() => {}); }}
+                />
               ))}
             </View>
           </View>
         ) : googleTaLoaded && !googleRestaurants ? (
           <View style={styles.apiSection}>
             <Text style={styles.apiSectionLabel}>GOOGLE PLACES</Text>
-            <View style={styles.fallbackContainer}>
-              <Text style={styles.fallbackText}>Couldn't load nearby restaurants</Text>
-            </View>
+            <SonarFallback label="Couldn't load nearby restaurants" />
           </View>
         ) : null}
 
@@ -530,24 +525,22 @@ export default function FoodScreen() {
             <Text style={styles.apiSectionHeading}>Top reviewed restaurants</Text>
             <View style={styles.apiCardStack}>
               {taRestaurants.map((loc, i) => (
-                <Pressable key={loc.locationId ?? i} style={({ pressed }) => [styles.apiCard, { opacity: pressed ? 0.85 : 1 }]} onPress={() => { hapticImpact(); Linking.openURL(`https://www.tripadvisor.com/Search?q=${encodeURIComponent(loc.name + ' ' + (destination ?? ''))}`); }} accessibilityLabel={`${loc.name} on TripAdvisor`} accessibilityRole="button">
-                  <Text style={styles.apiCardName}>{loc.name}</Text>
-                  <Text style={styles.apiCardMeta}>
-                    {loc.rating != null ? `${loc.rating.toFixed(1)} \u2605` : ''}
-                    {loc.numReviews ? ` (${loc.numReviews} reviews)` : ''}
-                    {loc.priceLevel ? ` · ${loc.priceLevel}` : ''}
-                  </Text>
-                  {loc.address ? <Text style={styles.apiCardSub}>{loc.address}</Text> : null}
-                </Pressable>
+                <APIDataCard
+                  key={loc.locationId ?? i}
+                  name={loc.name}
+                  rating={loc.rating ?? null}
+                  reviewCount={loc.numReviews ?? null}
+                  address={loc.address ?? null}
+                  category={loc.priceLevel ?? null}
+                  onPress={() => { hapticImpact(); Linking.openURL(`https://www.tripadvisor.com/Search?q=${encodeURIComponent(loc.name + ' ' + (destination ?? ''))}`); }}
+                />
               ))}
             </View>
           </View>
         ) : googleTaLoaded && !taRestaurants ? (
           <View style={styles.apiSection}>
             <Text style={styles.apiSectionLabel}>TRIPADVISOR</Text>
-            <View style={styles.fallbackContainer}>
-              <Text style={styles.fallbackText}>Couldn't load top restaurants</Text>
-            </View>
+            <SonarFallback label="Couldn't load top restaurants" />
           </View>
         ) : null}
 

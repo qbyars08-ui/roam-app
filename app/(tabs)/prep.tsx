@@ -25,6 +25,7 @@ import { getWeatherForecast } from '../../lib/weather-forecast';
 import { useSonarQuery } from '../../lib/sonar';
 import LiveBadge from '../../components/ui/LiveBadge';
 import SourceCitation from '../../components/ui/SourceCitation';
+import SonarCard, { SonarFallback } from '../../components/ui/SonarCard';
 import { getEntryRequirements } from '../../lib/apis/sherpa';
 import { getCurrentWeather, getWeatherIntel, type CurrentWeather, type WeatherIntel } from '../../lib/apis/openweather';
 import { geocode, type GeoResult } from '../../lib/apis/mapbox';
@@ -180,15 +181,29 @@ function PrepScreen() {
             {weatherIntel && (weatherIntel.summary || (weatherIntel.packingAdvice?.length > 0)) && !weatherLoading ? <WeatherPackingAdvice weatherIntel={weatherIntel} /> : null}
 
             {(sonarPrep.data || sonarSafety.data) ? (
-              <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}>
-                {sonarPrep.data && <View style={styles.sonarCard}><View style={styles.sonarCardHeader}><Text style={styles.sonarCardTitle}>{t('prep.currentConditions', { defaultValue: 'Current Conditions' })}</Text>{sonarPrep.isLive && <LiveBadge />}</View><Text style={styles.sonarCardBody}>{sonarPrep.data.answer}</Text>{sonarPrep.citations.length > 0 && <View style={{ marginTop: SPACING.sm }}><SourceCitation citations={sonarPrep.citations} /></View>}</View>}
-                {sonarSafety.data && <View style={[styles.sonarCard, { marginTop: SPACING.md }]}><View style={styles.sonarCardHeader}><Text style={styles.sonarCardTitle}>{t('prep.safetyUpdate', { defaultValue: 'Safety Update' })}</Text>{sonarSafety.isLive && <LiveBadge />}</View><Text style={styles.sonarCardBody}>{sonarSafety.data.answer}</Text>{sonarSafety.citations.length > 0 && <View style={{ marginTop: SPACING.sm }}><SourceCitation citations={sonarSafety.citations} /></View>}</View>}
+              <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg, gap: SPACING.md }}>
+                {sonarPrep.data && (
+                  <SonarCard
+                    answer={sonarPrep.data.answer}
+                    isLive={sonarPrep.isLive}
+                    citations={sonarPrep.citations}
+                    title={t('prep.currentConditions', { defaultValue: 'Current Conditions' })}
+                    timestamp={sonarPrep.data.timestamp}
+                  />
+                )}
+                {sonarSafety.data && (
+                  <SonarCard
+                    answer={sonarSafety.data.answer}
+                    isLive={sonarSafety.isLive}
+                    citations={sonarSafety.citations}
+                    title={t('prep.safetyUpdate', { defaultValue: 'Safety Update' })}
+                    timestamp={sonarSafety.data.timestamp}
+                  />
+                )}
               </View>
             ) : !sonarPrep.isLoading && !sonarSafety.isLoading ? (
               <View style={{ paddingHorizontal: 20, marginBottom: SPACING.lg }}>
-                <View style={styles.fallbackContainer}>
-                  <Text style={styles.fallbackText}>Live conditions unavailable</Text>
-                </View>
+                <SonarFallback label="Live conditions unavailable" />
               </View>
             ) : null}
 

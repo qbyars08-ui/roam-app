@@ -178,11 +178,21 @@ npx eslint . --ext .ts,.tsx
 - Single file edits
 - Agent output files
 
-**Always use:**
+## Deploy
+Primary (Vercel — auto-deploys on push):
 ```bash
-npx expo export --platform web && npx netlify deploy --prod --dir=dist --no-build
+git push origin main
 ```
-This saves Netlify credits.
+
+Manual (if needed):
+```bash
+vercel --prod
+```
+
+Legacy (Netlify backup):
+```bash
+npx netlify deploy --prod --dir=dist --no-build
+```
 
 ## Visual Design (Clean Spatial Redesign — March 2026)
 - Linear/Notion/Arc inspired — clean, spatial, confident

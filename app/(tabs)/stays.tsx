@@ -30,6 +30,7 @@ import { useAppStore } from '../../lib/store';
 import { useSonarQuery } from '../../lib/sonar';
 import LiveBadge from '../../components/ui/LiveBadge';
 import SourceCitation from '../../components/ui/SourceCitation';
+import SonarCard, { SonarFallback, APIDataCard } from '../../components/ui/SonarCard';
 import { searchNearby, type PlaceResult } from '../../lib/apis/google-places';
 import { searchLocations, type TALocation } from '../../lib/apis/tripadvisor';
 import { geocode } from '../../lib/apis/mapbox';
@@ -425,19 +426,19 @@ export default function StaysScreen() {
             <View style={styles.apiSection}>
               <View style={styles.apiSectionHeader}>
                 <Text style={styles.apiSectionLabel}>LIVE INTEL</Text>
-                {sonarStays.isLive && <LiveBadge />}
               </View>
-              <Pressable style={({ pressed }) => [styles.apiCard, { opacity: pressed ? 0.85 : 1 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.booking.com/searchresults.html?ss=${encodeURIComponent(destinationText.trim())}`).catch(() => {}); }} accessibilityLabel="View stays intel on Booking.com" accessibilityRole="button">
-                <Text style={styles.apiCardBody}>{sonarStays.data.answer}</Text>
-                {sonarStays.citations.length > 0 && <SourceCitation citations={sonarStays.citations} />}
-              </Pressable>
+              <SonarCard
+                answer={sonarStays.data.answer}
+                isLive={sonarStays.isLive}
+                citations={sonarStays.citations}
+                timestamp={sonarStays.data.timestamp}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.booking.com/searchresults.html?ss=${encodeURIComponent(destinationText.trim())}`).catch(() => {}); }}
+              />
             </View>
           ) : !sonarStays.isLoading ? (
             <View style={styles.apiSection}>
               <Text style={styles.apiSectionLabel}>LIVE INTEL</Text>
-              <View style={styles.fallbackContainer}>
-                <Text style={styles.fallbackText}>Live intel unavailable</Text>
-              </View>
+              <SonarFallback label="Live intel unavailable" />
             </View>
           ) : null
         ) : null}
@@ -450,22 +451,22 @@ export default function StaysScreen() {
               <Text style={styles.apiSectionHeading}>Real hotels near {destinationText.trim()}</Text>
               <View style={styles.apiCardStack}>
                 {nearbyHotels.map((h) => (
-                  <Pressable key={h.placeId} style={({ pressed }) => [styles.apiCard, { opacity: pressed ? 0.85 : 1 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(h.name + (h.vicinity ? ' ' + h.vicinity : ''))}`).catch(() => {}); }} accessibilityLabel={`${h.name} on Google Maps`} accessibilityRole="button">
-                    <Text style={styles.apiCardName}>{h.name}</Text>
-                    <Text style={styles.apiCardMeta}>
-                      {h.rating ? `${h.rating} ★` : ''}{h.priceLevel ? ` · ${'$'.repeat(h.priceLevel)}` : ''}
-                    </Text>
-                    {h.vicinity && <Text style={styles.apiCardSub}>{h.vicinity}</Text>}
-                  </Pressable>
+                  <APIDataCard
+                    key={h.placeId}
+                    name={h.name}
+                    rating={h.rating ?? null}
+                    reviewCount={null}
+                    address={h.vicinity ?? null}
+                    category={h.priceLevel != null ? '$'.repeat(h.priceLevel) : null}
+                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(h.name + (h.vicinity ? ' ' + h.vicinity : ''))}`).catch(() => {}); }}
+                  />
                 ))}
               </View>
             </View>
           ) : nearbyHotels !== null ? (
             <View style={styles.apiSection}>
               <Text style={styles.apiSectionLabel}>NEARBY HOTELS</Text>
-              <View style={styles.fallbackContainer}>
-                <Text style={styles.fallbackText}>Couldn't load nearby hotels</Text>
-              </View>
+              <SonarFallback label="Couldn't load nearby hotels" />
             </View>
           ) : null
         ) : null}
@@ -478,24 +479,22 @@ export default function StaysScreen() {
               <Text style={styles.apiSectionHeading}>Highest rated stays</Text>
               <View style={styles.apiCardStack}>
                 {taHotels.map((h) => (
-                  <Pressable
+                  <APIDataCard
                     key={h.locationId}
-                    style={styles.apiCard}
+                    name={h.name}
+                    rating={h.rating ?? null}
+                    reviewCount={h.numReviews ?? null}
+                    address={h.address ?? null}
+                    category={null}
                     onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://www.tripadvisor.com/Search?q=${encodeURIComponent(h.name + ' ' + destinationText.trim())}`).catch(() => {}); }}
-                  >
-                    <Text style={styles.apiCardName}>{h.name}</Text>
-                    {h.rating && <Text style={styles.apiCardMeta}>{h.rating} ★ · {h.numReviews ?? 0} reviews</Text>}
-                    {h.address && <Text style={styles.apiCardSub}>{h.address}</Text>}
-                  </Pressable>
+                  />
                 ))}
               </View>
             </View>
           ) : taHotels !== null ? (
             <View style={styles.apiSection}>
               <Text style={styles.apiSectionLabel}>TOP RATED</Text>
-              <View style={styles.fallbackContainer}>
-                <Text style={styles.fallbackText}>Couldn't load top-rated stays</Text>
-              </View>
+              <SonarFallback label="Couldn't load top-rated stays" />
             </View>
           ) : null
         ) : null}

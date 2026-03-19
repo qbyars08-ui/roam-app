@@ -50,13 +50,18 @@ import { EnvironmentalProvider } from '../lib/environmental-ui';
 // ---------------------------------------------------------------------------
 // Auth guard — redirects based on session state
 // Skips redirect when on join-group (deferred signup: allow preview before auth)
+// isReady must be true before any redirect fires to avoid race conditions on
+// web where the session is loaded asynchronously after the initial render.
 // ---------------------------------------------------------------------------
-function useProtectedRoute(session: { user: { id: string } } | null) {
+function useProtectedRoute(session: { user: { id: string } } | null, isReady: boolean) {
   const segments = useSegments();
   const router = useRouter();
   const hasCheckedOnboarding = useRef(false);
 
   useEffect(() => {
+    // Wait for session bootstrap to complete before any redirect
+    if (!isReady) return;
+
     const inAuthGroup = segments[0] === '(auth)';
     const onJoinGroup = segments[0] === 'join-group' || segments[0] === 'join';
     const onOnboarding = segments[0] === 'onboarding';
@@ -91,7 +96,7 @@ function useProtectedRoute(session: { user: { id: string } } | null) {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- router intentional mount-only
-  }, [session, segments]);
+  }, [session, segments, isReady]);
 }
 
 // ---------------------------------------------------------------------------
@@ -323,8 +328,8 @@ export default function RootLayout() {
     return () => sub.remove();
   }, [router]);
 
-  // Auth guard
-  useProtectedRoute(session);
+  // Auth guard — pass isReady to avoid premature redirects on web
+  useProtectedRoute(session, isReady);
 
   // Hide splash and show app once fonts + session are ready (native only — web uses lib/splash-screen.web.ts no-op)
   useEffect(() => {
