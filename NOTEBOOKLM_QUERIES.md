@@ -226,3 +226,62 @@ Which of these are technically feasible with existing APIs? Which have the highe
 
 EXPECTED OUTPUT: Premium tier spec with pricing justification and technical feasibility.
 
+---
+
+## QUERY 19 — Web App vs. Mobile App: Two Different Products
+
+QUESTION: ROAM exists on TWO platforms right now, and they need to feel like different products that complement each other — NOT the same thing on different screens.
+
+**ROAM Web (roamapp.app) — what exists today:**
+- Sidebar navigation (not bottom tabs)
+- CRAFT split-screen: conversation on left, itinerary building on right with draggable divider
+- Flight comparison table with sortable columns and Skyscanner links
+- Budget spreadsheet with editable cells, category chart, and CSV export
+- Cmd+K search overlay for quick destination lookup
+- Full-width content, optimized for desktop/laptop sessions
+
+**ROAM Mobile (React Native) — what exists today:**
+- Floating pill nav (5 tabs: Plan / Pulse / Flights / People / Prep)
+- "I Am Here Now" live mode when GPS detects you're at a destination
+- Haptic feedback on all interactions
+- Audio guides with ElevenLabs narration
+- Push notifications (daily brief, golden hour, trip countdown)
+- Offline pack download for trips without WiFi
+- Camera integration for photo journal
+- Pronunciation button for foreign words
+
+**The question:** What should EACH platform do that the other DOESN'T? Specifically:
+
+1. What are the best "plan on web, travel on mobile" workflows? (Like how Figma is desktop for design, mobile for presenting)
+2. Should web have features mobile doesn't? (Interactive maps? Spreadsheet views? Collaboration?)
+3. Should mobile have features web doesn't? (AR? NFC? Widgets? Siri/Shortcuts?)
+4. How should the handoff work? (User plans trip on laptop Saturday night, picks up phone Monday morning at airport)
+5. What do Notion, Linear, Arc, Figma do for web-to-mobile continuity?
+6. Should there be a "travel mode" on mobile that completely changes the UI when you're actually traveling vs. planning?
+7. What about a "Planning Mode" on web that's optimized for deep 30-minute planning sessions?
+
+Give me a specific feature matrix: Web Only | Mobile Only | Shared (synced). Include WHY each feature belongs on that platform.
+
+EXPECTED OUTPUT: Platform-specific feature matrix with rationale, plus handoff design spec.
+
+---
+
+## QUERY 20 — Web App Conversion: Why Would Someone Plan Trips on a Website?
+
+QUESTION: Most Gen Z users discover apps on TikTok/Instagram and download directly to their phone. Why would anyone use ROAM's web app at roamapp.app?
+
+Consider these user scenarios:
+1. A college student on their laptop procrastinating — googles "Tokyo trip planner" and lands on roamapp.app
+2. A dad at his desk at work planning a family vacation during lunch break
+3. A couple sitting on the couch with a laptop between them, planning together
+4. A content creator who wants to screenshot/screen-record their trip planning process
+5. Someone comparing ROAM to Google Sheets where they currently plan trips
+
+For each scenario: What would make them stay on the web app instead of just downloading the mobile app? What web-specific features would make them think "this is better on my laptop"?
+
+What's the conversion funnel? Web visitor → plans trip → sees "Get the mobile app for live travel features" → downloads. Is this the right flow?
+
+What do Notion, Figma, and Canva do on web that drives mobile downloads? How do they make web feel essential for certain tasks while mobile feels essential for others?
+
+EXPECTED OUTPUT: Web app value proposition per user scenario + web-to-mobile conversion funnel design.
+
