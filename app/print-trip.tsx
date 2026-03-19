@@ -1,10 +1,11 @@
 // =============================================================================
-// ROAM — Printable Trip Summary
+// ROAM — Printable Trip Summary (Pro PDF Export)
 // Accessed via router.push('/print-trip?tripId=xxx')
 // White-background, print-optimised layout. No dark mode.
 // =============================================================================
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -13,13 +14,29 @@ import {
   View,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Printer, ArrowLeft, MapPin, Sun, Sunset, Moon, Building2, ShieldAlert, Globe, MessageCircle } from 'lucide-react-native';
+import {
+  Printer,
+  ArrowLeft,
+  Download,
+  Share2,
+  Lock,
+  CloudRain,
+  Thermometer,
+  DollarSign,
+  Luggage,
+} from 'lucide-react-native';
 
 import { useAppStore } from '../lib/store';
+import { COLORS, RADIUS } from '../lib/constants';
 import { parseItinerary, type Itinerary, type ItineraryDay, type TimeSlotActivity } from '../lib/types/itinerary';
 import { getEmergencyNumbers, type EmergencyNumbers } from '../lib/emergency-numbers';
 import { getSimpleVisaInfo as getVisaInfo, type SimpleVisaInfo as VisaInfo, destinationToCountryCode } from '../lib/visa-intel';
 import { getPhrasesForDestination, type SurvivalPhrase } from '../lib/survival-phrases';
+import { generatePackingList, type PackingItem, type PackingListResult } from '../lib/packing-list';
+import { getExchangeRates, type ExchangeRateData } from '../lib/exchange-rates';
+import { getCurrentWeather, getForecast, type CurrentWeather, type ForecastDay } from '../lib/apis/openweather';
+import { getWeatherIntel } from '../lib/apis/openweather';
+import { DESTINATIONS, HIDDEN_DESTINATIONS } from '../lib/constants';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -32,6 +49,11 @@ interface PrintData {
   phrases: SurvivalPhrase[];
   startDate: string | undefined;
   days: number;
+  packingList: PackingListResult | null;
+  exchangeRates: ExchangeRateData | null;
+  currentWeather: CurrentWeather | null;
+  forecast: ForecastDay[] | null;
+  destinationCurrency: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -63,12 +85,61 @@ function formatDateRange(startDate: string | undefined, numDays: number): string
   }
 }
 
+function findDestinationCurrency(destination: string): string | null {
+  const all = [...DESTINATIONS, ...HIDDEN_DESTINATIONS];
+  const match = all.find((d) => d.label.toLowerCase() === destination.toLowerCase());
+  return match?.currencyCode ?? null;
+}
+
 const VISA_STATUS_LABELS: Record<string, string> = {
   'visa-free': 'Visa-Free',
   'visa-on-arrival': 'Visa on Arrival',
   'e-visa': 'E-Visa Required',
   'required': 'Visa Required',
 };
+
+// ---------------------------------------------------------------------------
+// Print-only CSS (web)
+// ---------------------------------------------------------------------------
+
+function injectPrintStyles(): void {
+  if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+
+  const PRINT_STYLE_ID = 'roam-print-styles';
+  if (document.getElementById(PRINT_STYLE_ID)) return;
+
+  const style = document.createElement('style');
+  style.id = PRINT_STYLE_ID;
+  style.textContent = `
+    @media print {
+      /* Hide the toolbar and any nav */
+      [data-print-hide="true"] {
+        display: none !important;
+      }
+      /* Reset body for clean print */
+      body {
+        background: #ffffff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      /* Avoid page breaks inside day blocks */
+      [data-print-block="day"] {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      /* Avoid breaks inside sections */
+      [data-print-block="section"] {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      /* Force white bg on scroll container */
+      [data-testid="print-scroll"] {
+        background: #ffffff !important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 // ---------------------------------------------------------------------------
 // Sub-components
@@ -105,7 +176,7 @@ function TimeSlotRow({
 function DayBlock({ day, startDate }: { day: ItineraryDay; startDate: string | undefined }) {
   const dateLabel = formatDate(startDate, day.day - 1);
   return (
-    <View style={styles.dayBlock}>
+    <View style={styles.dayBlock} {...(Platform.OS === 'web' ? { 'data-print-block': 'day' } as Record<string, string> : {})}>
       <View style={styles.dayHeader}>
         <Text style={styles.dayNumber}>Day {day.day}</Text>
         <Text style={styles.dayDate}>{dateLabel}</Text>
@@ -130,6 +201,156 @@ function DayBlock({ day, startDate }: { day: ItineraryDay; startDate: string | u
   );
 }
 
+function ProPaywallNudge({ onUpgrade }: { onUpgrade: () => void }) {
+  return (
+    <View style={styles.paywallNudge}>
+      <Lock size={20} color={COLORS.gold} strokeWidth={1.5} />
+      <Text style={styles.paywallTitle}>Pro Feature</Text>
+      <Text style={styles.paywallDescription}>
+        Upgrade to Pro to export your trip as PDF
+      </Text>
+      <Pressable
+        onPress={onUpgrade}
+        style={({ pressed }) => [styles.paywallButton, { opacity: pressed ? 0.85 : 1 }]}
+      >
+        <Text style={styles.paywallButtonText}>Upgrade to Pro</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function WeatherSection({ weather, forecast }: { weather: CurrentWeather | null; forecast: ForecastDay[] | null }) {
+  if (!weather && (!forecast || forecast.length === 0)) return null;
+
+  return (
+    <View {...(Platform.OS === 'web' ? { 'data-print-block': 'section' } as Record<string, string> : {})}>
+      <SectionHeader title="Weather Forecast" />
+      {weather ? (
+        <View style={styles.weatherCurrentBlock}>
+          <View style={styles.weatherCurrentRow}>
+            <Thermometer size={16} color={BASE.inkMuted} strokeWidth={1.5} />
+            <Text style={styles.weatherTemp}>{weather.temp}°F</Text>
+            <Text style={styles.weatherCondition}>{weather.condition}</Text>
+          </View>
+          <Text style={styles.weatherDetail}>
+            Humidity: {weather.humidity}%  ·  Wind: {weather.windSpeed} km/h
+          </Text>
+        </View>
+      ) : null}
+      {forecast && forecast.length > 0 ? (
+        <View style={styles.forecastGrid}>
+          {forecast.slice(0, 7).map((day) => (
+            <View key={day.date} style={styles.forecastDay}>
+              <Text style={styles.forecastDate}>{day.date.slice(5)}</Text>
+              <Text style={styles.forecastTemp}>
+                {day.tempHigh}° / {day.tempLow}°
+              </Text>
+              <Text style={styles.forecastCondition}>{day.condition}</Text>
+              {day.rainChance > 20 ? (
+                <View style={styles.forecastRainRow}>
+                  <CloudRain size={10} color={BASE.inkLight} strokeWidth={1.5} />
+                  <Text style={styles.forecastRain}>{day.rainChance}%</Text>
+                </View>
+              ) : null}
+            </View>
+          ))}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+function CurrencySection({
+  rates,
+  destinationCurrency,
+}: {
+  rates: ExchangeRateData | null;
+  destinationCurrency: string | null;
+}) {
+  if (!rates) return null;
+
+  const relevantCurrencies = useMemo(() => {
+    const always = ['EUR', 'GBP', 'JPY'];
+    const combined = destinationCurrency
+      ? [destinationCurrency, ...always.filter((c) => c !== destinationCurrency)]
+      : always;
+    return combined.filter((c) => c !== rates.base && rates.rates[c] !== undefined).slice(0, 6);
+  }, [rates, destinationCurrency]);
+
+  if (relevantCurrencies.length === 0) return null;
+
+  return (
+    <View {...(Platform.OS === 'web' ? { 'data-print-block': 'section' } as Record<string, string> : {})}>
+      <SectionHeader title="Currency Exchange Rates" />
+      <View style={styles.currencyBlock}>
+        <Text style={styles.currencyBase}>1 {rates.base} =</Text>
+        <View style={styles.currencyGrid}>
+          {relevantCurrencies.map((code) => (
+            <View key={code} style={styles.currencyRow}>
+              <Text style={styles.currencyCode}>{code}</Text>
+              <Text style={styles.currencyRate}>{rates.rates[code].toFixed(2)}</Text>
+            </View>
+          ))}
+        </View>
+        <Text style={styles.currencyDate}>Rates as of {rates.date}</Text>
+      </View>
+    </View>
+  );
+}
+
+function PackingSection({ packingList }: { packingList: PackingListResult | null }) {
+  if (!packingList || packingList.items.length === 0) return null;
+
+  const grouped = useMemo(() => {
+    const map = new Map<string, readonly PackingItem[]>();
+    const categories = ['clothing', 'toiletries', 'electronics', 'documents', 'health', 'misc'] as const;
+    for (const cat of categories) {
+      const items = packingList.items.filter((item) => item.category === cat);
+      if (items.length > 0) {
+        map.set(cat, items);
+      }
+    }
+    return map;
+  }, [packingList]);
+
+  const categoryLabels: Record<string, string> = {
+    clothing: 'Clothing',
+    toiletries: 'Toiletries',
+    electronics: 'Electronics',
+    documents: 'Documents',
+    health: 'Health',
+    misc: 'Miscellaneous',
+  };
+
+  return (
+    <View {...(Platform.OS === 'web' ? { 'data-print-block': 'section' } as Record<string, string> : {})}>
+      <SectionHeader title="Packing Checklist" />
+      {Array.from(grouped.entries()).map(([category, items]) => (
+        <View key={category} style={styles.packingCategory}>
+          <Text style={styles.packingCategoryLabel}>{categoryLabels[category] ?? category}</Text>
+          <View style={styles.packingGrid}>
+            {items.map((item) => (
+              <View key={item.id} style={styles.packingItem}>
+                <View style={styles.packingCheckbox} />
+                <Text style={[styles.packingText, item.essential ? styles.packingEssential : undefined]}>
+                  {item.name}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      ))}
+      {packingList.proTips.length > 0 ? (
+        <View style={styles.packingTips}>
+          {packingList.proTips.slice(0, 3).map((tip, idx) => (
+            <Text key={idx} style={styles.packingTipText}>• {tip}</Text>
+          ))}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Main screen
 // ---------------------------------------------------------------------------
@@ -138,9 +359,15 @@ export default function PrintTripScreen() {
   const router = useRouter();
   const { tripId } = useLocalSearchParams<{ tripId?: string }>();
   const trips = useAppStore((s) => s.trips);
+  const isPro = useAppStore((s) => s.isPro);
 
   const [printData, setPrintData] = useState<PrintData | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Inject @media print styles on web
+  useEffect(() => {
+    injectPrintStyles();
+  }, []);
 
   // ---------------------------------------------------------------------------
   // Load data
@@ -164,17 +391,28 @@ export default function PrintTripScreen() {
     const visaInfo = getVisaInfo(itinerary.destination);
     const { phrases } = getPhrasesForDestination(itinerary.destination);
     const topPhrases = phrases.slice(0, 6);
+    const destinationCurrency = findDestinationCurrency(itinerary.destination);
 
-    // Emergency numbers — async
-    const loadEmergency = async () => {
-      let emergencyNumbers: EmergencyNumbers | null = null;
-      if (countryCode) {
-        try {
-          emergencyNumbers = await getEmergencyNumbers(countryCode);
-        } catch {
-          emergencyNumbers = null;
-        }
-      }
+    const loadAsyncData = async () => {
+      // Load all async data in parallel
+      const [emergencyNumbers, exchangeRates, currentWeather, forecast, weatherIntel] = await Promise.all([
+        countryCode ? getEmergencyNumbers(countryCode).catch(() => null) : Promise.resolve(null),
+        getExchangeRates('USD').catch(() => null),
+        getCurrentWeather(itinerary.destination).catch(() => null),
+        getForecast(itinerary.destination).catch(() => null),
+        getWeatherIntel(itinerary.destination).catch(() => null),
+      ]);
+
+      // Generate packing list (sync, uses weather intel)
+      const packingList = generatePackingList(
+        itinerary.destination,
+        trip.days,
+        weatherIntel,
+        trip.vibes,
+        undefined,
+        itinerary,
+      );
+
       setPrintData({
         itinerary,
         emergencyNumbers,
@@ -182,14 +420,19 @@ export default function PrintTripScreen() {
         phrases: topPhrases,
         startDate: trip.startDate,
         days: trip.days,
+        packingList,
+        exchangeRates,
+        currentWeather,
+        forecast,
+        destinationCurrency,
       });
     };
 
-    loadEmergency();
+    loadAsyncData();
   }, [tripId, trips]);
 
   // ---------------------------------------------------------------------------
-  // Print handler (web only)
+  // Handlers
   // ---------------------------------------------------------------------------
   const handlePrint = useCallback(() => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -199,6 +442,24 @@ export default function PrintTripScreen() {
 
   const handleBack = useCallback(() => {
     router.back();
+  }, [router]);
+
+  const handleShareLink = useCallback(() => {
+    if (!tripId) return;
+    const shareUrl = `https://roamapp.app/shared-trip/${tripId}`;
+    if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(shareUrl).catch(() => {
+        // Fallback: do nothing, URL is displayed
+      });
+    } else {
+      Linking.openURL(shareUrl).catch(() => {
+        // Graceful fallback
+      });
+    }
+  }, [tripId]);
+
+  const handleUpgrade = useCallback(() => {
+    router.push('/paywall');
   }, [router]);
 
   // ---------------------------------------------------------------------------
@@ -219,18 +480,38 @@ export default function PrintTripScreen() {
   if (!printData) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Preparing print pack…</Text>
+        <Text style={styles.loadingText}>Preparing print pack...</Text>
       </View>
     );
   }
 
-  const { itinerary, emergencyNumbers, visaInfo, phrases, startDate, days } = printData;
+  const {
+    itinerary,
+    emergencyNumbers,
+    visaInfo,
+    phrases,
+    startDate,
+    days,
+    packingList,
+    exchangeRates,
+    currentWeather,
+    forecast,
+    destinationCurrency,
+  } = printData;
   const dateRange = formatDateRange(startDate, days);
+  const shareUrl = tripId ? `https://roamapp.app/shared-trip/${tripId}` : null;
 
   return (
-    <ScrollView style={styles.page} contentContainerStyle={styles.pageContent}>
+    <ScrollView
+      style={styles.page}
+      contentContainerStyle={styles.pageContent}
+      {...(Platform.OS === 'web' ? { 'data-testid': 'print-scroll' } as Record<string, string> : {})}
+    >
       {/* ── Toolbar (screen-only, hidden on print) ── */}
-      <View style={styles.toolbar}>
+      <View
+        style={styles.toolbar}
+        {...(Platform.OS === 'web' ? { 'data-print-hide': 'true' } as Record<string, string> : {})}
+      >
         <Pressable
           onPress={handleBack}
           hitSlop={8}
@@ -241,18 +522,56 @@ export default function PrintTripScreen() {
           <Text style={styles.toolbarBtnText}>Back</Text>
         </Pressable>
 
-        {Platform.OS === 'web' && (
-          <Pressable
-            onPress={handlePrint}
-            hitSlop={8}
-            style={({ pressed }) => [styles.printBtn, { opacity: pressed ? 0.85 : 1 }]}
-            accessibilityLabel="Print trip pack"
-          >
-            <Printer size={18} color="#ffffff" strokeWidth={1.5} />
-            <Text style={styles.printBtnText}>Print / Save PDF</Text>
-          </Pressable>
-        )}
+        <View style={styles.toolbarActions}>
+          {/* Share link button (always visible) */}
+          {shareUrl ? (
+            <Pressable
+              onPress={handleShareLink}
+              hitSlop={8}
+              style={({ pressed }) => [styles.shareBtn, { opacity: pressed ? 0.85 : 1 }]}
+              accessibilityLabel="Share trip link"
+            >
+              <Share2 size={16} color={BASE.ink} strokeWidth={1.5} />
+              <Text style={styles.shareBtnText}>Share Link</Text>
+            </Pressable>
+          ) : null}
+
+          {/* Download PDF button — Pro-gated, web only */}
+          {Platform.OS === 'web' ? (
+            isPro ? (
+              <Pressable
+                onPress={handlePrint}
+                hitSlop={8}
+                style={({ pressed }) => [styles.printBtn, { opacity: pressed ? 0.85 : 1 }]}
+                accessibilityLabel="Download PDF"
+              >
+                <Download size={16} color="#ffffff" strokeWidth={1.5} />
+                <Text style={styles.printBtnText}>Download PDF</Text>
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={handleUpgrade}
+                hitSlop={8}
+                style={({ pressed }) => [styles.proLockedBtn, { opacity: pressed ? 0.85 : 1 }]}
+                accessibilityLabel="Upgrade to Pro for PDF export"
+              >
+                <Lock size={14} color={COLORS.gold} strokeWidth={1.5} />
+                <Text style={styles.proLockedBtnText}>PDF Export</Text>
+              </Pressable>
+            )
+          ) : null}
+        </View>
       </View>
+
+      {/* ── Pro paywall nudge (non-Pro users, web only) ── */}
+      {Platform.OS === 'web' && !isPro ? (
+        <View
+          style={styles.paywallBanner}
+          {...(Platform.OS === 'web' ? { 'data-print-hide': 'true' } as Record<string, string> : {})}
+        >
+          <ProPaywallNudge onUpgrade={handleUpgrade} />
+        </View>
+      ) : null}
 
       {/* ── Print body ── */}
       <View style={styles.printBody}>
@@ -262,6 +581,17 @@ export default function PrintTripScreen() {
           <Text style={styles.tagline}>{itinerary.tagline}</Text>
           <Text style={styles.meta}>{dateRange}  ·  {days} {days === 1 ? 'day' : 'days'}  ·  {itinerary.totalBudget}</Text>
         </View>
+
+        {/* Share URL / QR placeholder */}
+        {shareUrl ? (
+          <View style={styles.shareUrlBlock}>
+            <Text style={styles.shareUrlLabel}>Share this trip</Text>
+            <Text style={styles.shareUrlText}>{shareUrl}</Text>
+          </View>
+        ) : null}
+
+        {/* Weather forecast */}
+        <WeatherSection weather={currentWeather} forecast={forecast} />
 
         {/* Day-by-day itinerary */}
         <SectionHeader title="Itinerary" />
@@ -280,6 +610,56 @@ export default function PrintTripScreen() {
             </View>
           ))}
         </View>
+
+        {/* Budget breakdown */}
+        <SectionHeader title="Budget Breakdown" />
+        <View style={styles.budgetBlock}>
+          <View style={styles.budgetRow}>
+            <Text style={styles.budgetLabel}>Accommodation</Text>
+            <Text style={styles.budgetValue}>{itinerary.budgetBreakdown.accommodation}</Text>
+          </View>
+          <View style={styles.budgetRow}>
+            <Text style={styles.budgetLabel}>Food</Text>
+            <Text style={styles.budgetValue}>{itinerary.budgetBreakdown.food}</Text>
+          </View>
+          <View style={styles.budgetRow}>
+            <Text style={styles.budgetLabel}>Activities</Text>
+            <Text style={styles.budgetValue}>{itinerary.budgetBreakdown.activities}</Text>
+          </View>
+          <View style={styles.budgetRow}>
+            <Text style={styles.budgetLabel}>Transportation</Text>
+            <Text style={styles.budgetValue}>{itinerary.budgetBreakdown.transportation}</Text>
+          </View>
+          <View style={styles.budgetRow}>
+            <Text style={styles.budgetLabel}>Miscellaneous</Text>
+            <Text style={styles.budgetValue}>{itinerary.budgetBreakdown.miscellaneous}</Text>
+          </View>
+          <View style={[styles.budgetRow, styles.budgetTotal]}>
+            <Text style={styles.budgetTotalLabel}>Total</Text>
+            <Text style={styles.budgetTotalValue}>{itinerary.totalBudget}</Text>
+          </View>
+        </View>
+
+        {/* Currency exchange rates */}
+        <CurrencySection rates={exchangeRates} destinationCurrency={destinationCurrency} />
+
+        {/* Packing checklist (smart) */}
+        <PackingSection packingList={packingList} />
+
+        {/* Packing essentials from itinerary (fallback) */}
+        {(!packingList || packingList.items.length === 0) && itinerary.packingEssentials.length > 0 ? (
+          <>
+            <SectionHeader title="Packing Essentials" />
+            <View style={styles.packingGrid}>
+              {itinerary.packingEssentials.map((item, idx) => (
+                <View key={idx} style={styles.packingItem}>
+                  <View style={styles.packingCheckbox} />
+                  <Text style={styles.packingText}>{item}</Text>
+                </View>
+              ))}
+            </View>
+          </>
+        ) : null}
 
         {/* Emergency numbers */}
         <SectionHeader title="Emergency Numbers" />
@@ -373,24 +753,12 @@ export default function PrintTripScreen() {
           </>
         ) : null}
 
-        {/* Packing essentials */}
-        {itinerary.packingEssentials.length > 0 && (
-          <>
-            <SectionHeader title="Packing Essentials" />
-            <View style={styles.packingGrid}>
-              {itinerary.packingEssentials.map((item, idx) => (
-                <View key={idx} style={styles.packingItem}>
-                  <View style={styles.packingCheckbox} />
-                  <Text style={styles.packingText}>{item}</Text>
-                </View>
-              ))}
-            </View>
-          </>
-        )}
-
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>Generated by ROAM · roamapp.app</Text>
+          {shareUrl ? (
+            <Text style={styles.footerUrl}>{shareUrl}</Text>
+          ) : null}
         </View>
       </View>
     </ScrollView>
@@ -444,6 +812,27 @@ const styles = StyleSheet.create({
     color: BASE.ink,
     fontFamily: 'System',
   },
+  toolbarActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  shareBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1.5,
+    borderColor: BASE.border,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  shareBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: BASE.ink,
+    fontFamily: 'System',
+  },
   printBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -456,6 +845,64 @@ const styles = StyleSheet.create({
   printBtnText: {
     fontSize: 14,
     fontWeight: '600',
+    color: '#ffffff',
+    fontFamily: 'System',
+  },
+  proLockedBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1.5,
+    borderColor: COLORS.goldBorder,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: COLORS.goldFaint,
+  },
+  proLockedBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.gold,
+    fontFamily: 'System',
+  },
+
+  // Paywall nudge
+  paywallBanner: {
+    paddingHorizontal: 28,
+    paddingTop: 16,
+  },
+  paywallNudge: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 24,
+    backgroundColor: '#FFFBF0',
+    borderWidth: 1,
+    borderColor: '#E8D48B',
+    borderRadius: 10,
+    gap: 8,
+  },
+  paywallTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: BASE.ink,
+    fontFamily: 'System',
+  },
+  paywallDescription: {
+    fontSize: 14,
+    color: BASE.inkMuted,
+    fontFamily: 'System',
+    textAlign: 'center',
+  },
+  paywallButton: {
+    marginTop: 4,
+    backgroundColor: COLORS.gold,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: RADIUS.pill,
+  },
+  paywallButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
     color: '#ffffff',
     fontFamily: 'System',
   },
@@ -492,6 +939,32 @@ const styles = StyleSheet.create({
     color: BASE.inkLight,
     fontFamily: 'System',
     letterSpacing: 0.2,
+  },
+
+  // Share URL block
+  shareUrlBlock: {
+    marginBottom: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: BASE.surface,
+    borderWidth: 1,
+    borderColor: BASE.borderLight,
+    borderRadius: 6,
+  },
+  shareUrlLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: BASE.inkMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    fontFamily: 'System',
+    marginBottom: 4,
+  },
+  shareUrlText: {
+    fontSize: 13,
+    color: BASE.ink,
+    fontFamily: 'System',
+    textDecorationLine: 'underline',
   },
 
   // Section headers
@@ -653,6 +1126,173 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
+  // Budget breakdown
+  budgetBlock: {
+    borderWidth: 1,
+    borderColor: BASE.border,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  budgetRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: BASE.borderLight,
+  },
+  budgetLabel: {
+    fontSize: 13,
+    color: BASE.inkMuted,
+    fontFamily: 'System',
+  },
+  budgetValue: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: BASE.ink,
+    fontFamily: 'System',
+  },
+  budgetTotal: {
+    backgroundColor: BASE.surface,
+    borderBottomWidth: 0,
+  },
+  budgetTotalLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: BASE.black,
+    fontFamily: 'System',
+  },
+  budgetTotalValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: BASE.black,
+    fontFamily: 'System',
+  },
+
+  // Weather
+  weatherCurrentBlock: {
+    borderWidth: 1,
+    borderColor: BASE.border,
+    borderRadius: 6,
+    padding: 14,
+    marginBottom: 10,
+  },
+  weatherCurrentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  weatherTemp: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: BASE.black,
+    fontFamily: 'System',
+  },
+  weatherCondition: {
+    fontSize: 14,
+    color: BASE.inkMuted,
+    fontFamily: 'System',
+  },
+  weatherDetail: {
+    fontSize: 12,
+    color: BASE.inkLight,
+    fontFamily: 'System',
+  },
+  forecastGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  forecastDay: {
+    width: '13%',
+    minWidth: 70,
+    borderWidth: 1,
+    borderColor: BASE.borderLight,
+    borderRadius: 6,
+    padding: 8,
+    alignItems: 'center',
+  },
+  forecastDate: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: BASE.ink,
+    fontFamily: 'System',
+    marginBottom: 4,
+  },
+  forecastTemp: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: BASE.black,
+    fontFamily: 'System',
+    marginBottom: 2,
+  },
+  forecastCondition: {
+    fontSize: 10,
+    color: BASE.inkLight,
+    fontFamily: 'System',
+    textAlign: 'center',
+  },
+  forecastRainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    marginTop: 3,
+  },
+  forecastRain: {
+    fontSize: 10,
+    color: BASE.inkLight,
+    fontFamily: 'System',
+  },
+
+  // Currency
+  currencyBlock: {
+    borderWidth: 1,
+    borderColor: BASE.border,
+    borderRadius: 6,
+    padding: 14,
+  },
+  currencyBase: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: BASE.black,
+    fontFamily: 'System',
+    marginBottom: 10,
+  },
+  currencyGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  currencyRow: {
+    width: '30%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: BASE.surface,
+    borderRadius: 4,
+  },
+  currencyCode: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: BASE.ink,
+    fontFamily: 'System',
+  },
+  currencyRate: {
+    fontSize: 13,
+    color: BASE.black,
+    fontFamily: 'System',
+  },
+  currencyDate: {
+    fontSize: 10,
+    color: BASE.inkLight,
+    fontFamily: 'System',
+    marginTop: 10,
+  },
+
   // Emergency numbers
   emergencyBlock: {
     borderWidth: 1,
@@ -774,6 +1414,18 @@ const styles = StyleSheet.create({
   },
 
   // Packing
+  packingCategory: {
+    marginBottom: 14,
+  },
+  packingCategoryLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: BASE.inkMuted,
+    fontFamily: 'System',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
   packingGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -799,6 +1451,22 @@ const styles = StyleSheet.create({
     color: BASE.ink,
     fontFamily: 'System',
   },
+  packingEssential: {
+    fontWeight: '600',
+  },
+  packingTips: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: BASE.borderLight,
+  },
+  packingTipText: {
+    fontSize: 12,
+    color: BASE.inkMuted,
+    fontFamily: 'System',
+    lineHeight: 18,
+    marginBottom: 4,
+  },
 
   // Footer
   footer: {
@@ -813,6 +1481,12 @@ const styles = StyleSheet.create({
     color: BASE.inkLight,
     fontFamily: 'System',
     letterSpacing: 0.3,
+  },
+  footerUrl: {
+    fontSize: 10,
+    color: BASE.inkLight,
+    fontFamily: 'System',
+    marginTop: 4,
   },
 
   // Fallback / loading / error

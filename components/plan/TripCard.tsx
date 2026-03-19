@@ -23,6 +23,7 @@ import {
   Plane,
   ShieldCheck,
   Sparkle,
+  Users,
   Wallet,
 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -39,9 +40,10 @@ export interface TripCardProps {
   trip: Trip;
   onPress: () => void;
   isLatest: boolean;
+  collaboratorCount?: number;
 }
 
-export const TripCard = React.memo(function TripCard({ trip, onPress, isLatest }: TripCardProps) {
+export const TripCard = React.memo(function TripCard({ trip, onPress, isLatest, collaboratorCount }: TripCardProps) {
   const { t } = useTranslation();
   const imageUrl = DEST_IMAGES[trip.destination] ?? FALLBACK_IMAGE;
   const destMeta = useMemo(() => getDestinationMeta(trip.destination), [trip.destination]);
@@ -125,6 +127,12 @@ export const TripCard = React.memo(function TripCard({ trip, onPress, isLatest }
             <Clock size={12} color={COLORS.creamSoft} strokeWidth={1.5} />
             <Text style={styles.tripCardChipText}>{dateLabel}</Text>
           </View>
+          {(collaboratorCount ?? 0) > 1 && (
+            <View style={styles.tripCardChip}>
+              <Users size={12} color={COLORS.creamSoft} strokeWidth={1.5} />
+              <Text style={styles.tripCardChipText}>{`${collaboratorCount} people planning`}</Text>
+            </View>
+          )}
         </View>
       </View>
       <View style={styles.tripCardArrow}>
@@ -140,9 +148,10 @@ export const TripCard = React.memo(function TripCard({ trip, onPress, isLatest }
 export interface NextTripHeroProps {
   trip: Trip;
   onPress: () => void;
+  collaboratorCount?: number;
 }
 
-export const NextTripHero = React.memo(function NextTripHero({ trip, onPress }: NextTripHeroProps) {
+export const NextTripHero = React.memo(function NextTripHero({ trip, onPress, collaboratorCount }: NextTripHeroProps) {
   const router = useRouter();
   const imageUrl = DEST_IMAGES[trip.destination] ?? FALLBACK_IMAGE;
   const destMeta = useMemo(() => getDestinationMeta(trip.destination), [trip.destination]);
@@ -218,6 +227,12 @@ export const NextTripHero = React.memo(function NextTripHero({ trip, onPress }: 
         {tagline ? (
           <Text style={styles.heroTagline} numberOfLines={2}>{tagline}</Text>
         ) : null}
+        {(collaboratorCount ?? 0) > 1 && (
+          <View style={styles.collabBadge}>
+            <Users size={12} color={COLORS.sage} strokeWidth={1.5} />
+            <Text style={styles.collabBadgeText}>{`${collaboratorCount} people planning`}</Text>
+          </View>
+        )}
 
         {/* Quick-link pills */}
         <View style={styles.heroPills}>
@@ -482,4 +497,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
+  collabBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: SPACING.xs,
+    backgroundColor: COLORS.sageVeryFaint,
+    borderRadius: RADIUS.pill,
+    paddingVertical: 3,
+    paddingHorizontal: SPACING.sm,
+    alignSelf: 'flex-start',
+  } as ViewStyle,
+  collabBadgeText: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+  } as TextStyle,
 });

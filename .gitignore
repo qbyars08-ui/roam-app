@@ -49,3 +49,4 @@ GoogleService-Info.plist
 
 # Local Netlify folder
 .netlify
+.vercel

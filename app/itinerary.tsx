@@ -95,12 +95,16 @@ import TripInsuranceCards from '../components/features/TripInsuranceCards';
 import ReturnTripSection from '../components/features/ReturnTripSection';
 import CurrencyToggle, { useCurrency } from '../components/features/CurrencyToggle';
 import MapboxRouteMap from '../components/features/MapboxRouteMap';
+import CollaboratorRow from '../components/features/CollaboratorRow';
+import ActivityVoteButtons from '../components/features/ActivityVoteButtons';
+import InviteSheet from '../components/features/InviteSheet';
+import { useGroupTrip, type VoteDirection, type TimeSlot as GroupTimeSlot } from '../lib/group-trip';
 import {
   buildSafetyZones,
   SAFETY_COLORS,
 } from '../lib/neighborhood-safety';
 import { formatDualPrice, formatLocalPrice, type ExchangeRates } from '../lib/currency';
-import { AlertTriangle, X, Pencil, Calendar, Link2, Share2, MapPin, Map as LucideMap, Receipt, Film, Wallet, Train, CreditCard, Plane, Heart, ShieldCheck, Droplets, Globe, Sun, Wind, PartyPopper, Camera, Clock, ChevronRight, Printer } from 'lucide-react-native';
+import { AlertTriangle, X, Pencil, Calendar, Link2, Share2, MapPin, Map as LucideMap, Receipt, Film, Wallet, Train, CreditCard, Plane, Heart, ShieldCheck, Droplets, Globe, Sun, Wind, PartyPopper, Camera, Clock, ChevronRight, Printer, Users } from 'lucide-react-native';
 import { getTransitGuide, type TransitGuide } from '../lib/transit-data';
 import { getHomeAirport } from '../lib/flights';
 import { getMedicalGuideByDestination, type MedicalGuide } from '../lib/medical-abroad';
@@ -186,6 +190,17 @@ export default function ItineraryScreen() {
 
   // Realtime sync — keeps itinerary in sync with web edits and new moments
   const { isSynced, lastSyncedAt, syncError } = useTripSync(trip?.id ?? null);
+
+  // Group trip — collaborators, votes, invite
+  const {
+    collaborators: groupCollaborators,
+    votes: groupVotes,
+    inviteLink: groupInviteLink,
+    isGroupTrip,
+    createInvite: createGroupInvite,
+    vote: castGroupVote,
+  } = useGroupTrip(trip?.id ?? null);
+  const [inviteSheetVisible, setInviteSheetVisible] = useState(false);
 
   // ---------------------------------------------------------------------------
   // Resolve trip from params
@@ -976,15 +991,17 @@ export default function ItineraryScreen() {
           <Pressable
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push({ pathname: '/create-group', params: { tripId: trip?.id } });
+              setInviteSheetVisible(true);
             }}
             hitSlop={8}
             style={({ pressed }) => [
               styles.headerBtn,
               { opacity: pressed ? 0.6 : 1 },
             ]}
+            accessibilityLabel="Invite friends"
+            accessibilityRole="button"
           >
-            <Text style={styles.headerBtnText}>Invite</Text>
+            <Users size={20} color={COLORS.cream} strokeWidth={1.5} />
           </Pressable>
 
           {/* Share deep link */}
@@ -1046,6 +1063,20 @@ export default function ItineraryScreen() {
           </Pressable>
         </View>
       </View>
+
+      {/* ── Collaborator avatars row ── */}
+      {groupCollaborators.length > 0 && (
+        <CollaboratorRow collaborators={groupCollaborators} />
+      )}
+
+      {/* ── Invite sheet ── */}
+      <InviteSheet
+        visible={inviteSheetVisible}
+        onClose={() => setInviteSheetVisible(false)}
+        inviteLink={groupInviteLink}
+        destination={parsed.destination}
+        onCreateInvite={createGroupInvite}
+      />
 
       {/* ── Share nudge — shown for trips created in the last 5 minutes ── */}
       {!shareNudgeDismissed && trip && parsed && (Date.now() - new Date(trip.createdAt).getTime() < 5 * 60 * 1000) && (
@@ -1728,14 +1759,23 @@ export default function ItineraryScreen() {
                   <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setEditingActivity({ slot: 'morning', data: currentDay.morning }); }}>
                     <TimeBlock slot="morning" data={currentDay.morning} currency={currency} rates={rates} />
                   </Pressable>
+                  {isGroupTrip && (
+                    <ActivityVoteButtons dayIndex={activeDay} slot="morning" summary={groupVotes[`${activeDay}-morning`]} onVote={castGroupVote} />
+                  )}
                   {renderVenueCard(currentDay.morning.activity, { location: currentDay.morning.location, address: currentDay.morning.address, name: currentDay.morning.location })}
                   <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setEditingActivity({ slot: 'afternoon', data: currentDay.afternoon }); }}>
                     <TimeBlock slot="afternoon" data={currentDay.afternoon} currency={currency} rates={rates} />
                   </Pressable>
+                  {isGroupTrip && (
+                    <ActivityVoteButtons dayIndex={activeDay} slot="afternoon" summary={groupVotes[`${activeDay}-afternoon`]} onVote={castGroupVote} />
+                  )}
                   {renderVenueCard(currentDay.afternoon.activity, { location: currentDay.afternoon.location, address: currentDay.afternoon.address, name: currentDay.afternoon.location })}
                   <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setEditingActivity({ slot: 'evening', data: currentDay.evening }); }}>
                     <TimeBlock slot="evening" data={currentDay.evening} currency={currency} rates={rates} />
                   </Pressable>
+                  {isGroupTrip && (
+                    <ActivityVoteButtons dayIndex={activeDay} slot="evening" summary={groupVotes[`${activeDay}-evening`]} onVote={castGroupVote} />
+                  )}
                   {renderVenueCard(currentDay.evening.activity, { location: currentDay.evening.location, address: currentDay.evening.address, name: currentDay.evening.location })}
                 </>
               )}

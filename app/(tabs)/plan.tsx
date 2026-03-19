@@ -43,6 +43,9 @@ import QuickActions from '../../components/plan/QuickActions';
 import DestinationIntel from '../../components/plan/DestinationIntel';
 import DreamBoardBanner from '../../components/plan/DreamBoardBanner'; import TripFundCard from '../../components/plan/TripFundCard';
 import PeopleNudgeBanner from '../../components/plan/PeopleNudgeBanner'; import RateLimitModal from '../../components/plan/RateLimitModal';
+import { getCollaboratorCount } from '../../lib/group-trip';
+import { useBudgetTracker } from '../../lib/budget-tracker';
+import { parseItinerary } from '../../lib/types/itinerary';
 
 interface ConversationBrief { destination?: string; days?: number; budget?: string; groupSize?: number; vibes: string[] }
 const RANDOM_CITIES = ['Tokyo', 'Bali', 'Lisbon', 'Mexico City', 'Bangkok', 'Barcelona', 'Cape Town', 'Medellín', 'Kyoto', 'Marrakech', 'Budapest', 'Buenos Aires'];
@@ -87,6 +90,13 @@ export default function PlanScreen() {
   const { brief, isLive } = useDailyBrief(activeTrip?.destination, daysUntil ?? 0);
   const checklist = useMemo(() => getChecklistItems(daysUntil ?? 999), [daysUntil]);
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+
+  // ── Budget tracker for TRAVELING state ──
+  const activeTripItinerary = useMemo(() => {
+    if (!activeTrip) return null;
+    try { return parseItinerary(activeTrip.itinerary); } catch { return null; }
+  }, [activeTrip]);
+  const { comparison: budgetComparison } = useBudgetTracker(activeTrip?.id ?? '', activeTripItinerary, activeTrip?.startDate);
 
   // ── Typewriter effect for DREAMING state ──
   const dreamingCities = useMemo(() => ['Tokyo.', 'Bali.', 'Vienna.', 'Lisbon.', 'Seoul.', 'Cartagena.'], []);
@@ -144,6 +154,26 @@ export default function PlanScreen() {
 
   const sortedTrips = useMemo(() => [...trips].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()), [trips]);
   const hasTrips = sortedTrips.length > 0;
+
+  // ── Collaborator counts for trip cards ──
+  const [collabCounts, setCollabCounts] = useState<Record<string, number>>({});
+  useEffect(() => {
+    if (sortedTrips.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const counts: Record<string, number> = {};
+      // Only load for first 10 trips to avoid excessive queries
+      const batch = sortedTrips.slice(0, 10);
+      await Promise.all(
+        batch.map(async (t) => {
+          const count = await getCollaboratorCount(t.id);
+          if (!cancelled) counts[t.id] = count;
+        }),
+      );
+      if (!cancelled) setCollabCounts(counts);
+    })();
+    return () => { cancelled = true; };
+  }, [sortedTrips.length]);
 
   // ── Handlers ──
   const handleModeSelect = useCallback((mode: 'quick' | 'conversation') => {
@@ -243,7 +273,7 @@ export default function PlanScreen() {
 
         {(stage === 'PLANNING' || stage === 'IMMINENT') && activeTrip && (<CountdownSection stage={stage} daysUntil={daysUntil ?? 0} activeTrip={activeTrip} brief={brief} isLive={isLive} checklist={checklist} checkedItems={checkedItems} onToggle={handleChecklistToggle} pulseAnim={pulseAnim} weatherDays={planWeatherDays} airQuality={planAirQuality} costData={planCostData} />)}
 
-        {stage === 'TRAVELING' && activeTrip && (<TravelingSection activeTrip={activeTrip} onHelpPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/i-am-here-now' as never); }} onCapturePress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push(('/trip-journal?tripId=' + activeTrip.id) as never); }} onSplitPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/split-expenses' as never); }} />)}
+        {stage === 'TRAVELING' && activeTrip && (<TravelingSection activeTrip={activeTrip} onHelpPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/i-am-here-now' as never); }} onCapturePress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push(('/trip-journal?tripId=' + activeTrip.id) as never); }} onSplitPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/split-expenses' as never); }} onBudgetPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/budget-tracker' as never); }} budgetComparison={budgetComparison} />)}
 
         {stage === 'RETURNED' && activeTrip && (<ReturnedSection activeTrip={activeTrip} onWrappedPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/trip-wrapped' as never); }} onJournalPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(('/trip-journal?tripId=' + activeTrip.id) as never); }} />)}
 
@@ -261,7 +291,7 @@ export default function PlanScreen() {
         {sortedTrips.length > 0 && sortedTrips[0].itinerary && (<View style={{ paddingHorizontal: SPACING.md, marginBottom: SPACING.md }}><TripMapCard tripId={sortedTrips[0].id} destination={sortedTrips[0].destination} itineraryRaw={sortedTrips[0].itinerary} days={sortedTrips[0].days} /></View>)}
 
         <Text style={styles.sectionLabel}>{t('plan.sectionYourTrips')}</Text>
-        {sortedTrips.map((trip, index) => (index === 0 ? <NextTripHero key={trip.id} trip={trip} onPress={() => handleTripPress(trip)} /> : <TripCard key={trip.id} trip={trip} onPress={() => handleTripPress(trip)} isLatest={false} />))}
+        {sortedTrips.map((trip, index) => (index === 0 ? <NextTripHero key={trip.id} trip={trip} onPress={() => handleTripPress(trip)} collaboratorCount={collabCounts[trip.id]} /> : <TripCard key={trip.id} trip={trip} onPress={() => handleTripPress(trip)} isLatest={false} collaboratorCount={collabCounts[trip.id]} />))}
 
         <View style={styles.flightsSectionHeader}><Text style={styles.sectionLabel}>Flights</Text><Text style={styles.flightsSectionSub}>Deals and search</Text></View>
         <GoNowFeed />
