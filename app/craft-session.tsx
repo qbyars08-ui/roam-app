@@ -51,6 +51,7 @@ import { captureEvent } from '../lib/posthog';
 import { recordGrowthEvent } from '../lib/growth-hooks';
 import { evaluateTrigger } from '../lib/smart-triggers';
 import TripLimitBanner from '../components/monetization/TripLimitBanner';
+import CraftSplitScreen from '../components/web/CraftSplitScreen';
 
 export default function CraftSessionScreen() {
   const insets = useSafeAreaInsets();
@@ -326,6 +327,29 @@ export default function CraftSessionScreen() {
       params: { reason: 'limit', destination: state.preferences.destination ?? '' },
     });
     return null;
+  }
+
+  // Web: render split-screen experience
+  if (Platform.OS === 'web') {
+    return (
+      <CraftSplitScreen
+        state={state}
+        input={input}
+        loading={loading}
+        error={error}
+        parsedItinerary={parsedItinerary}
+        streamingText={streamingText}
+        welcomeBackMessage={welcomeBackMessage}
+        question={question}
+        isGathering={isGathering}
+        isBuilding={isBuilding}
+        isFollowUp={!!isFollowUp}
+        onInputChange={setInput}
+        onSubmit={handleSubmit}
+        onBack={handleBack}
+        onSaveTrip={handleSaveTrip}
+      />
+    );
   }
 
   return (

@@ -6,551 +6,46 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
   Animated,
-  Dimensions,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
-  StyleSheet,
   Switch,
   Text,
   TextInput,
   View,
+  Share,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  ArrowRight,
-  Calendar,
-  Check,
-  Compass,
-  Eye,
-  EyeOff,
-  Globe,
-  Heart,
-  MapPin,
-  Moon,
-  Mountain,
-  Send,
-  Star,
-  UserPlus,
-  Users,
-  Utensils,
-  Wallet,
-} from 'lucide-react-native';
-import { Share } from 'react-native';
+import { ArrowRight, Calendar, Eye, EyeOff, MapPin, Send, Users } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAppStore } from '../../lib/store';
 import { useSocialProfile } from '../../lib/hooks/useSocialProfile';
 import { useTripPresence } from '../../lib/hooks/useTripPresence';
-import { trackEvent } from '../../lib/analytics';
-import { track } from '../../lib/analytics';
+import { trackEvent, track } from '../../lib/analytics';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, FONTS, SPACING, RADIUS, MAGAZINE } from '../../lib/constants';
 import type { SocialProfile, TripPresence as TripPresenceType } from '../../lib/types/social';
 import { DEFAULT_PRIVACY } from '../../lib/types/social';
-import { calculateChemistryScore, type ChemistryBreakdown } from '../../lib/social-chemistry';
-import ChemistryBadge from '../../components/social/ChemistryBadge';
+import { calculateChemistryScore } from '../../lib/social-chemistry';
+import type { VibeTag } from '../../lib/types/social';
 import ProfileCard from '../../components/social/ProfileCard';
 import TripPresenceCard from '../../components/social/TripPresenceCard';
-import MatchCard from '../../components/social/MatchCard';
+import { styles } from '../../components/people/people-styles';
+import {
+  type TravelStyleOption, TRAVEL_STYLES, LANGUAGE_OPTIONS, STYLE_TO_DB,
+  resolveProfileFromDraft, mockToSocialProfile, mockToTripPresence,
+  type ProfileDraft, EMPTY_DRAFT, computeCompatibility,
+  type ConnectionStatus, type MockRoamer, getMockRoamers, getMockDestinationCounts,
+} from '../../components/people/people-data';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import {
+  StepIndicator, TravelStyleCard, LanguageChip,
+  DestinationChip, RoamerProfileCard, EmptyMatchState,
+} from '../../components/people/PeopleCards';
 
-// =============================================================================
-// TRAVEL STYLE DEFINITIONS
-// =============================================================================
-type TravelStyleOption = {
-  id: string;
-  label: string;
-  icon: React.ReactNode;
-};
-
-const TRAVEL_STYLES: TravelStyleOption[] = [
-  { id: 'solo-explorer', label: 'Solo explorer', icon: <Compass size={20} color={COLORS.creamSoft} strokeWidth={1.5} /> },
-  { id: 'cultural-deep-dive', label: 'Cultural deep-dive', icon: <Globe size={20} color={COLORS.creamSoft} strokeWidth={1.5} /> },
-  { id: 'adventure-seeker', label: 'Adventure seeker', icon: <Mountain size={20} color={COLORS.creamSoft} strokeWidth={1.5} /> },
-  { id: 'food-obsessed', label: 'Food obsessed', icon: <Utensils size={20} color={COLORS.creamSoft} strokeWidth={1.5} /> },
-  { id: 'slow-traveler', label: 'Slow traveler', icon: <Heart size={20} color={COLORS.creamSoft} strokeWidth={1.5} /> },
-  { id: 'night-owl', label: 'Night owl', icon: <Moon size={20} color={COLORS.creamSoft} strokeWidth={1.5} /> },
-  { id: 'budget-master', label: 'Budget master', icon: <Wallet size={20} color={COLORS.creamSoft} strokeWidth={1.5} /> },
-  { id: 'no-compromises', label: 'No compromises', icon: <Star size={20} color={COLORS.creamSoft} strokeWidth={1.5} /> },
-];
-
-const LANGUAGE_OPTIONS = [
-  'English', 'Spanish', 'French', 'German', 'Japanese',
-  'Mandarin', 'Portuguese', 'Italian', 'Arabic', 'Korean',
-  'Dutch', 'Other',
-];
-
-// Map local travel style IDs → DB travel_style enum + vibe_tags
-import type { TravelStyle, VibeTag } from '../../lib/types/social';
-
-const STYLE_TO_DB: Record<string, { travelStyle: TravelStyle; vibeTags: VibeTag[] }> = {
-  'solo-explorer': { travelStyle: 'adventure', vibeTags: ['hiking-buddy', 'day-trip-companion'] },
-  'cultural-deep-dive': { travelStyle: 'slow-travel', vibeTags: ['culture-explorer', 'language-exchange'] },
-  'adventure-seeker': { travelStyle: 'adventure', vibeTags: ['hiking-buddy', 'day-trip-companion'] },
-  'food-obsessed': { travelStyle: 'comfort', vibeTags: ['food-tour-partner', 'coffee-chat'] },
-  'slow-traveler': { travelStyle: 'slow-travel', vibeTags: ['coffee-chat', 'culture-explorer'] },
-  'night-owl': { travelStyle: 'comfort', vibeTags: ['nightlife-crew', 'hostel-hangout'] },
-  'budget-master': { travelStyle: 'backpacker', vibeTags: ['hostel-hangout', 'hiking-buddy'] },
-  'no-compromises': { travelStyle: 'luxury', vibeTags: ['food-tour-partner', 'photography-partner'] },
-};
-
-function resolveProfileFromDraft(styles: string[]): { travelStyle: TravelStyle; vibeTags: VibeTag[] } {
-  if (styles.length === 0) return { travelStyle: 'comfort', vibeTags: [] };
-  const first = STYLE_TO_DB[styles[0]] ?? { travelStyle: 'comfort' as TravelStyle, vibeTags: [] as VibeTag[] };
-  // Merge vibe tags from all selected styles (deduplicated)
-  const allTags = new Set<VibeTag>();
-  for (const s of styles) {
-    const mapped = STYLE_TO_DB[s];
-    if (mapped) mapped.vibeTags.forEach((t) => allTags.add(t));
-  }
-  return { travelStyle: first.travelStyle, vibeTags: [...allTags] };
-}
-
-// =============================================================================
-// MOCK → SOCIAL TYPE CONVERTERS
-// =============================================================================
-function mockToSocialProfile(roamer: MockRoamer): SocialProfile {
-  const mapped = STYLE_TO_DB[roamer.travelStyles[0]] ?? { travelStyle: 'comfort' as TravelStyle, vibeTags: [] as VibeTag[] };
-  const allTags = new Set<VibeTag>();
-  for (const s of roamer.travelStyles) {
-    const m = STYLE_TO_DB[s];
-    if (m) m.vibeTags.forEach((t) => allTags.add(t));
-  }
-  return {
-    id: roamer.id,
-    userId: roamer.id,
-    displayName: roamer.name,
-    ageRange: '25-30',
-    travelStyle: mapped.travelStyle,
-    vibeTags: [...allTags],
-    bio: roamer.bio,
-    avatarEmoji: '',
-    languages: roamer.languages,
-    verified: false,
-    privacy: { ...DEFAULT_PRIVACY },
-    createdAt: new Date().toISOString(),
-  };
-}
-
-function mockToTripPresence(roamer: MockRoamer): TripPresenceType {
-  const mapped = STYLE_TO_DB[roamer.travelStyles[0]] ?? { vibeTags: [] as VibeTag[] };
-  return {
-    id: roamer.id,
-    userId: roamer.id,
-    destination: roamer.destination,
-    arrivalDate: roamer.arrivalDate,
-    departureDate: roamer.departureDate,
-    lookingFor: mapped.vibeTags,
-    status: 'active',
-    createdAt: new Date().toISOString(),
-  };
-}
-
-// =============================================================================
-// PROFILE CREATION STATE
-// =============================================================================
-type ProfileDraft = {
-  name: string;
-  homeCity: string;
-  travelStyles: string[];
-  languages: string[];
-  bio: string;
-  firstTripDestination: string;
-  firstTripStartDate: string;
-  firstTripEndDate: string;
-};
-
-const EMPTY_DRAFT: ProfileDraft = {
-  name: '',
-  homeCity: '',
-  travelStyles: [],
-  languages: [],
-  bio: '',
-  firstTripDestination: '',
-  firstTripStartDate: '',
-  firstTripEndDate: '',
-};
-
-// =============================================================================
-// COMPATIBILITY SCORE CALCULATOR
-// =============================================================================
-function computeCompatibility(
-  myStyles: string[],
-  myLanguages: string[],
-  myTripCount: number,
-  theirStyles: string[],
-  theirLanguages: string[],
-  theirTripCount: number,
-  datesOverlap: boolean,
-): number {
-  let score = 0;
-  // Shared travel styles: 30 pts each, max 3
-  const sharedStyles = myStyles.filter((st) => theirStyles.includes(st));
-  score += Math.min(sharedStyles.length, 3) * 30;
-  // Overlapping dates
-  if (datesOverlap) score += 10;
-  // Shared language
-  const sharedLangs = myLanguages.filter((l) => theirLanguages.includes(l));
-  if (sharedLangs.length > 0) score += 20;
-  // Similar trip count (within 3)
-  if (Math.abs(myTripCount - theirTripCount) <= 3) score += 10;
-  return Math.min(score, 100);
-}
-
-// =============================================================================
-// CONNECTION STATUS TYPE
-// =============================================================================
-type ConnectionStatus = 'none' | 'requested' | 'connected';
-
-// =============================================================================
-// MOCK DATA FOR DEMO (replaces Supabase reads until tables exist)
-// =============================================================================
-type MockRoamer = {
-  id: string;
-  name: string;
-  homeCity: string;
-  travelStyles: string[];
-  languages: string[];
-  bio: string;
-  tripCount: number;
-  destination: string;
-  arrivalDate: string;
-  departureDate: string;
-  currentlyThere: boolean;
-  isDemo?: boolean;
-};
-
-function getMockRoamers(destination: string): MockRoamer[] {
-  return [
-    {
-      id: 'mock-1',
-      name: 'Lena K.',
-      homeCity: 'Berlin',
-      travelStyles: ['cultural-deep-dive', 'food-obsessed', 'slow-traveler'],
-      languages: ['English', 'German', 'French'],
-      bio: 'Film photographer with a thing for street food markets.',
-      tripCount: 12,
-      destination,
-      arrivalDate: new Date(Date.now() + 2 * 86400000).toISOString(),
-      departureDate: new Date(Date.now() + 14 * 86400000).toISOString(),
-      currentlyThere: false,
-      isDemo: true,
-    },
-    {
-      id: 'mock-2',
-      name: 'Marco T.',
-      homeCity: 'Lisbon',
-      travelStyles: ['adventure-seeker', 'night-owl', 'budget-master'],
-      languages: ['English', 'Portuguese', 'Spanish'],
-      bio: 'Surf and sunsets. Looking for hiking partners.',
-      tripCount: 8,
-      destination,
-      arrivalDate: new Date(Date.now() - 3 * 86400000).toISOString(),
-      departureDate: new Date(Date.now() + 7 * 86400000).toISOString(),
-      currentlyThere: true,
-      isDemo: true,
-    },
-    {
-      id: 'mock-3',
-      name: 'Yuki A.',
-      homeCity: 'Tokyo',
-      travelStyles: ['solo-explorer', 'food-obsessed', 'cultural-deep-dive'],
-      languages: ['English', 'Japanese'],
-      bio: 'Architecture nerd. Will walk 30k steps for the right coffee.',
-      tripCount: 15,
-      destination,
-      arrivalDate: new Date(Date.now() + 5 * 86400000).toISOString(),
-      departureDate: new Date(Date.now() + 12 * 86400000).toISOString(),
-      currentlyThere: false,
-      isDemo: true,
-    },
-  ];
-}
-
-function getMockDestinationCounts(): { destination: string; count: number }[] {
-  return [
-    { destination: 'Tokyo', count: 24 },
-    { destination: 'Lisbon', count: 18 },
-    { destination: 'Mexico City', count: 15 },
-    { destination: 'Bali', count: 31 },
-    { destination: 'Barcelona', count: 12 },
-    { destination: 'Seoul', count: 9 },
-  ];
-}
-
-// =============================================================================
-// SUB-COMPONENT: StepIndicator
-// =============================================================================
-const StepIndicator = React.memo<{ current: number; total: number }>(({ current, total }) => (
-  <View style={styles.stepRow}>
-    {Array.from({ length: total }, (_, i) => (
-      <View
-        key={i}
-        style={[
-          styles.stepDot,
-          i < current
-            ? styles.stepDotComplete
-            : i === current
-              ? styles.stepDotActive
-              : styles.stepDotInactive,
-        ]}
-      />
-    ))}
-  </View>
-));
-StepIndicator.displayName = 'StepIndicator';
-
-// =============================================================================
-// SUB-COMPONENT: TravelStyleCard
-// =============================================================================
-const TravelStyleCard = React.memo<{
-  item: TravelStyleOption;
-  selected: boolean;
-  onToggle: (id: string) => void;
-}>(({ item, selected, onToggle }) => {
-  const handlePress = useCallback(async () => {
-    await Haptics.selectionAsync();
-    onToggle(item.id);
-  }, [item.id, onToggle]);
-
-  return (
-    <Pressable
-      onPress={handlePress}
-      accessibilityLabel={`${item.label} travel style${selected ? ', selected' : ''}`}
-      style={[
-        styles.styleCard,
-        selected ? styles.styleCardSelected : styles.styleCardUnselected,
-      ]}
-    >
-      <View style={styles.styleCardIcon}>{item.icon}</View>
-      <Text
-        style={[
-          styles.styleCardLabel,
-          selected ? styles.styleCardLabelSelected : styles.styleCardLabelUnselected,
-        ]}
-        numberOfLines={2}
-      >
-        {item.label}
-      </Text>
-      {selected && (
-        <View style={styles.styleCardCheck}>
-          <Check size={14} color={COLORS.sage} strokeWidth={1.5} />
-        </View>
-      )}
-    </Pressable>
-  );
-});
-TravelStyleCard.displayName = 'TravelStyleCard';
-
-// =============================================================================
-// SUB-COMPONENT: LanguageChip
-// =============================================================================
-const LanguageChip = React.memo<{
-  label: string;
-  selected: boolean;
-  onToggle: (lang: string) => void;
-}>(({ label, selected, onToggle }) => {
-  const handlePress = useCallback(async () => {
-    await Haptics.selectionAsync();
-    onToggle(label);
-  }, [label, onToggle]);
-
-  return (
-    <Pressable
-      onPress={handlePress}
-      accessibilityLabel={`${label}${selected ? ', selected' : ''}`}
-      style={[styles.langChip, selected ? styles.langChipSelected : styles.langChipUnselected]}
-    >
-      <Text
-        style={[
-          styles.langChipText,
-          selected ? styles.langChipTextSelected : styles.langChipTextUnselected,
-        ]}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-});
-LanguageChip.displayName = 'LanguageChip';
-
-// =============================================================================
-// SUB-COMPONENT: DestinationChip (for "ROAM This Month")
-// =============================================================================
-const DestinationChip = React.memo<{
-  destination: string;
-  count: number;
-  onPress: (dest: string) => void;
-}>(({ destination, count, onPress }) => {
-  const handlePress = useCallback(async () => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    onPress(destination);
-  }, [destination, onPress]);
-
-  return (
-    <Pressable
-      onPress={handlePress}
-      accessibilityLabel={`${destination}, ${count} ROAMers`}
-      style={({ pressed }) => [styles.destChip, pressed && styles.pressed]}
-    >
-      <MapPin size={14} color={COLORS.sage} strokeWidth={1.5} />
-      <Text style={styles.destChipText}>{destination}</Text>
-      <Text style={styles.destChipCount}>{count}</Text>
-    </Pressable>
-  );
-});
-DestinationChip.displayName = 'DestinationChip';
-
-// =============================================================================
-// SUB-COMPONENT: RoamerProfileCard
-// =============================================================================
-const DemoBadge = () => {
-  const { t } = useTranslation();
-  return (
-    <View style={{ paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs, borderRadius: RADIUS.sm, backgroundColor: COLORS.bgElevated, borderWidth: 1, borderColor: COLORS.border }}>
-      <Text style={{ fontFamily: FONTS.mono, fontSize: 9, color: COLORS.creamMuted, letterSpacing: 1, textTransform: 'uppercase' }}>{t('people.demo', { defaultValue: 'Demo' })}</Text>
-    </View>
-  );
-};
-
-const RoamerProfileCard = React.memo<{
-  roamer: MockRoamer;
-  compatibilityScore: number;
-  connectionStatus: ConnectionStatus;
-  onConnect: (id: string) => void;
-}>(({ roamer, compatibilityScore, connectionStatus, onConnect }) => {
-  const { t } = useTranslation();
-  const handleConnect = useCallback(async () => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    onConnect(roamer.id);
-  }, [roamer.id, onConnect]);
-
-  const buttonLabel = useMemo(() => {
-    if (connectionStatus === 'connected') return t('people.connected', { defaultValue: 'Connected' });
-    if (connectionStatus === 'requested') return t('people.requested', { defaultValue: 'Requested' });
-    return t('people.connect', { defaultValue: 'Connect' });
-  }, [connectionStatus, t]);
-
-  const buttonStyle = useMemo(() => {
-    if (connectionStatus === 'connected') return styles.connectBtnConnected;
-    if (connectionStatus === 'requested') return styles.connectBtnRequested;
-    return styles.connectBtnDefault;
-  }, [connectionStatus]);
-
-  const buttonTextStyle = useMemo(() => {
-    if (connectionStatus === 'connected') return styles.connectBtnTextConnected;
-    if (connectionStatus === 'requested') return styles.connectBtnTextRequested;
-    return styles.connectBtnTextDefault;
-  }, [connectionStatus]);
-
-  return (
-    <View style={styles.roamerCard}>
-      <View style={styles.roamerCardHeader}>
-        <View style={styles.roamerNameRow}>
-          <Text style={styles.roamerName}>{roamer.name}</Text>
-          {roamer.isDemo && <DemoBadge />}
-          <Text style={styles.roamerScore}>{compatibilityScore}%</Text>
-        </View>
-        <View style={styles.roamerMeta}>
-          <MapPin size={12} color={COLORS.creamMuted} strokeWidth={1.5} />
-          <Text style={styles.roamerCity}>{roamer.homeCity}</Text>
-          {roamer.languages.length > 0 && (
-            <>
-              <Globe size={12} color={COLORS.creamMuted} strokeWidth={1.5} />
-              <Text style={styles.roamerLangs} numberOfLines={1}>
-                {roamer.languages.slice(0, 2).join(', ')}
-              </Text>
-            </>
-          )}
-        </View>
-      </View>
-      <View style={styles.roamerTags}>
-        {roamer.travelStyles.slice(0, 3).map((travelStyle) => (
-          <View key={travelStyle} style={styles.roamerTag}>
-            <Text style={styles.roamerTagText}>
-              {TRAVEL_STYLES.find((ts) => ts.id === travelStyle)?.label ?? travelStyle}
-            </Text>
-          </View>
-        ))}
-      </View>
-      <View style={styles.roamerFooter}>
-        <Text style={styles.roamerBio} numberOfLines={1}>{roamer.bio}</Text>
-        <Pressable
-          onPress={handleConnect}
-          accessibilityLabel={`${buttonLabel} with ${roamer.name}`}
-          style={({ pressed }) => [styles.connectBtn, buttonStyle, pressed && styles.pressed]}
-          disabled={connectionStatus === 'connected'}
-        >
-          {connectionStatus === 'none' && (
-            <UserPlus size={14} color={COLORS.bg} strokeWidth={1.5} />
-          )}
-          <Text style={[styles.connectBtnText, buttonTextStyle]}>{buttonLabel}</Text>
-        </Pressable>
-      </View>
-    </View>
-  );
-});
-RoamerProfileCard.displayName = 'RoamerProfileCard';
-
-// =============================================================================
-// SUB-COMPONENT: EmptyMatchState — "You'd be the first ROAMer in [city]", animated pin, Add your trip CTA
-// =============================================================================
-const EmptyMatchState = React.memo<{ destination: string }>(({ destination }) => {
-  const { t } = useTranslation();
-  const router = useRouter();
-  const pinDrop = useRef(new Animated.Value(-72)).current;
-  const pinBounce = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    const drop = Animated.timing(pinDrop, {
-      toValue: 0,
-      duration: 1600,
-      useNativeDriver: true,
-    });
-    const bounce = Animated.sequence([
-      Animated.timing(pinBounce, { toValue: 1.15, duration: 100, useNativeDriver: true }),
-      Animated.spring(pinBounce, { toValue: 1, tension: 160, friction: 10, useNativeDriver: true }),
-    ]);
-    Animated.sequence([drop, bounce]).start();
-  }, [pinDrop, pinBounce]);
-
-  const handleAddTrip = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push('/(tabs)/plan' as never);
-  }, [router]);
-
-  return (
-    <View style={styles.emptyState}>
-      <Animated.View style={[styles.emptyStatePinWrap, { transform: [{ translateY: pinDrop }, { scale: pinBounce }] }]}>
-        <MapPin size={48} color={COLORS.sage} strokeWidth={1.5} />
-      </Animated.View>
-      <Text style={styles.emptyText}>
-        {t('people.firstRoamer', { destination, defaultValue: `You'd be the first ROAMer in ${destination}.` })}
-      </Text>
-      <Text style={styles.emptySubtext}>
-        {t('people.firstRoamerSub', { defaultValue: 'Add your trip and someone will find you.' })}
-      </Text>
-      <Pressable
-        onPress={handleAddTrip}
-        accessibilityLabel={t('people.addYourTrip', { defaultValue: 'Add your trip' })}
-        accessibilityRole="button"
-        style={({ pressed }) => [styles.addTripCta, pressed && styles.pressed]}
-      >
-        <Text style={styles.addTripCtaText}>{t('people.addYourTrip', { defaultValue: 'Add your trip' })}</Text>
-        <ArrowRight size={18} color={COLORS.bg} strokeWidth={1.5} />
-      </Pressable>
-    </View>
-  );
-});
-EmptyMatchState.displayName = 'EmptyMatchState';
-
-// =============================================================================
-// MAIN COMPONENT
-// =============================================================================
 export default function PeopleTab() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -559,26 +54,20 @@ export default function PeopleTab() {
   const { myPresences, postPresence } = useTripPresence();
   const trips = useAppStore((st) => st.trips);
 
-  // ---------------------------------------------------------------------------
   // Profile creation state
-  // ---------------------------------------------------------------------------
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<ProfileDraft>({ ...EMPTY_DRAFT });
   const [saving, setSaving] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  // ---------------------------------------------------------------------------
   // Full experience state
-  // ---------------------------------------------------------------------------
   const [visibleToRoamers, setVisibleToRoamers] = useState(true);
   const [connections, setConnections] = useState<Record<string, ConnectionStatus>>({});
   const [tripDestInput, setTripDestInput] = useState('');
   const [tripStartDate, setTripStartDate] = useState('');
   const [tripEndDate, setTripEndDate] = useState('');
 
-  // ---------------------------------------------------------------------------
   // Determine state
-  // ---------------------------------------------------------------------------
   const hasProfile = socialProfile !== null;
   const activeTrip = useMemo(() => {
     if (myPresences.length > 0) return myPresences[0];
@@ -597,9 +86,7 @@ export default function PeopleTab() {
   const hasTrip = activeTrip !== null;
   const currentDestination = activeTrip?.destination ?? '';
 
-  // ---------------------------------------------------------------------------
   // Mock data
-  // ---------------------------------------------------------------------------
   const roamers = useMemo(
     () => (currentDestination ? getMockRoamers(currentDestination) : []),
     [currentDestination],
@@ -615,9 +102,7 @@ export default function PeopleTab() {
     [roamers],
   );
 
-  // ---------------------------------------------------------------------------
   // Load persisted connections + analytics
-  // ---------------------------------------------------------------------------
   useEffect(() => {
     track({ type: 'screen_view', screen: 'people_tab' }).catch(() => {});
     trackEvent('people_tab_opened').catch(() => {});
@@ -631,9 +116,7 @@ export default function PeopleTab() {
     }).catch(() => {});
   }, []);
 
-  // ---------------------------------------------------------------------------
   // Step animation helper
-  // ---------------------------------------------------------------------------
   const animateStep = useCallback(
     (nextStep: number) => {
       Animated.timing(fadeAnim, {
@@ -652,9 +135,7 @@ export default function PeopleTab() {
     [fadeAnim],
   );
 
-  // ---------------------------------------------------------------------------
   // Profile creation handlers
-  // ---------------------------------------------------------------------------
   const updateDraft = useCallback((partial: Partial<ProfileDraft>) => {
     setDraft((prev) => ({ ...prev, ...partial }));
   }, []);
@@ -785,9 +266,7 @@ export default function PeopleTab() {
     }
   }, [draft, upsert, postPresence]);
 
-  // ---------------------------------------------------------------------------
   // Full experience handlers
-  // ---------------------------------------------------------------------------
   const handleToggleVisibility = useCallback(async (value: boolean) => {
     await Haptics.selectionAsync();
     setVisibleToRoamers(value);
@@ -828,9 +307,7 @@ export default function PeopleTab() {
     setTripEndDate('');
   }, [tripDestInput, tripStartDate, tripEndDate, postPresence]);
 
-  // ---------------------------------------------------------------------------
   // Can proceed check for each step
-  // ---------------------------------------------------------------------------
   const canProceed = useMemo(() => {
     switch (step) {
       case 0: return draft.name.trim().length > 0;
@@ -843,9 +320,7 @@ export default function PeopleTab() {
     }
   }, [step, draft]);
 
-  // ---------------------------------------------------------------------------
   // RENDER: STATE 0 — Loading profile
-  // ---------------------------------------------------------------------------
   if (profileLoading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top, justifyContent: 'center', alignItems: 'center' }]}>
@@ -854,9 +329,7 @@ export default function PeopleTab() {
     );
   }
 
-  // ---------------------------------------------------------------------------
   // RENDER: STATE 1 — No Profile (ProfileCreation inline flow)
-  // ---------------------------------------------------------------------------
   if (!hasProfile) {
     return (
       <KeyboardAvoidingView
@@ -1057,9 +530,7 @@ export default function PeopleTab() {
     );
   }
 
-  // ---------------------------------------------------------------------------
   // RENDER: STATE 2 — Profile Exists, No Trip
-  // ---------------------------------------------------------------------------
   if (hasProfile && !hasTrip) {
     return (
       <ScrollView
@@ -1134,9 +605,7 @@ export default function PeopleTab() {
     );
   }
 
-  // ---------------------------------------------------------------------------
   // RENDER: STATE 3 — Full Experience
-  // ---------------------------------------------------------------------------
   return (
     <ScrollView
       style={[styles.container, { paddingTop: insets.top }]}
@@ -1329,581 +798,3 @@ export default function PeopleTab() {
   );
 }
 
-// =============================================================================
-// STYLES
-// =============================================================================
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.bg,
-  },
-  pressed: {
-    opacity: 0.75,
-  },
-  btnDisabled: {
-    opacity: 0.4,
-  },
-
-  // ---------------------------------------------------------------------------
-  // Step indicator
-  // ---------------------------------------------------------------------------
-  stepRow: {
-    flexDirection: 'row',
-    gap: SPACING.xs,
-    paddingHorizontal: MAGAZINE.padding,
-    paddingTop: SPACING.lg,
-    paddingBottom: SPACING.md,
-  },
-  stepDot: {
-    flex: 1,
-    height: 3,
-    borderRadius: RADIUS.full,
-  },
-  stepDotActive: {
-    backgroundColor: COLORS.sage,
-  },
-  stepDotComplete: {
-    backgroundColor: COLORS.sageMedium,
-  },
-  stepDotInactive: {
-    backgroundColor: COLORS.bgElevated,
-  },
-
-  // ---------------------------------------------------------------------------
-  // Profile creation (State 1)
-  // ---------------------------------------------------------------------------
-  creationScroll: {
-    paddingBottom: SPACING.xxxl,
-    flexGrow: 1,
-  },
-  stepContainer: {
-    flex: 1,
-    paddingHorizontal: MAGAZINE.padding,
-    paddingTop: SPACING.xl,
-  },
-  stepContent: {
-    gap: SPACING.md,
-  },
-  stepQuestion: {
-    fontFamily: FONTS.header,
-    fontSize: 34,
-    color: COLORS.cream,
-    lineHeight: 40,
-    letterSpacing: -0.8,
-  },
-  stepHint: {
-    fontFamily: FONTS.mono,
-    fontSize: 12,
-    color: COLORS.creamMuted,
-    letterSpacing: 0.5,
-  },
-  textInput: {
-    fontFamily: FONTS.body,
-    fontSize: 18,
-    color: COLORS.cream,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.sage,
-    paddingVertical: SPACING.sm,
-    minHeight: 44,
-  },
-  textArea: {
-    borderBottomWidth: 0,
-    borderWidth: 1,
-    borderColor: COLORS.sageBorder,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: SPACING.sm,
-    minHeight: 100,
-    textAlignVertical: 'top',
-  },
-  charCount: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.creamMuted,
-    alignSelf: 'flex-end',
-  },
-  dateRow: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-  },
-  dateInput: {
-    flex: 1,
-    fontSize: 14,
-  },
-
-  // Travel style grid (2x4)
-  styleGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
-  },
-  styleCard: {
-    width: (SCREEN_WIDTH - MAGAZINE.padding * 2 - SPACING.sm) / 2,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.xs,
-    minHeight: 80,
-  },
-  styleCardSelected: {
-    borderColor: COLORS.sage,
-    backgroundColor: COLORS.sageVeryFaint,
-  },
-  styleCardUnselected: {
-    borderColor: COLORS.creamDimLight,
-    backgroundColor: COLORS.transparent,
-  },
-  styleCardIcon: {
-    marginBottom: SPACING.xs,
-  },
-  styleCardLabel: {
-    fontFamily: FONTS.bodyMedium,
-    fontSize: 13,
-    textAlign: 'center',
-  },
-  styleCardLabelSelected: {
-    color: COLORS.sage,
-  },
-  styleCardLabelUnselected: {
-    color: COLORS.creamMuted,
-  },
-  styleCardCheck: {
-    position: 'absolute',
-    top: SPACING.xs,
-    right: SPACING.xs,
-  },
-
-  // Language chips
-  langGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
-  },
-  langChip: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.full,
-    borderWidth: 1,
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  langChipSelected: {
-    borderColor: COLORS.sage,
-    backgroundColor: COLORS.sageVeryFaint,
-  },
-  langChipUnselected: {
-    borderColor: COLORS.creamDimLight,
-    backgroundColor: COLORS.transparent,
-  },
-  langChipText: {
-    fontFamily: FONTS.bodyMedium,
-    fontSize: 14,
-  },
-  langChipTextSelected: {
-    color: COLORS.sage,
-  },
-  langChipTextUnselected: {
-    color: COLORS.creamMuted,
-  },
-
-  // Nav buttons
-  navRow: {
-    paddingHorizontal: MAGAZINE.padding,
-    paddingTop: SPACING.xl,
-    gap: SPACING.sm,
-  },
-  nextBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    paddingVertical: SPACING.md,
-    borderRadius: RADIUS.pill,
-    backgroundColor: COLORS.sage,
-    minHeight: 52,
-  },
-  nextBtnFinal: {
-    backgroundColor: COLORS.sage,
-  },
-  nextBtnText: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 16,
-    color: COLORS.bg,
-  },
-  skipBtn: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: SPACING.sm,
-    minHeight: 44,
-  },
-  skipBtnText: {
-    fontFamily: FONTS.bodyMedium,
-    fontSize: 14,
-    color: COLORS.creamMuted,
-  },
-
-  // ---------------------------------------------------------------------------
-  // State 2 — Profile exists, no trip
-  // ---------------------------------------------------------------------------
-  state2Scroll: {
-    paddingBottom: SPACING.xxxl,
-  },
-  networkLabel: {
-    fontFamily: FONTS.body,
-    fontSize: 14,
-    color: COLORS.creamSoft,
-    paddingHorizontal: MAGAZINE.padding,
-    paddingTop: SPACING.lg,
-  },
-  sectionHeader: {
-    paddingHorizontal: MAGAZINE.padding,
-    paddingTop: SPACING.xl,
-    paddingBottom: SPACING.sm,
-  },
-  sectionTitle: {
-    fontFamily: FONTS.header,
-    fontSize: 24,
-    color: COLORS.cream,
-    letterSpacing: -0.4,
-  },
-  destChipsRow: {
-    paddingHorizontal: MAGAZINE.padding,
-    gap: SPACING.sm,
-    paddingBottom: SPACING.md,
-  },
-  destChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.full,
-    borderWidth: 1,
-    borderColor: COLORS.sageBorder,
-    backgroundColor: COLORS.sageVeryFaint,
-    minHeight: 44,
-  },
-  destChipText: {
-    fontFamily: FONTS.bodyMedium,
-    fontSize: 14,
-    color: COLORS.cream,
-  },
-  destChipCount: {
-    fontFamily: FONTS.mono,
-    fontSize: 12,
-    color: COLORS.sage,
-  },
-  addTripCard: {
-    marginHorizontal: MAGAZINE.padding,
-    marginTop: SPACING.xl,
-    padding: MAGAZINE.padding,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.bgCard,
-    gap: SPACING.md,
-  },
-  addTripTitle: {
-    fontFamily: FONTS.header,
-    fontSize: 28,
-    color: COLORS.cream,
-    letterSpacing: -0.6,
-  },
-
-  // Share button
-  shareBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    marginHorizontal: MAGAZINE.padding,
-    marginBottom: SPACING.md,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    borderRadius: RADIUS.pill,
-    borderWidth: 1,
-    borderColor: COLORS.sageBorder,
-    backgroundColor: COLORS.sageVeryFaint,
-  },
-  shareBtnText: {
-    flex: 1,
-    fontFamily: FONTS.bodyMedium,
-    fontSize: 13,
-    color: COLORS.sage,
-  },
-
-  // ---------------------------------------------------------------------------
-  // Social Discovery Nav Cards
-  // ---------------------------------------------------------------------------
-  socialNavRow: {
-    paddingHorizontal: MAGAZINE.padding,
-    paddingBottom: SPACING.md,
-    gap: SPACING.sm,
-  },
-  socialNavCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    backgroundColor: COLORS.surface1,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    minHeight: 60,
-  },
-  socialNavCardText: {
-    flex: 1,
-    gap: 2,
-  },
-  socialNavCardTitle: {
-    fontFamily: FONTS.bodyMedium,
-    fontSize: 15,
-    color: COLORS.cream,
-  },
-  socialNavCardSubtitle: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.creamMuted,
-    letterSpacing: 0.3,
-  },
-
-  // ---------------------------------------------------------------------------
-  // State 3 — Full experience
-  // ---------------------------------------------------------------------------
-  fullScroll: {
-    paddingBottom: SPACING.xxxl,
-  },
-  fullHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: MAGAZINE.padding,
-    paddingTop: SPACING.lg,
-    paddingBottom: SPACING.sm,
-  },
-  fullTitle: {
-    fontFamily: FONTS.header,
-    fontSize: 32,
-    color: COLORS.cream,
-    letterSpacing: -0.8,
-  },
-  privacyToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-  privacyLabel: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.creamMuted,
-  },
-  section: {
-    paddingHorizontal: MAGAZINE.padding,
-    paddingTop: SPACING.xl,
-    gap: SPACING.md,
-  },
-
-  // Roamer profile cards
-  roamerCard: {
-    height: 140,
-    backgroundColor: COLORS.bgMagazine,
-    borderRadius: RADIUS.md,
-    borderLeftWidth: MAGAZINE.accentBorder,
-    borderLeftColor: COLORS.sage,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    justifyContent: 'space-between',
-  },
-  roamerCardHeader: {
-    gap: SPACING.xs,
-  },
-  roamerNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  roamerName: {
-    fontFamily: FONTS.header,
-    fontSize: 20,
-    color: COLORS.cream,
-  },
-  roamerScore: {
-    fontFamily: FONTS.mono,
-    fontSize: 14,
-    color: COLORS.gold,
-  },
-  roamerMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-  roamerCity: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.creamMuted,
-    marginRight: SPACING.xs,
-  },
-  roamerLangs: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.creamMuted,
-    flex: 1,
-  },
-  roamerTags: {
-    flexDirection: 'row',
-    gap: SPACING.xs,
-    flexWrap: 'wrap',
-  },
-  roamerTag: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.coralSubtle,
-  },
-  roamerTagText: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.coral,
-  },
-  roamerFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: SPACING.sm,
-  },
-  roamerBio: {
-    fontFamily: FONTS.body,
-    fontSize: 12,
-    color: COLORS.creamMuted,
-    flex: 1,
-  },
-  connectBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.pill,
-    minHeight: 44,
-  },
-  connectBtnDefault: {
-    backgroundColor: COLORS.sage,
-  },
-  connectBtnRequested: {
-    backgroundColor: COLORS.transparent,
-    borderWidth: 1,
-    borderColor: COLORS.goldBorder,
-  },
-  connectBtnConnected: {
-    backgroundColor: COLORS.transparent,
-    borderWidth: 1,
-    borderColor: COLORS.successBorder,
-  },
-  connectBtnText: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 13,
-  },
-  connectBtnTextDefault: {
-    color: COLORS.bg,
-  },
-  connectBtnTextRequested: {
-    color: COLORS.gold,
-  },
-  connectBtnTextConnected: {
-    color: COLORS.sage,
-  },
-
-  // Empty state
-  emptyState: {
-    paddingHorizontal: MAGAZINE.padding,
-    paddingTop: SPACING.xxl,
-    alignItems: 'center',
-    gap: SPACING.lg,
-  },
-  emptyStatePinWrap: {
-    marginBottom: SPACING.sm,
-  },
-  emptyText: {
-    fontFamily: FONTS.body,
-    fontSize: 15,
-    color: COLORS.creamMuted,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  emptySubtext: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.muted,
-    textAlign: 'center',
-    lineHeight: 18,
-    marginTop: -SPACING.xs,
-  },
-  addTripCta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    backgroundColor: COLORS.sage,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.xl,
-    borderRadius: RADIUS.pill,
-    minHeight: 48,
-  },
-  addTripCtaText: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 16,
-    color: COLORS.bg,
-  },
-  inviteBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.sm,
-    minHeight: 44,
-  },
-  inviteBtnText: {
-    fontFamily: FONTS.bodyMedium,
-    fontSize: 14,
-    color: COLORS.sage,
-  },
-
-  // Network horizontal scroll (State 3, section 3)
-  networkScroll: {
-    gap: SPACING.sm,
-    paddingRight: MAGAZINE.padding,
-  },
-  networkCard: {
-    width: 100,
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-  networkAvatar: {
-    width: 56,
-    height: 56,
-    borderRadius: RADIUS.pill,
-    backgroundColor: COLORS.bgElevated,
-    borderWidth: 1,
-    borderColor: COLORS.sageBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  networkAvatarText: {
-    fontFamily: FONTS.header,
-    fontSize: 22,
-    color: COLORS.sage,
-  },
-  networkName: {
-    fontFamily: FONTS.bodyMedium,
-    fontSize: 12,
-    color: COLORS.cream,
-    textAlign: 'center',
-  },
-  networkCity: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.creamMuted,
-    textAlign: 'center',
-  },
-});
