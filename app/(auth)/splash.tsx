@@ -23,9 +23,9 @@ import { COLORS, FONTS, RADIUS, SPACING } from '../../lib/constants';
 // Itinerary demo lines — 3 cities, one line each, cycling
 // ---------------------------------------------------------------------------
 const DEMO_LINES = [
-  'Day 1 \u2014 Shibuya at dusk. The vinyl shops close at 8.',
-  'Day 2 \u2014 Trastevere. Ask for the cacio e pepe.',
-  'Day 3 \u2014 Canggu. Rent a scooter. Trust me.',
+  'Day 1 — Shibuya at dusk. The vinyl shops close at 8.',
+  'Day 2 — Trastevere. Ask for the cacio e pepe.',
+  'Day 3 — Canggu. Rent a scooter. Trust me.',
 ] as const;
 
 const HOLD_MS = 6000;
@@ -209,7 +209,7 @@ export default function SplashScreen() {
             { transform: [{ scale: pressed ? 0.97 : 1 }] },
           ]}
         >
-          <Text style={styles.primaryBtnText}>Plan a trip \u2014 free</Text>
+          <Text style={styles.primaryBtnText}>Plan a trip — free</Text>
         </Pressable>
 
         <Pressable onPress={handleSignIn} hitSlop={12}>
