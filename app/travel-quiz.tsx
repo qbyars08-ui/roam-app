@@ -84,42 +84,12 @@ const QUESTIONS: QuizQuestion[] = [
 type ResultConfig = { emoji: string; title: string; description: string; persona: TravelerPersona };
 
 const RESULTS: Record<TravelerPersona, ResultConfig> = {
-  adventure: {
-    emoji: '\u{1F3D4}\u{FE0F}',
-    title: 'Adventure Seeker',
-    description: 'You chase adrenaline, not comfort. Hiking boots over heels, sunrise trails over sleep-ins. The best trips push your limits.',
-    persona: 'adventure',
-  },
-  backpacker: {
-    emoji: '\u{1F392}',
-    title: 'Backpacker',
-    description: 'Street food, hostels, and stories that start with "so we got lost." You travel light and live big on any budget.',
-    persona: 'backpacker',
-  },
-  luxury: {
-    emoji: '\u{1F451}',
-    title: 'Luxury Traveler',
-    description: "Thread count matters. You've earned the upgrade, the tasting menu, and the late checkout. Travel is self-care.",
-    persona: 'luxury',
-  },
-  romantic: {
-    emoji: '\u{2728}',
-    title: 'Romantic Wanderer',
-    description: 'Boutique stays, golden hour photos, and restaurants you found in a novel. Every trip is a love letter to a place.',
-    persona: 'romantic',
-  },
-  family: {
-    emoji: '\u{1F3E1}',
-    title: 'Comfort Traveler',
-    description: 'You plan smart so everyone has fun. Breakfast buffets, nap windows, and a backup plan for the backup plan.',
-    persona: 'family',
-  },
-  business: {
-    emoji: '\u{1F4BC}',
-    title: 'Culture Seeker',
-    description: 'Cafes with wifi, local coffee scenes, and efficient itineraries. You blend work and wanderlust seamlessly.',
-    persona: 'business',
-  },
+  adventure: { emoji: '\u{1F3D4}\u{FE0F}', title: 'Adventure Seeker', persona: 'adventure', description: 'You chase adrenaline, not comfort. Hiking boots over heels, sunrise trails over sleep-ins. The best trips push your limits.' },
+  backpacker: { emoji: '\u{1F392}', title: 'Backpacker', persona: 'backpacker', description: 'Street food, hostels, and stories that start with "so we got lost." You travel light and live big on any budget.' },
+  luxury: { emoji: '\u{1F451}', title: 'Luxury Traveler', persona: 'luxury', description: "Thread count matters. You've earned the upgrade, the tasting menu, and the late checkout. Travel is self-care." },
+  romantic: { emoji: '\u{2728}', title: 'Romantic Wanderer', persona: 'romantic', description: 'Boutique stays, golden hour photos, and restaurants you found in a novel. Every trip is a love letter to a place.' },
+  family: { emoji: '\u{1F3E1}', title: 'Comfort Traveler', persona: 'family', description: 'You plan smart so everyone has fun. Breakfast buffets, nap windows, and a backup plan for the backup plan.' },
+  business: { emoji: '\u{1F4BC}', title: 'Culture Seeker', persona: 'business', description: 'Cafes with wifi, local coffee scenes, and efficient itineraries. You blend work and wanderlust seamlessly.' },
 };
 
 // ---------------------------------------------------------------------------
@@ -192,11 +162,11 @@ export default function TravelQuiz() {
   }, [router]);
 
   const progressDots = useMemo(() => (
-    <View style={styles.dots}>
+    <View style={S.dots}>
       {QUESTIONS.map((_, i) => (
         <View
           key={i}
-          style={[styles.dot, i < step ? styles.dotDone : undefined, i === step && !isQuizDone ? styles.dotActive : undefined]}
+          style={[S.dot, i < step ? S.dotDone : undefined, i === step && !isQuizDone ? S.dotActive : undefined]}
         />
       ))}
     </View>
@@ -205,28 +175,28 @@ export default function TravelQuiz() {
   // ---- Result screen ----
   if (isQuizDone && result) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={S.container}>
         <FadeIn duration={400}>
-          <View style={styles.resultContainer}>
-            <Text style={styles.resultEmoji}>{result.emoji}</Text>
-            <Text style={styles.resultTitle}>{result.title}</Text>
-            <Text style={styles.resultDesc}>{result.description}</Text>
+          <View style={S.resultWrap}>
+            <Text style={S.resultEmoji}>{result.emoji}</Text>
+            <Text style={S.resultTitle}>{result.title}</Text>
+            <Text style={S.resultDesc}>{result.description}</Text>
 
-            <View style={styles.resultActions}>
-              <PressableScale onPress={handleShare} style={styles.shareBtn}>
-                <Text style={styles.shareBtnText}>
+            <View style={S.resultActions}>
+              <PressableScale onPress={handleShare} style={S.shareBtn}>
+                <Text style={S.shareBtnText}>
                   {t('quiz.share', { defaultValue: 'Share your result' })}
                 </Text>
               </PressableScale>
 
-              <PressableScale onPress={handleRetake} style={styles.retakeBtn}>
-                <Text style={styles.retakeBtnText}>
+              <PressableScale onPress={handleRetake} style={S.retakeBtn}>
+                <Text style={S.retakeBtnText}>
                   {t('quiz.retake', { defaultValue: 'Retake' })}
                 </Text>
               </PressableScale>
 
-              <PressableScale onPress={handleClose} style={styles.closeBtn}>
-                <Text style={styles.closeBtnText}>
+              <PressableScale onPress={handleClose} style={S.closeBtn}>
+                <Text style={S.closeBtnText}>
                   {t('quiz.done', { defaultValue: 'Done' })}
                 </Text>
               </PressableScale>
@@ -239,28 +209,28 @@ export default function TravelQuiz() {
 
   // ---- Question screen ----
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={S.container}>
       {progressDots}
 
       <FadeIn key={step} duration={300}>
-        <Text style={styles.question}>{currentQ.question}</Text>
+        <Text style={S.question}>{currentQ.question}</Text>
 
-        <View style={styles.grid}>
+        <View style={S.grid}>
           {currentQ.options.map((opt, idx) => (
             <PressableScale
               key={idx}
               onPress={() => handleSelect(idx)}
-              style={styles.card}
+              style={S.card}
               accessibilityLabel={opt.label}
               accessibilityRole="button"
             >
               <ImageBackground
                 source={{ uri: opt.image }}
-                style={styles.cardImage}
-                imageStyle={styles.cardImageInner}
+                style={S.cardImage}
+                imageStyle={S.cardImageInner}
               >
-                <View style={styles.cardOverlay}>
-                  <Text style={styles.cardLabel}>{opt.label}</Text>
+                <View style={S.cardOverlay}>
+                  <Text style={S.cardLabel}>{opt.label}</Text>
                 </View>
               </ImageBackground>
             </PressableScale>
@@ -268,7 +238,7 @@ export default function TravelQuiz() {
         </View>
       </FadeIn>
 
-      <Text style={styles.stepLabel}>
+      <Text style={S.stepLabel}>
         {step + 1} / {QUESTIONS.length}
       </Text>
     </SafeAreaView>
@@ -278,135 +248,29 @@ export default function TravelQuiz() {
 // ---------------------------------------------------------------------------
 // Styles
 // ---------------------------------------------------------------------------
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.bg,
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.lg,
-  },
-  dots: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    marginBottom: SPACING.xl,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: COLORS.surface2,
-  },
-  dotActive: {
-    backgroundColor: COLORS.action,
-    width: 24,
-  },
-  dotDone: {
-    backgroundColor: COLORS.sage,
-  },
-  question: {
-    fontFamily: FONTS.header,
-    fontSize: 24,
-    color: COLORS.accent,
-    textAlign: 'center',
-    marginBottom: SPACING.xl,
-    lineHeight: 32,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: SPACING.sm,
-  },
-  card: {
-    width: CARD_SIZE,
-    height: CARD_SIZE * 1.15,
-    borderRadius: RADIUS.md,
-    overflow: 'hidden',
-  },
-  cardImage: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  cardImageInner: {
-    borderRadius: RADIUS.md,
-  },
-  cardOverlay: {
-    backgroundColor: COLORS.overlayDark,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-  },
-  cardLabel: {
-    fontFamily: FONTS.bodyMedium,
-    fontSize: 14,
-    color: COLORS.accent,
-  },
-  stepLabel: {
-    fontFamily: FONTS.mono,
-    fontSize: 12,
-    color: COLORS.muted,
-    textAlign: 'center',
-    marginTop: SPACING.lg,
-  },
-  // Result screen
-  resultContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-  },
-  resultEmoji: {
-    fontSize: 72,
-    marginBottom: SPACING.lg,
-  },
-  resultTitle: {
-    fontFamily: FONTS.header,
-    fontSize: 32,
-    color: COLORS.accent,
-    textAlign: 'center',
-    marginBottom: SPACING.md,
-  },
-  resultDesc: {
-    fontFamily: FONTS.body,
-    fontSize: 16,
-    color: COLORS.creamDim,
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: SPACING.xxl,
-  },
-  resultActions: {
-    width: '100%',
-    gap: SPACING.md,
-  },
-  shareBtn: {
-    backgroundColor: COLORS.action,
-    paddingVertical: SPACING.md,
-    borderRadius: RADIUS.pill,
-    alignItems: 'center',
-  },
-  shareBtnText: {
-    fontFamily: FONTS.bodyMedium,
-    fontSize: 16,
-    color: COLORS.bg,
-  },
-  retakeBtn: {
-    backgroundColor: COLORS.surface2,
-    paddingVertical: SPACING.md,
-    borderRadius: RADIUS.pill,
-    alignItems: 'center',
-  },
-  retakeBtnText: {
-    fontFamily: FONTS.bodyMedium,
-    fontSize: 16,
-    color: COLORS.accent,
-  },
-  closeBtn: {
-    paddingVertical: SPACING.sm,
-    alignItems: 'center',
-  },
-  closeBtnText: {
-    fontFamily: FONTS.body,
-    fontSize: 14,
-    color: COLORS.muted,
-  },
+const S = StyleSheet.create({
+  container: { flex: 1, backgroundColor: COLORS.bg, paddingHorizontal: SPACING.lg, paddingTop: SPACING.lg },
+  dots: { flexDirection: 'row', justifyContent: 'center', gap: SPACING.sm, marginBottom: SPACING.xl },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.surface2 },
+  dotActive: { backgroundColor: COLORS.action, width: 24 },
+  dotDone: { backgroundColor: COLORS.sage },
+  question: { fontFamily: FONTS.header, fontSize: 24, color: COLORS.accent, textAlign: 'center', marginBottom: SPACING.xl, lineHeight: 32 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: SPACING.sm },
+  card: { width: CARD_SIZE, height: CARD_SIZE * 1.15, borderRadius: RADIUS.md, overflow: 'hidden' },
+  cardImage: { flex: 1, justifyContent: 'flex-end' },
+  cardImageInner: { borderRadius: RADIUS.md },
+  cardOverlay: { backgroundColor: COLORS.overlayDark, paddingVertical: SPACING.sm, paddingHorizontal: SPACING.md },
+  cardLabel: { fontFamily: FONTS.bodyMedium, fontSize: 14, color: COLORS.accent },
+  stepLabel: { fontFamily: FONTS.mono, fontSize: 12, color: COLORS.muted, textAlign: 'center', marginTop: SPACING.lg },
+  resultWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: SPACING.lg },
+  resultEmoji: { fontSize: 72, marginBottom: SPACING.lg },
+  resultTitle: { fontFamily: FONTS.header, fontSize: 32, color: COLORS.accent, textAlign: 'center', marginBottom: SPACING.md },
+  resultDesc: { fontFamily: FONTS.body, fontSize: 16, color: COLORS.creamDim, textAlign: 'center', lineHeight: 24, marginBottom: SPACING.xxl },
+  resultActions: { width: '100%', gap: SPACING.md },
+  shareBtn: { backgroundColor: COLORS.action, paddingVertical: SPACING.md, borderRadius: RADIUS.pill, alignItems: 'center' },
+  shareBtnText: { fontFamily: FONTS.bodyMedium, fontSize: 16, color: COLORS.bg },
+  retakeBtn: { backgroundColor: COLORS.surface2, paddingVertical: SPACING.md, borderRadius: RADIUS.pill, alignItems: 'center' },
+  retakeBtnText: { fontFamily: FONTS.bodyMedium, fontSize: 16, color: COLORS.accent },
+  closeBtn: { paddingVertical: SPACING.sm, alignItems: 'center' },
+  closeBtnText: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.muted },
 });
