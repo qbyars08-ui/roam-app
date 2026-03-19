@@ -12,6 +12,7 @@ import { useAppStore, type Trip } from '../../lib/store';
 import { generateItineraryStreaming, TripLimitReachedError } from '../../lib/claude';
 import { isGuestUser } from '../../lib/guest';
 import { scheduleDailyBrief, scheduleTripWrappedReminder } from '../../lib/notifications';
+import { scheduleSmartNotifications } from '../../lib/smart-notifications';
 import type { QuickModeState } from '../../components/generate/GenerateQuickMode';
 import { BUDGET_TO_BACKEND } from '../../components/generate/GenerateQuickMode';
 import GenerateModeSelect from '../../components/generate/GenerateModeSelect';
@@ -224,6 +225,8 @@ export default function PlanScreen() {
       scheduleDailyBrief(dest, du).catch(() => {});
       const returnDate = startDate ? new Date(startDate.getTime() + days * 24 * 60 * 60 * 1000).toISOString() : new Date(Date.now() + (du + days) * 24 * 60 * 60 * 1000).toISOString();
       scheduleTripWrappedReminder(trip.id, dest, returnDate).catch(() => {});
+      const parsed = parseItinerary(trip.itinerary);
+      if (parsed) scheduleSmartNotifications(trip, parsed).catch(() => {});
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       await new Promise((r) => setTimeout(r, 800));
       if (!isMountedRef.current) return;

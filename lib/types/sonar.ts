@@ -17,7 +17,8 @@ export type SonarQueryType =
   | 'local_eats'
   | 'safety_detail'
   | 'meetups'
-  | 'narration';
+  | 'narration'
+  | 'neighborhoods';
 
 export interface SonarCitation {
   url: string;

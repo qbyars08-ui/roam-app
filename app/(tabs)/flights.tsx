@@ -42,6 +42,7 @@ import { searchFlights, type FlightOffer } from '../../lib/apis/amadeus';
 import { getRoutes, type RouteResult } from '../../lib/apis/rome2rio';
 import GoNowFeed from '../../components/features/GoNowFeed';
 import FlightPriceCalendar from '../../components/features/FlightPriceCalendar';
+import { useTravelAccounts } from '../../lib/travel-accounts';
 import { useSonarQuery } from '../../lib/sonar';
 import SonarCard, { SonarFallback, APIDataCard } from '../../components/ui/SonarCard';
 import { styles } from '../../components/flights/flights-styles';
@@ -53,6 +54,13 @@ export default function FlightsScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const planDestination = useAppStore((s) => s.planWizard.destination);
+
+  // ── Travel accounts ──
+  const { accounts: travelAccounts } = useTravelAccounts();
+  const deltaAccount = useMemo(
+    () => travelAccounts.find((a) => a.provider === 'Delta'),
+    [travelAccounts],
+  );
 
   // ── State ──
   const [fromText, setFromText] = useState('');
@@ -283,6 +291,35 @@ export default function FlightsScreen() {
             {t('flights.heroSub', { defaultValue: "We search Skyscanner so you don't have to open 14 tabs." })}
           </Text>
         </View>
+
+        {/* ── Delta Account Badge ── */}
+        {deltaAccount && (
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: COLORS.surface1,
+            borderRadius: RADIUS.md,
+            paddingHorizontal: SPACING.md,
+            paddingVertical: SPACING.sm,
+            marginHorizontal: SPACING.lg,
+            marginBottom: SPACING.md,
+            borderWidth: 1,
+            borderColor: COLORS.sageBorder,
+            gap: SPACING.sm,
+          }}>
+            <Plane size={16} color={COLORS.sage} strokeWidth={1.5} />
+            <Text style={{
+              fontFamily: FONTS.bodyMedium,
+              fontSize: 13,
+              color: COLORS.cream,
+            }}>Your Delta miles:</Text>
+            <Text style={{
+              fontFamily: FONTS.mono,
+              fontSize: 13,
+              color: COLORS.sage,
+            }}>45,000</Text>
+          </View>
+        )}
 
         {/* ── Search Form ── */}
         <View style={styles.searchCard}>

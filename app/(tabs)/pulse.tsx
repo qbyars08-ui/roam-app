@@ -332,6 +332,26 @@ export default function PulseScreen() {
           </View>
         )}
 
+        {/* ── Neighborhoods ── */}
+        {trips.length > 0 && (
+          <View style={{ paddingHorizontal: SPACING.lg, marginBottom: SPACING.xl }}>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                const dest = trips[0]?.destination ?? '';
+                router.push({ pathname: '/neighborhoods', params: { destination: dest } } as never);
+              }}
+              style={({ pressed }) => [styles.checkInFloatBtn, { opacity: pressed ? 0.85 : 1 }]}
+              accessibilityLabel="Know the neighborhoods"
+              accessibilityRole="button"
+            >
+              <MapPin size={18} color={COLORS.sage} strokeWidth={1.5} />
+              <Text style={styles.checkInFloatBtnText}>Know the neighborhoods</Text>
+              <Text style={styles.checkInFloatBtnSub}>Vibes, safety, walkability</Text>
+            </Pressable>
+          </View>
+        )}
+
         {/* ── No-trip CTA ── */}
         {trips.length === 0 && (
           <View style={{ paddingHorizontal: SPACING.lg, marginBottom: SPACING.xl }}>

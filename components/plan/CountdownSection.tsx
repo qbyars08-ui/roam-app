@@ -189,6 +189,24 @@ export default function CountdownSection({
         </Pressable>
       )}
 
+      {/* ── Save money link ── */}
+      <Pressable
+        style={({ pressed }) => [styles.savingsLink, { opacity: pressed ? 0.7 : 1 }]}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          router.push({
+            pathname: '/cost-optimizer',
+            params: { destination: activeTrip.destination },
+          } as never);
+        }}
+        accessibilityLabel="Find ways to save money on your trip"
+        accessibilityRole="link"
+      >
+        <Text style={styles.savingsLinkText}>
+          {t('plan.planning.saveMoney', { defaultValue: 'Save money' })}
+        </Text>
+      </Pressable>
+
       {/* ── Air quality alert ── */}
       {hasNotableAir && airQuality && (
         <Pressable
@@ -240,6 +258,24 @@ export default function CountdownSection({
               </Pressable>
             );
           })}
+          <Pressable
+            onPress={() => {
+              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push({
+                pathname: '/trip-checklist',
+                params: {
+                  tripId: activeTrip.id,
+                  destination: activeTrip.destination,
+                  daysUntil: String(daysUntil),
+                },
+              } as never);
+            }}
+            style={styles.fullChecklistLink}
+          >
+            <Text style={styles.fullChecklistText}>
+              {t('plan.planning.viewFullChecklist', { defaultValue: 'View full checklist' })}
+            </Text>
+          </Pressable>
         </View>
       )}
     </View>
@@ -341,6 +377,19 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   } as TextStyle,
 
+  // Savings link
+  savingsLink: {
+    alignSelf: 'center',
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.md,
+  } as ViewStyle,
+  savingsLinkText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
+    color: COLORS.sage,
+    textDecorationLine: 'underline',
+  } as TextStyle,
+
   // Weather
   weatherScroll: {
     marginTop: SPACING.sm,
@@ -431,5 +480,15 @@ const styles = StyleSheet.create({
   checklistLabelDone: {
     textDecorationLine: 'line-through',
     color: COLORS.muted,
+  } as TextStyle,
+  fullChecklistLink: {
+    marginTop: SPACING.sm,
+    alignItems: 'center',
+    paddingVertical: SPACING.sm,
+  } as ViewStyle,
+  fullChecklistText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 13,
+    color: COLORS.sage,
   } as TextStyle,
 });

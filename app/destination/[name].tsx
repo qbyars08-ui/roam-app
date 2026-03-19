@@ -8,7 +8,7 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, Heart, MapPin, Share2 } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, GitCompare, Heart, MapPin, Share2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
 import * as Haptics from '../../lib/haptics';
@@ -483,6 +483,39 @@ export default function LivingDestinationPage(): React.JSX.Element {
 
         {/* 9. WHERE TO EAT */}
         <RestaurantsSection venues={venues} loading={venuesLoading} />
+
+        {/* 9.5 NEIGHBORHOODS */}
+        <Pressable
+          style={[CARD_BASE, { marginHorizontal: SPACING.lg, marginTop: SPACING.md, flexDirection: 'row', alignItems: 'center' }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push({ pathname: '/neighborhoods' as any, params: { destination } });
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Know the neighborhoods"
+        >
+          <MapPin size={18} color={COLORS.sage} strokeWidth={1.5} />
+          <View style={{ flex: 1, marginLeft: SPACING.sm }}>
+            <Text style={{ fontFamily: FONTS.bodyMedium, fontSize: 14, color: COLORS.cream }}>Know the neighborhoods</Text>
+            <Text style={{ fontFamily: FONTS.body, fontSize: 12, color: COLORS.muted, marginTop: 2 }}>Vibes, safety, walkability</Text>
+          </View>
+          <ChevronRight size={16} color={COLORS.muted} strokeWidth={1.5} />
+        </Pressable>
+
+        {/* Compare with... */}
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push(`/compare?left=${encodeURIComponent(destination)}` as never);
+          }}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: SPACING.md, marginBottom: SPACING.md }}
+          accessibilityRole="button"
+        >
+          <GitCompare size={14} color={COLORS.sage} strokeWidth={1.5} />
+          <Text style={{ fontFamily: FONTS.bodyMedium, fontSize: 13, color: COLORS.sage }}>
+            {t('destination.compareWith', { defaultValue: `Compare with another destination` })}
+          </Text>
+        </Pressable>
 
         {/* 10. PLAN A TRIP HERE */}
         <PlanTripSection

@@ -10,6 +10,8 @@ import {
   Stethoscope,
   BedDouble,
   Shield,
+  FolderOpen,
+  ListChecks,
   ChevronRight,
 } from 'lucide-react-native';
 import * as Haptics from '../../lib/haptics';
@@ -25,6 +27,19 @@ export default function PrepNavCards({ destination, activeTrip }: Props) {
   const router = useRouter();
 
   const cards = [
+    ...(activeTrip ? [{
+      key: 'trip-checklist',
+      icon: ListChecks,
+      title: 'Trip Checklist',
+      sub: `Smart countdown checklist for ${destination}`,
+      onPress: () => {
+        const daysUntil = activeTrip.startDate
+          ? Math.max(0, Math.ceil((new Date(activeTrip.startDate).getTime() - Date.now()) / 86400000))
+          : 14;
+        router.push({ pathname: '/trip-checklist', params: { tripId: activeTrip.id, destination, daysUntil: String(daysUntil) } } as never);
+      },
+      haptic: Haptics.ImpactFeedbackStyle.Medium,
+    }] : []),
     ...(activeTrip ? [{
       key: 'before-you-land',
       icon: Plane,
@@ -65,6 +80,14 @@ export default function PrepNavCards({ destination, activeTrip }: Props) {
       onPress: () => router.push({ pathname: '/safety-intel', params: { destination } } as never),
       haptic: Haptics.ImpactFeedbackStyle.Light,
     },
+    ...(activeTrip ? [{
+      key: 'documents',
+      icon: FolderOpen,
+      title: 'Documents',
+      sub: 'Passports, visas, bookings, and more',
+      onPress: () => router.push({ pathname: '/document-vault', params: { tripId: activeTrip.id } } as never),
+      haptic: Haptics.ImpactFeedbackStyle.Light,
+    }] : []),
   ];
 
   return (

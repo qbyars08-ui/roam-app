@@ -1,7 +1,7 @@
 // =============================================================================
-// ROAM — Public Trip Share Page
+// ROAM — Public Trip Share Page (The Marketing Page)
 // Public URL: roamapp.app/shared-trip/[tripId]
-// No auth required — read-only, shareable, beautiful
+// No auth required — read-only, shareable, conversion-optimized
 // =============================================================================
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -10,6 +10,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -20,32 +21,33 @@ import {
 import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import {
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  ExternalLink,
+  MapPin,
+  Share2,
+} from 'lucide-react-native';
 
-import { supabase } from '../../lib/supabase';
-import { parseItinerary, type Itinerary, type ItineraryDay, type TimeSlotActivity } from '../../lib/types/itinerary';
+import { COLORS, FONTS, SPACING, RADIUS, DESTINATION_HERO_PHOTOS } from '../../lib/constants';
+import {
+  getShareableTrip,
+  copyTripLink,
+  type ShareableTrip,
+} from '../../lib/share-utils';
+import type { Itinerary, ItineraryDay, TimeSlotActivity } from '../../lib/types/itinerary';
 import { getWeatherForecast, type WeatherForecast } from '../../lib/weather';
 import { getCostOfLiving, type CostOfLiving } from '../../lib/cost-of-living';
 import { buildStaticMapUrl, geocodePlaces, type GeocodedLocation } from '../../lib/mapbox';
-import { COLORS, FONTS, SPACING, RADIUS, DESTINATION_HERO_PHOTOS } from '../../lib/constants';
 import { SkeletonCard } from '../../components/premium/LoadingStates';
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-interface PublicTrip {
-  id: string;
-  destination: string;
-  days: number;
-  budget: string;
-  vibes: string[];
-  itinerary: string;
-  created_at: string;
-}
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 const ROAM_URL = 'https://roamapp.app';
+const HERO_HEIGHT = 440;
+const CARD_MAX_WIDTH = 680;
 
 const SLOT_LABELS: Record<string, string> = {
   morning: 'Morning',
@@ -62,46 +64,48 @@ const SLOT_COLORS: Record<string, string> = {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function getHeroPhotoUrl(destination: string): string {
-  const key = Object.keys(DESTINATION_HERO_PHOTOS).find(
-    (k) => destination.toLowerCase().includes(k.toLowerCase()) ||
-           k.toLowerCase().includes(destination.toLowerCase().split(',')[0])
-  );
-  if (key) return DESTINATION_HERO_PHOTOS[key] + '&w=1200&q=90';
-  // Unsplash fallback keyed on destination name
-  return `https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1200&q=90`;
+
+function countActivities(itinerary: Itinerary): number {
+  return itinerary.days.length * 3;
 }
 
-function formatTemp(temp: number): string {
-  return `${Math.round(temp)}°C`;
+function formatBudgetLabel(budget: string): string {
+  if (!budget) return '';
+  // Capitalize first letter
+  return budget.charAt(0).toUpperCase() + budget.slice(1);
 }
 
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
 
-// Weather widget ─────────────────────────────────────────────────────────────
-function WeatherWidget({ weather }: { weather: WeatherForecast }) {
+// Stat pill ──────────────────────────────────────────────────────────────────
+function StatPill({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.statPill}>
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+}
+
+// Weather strip ─────────────────────────────────────────────────────────────
+function WeatherStrip({ weather }: { weather: WeatherForecast }) {
   const days = weather.days.slice(0, 5);
   return (
     <View style={styles.card}>
-      <Text style={styles.cardLabel}>WEATHER</Text>
-      <View style={styles.weatherRow}>
-        <View style={styles.weatherCurrent}>
-          <Text style={styles.weatherTemp}>{formatTemp(weather.current.temp)}</Text>
-          <Text style={styles.weatherDesc}>{weather.current.description}</Text>
-        </View>
-        <View style={styles.weatherDays}>
-          {days.map((d, i) => (
-            <View key={i} style={styles.weatherDayItem}>
-              <Text style={styles.weatherDayDate}>
-                {new Date(d.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
-              </Text>
-              <Text style={styles.weatherDayHi}>{formatTemp(d.tempMax)}</Text>
-              <Text style={styles.weatherDayLo}>{formatTemp(d.tempMin)}</Text>
-            </View>
-          ))}
-        </View>
+      <Text style={styles.cardLabel}>5-DAY FORECAST</Text>
+      <View style={styles.weatherStrip}>
+        {days.map((d, i) => (
+          <View key={i} style={styles.weatherStripDay}>
+            <Text style={styles.weatherStripDayName}>
+              {new Date(d.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
+            </Text>
+            <Text style={styles.weatherStripHi}>{Math.round(d.tempMax)}\u00B0</Text>
+            <Text style={styles.weatherStripLo}>{Math.round(d.tempMin)}\u00B0</Text>
+            <Text style={styles.weatherStripDesc}>{d.description}</Text>
+          </View>
+        ))}
       </View>
       {weather.packingHint ? (
         <Text style={styles.weatherHint}>{weather.packingHint}</Text>
@@ -110,20 +114,22 @@ function WeatherWidget({ weather }: { weather: WeatherForecast }) {
   );
 }
 
-// Cost widget ─────────────────────────────────────────────────────────────────
-function CostWidget({ cost }: { cost: CostOfLiving }) {
+// Cost tiers ────────────────────────────────────────────────────────────────
+function CostTiers({ cost }: { cost: CostOfLiving }) {
+  const tiers: Array<{ label: string; total: string; color: string }> = [
+    { label: 'Budget', total: cost.budget.dailyTotal, color: COLORS.sage },
+    { label: 'Comfort', total: cost.comfort.dailyTotal, color: COLORS.gold },
+    { label: 'Luxury', total: cost.luxury.dailyTotal, color: COLORS.coral },
+  ];
   return (
     <View style={styles.card}>
       <Text style={styles.cardLabel}>DAILY COST</Text>
-      <View style={styles.costGrid}>
-        {([
-          ['Budget', cost.budget.dailyTotal],
-          ['Comfort', cost.comfort.dailyTotal],
-          ['Luxury', cost.luxury.dailyTotal],
-        ] as [string, string][]).map(([tier, val]) => (
-          <View key={tier} style={styles.costCell}>
-            <Text style={styles.costTier}>{tier}</Text>
-            <Text style={styles.costVal}>{val}</Text>
+      <View style={styles.costRow}>
+        {tiers.map((tier) => (
+          <View key={tier.label} style={styles.costTierCard}>
+            <View style={[styles.costTierDot, { backgroundColor: tier.color }]} />
+            <Text style={styles.costTierLabel}>{tier.label}</Text>
+            <Text style={styles.costTierValue}>{tier.total}</Text>
           </View>
         ))}
       </View>
@@ -132,8 +138,8 @@ function CostWidget({ cost }: { cost: CostOfLiving }) {
   );
 }
 
-// Time slot row ───────────────────────────────────────────────────────────────
-function SlotRow({
+// Slot row ──────────────────────────────────────────────────────────────────
+function SlotPreviewRow({
   slotKey,
   slot,
 }: {
@@ -141,57 +147,71 @@ function SlotRow({
   slot: TimeSlotActivity;
 }) {
   const color = SLOT_COLORS[slotKey];
-  const label = SLOT_LABELS[slotKey];
   return (
     <View style={styles.slotRow}>
       <View style={[styles.slotDot, { backgroundColor: color }]} />
       <View style={styles.slotContent}>
-        <Text style={[styles.slotLabel, { color }]}>{label}</Text>
-        <Text style={styles.slotActivity}>{slot.activity}</Text>
-        <Text style={styles.slotMeta}>{slot.location}</Text>
-        {slot.cost ? (
-          <Text style={styles.slotCost}>{slot.cost}</Text>
-        ) : null}
-        {slot.tip ? (
-          <Text style={styles.slotTip}>{slot.tip}</Text>
-        ) : null}
+        <Text style={[styles.slotLabel, { color }]}>{SLOT_LABELS[slotKey]}</Text>
+        <Text style={styles.slotActivity} numberOfLines={1}>{slot.activity}</Text>
+        <Text style={styles.slotLocation} numberOfLines={1}>{slot.location}</Text>
       </View>
     </View>
   );
 }
 
-// Day card ────────────────────────────────────────────────────────────────────
-function DayCard({ day }: { day: ItineraryDay }) {
+// Collapsible day section ───────────────────────────────────────────────────
+function DaySection({ day }: { day: ItineraryDay }) {
+  const [expanded, setExpanded] = useState(day.day === 1);
+
+  const toggleExpanded = useCallback(() => {
+    setExpanded((prev) => !prev);
+  }, []);
+
   return (
     <View style={styles.dayCard}>
-      <View style={styles.dayHeader}>
-        <Text style={styles.dayNumber}>Day {day.day}</Text>
-        <Text style={styles.dayTheme}>{day.theme}</Text>
-        {day.dailyCost ? (
-          <Text style={styles.dayCost}>{day.dailyCost}</Text>
-        ) : null}
-      </View>
-      {day.routeSummary ? (
-        <Text style={styles.dayRoute}>{day.routeSummary}</Text>
+      <Pressable
+        onPress={toggleExpanded}
+        style={styles.dayHeader}
+        accessibilityRole="button"
+        accessibilityLabel={`Day ${day.day}: ${day.theme}. ${expanded ? 'Collapse' : 'Expand'}`}
+      >
+        <View style={styles.dayHeaderLeft}>
+          <Text style={styles.dayNumber}>DAY {day.day}</Text>
+          <Text style={styles.dayTheme}>{day.theme}</Text>
+        </View>
+        <View style={styles.dayHeaderRight}>
+          {day.dailyCost ? (
+            <Text style={styles.dayCost}>{day.dailyCost}</Text>
+          ) : null}
+          {expanded ? (
+            <ChevronUp size={18} color={COLORS.muted} strokeWidth={1.5} />
+          ) : (
+            <ChevronDown size={18} color={COLORS.muted} strokeWidth={1.5} />
+          )}
+        </View>
+      </Pressable>
+
+      {expanded ? (
+        <View style={styles.dayBody}>
+          {day.routeSummary ? (
+            <View style={styles.dayRouteRow}>
+              <MapPin size={12} color={COLORS.sage} strokeWidth={1.5} />
+              <Text style={styles.dayRoute}>{day.routeSummary}</Text>
+            </View>
+          ) : null}
+          <View style={styles.daySlots}>
+            <SlotPreviewRow slotKey="morning" slot={day.morning} />
+            <SlotPreviewRow slotKey="afternoon" slot={day.afternoon} />
+            <SlotPreviewRow slotKey="evening" slot={day.evening} />
+          </View>
+        </View>
       ) : null}
-      <View style={styles.daySlots}>
-        <SlotRow slotKey="morning" slot={day.morning} />
-        <SlotRow slotKey="afternoon" slot={day.afternoon} />
-        <SlotRow slotKey="evening" slot={day.evening} />
-      </View>
-      <View style={styles.dayAccommodation}>
-        <Text style={styles.accommodationLabel}>STAY</Text>
-        <Text style={styles.accommodationName}>{day.accommodation.name}</Text>
-        <Text style={styles.accommodationMeta}>
-          {day.accommodation.type} · {day.accommodation.pricePerNight}
-        </Text>
-      </View>
     </View>
   );
 }
 
-// Map section ─────────────────────────────────────────────────────────────────
-function MapSection({ mapUrl }: { mapUrl: string | null }) {
+// Map preview ──────────────────────────────────────────────────────────────
+function MapPreview({ mapUrl }: { mapUrl: string | null }) {
   if (!mapUrl) return null;
   return (
     <View style={styles.card}>
@@ -202,9 +222,14 @@ function MapSection({ mapUrl }: { mapUrl: string | null }) {
         resizeMode="cover"
         accessibilityLabel="Map showing day 1 route"
       />
-      <Text style={styles.mapCaption}>
-        Morning · Afternoon · Evening stops
-      </Text>
+      <View style={styles.mapLegend}>
+        {(['morning', 'afternoon', 'evening'] as const).map((slot) => (
+          <View key={slot} style={styles.mapLegendItem}>
+            <View style={[styles.mapLegendDot, { backgroundColor: SLOT_COLORS[slot] }]} />
+            <Text style={styles.mapLegendText}>{SLOT_LABELS[slot]}</Text>
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
@@ -216,14 +241,15 @@ export default function SharedTripPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
 
-  const [trip, setTrip] = useState<PublicTrip | null>(null);
+  const [trip, setTrip] = useState<ShareableTrip | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [weather, setWeather] = useState<WeatherForecast | null>(null);
   const [cost, setCost] = useState<CostOfLiving | null>(null);
   const [mapUrl, setMapUrl] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
-  // ── Fetch trip from Supabase (public, no auth) ──────────────────────────
+  // -- Fetch trip (public, no auth) ──────────────────────────────────────────
   useEffect(() => {
     if (!id) {
       setError('Invalid link');
@@ -231,56 +257,40 @@ export default function SharedTripPage() {
       return;
     }
 
-    void Promise.resolve(
-      supabase
-        .from('trips')
-        .select('id, destination, days, budget, vibes, itinerary, created_at')
-        .eq('id', id)
-        .single()
-    ).then(({ data, error: dbError }) => {
-      if (dbError || !data) {
-        setError('Trip not found');
-      } else {
-        setTrip(data as PublicTrip);
-      }
-    }).catch(() => {
-      setError('Could not load trip');
-    }).finally(() => {
-      setLoading(false);
-    });
+    getShareableTrip(id)
+      .then((result) => {
+        if (!result) {
+          setError('Trip not found');
+        } else {
+          setTrip(result);
+        }
+      })
+      .catch(() => {
+        setError('Could not load trip');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [id]);
 
-  // ── Parse itinerary ──────────────────────────────────────────────────────
-  const parsed = useMemo<Itinerary | null>(() => {
-    if (!trip?.itinerary) return null;
-    try {
-      return parseItinerary(trip.itinerary);
-    } catch {
-      return null;
-    }
-  }, [trip]);
-
-  // ── Load weather + cost + map in parallel after trip loads ───────────────
+  // -- Load enrichments in parallel ─────────────────────────────────────────
   useEffect(() => {
     if (!trip) return;
 
-    // Weather (best-effort — no API key required via Open-Meteo fallback)
+    // Weather
     getWeatherForecast(trip.destination, { days: 5 })
       .then((w) => setWeather(w))
-      .catch(() => {/* silently skip */});
+      .catch(() => {/* skip */});
 
-    // Cost of living (offline data)
+    // Cost of living
     const c = getCostOfLiving(trip.destination);
     if (c) setCost(c);
 
-    // Map (requires Mapbox token — silently skipped if unconfigured)
-    if (parsed && parsed.days.length > 0) {
-      const day1 = parsed.days[0];
-      const places = [
-        day1.morning.location,
-        day1.afternoon.location,
-        day1.evening.location,
-      ];
+    // Map
+    const itinerary = trip.itinerary;
+    if (itinerary && itinerary.days.length > 0) {
+      const day1 = itinerary.days[0];
+      const places = [day1.morning.location, day1.afternoon.location, day1.evening.location];
       geocodePlaces(places, trip.destination)
         .then((locations) => {
           const valid = locations.filter((l): l is GeocodedLocation => l !== null);
@@ -294,51 +304,81 @@ export default function SharedTripPage() {
             setMapUrl(url);
           }
         })
-        .catch(() => {/* silently skip */});
+        .catch(() => {/* skip */});
     }
-  }, [trip, parsed]);
+  }, [trip]);
 
-  const heroPhotoUrl = useMemo(
-    () => (trip ? getHeroPhotoUrl(trip.destination) : null),
-    [trip]
-  );
-
+  // -- Handlers ─────────────────────────────────────────────────────────────
   const handleCTA = useCallback(() => {
     Linking.openURL(ROAM_URL).catch(() => {});
   }, []);
 
-  // ── Loading state ────────────────────────────────────────────────────────
+  const handleCopyLink = useCallback(async () => {
+    if (!id) return;
+    await copyTripLink(id);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  }, [id]);
+
+  const handleShareLink = useCallback(async () => {
+    if (!trip) return;
+    const url = `${ROAM_URL}/shared-trip/${trip.id}`;
+    await Share.share({
+      title: `${trip.destination} in ${trip.days} days \u2014 ROAM`,
+      message: `Check out this ${trip.days}-day trip to ${trip.destination}, planned with ROAM`,
+      url,
+    });
+  }, [trip]);
+
+  // -- Derived data ─────────────────────────────────────────────────────────
+  const itinerary = trip?.itinerary ?? null;
+
+  const activityCount = useMemo(
+    () => (itinerary ? countActivities(itinerary) : (trip?.days ?? 0) * 3),
+    [itinerary, trip],
+  );
+
+  const budgetDisplay = useMemo(() => {
+    if (itinerary?.totalBudget) return itinerary.totalBudget;
+    if (trip?.budget) return formatBudgetLabel(trip.budget);
+    return null;
+  }, [itinerary, trip]);
+
+  // -- Loading state ────────────────────────────────────────────────────────
   if (loading) {
     return (
       <View style={[styles.screen, { paddingTop: insets.top + SPACING.lg }]}>
-        <SkeletonCard width="100%" height={300} borderRadius={0} />
+        <SkeletonCard width="100%" height={HERO_HEIGHT} borderRadius={0} />
         <View style={{ paddingHorizontal: SPACING.lg, marginTop: SPACING.lg }}>
-          <SkeletonCard width="100%" height={160} borderRadius={RADIUS.lg} style={{ marginBottom: SPACING.md }} />
+          <SkeletonCard width="100%" height={60} borderRadius={RADIUS.lg} style={{ marginBottom: SPACING.md }} />
+          <SkeletonCard width="100%" height={200} borderRadius={RADIUS.lg} style={{ marginBottom: SPACING.md }} />
           <SkeletonCard width="100%" height={120} borderRadius={RADIUS.lg} />
         </View>
       </View>
     );
   }
 
-  // ── Error state ──────────────────────────────────────────────────────────
+  // -- Error state ──────────────────────────────────────────────────────────
   if (error || !trip) {
     return (
       <View style={[styles.screen, styles.centerContent, { paddingTop: insets.top }]}>
         <Text style={styles.errorTitle}>Trip not found</Text>
-        <Text style={styles.errorSub}>This link may have expired or the trip is no longer shared.</Text>
+        <Text style={styles.errorSub}>
+          This link may have expired or the trip is no longer shared.
+        </Text>
         <Pressable
-          style={({ pressed }) => [styles.ctaBtn, { opacity: pressed ? 0.85 : 1 }]}
+          style={({ pressed }) => [styles.ctaPrimary, { opacity: pressed ? 0.85 : 1 }]}
           onPress={handleCTA}
           accessibilityRole="link"
           accessibilityLabel="Plan your own trip at roamapp.app"
         >
-          <Text style={styles.ctaBtnText}>Plan your own trip</Text>
+          <Text style={styles.ctaPrimaryText}>Plan your own trip</Text>
         </Pressable>
       </View>
     );
   }
 
-  // ── Success render ───────────────────────────────────────────────────────
+  // -- Success render ───────────────────────────────────────────────────────
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <ScrollView
@@ -347,135 +387,147 @@ export default function SharedTripPage() {
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
       >
-        {/* ── Hero ─────────────────────────────────────────────────────── */}
+        {/* ── 1. HERO ──────────────────────────────────────────────────── */}
         <View style={styles.hero}>
-          {heroPhotoUrl ? (
-            <Image
-              source={{ uri: heroPhotoUrl }}
-              style={styles.heroBg}
-              resizeMode="cover"
-              accessibilityLabel={`Photo of ${trip.destination}`}
-            />
-          ) : null}
+          <Image
+            source={{ uri: trip.heroImageUrl }}
+            style={styles.heroBg}
+            resizeMode="cover"
+            accessibilityLabel={`Photo of ${trip.destination}`}
+          />
           <LinearGradient
-            colors={['transparent', 'rgba(10,10,10,0.65)', COLORS.bg]}
-            locations={[0, 0.5, 1]}
+            colors={['transparent', 'rgba(10,10,10,0.6)', COLORS.bg]}
+            locations={[0, 0.45, 1]}
             style={styles.heroGradient}
           />
-          {/* ROAM brand watermark */}
-          <View style={styles.heroBrand}>
-            <Text style={styles.heroBrandText}>ROAM</Text>
+
+          {/* Planned with ROAM badge */}
+          <View style={styles.heroBadge}>
+            <Text style={styles.heroBadgeText}>Planned with ROAM</Text>
           </View>
+
           <View style={styles.heroContent}>
-            <View style={styles.daysBadge}>
-              <Text style={styles.daysBadgeText}>{trip.days} days</Text>
-            </View>
             <Text style={styles.heroDestination}>{trip.destination}</Text>
-            {parsed?.tagline ? (
-              <Text style={styles.heroTagline}>{parsed.tagline}</Text>
-            ) : null}
-            {trip.budget ? (
-              <Text style={styles.heroBudget}>{trip.budget} budget</Text>
+            {itinerary?.tagline ? (
+              <Text style={styles.heroTagline}>{itinerary.tagline}</Text>
             ) : null}
           </View>
         </View>
 
-        {/* ── Body ─────────────────────────────────────────────────────── */}
+        {/* ── BODY ─────────────────────────────────────────────────────── */}
         <View style={styles.body}>
 
-          {/* Budget breakdown */}
-          {parsed?.totalBudget ? (
-            <View style={[styles.card, styles.highlightCard]}>
-              <Text style={styles.cardLabel}>TRIP COST</Text>
-              <Text style={styles.totalBudget}>{parsed.totalBudget}</Text>
-              {parsed.budgetBreakdown ? (
-                <View style={styles.budgetBreakdown}>
-                  {([
-                    ['Accommodation', parsed.budgetBreakdown.accommodation],
-                    ['Food', parsed.budgetBreakdown.food],
-                    ['Activities', parsed.budgetBreakdown.activities],
-                    ['Transport', parsed.budgetBreakdown.transportation],
-                    ['Misc', parsed.budgetBreakdown.miscellaneous],
-                  ] as [string, string][]).map(([cat, val]) => (
-                    <View key={cat} style={styles.budgetRow}>
-                      <Text style={styles.budgetCat}>{cat}</Text>
-                      <Text style={styles.budgetVal}>{val}</Text>
-                    </View>
-                  ))}
-                </View>
-              ) : null}
-            </View>
-          ) : null}
+          {/* ── 2. AT A GLANCE ───────────────────────────────────────────── */}
+          <View style={styles.statsRow}>
+            <StatPill value={`${trip.days}`} label="days" />
+            <StatPill value={`${activityCount}`} label="activities" />
+            {budgetDisplay ? (
+              <StatPill value={budgetDisplay} label="est. budget" />
+            ) : null}
+          </View>
 
-          {/* Weather */}
-          {weather ? <WeatherWidget weather={weather} /> : null}
-
-          {/* Cost of living */}
-          {cost ? <CostWidget cost={cost} /> : null}
-
-          {/* Day-by-day cards */}
-          {parsed?.days && parsed.days.length > 0 ? (
-            <View>
-              <Text style={styles.sectionHeader}>Day-by-Day Itinerary</Text>
-              {parsed.days.map((day) => (
-                <DayCard key={day.day} day={day} />
+          {/* ── 3. DAY-BY-DAY PREVIEW ────────────────────────────────────── */}
+          {itinerary && itinerary.days.length > 0 ? (
+            <View style={styles.section}>
+              <Text style={styles.sectionHeader}>Day-by-Day</Text>
+              {itinerary.days.map((day) => (
+                <DaySection key={day.day} day={day} />
               ))}
             </View>
           ) : null}
 
-          {/* Map */}
-          <MapSection mapUrl={mapUrl} />
+          {/* ── 4. MAP PREVIEW ───────────────────────────────────────────── */}
+          <MapPreview mapUrl={mapUrl} />
 
-          {/* Pro tip */}
-          {parsed?.proTip ? (
-            <View style={[styles.card, styles.proTipCard]}>
-              <Text style={styles.cardLabel}>PRO TIP</Text>
-              <Text style={styles.proTipText}>{parsed.proTip}</Text>
-            </View>
-          ) : null}
+          {/* ── 5. WEATHER FORECAST ──────────────────────────────────────── */}
+          {weather ? <WeatherStrip weather={weather} /> : null}
 
-          {/* Packing essentials */}
-          {parsed?.packingEssentials && parsed.packingEssentials.length > 0 ? (
-            <View style={styles.card}>
-              <Text style={styles.cardLabel}>PACKING ESSENTIALS</Text>
-              <View style={styles.packingGrid}>
-                {parsed.packingEssentials.map((item, i) => (
-                  <View key={i} style={styles.packingItem}>
-                    <View style={styles.packingDot} />
-                    <Text style={styles.packingText}>{item}</Text>
+          {/* ── 6. COST BREAKDOWN ────────────────────────────────────────── */}
+          {cost ? <CostTiers cost={cost} /> : null}
+
+          {/* Budget breakdown from itinerary */}
+          {itinerary?.budgetBreakdown ? (
+            <View style={[styles.card, styles.highlightCard]}>
+              <Text style={styles.cardLabel}>TRIP COST BREAKDOWN</Text>
+              {itinerary.totalBudget ? (
+                <Text style={styles.totalBudget}>{itinerary.totalBudget}</Text>
+              ) : null}
+              <View style={styles.breakdownRows}>
+                {([
+                  ['Accommodation', itinerary.budgetBreakdown.accommodation],
+                  ['Food', itinerary.budgetBreakdown.food],
+                  ['Activities', itinerary.budgetBreakdown.activities],
+                  ['Transport', itinerary.budgetBreakdown.transportation],
+                  ['Misc', itinerary.budgetBreakdown.miscellaneous],
+                ] as [string, string][]).map(([cat, val]) => (
+                  <View key={cat} style={styles.breakdownRow}>
+                    <Text style={styles.breakdownCat}>{cat}</Text>
+                    <Text style={styles.breakdownVal}>{val}</Text>
                   </View>
                 ))}
               </View>
             </View>
           ) : null}
 
-          {/* Visa info */}
-          {parsed?.visaInfo ? (
-            <View style={styles.card}>
-              <Text style={styles.cardLabel}>VISA</Text>
-              <Text style={styles.visaText}>{parsed.visaInfo}</Text>
-            </View>
-          ) : null}
-
-          {/* CTA */}
+          {/* ── 7. CTA SECTION ───────────────────────────────────────────── */}
           <View style={styles.ctaSection}>
             <Text style={styles.ctaHeadline}>Plan your own trip</Text>
             <Text style={styles.ctaSub}>
-              Get a full AI-generated itinerary with real costs, activities, and local tips — in 30 seconds.
+              Full AI-generated itinerary with real costs, local tips, and venue
+              recommendations — in 30 seconds. Free.
             </Text>
+
+            {/* Primary CTA */}
             <Pressable
-              style={({ pressed }) => [styles.ctaBtn, { opacity: pressed ? 0.85 : 1 }]}
+              style={({ pressed }) => [styles.ctaPrimary, { opacity: pressed ? 0.85 : 1 }]}
               onPress={handleCTA}
               accessibilityRole="link"
-              accessibilityLabel="Plan your own trip at roamapp.app"
+              accessibilityLabel="Plan your own trip — free"
             >
-              <Text style={styles.ctaBtnText}>Start planning free</Text>
-              <Text style={styles.ctaBtnSub}>roamapp.app</Text>
+              <Text style={styles.ctaPrimaryText}>Plan your own trip — free</Text>
+            </Pressable>
+
+            {/* Download / website link */}
+            <Pressable
+              style={({ pressed }) => [styles.ctaSecondary, { opacity: pressed ? 0.85 : 1 }]}
+              onPress={handleCTA}
+              accessibilityRole="link"
+              accessibilityLabel="Download ROAM"
+            >
+              <ExternalLink size={16} color={COLORS.sage} strokeWidth={1.5} />
+              <Text style={styles.ctaSecondaryText}>Download ROAM</Text>
             </Pressable>
           </View>
 
-          {/* Watermark */}
-          <Text style={styles.watermark}>Made with ROAM</Text>
+          {/* ── 8. FOOTER ────────────────────────────────────────────────── */}
+          <View style={styles.footer}>
+            <Text style={styles.footerBrand}>Made with ROAM</Text>
+            <Text style={styles.footerUrl}>roamapp.app</Text>
+
+            <View style={styles.footerActions}>
+              <Pressable
+                style={({ pressed }) => [styles.footerBtn, { opacity: pressed ? 0.7 : 1 }]}
+                onPress={handleCopyLink}
+                accessibilityRole="button"
+                accessibilityLabel="Copy trip link"
+              >
+                <Copy size={16} color={COLORS.creamDim} strokeWidth={1.5} />
+                <Text style={styles.footerBtnText}>
+                  {linkCopied ? 'Copied' : 'Copy link'}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={({ pressed }) => [styles.footerBtn, { opacity: pressed ? 0.7 : 1 }]}
+                onPress={handleShareLink}
+                accessibilityRole="button"
+                accessibilityLabel="Share trip"
+              >
+                <Share2 size={16} color={COLORS.creamDim} strokeWidth={1.5} />
+                <Text style={styles.footerBtnText}>Share</Text>
+              </Pressable>
+            </View>
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -485,11 +537,9 @@ export default function SharedTripPage() {
 // ---------------------------------------------------------------------------
 // Styles
 // ---------------------------------------------------------------------------
-const HERO_HEIGHT = 400;
-const CARD_MAX_WIDTH = 680;
 
 const styles = StyleSheet.create({
-  // Layout
+  // Layout ────────────────────────────────────────────────────────────────────
   screen: {
     flex: 1,
     backgroundColor: COLORS.bg,
@@ -507,13 +557,22 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   body: {
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.xl,
+    paddingTop: SPACING.lg,
     alignSelf: 'center',
     width: '100%',
     maxWidth: CARD_MAX_WIDTH,
   } as ViewStyle,
+  section: {
+    marginBottom: SPACING.md,
+  } as ViewStyle,
+  sectionHeader: {
+    fontFamily: FONTS.header,
+    fontSize: 22,
+    color: COLORS.cream,
+    marginBottom: SPACING.md,
+  } as TextStyle,
 
-  // Hero
+  // Hero ──────────────────────────────────────────────────────────────────────
   hero: {
     height: HERO_HEIGHT,
     position: 'relative',
@@ -528,43 +587,32 @@ const styles = StyleSheet.create({
   heroGradient: {
     ...StyleSheet.absoluteFillObject,
   } as ViewStyle,
-  heroBrand: {
+  heroBadge: {
     position: 'absolute',
     top: SPACING.xl,
     left: SPACING.lg,
+    backgroundColor: COLORS.bgDarkGreen80,
+    borderRadius: RADIUS.pill,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs + 2,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
   } as ViewStyle,
-  heroBrandText: {
-    fontFamily: FONTS.header,
-    fontSize: 16,
-    color: COLORS.cream,
-    letterSpacing: 5,
-    opacity: 0.9,
+  heroBadgeText: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+    letterSpacing: 1.5,
   } as TextStyle,
   heroContent: {
     paddingHorizontal: SPACING.lg,
     paddingBottom: SPACING.xl,
   } as ViewStyle,
-  daysBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: COLORS.sageLight,
-    borderRadius: RADIUS.pill,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    marginBottom: SPACING.sm,
-    borderWidth: 1,
-    borderColor: COLORS.sageBorder,
-  } as ViewStyle,
-  daysBadgeText: {
-    fontFamily: FONTS.mono,
-    fontSize: 12,
-    color: COLORS.sage,
-    letterSpacing: 1,
-  } as TextStyle,
   heroDestination: {
     fontFamily: FONTS.header,
-    fontSize: 44,
+    fontSize: 48,
     color: COLORS.cream,
-    lineHeight: 50,
+    lineHeight: 54,
   } as TextStyle,
   heroTagline: {
     fontFamily: FONTS.body,
@@ -573,25 +621,36 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
     lineHeight: 24,
   } as TextStyle,
-  heroBudget: {
-    fontFamily: FONTS.mono,
-    fontSize: 12,
-    color: COLORS.creamDim,
-    marginTop: SPACING.xs,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  } as TextStyle,
 
-  // Section header
-  sectionHeader: {
+  // Stats row ────────────────────────────────────────────────────────────────
+  statsRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginBottom: SPACING.lg,
+  } as ViewStyle,
+  statPill: {
+    flex: 1,
+    backgroundColor: COLORS.surface1,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingVertical: SPACING.md,
+    alignItems: 'center',
+  } as ViewStyle,
+  statValue: {
     fontFamily: FONTS.header,
-    fontSize: 22,
+    fontSize: 20,
     color: COLORS.cream,
-    marginBottom: SPACING.md,
-    marginTop: SPACING.sm,
+  } as TextStyle,
+  statLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.muted,
+    letterSpacing: 1,
+    marginTop: 2,
   } as TextStyle,
 
-  // Cards
+  // Cards ────────────────────────────────────────────────────────────────────
   card: {
     backgroundColor: COLORS.surface1,
     borderRadius: RADIUS.lg,
@@ -612,151 +671,42 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   } as TextStyle,
 
-  // Budget breakdown
-  totalBudget: {
-    fontFamily: FONTS.header,
-    fontSize: 32,
-    color: COLORS.sage,
-    marginBottom: SPACING.md,
-  } as TextStyle,
-  budgetBreakdown: {
-    gap: 6,
-  } as ViewStyle,
-  budgetRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  } as ViewStyle,
-  budgetCat: {
-    fontFamily: FONTS.body,
-    fontSize: 14,
-    color: COLORS.creamDim,
-  } as TextStyle,
-  budgetVal: {
-    fontFamily: FONTS.mono,
-    fontSize: 13,
-    color: COLORS.creamSoft,
-  } as TextStyle,
-
-  // Weather
-  weatherRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: SPACING.lg,
-  } as ViewStyle,
-  weatherCurrent: {
-    flex: 0,
-    minWidth: 80,
-  } as ViewStyle,
-  weatherTemp: {
-    fontFamily: FONTS.header,
-    fontSize: 36,
-    color: COLORS.cream,
-  } as TextStyle,
-  weatherDesc: {
-    fontFamily: FONTS.body,
-    fontSize: 12,
-    color: COLORS.creamDim,
-    textTransform: 'capitalize',
-    marginTop: 2,
-  } as TextStyle,
-  weatherDays: {
-    flex: 1,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
-  } as ViewStyle,
-  weatherDayItem: {
-    alignItems: 'center',
-    minWidth: 40,
-  } as ViewStyle,
-  weatherDayDate: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.muted,
-    letterSpacing: 0.5,
-    marginBottom: 2,
-  } as TextStyle,
-  weatherDayHi: {
-    fontFamily: FONTS.bodyMedium,
-    fontSize: 13,
-    color: COLORS.cream,
-  } as TextStyle,
-  weatherDayLo: {
-    fontFamily: FONTS.body,
-    fontSize: 12,
-    color: COLORS.creamDim,
-  } as TextStyle,
-  weatherHint: {
-    fontFamily: FONTS.body,
-    fontSize: 12,
-    color: COLORS.creamDim,
-    marginTop: SPACING.md,
-    lineHeight: 18,
-    fontStyle: 'italic',
-  } as TextStyle,
-
-  // Cost
-  costGrid: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-    marginBottom: SPACING.sm,
-  } as ViewStyle,
-  costCell: {
-    flex: 1,
-    backgroundColor: COLORS.surface2,
-    borderRadius: RADIUS.md,
-    padding: SPACING.sm,
-    alignItems: 'center',
-  } as ViewStyle,
-  costTier: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.muted,
-    letterSpacing: 1,
-    marginBottom: 4,
-  } as TextStyle,
-  costVal: {
-    fontFamily: FONTS.bodySemiBold,
-    fontSize: 14,
-    color: COLORS.cream,
-    textAlign: 'center',
-  } as TextStyle,
-  costNote: {
-    fontFamily: FONTS.body,
-    fontSize: 12,
-    color: COLORS.creamDim,
-    marginTop: SPACING.xs,
-    lineHeight: 17,
-  } as TextStyle,
-
-  // Day cards
+  // Day cards ────────────────────────────────────────────────────────────────
   dayCard: {
     backgroundColor: COLORS.surface1,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.border,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
     overflow: 'hidden',
   } as ViewStyle,
   dayHeader: {
-    padding: SPACING.lg,
-    paddingBottom: SPACING.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+  } as ViewStyle,
+  dayHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'baseline',
+    gap: SPACING.sm,
+    flex: 1,
+  } as ViewStyle,
+  dayHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: SPACING.sm,
   } as ViewStyle,
   dayNumber: {
     fontFamily: FONTS.mono,
-    fontSize: 11,
+    fontSize: 10,
     color: COLORS.sage,
     letterSpacing: 1.5,
   } as TextStyle,
   dayTheme: {
     fontFamily: FONTS.headerMedium,
-    fontSize: 16,
+    fontSize: 15,
     color: COLORS.cream,
     flex: 1,
   } as TextStyle,
@@ -765,19 +715,29 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.creamDim,
   } as TextStyle,
+  dayBody: {
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  } as ViewStyle,
+  dayRouteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.sm,
+  } as ViewStyle,
   dayRoute: {
     fontFamily: FONTS.body,
     fontSize: 12,
     color: COLORS.sage,
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.sm,
+    flex: 1,
   } as TextStyle,
   daySlots: {
     padding: SPACING.lg,
     gap: SPACING.md,
   } as ViewStyle,
 
-  // Slot rows
+  // Slot rows ────────────────────────────────────────────────────────────────
   slotRow: {
     flexDirection: 'row',
     gap: SPACING.md,
@@ -801,122 +761,160 @@ const styles = StyleSheet.create({
   } as TextStyle,
   slotActivity: {
     fontFamily: FONTS.bodyMedium,
-    fontSize: 15,
-    color: COLORS.cream,
-    lineHeight: 21,
-  } as TextStyle,
-  slotMeta: {
-    fontFamily: FONTS.body,
-    fontSize: 12,
-    color: COLORS.creamDim,
-    marginTop: 2,
-  } as TextStyle,
-  slotCost: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.creamMuted,
-    marginTop: 2,
-  } as TextStyle,
-  slotTip: {
-    fontFamily: FONTS.body,
-    fontSize: 11,
-    color: COLORS.muted,
-    marginTop: 4,
-    lineHeight: 16,
-    fontStyle: 'italic',
-  } as TextStyle,
-
-  // Accommodation
-  dayAccommodation: {
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    backgroundColor: COLORS.surface2,
-  } as ViewStyle,
-  accommodationLabel: {
-    fontFamily: FONTS.mono,
-    fontSize: 9,
-    color: COLORS.gold,
-    letterSpacing: 2,
-    marginBottom: 2,
-  } as TextStyle,
-  accommodationName: {
-    fontFamily: FONTS.bodyMedium,
     fontSize: 14,
     color: COLORS.cream,
+    lineHeight: 20,
   } as TextStyle,
-  accommodationMeta: {
+  slotLocation: {
     fontFamily: FONTS.body,
     fontSize: 12,
     color: COLORS.creamDim,
-    marginTop: 2,
+    marginTop: 1,
   } as TextStyle,
 
-  // Map
+  // Map ──────────────────────────────────────────────────────────────────────
   mapImage: {
     width: '100%',
-    height: 200,
+    height: 220,
     borderRadius: RADIUS.md,
     marginTop: SPACING.sm,
   } as ImageStyle,
-  mapCaption: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.muted,
-    textAlign: 'center',
-    marginTop: SPACING.sm,
-    letterSpacing: 1,
-  } as TextStyle,
-
-  // Pro tip
-  proTipCard: {
-    borderColor: COLORS.sageBorder,
-    backgroundColor: COLORS.sageVeryFaint,
-  } as ViewStyle,
-  proTipText: {
-    fontFamily: FONTS.body,
-    fontSize: 15,
-    color: COLORS.creamSoft,
-    lineHeight: 24,
-  } as TextStyle,
-
-  // Packing
-  packingGrid: {
+  mapLegend: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
+    justifyContent: 'center',
+    gap: SPACING.lg,
+    marginTop: SPACING.sm,
   } as ViewStyle,
-  packingItem: {
+  mapLegendItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: COLORS.surface2,
-    borderRadius: RADIUS.pill,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
   } as ViewStyle,
-  packingDot: {
-    width: 5,
-    height: 5,
+  mapLegendDot: {
+    width: 8,
+    height: 8,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.sage,
   } as ViewStyle,
-  packingText: {
+  mapLegendText: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.muted,
+    letterSpacing: 0.5,
+  } as TextStyle,
+
+  // Weather strip ────────────────────────────────────────────────────────────
+  weatherStrip: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: SPACING.xs,
+  } as ViewStyle,
+  weatherStripDay: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: COLORS.surface2,
+    borderRadius: RADIUS.md,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.xs,
+  } as ViewStyle,
+  weatherStripDayName: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.muted,
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  } as TextStyle,
+  weatherStripHi: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 16,
+    color: COLORS.cream,
+  } as TextStyle,
+  weatherStripLo: {
     fontFamily: FONTS.body,
     fontSize: 12,
-    color: COLORS.creamSoft,
+    color: COLORS.creamDim,
+    marginBottom: 2,
+  } as TextStyle,
+  weatherStripDesc: {
+    fontFamily: FONTS.body,
+    fontSize: 9,
+    color: COLORS.muted,
+    textAlign: 'center',
+    textTransform: 'capitalize',
+  } as TextStyle,
+  weatherHint: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamDim,
+    marginTop: SPACING.md,
+    lineHeight: 18,
   } as TextStyle,
 
-  // Visa
-  visaText: {
+  // Cost tiers ───────────────────────────────────────────────────────────────
+  costRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
+  } as ViewStyle,
+  costTierCard: {
+    flex: 1,
+    backgroundColor: COLORS.surface2,
+    borderRadius: RADIUS.md,
+    padding: SPACING.sm,
+    alignItems: 'center',
+  } as ViewStyle,
+  costTierDot: {
+    width: 6,
+    height: 6,
+    borderRadius: RADIUS.full,
+    marginBottom: 4,
+  } as ViewStyle,
+  costTierLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.muted,
+    letterSpacing: 1,
+    marginBottom: 4,
+  } as TextStyle,
+  costTierValue: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.cream,
+    textAlign: 'center',
+  } as TextStyle,
+  costNote: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamDim,
+    lineHeight: 17,
+  } as TextStyle,
+
+  // Budget breakdown ─────────────────────────────────────────────────────────
+  totalBudget: {
+    fontFamily: FONTS.header,
+    fontSize: 28,
+    color: COLORS.sage,
+    marginBottom: SPACING.md,
+  } as TextStyle,
+  breakdownRows: {
+    gap: 6,
+  } as ViewStyle,
+  breakdownRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  } as ViewStyle,
+  breakdownCat: {
     fontFamily: FONTS.body,
     fontSize: 14,
+    color: COLORS.creamDim,
+  } as TextStyle,
+  breakdownVal: {
+    fontFamily: FONTS.mono,
+    fontSize: 13,
     color: COLORS.creamSoft,
-    lineHeight: 22,
   } as TextStyle,
 
-  // CTA section
+  // CTA section ──────────────────────────────────────────────────────────────
   ctaSection: {
     alignItems: 'center',
     paddingVertical: SPACING.xxl,
@@ -940,39 +938,79 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xl,
     maxWidth: 380,
   } as TextStyle,
-  ctaBtn: {
+  ctaPrimary: {
     backgroundColor: COLORS.sage,
     borderRadius: RADIUS.pill,
     paddingHorizontal: SPACING.xxl,
     paddingVertical: SPACING.md + 2,
     alignItems: 'center',
+    marginBottom: SPACING.md,
   } as ViewStyle,
-  ctaBtnText: {
+  ctaPrimaryText: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 17,
     color: COLORS.bg,
   } as TextStyle,
-  ctaBtnSub: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.bg,
-    opacity: 0.7,
-    marginTop: 3,
-    letterSpacing: 0.5,
+  ctaSecondary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.pill,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+  } as ViewStyle,
+  ctaSecondaryText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
+    color: COLORS.sage,
   } as TextStyle,
 
-  // Watermark
-  watermark: {
+  // Footer ───────────────────────────────────────────────────────────────────
+  footer: {
+    alignItems: 'center',
+    paddingVertical: SPACING.xl,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    marginTop: SPACING.md,
+  } as ViewStyle,
+  footerBrand: {
     fontFamily: FONTS.mono,
     fontSize: 11,
     color: COLORS.muted,
-    textAlign: 'center',
-    marginTop: SPACING.lg,
     letterSpacing: 2,
-    opacity: 0.6,
+  } as TextStyle,
+  footerUrl: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+    letterSpacing: 0.5,
+    marginTop: 2,
+  } as TextStyle,
+  footerActions: {
+    flexDirection: 'row',
+    gap: SPACING.lg,
+    marginTop: SPACING.md,
+  } as ViewStyle,
+  footerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.pill,
+    backgroundColor: COLORS.surface1,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  } as ViewStyle,
+  footerBtnText: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamDim,
   } as TextStyle,
 
-  // Error state
+  // Error state ──────────────────────────────────────────────────────────────
   errorTitle: {
     fontFamily: FONTS.header,
     fontSize: 24,

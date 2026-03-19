@@ -23,6 +23,7 @@ import {
   Music,
   Plus,
   ShoppingBag,
+  Sparkles,
   Train,
   TrendingUp,
   Utensils,
@@ -551,6 +552,29 @@ export default function BudgetTrackerScreen() {
                 </View>
               </View>
             </View>
+
+            {/* Optimize CTA */}
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push({
+                  pathname: '/cost-optimizer',
+                  params: {
+                    tripId: activeTrip?.id ?? '',
+                    destination: activeTrip?.destination ?? '',
+                  },
+                } as never);
+              }}
+              style={({ pressed }) => [
+                styles.optimizeBtn,
+                { opacity: pressed ? 0.85 : 1 },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Optimize trip costs"
+            >
+              <Sparkles size={18} color={COLORS.sage} strokeWidth={1.5} />
+              <Text style={styles.optimizeBtnText}>Optimize</Text>
+            </Pressable>
           </>
         )}
       </ScrollView>
@@ -879,6 +903,27 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
     maxWidth: 280,
+  } as TextStyle,
+
+  // ── Optimize button ──
+  optimizeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.sageVeryFaint,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+    borderRadius: RADIUS.pill,
+    paddingVertical: SPACING.sm + 4,
+    paddingHorizontal: SPACING.lg,
+    alignSelf: 'center',
+    marginTop: SPACING.md,
+  } as ViewStyle,
+  optimizeBtnText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 15,
+    color: COLORS.sage,
   } as TextStyle,
 
   // ── FAB ──

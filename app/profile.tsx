@@ -34,7 +34,7 @@ import { logoutRevenueCat } from '../lib/revenue-cat';
 import {
   Sparkles, Repeat, Gift, Shield, ChevronRight, BarChart3,
   CreditCard, LogOut, Globe, Camera, MapPin, ImageIcon, Heart, Scan, Backpack,
-  Volume2, X, Brain, Sun,
+  Volume2, X, Brain, Sun, Bell, SunMedium, CloudSun, CalendarClock, Briefcase,
 } from 'lucide-react-native';
 import { getPersonaConfig } from '../lib/traveler-persona';
 import { hasEnoughData } from '../lib/travel-dna';
@@ -53,6 +53,7 @@ import { computeTravelPersonality } from '../lib/travel-personality';
 import type { TripPhoto, TripAlbum } from '../lib/types/trip-photos';
 
 import { EMERGENCY_CONTACT, ONBOARDING_COMPLETE, TRIP_SOUNDS } from '../lib/storage-keys';
+import { getNotificationPreferences, setNotificationPreferences as setNotifPref } from '../lib/smart-notifications';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GALLERY_GAP = 3;
@@ -138,6 +139,26 @@ export default function ProfileScreen() {
     setTripSoundsEnabled(next);
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     await AsyncStorage.setItem(TRIP_SOUNDS, next ? 'true' : 'false');
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // Smart notification preferences
+  // ---------------------------------------------------------------------------
+  const [notifPrefs, setNotifPrefs] = useState({
+    dailyBriefs: true,
+    goldenHourAlerts: true,
+    weatherUpdates: true,
+    tripReminders: true,
+  });
+
+  useEffect(() => {
+    getNotificationPreferences().then(setNotifPrefs).catch(() => {});
+  }, []);
+
+  const handleNotifToggle = useCallback(async (key: keyof typeof notifPrefs, value: boolean) => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const updated = await setNotifPref({ [key]: value });
+    setNotifPrefs(updated);
   }, []);
 
   // ---------------------------------------------------------------------------
@@ -617,6 +638,29 @@ export default function ProfileScreen() {
           </View>
         </Pressable>
 
+        {/* Travel Accounts */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.tripWrappedCard,
+            { opacity: pressed ? 0.9 : 1 },
+          ]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            router.push('/travel-accounts' as never);
+          }}
+        >
+          <View style={styles.tripWrappedContent}>
+            <View style={styles.tripWrappedIconWrap}>
+              <Briefcase size={24} color={COLORS.sage} strokeWidth={1.5} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.tripWrappedTitle}>Travel Accounts</Text>
+              <Text style={styles.tripWrappedSub}>Airlines, hotels & loyalty programs</Text>
+            </View>
+            <ChevronRight size={22} color={COLORS.sage} strokeWidth={1.5} />
+          </View>
+        </Pressable>
+
         {/* Fun features */}
         <View style={[styles.menuSection, { marginTop: SPACING.lg }]}>
           {/* Travel Compatibility — LIVE */}
@@ -752,6 +796,83 @@ export default function ProfileScreen() {
             <Switch
               value={tripSoundsEnabled}
               onValueChange={handleTripSoundsToggle}
+              trackColor={{ false: COLORS.bgGlass, true: COLORS.sage }}
+              thumbColor={COLORS.cream}
+              ios_backgroundColor={COLORS.bgGlass}
+            />
+          </View>
+
+          <View style={styles.menuDivider} />
+
+          {/* Notifications section */}
+          <View style={styles.menuItem}>
+            <View style={styles.menuIconWrap}>
+              <Bell size={18} color={COLORS.sage} strokeWidth={1.5} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.menuLabel}>Daily briefs</Text>
+              <Text style={styles.menuSubtext}>Morning + evening trip updates</Text>
+            </View>
+            <Switch
+              value={notifPrefs.dailyBriefs}
+              onValueChange={(v) => handleNotifToggle('dailyBriefs', v)}
+              trackColor={{ false: COLORS.bgGlass, true: COLORS.sage }}
+              thumbColor={COLORS.cream}
+              ios_backgroundColor={COLORS.bgGlass}
+            />
+          </View>
+
+          <View style={styles.menuDivider} />
+
+          <View style={styles.menuItem}>
+            <View style={styles.menuIconWrap}>
+              <SunMedium size={18} color={COLORS.accentGold} strokeWidth={1.5} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.menuLabel}>Golden hour alerts</Text>
+              <Text style={styles.menuSubtext}>Best photo light, 30 min heads-up</Text>
+            </View>
+            <Switch
+              value={notifPrefs.goldenHourAlerts}
+              onValueChange={(v) => handleNotifToggle('goldenHourAlerts', v)}
+              trackColor={{ false: COLORS.bgGlass, true: COLORS.sage }}
+              thumbColor={COLORS.cream}
+              ios_backgroundColor={COLORS.bgGlass}
+            />
+          </View>
+
+          <View style={styles.menuDivider} />
+
+          <View style={styles.menuItem}>
+            <View style={styles.menuIconWrap}>
+              <CloudSun size={18} color={COLORS.sage} strokeWidth={1.5} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.menuLabel}>Weather updates</Text>
+              <Text style={styles.menuSubtext}>Packing reminders + forecasts</Text>
+            </View>
+            <Switch
+              value={notifPrefs.weatherUpdates}
+              onValueChange={(v) => handleNotifToggle('weatherUpdates', v)}
+              trackColor={{ false: COLORS.bgGlass, true: COLORS.sage }}
+              thumbColor={COLORS.cream}
+              ios_backgroundColor={COLORS.bgGlass}
+            />
+          </View>
+
+          <View style={styles.menuDivider} />
+
+          <View style={styles.menuItem}>
+            <View style={styles.menuIconWrap}>
+              <CalendarClock size={18} color={COLORS.sage} strokeWidth={1.5} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.menuLabel}>Trip reminders</Text>
+              <Text style={styles.menuSubtext}>Countdowns, check-ins, anniversaries</Text>
+            </View>
+            <Switch
+              value={notifPrefs.tripReminders}
+              onValueChange={(v) => handleNotifToggle('tripReminders', v)}
               trackColor={{ false: COLORS.bgGlass, true: COLORS.sage }}
               thumbColor={COLORS.cream}
               ios_backgroundColor={COLORS.bgGlass}

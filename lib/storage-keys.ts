@@ -125,3 +125,8 @@ export const CACHE_NARRATION_PREFIX = 'roam_narration_';
 // Smart translate
 // ---------------------------------------------------------------------------
 export const CACHE_SMART_TRANSLATE_PREFIX = '@roam/smart-translate/';
+
+// ---------------------------------------------------------------------------
+// Smart notification preferences
+// ---------------------------------------------------------------------------
+export const NOTIF_PREFS_KEY = '@roam/notification_prefs';

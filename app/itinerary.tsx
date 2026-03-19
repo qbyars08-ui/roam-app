@@ -60,7 +60,7 @@ import {
   saveItineraryOffline as saveItineraryOfflineEnhanced,
   loadOfflineItinerary,
 } from '../lib/offline-itinerary';
-import { exportCalendar } from '../lib/calendar';
+import CalendarSyncButton from '../components/features/CalendarSyncButton';
 import { shareTrip, shareTripAsCard, copyShareableLink } from '../lib/sharing';
 import { recordGrowthEvent } from '../lib/growth-hooks';
 import { evaluateTrigger } from '../lib/smart-triggers';
@@ -104,7 +104,7 @@ import {
   SAFETY_COLORS,
 } from '../lib/neighborhood-safety';
 import { formatDualPrice, formatLocalPrice, type ExchangeRates } from '../lib/currency';
-import { AlertTriangle, X, Pencil, Calendar, Link2, Share2, MapPin, Map as LucideMap, Receipt, Film, Wallet, Train, CreditCard, Plane, Heart, ShieldCheck, Droplets, Globe, Sun, Wind, PartyPopper, Camera, Clock, ChevronRight, Printer, Users } from 'lucide-react-native';
+import { AlertTriangle, X, Pencil, Link2, Share2, MapPin, Map as LucideMap, Receipt, Film, Wallet, Train, CreditCard, Plane, Heart, ShieldCheck, Droplets, Globe, Sun, Wind, PartyPopper, Camera, Clock, ChevronRight, Printer, Users, FolderOpen } from 'lucide-react-native';
 import { getTransitGuide, type TransitGuide } from '../lib/transit-data';
 import { getHomeAirport } from '../lib/flights';
 import { getMedicalGuideByDestination, type MedicalGuide } from '../lib/medical-abroad';
@@ -160,7 +160,7 @@ export default function ItineraryScreen() {
   const [homeAirport, setHomeAirportLocal] = useState('JFK');
 
   const [activeDay, setActiveDay] = useState(0);
-  const [viewMode, setViewMode] = useState<'list' | 'map'>(params.map === '1' ? 'map' : 'list');
+  const [viewMode, setViewMode] = useState<'list' | 'map' | 'timeline'>(params.map === '1' ? 'map' : 'list');
   const [selectedPin, setSelectedPin] = useState<string | null>(null);
   const [safetyOverlay, setSafetyOverlay] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -644,15 +644,6 @@ export default function ItineraryScreen() {
     );
   }, []);
 
-  const handleCalendarExport = useCallback(() => {
-    if (!parsed) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const startDate = trip?.createdAt ? new Date(trip.createdAt) : new Date();
-    exportCalendar(parsed, startDate).catch(() =>
-      Alert.alert('Export Failed', 'Couldn\u2019t add this to your calendar. Check that ROAM has calendar access in Settings.')
-    );
-  }, [parsed, trip]);
-
   const handleShareLink = useCallback(async () => {
     if (!trip) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -888,17 +879,10 @@ export default function ItineraryScreen() {
             </Pressable>
           )}
 
-          {/* Calendar export */}
-          <Pressable
-            onPress={handleCalendarExport}
-            hitSlop={8}
-            style={({ pressed }) => [
-              styles.headerBtn,
-              { opacity: pressed ? 0.6 : 1 },
-            ]}
-          >
-            <Calendar size={20} color={COLORS.cream} strokeWidth={1.5} />
-          </Pressable>
+          {/* Calendar sync (native) / export (web) */}
+          {trip && parsed && (
+            <CalendarSyncButton trip={trip} itinerary={parsed} />
+          )}
 
           {/* Itinerary map toggle — numbered pins + route line, tap pin for activity card */}
           <Pressable
@@ -931,6 +915,24 @@ export default function ItineraryScreen() {
             <MapPin size={14} color={COLORS.sage} strokeWidth={1.5} />
             <Text style={styles.mapExploreBtnText}>MAP</Text>
           </Pressable>
+
+          {/* Documents vault */}
+          {trip && (
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push({ pathname: '/document-vault', params: { tripId: trip.id } } as never);
+              }}
+              hitSlop={8}
+              style={({ pressed }) => [
+                styles.headerBtn,
+                { opacity: pressed ? 0.6 : 1 },
+              ]}
+              accessibilityLabel="Trip documents"
+            >
+              <FolderOpen size={20} color={COLORS.cream} strokeWidth={1.5} />
+            </Pressable>
+          )}
 
           {/* Here Now — quick access to I Am Here Now screen */}
           <Pressable
@@ -983,6 +985,29 @@ export default function ItineraryScreen() {
                 ]}
               >
                 Map
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                if (parsed) {
+                  router.push({
+                    pathname: '/trip-timeline',
+                    params: { data: JSON.stringify(parsed) },
+                  } as never);
+                }
+              }}
+              style={[
+                styles.viewToggleBtn,
+                viewMode === 'timeline' && styles.viewToggleBtnActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.viewToggleText,
+                  viewMode === 'timeline' && styles.viewToggleTextActive,
+                ]}
+              >
+                Timeline
               </Text>
             </Pressable>
           </View>

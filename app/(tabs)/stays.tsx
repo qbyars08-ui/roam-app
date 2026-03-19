@@ -37,6 +37,7 @@ import { getHotelLink, openBookingLink } from '../../lib/booking-links';
 import { DatePickerInline } from '../../components/stays/StaysDatePicker';
 import { SkeletonCard } from '../../components/premium/LoadingStates';
 import FadeIn from '../../components/ui/FadeIn';
+import { useTravelAccounts } from '../../lib/travel-accounts';
 
 // ---------------------------------------------------------------------------
 // Curated destination data
@@ -214,6 +215,13 @@ export default function StaysScreen() {
   const insets = useSafeAreaInsets();
   const planDestination = useAppStore((s) => s.planWizard.destination);
 
+  // Travel accounts
+  const { accounts: travelAccounts } = useTravelAccounts();
+  const marriottAccount = useMemo(
+    () => travelAccounts.find((a) => a.provider === 'Marriott'),
+    [travelAccounts],
+  );
+
   const [destinationText, setDestinationText] = useState(planDestination ?? '');
   const [checkIn, setCheckIn] = useState(startOfDay(addDays(new Date(), 7)));
   const [checkOut, setCheckOut] = useState(startOfDay(addDays(new Date(), 14)));
@@ -322,6 +330,35 @@ export default function StaysScreen() {
             {t('stays.heroSub', { defaultValue: 'Search and compare the best prices.' })}
           </Text>
         </View>
+
+        {/* ── Marriott Account Badge ── */}
+        {marriottAccount && (
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: COLORS.surface1,
+            borderRadius: RADIUS.md,
+            paddingHorizontal: SPACING.md,
+            paddingVertical: SPACING.sm,
+            marginHorizontal: SPACING.lg,
+            marginBottom: SPACING.md,
+            borderWidth: 1,
+            borderColor: COLORS.sageBorder,
+            gap: SPACING.sm,
+          }}>
+            <Building2 size={16} color={COLORS.sage} strokeWidth={1.5} />
+            <Text style={{
+              fontFamily: FONTS.bodyMedium,
+              fontSize: 13,
+              color: COLORS.cream,
+            }}>Your Marriott tier:</Text>
+            <Text style={{
+              fontFamily: FONTS.mono,
+              fontSize: 13,
+              color: COLORS.sage,
+            }}>{marriottAccount.tier ?? 'Gold'}</Text>
+          </View>
+        )}
 
         {/* Search Form — clean, large inputs */}
         <View style={styles.searchCard}>
