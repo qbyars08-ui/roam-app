@@ -34,7 +34,7 @@ import { logoutRevenueCat } from '../lib/revenue-cat';
 import {
   Sparkles, Repeat, Gift, Shield, ChevronRight, BarChart3,
   CreditCard, LogOut, Globe, Camera, MapPin, ImageIcon, Heart, Scan, Backpack,
-  Volume2, X, Brain,
+  Volume2, X, Brain, Sun,
 } from 'lucide-react-native';
 import { getPersonaConfig } from '../lib/traveler-persona';
 import { hasEnoughData } from '../lib/travel-dna';
@@ -193,6 +193,17 @@ export default function ProfileScreen() {
   const handleCancelEmergencyModal = useCallback(() => {
     setEmergencyModalVisible(false);
   }, []);
+
+  // ---------------------------------------------------------------------------
+  // Appearance (color scheme)
+  // ---------------------------------------------------------------------------
+  const colorScheme = useAppStore((s) => s.colorScheme);
+  const setColorScheme = useAppStore((s) => s.setColorScheme);
+
+  const handleAppearanceChange = useCallback((scheme: 'dark' | 'light' | 'system') => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setColorScheme(scheme);
+  }, [setColorScheme]);
 
   // ---------------------------------------------------------------------------
   // Sign out
@@ -749,6 +760,41 @@ export default function ProfileScreen() {
 
           <View style={styles.menuDivider} />
 
+          {/* Appearance toggle */}
+          <View style={styles.menuItem}>
+            <View style={styles.menuIconWrap}>
+              <Sun size={18} color={COLORS.accentGold} strokeWidth={1.5} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.menuLabel}>Appearance</Text>
+            </View>
+            <View style={styles.appearanceToggleRow}>
+              {(['dark', 'light', 'system'] as const).map((option) => {
+                const isActive = colorScheme === option;
+                const label = option.charAt(0).toUpperCase() + option.slice(1);
+                return (
+                  <Pressable
+                    key={option}
+                    onPress={() => handleAppearanceChange(option)}
+                    style={[
+                      styles.appearancePill,
+                      isActive && styles.appearancePillActive,
+                    ]}
+                  >
+                    <Text style={[
+                      styles.appearancePillText,
+                      isActive && styles.appearancePillTextActive,
+                    ]}>
+                      {label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          <View style={styles.menuDivider} />
+
           <Pressable
             style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.7 : 1 }]}
             onPress={() => {
@@ -1131,6 +1177,31 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.border,
     marginHorizontal: SPACING.lg,
   } as ViewStyle,
+  // Appearance toggle
+  appearanceToggleRow: {
+    flexDirection: 'row',
+    gap: SPACING.xs,
+  } as ViewStyle,
+  appearancePill: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: RADIUS.pill,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.bgGlass,
+  } as ViewStyle,
+  appearancePillActive: {
+    backgroundColor: COLORS.sageSubtle,
+    borderColor: COLORS.sageBorder,
+  } as ViewStyle,
+  appearancePillText: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.muted,
+  } as TextStyle,
+  appearancePillTextActive: {
+    color: COLORS.sage,
+  } as TextStyle,
   // Emergency contact modal
   modalBackdrop: {
     flex: 1,

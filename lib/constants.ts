@@ -274,6 +274,40 @@ export const COLORS = {
 } as const;
 
 // ---------------------------------------------------------------------------
+// Light mode color system
+// ---------------------------------------------------------------------------
+export const LIGHT_COLORS = {
+  bg: '#F8F7F4',
+  surface1: '#FFFFFF',
+  surface2: '#F0EEE9',
+  surface3: '#E8E6E0',
+  border: 'rgba(0,0,0,0.08)',
+  borderSubtle: 'rgba(0,0,0,0.04)',
+  text: '#0A0A0A',
+  cream: '#0A0A0A',
+  creamBright: '#1A1A1A',
+  creamDim: 'rgba(10,10,10,0.5)',
+  creamFaint: 'rgba(10,10,10,0.3)',
+  muted: '#6B6B6B',
+  sage: '#4A8A5C',
+  sageSubtle: 'rgba(74,138,92,0.12)',
+  sageBorder: 'rgba(74,138,92,0.25)',
+  sageVeryFaint: 'rgba(74,138,92,0.06)',
+  gold: '#B8932F',
+  goldSubtle: 'rgba(184,147,47,0.12)',
+  coral: '#D4503A',
+  coralStrong: '#C0392B',
+  coralSubtle: 'rgba(212,80,58,0.12)',
+  bgElevated: '#FFFFFF',
+  bgGlass: 'rgba(255,255,255,0.9)',
+  overlayDark: 'rgba(0,0,0,0.4)',
+  overlayDarkest: 'rgba(0,0,0,0.7)',
+  action: '#4A8A5C',
+  primary: '#4A8A5C',
+  danger: '#D4503A',
+} as const;
+
+// ---------------------------------------------------------------------------
 // Destination theme palettes — unique accent colors per destination
 // ---------------------------------------------------------------------------
 export const DESTINATION_THEME_PALETTES: Record<string, { primary: string; secondary: string; gradient: [string, string, string]; glowColor: string }> = {

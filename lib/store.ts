@@ -89,6 +89,8 @@ type AppState = {
   lastViewedDestination: string | null;
   /** Traveler persona — shapes trip generation, Sonar queries, and UI */
   travelerPersona: TravelerPersona | null;
+  /** Color scheme preference — 'system' follows device, 'dark'/'light' override */
+  colorScheme: 'dark' | 'light' | 'system';
 
   // Actions
   setSession: (session: Session | null) => void;
@@ -131,6 +133,7 @@ type AppState = {
   setActivePeopleTab: (tab: 'feed' | 'squad' | 'groups' | 'meetups' | 'matches') => void;
   setLastViewedDestination: (dest: string | null) => void;
   setTravelerPersona: (persona: TravelerPersona | null) => void;
+  setColorScheme: (scheme: 'dark' | 'light' | 'system') => void;
 };
 
 const defaultPlanWizard: PlanWizardState = {
@@ -153,6 +156,7 @@ const SOCIAL_PROFILE_KEY = 'roam_social_profile';
 const LAST_VIEWED_DESTINATION_KEY = 'roam_last_viewed_destination';
 const IS_PRO_KEY = 'roam_is_pro';
 const TRAVELER_PERSONA_KEY = '@roam/persona';
+const COLOR_SCHEME_KEY = 'roam_color_scheme';
 
 function persistBookmarkedRestaurants(ids: string[]) {
   AsyncStorage.setItem(BOOKMARKED_RESTAURANTS_KEY, JSON.stringify(ids)).catch((err: unknown) => { console.warn('[ROAM] Persist failed:', err instanceof Error ? err.message : String(err)); });
@@ -205,6 +209,7 @@ export const useAppStore = create<AppState>((set) => ({
   activePeopleTab: 'feed',
   lastViewedDestination: null,
   travelerPersona: null,
+  colorScheme: 'system',
 
   setSession: (session) => set({ session }),
   addTrip: (trip) =>
@@ -380,6 +385,10 @@ export const useAppStore = create<AppState>((set) => ({
       AsyncStorage.removeItem(TRAVELER_PERSONA_KEY).catch((err: unknown) => { console.warn('[ROAM] Persist failed:', err instanceof Error ? err.message : String(err)); });
     }
     set({ travelerPersona: persona });
+  },
+  setColorScheme: (scheme) => {
+    AsyncStorage.setItem(COLOR_SCHEME_KEY, scheme).catch((err: unknown) => { console.warn('[ROAM] Persist failed:', err instanceof Error ? err.message : String(err)); });
+    set({ colorScheme: scheme });
   },
 }));
 
@@ -565,6 +574,20 @@ export async function loadPersistedSocialProfile(): Promise<void> {
     if (raw) {
       const profile = JSON.parse(raw) as SocialProfile;
       useAppStore.setState({ socialProfile: profile, socialProfileLoaded: true });
+    }
+  } catch {
+    // silent — first launch or corrupt data
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Load persisted color scheme on app start
+// ---------------------------------------------------------------------------
+export async function loadPersistedColorScheme(): Promise<void> {
+  try {
+    const raw = await AsyncStorage.getItem(COLOR_SCHEME_KEY);
+    if (raw === 'dark' || raw === 'light' || raw === 'system') {
+      useAppStore.setState({ colorScheme: raw });
     }
   } catch {
     // silent — first launch or corrupt data

@@ -3,7 +3,7 @@
 // Font loading, auth routing, session bootstrap, StatusBar
 // =============================================================================
 import React, { useEffect, useRef, useState } from 'react';
-import { AppState, Linking } from 'react-native';
+import { AppState, Linking, useColorScheme as useDeviceColorScheme } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { hideAsync as hideSplashScreen } from '../lib/splash-screen';
@@ -17,13 +17,14 @@ import { useFonts } from 'expo-font';
 import '../lib/i18n';
 
 import { supabase } from '../lib/supabase';
-import { useAppStore, checkActiveTripOnLoad, loadPersistedTrips, loadPersistedPets, loadPersistedTravelProfile, loadPersistedBookmarks, loadGenerateMode } from '../lib/store';
+import { useAppStore, checkActiveTripOnLoad, loadPersistedTrips, loadPersistedPets, loadPersistedTravelProfile, loadPersistedBookmarks, loadGenerateMode, loadPersistedColorScheme } from '../lib/store';
 import { initRevenueCat, loginRevenueCat, logoutRevenueCat, isProActive, addCustomerInfoListener } from '../lib/revenue-cat';
 import { syncProStatusToSupabase } from '../lib/sync-pro-status';
 import { ensureReferralCode } from '../lib/referral';
 import { requestNotificationPermission, scheduleDailyDiscovery, registerPushToken, registerForPushNotifications } from '../lib/notifications';
 import { recordAppOpen, cancelReengagementNotifications, scheduleReengagementNotifications } from '../lib/reengagement';
-import { COLORS } from '../lib/constants';
+import { COLORS, LIGHT_COLORS } from '../lib/constants';
+import { ThemeContext } from '../lib/theme-context';
 import { HAS_SEEN_ONBOARDING } from './onboarding';
 import { getSharedTrip } from '../lib/sharing';
 import { trackOnboardingComplete } from '../lib/ab-test';
@@ -105,6 +106,10 @@ export default function RootLayout() {
   const setSession = useAppStore((s) => s.setSession);
   const setTripsThisMonth = useAppStore((s) => s.setTripsThisMonth);
   const activeDestination = useAppStore((s) => s.trips?.[0]?.destination ?? null);
+  const colorScheme = useAppStore((s) => s.colorScheme);
+  const deviceScheme = useDeviceColorScheme();
+  const resolved = colorScheme === 'system' ? deviceScheme : colorScheme;
+  const activeColors = resolved === 'light' ? LIGHT_COLORS : COLORS;
 
   // Load fonts
   const [fontsLoaded] = useFonts({
@@ -135,6 +140,7 @@ export default function RootLayout() {
       loadPersistedTravelProfile(),
       loadPersistedBookmarks(),
       loadGenerateMode(),
+      loadPersistedColorScheme(),
       useAppStore.getState().initCurrency(),
     ]).catch(() => {});
 
@@ -339,6 +345,7 @@ export default function RootLayout() {
   const posthogClient = getPostHogClient();
 
   const appContent = (
+    <ThemeContext.Provider value={{ colors: activeColors as typeof COLORS, isDark: resolved !== 'light' }}>
     <EnvironmentalProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <GrainOverlay />
@@ -641,6 +648,7 @@ export default function RootLayout() {
         <StatusBar style="light" />
       </GestureHandlerRootView>
     </EnvironmentalProvider>
+    </ThemeContext.Provider>
   );
 
   return (
