@@ -1,22 +1,15 @@
 // =============================================================================
-// ROAM — Hostel Hub
-// Best hostels for solo travelers — Sonar intel + Foursquare search
+// ROAM — Hostel Hub (rebuilt)
+// Sleep cheap. Sleep smart. — Sonar intel + Foursquare price tiers + safety
 // =============================================================================
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
-  Linking,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  type TextStyle,
-  type ViewStyle,
+  Linking, Pressable, ScrollView, StyleSheet, Text, View,
+  type TextStyle, type ViewStyle,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BedDouble, ChevronLeft, ExternalLink, MapPin, Star } from 'lucide-react-native';
+import { BedDouble, ChevronLeft, ExternalLink, Lightbulb, MapPin, Star } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
@@ -24,264 +17,155 @@ import { useSonarQuery } from '../lib/sonar';
 import { searchPlaces, type FSQPlace } from '../lib/apis/foursquare';
 import { geocodeCity } from '../lib/geocoding';
 import { SkeletonCard } from '../components/premium/LoadingStates';
-import LiveBadge from '../components/ui/LiveBadge';
-import SourceCitation from '../components/ui/SourceCitation';
+import SonarCard, { SonarFallback } from '../components/ui/SonarCard';
 import * as Haptics from '../lib/haptics';
 
 // ---------------------------------------------------------------------------
-// Hostelworld link builder
+// Helpers
 // ---------------------------------------------------------------------------
-function buildHostelworldUrl(destination: string): string {
-  const slug = destination.toLowerCase().replace(/\s+/g, '-');
-  return `https://www.hostelworld.com/st/hostels/${encodeURIComponent(slug)}`;
+const hwUrl = (d: string) => `https://www.hostelworld.com/st/hostels/${encodeURIComponent(d.toLowerCase().replace(/\s+/g, '-'))}`;
+const bkUrl = (d: string) => `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(d)}&nflt=ht_id%3D203`;
+const mapsUrl = (n: string, d: string) => `https://www.google.com/maps/search/${encodeURIComponent(`${n} ${d}`)}`;
+const priceDots = (p: number | null) => (p == null ? '' : '$'.repeat(Math.min(p, 4)));
+const distLabel = (m: number) => (m < 1000 ? `${m}m` : `${(m / 1000).toFixed(1)}km`);
+
+// Price tier buckets
+const PRICE_TIERS = [
+  { label: 'Budget', range: '$0-25', min: 0, max: 1 },
+  { label: 'Mid', range: '$25-50', min: 2, max: 2 },
+  { label: 'Comfort', range: '$50-100', min: 3, max: 4 },
+] as const;
+
+function bucketByPrice(places: readonly FSQPlace[]) {
+  const b: Record<string, FSQPlace[]> = {};
+  for (const t of PRICE_TIERS) {
+    b[t.label] = places.filter((p) => {
+      if (p.price == null) return t.label === 'Budget';
+      return p.price >= t.min && p.price <= t.max;
+    });
+  }
+  return b;
 }
 
 // ---------------------------------------------------------------------------
-// Price level display
+// Venue card
 // ---------------------------------------------------------------------------
-function priceDots(price: number | null): string {
-  if (price == null) return '';
-  return '$'.repeat(Math.min(price, 4));
-}
-
-// ---------------------------------------------------------------------------
-// Distance label
-// ---------------------------------------------------------------------------
-function distanceLabel(meters: number): string {
-  if (meters < 1000) return `${meters}m`;
-  return `${(meters / 1000).toFixed(1)}km`;
-}
-
-// ---------------------------------------------------------------------------
-// FSQ Hostel Card
-// ---------------------------------------------------------------------------
-interface HostelCardProps {
-  place: FSQPlace;
-  destination: string;
-}
-
-function FsqHostelCard({ place, destination }: HostelCardProps) {
-  const handlePress = useCallback(() => {
+function VenueCard({ place, destination }: { place: FSQPlace; destination: string }) {
+  const open = useCallback(() => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const query = encodeURIComponent(`${place.name} ${destination}`);
-    void Linking.openURL(`https://www.google.com/maps/search/${query}`);
+    void Linking.openURL(mapsUrl(place.name, destination));
   }, [place.name, destination]);
 
-  const handleBook = useCallback(() => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    void Linking.openURL(buildHostelworldUrl(destination));
-  }, [destination]);
-
   return (
-    <View style={styles.hostelCard}>
-      <View style={styles.hostelCardAccent} />
-      <View style={styles.hostelCardContent}>
-        <View style={styles.hostelCardTopRow}>
-          <Text style={styles.hostelCardName} numberOfLines={1}>
-            {place.name}
-          </Text>
-          <View style={styles.hostelCardMeta}>
-            {place.price != null ? (
-              <Text style={styles.hostelCardPrice}>{priceDots(place.price)}</Text>
-            ) : null}
-            {place.rating != null ? (
-              <View style={styles.ratingBadge}>
-                <Star size={10} color={COLORS.gold} fill={COLORS.gold} strokeWidth={0} />
-                <Text style={styles.ratingText}>{place.rating.toFixed(1)}</Text>
-              </View>
-            ) : null}
-          </View>
+    <Pressable onPress={open} style={({ pressed }) => [s.vc, { opacity: pressed ? 0.85 : 1 }]}>
+      <View style={s.vcAccent} />
+      <View style={s.vcBody}>
+        <View style={s.vcTop}>
+          <Text style={s.vcName} numberOfLines={1}>{place.name}</Text>
+          {place.rating != null && (
+            <View style={s.rat}><Star size={10} color={COLORS.gold} fill={COLORS.gold} strokeWidth={0} /><Text style={s.ratV}>{place.rating.toFixed(1)}</Text></View>
+          )}
         </View>
-        <Text style={styles.hostelCardCategory} numberOfLines={1}>
-          {place.category}
-        </Text>
-        {place.address ? (
-          <View style={styles.hostelAddressRow}>
-            <MapPin size={11} color={COLORS.muted} strokeWidth={1.5} />
-            <Text style={styles.hostelCardAddress} numberOfLines={1}>
-              {place.address}
-            </Text>
-          </View>
-        ) : null}
-        <Text style={styles.hostelCardDistance}>
-          {distanceLabel(place.distance)} away
-        </Text>
+        <Text style={s.vcCat} numberOfLines={1}>{place.category}</Text>
+        {place.address && <View style={s.vcAR}><MapPin size={10} color={COLORS.muted} strokeWidth={1.5} /><Text style={s.vcAddr} numberOfLines={1}>{place.address}</Text></View>}
+        <View style={s.vcMR}>{place.price != null && <Text style={s.vcPr}>{priceDots(place.price)}</Text>}<Text style={s.vcDist}>{distLabel(place.distance)}</Text></View>
       </View>
-      <View style={styles.hostelCardActions}>
-        <Pressable
-          onPress={handlePress}
-          style={({ pressed }) => [
-            styles.mapsBtn,
-            { opacity: pressed ? 0.75 : 1 },
-          ]}
-          accessibilityLabel="View on Google Maps"
-        >
-          <ExternalLink size={14} color={COLORS.muted} strokeWidth={1.5} />
-        </Pressable>
-        <Pressable
-          onPress={handleBook}
-          style={({ pressed }) => [
-            styles.bookBtn,
-            { opacity: pressed ? 0.8 : 1 },
-          ]}
-          accessibilityLabel="Book on Hostelworld"
-        >
-          <Text style={styles.bookBtnText}>Book</Text>
-        </Pressable>
-      </View>
-    </View>
+      <View style={s.vcAct}><ExternalLink size={14} color={COLORS.muted} strokeWidth={1.5} /></View>
+    </Pressable>
   );
 }
 
 // ---------------------------------------------------------------------------
 // Main screen
 // ---------------------------------------------------------------------------
-function HostelHubScreen() {
+export default function HostelHubScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const { destination: paramDest } = useLocalSearchParams<{ destination: string }>();
-  const trips = useAppStore((s) => s.trips);
+  const trips = useAppStore((st) => st.trips);
+  const destination = useMemo(() => paramDest || (trips.length > 0 ? trips[0].destination : DESTINATIONS[0]?.label ?? 'Bangkok'), [paramDest, trips]);
 
-  const destination = useMemo((): string => {
-    if (paramDest) return paramDest;
-    if (trips.length > 0) return trips[0].destination;
-    return DESTINATIONS[0]?.label ?? 'Bangkok';
-  }, [paramDest, trips]);
+  const sonarHostels = useSonarQuery(destination, 'hostels');
+  const sonarSafety = useSonarQuery(destination, 'safety');
 
-  // Sonar intel
-  const sonar = useSonarQuery(destination, 'hostels');
+  const [places, setPlaces] = useState<FSQPlace[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  // Foursquare state
-  const [fsqPlaces, setFsqPlaces] = useState<FSQPlace[]>([]);
-  const [fsqLoading, setFsqLoading] = useState(false);
-
-  // Fetch Foursquare hostels
   useEffect(() => {
     if (!destination) return;
-    let cancelled = false;
-    setFsqLoading(true);
-    setFsqPlaces([]);
-
+    let c = false;
+    setLoading(true); setPlaces([]);
     (async () => {
       try {
         const geo = await geocodeCity(destination);
-        if (cancelled || !geo) return;
-        const results = await searchPlaces('hostel', geo.latitude, geo.longitude, undefined, 10000);
-        if (!cancelled && results) setFsqPlaces(results.slice(0, 8));
-      } catch {
-        // non-fatal
-      } finally {
-        if (!cancelled) setFsqLoading(false);
-      }
+        if (c || !geo) return;
+        const r = await searchPlaces('hostel', geo.latitude, geo.longitude, undefined, 10000);
+        if (!c && r) setPlaces(r.slice(0, 12));
+      } catch { /* non-fatal */ } finally { if (!c) setLoading(false); }
     })();
-
-    return () => { cancelled = true; };
+    return () => { c = true; };
   }, [destination]);
 
-  const handleBack = useCallback(() => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.back();
-  }, [router]);
-
-  const handleHostelworld = useCallback(() => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    void Linking.openURL(buildHostelworldUrl(destination));
-  }, [destination]);
+  const buckets = useMemo(() => bucketByPrice(places), [places]);
+  const links = useMemo(() => [
+    { l: 'Hostelworld', u: hwUrl(destination) },
+    { l: 'Booking.com', u: bkUrl(destination) },
+    { l: 'Google Maps', u: mapsUrl('hostels', destination) },
+  ], [destination]);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header */}
-      <View style={styles.headerBar}>
-        <Pressable onPress={handleBack} hitSlop={12}>
+    <View style={[s.root, { paddingTop: insets.top }]}>
+      <View style={s.hdr}>
+        <Pressable onPress={() => { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }} hitSlop={12}>
           <ChevronLeft size={24} color={COLORS.cream} strokeWidth={1.5} />
         </Pressable>
       </View>
-
-      <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + SPACING.xl }]}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={[s.scr, { paddingBottom: insets.bottom + SPACING.xxl }]} showsVerticalScrollIndicator={false}>
         {/* Hero */}
-        <View style={styles.heroBlock}>
-          <BedDouble size={32} color={COLORS.sage} strokeWidth={1.5} />
-          <Text style={styles.heroTitle}>
-            {t('hostelHub.heroTitle', { defaultValue: 'Where to stay in' })}
-          </Text>
-          <Text style={styles.heroDestination}>{destination}</Text>
-          <Text style={styles.heroSub}>
-            {t('hostelHub.heroSub', { defaultValue: 'Best social hostels for solo travelers' })}
-          </Text>
+        <View style={s.hero}>
+          <BedDouble size={36} color={COLORS.sage} strokeWidth={1.5} />
+          <Text style={s.heroH}>{t('hostelHub.headline', { defaultValue: 'Sleep cheap. Sleep smart.' })}</Text>
+          <Text style={s.heroD}>{destination}</Text>
         </View>
 
-        {/* Sonar results card */}
-        {sonar.isLoading && !sonar.error ? (
-          <SkeletonCard height={120} style={{ marginBottom: SPACING.md }} />
-        ) : sonar.data ? (
-          <View style={styles.sonarCard}>
-            <View style={styles.sonarCardHeader}>
-              <Text style={styles.sonarCardLabel}>
-                {t('hostelHub.sonarLabel', { defaultValue: 'HOSTEL INTEL' })}
-              </Text>
-              {sonar.isLive ? <LiveBadge size="sm" /> : null}
+        {/* Sonar intel */}
+        {sonarHostels.isLoading ? <SkeletonCard height={120} style={s.gap} /> : sonarHostels.data ? (
+          <View style={s.gap}><SonarCard answer={sonarHostels.data.answer} isLive={sonarHostels.isLive} citations={sonarHostels.citations} title={`Best hostels in ${destination} right now`} /></View>
+        ) : <View style={s.gap}><SonarFallback label={t('hostelHub.intelUnavailable', { defaultValue: 'Hostel intel unavailable right now.' })} /></View>}
+
+        {/* Booking links */}
+        <View style={s.bkRow}>
+          {links.map((lk) => (
+            <Pressable key={lk.l} onPress={() => { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); void Linking.openURL(lk.u); }} style={({ pressed }) => [s.bkChip, { opacity: pressed ? 0.8 : 1 }]}>
+              <ExternalLink size={12} color={COLORS.sage} strokeWidth={1.5} /><Text style={s.bkTxt}>{lk.l}</Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {/* Price tiers */}
+        <Text style={s.secT}>{t('hostelHub.priceComparison', { defaultValue: 'Price tiers' })}</Text>
+        {loading && places.length === 0 ? [1, 2, 3].map((i) => <SkeletonCard key={i} height={80} style={{ marginBottom: SPACING.sm }} />) : places.length > 0 ? PRICE_TIERS.map((tier) => {
+          const items = buckets[tier.label] ?? [];
+          if (items.length === 0) return null;
+          return (
+            <View key={tier.label} style={s.tB}>
+              <View style={s.tH}><Text style={s.tL}>{tier.label.toUpperCase()}</Text><Text style={s.tR}>{tier.range}/night</Text></View>
+              {items.slice(0, 3).map((p) => <VenueCard key={p.fsqId} place={p} destination={destination} />)}
             </View>
-            <Text style={styles.sonarAnswer}>{sonar.data.answer}</Text>
-            {sonar.citations.length > 0 ? (
-              <View style={{ marginTop: SPACING.sm }}>
-                <SourceCitation citations={sonar.citations} />
-              </View>
-            ) : null}
-          </View>
-        ) : sonar.error ? (
-          <View style={styles.errorCard}>
-            <Text style={styles.errorText}>
-              {t('hostelHub.sonarError', { defaultValue: 'Intel unavailable. Check connection.' })}
-            </Text>
-          </View>
-        ) : null}
+          );
+        }) : !loading ? <View style={s.emp}><Text style={s.empT}>{t('hostelHub.noHostels', { defaultValue: 'No nearby hostels found. Try the booking links above.' })}</Text></View> : null}
 
-        {/* Foursquare results */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionLabel}>
-            {t('hostelHub.nearbyLabel', { defaultValue: 'NEARBY HOSTELS' })}
-          </Text>
-          {fsqLoading ? (
-            <ActivityIndicator size="small" color={COLORS.sage} />
-          ) : null}
-        </View>
+        {/* Safety tips */}
+        <Text style={s.secT}>{t('hostelHub.safetyTitle', { defaultValue: 'Safety tips' })}</Text>
+        {sonarSafety.isLoading ? <SkeletonCard height={100} style={s.gap} /> : sonarSafety.data ? (
+          <View style={s.gap}><SonarCard answer={sonarSafety.data.answer} isLive={sonarSafety.isLive} citations={sonarSafety.citations} title="Hostel safety" maxBullets={3} /></View>
+        ) : <View style={s.info}><Text style={s.infoB}>Use lockers for valuables. Keep your passport on you. Book beds with curtains for privacy. Check recent reviews before booking.</Text></View>}
 
-        {fsqLoading && fsqPlaces.length === 0 ? (
-          <View style={styles.skeletonStack}>
-            {[1, 2, 3].map((i) => (
-              <SkeletonCard key={i} height={88} style={{ marginBottom: SPACING.sm }} />
-            ))}
-          </View>
-        ) : fsqPlaces.length > 0 ? (
-          fsqPlaces.map((place) => (
-            <FsqHostelCard key={place.fsqId} place={place} destination={destination} />
-          ))
-        ) : !fsqLoading ? (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyText}>
-              {t('hostelHub.noNearby', { defaultValue: 'No nearby hostels found via Foursquare.' })}
-            </Text>
-          </View>
-        ) : null}
-
-        {/* Hostelworld CTA */}
-        <Pressable
-          onPress={handleHostelworld}
-          style={({ pressed }) => [
-            styles.hostelworldBtn,
-            { opacity: pressed ? 0.85 : 1 },
-          ]}
-          accessibilityLabel="Browse all hostels on Hostelworld"
-        >
-          <BedDouble size={18} color={COLORS.bg} strokeWidth={1.5} />
-          <Text style={styles.hostelworldBtnText}>
-            {t('hostelHub.browseAll', { defaultValue: 'Browse all hostels on Hostelworld' })}
-          </Text>
-          <ExternalLink size={14} color={COLORS.bg} strokeWidth={1.5} />
+        {/* Pro tip */}
+        <Pressable style={({ pressed }) => [s.tip, { opacity: pressed ? 0.9 : 1 }]} onPress={() => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}>
+          <View style={s.tipH}><Lightbulb size={16} color={COLORS.gold} strokeWidth={1.5} /><Text style={s.tipL}>PRO TIP</Text></View>
+          <Text style={s.tipT}>Book hostels with free breakfast and a kitchen. That alone can save you $15-20/day. Read the 1-star reviews first — they tell the real story.</Text>
         </Pressable>
       </ScrollView>
     </View>
@@ -291,237 +175,42 @@ function HostelHubScreen() {
 // ---------------------------------------------------------------------------
 // Styles
 // ---------------------------------------------------------------------------
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.bg,
-  } as ViewStyle,
-  headerBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-  } as ViewStyle,
-  scroll: {
-    paddingHorizontal: SPACING.md,
-  } as ViewStyle,
-
-  // Hero
-  heroBlock: {
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
-    gap: SPACING.xs,
-    paddingTop: SPACING.sm,
-  } as ViewStyle,
-  heroTitle: {
-    fontFamily: FONTS.body,
-    fontSize: 16,
-    color: COLORS.creamDim,
-    marginTop: SPACING.sm,
-  } as TextStyle,
-  heroDestination: {
-    fontFamily: FONTS.header,
-    fontSize: 32,
-    color: COLORS.cream,
-    textAlign: 'center',
-  } as TextStyle,
-  heroSub: {
-    fontFamily: FONTS.body,
-    fontSize: 14,
-    color: COLORS.muted,
-    textAlign: 'center',
-  } as TextStyle,
-
-  // Sonar card
-  sonarCard: {
-    backgroundColor: COLORS.surface1,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-  } as ViewStyle,
-  sonarCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    marginBottom: SPACING.sm,
-  } as ViewStyle,
-  sonarCardLabel: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.sage,
-    letterSpacing: 1.5,
-  } as TextStyle,
-  sonarAnswer: {
-    fontFamily: FONTS.body,
-    fontSize: 14,
-    color: COLORS.creamSoft,
-    lineHeight: 22,
-  } as TextStyle,
-
-  // Error / empty
-  errorCard: {
-    backgroundColor: COLORS.surface1,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.dangerBorderLight,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-  } as ViewStyle,
-  errorText: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.coral,
-  } as TextStyle,
-  emptyCard: {
-    backgroundColor: COLORS.surface1,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-  } as ViewStyle,
-  emptyText: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.muted,
-    textAlign: 'center',
-  } as TextStyle,
-
-  // Section header
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.sm,
-  } as ViewStyle,
-  sectionLabel: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.muted,
-    letterSpacing: 1.5,
-  } as TextStyle,
-
-  // Skeleton
-  skeletonStack: {
-    marginBottom: SPACING.sm,
-  } as ViewStyle,
-
-  // Hostel card
-  hostelCard: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.surface1,
-    borderRadius: RADIUS.md,
-    marginBottom: SPACING.sm,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  } as ViewStyle,
-  hostelCardAccent: {
-    width: 3,
-    backgroundColor: COLORS.sageLight,
-  } as ViewStyle,
-  hostelCardContent: {
-    flex: 1,
-    padding: SPACING.sm,
-  } as ViewStyle,
-  hostelCardTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 3,
-  } as ViewStyle,
-  hostelCardName: {
-    fontFamily: FONTS.bodyMedium,
-    fontSize: 14,
-    color: COLORS.cream,
-    flex: 1,
-  } as TextStyle,
-  hostelCardMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-  } as ViewStyle,
-  hostelCardPrice: {
-    fontFamily: FONTS.mono,
-    fontSize: 11,
-    color: COLORS.gold,
-  } as TextStyle,
-  ratingBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    backgroundColor: COLORS.goldSoft,
-    borderRadius: RADIUS.sm,
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-  } as ViewStyle,
-  ratingText: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.gold,
-  } as TextStyle,
-  hostelCardCategory: {
-    fontFamily: FONTS.body,
-    fontSize: 12,
-    color: COLORS.muted,
-    marginBottom: 3,
-  } as TextStyle,
-  hostelAddressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    marginBottom: 2,
-  } as ViewStyle,
-  hostelCardAddress: {
-    fontFamily: FONTS.body,
-    fontSize: 11,
-    color: COLORS.muted,
-    flex: 1,
-  } as TextStyle,
-  hostelCardDistance: {
-    fontFamily: FONTS.mono,
-    fontSize: 10,
-    color: COLORS.creamDim,
-  } as TextStyle,
-  hostelCardActions: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.xs,
-    paddingHorizontal: SPACING.sm,
-  } as ViewStyle,
-  mapsBtn: {
-    padding: 6,
-  } as ViewStyle,
-  bookBtn: {
-    backgroundColor: COLORS.action,
-    borderRadius: RADIUS.pill,
-    paddingVertical: 5,
-    paddingHorizontal: SPACING.sm,
-  } as ViewStyle,
-  bookBtnText: {
-    fontFamily: FONTS.bodyMedium,
-    fontSize: 11,
-    color: COLORS.bg,
-  } as TextStyle,
-
-  // Hostelworld CTA
-  hostelworldBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    backgroundColor: COLORS.action,
-    borderRadius: RADIUS.pill,
-    paddingVertical: SPACING.md,
-    marginTop: SPACING.md,
-    marginBottom: SPACING.sm,
-  } as ViewStyle,
-  hostelworldBtnText: {
-    fontFamily: FONTS.bodyMedium,
-    fontSize: 15,
-    color: COLORS.bg,
-  } as TextStyle,
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: COLORS.bg } as ViewStyle,
+  hdr: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm } as ViewStyle,
+  scr: { paddingHorizontal: SPACING.md } as ViewStyle,
+  gap: { marginBottom: SPACING.md } as ViewStyle,
+  hero: { alignItems: 'center', gap: SPACING.xs, paddingTop: SPACING.sm, marginBottom: SPACING.lg } as ViewStyle,
+  heroH: { fontFamily: FONTS.header, fontSize: 28, color: COLORS.cream, textAlign: 'center', marginTop: SPACING.sm } as TextStyle,
+  heroD: { fontFamily: FONTS.bodyMedium, fontSize: 16, color: COLORS.creamDim } as TextStyle,
+  secT: { fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted, letterSpacing: 1.5, marginBottom: SPACING.sm, marginTop: SPACING.md } as TextStyle,
+  bkRow: { flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.md, flexWrap: 'wrap' } as ViewStyle,
+  bkChip: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, backgroundColor: COLORS.sageVeryFaint, borderWidth: 1, borderColor: COLORS.sageBorder, borderRadius: RADIUS.pill, paddingVertical: 6, paddingHorizontal: SPACING.sm } as ViewStyle,
+  bkTxt: { fontFamily: FONTS.bodyMedium, fontSize: 12, color: COLORS.sage } as TextStyle,
+  tB: { marginBottom: SPACING.md } as ViewStyle,
+  tH: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: SPACING.xs } as ViewStyle,
+  tL: { fontFamily: FONTS.mono, fontSize: 11, color: COLORS.cream, letterSpacing: 1 } as TextStyle,
+  tR: { fontFamily: FONTS.mono, fontSize: 10, color: COLORS.muted } as TextStyle,
+  vc: { flexDirection: 'row', backgroundColor: COLORS.surface1, borderRadius: RADIUS.md, marginBottom: SPACING.xs, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.border } as ViewStyle,
+  vcAccent: { width: 3, backgroundColor: COLORS.sageLight } as ViewStyle,
+  vcBody: { flex: 1, padding: SPACING.sm } as ViewStyle,
+  vcTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 } as ViewStyle,
+  vcName: { fontFamily: FONTS.bodyMedium, fontSize: 14, color: COLORS.cream, flex: 1 } as TextStyle,
+  rat: { flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: COLORS.goldSoft, borderRadius: RADIUS.sm, paddingHorizontal: 5, paddingVertical: 2 } as ViewStyle,
+  ratV: { fontFamily: FONTS.mono, fontSize: 10, color: COLORS.gold } as TextStyle,
+  vcCat: { fontFamily: FONTS.body, fontSize: 12, color: COLORS.muted, marginBottom: 2 } as TextStyle,
+  vcAR: { flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 2 } as ViewStyle,
+  vcAddr: { fontFamily: FONTS.body, fontSize: 11, color: COLORS.muted, flex: 1 } as TextStyle,
+  vcMR: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm } as ViewStyle,
+  vcPr: { fontFamily: FONTS.mono, fontSize: 11, color: COLORS.gold } as TextStyle,
+  vcDist: { fontFamily: FONTS.mono, fontSize: 10, color: COLORS.creamDim } as TextStyle,
+  vcAct: { justifyContent: 'center', paddingHorizontal: SPACING.sm } as ViewStyle,
+  info: { backgroundColor: COLORS.surface1, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, padding: SPACING.md, marginBottom: SPACING.md } as ViewStyle,
+  infoB: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.creamSoft, lineHeight: 20 } as TextStyle,
+  tip: { backgroundColor: COLORS.goldFaint, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.goldBorder, padding: SPACING.md, marginTop: SPACING.md } as ViewStyle,
+  tipH: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginBottom: SPACING.sm } as ViewStyle,
+  tipL: { fontFamily: FONTS.mono, fontSize: 10, color: COLORS.gold, letterSpacing: 1.5 } as TextStyle,
+  tipT: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.creamSoft, lineHeight: 20 } as TextStyle,
+  emp: { backgroundColor: COLORS.surface1, borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.md } as ViewStyle,
+  empT: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.muted, textAlign: 'center' } as TextStyle,
 });
-
-export default HostelHubScreen;

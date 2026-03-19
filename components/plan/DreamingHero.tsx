@@ -17,19 +17,23 @@ export interface DreamingHeroProps {
   cityLabel: string;
   onQuickTrip: () => void;
   onPlanTogether: () => void;
+  /** Personalized greeting from TravelerDNA engine — overrides default headline */
+  personalizedGreeting?: string;
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-export default function DreamingHero({ cityLabel, onQuickTrip, onPlanTogether }: DreamingHeroProps) {
+export default function DreamingHero({ cityLabel, onQuickTrip, onPlanTogether, personalizedGreeting }: DreamingHeroProps) {
   const { t } = useTranslation();
   const router = useRouter();
+
+  const headline = personalizedGreeting ?? t('plan.dreaming.headline', { defaultValue: 'Where are you going?' });
 
   return (
     <View style={styles.dreamingContainer}>
       <Text style={styles.dreamingHeadline}>
-        {t('plan.dreaming.headline', { defaultValue: 'Where are you going?' })}
+        {headline}
       </Text>
       <Text style={styles.dreamingTypewriter}>{cityLabel}</Text>
       <View style={styles.dreamingButtons}>

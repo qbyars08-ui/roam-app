@@ -115,3 +115,13 @@ export const LOCALE = '@roam/locale';
 
 /** AsyncStorage key for the "Trip sounds / morning brief audio" toggle. */
 export const TRIP_SOUNDS = 'roam_trip_sounds';
+
+// ---------------------------------------------------------------------------
+// Live narration
+// ---------------------------------------------------------------------------
+export const CACHE_NARRATION_PREFIX = 'roam_narration_';
+
+// ---------------------------------------------------------------------------
+// Smart translate
+// ---------------------------------------------------------------------------
+export const CACHE_SMART_TRANSLATE_PREFIX = '@roam/smart-translate/';

@@ -22,6 +22,7 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/constants';
 import {
   geocodePlaces,
   buildStaticMapUrl,
+  isMapboxConfigured,
   type GeocodedLocation,
 } from '../../lib/mapbox';
 import * as Haptics from '../../lib/haptics';
@@ -183,6 +184,13 @@ export default function ItineraryDayMap({
   useEffect(() => {
     let cancelled = false;
 
+    // FIX: Check if Mapbox is configured before attempting geocoding
+    if (!isMapboxConfigured()) {
+      setLocations([null, null, null]);
+      setLoading(false);
+      return;
+    }
+
     const places = [
       day.morning.location,
       day.afternoon.location,
@@ -277,15 +285,14 @@ export default function ItineraryDayMap({
   // ---------------------------------------------------------------------------
   const handleOpenFullMap = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    // Navigate to the visited-map screen; cast to any to bypass strict Expo Router path types
-    // since the full map screen may be parameterized at runtime
+    // FIX: Navigate to /explore-map (NOT /visited-map)
     if (tripId) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (router as any).push(`/explore-map?tripId=${tripId}`);
     } else {
       router.push('/explore-map' as never);
     }
-  }, [router, tripId, dayNumber]);
+  }, [router, tripId]);
 
   const handleMapReady = useCallback(() => {
     setMapReady(true);
@@ -344,58 +351,104 @@ export default function ItineraryDayMap({
   };
 
   // ---------------------------------------------------------------------------
+  // FIX: Show fallback card when all geocoding fails (not empty map)
+  // ---------------------------------------------------------------------------
+  const allGeocodingFailed = !loading && validLocations.length === 0;
+
+  // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
   return (
-    <View style={styles.container}>
-      {loading ? (
-        <MapSkeleton />
-      ) : isWeb ? (
-        // ---- Web: static Mapbox image ----
-        staticMapUrl != null ? (
-          <Image
-            source={{ uri: staticMapUrl }}
-            style={styles.staticImage}
-            resizeMode="cover"
-          />
+    <View style={styles.outerContainer}>
+      <View style={styles.container}>
+        {loading ? (
+          <MapSkeleton />
+        ) : allGeocodingFailed ? (
+          // FIX: Fallback card when geocoding fails — not an empty map
+          <View style={styles.fallbackCard}>
+            <View style={styles.fallbackContent}>
+              <Text style={styles.fallbackTitle}>Day {dayNumber}</Text>
+              <View style={styles.fallbackSlots}>
+                <View style={styles.fallbackSlotRow}>
+                  <View style={[styles.fallbackDot, { backgroundColor: SLOT_COLORS.morning }]} />
+                  <Text style={styles.fallbackSlotText} numberOfLines={1}>{day.morning.location}</Text>
+                </View>
+                <View style={styles.fallbackSlotRow}>
+                  <View style={[styles.fallbackDot, { backgroundColor: SLOT_COLORS.afternoon }]} />
+                  <Text style={styles.fallbackSlotText} numberOfLines={1}>{day.afternoon.location}</Text>
+                </View>
+                <View style={styles.fallbackSlotRow}>
+                  <View style={[styles.fallbackDot, { backgroundColor: SLOT_COLORS.evening }]} />
+                  <Text style={styles.fallbackSlotText} numberOfLines={1}>{day.evening.location}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        ) : isWeb ? (
+          // ---- Web: static Mapbox image ----
+          staticMapUrl != null ? (
+            <Image
+              source={{ uri: staticMapUrl }}
+              style={styles.staticImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={styles.noMap}>
+              <Text style={styles.noMapText}>Map unavailable</Text>
+            </View>
+          )
+        ) : NativeMapView != null ? (
+          // ---- Native: interactive MapView ----
+          <NativeMapView
+            ref={mapRef}
+            style={styles.map}
+            customMapStyle={DARK_MAP_STYLE}
+            initialRegion={initialRegion}
+            onMapReady={handleMapReady}
+            showsCompass={false}
+            showsUserLocation={false}
+            rotateEnabled={false}
+            pitchEnabled={false}
+            moveOnMarkerPress={false}
+          >
+            {renderPolyline()}
+            {renderMarkers()}
+          </NativeMapView>
         ) : (
           <View style={styles.noMap}>
             <Text style={styles.noMapText}>Map unavailable</Text>
           </View>
-        )
-      ) : NativeMapView != null ? (
-        // ---- Native: interactive MapView ----
-        <NativeMapView
-          ref={mapRef}
-          style={styles.map}
-          customMapStyle={DARK_MAP_STYLE}
-          initialRegion={initialRegion}
-          onMapReady={handleMapReady}
-          showsCompass={false}
-          showsUserLocation={false}
-          rotateEnabled={false}
-          pitchEnabled={false}
-          moveOnMarkerPress={false}
-        >
-          {renderPolyline()}
-          {renderMarkers()}
-        </NativeMapView>
-      ) : (
-        <View style={styles.noMap}>
-          <Text style={styles.noMapText}>Map unavailable</Text>
-        </View>
-      )}
+        )}
 
-      {/* "Open Full Map" floating button */}
-      <Pressable
-        style={styles.fullMapBtn}
-        onPress={handleOpenFullMap}
-        accessibilityLabel="Open full map"
-        accessibilityRole="button"
-      >
-        <Maximize2 size={12} color={COLORS.cream} strokeWidth={1.5} />
-        <Text style={styles.fullMapText}>Full Map</Text>
-      </Pressable>
+        {/* "Open Full Map" floating button */}
+        {!allGeocodingFailed && (
+          <Pressable
+            style={styles.fullMapBtn}
+            onPress={handleOpenFullMap}
+            accessibilityLabel="Open full map"
+            accessibilityRole="button"
+          >
+            <Maximize2 size={12} color={COLORS.cream} strokeWidth={1.5} />
+            <Text style={styles.fullMapText}>Full Map</Text>
+          </Pressable>
+        )}
+      </View>
+
+      {/* Morning/afternoon/evening color legend */}
+      <View style={styles.legendRow}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: SLOT_COLORS.morning }]} />
+          <Text style={styles.legendLabel}>Morning</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: SLOT_COLORS.afternoon }]} />
+          <Text style={styles.legendLabel}>Afternoon</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: SLOT_COLORS.evening }]} />
+          <Text style={styles.legendLabel}>Evening</Text>
+        </View>
+      </View>
     </View>
   );
 }
@@ -404,6 +457,11 @@ export default function ItineraryDayMap({
 // Styles
 // ---------------------------------------------------------------------------
 const styles = StyleSheet.create({
+  outerContainer: {
+    width: '100%',
+    gap: SPACING.xs,
+  } as ViewStyle,
+
   container: {
     height: MAP_HEIGHT,
     width: '100%',
@@ -518,5 +576,76 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: COLORS.muted,
     marginTop: 3,
+  } as TextStyle,
+
+  // Fallback card when geocoding fails
+  fallbackCard: {
+    flex: 1,
+    backgroundColor: COLORS.surface2,
+    justifyContent: 'center',
+    padding: SPACING.md,
+  } as ViewStyle,
+
+  fallbackContent: {
+    gap: SPACING.sm,
+  } as ViewStyle,
+
+  fallbackTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 14,
+    color: COLORS.cream,
+    marginBottom: SPACING.xs,
+  } as TextStyle,
+
+  fallbackSlots: {
+    gap: SPACING.xs,
+  } as ViewStyle,
+
+  fallbackSlotRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  } as ViewStyle,
+
+  fallbackDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  } as ViewStyle,
+
+  fallbackSlotText: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.creamDim,
+    flex: 1,
+  } as TextStyle,
+
+  // Color legend below map
+  legendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.lg,
+    paddingVertical: 2,
+  } as ViewStyle,
+
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  } as ViewStyle,
+
+  legendDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  } as ViewStyle,
+
+  legendLabel: {
+    fontFamily: FONTS.mono,
+    fontSize: 9,
+    color: COLORS.muted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   } as TextStyle,
 });

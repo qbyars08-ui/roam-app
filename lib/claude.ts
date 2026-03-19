@@ -9,6 +9,7 @@ import { type TravelProfile, profileToPromptString } from './types/travel-profil
 import { useAppStore } from './store';
 import { getPersonaConfig, type TravelerPersona } from './traveler-persona';
 import { type TravelPreference, getPreferencesSummary } from './travel-preferences';
+import { type TravelerDNA, dnaSummaryForPrompt, inferDNAFromTrips } from './personalization-engine';
 
 // ---------------------------------------------------------------------------
 // System prompts
@@ -193,6 +194,41 @@ Never schedule activities that are geographically impossible in sequence. Rules:
 - If suggesting a day trip to a nearby area (e.g., Kamakura from Tokyo, Sintra from Lisbon), the ENTIRE day should be dedicated to that trip. Do not mix a day trip with activities back in the main city.
 - Before finalizing each day, mentally verify: "Can a person physically get from Activity A to Activity B in the time between them?" If not, restructure.
 - The "routeSummary" field should show neighborhoods flowing geographically, not zigzagging across the city.`;
+
+// ---------------------------------------------------------------------------
+// ANTI-ITINERARY mode — anchor moments + blank space
+// ---------------------------------------------------------------------------
+export const ANTI_ITINERARY_SYSTEM_PROMPT = `You are a traveler who knows every city deeply. Your job is the opposite of planning — you strip away everything except the 2-3 moments per day that truly define a place.
+
+RULES:
+- Give ONLY 2-3 things per day. Not 4. Not 5. Two or three.
+- These are NOT tourist attractions. These are the specific moments that make this place THIS place and not somewhere else.
+- No "visit the museum" or "walk around the old town." Be brutally specific: the exact time, the exact spot, the exact reason.
+- Leave everything else blank. The blank space is the point.
+- Write one sentence for WHY. Make it honest. Make it the thing a local friend would text you.
+
+FORMAT (strict — follow exactly):
+Day 1:
+[TIME] — [ACTIVITY]. [ONE SENTENCE WHY.]
+
+Day 2:
+[TIME] — [ACTIVITY]. [ONE SENTENCE WHY.]
+
+(continue for each day)
+
+EXAMPLES OF GOOD ANCHORS:
+- "6:30 AM — Tsukiji outer market before the crowds. The tuna auction energy still lingers at dawn and the tamago stand on the left has been there 40 years."
+- "9:00 PM — Trastevere side streets after dinner. Not the main drag — turn left after the fountain and follow the noise."
+- "5:00 AM — Angkor Wat east entrance. Skip the main crowd at the reflection pool, walk to the left side. You will have it alone for 20 minutes."
+
+EXAMPLES OF BAD ANCHORS (never do these):
+- "Visit the Eiffel Tower" (tourist trap, not a moment)
+- "Explore the local market" (vague, not specific)
+- "Try the local food" (meaningless without specifics)
+
+BANNED WORDS: vibrant, bustling, must-see, hidden gem, iconic, charming, picturesque, unforgettable, breathtaking, stunning, authentic experience, world-class, renowned, exquisite
+
+Be honest. Be specific. Be brief. Leave the rest blank.`;
 
 // ---------------------------------------------------------------------------
 // SPARK mode — fast, opinionated, one shot. "Trust me."
@@ -748,6 +784,7 @@ export function buildTripPrompt(params: {
   specialRequests?: string;
   travelerPersona?: TravelerPersona | null;
   travelPreferences?: readonly TravelPreference[] | null;
+  travelerDNA?: TravelerDNA | null;
 }): string {
   // Validate required params at runtime
   const dest = params.destination?.trim();
@@ -849,6 +886,18 @@ export function buildTripPrompt(params: {
     }
   }
 
+  // Inject TravelerDNA if available (deep personalization)
+  if (params.travelerDNA) {
+    const dnaSummary = dnaSummaryForPrompt(params.travelerDNA);
+    if (dnaSummary) {
+      lines.push('');
+      lines.push('--- TRAVELER DNA (deep personalization — shape every recommendation to this) ---');
+      lines.push(dnaSummary);
+      lines.push('Match accommodation, food, pace, and activity choices to these preferences.');
+      lines.push('---');
+    }
+  }
+
   // Inject weather forecast if available — AI adjusts outdoor activities for rain
   if (params.weather && params.weather.days.length > 0) {
     lines.push('');
@@ -930,12 +979,16 @@ export async function generateItinerary(params: {
     }
   }
 
+  // Auto-inject TravelerDNA from past trips for deep personalization
+  const travelerDNA = inferDNAFromTrips(useAppStore.getState().trips);
+
   const prompt = buildTripPrompt({
     ...params,
     travelProfile: profile,
     weather: weatherCtx,
     groupSize: params.groupSize,
     travelerPersona: persona,
+    travelerDNA: travelerDNA.confidence > 0.2 ? travelerDNA : null,
   });
   const response = await callClaude(ITINERARY_SYSTEM_PROMPT, prompt, true);
 
@@ -1006,12 +1059,16 @@ export async function generateItineraryStreaming(params: {
     }
   }
 
+  // Auto-inject TravelerDNA from past trips for deep personalization
+  const travelerDNA = inferDNAFromTrips(useAppStore.getState().trips);
+
   const prompt = buildTripPrompt({
     ...params,
     travelProfile: profile,
     weather: weatherCtx,
     groupSize: params.groupSize,
     travelerPersona: persona,
+    travelerDNA: travelerDNA.confidence > 0.2 ? travelerDNA : null,
   });
 
   return new Promise((resolve, reject) => {
@@ -1095,4 +1152,18 @@ export async function sendChatMessage(
 ): Promise<{ content: string }> {
   const response = await callClaude(CHAT_SYSTEM_PROMPT, message, false);
   return { content: response.content };
+}
+
+// ---------------------------------------------------------------------------
+// generateAntiTrip — Anti-Itinerary: anchor moments + blank space
+// ---------------------------------------------------------------------------
+
+export async function generateAntiTrip(
+  destination: string,
+  days: number,
+  style: string,
+): Promise<ClaudeResponse> {
+  const prompt = `For ${destination} over ${days} days, give me ONLY the 2-3 things per day that are genuinely unmissable — not tourist traps, not popular, but the specific moments that define this place. Travel style: ${style}. Leave everything else blank. Format: Day 1: [time] [activity] [one sentence why]. Nothing else.`;
+
+  return callClaude(ANTI_ITINERARY_SYSTEM_PROMPT, prompt, false);
 }

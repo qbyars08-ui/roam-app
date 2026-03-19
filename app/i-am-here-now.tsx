@@ -23,7 +23,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Camera, ChevronLeft, Image as ImageIcon, Phone, X } from 'lucide-react-native';
+import { Camera, ChevronLeft, Headphones, Image as ImageIcon, Phone, X } from 'lucide-react-native';
 import { COLORS, FONTS, RADIUS, SPACING } from '../lib/constants';
 import { useAppStore, type Trip } from '../lib/store';
 import * as Haptics from '../lib/haptics';
@@ -378,6 +378,26 @@ export default function IAmHereNow(): React.JSX.Element {
             </Text>
           </Pressable>
         </View>
+
+        {/* Live Guide — opens immersive narration */}
+        {destination ? (
+          <View style={styles.buttonsSection}>
+            <Pressable
+              style={[styles.actionButton, { backgroundColor: COLORS.sageSubtle, borderWidth: 1, borderColor: COLORS.sageBorder }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                router.push('/live-narrator' as never);
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <Headphones size={18} color={COLORS.sage} strokeWidth={1.5} />
+                <Text style={[styles.actionButtonText, { color: COLORS.sage }]}>
+                  {t('hereNow.liveGuide', { defaultValue: 'Live Guide' })}
+                </Text>
+              </View>
+            </Pressable>
+          </View>
+        ) : null}
 
         {/* Sonar "right now" section */}
         {destination ? (

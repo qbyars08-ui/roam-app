@@ -35,6 +35,7 @@ import { getAirQuality, resolveDestinationCoords, type AirQuality } from '../../
 import { geocodeCity } from '../../lib/geocoding';
 import { getCurrentWeather, type CurrentWeather } from '../../lib/apis/openweather'; import { searchEvents, type EventResult } from '../../lib/apis/eventbrite';
 import DreamingHero from '../../components/plan/DreamingHero';
+import { useTravelerDNA, getPersonalizedGreeting, getQuickActions } from '../../lib/personalization-engine';
 import CountdownSection from '../../components/plan/CountdownSection';
 import TravelingSection from '../../components/plan/TravelingSection';
 import ReturnedSection from '../../components/plan/ReturnedSection';
@@ -84,6 +85,14 @@ export default function PlanScreen() {
   const tripsThisMonth = useAppStore((s) => s.tripsThisMonth);
   const isPro = useAppStore((s) => s.isPro);
   const trips = useAppStore((s) => s.trips);
+
+  // ── Personalization ──
+  const { dna } = useTravelerDNA();
+  const personalizedGreeting = useMemo(
+    () => dna.confidence > 0.2 ? getPersonalizedGreeting(dna) : undefined,
+    [dna],
+  );
+  const personalizedActions = useMemo(() => getQuickActions(dna), [dna]);
 
   // ── Travel state ──
   const { stage, activeTrip, daysUntil } = useTravelStage();
@@ -269,7 +278,7 @@ export default function PlanScreen() {
       <ScrollView style={styles.fill} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {hasTrips && (<View style={styles.header}><Text style={styles.headerTitle}>{t('plan.yourTrips')}</Text><Text style={styles.headerSub}>{t('plan.tripsPlanned', { count: sortedTrips.length })}</Text></View>)}
 
-        {stage === 'DREAMING' && !showGenerator && (<DreamingHero cityLabel={dreamingCities[dreamingCityIndex]} onQuickTrip={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); handleNewTrip(); setGenerateMode('quick'); }} onPlanTogether={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/craft-session' as never); }} />)}
+        {stage === 'DREAMING' && !showGenerator && (<DreamingHero cityLabel={dreamingCities[dreamingCityIndex]} onQuickTrip={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); handleNewTrip(); setGenerateMode('quick'); }} onPlanTogether={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/craft-session' as never); }} personalizedGreeting={personalizedGreeting} />)}
 
         {(stage === 'PLANNING' || stage === 'IMMINENT') && activeTrip && (<CountdownSection stage={stage} daysUntil={daysUntil ?? 0} activeTrip={activeTrip} brief={brief} isLive={isLive} checklist={checklist} checkedItems={checkedItems} onToggle={handleChecklistToggle} pulseAnim={pulseAnim} weatherDays={planWeatherDays} airQuality={planAirQuality} costData={planCostData} />)}
 

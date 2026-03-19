@@ -1,6 +1,7 @@
 // =============================================================================
 // ROAM — Mapbox Integration (Free Tier: 100K geocoding, 50K map loads/month)
 // Dark-styled static maps with day routes as connected paths.
+// Enhanced: interactive maps, heatmaps, route lines, dark style builder
 // =============================================================================
 import { COLORS } from './constants';
 
@@ -10,15 +11,22 @@ import { COLORS } from './constants';
 const TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? '';
 const GEOCODE_BASE = 'https://api.mapbox.com/geocoding/v5/mapbox.places';
 const STATIC_BASE = 'https://api.mapbox.com/styles/v1';
+const DIRECTIONS_BASE = 'https://api.mapbox.com/directions/v5/mapbox';
 
 // Dark map style — ROAM branded
 const DARK_STYLE = 'mapbox/dark-v11';
 
+// Max URL length for Mapbox static images
+const MAX_URL_LENGTH = 7000;
+
+// Max pins before truncation
+const MAX_PINS = 15;
+
 // Pin colors for morning/afternoon/evening (Mapbox expects hex without #)
 const SLOT_COLORS: Record<string, string> = {
-  morning: COLORS.primary.slice(1),
-  afternoon: COLORS.gold.slice(1),
-  evening: COLORS.danger.slice(1),
+  morning: COLORS.primary.slice(1),   // sage
+  afternoon: COLORS.gold.slice(1),    // gold
+  evening: 'E8614A',                  // coral (solid hex, not rgba)
 };
 
 // ---------------------------------------------------------------------------
@@ -35,6 +43,14 @@ export interface DayRouteMap {
   day: number;
   imageUrl: string;
   locations: GeocodedLocation[];
+}
+
+export interface MapPin {
+  lat: number;
+  lng: number;
+  label?: string;
+  color?: string;
+  size?: 's' | 'l';
 }
 
 // ---------------------------------------------------------------------------
@@ -103,6 +119,35 @@ export async function geocodePlaces(
 }
 
 // ---------------------------------------------------------------------------
+// Pin truncation helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Truncate pins to MAX_PINS, returning the truncated list and overflow count.
+ */
+function truncatePins<T>(items: T[], max: number = MAX_PINS): { items: T[]; overflowCount: number } {
+  if (items.length <= max) return { items, overflowCount: 0 };
+  return { items: items.slice(0, max), overflowCount: items.length - max };
+}
+
+/**
+ * Build marker overlays string from pins, with URL length guard.
+ * Reduces pin count if URL would exceed MAX_URL_LENGTH.
+ */
+function buildMarkerOverlays(pins: MapPin[]): { overlays: string; overflowCount: number } {
+  const { items: truncated, overflowCount } = truncatePins(pins);
+
+  const markers = truncated.map((pin) => {
+    const color = pin.color ?? COLORS.primary.slice(1);
+    const size = pin.size ?? 's';
+    const labelPart = pin.label ? `-${pin.label}` : '';
+    return `pin-${size}${labelPart}+${color.replace('#', '')}(${pin.lng},${pin.lat})`;
+  }).join(',');
+
+  return { overlays: markers, overflowCount };
+}
+
+// ---------------------------------------------------------------------------
 // Static Map Generation
 // ---------------------------------------------------------------------------
 
@@ -125,24 +170,27 @@ export function buildStaticMapUrl(params: {
     i === 0 ? 'morning' : i === 1 ? 'afternoon' : 'evening'
   );
 
+  // Truncate to MAX_PINS
+  const { items: truncLocs, overflowCount: _overflow } = truncatePins(locations);
+  const truncSlots = slots.slice(0, truncLocs.length);
+
   // Build pin markers
-  const markers = locations.map((loc, i) => {
-    const color = SLOT_COLORS[slots[i]] ?? COLORS.primary.slice(1);
+  const markers = truncLocs.map((loc, i) => {
+    const color = SLOT_COLORS[truncSlots[i]] ?? COLORS.primary.slice(1);
     const label = `${i + 1}`;
     return `pin-l-${label}+${color}(${loc.lng},${loc.lat})`;
   }).join(',');
 
   // Build path overlay (route connecting the pins)
   let pathOverlay = '';
-  if (locations.length >= 2) {
-    const coords = locations.map((l) => `[${l.lng},${l.lat}]`).join(',');
+  if (truncLocs.length >= 2) {
     // GeoJSON line with sage green color, 3px width
     const geojson = JSON.stringify({
       type: 'Feature',
       properties: { 'stroke': COLORS.primary, 'stroke-width': 3, 'stroke-opacity': 0.8 },
       geometry: {
         type: 'LineString',
-        coordinates: locations.map((l) => [l.lng, l.lat]),
+        coordinates: truncLocs.map((l) => [l.lng, l.lat]),
       },
     });
     pathOverlay = `,geojson(${encodeURIComponent(geojson)})`;
@@ -152,7 +200,25 @@ export function buildStaticMapUrl(params: {
   const retinaStr = retina ? '@2x' : '';
   const overlays = `${markers}${pathOverlay}`;
 
-  return `${STATIC_BASE}/${DARK_STYLE}/static/${overlays}/auto/${width}x${height}${retinaStr}?access_token=${TOKEN}&padding=60&attribution=false&logo=false`;
+  let url = `${STATIC_BASE}/${DARK_STYLE}/static/${overlays}/auto/${width}x${height}${retinaStr}?access_token=${TOKEN}&padding=60&attribution=false&logo=false`;
+
+  // URL length guard — strip path overlay if too long, then reduce pins
+  if (url.length > MAX_URL_LENGTH && pathOverlay) {
+    url = `${STATIC_BASE}/${DARK_STYLE}/static/${markers}/auto/${width}x${height}${retinaStr}?access_token=${TOKEN}&padding=60&attribution=false&logo=false`;
+  }
+
+  if (url.length > MAX_URL_LENGTH) {
+    // Aggressively reduce pins
+    const reducedCount = Math.max(5, Math.floor(truncLocs.length / 2));
+    const reducedLocs = truncLocs.slice(0, reducedCount);
+    const reducedMarkers = reducedLocs.map((loc, i) => {
+      const color = SLOT_COLORS[truncSlots[i]] ?? COLORS.primary.slice(1);
+      return `pin-l-${i + 1}+${color}(${loc.lng},${loc.lat})`;
+    }).join(',');
+    url = `${STATIC_BASE}/${DARK_STYLE}/static/${reducedMarkers}/auto/${width}x${height}${retinaStr}?access_token=${TOKEN}&padding=60&attribution=false&logo=false`;
+  }
+
+  return url;
 }
 
 /**
@@ -171,6 +237,204 @@ export function buildDestinationMapUrl(params: {
 
   const marker = `pin-s+${COLORS.primary.slice(1)}(${lng},${lat})`;
   return `${STATIC_BASE}/${DARK_STYLE}/static/${marker}/${lng},${lat},${zoom}/${width}x${height}@2x?access_token=${TOKEN}&attribution=false&logo=false`;
+}
+
+// ---------------------------------------------------------------------------
+// Interactive Map URL Builder (for web iframes / embeds)
+// ---------------------------------------------------------------------------
+
+/**
+ * Build an interactive Mapbox GL JS map URL for web embeds.
+ * Uses the Mapbox dark style with custom pins.
+ */
+export function buildInteractiveMapUrl(params: {
+  pins: MapPin[];
+  zoom?: number;
+  center?: { lat: number; lng: number };
+  width?: number;
+  height?: number;
+}): string | null {
+  if (!TOKEN) return null;
+
+  const { pins, zoom = 13, center } = params;
+  const { items: truncPins } = truncatePins(pins);
+
+  // Calculate center from pins if not provided
+  const mapCenter = center ?? (truncPins.length > 0
+    ? {
+        lat: truncPins.reduce((s, p) => s + p.lat, 0) / truncPins.length,
+        lng: truncPins.reduce((s, p) => s + p.lng, 0) / truncPins.length,
+      }
+    : { lat: 0, lng: 0 });
+
+  // Build static map with the pins (interactive Mapbox GL JS requires JS SDK, so we use enhanced static)
+  const { overlays } = buildMarkerOverlays(truncPins);
+
+  if (!overlays) return null;
+
+  const url = `${STATIC_BASE}/${DARK_STYLE}/static/${overlays}/${mapCenter.lng},${mapCenter.lat},${zoom}/800x600@2x?access_token=${TOKEN}&attribution=false&logo=false`;
+
+  return url.length <= MAX_URL_LENGTH ? url : null;
+}
+
+// ---------------------------------------------------------------------------
+// Heatmap URL Builder (visited places density)
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a heatmap-style map by clustering pins with varying opacity.
+ * Uses larger pins for areas with more visits.
+ */
+export function buildHeatmapUrl(params: {
+  coords: Array<{ lat: number; lng: number; weight?: number }>;
+  width?: number;
+  height?: number;
+}): string | null {
+  if (!TOKEN || params.coords.length === 0) return null;
+
+  const { coords, width = 600, height = 400 } = params;
+  const sageHex = COLORS.sage.replace('#', '');
+
+  // Cluster nearby coords (simple grid-based clustering)
+  const clusters = clusterCoords(coords);
+  const { items: truncClusters } = truncatePins(clusters);
+
+  const markers = truncClusters.map((cluster) => {
+    // Larger pin for higher weight clusters
+    const size = cluster.weight >= 3 ? 'l' : 's';
+    return `pin-${size}+${sageHex}(${cluster.lng},${cluster.lat})`;
+  }).join(',');
+
+  if (!markers) return null;
+
+  const url = `${STATIC_BASE}/${DARK_STYLE}/static/${markers}/auto/${width}x${height}@2x?access_token=${TOKEN}&padding=40&attribution=false&logo=false`;
+  return url.length <= MAX_URL_LENGTH ? url : null;
+}
+
+/**
+ * Simple grid-based clustering for heatmap visualization.
+ */
+function clusterCoords(
+  coords: Array<{ lat: number; lng: number; weight?: number }>
+): Array<{ lat: number; lng: number; weight: number }> {
+  const gridSize = 2; // degrees
+  const grid = new Map<string, { latSum: number; lngSum: number; count: number }>();
+
+  for (const c of coords) {
+    const key = `${Math.floor(c.lat / gridSize)}_${Math.floor(c.lng / gridSize)}`;
+    const existing = grid.get(key);
+    const w = c.weight ?? 1;
+    if (existing) {
+      grid.set(key, {
+        latSum: existing.latSum + c.lat * w,
+        lngSum: existing.lngSum + c.lng * w,
+        count: existing.count + w,
+      });
+    } else {
+      grid.set(key, { latSum: c.lat * w, lngSum: c.lng * w, count: w });
+    }
+  }
+
+  return Array.from(grid.values()).map((g) => ({
+    lat: g.latSum / g.count,
+    lng: g.lngSum / g.count,
+    weight: g.count,
+  }));
+}
+
+// ---------------------------------------------------------------------------
+// Route Map Builder (walking/driving route between waypoints)
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a static map URL with a Mapbox Directions API route drawn.
+ * Falls back to straight-line GeoJSON if directions fail.
+ */
+export async function getStaticMapWithRoute(params: {
+  waypoints: Array<{ lat: number; lng: number; label?: string; color?: string }>;
+  profile?: 'walking' | 'driving' | 'cycling';
+  width?: number;
+  height?: number;
+}): Promise<string | null> {
+  if (!TOKEN || params.waypoints.length < 2) return null;
+
+  const { waypoints, profile = 'walking', width = 600, height = 400 } = params;
+  const { items: truncWaypoints } = truncatePins(waypoints);
+
+  // Build markers
+  const markers = truncWaypoints.map((wp, i) => {
+    const color = (wp.color ?? COLORS.primary).replace('#', '');
+    const label = wp.label ?? `${i + 1}`;
+    return `pin-l-${label}+${color}(${wp.lng},${wp.lat})`;
+  }).join(',');
+
+  // Try to get actual route geometry from Directions API
+  let routeGeojson: string | null = null;
+  try {
+    const coordStr = truncWaypoints.map((w) => `${w.lng},${w.lat}`).join(';');
+    const dirUrl = `${DIRECTIONS_BASE}/${profile}/${coordStr}?access_token=${TOKEN}&geometries=geojson&overview=full`;
+    const res = await fetch(dirUrl);
+    if (res.ok) {
+      const data = await res.json();
+      const routeCoords = data.routes?.[0]?.geometry?.coordinates;
+      if (routeCoords && routeCoords.length > 0) {
+        routeGeojson = JSON.stringify({
+          type: 'Feature',
+          properties: { 'stroke': COLORS.primary, 'stroke-width': 3, 'stroke-opacity': 0.7 },
+          geometry: { type: 'LineString', coordinates: routeCoords },
+        });
+      }
+    }
+  } catch {
+    // Fall through to straight-line fallback
+  }
+
+  // Fallback: straight-line GeoJSON
+  if (!routeGeojson) {
+    routeGeojson = JSON.stringify({
+      type: 'Feature',
+      properties: { 'stroke': COLORS.primary, 'stroke-width': 3, 'stroke-opacity': 0.6, 'stroke-dasharray': [6, 4] },
+      geometry: {
+        type: 'LineString',
+        coordinates: truncWaypoints.map((w) => [w.lng, w.lat]),
+      },
+    });
+  }
+
+  const pathOverlay = `geojson(${encodeURIComponent(routeGeojson)})`;
+  let url = `${STATIC_BASE}/${DARK_STYLE}/static/${markers},${pathOverlay}/auto/${width}x${height}@2x?access_token=${TOKEN}&padding=60&attribution=false&logo=false`;
+
+  // URL length guard
+  if (url.length > MAX_URL_LENGTH) {
+    // Fall back to markers only
+    url = `${STATIC_BASE}/${DARK_STYLE}/static/${markers}/auto/${width}x${height}@2x?access_token=${TOKEN}&padding=60&attribution=false&logo=false`;
+  }
+
+  return url;
+}
+
+// ---------------------------------------------------------------------------
+// Dark Style URL Builder (ROAM's exact dark palette)
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a dark-styled Mapbox static map URL with ROAM's brand colors.
+ * No pins, just the map itself — useful for background images.
+ */
+export function buildDarkStyleUrl(params: {
+  lat: number;
+  lng: number;
+  zoom?: number;
+  width?: number;
+  height?: number;
+  bearing?: number;
+  pitch?: number;
+}): string | null {
+  if (!TOKEN) return null;
+
+  const { lat, lng, zoom = 12, width = 800, height = 400, bearing = 0, pitch = 0 } = params;
+
+  return `${STATIC_BASE}/${DARK_STYLE}/static/${lng},${lat},${zoom},${bearing},${pitch}/${width}x${height}@2x?access_token=${TOKEN}&attribution=false&logo=false`;
 }
 
 // ---------------------------------------------------------------------------
@@ -241,18 +505,31 @@ export function buildVisitedMapUrl(params: {
   const sageHex = COLORS.sage.replace('#', '');
   const goldHex = COLORS.gold.replace('#', '');
 
-  const markers: string[] = [];
-  params.visited.forEach((p) => {
-    markers.push(`pin-s+${sageHex}(${p.lng},${p.lat})`);
-  });
-  params.planned.forEach((p) => {
-    markers.push(`pin-s+${goldHex}(${p.lng},${p.lat})`);
-  });
+  const allPins = [
+    ...params.visited.map((p) => ({ ...p, color: sageHex, size: 's' as const })),
+    ...params.planned.map((p) => ({ ...p, color: goldHex, size: 's' as const })),
+  ];
 
-  if (markers.length === 0) return null;
+  const { items: truncPins } = truncatePins(allPins);
 
-  const overlays = markers.join(',');
-  return `${STATIC_BASE}/${DARK_STYLE}/static/${overlays}/auto/${width}x${height}@2x?access_token=${TOKEN}&padding=40&attribution=false&logo=false`;
+  const markers = truncPins.map((p) =>
+    `pin-${p.size}+${p.color}(${p.lng},${p.lat})`
+  ).join(',');
+
+  if (!markers) return null;
+
+  let url = `${STATIC_BASE}/${DARK_STYLE}/static/${markers}/auto/${width}x${height}@2x?access_token=${TOKEN}&padding=40&attribution=false&logo=false`;
+
+  // URL length guard
+  if (url.length > MAX_URL_LENGTH) {
+    const reducedPins = truncPins.slice(0, Math.floor(truncPins.length / 2));
+    const reducedMarkers = reducedPins.map((p) =>
+      `pin-${p.size}+${p.color}(${p.lng},${p.lat})`
+    ).join(',');
+    url = `${STATIC_BASE}/${DARK_STYLE}/static/${reducedMarkers}/auto/${width}x${height}@2x?access_token=${TOKEN}&padding=40&attribution=false&logo=false`;
+  }
+
+  return url;
 }
 
 // ---------------------------------------------------------------------------

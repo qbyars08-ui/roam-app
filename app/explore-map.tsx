@@ -1,6 +1,6 @@
 // =============================================================================
 // ROAM — Explore Map Screen
-// Palantir/Bloomberg terminal aesthetic — dark, data-rich, cinematic
+// Full-screen dark map with color-coded pins, day selector, venue callouts
 // =============================================================================
 import React, {
   useCallback,
@@ -35,17 +35,17 @@ import {
   ChevronRight,
 } from 'lucide-react-native';
 
-import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
+import { COLORS, FONTS, SPACING, RADIUS, DESTINATIONS, HIDDEN_DESTINATIONS } from '../lib/constants';
 import { useAppStore } from '../lib/store';
 import {
   parseItinerary,
   type Itinerary,
-  type ItineraryDay,
   type TimeSlotActivity,
 } from '../lib/types/itinerary';
 import {
   geocodePlace,
   buildStaticMapUrl,
+  isMapboxConfigured,
   type GeocodedLocation,
 } from '../lib/mapbox';
 import * as Haptics from '../lib/haptics';
@@ -81,12 +81,6 @@ const BOTTOM_SHEET_EXPANDED = SCREEN_HEIGHT * 0.45;
 const DAY_SELECTOR_HEIGHT = 64;
 
 const SLOT_COLORS = {
-  morning: COLORS.sage,
-  afternoon: COLORS.gold,
-  evening: COLORS.coral,
-} as const;
-
-const SLOT_LABEL_COLORS = {
   morning: COLORS.sage,
   afternoon: COLORS.gold,
   evening: COLORS.coral,
@@ -154,6 +148,19 @@ function totalRouteKm(pins: VenuePin[]): number {
   return total;
 }
 
+/**
+ * Look up destination coordinates from the DESTINATIONS constant.
+ * Returns a sensible default region instead of hardcoded Tokyo.
+ */
+function getDestinationCoords(destinationName: string): { lat: number; lng: number } | null {
+  const allDests = [...DESTINATIONS, ...HIDDEN_DESTINATIONS];
+  const match = allDests.find(
+    (d) => d.label.toLowerCase() === destinationName.toLowerCase()
+  );
+  if (match) return { lat: match.lat, lng: match.lng };
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
@@ -166,6 +173,25 @@ function SlotDot({ slot }: { slot: Slot }) {
         { backgroundColor: SLOT_COLORS[slot] },
       ]}
     />
+  );
+}
+
+function ColorLegend() {
+  return (
+    <View style={styles.legendRow}>
+      <View style={styles.legendItem}>
+        <View style={[styles.legendDot, { backgroundColor: COLORS.sage }]} />
+        <Text style={styles.legendText}>Morning</Text>
+      </View>
+      <View style={styles.legendItem}>
+        <View style={[styles.legendDot, { backgroundColor: COLORS.gold }]} />
+        <Text style={styles.legendText}>Afternoon</Text>
+      </View>
+      <View style={styles.legendItem}>
+        <View style={[styles.legendDot, { backgroundColor: COLORS.coral }]} />
+        <Text style={styles.legendText}>Evening</Text>
+      </View>
+    </View>
   );
 }
 
@@ -295,7 +321,7 @@ export default function ExploreMapScreen() {
 
   const resolvedTripId = paramTripId ?? activeTripId ?? trips[0]?.id ?? null;
   const trip = useMemo(
-    () => trips.find((t) => t.id === resolvedTripId) ?? null,
+    () => trips.find((tr) => tr.id === resolvedTripId) ?? null,
     [trips, resolvedTripId]
   );
 
@@ -308,6 +334,31 @@ export default function ExploreMapScreen() {
       return null;
     }
   }, [trip]);
+
+  // ---------------------------------------------------------------------------
+  // Destination-based initial region (FIX: no more hardcoded Tokyo)
+  // ---------------------------------------------------------------------------
+  const destinationRegion = useMemo(() => {
+    const dest = itinerary?.destination ?? trip?.destination;
+    if (dest) {
+      const coords = getDestinationCoords(dest);
+      if (coords) {
+        return {
+          latitude: coords.lat,
+          longitude: coords.lng,
+          latitudeDelta: 0.1,
+          longitudeDelta: 0.1,
+        };
+      }
+    }
+    // Fallback: world center
+    return {
+      latitude: 20,
+      longitude: 0,
+      latitudeDelta: 100,
+      longitudeDelta: 100,
+    };
+  }, [itinerary, trip]);
 
   // ---------------------------------------------------------------------------
   // State
@@ -329,10 +380,14 @@ export default function ExploreMapScreen() {
   const bottomSheetAnim = useRef(new Animated.Value(BOTTOM_SHEET_PEEK)).current;
 
   // ---------------------------------------------------------------------------
-  // Geocode all venues when itinerary changes
+  // Geocode all venues when itinerary changes (progressive loading)
   // ---------------------------------------------------------------------------
   useEffect(() => {
     if (!itinerary) return;
+    if (!isMapboxConfigured()) {
+      setLoadingGeo(false);
+      return;
+    }
 
     let cancelled = false;
     setLoadingGeo(true);
@@ -356,23 +411,17 @@ export default function ExploreMapScreen() {
           try {
             const geo = await geocodePlace(activity.location, dest);
             if (geo && !cancelled) {
-              allPins.push({
+              const newPin: VenuePin = {
                 id: `day${day.day}-${slot}`,
                 dayIndex: dayIdx,
                 dayNumber: day.day,
                 slot,
                 activity,
                 location: geo,
-              });
-              // Update progressively
-              setPins((prev) => [...prev, {
-                id: `day${day.day}-${slot}`,
-                dayIndex: dayIdx,
-                dayNumber: day.day,
-                slot,
-                activity,
-                location: geo,
-              }]);
+              };
+              allPins.push(newPin);
+              // Progressive update — show pins as they geocode
+              setPins((prev) => [...prev, newPin]);
             }
           } catch {
             // Skip un-geocodable venues
@@ -384,10 +433,10 @@ export default function ExploreMapScreen() {
         setLoadingGeo(false);
         // Build web static map if needed
         if (isWeb && allPins.length > 0) {
-          const slots = allPins.map((p) => p.slot);
+          const slotLabels = allPins.map((p) => p.slot);
           const url = buildStaticMapUrl({
             locations: allPins.map((p) => p.location),
-            slots,
+            slots: slotLabels,
             width: Math.round(SCREEN_WIDTH),
             height: 300,
           });
@@ -422,7 +471,7 @@ export default function ExploreMapScreen() {
   }, [visiblePins]);
 
   // ---------------------------------------------------------------------------
-  // Polylines — group by day
+  // Polylines — group by day (dashed sage line)
   // ---------------------------------------------------------------------------
   const polylines = useMemo(() => {
     const byDay: Record<number, VenuePin[]> = {};
@@ -454,7 +503,6 @@ export default function ExploreMapScreen() {
 
   useEffect(() => {
     if (visiblePins.length > 0) {
-      // Small delay to let map settle
       const timer = setTimeout(fitMapToVisible, 400);
       return () => clearTimeout(timer);
     }
@@ -476,7 +524,6 @@ export default function ExploreMapScreen() {
     Haptics.impactAsync(ImpactFeedbackStyle.Light);
     setSelectedVenue({ pin });
 
-    // Scroll map to pin
     if (!isWeb && mapRef.current) {
       mapRef.current.animateToRegion({
         latitude: pin.location.lat - 0.003,
@@ -533,7 +580,7 @@ export default function ExploreMapScreen() {
   }, [itinerary]);
 
   // ---------------------------------------------------------------------------
-  // Web fallback
+  // Web fallback — enhanced with color legend and day selector
   // ---------------------------------------------------------------------------
   if (isWeb) {
     return (
@@ -552,7 +599,51 @@ export default function ExploreMapScreen() {
           </Text>
         </View>
 
+        {/* Day selector strip */}
+        {dayOptions.length > 0 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.webDaySelectorContent}
+            style={styles.webDaySelector}
+          >
+            <Pressable
+              onPress={() => handleDaySelect('all')}
+              style={[styles.dayChip, selectedDayIndex === 'all' && styles.dayChipActive]}
+            >
+              <Text style={[styles.dayChipText, selectedDayIndex === 'all' && styles.dayChipTextActive]}>
+                {t('exploreMap.allDays', { defaultValue: 'All Days' })}
+              </Text>
+            </Pressable>
+            {dayOptions.map((opt) => (
+              <Pressable
+                key={opt.dayIndex}
+                onPress={() => handleDaySelect(opt.dayIndex)}
+                style={[styles.dayChip, selectedDayIndex === opt.dayIndex && styles.dayChipActive]}
+              >
+                <Text style={[styles.dayChipText, selectedDayIndex === opt.dayIndex && styles.dayChipTextActive]}>
+                  {opt.label}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
+
         <ScrollView style={styles.webScroll} contentContainerStyle={styles.webScrollContent}>
+          {/* Stats bar */}
+          <View style={styles.webStatsBar}>
+            <View style={styles.webStatItem}>
+              <MapPin size={14} color={COLORS.sage} strokeWidth={1.5} />
+              <Text style={styles.webStatValue}>
+                {stats.venueCount} {t('exploreMap.venues', { defaultValue: 'venues' })}
+              </Text>
+            </View>
+            <View style={styles.webStatItem}>
+              <Route size={14} color={COLORS.muted} strokeWidth={1.5} />
+              <Text style={styles.webStatValue}>{stats.distance}</Text>
+            </View>
+          </View>
+
           {/* Static map image */}
           {staticMapUrl ? (
             <Image
@@ -574,6 +665,9 @@ export default function ExploreMapScreen() {
               )}
             </View>
           )}
+
+          {/* Color legend */}
+          <ColorLegend />
 
           {/* Venue list */}
           <View style={styles.webVenueList}>
@@ -617,7 +711,7 @@ export default function ExploreMapScreen() {
   // ---------------------------------------------------------------------------
   return (
     <View style={styles.container}>
-      {/* Full-screen Map */}
+      {/* Full-screen Map — initial region from destination, NOT hardcoded */}
       <MapView
         ref={mapRef}
         style={StyleSheet.absoluteFillObject}
@@ -630,14 +724,9 @@ export default function ExploreMapScreen() {
         rotateEnabled
         pitchEnabled={false}
         mapPadding={{ top: 0, right: 0, bottom: BOTTOM_SHEET_PEEK + DAY_SELECTOR_HEIGHT, left: 0 }}
-        initialRegion={{
-          latitude: 35.6762,
-          longitude: 139.6503,
-          latitudeDelta: 0.1,
-          longitudeDelta: 0.1,
-        }}
+        initialRegion={destinationRegion}
       >
-        {/* Route polylines */}
+        {/* Route polylines — dashed sage line */}
         {polylines.map((coords, i) => (
           <Polyline
             key={`poly-${i}`}
@@ -648,7 +737,7 @@ export default function ExploreMapScreen() {
           />
         ))}
 
-        {/* Venue markers */}
+        {/* Venue markers with day number badge */}
         {visiblePins.map((pin) => (
           <Marker
             key={pin.id}
@@ -657,7 +746,9 @@ export default function ExploreMapScreen() {
             anchor={{ x: 0.5, y: 1 }}
           >
             <View style={[styles.markerContainer, selectedVenue?.pin.id === pin.id && styles.markerSelected]}>
-              <View style={[styles.markerDot, { backgroundColor: SLOT_COLORS[pin.slot] }]} />
+              <View style={[styles.markerDot, { backgroundColor: SLOT_COLORS[pin.slot] }]}>
+                <Text style={styles.markerDayBadge}>{pin.dayNumber}</Text>
+              </View>
               <View style={[styles.markerTail, { borderTopColor: SLOT_COLORS[pin.slot] }]} />
             </View>
           </Marker>
@@ -669,7 +760,7 @@ export default function ExploreMapScreen() {
         <View style={[styles.loadingOverlay, { top: insets.top + 60 }]}>
           <ActivityIndicator size="small" color={COLORS.sage} />
           <Text style={styles.loadingText}>
-            {t('exploreMap.mapping', { defaultValue: 'Mapping venues…' })}
+            {t('exploreMap.mapping', { defaultValue: 'Mapping venues...' })}
           </Text>
         </View>
       )}
@@ -805,7 +896,7 @@ export default function ExploreMapScreen() {
               <View style={styles.listEmpty}>
                 <ActivityIndicator size="small" color={COLORS.sage} />
                 <Text style={styles.listEmptyText}>
-                  {t('exploreMap.geocoding', { defaultValue: 'Finding venues on map…' })}
+                  {t('exploreMap.geocoding', { defaultValue: 'Finding venues on map...' })}
                 </Text>
               </View>
             ) : (
@@ -898,7 +989,7 @@ const styles = StyleSheet.create({
     color: COLORS.muted,
   },
 
-  // ---- Map marker ----
+  // ---- Map marker with day badge ----
   markerContainer: {
     alignItems: 'center',
   },
@@ -906,11 +997,19 @@ const styles = StyleSheet.create({
     transform: [{ scale: 1.25 }],
   },
   markerDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     borderWidth: 2,
     borderColor: COLORS.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  markerDayBadge: {
+    fontFamily: FONTS.header,
+    fontSize: 10,
+    color: COLORS.bg,
+    lineHeight: 12,
   },
   markerTail: {
     width: 0,
@@ -1188,6 +1287,33 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
 
+  // ---- Color legend ----
+  legendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  legendText: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.muted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
   // ---- Empty states ----
   listEmpty: {
     alignItems: 'center',
@@ -1229,6 +1355,40 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.header,
     fontSize: 16,
     color: COLORS.cream,
+  },
+  webDaySelector: {
+    maxHeight: 52,
+    backgroundColor: COLORS.surface1,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  webDaySelectorContent: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    gap: SPACING.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  webStatsBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    backgroundColor: COLORS.surface1,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  webStatItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  webStatValue: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
+    color: COLORS.muted,
   },
   webScroll: {
     flex: 1,

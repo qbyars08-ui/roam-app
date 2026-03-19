@@ -19,7 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from '../lib/haptics';
 
-import { ChevronLeft, MapPin, X } from 'lucide-react-native';
+import { ChevronLeft, MapPin, X, Navigation, Layers } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/constants';
 import {
@@ -41,7 +41,7 @@ import {
   ALL_CONTINENTS,
   WORLD_GRID,
 } from '../lib/visited-store';
-import { buildVisitedMapUrl, isMapboxConfigured } from '../lib/mapbox';
+import { buildVisitedMapUrl, buildHeatmapUrl, isMapboxConfigured } from '../lib/mapbox';
 
 // ---------------------------------------------------------------------------
 // Milestone thresholds
@@ -79,6 +79,7 @@ function VisitedMapScreen() {
   const [bucketSuggestions, setBucketSuggestions] = useState<string[]>([]);
   const [expandedCountry, setExpandedCountry] = useState<string | null>(null);
   const [_isBucketMode, _setIsBucketMode] = useState(false);
+  const [showHeatmap, setShowHeatmap] = useState(false);
   const [selectedCard, setSelectedCard] = useState<VisitedPlace | BucketListPlace | null>(null);
 
   // Animations
@@ -167,6 +168,41 @@ function VisitedMapScreen() {
       .filter((c): c is { lat: number; lng: number } => c !== null);
     return buildVisitedMapUrl({ visited: visitedCoords, planned: plannedCoords });
   }, [places, bucketList]);
+
+  // Heatmap URL: density visualization of visited places
+  const heatmapUrl = useMemo(() => {
+    if (!isMapboxConfigured() || places.length === 0) return null;
+    const coords = places
+      .map((p) => {
+        const c = getDestinationCoords(p.destination);
+        return c ? { lat: c.lat, lng: c.lng, weight: 1 } : null;
+      })
+      .filter((c): c is { lat: number; lng: number; weight: number } => c !== null);
+    return buildHeatmapUrl({ coords });
+  }, [places]);
+
+  // Determine which map URL to show
+  const activeMapUrl = showHeatmap ? heatmapUrl : visitedMapUrl;
+
+  // Visit count per destination
+  const visitCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const p of places) {
+      counts.set(p.destination, (counts.get(p.destination) ?? 0) + 1);
+    }
+    return counts;
+  }, [places]);
+
+  const handleToggleHeatmap = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setShowHeatmap((prev) => !prev);
+  }, []);
+
+  const handlePlanAgain = useCallback((destination: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setSelectedCard(null);
+    router.push('/(tabs)/plan' as never);
+  }, [router]);
 
   // Handlers
   const handleAddPlace = useCallback(async (destination: string) => {
@@ -287,15 +323,40 @@ function VisitedMapScreen() {
           {/* ============================================================= */}
           {/* MAPBOX VISITED MAP — dark-v11, sage (visited) + gold (planned) */}
           {/* ============================================================= */}
-          {visitedMapUrl && (
+          {activeMapUrl ? (
             <View style={styles.mapSection}>
               <View style={styles.mapLabelRow}>
                 <MapPin size={18} color={COLORS.sage} strokeWidth={1.5} />
-                <Text style={styles.mapLabel}>{t('visitedMap.mapPins', { defaultValue: 'Sage = visited · Gold = planned' })}</Text>
+                <Text style={styles.mapLabel}>
+                  {showHeatmap
+                    ? t('visitedMap.heatmapLabel', { defaultValue: 'Visit density' })
+                    : t('visitedMap.mapPins', { defaultValue: 'Sage = visited · Gold = planned' })}
+                </Text>
+                {/* Heatmap toggle */}
+                {heatmapUrl && (
+                  <Pressable onPress={handleToggleHeatmap} style={styles.heatmapToggle}>
+                    <Layers size={14} color={showHeatmap ? COLORS.sage : COLORS.muted} strokeWidth={1.5} />
+                    <Text style={[styles.heatmapToggleText, showHeatmap && styles.heatmapToggleActive]}>
+                      {showHeatmap
+                        ? t('visitedMap.pins', { defaultValue: 'Pins' })
+                        : t('visitedMap.heatmap', { defaultValue: 'Heatmap' })}
+                    </Text>
+                  </Pressable>
+                )}
               </View>
-              <Image source={{ uri: visitedMapUrl }} style={styles.mapImage} resizeMode="cover" />
+              <Image source={{ uri: activeMapUrl }} style={styles.mapImage} resizeMode="cover" />
             </View>
-          )}
+          ) : places.length === 0 ? (
+            <View style={styles.emptyMapCard}>
+              <MapPin size={36} color={COLORS.muted} strokeWidth={1.5} />
+              <Text style={styles.emptyMapTitle}>
+                {t('visitedMap.emptyTitle', { defaultValue: 'Your world map starts with your first trip' })}
+              </Text>
+              <Text style={styles.emptyMapSub}>
+                {t('visitedMap.emptySub', { defaultValue: 'Add visited places or sync from your trips to see them on the map.' })}
+              </Text>
+            </View>
+          ) : null}
 
           {/* ============================================================= */}
           {/* WORLD STATS */}
@@ -647,6 +708,26 @@ function VisitedMapScreen() {
                 {'notes' in selectedCard && selectedCard.notes ? (
                   <Text style={styles.cardSheetNotes}>{selectedCard.notes}</Text>
                 ) : null}
+
+                {/* Visit count badge */}
+                {visitCounts.get(selectedCard.destination) != null && (visitCounts.get(selectedCard.destination) ?? 0) > 0 && (
+                  <View style={styles.visitCountBadge}>
+                    <Text style={styles.visitCountText}>
+                      {`Visited ${visitCounts.get(selectedCard.destination) ?? 0} time${(visitCounts.get(selectedCard.destination) ?? 0) > 1 ? 's' : ''}`}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Plan again button */}
+                <Pressable
+                  style={styles.planAgainBtn}
+                  onPress={() => handlePlanAgain(selectedCard.destination)}
+                >
+                  <Navigation size={14} color={COLORS.bg} strokeWidth={1.5} />
+                  <Text style={styles.planAgainText}>
+                    {t('visitedMap.planAgain', { defaultValue: 'Plan again' })}
+                  </Text>
+                </Pressable>
               </>
             )}
           </Pressable>
@@ -1247,6 +1328,91 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.coral,
     padding: SPACING.xs,
+  },
+
+  // Heatmap toggle
+  heatmapToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginLeft: 'auto',
+    backgroundColor: COLORS.surface2,
+    borderRadius: RADIUS.pill,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  heatmapToggleText: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.muted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  heatmapToggleActive: {
+    color: COLORS.sage,
+  },
+
+  // Empty map state
+  emptyMapCard: {
+    backgroundColor: COLORS.bgGlass,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.xl,
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  emptyMapTitle: {
+    fontFamily: FONTS.header,
+    fontSize: 18,
+    color: COLORS.cream,
+    textAlign: 'center',
+  },
+  emptyMapSub: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.creamMuted,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+
+  // Visit count badge in bottom sheet
+  visitCountBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: COLORS.sageSubtle,
+    borderRadius: RADIUS.pill,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    borderWidth: 1,
+    borderColor: COLORS.sageBorder,
+    marginTop: SPACING.sm,
+  },
+  visitCountText: {
+    fontFamily: FONTS.mono,
+    fontSize: 11,
+    color: COLORS.sage,
+    letterSpacing: 0.5,
+  },
+
+  // Plan again button
+  planAgainBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.sage,
+    borderRadius: RADIUS.pill,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm + 2,
+    marginTop: SPACING.md,
+    alignSelf: 'stretch',
+  },
+  planAgainText: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 14,
+    color: COLORS.bg,
   },
 });
 

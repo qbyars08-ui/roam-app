@@ -16,7 +16,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Clock, MapPin, ChevronRight, Users, GitCompare } from 'lucide-react-native';
+import { Clock, Headphones, MapPin, ChevronRight, Users, GitCompare } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from '../../lib/haptics';
 import { COLORS, SPACING, RADIUS } from '../../lib/constants';
@@ -39,6 +39,7 @@ import { searchPlaces, getPlaceTips, type FSQPlace, type FSQTip } from '../../li
 import { getDestinationCoords, getAirQuality, type AirQuality } from '../../lib/air-quality';
 import { getSunTimes, type SunTimes } from '../../lib/sun-times';
 import { getGoldenHour, type GoldenHourData } from '../../lib/golden-hour';
+import { useTravelerDNA, getRecommendationLabel } from '../../lib/personalization-engine';
 
 // Extracted sub-modules
 import {
@@ -94,6 +95,9 @@ export default function PulseScreen() {
   const timeSlot = useMemo(() => getCurrentTimeSlot(), []);
   const timeRecs = useMemo(() => TIME_RECS[selectedKey]?.[timeSlot] ?? [], [selectedKey, timeSlot]);
   const localTips = useMemo(() => (LOCAL_TIPS[selectedKey] ?? DEFAULT_TIPS).slice(0, 5), [selectedKey]);
+
+  const { dna } = useTravelerDNA();
+  const recLabel = useMemo(() => getRecommendationLabel(dna), [dna]);
 
   const sonarPulse = useSonarQuery(selectedDest.label, 'pulse');
   const sonarLocal = useSonarQuery(selectedDest.label, 'local');
@@ -237,6 +241,32 @@ export default function PulseScreen() {
           </View>
         )}
 
+        {/* Live Guide — immersive narration */}
+        {trips.length > 0 && (
+          <View style={{ paddingHorizontal: SPACING.lg, marginBottom: SPACING.lg }}>
+            <Pressable
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/live-narrator' as never); }}
+              style={({ pressed }) => [{
+                flexDirection: 'row' as const,
+                alignItems: 'center' as const,
+                justifyContent: 'center' as const,
+                gap: SPACING.sm,
+                paddingVertical: 14,
+                borderRadius: RADIUS.pill,
+                backgroundColor: 'transparent',
+                borderWidth: 1,
+                borderColor: COLORS.sageBorder,
+                opacity: pressed ? 0.85 : 1,
+              }]}
+              accessibilityLabel={t('pulse.liveGuide', { defaultValue: 'Live Guide' })}
+              accessibilityRole="button"
+            >
+              <Headphones size={18} color={COLORS.sage} strokeWidth={1.5} />
+              <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 15, color: COLORS.sage }}>{t('pulse.liveGuide', { defaultValue: 'Live Guide' })}</Text>
+            </Pressable>
+          </View>
+        )}
+
         {/* Check In */}
         {trips.length > 0 && (
           <View style={{ paddingHorizontal: SPACING.lg, marginBottom: SPACING.lg }}>
@@ -318,6 +348,9 @@ export default function PulseScreen() {
           ) : null}
 
           {/* Time recs */}
+          {recLabel ? (
+            <Text style={{ fontFamily: 'DMMono_400Regular', fontSize: 11, color: COLORS.sage, letterSpacing: 0.5, marginBottom: SPACING.sm, textTransform: 'uppercase' }}>{recLabel.text}</Text>
+          ) : null}
           {timeRecs.length > 0 ? (
             <View style={styles.editorialStack}>
               {timeRecs.map((rec, i) => (<EditorialCard key={i} rec={rec} index={i} destinationLabel={selectedDest.label} />))}

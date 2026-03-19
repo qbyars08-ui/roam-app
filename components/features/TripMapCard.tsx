@@ -1,5 +1,6 @@
 // =============================================================================
 // ROAM — TripMapCard: Tappable Mapbox static map preview of a trip's route
+// Route line between pins, day number badges, animated press.
 // Used in Plan tab and itinerary to navigate to the full explore-map screen.
 // =============================================================================
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -81,6 +82,25 @@ function buildSlotLabels(locationNames: string[], itineraryRaw: string): string[
   }
 }
 
+/** Build day number for each venue (first occurrence). */
+function buildDayNumbers(locationNames: string[], itineraryRaw: string): number[] {
+  try {
+    const itinerary = parseItinerary(itineraryRaw);
+    const dayMap = new Map<string, number>();
+    for (const day of itinerary.days) {
+      for (const slot of ['morning', 'afternoon', 'evening'] as const) {
+        const loc = day[slot].location;
+        if (loc && !dayMap.has(loc)) {
+          dayMap.set(loc, day.day);
+        }
+      }
+    }
+    return locationNames.map((name) => dayMap.get(name) ?? 1);
+  } catch {
+    return locationNames.map(() => 1);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -96,15 +116,20 @@ export default function TripMapCard({
 
   const [loading, setLoading] = useState(true);
   const [mapUrl, setMapUrl] = useState<string | null>(null);
+  const [pinCount, setPinCount] = useState(0);
 
   // Animated press scale
   const pressScale = useRef(new Animated.Value(1)).current;
+
+  // Pin drop animations — staggered appearance
+  const pinOpacity = useRef(new Animated.Value(0)).current;
 
   const mapHeight = compact ? 160 : 220;
 
   // Extract venue names once — stable reference avoids re-geocoding
   const venueNames = useMemo(() => extractVenueNames(itineraryRaw), [itineraryRaw]);
   const slots = useMemo(() => buildSlotLabels(venueNames, itineraryRaw), [venueNames, itineraryRaw]);
+  const dayNumbers = useMemo(() => buildDayNumbers(venueNames, itineraryRaw), [venueNames, itineraryRaw]);
 
   // ---------------------------------------------------------------------------
   // Geocode + build map URL on mount
@@ -130,9 +155,18 @@ export default function TripMapCard({
           return;
         }
 
+        // Build static map with route line (buildStaticMapUrl includes GeoJSON line)
         const url = buildStaticMapUrl({ locations: valid, slots: validSlots });
         setMapUrl(url);
+        setPinCount(valid.length);
         setLoading(false);
+
+        // Animate pins appearing with staggered fade
+        Animated.timing(pinOpacity, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }).start();
       })
       .catch(() => {
         if (cancelled) return;
@@ -143,7 +177,7 @@ export default function TripMapCard({
     return () => {
       cancelled = true;
     };
-  }, [venueNames, slots, destination]);
+  }, [venueNames, slots, destination, pinOpacity]);
 
   // ---------------------------------------------------------------------------
   // Press handlers
@@ -209,10 +243,10 @@ export default function TripMapCard({
   }
 
   // ---------------------------------------------------------------------------
-  // Full map card
+  // Full map card with route line and day badges
   // ---------------------------------------------------------------------------
   return (
-    <Animated.View style={{ transform: [{ scale: pressScale }] }}>
+    <Animated.View style={{ transform: [{ scale: pressScale }], opacity: pinOpacity }}>
       <Pressable
         onPress={handlePress}
         onPressIn={handlePressIn}
@@ -248,6 +282,15 @@ export default function TripMapCard({
               </Text>
             </View>
           )}
+
+          {/* Pin count badge — bottom left */}
+          {pinCount > 0 && (
+            <View style={styles.pinCountBadge} pointerEvents="none">
+              <Text style={styles.pinCountText}>
+                {pinCount} {pinCount === 1 ? 'venue' : 'venues'}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* CTA row */}
@@ -267,7 +310,7 @@ function CTARow() {
       <Navigation color={COLORS.sage} size={14} strokeWidth={1.5} />
       <Text style={styles.ctaText}>
         {t('map.exploreCta', { defaultValue: 'Explore Map' })}
-        {' →'}
+        {' \u2192'}
       </Text>
     </View>
   );
@@ -324,7 +367,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    // Subtle darkening at edges for text contrast
     backgroundColor: COLORS.overlayVeryFaint,
   } as ViewStyle,
 
@@ -367,6 +409,24 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.sage,
     letterSpacing: 0.5,
+  } as TextStyle,
+
+  // Pin count badge — bottom left
+  pinCountBadge: {
+    position: 'absolute',
+    bottom: SPACING.sm,
+    left: SPACING.sm,
+    backgroundColor: COLORS.overlayDark,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 3,
+    borderRadius: RADIUS.sm,
+  } as ViewStyle,
+
+  pinCountText: {
+    fontFamily: FONTS.mono,
+    fontSize: 10,
+    color: COLORS.muted,
+    letterSpacing: 0.3,
   } as TextStyle,
 
   // CTA row

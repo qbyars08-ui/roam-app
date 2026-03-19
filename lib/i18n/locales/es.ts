@@ -538,6 +538,23 @@ const es: TranslationKeys = {
     featureRequest: 'Solicitar funci\u00f3n',
   },
 
+  translateHub: {
+    heroTitle: 'Speak the language. Sort of.',
+    quickPhrases: 'QUICK PHRASES',
+    customTranslate: 'TRANSLATE ANYTHING',
+    placeholder: 'Type anything to translate...',
+    showDriver: 'SHOW YOUR DRIVER',
+    tapToShow: 'Tap to show full-screen card for taxi driver',
+    showThisToDriver: 'Show this to your driver',
+    numbersTitle: 'NUMBERS & MONEY',
+    bargaining: 'BARGAINING',
+    culturalIntel: 'CULTURAL INTEL',
+    culturalCardTitle: 'Cultural tips',
+    tapToHear: 'Tap to hear',
+    longPressCopy: 'Long press to copy',
+    copied: 'Copied!',
+  },
+
   notFound: {
     title: 'P\u00e1gina no encontrada',
     subtitle: 'Esta p\u00e1gina no existe.',
