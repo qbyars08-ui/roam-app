@@ -98,6 +98,7 @@ import MapboxRouteMap from '../components/features/MapboxRouteMap';
 import CollaboratorRow from '../components/features/CollaboratorRow';
 import ActivityVoteButtons from '../components/features/ActivityVoteButtons';
 import InviteSheet from '../components/features/InviteSheet';
+import TripShareSheet from '../components/features/TripShareSheet';
 import { useGroupTrip, type VoteDirection, type TimeSlot as GroupTimeSlot } from '../lib/group-trip';
 import {
   buildSafetyZones,
@@ -165,6 +166,7 @@ export default function ItineraryScreen() {
   const [safetyOverlay, setSafetyOverlay] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [shareVisible, setShareVisible] = useState(false);
+  const [shareSheetVisible, setShareSheetVisible] = useState(false);
   const [shareNudgeDismissed, setShareNudgeDismissed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editingActivity, setEditingActivity] = useState<{
@@ -1041,7 +1043,24 @@ export default function ItineraryScreen() {
             <Link2 size={20} color={COLORS.cream} strokeWidth={1.5} />
           </Pressable>
 
-          {/* Share card */}
+          {/* Share sheet */}
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setShareSheetVisible(true);
+            }}
+            hitSlop={12}
+            accessibilityLabel="Share trip"
+            accessibilityHint="Opens share sheet with sharing options"
+            style={({ pressed }) => [
+              styles.headerBtn,
+              { opacity: pressed ? 0.6 : 1 },
+            ]}
+          >
+            <Share2 size={20} color={COLORS.cream} strokeWidth={1.5} />
+          </Pressable>
+
+          {/* Share card (poster) */}
           <Pressable
             onPress={() => setShareVisible(true)}
             hitSlop={12}
@@ -1052,7 +1071,7 @@ export default function ItineraryScreen() {
               { opacity: pressed ? 0.6 : 1 },
             ]}
           >
-            <Share2 size={20} color={COLORS.cream} strokeWidth={1.5} />
+            <Camera size={20} color={COLORS.cream} strokeWidth={1.5} />
           </Pressable>
 
           {/* Viral cards */}
@@ -2132,11 +2151,14 @@ export default function ItineraryScreen() {
           </View>
         </ScrollView>
 
-        {/* Floating Share FAB — generates shareable link */}
+        {/* Floating Share FAB — opens share sheet */}
         {trip && (
           <Pressable
             style={[styles.shareFab, { bottom: (insets.bottom || 0) + SPACING.lg }]}
-            onPress={handleShareLink}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setShareSheetVisible(true);
+            }}
             accessibilityRole="button"
             accessibilityLabel="Share trip"
           >
@@ -2187,6 +2209,16 @@ export default function ItineraryScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* ── Trip Share Sheet ──────────────────────────────────────────── */}
+      {trip && parsed && (
+        <TripShareSheet
+          visible={shareSheetVisible}
+          trip={trip}
+          itinerary={parsed}
+          onDismiss={() => setShareSheetVisible(false)}
+        />
+      )}
 
       {/* ── Activity Edit Modal ──────────────────────────────────────── */}
       {editingActivity && currentDay && (

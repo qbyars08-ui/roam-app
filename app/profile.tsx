@@ -43,6 +43,7 @@ import { track } from '../lib/analytics';
 import Button from '../components/ui/Button';
 import ExploreHub from '../components/features/ExploreHub';
 import StreakBadge from '../components/features/StreakBadge';
+import { useStreak } from '../lib/engagement';
 import TravelStats from '../components/features/TravelStats';
 import SubscriptionCard from '../components/monetization/SubscriptionCard';
 import { SUPPORTED_LANGUAGES, changeLanguage } from '../lib/i18n';
@@ -76,6 +77,7 @@ export default function ProfileScreen() {
   );
 
   const userEmail = session?.user?.email ?? t('common.guest');
+  const { currentStreak } = useStreak();
 
   // Photo gallery state
   const [allPhotos, setAllPhotos] = useState<TripPhoto[]>([]);
@@ -275,7 +277,7 @@ export default function ProfileScreen() {
                 {isPro ? t('common.pro') : t('common.free')}
               </Text>
             </View>
-            <StreakBadge size="sm" showLabel animated />
+            <StreakBadge streak={currentStreak} size="sm" />
             {ratedBadge && (
               <Text style={styles.ratedBadge}>{t('profile.thanksForRating')}</Text>
             )}

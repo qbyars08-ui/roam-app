@@ -110,3 +110,119 @@ EXPECTED OUTPUT: Competitive matrix with ROAM's defensible position.
 
 ## ANSWERS (paste NotebookLM responses below each question)
 
+---
+---
+
+# WAVE 2 — March 19, 2026 (Post-Sonar, Post-Life-Integration)
+
+These queries reflect where ROAM is NOW: Perplexity Sonar live intel across all tabs, 12 new life-integration modules (travel accounts, document vault, calendar sync, cost optimizer, neighborhood intel, wardrobe advisor, photo journal, etc.), and a full web + mobile split.
+
+---
+
+## QUERY 12 — Retention: Day 1 → Day 30
+
+QUESTION: ROAM now has 40+ screens and features. The risk is that users try it once, generate a trip, and never come back. What are the specific retention mechanics that travel apps use to get users to return DAILY, not just when they book a trip? Consider:
+- Pre-trip: countdown timers, daily destination intel, packing list nudges
+- During trip: "I Am Here Now" live mode, daily brief notifications, photo journal
+- Post-trip: trip recap, sharing, next-trip suggestions
+- Always-on: flight deal alerts, destination dreaming, bucket list
+
+What's the ideal push notification strategy for a travel app? Which notifications get opened vs. cause uninstalls? What frequency is optimal? What do Hopper and Google Flights do for retention between bookings?
+
+EXPECTED OUTPUT: Retention loop design with specific notification copy and timing.
+
+---
+
+## QUERY 13 — The Reservation Import Problem
+
+QUESTION: TripIt's #1 feature is auto-importing reservations from email. ROAM doesn't have this. What are the technical approaches to building email-based reservation importing in 2026?
+- Gmail API parsing (what permissions needed?)
+- Email forwarding to a ROAM address (like TripIt's plans@tripit.com)
+- Screenshot/photo OCR of confirmation pages
+- Manual entry with smart autofill
+
+Which approach has the best UX vs. engineering effort tradeoff? What structured data formats do airlines/hotels use (Schema.org, JSON-LD in confirmation emails)? How does TripIt actually parse 3000+ booking formats? Is there an API or service that does this?
+
+EXPECTED OUTPUT: Technical recommendation with effort estimate and UX comparison.
+
+---
+
+## QUERY 14 — The $7.99 Paywall Moment
+
+QUESTION: ROAM's paywall appears after the user's first free trip. Right now the paywall screen shows feature comparisons. But conversion psychology says the BEST time to show a paywall is at a "magic moment" — when the user just experienced value and wants MORE.
+
+What is ROAM's magic moment? Is it:
+- Right after generating their first itinerary (they're excited, want to do another)
+- When they try to use CRAFT mode and hit the limit
+- When they try to add a friend to a group trip
+- When they try to export a PDF
+- When they see a flight deal and want alerts
+
+What paywall design converts best for subscription apps in 2026? Soft paywall vs. hard paywall? What copy on the upgrade button drives the highest conversion? What does Duolingo's paywall strategy teach us?
+
+EXPECTED OUTPUT: Exact paywall timing + screen design spec with conversion reasoning.
+
+---
+
+## QUERY 15 — Web vs. Mobile Strategy
+
+QUESTION: ROAM has both a web app (roamapp.app) and a mobile app (React Native). The web app has a sidebar, CRAFT split-screen, flight tables, and budget spreadsheets. The mobile app has floating pill nav, I Am Here Now, and haptic feedback.
+
+What should the web app do that the mobile app DOESN'T? What's the web app's role vs. the mobile app's role? Consider:
+- Web = planning (desktop, longer sessions, spreadsheets, split-screen CRAFT)
+- Mobile = traveling (GPS, notifications, offline, camera, quick access)
+
+How do Notion, Linear, and Arc split their web vs. mobile experiences? What content should be web-exclusive vs. mobile-exclusive vs. shared? Should the pricing be different for web-only vs. mobile-only users?
+
+EXPECTED OUTPUT: Platform strategy matrix with feature assignments.
+
+---
+
+## QUERY 16 — Making AI Feel Like a Travel Agent, Not a Chatbot
+
+QUESTION: ROAM's CRAFT mode lets users have a conversation with AI to plan trips. The risk: it feels like ChatGPT with a travel skin. What makes a conversational AI planning experience feel like talking to a knowledgeable travel agent instead of a generic chatbot?
+
+Consider:
+- Proactive suggestions ("Based on your budget, skip Santorini in August — try Naxos instead")
+- Memory across sessions ("Last time you loved street food in Bangkok, so here's Oaxaca's food scene")
+- Opinionated recommendations ("Don't stay in Taksim — Karakoy has better restaurants and is walkable")
+- Travel-specific personality (confident, slightly opinionated, uses insider knowledge)
+- Follow-up intelligence ("Your flight to Rome lands at 2pm — I've moved your Vatican visit to Day 2 morning")
+
+How do luxury travel concierge services (Black Tomato, Journy, Scott's Cheap Flights) create that "someone who knows" feeling? What's the difference between a travel chatbot and a travel advisor?
+
+EXPECTED OUTPUT: CRAFT mode personality spec with 10 example interactions.
+
+---
+
+## QUERY 17 — The Share Loop
+
+QUESTION: ROAM's biggest growth potential is viral sharing — a user generates a trip, shares it, and the recipient downloads ROAM to see it. What makes a shared trip link actually get clicked and convert?
+
+Currently ROAM has:
+- Share card (visual trip summary image)
+- Shared trip page (web view of full itinerary)
+- Referral codes (5 invites, unlock free trips)
+
+What's missing? Should the shared trip be a beautiful web page or a screenshot? What format works best on Instagram Stories vs. iMessage vs. WhatsApp? What do Spotify Wrapped, Duolingo streaks, and Strava achievements teach us about shareable moments in apps?
+
+EXPECTED OUTPUT: Sharing strategy with specific formats per platform and viral coefficient targets.
+
+---
+
+## QUERY 18 — What Would Make This Worth $20/month?
+
+QUESTION: ROAM Pro is $7.99/month. If we wanted to charge $19.99/month (like a premium tier), what features would justify that price? Think about what affluent travelers (User B: the 55-year-old dad) would pay $20/month for:
+- Live concierge (real-time AI chat during travel)
+- Automatic rebooking when flights change
+- Restaurant reservation integration (OpenTable, Resy)
+- Priority access to deal alerts
+- Family account (5 travelers under one subscription)
+- Insurance integration
+- VIP airport lounge finder
+- White-glove trip planning (AI + human review)
+
+Which of these are technically feasible with existing APIs? Which have the highest willingness-to-pay? What do premium travel services charge and what's included?
+
+EXPECTED OUTPUT: Premium tier spec with pricing justification and technical feasibility.
+

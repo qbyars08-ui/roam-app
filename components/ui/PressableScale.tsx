@@ -2,18 +2,20 @@
 // ROAM — PressableScale: pressable that scales down on press
 // =============================================================================
 import React, { useRef } from 'react';
-import { Animated, Pressable, type ViewStyle } from 'react-native';
+import { Animated, Pressable, type StyleProp, type ViewStyle } from 'react-native';
 
-interface PressableScaleProps {
+export interface PressableScaleProps {
   scaleAmount?: number;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   onPress?: () => void;
+  onLongPress?: () => void;
+  disabled?: boolean;
   accessibilityLabel?: string;
   accessibilityRole?: 'button' | 'link';
   children: React.ReactNode;
 }
 
-export default function PressableScale({ scaleAmount = 0.97, style, onPress, children, ...rest }: PressableScaleProps) {
+export default function PressableScale({ scaleAmount = 0.97, style, onPress, onLongPress, disabled, children, ...rest }: PressableScaleProps) {
   const scale = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -25,7 +27,7 @@ export default function PressableScale({ scaleAmount = 0.97, style, onPress, chi
   };
 
   return (
-    <Pressable onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut} {...rest}>
+    <Pressable onPress={onPress} onLongPress={onLongPress} disabled={disabled} onPressIn={handlePressIn} onPressOut={handlePressOut} {...rest}>
       <Animated.View style={[style, { transform: [{ scale }] }]}>
         {children}
       </Animated.View>
